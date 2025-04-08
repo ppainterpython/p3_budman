@@ -1,0 +1,39 @@
+{
+    "version": 1,
+    "disable_existing_loggers": false,
+    "formatters": {
+        "module_function": {
+            "style": "{",
+            "format": "{asctime}.{msecs:03.0f}:{levelname}:[{process}:{thread}]MF: {module}.{funcName}() {message}",
+            "datefmt": "%Y-%m-%d %H:%M:%S"
+        },
+        "class_method": {
+            "style": "{",
+            "format": "{asctime}.{msecs:03.0f}:{levelname}:[{process}:{thread}]<<CM>>: {module}.{funcName}() {message}",
+            "datefmt": "%Y-%m-%d %H:%M:%S"
+        }
+    },
+    "handlers": {
+        "stderr": {
+            "class": "logging.StreamHandler",
+            "level": "WARNING",
+            "formatter": "module_function",
+            "stream": "ext://sys.stderr"
+        },
+        "file": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "level": "DEBUG",
+            "formatter": "class_method",
+            "filename": "logs/ActivityTracker.log",
+            "maxBytes": 10000,
+            "backupCount": 2
+        }
+    },
+    "root": {
+        "level": "DEBUG",
+        "handlers": [
+            "stderr",
+            "file"
+        ]
+    }
+}
