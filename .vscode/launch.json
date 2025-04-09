@@ -9,10 +9,11 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
-            "console": "integratedTerminal"
+            "console": "integratedTerminal",
+            "justMyCode": false,  // Allows stepping into third-party or library code
         },
         {
-            "name": "Python Debugger: Package Directory",
+            "name": "Pdebugpy: Package Directory",
             "type": "debugpy",
             "request": "launch",
             "program": "${file}", 
@@ -23,6 +24,30 @@
             }
             // "purpose": ["debug-test"]
             // "justMyCode": false // to debug worker threads
+        },
+        {
+            "name": "debugpy: Wrapper",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",  // Path to your wrapper script
+            "console": "integratedTerminal",
+            "justMyCode": false  // Allows stepping into third-party or library code
+        },
+        {
+            "name": "PyTest: Debug NOTjustMyCode",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",  // Path to your wrapper script
+            "purpose": ["debug-test"],  // Arguments to pass to the script
+            "justMyCode": false  // Allows stepping into third-party or library code
+        },
+        {
+            "name": "PyTest: Debug justMyCode",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",  // Path to your wrapper script
+            "purpose": ["debug-test"],  // Arguments to pass to the script
+            "justMyCode": true  // Allows stepping into third-party or library code
         }
     ]
 }
