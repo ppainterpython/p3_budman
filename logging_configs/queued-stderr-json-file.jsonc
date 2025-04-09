@@ -2,7 +2,7 @@
     "version": 1,
     "disable_existing_loggers": false,
     "formatters": {
-        // Basic formatter for logging messages
+        // Basic formatter for logging messages to stderr
         "module_function": {
             "style": "{",
             "format": "{asctime}.{msecs:03.0f}:{levelname}:[{process}:{thread}]MF: {module}.{funcName}() {message}",
@@ -16,7 +16,7 @@
             "datefmt": "%Y-%m-%d %H:%M:%S"
         },
         // a custom JSON formatter
-        "json": { // a custom JSON formatter
+        "json": {
             "()": "mylogger.MyJSONFormatter",
             "fmt_keys": {
                 "level": "levelname",
@@ -55,14 +55,21 @@
             "filename": "logs/ActivityTracker.jsonl",
             "maxBytes": 10000,
             "backupCount": 2
+        },
+        // Queue handler for logging to a queue thread
+        "queue_handler": {
+            "class": "logging.handlers.QueueHandler",
+            // list the other handlers to be used in the queue            
+            "handlers": [
+                "stderr",
+                "file",
+                "json_file"
+            ],
+            "respect_handler_level": true
         }
     },
     "root": {
         "level": "DEBUG",
-        "handlers": [
-            "stderr",
-            "file",
-            "json_file"
-        ]
+        "handlers": ["queue_handler"]
     }
 }

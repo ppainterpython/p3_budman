@@ -4,28 +4,35 @@ import pytest
 import pyjson5
 
 AT_APP_NAME = "ActivityTracker"
-AT_CONFIG_FILE = "logging_configs/at_log_config.json"
+AT_STDOUT_LOG_CONFIG = "logging_configs/stdout.jsonc"
 AT_STDERR_JSON_FILE_LOG_CONFIG = "logging_configs/stderr-json-file.jsonc"
+AT_QUEUED_STDERR_JSON_FILE_LOG_CONFIG = "logging_configs/queued-stderr-json-file.jsonc"
 
 root_logger = logging.getLogger()
 logger = logging.getLogger(AT_APP_NAME)
 logger.propagate = True
 #------------------------------------------------------------------------------+
-#region log_logging_setup() function
-def log_logging_setup(print:bool = False ) -> None:
-    '''Log the current logging setup. Also print to stdout if requested.'''
-    ...
-#endregion log_logging_setup() function
-#------------------------------------------------------------------------------+
-#region testickle_logger_exception_message
-def testickle_logger_exception_message()    -> None:
-    """Test function to demonstrate logging an exception."""
+#region show_logging_setup() function
+def show_logging_setup(config_file: str = AT_STDOUT_LOG_CONFIG,
+                       json:bool = False) -> None:
+    '''Load a logging config and display the resulting logging setup.
+    Argument json=True will print the config file as JSON.'''
     try:
-        1 / 0
-    except ZeroDivisionError as e:
-        logger.exception(f"Exception message: {str(e)}")
-        raise
-#endregion testickle_logger_exception_message
+        # Load the logging configuration from the specified file
+        config_file = pathlib.Path(config_file)
+        if not config_file.exists():
+            raise FileNotFoundError(f"Config file '{config_file}' not found.")
+        with open(config_file, "r") as f_in:
+            log_config = pyjson5.load(f_in)
+
+        # Apply the logging configuration preserving any pytest handlers
+        atlogging_setup(log_config)
+
+        if print:
+            print(json.dumps(log_config, indent=4))
+    except Exception as e:
+        print(f"{__name__}: {e}")
+#endregion show_logging_setup() function
 #------------------------------------------------------------------------------+
 #region retain_pytest_handlers decorator
 def retain_pytest_handlers(f):
@@ -51,54 +58,111 @@ def wrap_config_dictConfig(log_config):
     logging.config.dictConfig(log_config)
 #endregion retain_pytest_handlers decorator
 #------------------------------------------------------------------------------+
+#region validate_file_logging() function
+def validate_file_logging_config(config_json:dict) -> bool:
+    '''Validate the file logging configuration.'''
+    # Validate the JSON configuration
+    try:
+        _ = pyjson5.encode(config_json) # validate json serializable, not output
+    except TypeError as e:
+        t = type(config_json).__name__
+        m = f"Error decoding config_json: '{config_json} as type: '{t}'"
+        raise RuntimeError(m) from e
+    except (json.JSONDecodeError, Exception) as e:
+        m = f"Error decoding config_json input"
+        raise RuntimeError(m) from e
+    # Iterate handlers and check for file handlers
+    file_handler_classes = ("logging.FileHandler", 
+                            "logging.TimedRotatingFileHandler",
+                            "logging.handlers.RotatingFileHandler")
+    for name, handler in config_json["handlers"].items():
+        if isinstance(handler, dict) and \
+            handler.get("class") in file_handler_classes:
+            # Check if the filename is valid
+            filename = handler.get("filename")
+            if filename:
+                file_path = pathlib.Path(filename)
+                # Ensure the directory exists
+                file_path.parent.mkdir(parents=True, exist_ok=True)
+                # Check if the file is writable
+                try:
+                    with open(file_path, "a"):
+                        pass
+                except IOError as e:
+                    raise RuntimeError(f"Cannot write to log file: {file_path}") from e
+#endregion validate_file_logging() function
+#------------------------------------------------------------------------------+
+#region validate_json_file() function
+def validate_json_file(json_file:str) -> dict:
+    '''Validate the file contains valid json, return it as str.'''
+    # Check if the config file exists, is accessible, and is valid JSON
+    json_file = pathlib.Path(json_file)
+    if not json_file.exists():
+        raise FileNotFoundError(f"JSON file '{json_file}' not found.")
+    try:
+        with open(json_file, "r") as f_in:
+            config_json = pyjson5.decode_io(f_in)
+            return config_json
+    except TypeError as e:
+        t = type(json_file).__name__
+        m = f"Error accessing json_file: '{json_file} as type: '{t}'"
+        raise RuntimeError(m) from e
+    except FileNotFoundError as e:
+        m = f"Error accessing json_file: '{json_file}'"
+        raise RuntimeError(m) from e
+    except json.JSONDecodeError as e:
+        m = f"Error decoding json_file: '{json_file}'"
+        raise RuntimeError(m) from e
+    except Exception as e:
+        m = f"Error processing json_file: '{json_file}'"
+        raise RuntimeError(m) from e
+    
+#endregion validate_file_logging() function
+#------------------------------------------------------------------------------+
 #region atlogging_setup function
-def atlogging_setup(logger_name: str = AT_APP_NAME,
-                    config_file: str = AT_CONFIG_FILE,
-                    verbose:bool = False) -> logging.Logger:
+def atlogging_setup(config_file: str = AT_STDOUT_LOG_CONFIG) -> logging.Logger:
     """Set up logging for both stdout and a log file (thread-safe singleton)."""
     try:
-        # config_file = pathlib.Path(AT_CONFIG_FILE)
-        config_file = pathlib.Path(config_file)
-        with open(config_file, "r") as f_in:
-            at_log_config = pyjson5.load(f_in)
-
-        # Ensure the logs directory exists
-        log_file_path = pathlib.Path(at_log_config["handlers"]["file"]["filename"])
-        log_file_path.parent.mkdir(parents=True, exist_ok=True)
-
+        # Validate and parse the json config_file
+        at_log_config_json = validate_json_file(config_file)
+        # For FileHandler types, validate the filenames included in the config
+        validate_file_logging_config(at_log_config_json)
         # Apply the logging configuration preserving any pytest handlers
-        wrap_config_dictConfig(at_log_config)
+        wrap_config_dictConfig(at_log_config_json)
 
-        if verbose:
-            logger.debug(f"Logging configuration loaded from:'{config_file}'")
-
+        # If the queue_handler is used, start the listener thread
+        queue_handler = logging.getHandlerByName("queue_handler")
+        if queue_handler is not None:
+            queue_handler.listener.start()
+            atexit.register(queue_handler.listener.stop)
     except Exception as e:
-        print(f"{__name__}: Logging Setup Exception: {e}")
+        print(f"{__name__}: Logging Setup Exception: {str(e)}")
         raise
 #endregion atlogging_setup function
 #------------------------------------------------------------------------------+
 #region main() function
-def main():
+def main(config_file: str = AT_STDOUT_LOG_CONFIG):
     """Main function to run this application as a stand-alone test."""
     try:
         # Initialize the logger from a logging configuration file.
-        ln = AT_APP_NAME; cf = AT_STDERR_JSON_FILE_LOG_CONFIG; verbose = True
-        atlogging_setup(ln, cf, verbose)
-        logger.debug("debug message", extra={"extra_key": "extra_value"})
-        logger.debug("debug message")
-        logger.info("info message")
-        logger.warning("warning message")
-        logger.error("error message")
-        logger.critical("critical message")
+        atlogging_setup(config_file)
+        logger.debug("Debug message", extra={"extra_key": "extra_value"})
+        logger.debug("Debug message")
+        logger.info("Info message")
+        logger.warning("Warning message")
+        logger.error("Error message")
+        logger.critical("Critical message")
+        try:
+            1 / 0
+        except ZeroDivisionError as e:
+            logger.exception(f"Exception message: {str(e)}")
     except Exception as e:
-        logger.error(f"An error occurred: {e}")
+        logger.error(f"Error: during logger check: {e}")
         raise
-    try:
-        testickle_logger_exception_message()
-    except ZeroDivisionError as e:
-        logger.error(f"An error occurred: {e}")
 #endregion main() function
 #------------------------------------------------------------------------------+
 if __name__ == "__main__":
     main()
+    main(AT_STDERR_JSON_FILE_LOG_CONFIG)
+    main(AT_QUEUED_STDERR_JSON_FILE_LOG_CONFIG)
 #------------------------------------------------------------------------------+
