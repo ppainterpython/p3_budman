@@ -33,6 +33,16 @@ def show_logging_setup(config_file: str = AT_STDOUT_LOG_CONFIG,
     except Exception as e:
         print(f"{__name__}: {e}")
 #endregion show_logging_setup() function
+def append_cause(msg:str = None, e:Exception=None) -> str:
+    '''Append the cause of an exception to the message.'''
+    # If the exception has a cause, append it to the message
+    print(f"{repr(e)} - > {repr(e.__cause__)}")
+    if e:
+        if e.__cause__:
+            msg += append_cause(f" Exception: {repr(e)}",e.__cause__) 
+        else:
+            msg += f" Exception: {repr(e)}"
+    return msg 
 #------------------------------------------------------------------------------+
 #region retain_pytest_handlers decorator
 def retain_pytest_handlers(f):
@@ -55,7 +65,15 @@ def retain_pytest_handlers(f):
     return wrapper
 @retain_pytest_handlers
 def wrap_config_dictConfig(log_config):
-    logging.config.dictConfig(log_config)
+    try:
+        # Now invoke the dictConfig function to apply the logging configuration
+        logging.config.dictConfig(log_config)
+    except Exception as e:
+        # Exceptions from dictConfig can be deeply nested. The issues is 
+        # most likely with the configuration json itself, not the logging module.
+        m = f"Error: logging.config.dictConfig() "
+        m += append_cause("",e)
+        raise RuntimeError(m) from e
 #endregion retain_pytest_handlers decorator
 #------------------------------------------------------------------------------+
 #region validate_file_logging() function
@@ -136,33 +154,35 @@ def atlogging_setup(config_file: str = AT_STDOUT_LOG_CONFIG) -> logging.Logger:
             queue_handler.listener.start()
             atexit.register(queue_handler.listener.stop)
     except Exception as e:
-        print(f"{__name__}: Logging Setup Exception: {str(e)}")
+        print(f"{__name__}.atlogging_setup(): Error: Logging Setup {str(e)}")
         raise
 #endregion atlogging_setup function
 #------------------------------------------------------------------------------+
 #region main() function
 def main(config_file: str = AT_STDOUT_LOG_CONFIG):
     """Main function to run this application as a stand-alone test."""
+    cfm = f"Config file: '{config_file}'"
     try:
         # Initialize the logger from a logging configuration file.
         atlogging_setup(config_file)
-        logger.debug("Debug message", extra={"extra_key": "extra_value"})
-        logger.debug("Debug message")
-        logger.info("Info message")
-        logger.warning("Warning message")
-        logger.error("Error message")
-        logger.critical("Critical message")
+        logger.debug(f"Debug message, {cfm}", extra={"extra_key": "extra_value"})
+        logger.debug(f"Debug message, {cfm}")
+        logger.info(f"Info message, {cfm}")
+        logger.warning(f"Warning message, {cfm}")
+        logger.error(f"Error message, {cfm}")
+        logger.critical(f"Critical message, {cfm}")
         try:
             1 / 0
         except ZeroDivisionError as e:
             logger.exception(f"Exception message: {str(e)}")
     except Exception as e:
-        logger.error(f"Error: during logger check: {e}")
-        raise
+        m = f"Error: during logger check, {cfm} "
+        print(f"{m} {str(e)}")
+        # raise RuntimeError(m) from e
 #endregion main() function
 #------------------------------------------------------------------------------+
 if __name__ == "__main__":
-    main()
+    # main()
     main(AT_STDERR_JSON_FILE_LOG_CONFIG)
     main(AT_QUEUED_STDERR_JSON_FILE_LOG_CONFIG)
 #------------------------------------------------------------------------------+

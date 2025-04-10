@@ -9,15 +9,23 @@
             "datefmt": "%Y-%m-%d %H:%M:%S"
         },
         // custom formatter to include class name in messages for when methods 
-        // make logging calls. Requires a custom formatter to be used.
-        "class_method": {
-            "style": "{",
-            "format": "{asctime}.{msecs:03.0f}:{levelname}:[{process}:{thread}]<<CM>>: {module}.{funcName}() {message}",
-            "datefmt": "%Y-%m-%d %H:%M:%S"
+        // make logging calls.
+        "module_or_class": {
+            "()": "mylogger.ModuleOrClassFormatter",
+            "fmt_keys": {
+                "timestamp": "timestamp",
+                "level": "levelname",
+                "module": "module",
+                "function": "funcName",
+                "message": "message",
+                "line": "lineno",
+                "thread_name": "threadName",
+                "logger": "name"
+            }
         },
         // a custom JSON formatter
-        "json": { // a custom JSON formatter
-            "()": "mylogger.MyJSONFormatter",
+        "json": {
+            "()": "mylogger.JSONOutputFormatter",
             "fmt_keys": {
                 "level": "levelname",
                 "message": "message",

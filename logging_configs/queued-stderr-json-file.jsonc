@@ -10,21 +10,29 @@
         },
         // custom formatter to include class name in messages for when methods 
         // make logging calls.
-        "class_method": {
-            "style": "{",
-            "format": "{asctime}.{msecs:03.0f}:{levelname}:[{process}:{thread}]<<CM>>: {module}.{funcName}() {message}",
-            "datefmt": "%Y-%m-%d %H:%M:%S"
+        "module_or_class": {
+            "()": "mylogger.ModuleOrClassFormatter",
+            "fmt_keys": {
+                "timestamp": "timestamp",
+                "level": "levelname",
+                "module": "module",
+                "function": "funcName",
+                "message": "message",
+                "line": "lineno",
+                "thread_name": "threadName",
+                "logger": "name"
+            }
         },
         // a custom JSON formatter
         "json": {
-            "()": "mylogger.MyJSONFormatter",
+            "()": "mylogger.JSONOutputFormatter",
             "fmt_keys": {
-                "level": "levelname",
-                "message": "message",
                 "timestamp": "timestamp",
-                "logger": "name",
+                "level": "levelname",
                 "module": "module",
                 "function": "funcName",
+                "message": "message",
+                "logger": "name",
                 "line": "lineno",
                 "thread_name": "threadName"
             }
@@ -42,7 +50,7 @@
         "file": {
             "class": "logging.handlers.RotatingFileHandler",
             "level": "DEBUG",
-            "formatter": "class_method",
+            "formatter": "module_or_class",
             "filename": "logs/ActivityTracker.log",
             "maxBytes": 10000,
             "backupCount": 2
