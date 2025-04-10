@@ -114,37 +114,45 @@ class ModuleOrClassFormatter(logging.Formatter):
         # "{timestamp}:{levelname}:[{process}:{thread}]: {module}.{funcName}() {message}",
         # "{asctime}.{msecs:03.0f}:{levelname}:[{process}:{thread}]: {class}.{method}() {message}",
         #endregion Notes about the format string
-        message = self._prepare_log_dict(record) 
+        strmsg = self._prepare_log_dict(record) 
         # Convert the extracted message dictionary to a JSON string.
-        return json.dumps(message, default=str)
+        return strmsg
 
-    def _prepare_log_dict(self, record: logging.LogRecord):
+    def _prepare_log_dict(self, record: logging.LogRecord) -> str:
         # Extract a loggine.LogRecord to a dictionary.
-        always_fields = {
-            "message": record.getMessage(),
-            "timestamp": dt.datetime.fromtimestamp(
-                record.created, tz=dt.timezone.utc
-            ).isoformat(timespec="milliseconds"),
-        }
-        if record.exc_info is not None:
-            always_fields["exc_info"] = self.formatException(record.exc_info)
+        try:
+            always_fields = {
+                "message": record.getMessage(),
+                "timestamp": dt.datetime.fromtimestamp(
+                    record.created, tz=dt.timezone.utc
+                ).isoformat(timespec="milliseconds"),
+                "level": _ALL[int(record.levelno/10)],
+            }
+            if record.exc_info is not None:
+                always_fields["exc_info"] = self.formatException(record.exc_info)
 
-        if record.stack_info is not None:
-            always_fields["stack_info"] = self.formatStack(record.stack_info)
+            if record.stack_info is not None:
+                always_fields["stack_info"] = self.formatStack(record.stack_info)
 
-        message = {
-            key: msg_val
-            if (msg_val := always_fields.pop(val, None)) is not None
-            else getattr(record, val)
-            for key, val in self.fmt_keys.items()
-        }
-        message.update(always_fields)
+            message = {
+                key: msg_val
+                if (msg_val := always_fields.pop(val, None)) is not None
+                else getattr(record, val)
+                for key, val in self.fmt_keys.items()
+            }
+            message.update(always_fields)
 
-        for key, val in record.__dict__.items():
-            if key not in LOG_RECORD_BUILTIN_ATTRS:
-                message[key] = val
-
-        return message
+            for key, val in record.__dict__.items():
+                if key not in LOG_RECORD_BUILTIN_ATTRS:
+                    message[key] = val
+            strmsg = f"{message['timestamp']}:{message['level']}:"
+            strmsg += f"[{message['process']}:{message['thread']}]: "
+            strmsg += f"{message['module']}.{message['function']}() "
+            strmsg += f"{message['message']}"
+            return strmsg
+        except Exception as e:
+            eInfo = repr(e)
+            raise RuntimeError(f"ModuleOrClassFormatter: {eInfo}") from e
 #endregion ModuleOrClassFormatter class
 #------------------------------------------------------------------------------+
   

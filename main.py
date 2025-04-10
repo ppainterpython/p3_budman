@@ -1,6 +1,6 @@
 #------------------------------------------------------------------------------+
 import json, atexit, pathlib, logging, logging.config, logging.handlers
-import pytest
+import pytest, inspect
 import pyjson5
 
 AT_APP_NAME = "ActivityTracker"
@@ -11,28 +11,48 @@ AT_QUEUED_STDERR_JSON_FILE_LOG_CONFIG = "logging_configs/queued-stderr-json-file
 root_logger = logging.getLogger()
 logger = logging.getLogger(AT_APP_NAME)
 logger.propagate = True
+log_config_dict = {}
 #------------------------------------------------------------------------------+
+def get_logger_info(logger: logging.Logger, hierLevel:int=0) -> str:
+    """Get basic logger information in a displayable str."""
+    if logger is None: return None
+    if not isinstance(logger, logging.Logger):
+        raise TypeError(f"Expected logging.Logger, got {type(logger).__name__}")
+    levelName = logging.getLevelName(logger.level)
+    hCount = len(logger.handlers); fCount = len(logger.filters)
+    children = logger.getChildren()
+    cCount = len(children)
+    propagate = logger.propagate
+    parentName = logger.parent.name if logger.parent else "None"
+    pad = hierLevel * "  " # hierarchy level
+    ret = f"{pad}child: " if parentName != "None" else f"{pad}"
+    ret += f"{logger.name}_logger: Level: {levelName}, "
+    ret += f"Propagate: {propagate}, "
+    ret += f"Handlers({hCount}), "
+    ret += f"Filters({fCount}), Formatters({fCount}), Children({cCount})"
+    ret += f", Parent('{parentName}')"
+    return ret
 #region show_logging_setup() function
 def show_logging_setup(config_file: str = AT_STDOUT_LOG_CONFIG,
                        json:bool = False) -> None:
     '''Load a logging config and display the resulting logging setup.
     Argument json=True will print the config file as JSON.'''
     try:
-        # Load the logging configuration from the specified file
-        config_file = pathlib.Path(config_file)
-        if not config_file.exists():
-            raise FileNotFoundError(f"Config file '{config_file}' not found.")
-        with open(config_file, "r") as f_in:
-            log_config = pyjson5.load(f_in)
+        # Apply the logging configuration from config_file
+        atlogging_setup(config_file)
+        rlChildren = root_logger.getChildren()
+        print(get_logger_info(root_logger, 0))
+        for child in rlChildren:
+            print(get_logger_info(child, 1))
 
-        # Apply the logging configuration preserving any pytest handlers
-        atlogging_setup(log_config)
-
-        if print:
-            print(json.dumps(log_config, indent=4))
+        if json:
+            print(pyjson5.dumps(log_config_dict, indent=4))
     except Exception as e:
-        print(f"{__name__}: {e}")
+        eInfo = repr(e)
+        print(f"{__name__}.show_logging_setup(): {eInfo}")
 #endregion show_logging_setup() function
+#------------------------------------------------------------------------------+
+#region append_cause() function
 def append_cause(msg:str = None, e:Exception=None) -> str:
     '''Append the cause of an exception to the message.'''
     # If the exception has a cause, append it to the message
@@ -43,6 +63,7 @@ def append_cause(msg:str = None, e:Exception=None) -> str:
         else:
             msg += f" Exception: {repr(e)}"
     return msg 
+#endregion append_cause() function
 #------------------------------------------------------------------------------+
 #region retain_pytest_handlers decorator
 def retain_pytest_handlers(f):
@@ -138,15 +159,17 @@ def validate_json_file(json_file:str) -> dict:
 #endregion validate_file_logging() function
 #------------------------------------------------------------------------------+
 #region atlogging_setup function
-def atlogging_setup(config_file: str = AT_STDOUT_LOG_CONFIG) -> logging.Logger:
+def atlogging_setup(config_file: str = AT_STDOUT_LOG_CONFIG) -> None:
     """Set up logging for both stdout and a log file (thread-safe singleton)."""
     try:
+        global log_config_dict
         # Validate and parse the json config_file
         at_log_config_json = validate_json_file(config_file)
         # For FileHandler types, validate the filenames included in the config
         validate_file_logging_config(at_log_config_json)
         # Apply the logging configuration preserving any pytest handlers
         wrap_config_dictConfig(at_log_config_json)
+        log_config_dict = at_log_config_json
 
         # If the queue_handler is used, start the listener thread
         queue_handler = logging.getHandlerByName("queue_handler")
@@ -181,8 +204,19 @@ def main(config_file: str = AT_STDOUT_LOG_CONFIG):
         # raise RuntimeError(m) from e
 #endregion main() function
 #------------------------------------------------------------------------------+
+#region tryit() function
+def tryit() -> None:
+    """Try something."""
+    try:
+        result = inspect.stack()[1][3]
+        print(f"result: '{result}'")
+    except Exception as e:
+        print(f"Error: tryit(): {str(e)}")
+#endregion tryit() function
+#------------------------------------------------------------------------------+
 if __name__ == "__main__":
+    show_logging_setup(AT_STDERR_JSON_FILE_LOG_CONFIG)
     # main()
-    main(AT_STDERR_JSON_FILE_LOG_CONFIG)
-    main(AT_QUEUED_STDERR_JSON_FILE_LOG_CONFIG)
+    # main(AT_STDERR_JSON_FILE_LOG_CONFIG)
+    # main(AT_QUEUED_STDERR_JSON_FILE_LOG_CONFIG)
 #------------------------------------------------------------------------------+

@@ -14,12 +14,12 @@
             "()": "mylogger.ModuleOrClassFormatter",
             "fmt_keys": {
                 "timestamp": "timestamp",
-                "levelno": "levelno",
+                "level": "levelno",
                 "module": "module",
                 "function": "funcName",
                 "message": "message",
-                "line": "lineno",
-                "thread_name": "threadName",
+                "process": "process",
+                "thread": "thread",
                 "logger": "name"
             }
         },

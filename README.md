@@ -39,5 +39,3 @@ On occasion, as an option, the logger, handler and formatter names will be appen
 <loggername:handlername:formattername>
 <ActivityTracker:file:ModuleOrClassFormatter>
 ```
-
-
