@@ -9,6 +9,8 @@ print("\nCurrent working directory:", os.getcwd())
 print("Resolving path to current file:", os.path.abspath(__file__))
 print("sys.path:", sys.path)
 
+# Ensure the path to p3Logging is added to sys.path
+#sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
 from p3Logging.p3logger import *
 from main import *
 
