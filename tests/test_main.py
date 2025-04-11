@@ -1,7 +1,15 @@
 #------------------------------------------------------------------------------+
 # test_main.py
 #------------------------------------------------------------------------------+
+import os, sys
 import logging, pytest
+
+# sys.path.insert(0,  '../src')
+print("\nCurrent working directory:", os.getcwd())
+print("Resolving path to current file:", os.path.abspath(__file__))
+print("sys.path:", sys.path)
+
+from p3Logging.p3logger import *
 from main import *
 
 #------------------------------------------------------------------------------+

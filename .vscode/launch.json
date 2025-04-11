@@ -5,12 +5,15 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "debugpy: Cur. File",
+            "name": "Py: File",
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": false,  // Allows stepping into third-party or library code
+            "env": {
+                "PYTHONPATH": "${workspaceFolder};${workspaceFolder}/src"
+            }
         },
         {
             "name": "Pdebugpy: Package Directory",
@@ -20,7 +23,7 @@
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}", 
             "env": {
-                "PYTHONPATH": "${workspaceFolder}"
+                "PYTHONPATH": "${workspaceFolder};${workspaceFolder}/src"
             }
             // "purpose": ["debug-test"]
             // "justMyCode": false // to debug worker threads
@@ -34,20 +37,25 @@
             "justMyCode": false  // Allows stepping into third-party or library code
         },
         {
-            "name": "PyTest: Debug NOTjustMyCode",
+            "name": "PyTest: Debug",
             "type": "debugpy",
             "request": "launch",
-            "program": "${file}",  // Path to your wrapper script
-            "purpose": ["debug-test"],  // Arguments to pass to the script
-            "justMyCode": false  // Allows stepping into third-party or library code
-        },
-        {
-            "name": "PyTest: Debug justMyCode",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${file}",  // Path to your wrapper script
-            "purpose": ["debug-test"],  // Arguments to pass to the script
-            "justMyCode": true  // Allows stepping into third-party or library code
+            "program": "${workspaceFolder}/tests",  // Path to your wrapper script
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",  // Current working directory
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/src"
+            },
+            "purpose": ["debug-test"]  // Arguments to pass to the script
+            //"justMyCode": false  // Allows stepping into third-party or library code
         }
+        // ,{
+        //     "name": "PyTest: Debug justMyCode",
+        //     "type": "debugpy",
+        //     "request": "launch",
+        //     "program": "${file}",  // Path to your wrapper script
+        //     "purpose": ["debug-test"],  // Arguments to pass to the script
+        //     "justMyCode": true  // Allows stepping into third-party or library code
+        // }
     ]
 }

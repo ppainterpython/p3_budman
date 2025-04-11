@@ -2,7 +2,27 @@
 
 # PyExcelBudget
 
-## Introduction
+## Learning about Pandas with openpyxl
+
+```python
+pip install pandas
+pip install openpyxl
+pip install matplotlib
+pip install ipykernel # This is needed for Python 3.13.2+ to run jupyter cells
+> git clone https://github.com/daveebbelaar/pandas-tutorials.git
+> start vscode
+_ open folder for project
+_ in vscode, save as workspace in the project root folder, now open the workspace to work on the project. User level defaults and Workspace level settings. Workspace overrides User settings. 
+_ add vscode extensions: python, pylance, python extension pack, Jupyter
+# research extensions: CodeSnap, Path Intellisense, Atom One Dark Theme
+# file icon themes are also available. Material Icon Theme
+# vscode settings: Jupyter > Interactive Window > Text Editor: Execute Selection  <<<<---- should be checked
+# The above seems to override: PythonREPL: Enable REPLSmart Send
+
+
+```
+
+## Learning more about Python logging.Logger
 
 A project to learn about Python logging capabilities. Thanks to James Murphy for  his great [Modern Python Logging](https://www.youtube.com/watch?v=9L77QExPmI0) video with the [125_moder_loggin](https://github.com/mCodingLLC/VideosSampleCode/tree/master/videos/135_modern_logging) example code.
 
