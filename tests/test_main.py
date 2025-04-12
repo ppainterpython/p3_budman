@@ -36,7 +36,7 @@ def test_main_default(caplog) -> None:
 def test_main_stdout(caplog) -> None:
     """Test operation of AT_STDOUT_LOG_CONFIG logging config."""
     with caplog.at_level(logging.DEBUG):
-        main(AT_STDOUT_LOG_CONFIG)
+        main(p3l.STDOUT_LOG_CONFIG)
     assert "Warning message" in caplog.text, \
         "Expected 'Warning message' in log output"
     assert "Debug message" in caplog.text, \
@@ -54,7 +54,7 @@ def test_main_stdout(caplog) -> None:
 def test_main_stderr_json_file(caplog) -> None:
     """Test operation of AT_STDERR_JSON_FILE_LOG_CONFIG logging config."""
     with caplog.at_level(logging.DEBUG):
-        main(AT_STDERR_JSON_FILE_LOG_CONFIG)
+        main(p3l.STDERR_JSON_FILE_LOG_CONFIG)
     assert "Warning message" in caplog.text, \
         "Expected 'Warning message' in log output"
     assert "Debug message" in caplog.text, \
@@ -72,7 +72,7 @@ def test_main_stderr_json_file(caplog) -> None:
 def test_main_queued_stderr_json_file(caplog) -> None:
     """Test operation of AT_QUEUED_STDERR_JSON_FILE_LOG_CONFIG logging config."""
     with caplog.at_level(logging.DEBUG):
-        main(AT_QUEUED_STDERR_JSON_FILE_LOG_CONFIG)
+        main(p3l.QUEUED_STDERR_JSON_FILE_LOG_CONFIG)
     assert "Warning message" in caplog.text, \
         "Expected 'Warning message' in log output"
     assert "Debug message" in caplog.text, \
@@ -87,15 +87,15 @@ def test_main_queued_stderr_json_file(caplog) -> None:
         "Expected 'division by zero' in log output"
     assert len(caplog.records) == 7
 
-def test_atlogging_setup(caplog) -> None:
-    """Test the atlogging_setup function."""
+def test_setup_logging(caplog) -> None:
+    """Test the setup_logging function."""
     try:
         logger = logging.getLogger(AT_APP_NAME)
         logger.propagate = True        
         root_logger = logging.getLogger()
         # Initialize the logger from a logging configuration file.
-        ln = AT_APP_NAME; cf = AT_STDERR_JSON_FILE_LOG_CONFIG; verbose = True
-        atlogging_setup(cf)
+        ln = AT_APP_NAME; cf = p3l.STDERR_JSON_FILE_LOG_CONFIG; verbose = True
+        setup_logging(cf)
         with caplog.at_level(logging.DEBUG):
             logger.debug("Debug message for testing")
             logger.info("Info message for testing")
@@ -121,7 +121,7 @@ def test_atlogging_setup(caplog) -> None:
         assert "division by zero" in caplog.text, \
             "Expected 'Exception message' in log output"
     except Exception as e:
-        pytest.fail(f"atlogging_setup raised an exception: {str(e)}")
+        pytest.fail(f"setup_logging raised an exception: {str(e)}")
 #------------------------------------------------------------------------------+
 #region testickle_logger_exception_message
 def testickle_logger_exception_message(caplog)    -> None:
