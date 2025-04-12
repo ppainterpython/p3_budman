@@ -35,6 +35,30 @@ df = pd.read_excel(
 # ---------------------------------------------------------------------------- +
 # Transform data
 # ---------------------------------------------------------------------------- +
+# Remove some columns from the original excel import
+df.drop(['Status'], inplace=True, axis=1)
+df.drop(['Split Type'], inplace=True, axis=1)
+df.drop(['Currency'], inplace=True, axis=1)
+df.drop(['User Description'], inplace=True, axis=1)
+df.drop(['Memo'], inplace=True, axis=1)
+df.drop(['Classification'], inplace=True, axis=1)
+
+# Format the columns of interest
+df["Date"] = pd.to_datetime(df["Date"])
+df["Date"] = df["Date"].dt.strftime("%m/22/%Y")
+# For column ['Account Name'], Replace the string with just the third part, to
+# shorten it, i.e., "Bank of America - Bank - Primary Checking Acct" becomes
+# "Primary Checking Acct".
+df['Account Name'] = df['Account Name'].str.replace(
+    r'^[^-]+-\s*[^-]+-\s*(.+)$',  # Regular expression
+    r'\1',                        # Replace w/ group 1, 1st capturing group (the third part)
+    regex=True                    # Enable regex mode
+)
+df.head(5)
+# Map values to column ['Category'] by re pattern-matching to 
+# column ['Original Description'].
+# This list of patterns will be quite long. 
+# TODO: How to use data to train an LLM or ML model to do this?
 category_mapping = {
     r'(?i)\bamazon\b': 'Amazon Prime',
     r'(?i)\bavery\W*.*?\branch\W*.*?\bHOA\W*.*?\bdues\b': 'Home Owners Association',
@@ -51,19 +75,7 @@ category_mapping = {
     r'(?i)\bavery\W*.*?\branch\W*.*?\bHOA\W*.*?\bdues\b': 'Home Owners Association',
 }
 
-def map_acount_name(description):
-    for pattern, acount_name in category_mapping.items():
-        if re.search(pattern, str(description), re.IGNORECASE):
-            return acount_name
-    return 'Other'  # Default category if no match is found
 
-df.head()
-df.drop(['Status'], inplace=True, axis=1)
-df.drop(['Split Type'], inplace=True, axis=1)
-df.drop(['Currency'], inplace=True, axis=1)
-df.drop(['User Description'], inplace=True, axis=1)
-df.drop(['Memo'], inplace=True, axis=1)
-df.drop(['Classification'], inplace=True, axis=1)
 
 df['Category'] = df['Original Description'].apply(map_category)
 

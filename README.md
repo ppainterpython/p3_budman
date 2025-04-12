@@ -2,6 +2,16 @@
 
 # PyExcelBudget
 
+## Introduction
+
+This project began with the goal of learning about `pandas`, `Jupyter` in `VS Code` and the `python interactive mode`. At the same time, I was working on [pppActivityTracker](https://github.com/ppainterpython/pppActivityTracker.git) project. There I learned much about `Python logging` and and building a gui with `tkinter`.
+
+**Goal:** the goal of `PyExcelBudget` is to analyze excel and csv files downloaded from the bank and use `pandas` to perform data analysis on the transactions producing budget visualizations and insights (to find out where all the money has gone.)
+   > **Note**
+   > Begun in the winter of 2025, this was my first exerience with python, in VS Code and the current version of GitHub Copilot. I tried to spend a lot of time with GHC, to really understand what it can help with, and what it screws up.
+
+
+
 ## Learning about Pandas with openpyxl
 
 ```python
@@ -59,3 +69,160 @@ On occasion, as an option, the logger, handler and formatter names will be appen
 <loggername:handlername:formattername>
 <ActivityTracker:file:ModuleOrClassFormatter>
 ```
+
+## Python Regular Expressions (re)
+
+With some help from GitHub Copilot, I did a regex refresher. Here are some of the patterns being used. I wanted to record this as it was one of my initial sessions with GHC and `pandas`.
+
+### Modifying the `'Account Name'` Column
+
+For data from a bank holding transactions, the provided value of the Account Name is long and redundant. So, this pattern is used to reduce it to minimalist form. The original values are like:
+
+```python
+"ACME Bank of Awesome - Credit Card - Visa Signature"
+"ACME Bank of Awesome - Bank - Primary Checking Acct"
+```
+
+and are transformed to:
+
+```python
+"Visa Signature"
+"Primary Checking Acct"
+```
+
+The data is contained in a `pandas.dataframe` object. Here is the code to do the reduction.
+
+```python
+df['Account Name'] = df['Account Name'].str.replace(
+    r'^[^-]+-\s*[^-]+-\s*(.+)$',  # Regular expression
+    r'\1',                        # Replace w/ group 1, 1st capturing group (the third part)
+    regex=True                    # Enable regex mode
+)
+```
+
+Explanation (direct quote from GitHub Copilot)
+
+1. `^[^-]+`
+   - Matches the first part of the string (e.g., `'ACME Bank of Awesome'`), which is everything up to the first `-`.
+   - `^` asserts the start of the string.
+   - `[^-]+` matches one or more characters that are not a hyphen (`-`).
+1. `-\s*`
+   - Matches the hyphen (`-`) and any surrounding whitespace.
+1. `[^-]+`
+   - Matches the second part of the string (e.g., 'Bank' or 'Credit Card'), which is everything up to the next `-`
+1. `-\s*(.+)$`
+   - Matches the hyphen (`-`) and any surrounding whitespace, followed by the third part of the string.
+   - `(.+)$` captures the third part (e.g., `'Primary Checking Acct'` or `'Visa Signature'`) until the end of the string (`$`).
+
+### Mapping the `'Category'` Column
+
+When banking data is downloaded, the `'Original Description'` column is filled with varying different text drawn from the transaction processings. Our effort is to map those to a smaller, simpler set of values in the `'Category'` column. GitHub Copil was asked to write the python for this action when the data is contained in a `pandas.dataframe` object. Part of the prompt used, in several back and forth sequences, was:
+
+```text
+I want all the words to be present in order but with variable whitespace and perhaps other characters in between. 
+And the other characters could abut one of the words, like "DES:HOA"
+```
+
+Here is what GHC recommended:
+
+To match all the specified words in order, allowing for variable whitespace or other characters (e.g., punctuation) between them, and to handle cases where other characters might abut one of the words (like `"DES:HOA"`), you can use a regular expression with the following features:
+
+1. **Word Matching in Order**:
+   - Use `.*?` between the words to allow for any characters (including whitespace or punctuation) between them.
+1. **Word Boundaries**:
+   - Use `\b` to ensure that the words are matched as whole words, but allow for cases where characters might abut one of the words.
+1. **Case Insensitivity**:
+   - Use the `(?i)` flag to make the pattern case-insensitive.
+1. **Optional Characters Around Words**:
+   - Use optional non-word characters (`\W*`) to allow for characters like `:` or `-` to abut the words.
+
+#### Regular Expression
+
+Here’s the regular expression to match all the words in order:
+
+```python
+r'(?i)\bavery\W*.*?\branch\W*.*?\bHOA\W*.*?\bdues\b'
+```
+
+#### Explanation
+
+1. `(?i)`:
+   - Makes the pattern case-insensitive.
+1. `\bavery`:
+   - Matches the word `"avery"` as a whole word.
+1. `\W*`:
+   - Matches zero or more non-word characters (e.g., `:`, `-`, or whitespace).
+1. `.*?`:
+   - Matches zero or more of any characters (non-greedy), allowing for variable whitespace or other characters between the words.
+1. `\branch`:
+   - Matches the word `"ranch"` as a whole word.
+1. `\bHOA`:
+   - Matches the word `"HOA"` as a whole word.
+1. `\bdues\b`:
+   - Matches the word "dues" as a whole word.
+
+#### Example Usage
+
+Here’s how you can use this pattern in your `category_mapping` dictionary and apply it to a `pandas DataFrame`:
+
+```python
+import re
+import pandas as pd
+
+# Example DataFrame
+data = pd.DataFrame({
+    'description': [
+        'avery ranch HOA dues',
+        'avery-ranch HOA:dues',
+        'avery ranch dues HOA',
+        'DES:avery ranch HOA dues',
+        'amazon purchase',
+        'avery ranch HOAdues'
+    ]
+})
+
+# Category mapping
+category_mapping = {
+    r'(?i)\bavery\W*.*?\branch\W*.*?\bHOA\W*.*?\bdues\b': 'HOA Dues',
+    r'(?i)\bamazon\b': 'Amazon',
+}
+
+# Function to categorize descriptions
+def categorize(description):
+    for pattern, category in category_mapping.items():
+        if re.search(pattern, description):  # Match using the regex
+            return category
+    return 'Other'
+
+# Apply the function to the DataFrame
+data['category'] = data['description'].apply(categorize)
+
+print(data)
+```
+
+#### Output
+
+```python
+  Original Description      Category
+0 avery ranch HOA dues      HOA Dues
+1 avery-ranch HOA:dues      HOA Dues
+2 avery ranch dues HOA      HOA Dues
+3 DES:avery ranch HOA dues  HOA Dues
+4 amazon purchase           Amazon
+5 avery ranch HOAdues       HOA Dues
+```
+
+#### Key Points
+
+1. **Handles Variable Whitespace and Characters**:
+   - The `.*?` and `\W*` parts of the regex allow for any characters (including whitespace, punctuation, or none) between the words.
+1. **Matches Words in Order**:
+   - The words `"avery,"` `"ranch,"` `"HOA,"` and `"dues"` must appear in the specified order.
+1. **Case-Insensitive Matching**:
+   - The `(?i)` flag ensures that the matching is not affected by letter casing.
+1. **Handles Abutting Characters**:
+   - The `\W*` ensures that characters like `:` or `-` can abut the words without breaking the match.
+
+#### Summary
+
+The regular expression `r'(?i)\bavery\W*.*?\branch\W*.*?\bHOA\W*.*?\bdues\b'` ensures that all specified words are matched in order, with flexibility for variable whitespace, punctuation, or other characters in between. It also handles cases where characters abut the words, such as `"DES:HOA"`. This approach is robust for categorizing text data in your `DataFrame`.
