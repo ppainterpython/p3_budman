@@ -43,7 +43,7 @@ def wrap_config_dictConfig(log_config):
         raise RuntimeError(m) from e
 #endregion retain_pytest_handlers decorator
 # ---------------------------------------------------------------------------- +
-#region validate_file_logging() function
+#region validate_file_logging_config() function
 def validate_file_logging_config(config_json:dict) -> bool:
     '''Validate the file logging configuration.'''
     # Validate the JSON configuration
@@ -75,47 +75,48 @@ def validate_file_logging_config(config_json:dict) -> bool:
                         pass
                 except IOError as e:
                     raise RuntimeError(f"Cannot write to log file: {file_path}") from e
-#endregion validate_file_logging() function
+#endregion validate_file_logging_config() function
 # ---------------------------------------------------------------------------- +
-#region validate_json_file() function
-def validate_json_file(json_file:str) -> dict:
+#region validate_config_file() function
+def validate_config_file(config_file:str) -> dict:
     '''Validate the file contains valid json, return it as str.'''
+    pfx = fpfx(validate_config_file)
     # Check if the config file exists, is accessible, and is valid JSON
-    json_file = pathlib.Path(json_file)
-    if not json_file.exists():
-        raise FileNotFoundError(f"JSON file '{json_file}' not found.")
+    # config_file_path = str(config_file)
+    if (config_file_path := is_path_reachable(config_file)) is None:
+        raise FileNotFoundError(f"Config file not found:'{config_file}'")
     try:
-        with open(json_file, "r") as f_in:
+        with open(config_file_path, "r") as f_in:
             config_json = pyjson5.decode_io(f_in)
             return config_json
     except TypeError as e:
-        t = type(json_file).__name__
-        m = f"Error accessing json_file: '{json_file} as type: '{t}'"
-        raise RuntimeError(m) from e
-    except FileNotFoundError as e:
-        m = f"Error accessing json_file: '{json_file}'"
-        raise RuntimeError(m) from e
-    except pyjson5.JSONDecodeError as e:
-        m = f"Error decoding json_file: '{json_file}'"
-        raise RuntimeError(m) from e
+        log_exc(validate_config_file,e)
+        t = type(config_file).__name__
+        m = f"{pfx}Error accessing config_file: '{config_file}' as type: '{t}'"
+        print(m)
+        raise
     except Exception as e:
-        m = f"Error processing json_file: '{json_file}'"
-        raise RuntimeError(m) from e
+        log_exc(validate_config_file,e)
+        raise
     
-#endregion validate_file_logging() function
+#endregion validate_config_file() function
 # ---------------------------------------------------------------------------- +
 #region setup_logging function
-def setup_logging(config_file: str = STDOUT_LOG_CONFIG) -> None:
-    """Set up logging for both stdout and a log file (thread-safe singleton)."""
+def setup_logging(config_file: str = STDOUT_LOG_CONFIG_FILE) -> None:
+    """Set up logging for both stdout and a log file.
+    config_file is one of the builtin config file names, a relative path to
+    cwd, or an absolute path to a json file.
+    """
     try:
         global log_config_dict
+        pfx = fpfx(setup_logging)
         # Validate and parse the json config_file
-        at_log_config_json = validate_json_file(config_file)
+        log_config_json = validate_config_file(config_file)
         # For FileHandler types, validate the filenames included in the config
-        validate_file_logging_config(at_log_config_json)
+        validate_file_logging_config(log_config_json)
         # Apply the logging configuration preserving any pytest handlers
-        wrap_config_dictConfig(at_log_config_json)
-        log_config_dict = at_log_config_json
+        wrap_config_dictConfig(log_config_json)
+        log_config_dict = log_config_json
 
         # If the queue_handler is used, start the listener thread
         queue_handler = logging.getHandlerByName("queue_handler")
@@ -123,7 +124,8 @@ def setup_logging(config_file: str = STDOUT_LOG_CONFIG) -> None:
             queue_handler.listener.start()
             atexit.register(queue_handler.listener.stop)
     except Exception as e:
-        print(f"{__name__}.setup_logging(): Error: Logging Setup {str(e)}")
-        raise
+        et = type(e).__name__
+        print(f"{pfx}{et}: {str(e)}")
+        raise 
 #endregion setup_logging function
 # ---------------------------------------------------------------------------- +

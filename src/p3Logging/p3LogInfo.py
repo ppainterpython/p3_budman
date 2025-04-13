@@ -6,7 +6,7 @@ current logging setup.
 # ---------------------------------------------------------------------------- +
 #region module imports
 # Python Standard Libraries
-import atexit, pathlib, logging, inspect, logging.config  #, logging.handlers
+import os, atexit, pathlib, logging, inspect, logging.config  #, logging.handlers
 from typing import override
 import datetime as dt
 
@@ -77,7 +77,7 @@ def get_info_logger(logger: logging.Logger, hierLevel:int=0) -> str:
 #endregion get_info_logger() function
 # ---------------------------------------------------------------------------- +
 #region show_logging_setup() function
-def show_logging_setup(config_file: str = STDOUT_LOG_CONFIG,
+def show_logging_setup(config_file: str = STDOUT_LOG_CONFIG_FILE,
                        json:bool = False) -> None:
     '''Load a logging config and display the resulting logging setup.
     Argument json=True will print the config file as JSON.'''
@@ -94,6 +94,5 @@ def show_logging_setup(config_file: str = STDOUT_LOG_CONFIG,
         if json:
             print(pyjson5.dumps(log_config_dict, indent=4))
     except Exception as e:
-        eInfo = repr(e)
-        print(f"{__name__}.show_logging_setup(): {eInfo}")
+        raise
 #endregion show_logging_setup() function

@@ -7,7 +7,7 @@ import inspect, pyjson5
 
 # local libraries
 import p3Logging as p3l
-from p3l import show_logging_setup, setup_logging
+
 
 
 AT_APP_NAME = "ActivityTracker"
@@ -16,7 +16,7 @@ logger = logging.getLogger(AT_APP_NAME)
 logger.propagate = True
 log_config_dict = {}
 #region main() function
-def main(config_file: str = p3l.STDOUT_LOG_CONFIG):
+def main(config_file: str = p3l.STDOUT_LOG_CONFIG_FILE):
     """Main function to run this application as a stand-alone test."""
     cfm = f"Config file: '{config_file}'"
     try:
@@ -49,8 +49,12 @@ def tryit() -> None:
 #endregion tryit() function
 # ---------------------------------------------------------------------------- +
 if __name__ == "__main__":
-    p3l.show_logging_setup(p3l.QUEUED_STDERR_JSON_FILE_LOG_CONFIG)
-    # main()
-    main(p3l.STDERR_JSON_FILE_LOG_CONFIG)
-    # main(p3l.STDERR_JSON_FILE_LOG_CONFIG)
+    try:
+        p3l.show_logging_setup(p3l.QUEUED_STDERR_JSON_FILE_LOG_CONFIG_FILE)
+        # main()
+        main(p3l.STDERR_JSON_FILE_LOG_CONFIG_FILE)
+        # main(p3l.STDERR_JSON_FILE_LOG_CONFIG_FILE)
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        exit(1)
 # ---------------------------------------------------------------------------- +
