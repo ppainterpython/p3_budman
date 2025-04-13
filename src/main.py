@@ -1,4 +1,6 @@
 # ---------------------------------------------------------------------------- +
+# PyExeclBudget - read Excel files from a bank and analyze budget.
+# ---------------------------------------------------------------------------- +
 # python standard libraries
 import atexit, pathlib, logging, inspect, logging.config  #, logging.handlers
 
@@ -8,31 +10,20 @@ import inspect, pyjson5
 # local libraries
 import p3Logging as p3l
 
+THIS_APP_NAME = "PyExcelBudget"
 
-
-AT_APP_NAME = "ActivityTracker"
-
-logger = logging.getLogger(AT_APP_NAME)
+logger = logging.getLogger(THIS_APP_NAME)
 logger.propagate = True
 log_config_dict = {}
 #region main() function
 def main(config_file: str = p3l.STDOUT_LOG_CONFIG_FILE):
-    """Main function to run this application as a stand-alone test."""
+    """Main function to run PyExcelBudget application."""
     cfm = f"Config file: '{config_file}'"
     try:
         # Initialize the logger from a logging configuration file.
-        p3l.setup_logging(config_file)
-        logger.debug(f"Debug message, {cfm}", extra={"extra_key": "extra_value"})
-        logger.debug(f"Debug message, {cfm}")
-        logger.info(f"Info message, {cfm}")
-        logger.warning(f"Warning message, {cfm}")
-        logger.error(f"Error message, {cfm}")
-        logger.critical(f"Critical message, {cfm}")
-        try:
-            1 / 0
-        except ZeroDivisionError as e:
-            logger.exception(f"Exception message: {str(e)}")
+        p3l.quick_logging_test(THIS_APP_NAME,config_file)
     except Exception as e:
+        p3l.log_exc(main, e, print=True)
         m = f"Error: during logger check, {cfm} "
         print(f"{m} {str(e)}")
         # raise RuntimeError(m) from e
@@ -51,10 +42,10 @@ def tryit() -> None:
 if __name__ == "__main__":
     try:
         p3l.show_logging_setup(p3l.QUEUED_STDERR_JSON_FILE_LOG_CONFIG_FILE)
-        # main()
-        main(p3l.STDERR_JSON_FILE_LOG_CONFIG_FILE)
+        main()
+        # main(p3l.STDERR_JSON_FILE_LOG_CONFIG_FILE)
         # main(p3l.STDERR_JSON_FILE_LOG_CONFIG_FILE)
     except Exception as e:
-        print(f"Error: {str(e)}")
+        print(str(e))
         exit(1)
 # ---------------------------------------------------------------------------- +

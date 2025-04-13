@@ -90,11 +90,11 @@ def test_main_queued_stderr_json_file(caplog) -> None:
 def test_setup_logging(caplog) -> None:
     """Test the setup_logging function."""
     try:
-        logger = logging.getLogger(AT_APP_NAME)
+        logger = logging.getLogger(THIS_APP_NAME)
         logger.propagate = True        
         root_logger = logging.getLogger()
         # Initialize the logger from a logging configuration file.
-        ln = AT_APP_NAME; cf = p3l.STDERR_JSON_FILE_LOG_CONFIG_FILE; verbose = True
+        ln = THIS_APP_NAME; cf = p3l.STDERR_JSON_FILE_LOG_CONFIG_FILE; verbose = True
         setup_logging(cf)
         with caplog.at_level(logging.DEBUG):
             logger.debug("Debug message for testing")

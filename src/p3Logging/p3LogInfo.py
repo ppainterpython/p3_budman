@@ -1,8 +1,8 @@
 # ---------------------------------------------------------------------------- +
-'''
+"""
 p3LogInfo.py - Some commands to retrieve and display information about the
 current logging setup.
-'''
+"""
 # ---------------------------------------------------------------------------- +
 #region module imports
 # Python Standard Libraries
@@ -24,7 +24,31 @@ from .p3logger import *
 root_logger = logging.getLogger()
 #endregion Globals
 # ---------------------------------------------------------------------------- +
-#region get_info_logger_formatters() function
+#region quick_logging_test() function
+def quick_logging_test(app_name:str,log_config_file:str) -> None:
+    """Quick correctness test of the current logging setup."""
+
+    pfx = fpfx(quick_logging_test)
+    try:
+        # Initialize the logger from a logging configuration file.
+        setup_logging(log_config_file)
+        logger = logging.getLogger(app_name)
+        # Log messages at different levels
+        logger.debug("This is a debug message")
+        logger.info("This is an info message")
+        logger.warning("This is a warning message")
+        logger.error("This is an error message")
+        logger.critical("This is a critical message")
+        try:
+            1 / 0
+        except ZeroDivisionError as e:
+            logger.exception(f"Exception message: {str(e)}")
+    except Exception as e:
+        log_exc(quick_logging_test, e, print=True)
+        raise
+#endregion quick_logging_test()
+# ---------------------------------------------------------------------------- +
+#region quick_logging_test() function
 def get_info_logger_formatters(logger: logging.Logger) -> str:
     """Get basic logger information in a displayable str."""
     try:
@@ -79,17 +103,14 @@ def get_info_logger(logger: logging.Logger, hierLevel:int=0) -> str:
 #region show_logging_setup() function
 def show_logging_setup(config_file: str = STDOUT_LOG_CONFIG_FILE,
                        json:bool = False) -> None:
-    '''Load a logging config and display the resulting logging setup.
-    Argument json=True will print the config file as JSON.'''
+    """Load a logging config and display the resulting logging setup.
+    Argument json=True will print the config file as JSON."""
     try:
         # Apply the logging configuration from config_file
         setup_logging(config_file)
 
         all_formatters_info = get_info_logger_formatters(root_logger)
-        rlChildren = root_logger.getChildren()
         print(get_info_logger(root_logger, 0))
-        for child in rlChildren:
-            print(get_info_logger(child, 1))
 
         if json:
             print(pyjson5.dumps(log_config_dict, indent=4))
