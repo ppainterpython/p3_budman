@@ -24,9 +24,7 @@ def main(config_file: str = p3l.STDOUT_LOG_CONFIG_FILE):
         p3l.quick_logging_test(THIS_APP_NAME,config_file)
     except Exception as e:
         p3l.log_exc(main, e, print=True)
-        m = f"Error: during logger check, {cfm} "
-        print(f"{m} {str(e)}")
-        # raise RuntimeError(m) from e
+        raise
 #endregion main() function
 # ---------------------------------------------------------------------------- +
 #region tryit() function
@@ -41,8 +39,16 @@ def tryit() -> None:
 # ---------------------------------------------------------------------------- +
 if __name__ == "__main__":
     try:
-        p3l.show_logging_setup(p3l.QUEUED_STDERR_JSON_FILE_LOG_CONFIG_FILE)
-        main()
+        config_file = p3l.STDERR_JSON_FILE_LOG_CONFIG_FILE
+        m = "show_logging_setup one-liner, config_file = "
+        m += f"'{config_file}'"
+        print(m)
+        p3l.show_logging_setup(config_file,showall=False)
+        m = "show_logging_setup with showall, config_file = "
+        m += f"'{config_file}'"
+        print(m)
+        p3l.show_logging_setup(config_file,showall=False)
+        # main()
         # main(p3l.STDERR_JSON_FILE_LOG_CONFIG_FILE)
         # main(p3l.STDERR_JSON_FILE_LOG_CONFIG_FILE)
     except Exception as e:

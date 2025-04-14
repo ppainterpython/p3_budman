@@ -26,7 +26,7 @@ root
   |     |
   |     +- QueueHandlerType: info (inspect listener for Handlers)
   |                |
-  |                + Hanlders
+  |                + Handlers
   +- Formatters
   |     |
   |     +- formatter: info

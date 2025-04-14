@@ -113,13 +113,15 @@ def validate_config_file(config_file:str) -> dict:
 #endregion validate_config_file() function
 # ---------------------------------------------------------------------------- +
 #region setup_logging function
-def setup_logging(config_file: str = STDOUT_LOG_CONFIG_FILE) -> None:
+def setup_logging(config_file: str = STDOUT_LOG_CONFIG_FILE,
+                  start_queue:bool=True) -> None:
     """
     Set up logging for both stdout and a log file.
     
     Args:
         config_file (str): One of the builtin config file names, a relative path 
         to cwd, or an absolute path to a JSON file.
+        start_queue (bool): If True, start the queue listener thread.
     """
     try:
         global log_config_dict
