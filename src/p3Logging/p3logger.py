@@ -12,6 +12,10 @@ from .p3LogUtils import *
 from .p3LogFormatters import JSONOutputFormatter, ModuleOrClassFormatter
 
 # ---------------------------------------------------------------------------- +
+#region Globals
+log_config_dict = {}
+#endregion Globals
+# ---------------------------------------------------------------------------- +
 #region retain_pytest_handlers
 def retain_pytest_handlers(f):
     """
@@ -136,7 +140,7 @@ def setup_logging(config_file: str = STDOUT_LOG_CONFIG_FILE,
 
         # If the queue_handler is used, start the listener thread
         queue_handler = logging.getHandlerByName("queue_handler")
-        if queue_handler is not None:
+        if start_queue and queue_handler is not None:
             queue_handler.listener.start()
             atexit.register(queue_handler.listener.stop)
     except Exception as e:
@@ -144,4 +148,45 @@ def setup_logging(config_file: str = STDOUT_LOG_CONFIG_FILE,
         print(f"{pfx}{et}: {str(e)}")
         raise 
 #endregion setup_logging function
+# ---------------------------------------------------------------------------- +
+#region start_queue() function
+def start_queue() -> None:
+    # If the queue_handler is used, start the listener thread
+    queue_handler = logging.getHandlerByName("queue_handler")
+    if start_queue and queue_handler is not None:
+        queue_handler.listener.start()
+#endregion start_queue()() function
+# ---------------------------------------------------------------------------- +
+#region stop_queue() function
+def stop_queue() -> None:
+    # If the queue_handler is used, start the listener thread
+    queue_handler = logging.getHandlerByName("queue_handler")
+    if start_queue and queue_handler is not None:
+        queue_handler.listener.stop()
+#endregion stop_queue() function
+# ---------------------------------------------------------------------------- +
+#region get_formatter_reference_by_class() function
+def get_formatter_id_by_custom_class_name(formatter:logging.Formatter) -> str:
+    """
+    From the logging config file, lookup a formatter id associated with the 
+    given formatter object instance.
+    
+    This uses the currently logging config json file last loaded by 
+    setup_logging() and only searches custom formatter class references
+    specified in the dictConfig()-style json config file. 
+
+    Args:
+        handler (logging.Handler): The logging handler to get the formatter id for.
+
+    Returns:
+        str: The formatter id, which is a key in the formatters dictionary.
+    """
+    # https://docs.python.org/3/library/logging.config.html#dictionary-schema-details
+    # Get the formatter class from the logger's handlers
+    global log_config_dict
+    fmt_dict = log_config_dict["formatters"] 
+    fmt_id_key = [key for key, value in fmt_dict.items() 
+                if 'format' in value and value['format'] == formatter._fmt]
+    return fmt_id_key
+#endregion get_formatter_reference_by_class() function
 # ---------------------------------------------------------------------------- +

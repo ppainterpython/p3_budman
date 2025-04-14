@@ -5,6 +5,31 @@
 		}
 	],
 	"settings": {
-		"jupyter.interactiveWindow.textEditor.executeSelection": true
+		"jupyter.interactiveWindow.textEditor.executeSelection": true,
+		"cSpell.words": [
+			"asctime",
+			"caplog",
+			"conversts",
+			"cpad",
+			"datefmt",
+			"dateutil",
+			"fpfx",
+			"hndlr",
+			"levelname",
+			"levelno",
+			"lhlc",
+			"linfo",
+			"logr",
+			"mlultiline",
+			"msecs",
+			"NOTSET",
+			"pyjson",
+			"recknagel",
+			"showall",
+			"strmsg",
+			"testickle",
+			"timespec",
+			"tryit"
+		]
 	}
 }

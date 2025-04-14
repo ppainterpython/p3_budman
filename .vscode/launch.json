@@ -16,17 +16,16 @@
             }
         },
         {
-            "name": "Pdebugpy: Package Directory",
+            "name": "Py: Package Directory",
             "type": "debugpy",
             "request": "launch",
-            "program": "${file}", 
+            "program": "${file}",
             "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}", 
+            "cwd": "${workspaceFolder}/src",  // Set the working directory to the 'src' folder
             "env": {
-                "PYTHONPATH": "${workspaceFolder};${workspaceFolder}/src"
-            }
-            // "purpose": ["debug-test"]
-            // "justMyCode": false // to debug worker threads
+                "PYTHONPATH": "${workspaceFolder}/src"  // Ensure 'src' is in the Python path
+            },
+            "justMyCode": false  // Allows stepping into third-party or library code
         },
         {
             "name": "debugpy: Wrapper",
@@ -48,6 +47,18 @@
             },
             "purpose": ["debug-test"]  // Arguments to pass to the script
             //"justMyCode": false  // Allows stepping into third-party or library code
+        },
+        {
+            "name": "Py: Run as Module",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "p3Logging.p3LogInfo",  // Specify the module to run
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}/src",  // Set the working directory to 'src'
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/src"
+            }
         }
         // ,{
         //     "name": "PyTest: Debug justMyCode",

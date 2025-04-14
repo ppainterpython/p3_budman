@@ -77,7 +77,7 @@ def fpfx(func) -> str:
 # ---------------------------------------------------------------------------- +
 #region log_exc() function
 def log_exc(func:function,e:Exception,
-            print:bool=False,log:logging.Logger=None) -> str:
+            print_flag:bool=False,log_flag:logging.Logger=None) -> str:
     """
     Common simple output message for Exceptions.
     
@@ -95,7 +95,7 @@ def log_exc(func:function,e:Exception,
     """
     if func is None or e is None: return None
     m = f"{fpfx(func)}{str(e)}"
-    if print: print(m)
+    if print_flag: print(m)
     return m
 #endregion log_exc() function
 # ---------------------------------------------------------------------------- +

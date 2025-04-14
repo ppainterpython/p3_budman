@@ -14,7 +14,6 @@ THIS_APP_NAME = "PyExcelBudget"
 
 logger = logging.getLogger(THIS_APP_NAME)
 logger.propagate = True
-log_config_dict = {}
 #region main() function
 def main(config_file: str = p3l.STDOUT_LOG_CONFIG_FILE):
     """Main function to run PyExcelBudget application."""

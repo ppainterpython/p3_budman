@@ -67,7 +67,7 @@ class JSONOutputFormatter(logging.Formatter):
         return pyjson5.dumps(message, default=str)
 
     def _prepare_log_dict(self, record: logging.LogRecord):
-        # Extract a loggine.LogRecord to a dictionary.
+        # Extract a logging.LogRecord to a dictionary.
         always_fields = {
             "message": record.getMessage(),
             "timestamp": dt.datetime.fromtimestamp(
@@ -130,7 +130,7 @@ class ModuleOrClassFormatter(logging.Formatter):
         return strmsg
 
     def _prepare_log_dict(self, record: logging.LogRecord) -> str:
-        # Extract a loggine.LogRecord to a dictionary.
+        # Extract a logging.LogRecord to a dictionary.
         try:
             always_fields = {
                 "message": record.getMessage(),
