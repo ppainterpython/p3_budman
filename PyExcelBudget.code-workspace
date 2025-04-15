@@ -7,12 +7,15 @@
 	"settings": {
 		"jupyter.interactiveWindow.textEditor.executeSelection": true,
 		"cSpell.words": [
+			"addopts",
 			"asctime",
 			"caplog",
+			"capsys",
 			"conversts",
 			"cpad",
 			"datefmt",
 			"dateutil",
+			"excinfo",
 			"fpfx",
 			"hndlr",
 			"levelname",
@@ -24,10 +27,13 @@
 			"msecs",
 			"NOTSET",
 			"pyjson",
+			"pytest",
+			"pythonpath",
 			"recknagel",
 			"showall",
 			"strmsg",
 			"testickle",
+			"testpaths",
 			"timespec",
 			"tryit"
 		]

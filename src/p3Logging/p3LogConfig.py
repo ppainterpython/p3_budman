@@ -1,7 +1,8 @@
 # ---------------------------------------------------------------------------- +
 """ P3 Logging Module - simple add-on features to Python's logging module. """
 # Python standard libraries
-import atexit, pathlib, logging, inspect, logging.config  #, logging.handlers
+import atexit, pathlib, logging, inspect, logging.config  
+from typing import List
 # Python third-party libraries
 import pyjson5
 # Local libraries
@@ -207,23 +208,37 @@ def get_formatter_id_by_custom_class_name(formatter:logging.Formatter) -> str:
 #endregion get_formatter_reference_by_class() function
 # ---------------------------------------------------------------------------- +
 #region get_Logger_config_info() function
-def get_Logger_config_info(indent: int = 0) -> str:
-    """
-    Get logging configuration information obtained by dictConfig().
+def get_Logger_config_info(log_configDict:dict|None = None, 
+                           indent: int = 0) -> str:
+    """ Get logging config info obtained from a dict in dictConfig() format.
     
+    Navigate through the logging
     Args:
+        log_configDict (dict|None): The logging configuration dictionary to use.
+        If value of None provided, the current logging configuration is used.
         indent (int): The indentation level for the output.
     
     Returns:
-        str: A string representation of the current logging configuration.
+        A str containing the logging configuration information.
+        
+    raises:
+        TypeError: If a parameter is not of the expected type.
+        ValueError: If the logging config dict is invalid.
     """
-    me:str = "get_log_config_info():"
+    if log_configDict is not None and not isinstance(log_configDict, dict):
+        t = f"type:'{type(log_configDict).__name__}'"
+        v = f"value = '{str(log_configDict)}'"
+        raise TypeError(f"Invalid log_configDict: {t} {v}")
+    if not isinstance(indent, int):
+        t = f"type:'{type(indent).__name__}'"
+        v = f"value = '{str(indent)}'"
+        raise TypeError(f"Invalid indent: {t} {v}")
+    me:str = fpfx(get_Logger_config_info)
     version:int = 0
     formatters: dict = {}
     filters: dict = {}
     handlers: dict = {}
     loggers: dict = {}
-    root: dict = {}
     formatter_count = 0
     filter_count = 0
     handler_count = 0
@@ -234,90 +249,128 @@ def get_Logger_config_info(indent: int = 0) -> str:
     logger_ids:str = None
     incremental: bool = False
     disable_existing_loggers: bool = False
-    root_formatters_count = 0
-    root_formatters_ids = None
-    root_filters_count = 0
-    root_filters_ids = None
-    root_handlers_count = 0
-    root_handlers_ids = None
-    root_loggers_count = 0
-    root_loggers_ids = None
     pad = indent * " "
     try:
-        me = fpfx(get_Logger_config_info)
         # Get the current logging configuration
-        if (log_configDict := get_configDict()) is None: return None
+        # if (log_configDict := get_configDict()) is None: return None
+        print(pad)
+        # If configDict is None, use the current logging configuration
+        if log_configDict is None or len(log_configDict) == 0:
+            log_configDict = get_configDict()
         if (config_file_path := get_config_path()) is None:
             config_file_name = "unknown"
         else:
             config_file_name = config_file_path.name
         # Gather the info
         version = log_configDict.get("version", 1)
-        if "formatters" in log_configDict:
-            formatters = log_configDict["formatters"]
-            formatter_count = len(formatters)
-            if formatter_count > 0:
-                # Get the formatter class from the logger's handlers
-                formatter_ids = str([key for key, value in formatters.items()])
-        if "filters" in log_configDict:
-            filters = log_configDict["filters"]
-            filter_count = len(filters)
-            if filter_count > 0:
-                filter_ids = [key for key in filters.keys()]
-        if "handlers" in log_configDict:
-            handlers = log_configDict["handlers"]
-            handler_count = len(handlers)
-            if handler_count > 0:
-                handler_ids = [key for key in handlers.keys()]
-        if "loggers" in log_configDict:
-            loggers = log_configDict["loggers"]
-            logger_count = len(loggers) 
-            if logger_count > 0:
-                logger_ids = [key for key in loggers.keys()]
-        if "root" in log_configDict:
-            root = log_configDict["root"]
-            if "handlers" in root:
-                root_handlers = root["handlers"]
-                root_handlers_count = len(root_handlers)
-                if root_handlers_count > 0:
-                    root_handlers_ids = [key for key in root_handlers]
-            if "level" in root:
-                root_level = root["level"]
-            if "filters" in root:
-                root_filters = root["filters"]
-                root_filters_count = len(root_filters)
-                if root_filters_count > 0:
-                    root_filters_ids = [key for key in root_filters]
-            if "formatters" in root:
-                root_formatters = root["formatters"]
-                root_formatters_count = len(root_formatters)
-                if root_formatters_count > 0:
-                    root_formatters_ids = [key for key in root_formatters]
-            if "Loggers" in root:
-                root_loggers = root["Loggers"]
-                root_loggers_count = len(root_loggers)
-                if root_loggers_count > 0:
-                    root_loggers_ids = [key for key in root_loggers]
-            if "incremental" in root:
-                root_incremental = root["incremental"]
-            if "disable_existing_loggers" in root:
-                root_disable_existing_loggers = root["disable_existing_loggers"]
+        incremental = log_configDict.get("incremental", False)
+        disable_existing_loggers = log_configDict.get("disable_existing_loggers", True)
+        formatters = log_configDict.get("formatters", {})
+        formatter_count = len(formatters)
+        formatter_ids = str([key for key, value in formatters.items()]) if formatter_count > 0 else ""
+        filters = log_configDict.get("filters", {})
+        filter_count = len(filters)
+        filter_ids = str([key for key, value in filters.items()]) if filter_count > 0 else ""
+        handlers = log_configDict.get("handlers", {})
+        handler_count = len(handlers)
+        handler_ids = str([key for key, value in handlers.items()]) if handler_count > 0 else ""
+        loggers = log_configDict.get("loggers", {})
+        logger_count = len(loggers)
+        logger_ids = str([key for key, value in loggers.items()]) if logger_count > 0 else ""
+        root_config_info = get_Logger_root_config_info(log_configDict.get("root", None))
+
         # Construct summary of the current logging configuration
-        ret = str(
-            f"Logging config({config_file_name}) version({version}) "
-            f"formatters({formatter_count})[{formatter_ids}] "
-            f"filters({filter_count})[{filter_ids}] " 
-            f"handlers({handler_count})[{handler_ids}] "
-            f"loggers({logger_count})[{logger_ids}] "
-            f"root_handlers({root_handlers_count}) "
-            
-        )
-            
-        return ret
+        m = f"{pad}Logging config({config_file_name}) version({version}) "
+        t = f"{formatter_ids}" if formatter_count > 0 else ""
+        m = f"formatters({formatter_count}){t} "
+        t = f"{filter_ids}" if filter_count > 0 else ""
+        m += f"filters({filter_count}){t} " 
+        t = f"{handler_ids}" if handler_count > 0 else ""
+        m += f"handlers({handler_count}){t} "
+        t = f"{logger_ids}" if logger_count > 0 else ""
+        m += f"loggers({logger_count}){t} "
+        m += f"root config[{root_config_info}]" if root_config_info else ""
+        return m
     except Exception as e:
-        et = type(e).__name__
-        m = f"{me}Error: {str(e)}"
-        print(m)
+        m = log_exc(get_Logger_config_info, e, print_flag = True)
         raise
 #endregion get_Logger_config_info() function
+# ---------------------------------------------------------------------------- +
+#region get_Logger_root_config_info() function
+def get_Logger_root_config_info(root_log_configDict:dict|None = None) -> str:
+    """ Get logging config info from 'root' element dict.
+    
+    The 'root' element of a logging configuration dict is similar to the 
+    configDict format, but cannot contain a 'root' element itself. Also,
+    the values for 'Formatters', 'Filters', 'Handlers' and 'Loggers' are Lists
+    of the IDs used in the higher elements, not dict objects.
+    
+    Args:
+        root_log_configDict (dict|None): The 'root' element dict from a valid
+        logging configuration dictionary to use. A value of None returns the 
+        empty string, no dict, empty result. 
+        
+    Returns:
+        A str, maybe empty, containing an overview of the 'root' element 
+        logging configuration information.
+        
+    Raises:
+        TypeError: If the input is not a dict.
+        ValueError: If the input dict is found to have a 'root'
+        element, which is invalid.
+    """
+    if root_log_configDict is None or (): return ""
+    if root_log_configDict is not None and not isinstance(root_log_configDict, dict):
+        t = f"type:'{type(root_log_configDict).__name__}'"
+        v = f"value = '{str(root_log_configDict)}'"
+        m = f"Invalid root_log_configDict: {t} {v}"
+        raise TypeError(m)
+    me:str = fpfx(get_Logger_root_config_info)
+    formatters: List = []
+    filters: List = []
+    handlers: List = []
+    loggers: List = []
+    formatter_ids: str = ""
+    filter_ids: str = ""
+    handler_ids: str = ""
+    logger_ids: str = ""
+    formatter_count = 0
+    filter_count = 0
+    handler_count = 0
+    logger_count = 0
+    try:
+        # Get the current logging configuration
+        # Gather the info
+        if "root" in root_log_configDict:
+            m = f"{me} Invalid: root Logging config({root_log_configDict}) "
+            m += "contains 'root' element"
+            print(m)
+            raise ValueError(m)
+        if "formatters" in root_log_configDict:
+            formatters = root_log_configDict["formatters"]
+            formatter_count = len(formatters)
+            formatter_ids = str(formatters) if formatter_count > 0 else ""
+        if "filters" in root_log_configDict:
+            filters = root_log_configDict["filters"]
+            filter_count = len(filters)
+            filter_ids = str(filters) if filter_count > 0 else ""
+        if "handlers" in root_log_configDict:
+            handlers = root_log_configDict["handlers"]
+            handler_count = len(handlers)
+            handler_ids = str(handlers) if handler_count > 0 else ""
+        if "loggers" in root_log_configDict:
+            loggers = root_log_configDict["loggers"]
+            logger_count = len(loggers) 
+            logger_ids = str(loggers) if logger_count > 0 else ""
+        # Construct summary of the root logging configuration
+        m = f"root config[ "
+        m += f"formatters({formatter_count}){formatter_ids} "
+        m += f"filters({filter_count}){filter_ids} " 
+        m += f"handlers({handler_count}){handler_ids} "
+        m += f"loggers({logger_count}){logger_ids} ]"
+        return m
+    except Exception as e:
+        m = log_exc(get_Logger_config_info, e, print_flag = True)
+        raise
+#endregion get_Logger_root_config_info() function
 # ---------------------------------------------------------------------------- +
