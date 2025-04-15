@@ -18,7 +18,7 @@ import pyjson5
 # Local Libraries
 from .p3LogConstants import *
 from .p3LogUtils import *
-from . import p3logger
+from . import p3LogConfig
 #endregion module imports
 # ---------------------------------------------------------------------------- +
 #region quick_logging_test() function
@@ -28,7 +28,7 @@ def quick_logging_test(app_name:str,log_config_file:str) -> None:
     pfx = fpfx(quick_logging_test)
     try:
         # Initialize the logger from a logging configuration file.
-        p3logger.setup_logging(log_config_file)
+        p3LogConfig.setup_logging(log_config_file)
         logger = logging.getLogger(app_name)
         # Log messages at different levels
         logger.debug("This is a debug message")
@@ -152,7 +152,7 @@ def get_logger_formatters(
                 # A listener has a list of handlers, collect them if present.
                 listener = handler.listener
                 hl = listener.handlers if listener else None
-                formatters += get_logger_info_formatters(hl) if hl else None
+                formatters += get_logger_formatters(hl) if hl else None
         return formatters
     except Exception as e:
         print(log_exc(get_handler_info_QueueHandler, e, print=True))
@@ -217,7 +217,7 @@ def get_logger_handler_info(handler_param: List, indent: int = 0,
                 ret = f"{indent}:" # new line
                 ret += f"{pad}{str(handler)}, "
                 ret += f"formatter: '{str(type(handler.formatter))}', "
-                fmt_id = p3logger.get_formatter_id_by_custom_class_name(handler.formatter)
+                fmt_id = p3LogConfig.get_formatter_id_by_custom_class_name(handler.formatter)
                 ret += f"config formatter id:'{fmt_id}'"
             # logging.FileHandler
             elif isinstance(handler, logging.FileHandler):
@@ -231,7 +231,7 @@ def get_logger_handler_info(handler_param: List, indent: int = 0,
             else:
                 ret = f"{indent}:" # new line
                 ret += f"Handler: type:'{type(handler).__name__}', "
-            print(ret)
+            # print(ret)
             ...
         return ret
     except Exception as e:
@@ -347,7 +347,7 @@ def show_logging_setup(config_file: str = STDOUT_LOG_CONFIG_FILE,
     """
     try:
         # Apply the logging configuration from config_file
-        p3logger.setup_logging(config_file,start_queue=False)
+        p3LogConfig.setup_logging(config_file,start_queue=False)
         
         # Invoke get_logger_info() to display the current logging setup
         root_logger = logging.getLogger()
@@ -362,7 +362,10 @@ def show_logging_setup(config_file: str = STDOUT_LOG_CONFIG_FILE,
 # ---------------------------------------------------------------------------- +
 if __name__ == "__main__":
     try:
-        show_logging_setup()
+        # Apply the logging configuration from config_file
+        p3LogConfig.setup_logging(p3LogConfig.STDOUT_LOG_CONFIG_FILE,start_queue=False)
+        p3LogConfig.get_Logger_config_info()
+        # show_logging_setup()
     except Exception as e:
         print(str(e))
         exit(1)

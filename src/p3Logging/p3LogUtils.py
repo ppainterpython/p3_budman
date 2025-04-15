@@ -68,11 +68,18 @@ def fpfx(func) -> str:
     """
     Return a prefix for the function name and its module.
     """
-    if func is None:
-        return None
-    mod_name = func.__globals__['__name__']
-    func_name = func.__name__
-    return f"{mod_name}.{func_name}(): "
+    try:
+        if not func is None and isinstance(func, function):
+            mod_name = func.__globals__['__name__']
+            func_name = func.__name__
+            return f"{mod_name}.{func_name}(): "
+        else: 
+            m = f"InvalidFunction({str(func)}): "
+            print(f"fpfx(): Passed {str(m)}")
+            return m
+    except Exception as e:
+        print(f"fpfx() Error: {str(e)}")
+        raise
 #endregion fpfx() function
 # ---------------------------------------------------------------------------- +
 #region log_exc() function
@@ -93,9 +100,17 @@ def log_exc(func:function,e:Exception,
     Returns:
         str: Returns the routine exception log message.    
     """
-    if func is None or e is None: return None
-    m = f"{fpfx(func)}{str(e)}"
-    if print_flag: print(m)
-    return m
+    try:
+        if not func is None and isinstance(func, function):
+            m = f"{fpfx(func)}{str(e)}"
+            if print_flag: print(m)
+            return m
+        else:
+            m = f"log_exc(): InvalidFunction({str(func)}): "
+            if print_flag: print(m)
+            return m
+    except Exception as e:
+        print(f"log_exc() Error: {str(e)}")
+        raise
 #endregion log_exc() function
 # ---------------------------------------------------------------------------- +
