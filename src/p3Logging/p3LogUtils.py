@@ -25,27 +25,54 @@ def is_filename_only(path_str:str = None) -> bool:
 # ---------------------------------------------------------------------------- +
 #region is_path_reachable() function
 def is_path_reachable(path_name: str) -> Path | None:
+    """ Convert the path_name to a Path object and text for existence.
+    
+    Check if the path is reachable and exists. 3 cases are supported:
+    1. If the path is just a file name, check if it exists in the module folder. 
+       This case supports using built-in log config files in the package. 
+    2. If the path is absolute, check if it exists. This case allows callers to
+       specify an absolute path to a file or directory.
+    3. If the path is relative, check if it exists relative to CWD. This case
+       allows callers to specify a relative path to another project folder.
+    
+    Args:
+        path_name (str): The path str to check. Must be a string valid for use
+        in a path.
+        
+    Returns:
+        Path | None: Returns a Path object if the path exists, otherwise None.
+        
+    Raises:
+        TypeError: Raises a TypeError if the path_name is not a string.
+        ValueError: Raises a ValueError if the path_name is empty or not usable
+        in a path.
+        Exception: Forwards exceptions caught from the pathlib methods.
     """
-    Check if the path is reachable and exists.
-    If true, return the path object, else None.
-    """
-    # Step 1: Check if the input is just a file name
-    module_folder = Path(__file__).parent / "p3logging_configs" / path_name
-    if module_folder.exists():
-        return module_folder
+    try:
+        me = fpfx(is_path_reachable)
+        # Check if the path is a viable str usable in a path.
+        if path_name is None or not isinstance(path_name, str) or len(path_name) == 0:
+            raise TypeError(f"Invalid path_name: type:'{type(path_name)}' value = '{path_name}'")
+        # Case 1: Check if the input is just a file name
+        module_folder = Path(__file__).parent / "p3logging_configs" / path_name
+        if module_folder.exists():
+            return module_folder
 
-    # Step 2: Check if the path is absolute
-    path = Path(path_name)
-    if path.is_absolute() and path.exists():
-        return path
+        # Step 2: Check if the path is absolute
+        path = Path(path_name)
+        if path.is_absolute() and path.exists():
+            return path
 
-    # Step 3: Resolve as relative to the current working directory
-    relative_path = Path.cwd() / path_name
-    if relative_path.exists():
-        return relative_path
+        # Step 3: Resolve as relative to the current working directory
+        relative_path = Path.cwd() / path_name
+        if relative_path.exists():
+            return relative_path
 
-    # If none of the above checks succeed, return None
-    return None
+        # If none of the above checks succeed, return None
+        return None
+    except Exception as e:
+        log_exc(is_path_reachable,e,print_flag=True)
+        raise
 #endregion is_path_reachable() function
 # ---------------------------------------------------------------------------- +
 #region append_cause() function

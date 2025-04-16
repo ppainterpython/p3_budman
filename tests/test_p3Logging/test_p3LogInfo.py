@@ -34,21 +34,41 @@ def test_get_Logger_config_info_STDOUT_LOG_CONFIG_FILE():
     
 #endregion test_get_logger_info() function
 # ---------------------------------------------------------------------------- +
-#region test_get_logger_info() function
-def test_get_Logger_config_None_Input():
-    config_file: str = None
+#region test_get_Logger_config_None_nput() function
+def test_get_Logger_config_None_input():
+    config_file: str = p3l.STDOUT_LOG_CONFIG_FILE
     # Initialize the logger from a logging configuration file.
     # Apply the logging configuration from config_file
-    p3l.setup_logging(config_file,start_queue=False)
-    # Invoke get_logger_info() to display the current logging setup
-    res = p3l.get_Logger_config_info(log_configDict=config_file)
+    log_configDict:dict = p3l.setup_logging(config_file,
+                                            start_queue=False,
+                                            validate_only=True)
+    # Invoke get_logger_info() with None input value
+    res = p3l.get_Logger_config_info(log_configDict=None)
     # captured = capsys.readouterr()
     assert res is not None, \
-        "Expected get_Logger_config_info() to return a non-None value"
+        "Expected get_Logger_config_info(None) to return a non-None value"
     assert isinstance(res, str) and len(res) > 0, \
-        "Expected get_Logger_config_info() to return a non-zero str"
+        "Expected get_Logger_config_info(None) to return a non-zero str"
+#endregion test_get_Logger_config_None_input() function
+# ---------------------------------------------------------------------------- +
+#region test_get_Logger_config_empty_string_input() function
+def test_get_Logger_config_empty_string_input():
+    config_file: str = p3l.STDOUT_LOG_CONFIG_FILE
+    # Initialize the logger from a logging configuration file.
+    # Apply the logging configuration from config_file
+    log_configDict:dict = p3l.setup_logging(config_file,
+                                            start_queue=False,
+                                            validate_only=True)
+    # Invoke get_logger_info() with None input value
+    # Invoke get_logger_info() with "" input value
+    with pytest.raises(TypeError) as excinfo:
+        p3l.get_Logger_config_info(log_configDict="")
+    expected_msg = "Invalid log_configDict: type:'str' value = ''"
+    assert expected_msg in str(excinfo.value), \
+        "Wrong message from expected TypeError for root_log_configDict=\"\""
+    # captured = capsys.readouterr()
     
-#endregion test_get_logger_info() function
+#endregion test_get_Logger_config_empty_string_input() function
 # ---------------------------------------------------------------------------- +
 
 #endregion Tests for p3LogConfig.get_Logger_config_info() function
@@ -92,10 +112,9 @@ def test_get_Logger_root_config_info_None():
 def test_get_Logger_root_config_info_wrong_type():
     with pytest.raises(TypeError) as excinfo:
         p3l.get_Logger_root_config_info(root_log_configDict=101)
-        
     expected_msg = "Invalid root_log_configDict: type:'int' value = '101'"
     assert expected_msg in str(excinfo.value), \
-        "Expected ValueError for None root_log_configDict"
+        "Wrong message from expected TypeError for root_log_configDict=101"
 #endregion test_get_Logger_root_config_info_wrong_type() function
 # ---------------------------------------------------------------------------- +
 #region test_get_logger_info() function

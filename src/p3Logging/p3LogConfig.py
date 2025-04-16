@@ -72,8 +72,7 @@ def wrap_config_dictConfig(log_config):
 # ---------------------------------------------------------------------------- +
 #region validate_file_logging_config() function
 def validate_file_logging_config(config_json:dict) -> bool:
-    """
-    Validate the file logging configuration.
+    """ Pre-validate the file log config for support and dictConfig() format. 
     """
     # Validate the JSON configuration
     try:
@@ -85,7 +84,9 @@ def validate_file_logging_config(config_json:dict) -> bool:
     except (pyjson5.JSONDecodeError, Exception) as e:
         m = f"Error decoding config_json input"
         raise RuntimeError(m) from e
-    # Iterate handlers and check for file handlers
+    # TODO: should support check for other p3Logging-supported handlers?
+    # Like QueueHandler, QueueListener, etc.
+    # Iterate supported file handlers, check log file access
     file_handler_classes = ("logging.FileHandler", 
                             "logging.TimedRotatingFileHandler",
                             "logging.handlers.RotatingFileHandler")
@@ -104,6 +105,7 @@ def validate_file_logging_config(config_json:dict) -> bool:
                         pass
                 except IOError as e:
                     raise RuntimeError(f"Cannot write to log file: {file_path}") from e
+    return True
 #endregion validate_file_logging_config() function
 # ---------------------------------------------------------------------------- +
 #region validate_config_file() function
@@ -135,34 +137,52 @@ def validate_config_file(config_file:str) -> dict:
 # ---------------------------------------------------------------------------- +
 #region setup_logging function
 def setup_logging(config_file: str = STDOUT_LOG_CONFIG_FILE,
-                  start_queue:bool=True) -> None:
-    """
-    Set up logging for both stdout and a log file.
+                  start_queue:bool=True, validate_only:bool=False) -> dict|None:
+    """ Process a configDict-style JSON file to validate and configure logging.
+
+    A valid json file is required. When validate_only is True, the function
+    will only validate the json file and return the config_dict. 
+    If False (default), the configDict is applied to the logging module.
     
     Args:
         config_file (str): One of the builtin config file names, a relative path 
         to cwd, or an absolute path to a JSON file.
         start_queue (bool): If True, start the queue listener thread.
+        validate_only (bool): If True, only validate the config file and return 
+        the config_dict without applying it.
+        
+    Returns:
+        dict|None: The logging configuration dictionary if validate_only is True, 
+        otherwise None.
+        
+    Raises:
+        FileNotFoundError: If the config file is not found or not accessible.
+        TypeError: If the config file is not a valid JSON file.
+        ValueError: If the config file is not a valid logging configuration file.
     """
     try:
         global _log_config_dict
-        pfx = fpfx(setup_logging)
-        # Validate and parse the json config_file
-        log_config_json = validate_config_file(config_file)
+        valid_dictConfig = False
+        # me = fpfx(setup_logging)
+        # Validate/parse the json config_file to dict
+        log_config_dict = validate_config_file(config_file)
         # For FileHandler types, validate the filenames included in the config
-        validate_file_logging_config(log_config_json)
+        valid_config_file:bool = validate_file_logging_config(log_config_dict)
+        # If validate_only is True, return the config_dict without applying it
+        if valid_config_file and validate_only:
+            return log_config_dict
         # Apply the logging configuration preserving any pytest handlers
-        wrap_config_dictConfig(log_config_json)
-        _log_config_dict = log_config_json
+        wrap_config_dictConfig(log_config_dict)
+        _log_config_dict = log_config_dict
 
         # If the queue_handler is used, start the listener thread
         queue_handler = logging.getHandlerByName("queue_handler")
         if start_queue and queue_handler is not None:
             queue_handler.listener.start()
             atexit.register(queue_handler.listener.stop)
+        return None
     except Exception as e:
-        et = type(e).__name__
-        print(f"{pfx}{et}: {str(e)}")
+        log_exc(setup_logging, e, print_flag=True)
         raise 
 #endregion setup_logging function
 # ---------------------------------------------------------------------------- +
