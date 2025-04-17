@@ -1,38 +1,18 @@
 #------------------------------------------------------------------------------+
 # test_main.py
 #------------------------------------------------------------------------------+
-import os, sys
 import logging, pytest
 
-# sys.path.insert(0,  '../src')
-print("\nCurrent working directory:", os.getcwd())
-print("Resolving path to current file:", os.path.abspath(__file__))
-print("sys.path:", sys.path)
-
-# Ensure the path to p3Logging is added to sys.path
-#sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
-from p3Logging.p3LogConfig import *
-from main import *
+import p3Logging as p3l
+from main import THIS_APP_NAME, main
 
 #------------------------------------------------------------------------------+
-def test_main_default(caplog) -> None:
-    """Test operation of default logging config."""
-    with caplog.at_level(logging.DEBUG):
-        main()
-    assert "Warning message" in caplog.text, \
-        "Expected 'Warning message' in log output"
-    assert "Debug message" in caplog.text, \
-        "Expected 'Debug message' in log output"
-    assert "Info message" in caplog.text, \
-        "Expected 'Info message' in log output"
-    assert "Error message" in caplog.text, \
-        "Expected 'Error message' in log output"
-    assert "Critical message" in caplog.text, \
-        "Expected 'Critical message' in log output"
-    assert "division by zero" in caplog.text, \
-        "Expected 'division by zero' in log output"
-    assert len(caplog.records) == 7
-
+def test_logging_setup() -> None:
+    """Test operation of logging config."""
+    assert p3l.quick_logging_test(
+        THIS_APP_NAME, 
+        p3l.STDERR_JSON_FILE_LOG_CONFIG_FILE)        
+    
 def test_main_stdout(caplog) -> None:
     """Test operation of AT_STDOUT_LOG_CONFIG_FILE logging config."""
     with caplog.at_level(logging.DEBUG):

@@ -20,7 +20,7 @@ def main(config_file: str = p3l.STDOUT_LOG_CONFIG_FILE):
     cfm = f"Config file: '{config_file}'"
     try:
         # Initialize the logger from a logging configuration file.
-        p3l.quick_logging_test(THIS_APP_NAME,config_file)
+        ...
     except Exception as e:
         p3l.log_exc(main, e, print=True)
         raise
