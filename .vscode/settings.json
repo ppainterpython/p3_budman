@@ -10,6 +10,10 @@
     "python.analysis.extraPaths": [
         "${workspaceFolder}/src"
     ],
+    "python.analysis.exclude": [
+        "**/test_configs",
+        "**/Interactive*.py"
+    ],
     "python.analysis.reportExtraTelemetry": true,
     "cSpell.words": [
         "addopts",

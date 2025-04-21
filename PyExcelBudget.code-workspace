@@ -1,4 +1,19 @@
 {
+    "python.testing.pytestArgs": [
+        "tests"
+    ],
+    "python.terminal.activateEnvironment": true,
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "python.REPL.enableREPLSmartSend": false,
+    "jupyter.interactiveWindow.textEditor.executeSelection": true,
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}/src"
+    ],
+	"python.analysis.exclude": [
+        "**/test_configs",
+        "**/Interactive*.py"
+    ],
 	"folders": [
 		{
 			"path": "."
@@ -36,6 +51,10 @@
 			"testpaths",
 			"timespec",
 			"tryit"
+		],
+		"python.analysis.exclude": [
+			"**/Interactive.py",
+			"**/test_configs"
 		]
 	}
 }

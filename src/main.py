@@ -38,18 +38,13 @@ def tryit() -> None:
 # ---------------------------------------------------------------------------- +
 if __name__ == "__main__":
     try:
-        config_file = p3l.STDERR_JSON_FILE_LOG_CONFIG_FILE
+        config_file = p3l.QUEUED_STDERR_FILE_JSON_LOG_CONFIG_FILE
+        log_dictConfig = p3l.setup_logging(config_file) 
         m = "show_logging_setup one-liner, config_file = "
         m += f"'{config_file}'"
         print(m)
         p3l.show_logging_setup(config_file,showall=False)
-        m = "show_logging_setup with showall, config_file = "
-        m += f"'{config_file}'"
-        print(m)
-        p3l.show_logging_setup(config_file,showall=False)
         # main()
-        # main(p3l.STDERR_JSON_FILE_LOG_CONFIG_FILE)
-        # main(p3l.STDERR_JSON_FILE_LOG_CONFIG_FILE)
     except Exception as e:
         print(str(e))
         exit(1)
