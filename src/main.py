@@ -40,9 +40,7 @@ if __name__ == "__main__":
     try:
         config_file = p3l.QUEUED_STDERR_FILE_JSON_LOG_CONFIG_FILE
         log_dictConfig = p3l.setup_logging(config_file) 
-        m = "show_logging_setup one-liner, config_file = "
-        m += f"'{config_file}'"
-        print(m)
+        logger.info(f"Logging setup from file: '{config_file}'")
         p3l.show_logging_setup(config_file,showall=False)
         # main()
     except Exception as e:

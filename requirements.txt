@@ -61,6 +61,7 @@ notebook_shim==0.2.4
 numpy==2.2.4
 openpyxl==3.1.5
 overrides==7.7.0
+-e git+https://github.com/ppainterpython/p3Logging.git@6cd2e21cafb309acc26b708362bd2dea145523ab#egg=p3Logging
 packaging==24.2
 pandas==2.2.3
 pandocfilters==1.5.1
