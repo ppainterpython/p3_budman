@@ -1,2 +1,2 @@
 
-from .p3BankingTransactions import get_banking_transactions
+from .p3_banking_transactions import *

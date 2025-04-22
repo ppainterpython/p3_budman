@@ -1,1 +1,1 @@
-THIS_APP_NAME = "PyExcelBudget"
+THIS_APP_NAME = "p3ExcelBudget"

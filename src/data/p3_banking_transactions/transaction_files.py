@@ -11,7 +11,7 @@ import pyjson5, p3logging as p3l
 from openpyxl import Workbook, load_workbook
 
 # local modules and packages
-from p3ExcelBudgetConstants import  *
+from p3_excel_budget_constants import  *
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -27,13 +27,15 @@ user_config = {
 def get_banking_transactions() -> Workbook:
     """Get the banking transactions from configured sources."""
     try:
-        logger.info("Loading banking transactions...")
         trans_file = "BOAChecking2025.xlsx"
         trans_path = Path.Path(user_config["bank_transactions_folder"]) / trans_file
 
+        logger.info("Loading banking transactions...")
         wb = load_workbook(filename=trans_path)
+        logger.info(f"Loaded banking transactions from {str(trans_path)}")
+        return wb
     except Exception as e:
-        p3l.exc_msg(get_banking_transactions, e, print=True)
+        p3l.exc_msg(get_banking_transactions, e)
         raise    
 #endregion get_banking_transactions() function
 # ---------------------------------------------------------------------------- +
