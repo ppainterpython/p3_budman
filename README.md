@@ -10,8 +10,6 @@ This project began with the goal of learning about `pandas`, `Jupyter` in `VS Co
    > **Note**
    > Begun in the winter of 2025, this was my first exerience with python, in VS Code and the current version of GitHub Copilot. I tried to spend a lot of time with GHC, to really understand what it can help with, and what it screws up.
 
-
-
 ## Learning about Pandas with openpyxl
 
 ```python
@@ -226,3 +224,18 @@ print(data)
 #### Summary
 
 The regular expression `r'(?i)\bavery\W*.*?\branch\W*.*?\bHOA\W*.*?\bdues\b'` ensures that all specified words are matched in order, with flexibility for variable whitespace, punctuation, or other characters in between. It also handles cases where characters abut the words, such as `"DES:HOA"`. This approach is robust for categorizing text data in your `DataFrame`.
+
+## Learning about Python Packages
+
+```python
+pip install -e ../p3Logging
+
+# wsl
+wsl.exe  -d Ubuntu
+
+
+# TODO List
+# p3logging - enable/disable loggers by dictConfig Handler Id
+# p3logging - clean up Queue_Handler thread issues
+
+```

@@ -6,21 +6,19 @@ import atexit, pathlib, logging, inspect, logging.config  #, logging.handlers
 
 # third-party libraries
 import inspect, pyjson5
+import p3logging as p3l
 
 # local libraries
-import p3Logging as p3l
-
-THIS_APP_NAME = "PyExcelBudget"
+from p3ExcelBudgetConstants import  *
+from data import p3BankingTransactions as p3b
 
 logger = logging.getLogger(THIS_APP_NAME)
 logger.propagate = True
 #region main() function
-def main(config_file: str = p3l.STDOUT_LOG_CONFIG_FILE):
+def main():
     """Main function to run PyExcelBudget application."""
-    cfm = f"Config file: '{config_file}'"
     try:
-        # Initialize the logger from a logging configuration file.
-        p3l.quick_logging_test(THIS_APP_NAME,config_file)
+        wb = p3b.get_banking_transactions()
     except Exception as e:
         p3l.log_exc(main, e, print=True)
         raise
@@ -38,18 +36,17 @@ def tryit() -> None:
 # ---------------------------------------------------------------------------- +
 if __name__ == "__main__":
     try:
-        config_file = p3l.STDERR_JSON_FILE_LOG_CONFIG_FILE
-        m = "show_logging_setup one-liner, config_file = "
-        m += f"'{config_file}'"
-        print(m)
-        p3l.show_logging_setup(config_file,showall=False)
-        m = "show_logging_setup with showall, config_file = "
-        m += f"'{config_file}'"
-        print(m)
-        p3l.show_logging_setup(config_file,showall=False)
-        # main()
-        # main(p3l.STDERR_JSON_FILE_LOG_CONFIG_FILE)
-        # main(p3l.STDERR_JSON_FILE_LOG_CONFIG_FILE)
+        # Configure logging
+        log_config = p3l.STDOUT_FILE_LOG_CONFIG_FILE
+        filenames = {"file": "logs/p3PyExcelBudget.log"}
+        log_dictConfig = p3l.setup_logging(config_file = log_config,
+                                           filenames=filenames)
+        logger = logging.getLogger(THIS_APP_NAME)
+        logger.info("+ ----------------------------------------------------- +")
+        logger.info(f"Running {THIS_APP_NAME}...")
+        logger.info("+ ----------------------------------------------------- +")
+        p3l.quick_logging_test(THIS_APP_NAME,log_config)
+
     except Exception as e:
         print(str(e))
         exit(1)
