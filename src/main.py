@@ -13,7 +13,7 @@ import atexit, pathlib, logging, inspect, logging.config  #, logging.handlers
 
 # third-party  packages and module libraries
 import inspect, pyjson5
-import p3logging as p3l
+import p3logging as p3l, p3_utils as p3u
 
 # local packages and module libraries
 from p3_excel_budget_constants import  *
@@ -83,6 +83,7 @@ def main():
 if __name__ == "__main__":
     try:
         configure_logging(THIS_APP_NAME)
+        logger.setLevel(logging.DEBUG)
         main() # Application Main()
     except Exception as e:
         logger.error(p3l.exc_msg("__main__",e))

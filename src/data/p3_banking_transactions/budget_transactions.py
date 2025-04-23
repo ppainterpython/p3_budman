@@ -309,7 +309,8 @@ def map_budget_category(sheet,src,dst) -> None:
     """
     me = map_budget_category
     try:
-        logger.info("Applying budget category mapping...")
+        rules_count = len(category_mapping)
+        logger.info(f"Applying '{rules_count}' budget category mapping rules...")
         header_row = [cell.value for cell in sheet[1]] 
         if src in header_row:
             src_col_index = header_row.index(src) + 1
@@ -337,11 +338,11 @@ def map_budget_category(sheet,src,dst) -> None:
             # Set the value in the destination column.
             sheet.cell(row=row_idx, column=dst_col_index).value = dst_value
             # if dst_value != 'Other':
-            logger.info(f"Row {row_idx:04}: " 
+            logger.debug(f"Row {row_idx:04}: " 
                         f"({len(src_value):03})|{str(src_value):102}| -> " 
                         f"({len(dst_value):03})|{str(dst_value):40}|")
 
-        logger.info(f"Completed budget category mapping")
+        logger.info(f"Completed budget category mapping for '{num_rows}' rows.")
         return None
     except Exception as e:
         logger.error(p3l.exc_msg(me, e))
