@@ -71,7 +71,7 @@ category_mapping = {
     r'(?i)\bCOSTCO\sWHSE\b': 'Groceries.CostCo',
     r'(?i)\bH-E-B\b': 'Groceries.H-E-B',
     # Insurance
-    r'(?i)\bHP\s*\bDES:PREM\b': 'Insurance.Cobra Medical',
+    r'(?i)\bHP\s*\bDES:INS\sPREM\b': 'Insurance.Cobra Medical',
     r'(?i)\bState\s\bFARM\b': 'Insurance.State Farm',
     # Medical
     r'(?i)\bGEORGETOWN\sOB-GYN\b': 'Medical.Bio-T',
