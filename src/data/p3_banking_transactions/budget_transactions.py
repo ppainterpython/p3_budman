@@ -44,6 +44,10 @@ def map_category(description):
     return 'Other'  # Default category if no match is found
 
 category_mapping = {
+    # Donations
+    r'(?i)\bCAMPUS\s\bCRUSADE\b': 'Charity.Campus Crusade',
+    r'(?i)\bTUNNELTOTOWERS\b': 'Charity.Tunnel to Towers',
+    # Housing, Utilities etc.
     r'(?i)\bReliant\sEnergy\b': 'Grape Cove.Utilities.Electric',
     r'(?i)\bPedernales_Elec\b': 'Castle Pines.Utilities.Electric',
     r'(?i)\bONE\sGAS\b': 'Grape Cove.Utilities.Natural Gas',
@@ -51,29 +55,57 @@ category_mapping = {
     r'(?i)\bService\sExperts\b': 'Grape Cove.Utilities.HVAC',
     r'(?i)\bBrushy\sCreek\sMUD\b': 'Grape Cove.Utilities.MUD',
     r'(?i)\bAT\&T\sU-Verse\b': 'Grape Cove.Utilities.Internet',
-    r'(?i)\bGoogle\s*\bFIBER\b': 'Castle Pines.Utilities.Internet',
+    r'(?i)\bGoogle\s*\*FIBER\b': 'Castle Pines.Utilities.Internet',
     r'(?i)\bGOOGLE\s\*FIBER\b': 'Castle Pines.Utilities.Internet',
     r'(?i)\bavery\W*.*?\branch\W*.*?\bHOA\W*.*?\bdues\b': 'Castle Pines.HOA',
-    r'(?i)\bDAIRY\sQUEEN\sEnergy\b': 'Restaurants.Dairy Queen',
-    r'(?i)\bMOD\sPIZZA\b': 'Restaurants.Mod Pizza',
-    r'(?i)\bH\-E\-B\s\#\sPIZZA\b': 'Groceries.H-E-B',
-    r'(?i)\bHP*?\bINS\sPREM\b': 'Insurance.Medical',
-    r'(?i)\bState\s\bFARM\b': 'Insurance.State Farm',
-    r'(?i)\bHAROLD\sF\sADELMAN\sMD\b': 'Medical.Adelman',
-    r'(?i)\bBSWHealth\b': 'Medical.BSW Health',
-    r'(?i)\bJOHN\sF\sLANN\sDDS\b': 'Dental.Lann',
-    r'(?i)\bCVS.*PHARMACY\b': 'Medical.Pharmacy.CVS',
-    r'(?i)\bGREAT\sOAKS\sANIMAL\b': 'Pets.Veternary',
-    r'(?i)\bCAMPUS\s\bCRUSADE\b': 'Charity.Campus Crusade',
-    r'(?i)\bTUNNELTOTOWERS\b': 'Charity.Tunnel to Towers',
+    r'(?i)\bFREDERICK\sPEVA\b': 'Housing.Lawn Care',
+    r'(?i)\bTRANSFER\sPAUL\sB\sPAINTER\sLAURA:john hogge\b': 'Housing.Mortgage',
+    r'(?i)\bTHE\sHOME\sDEPOT\b': 'Housing.Maintenance',
+    # Auto
     r'(?i)\bCHEVRON\b': 'Auto.Gasoline.Chevron',
     r'(?i)\bGO\s\bCARWASH\b': 'Auto.Carwash.Go Carwash',
     r'(?i)\bHCTRA\sEFT\b': 'Auto.Tolls.HCTRA',
     r'(?i)\bdoxoPLUS\b': 'Auto.Tolls.DoxoPlus',
+    # Groceries
+    r'(?i)\bH-E-B\b': 'Groceries.H-E-B',
+    # Insurance
+    r'(?i)\bHP*?\bINS\sPREM\b': 'Insurance.Medical',
+    r'(?i)\bState\s\bFARM\b': 'Insurance.State Farm',
+    # Medical
+    r'(?i)\bHAROLD\sF\sADELMAN\sMD\b': 'Medical.Adelman',
+    r'(?i)\bBSWHealth\b': 'Medical.BSW Health',
+    r'(?i)\bJOHN\sF\sLANN\sDDS\b': 'Dental.Lann',
+    r'(?i)\bCVS.*PHARMACY\b': 'Medical.Pharmacy.CVS',
+    # Health and Fitness, Coaching
+    r'(?i)\bCATHY\s\bDUNFORD\b': 'Health and Fitness.Coach Cathy',
+    r'(?i)\bSNICOLA\s\bMCKERLIE\b': 'Health and Fitness.Nicola McKerlie',
+    # Streaming
+    r'(?i)\bPrime\s\bVideo\b': 'Streaming.Amazon Prime Video',
+    r'(?i)\bTHIRTEEN\b': 'Streaming.Thirteen',
+    # Shopping - Amazon, Apple, etc.
+    r'(?i)\bAMAZON\s.*?\bPRIME\b': 'Shopping.Amazon Prime',
+    r'(?i)\bAMAZON\sRETA\*\s\b': 'Shopping.Amazon Retail',
+    r'(?i)\bAMAZON\s\bMKTPL\*.*\b': 'Shopping.Amazon Marketplace',
+    r'(?i)\bAMAZON\.com\*.*\b': 'Shopping.Amazon',
+    r'(?i)\bAMAZON\s(MARKETPLA\s|MKTPLACE\s)\b': 'Shopping.Amazon Marketplace',
+    r'(?i)\bAMAZON\s\b(DIGITAL|DIGI).*?\b(LINKEDIN|LINKWA)\b': 'Shopping.Amazon Digital',
+    r'(?i)\b.*APPLE\.COM.*\b': 'Shopping.Apple',
+    r'(?i)\bCIRCLE\sK\b': 'Shopping.Circle K',
     r'(?i)\b7-ELEVEN\s.*?MOBILE\sPURCHASE\b': 'vape',
+    r'(?i)\b7-ELEVEN\b': 'Shoppint.7-Eleven',
+    # Pets
+    r'(?i)\bGREAT\sOAKS\sANIMAL\b': 'Pets.Veternary',
+    # Restaurants, Door Dash, Eating Out.
+    r'(?i)\bID:DOORDASHINC\b': 'Restaurants.Door Dash',
+    r'(?i)\bDAIRY\sQUEEN\b': 'Restaurants.Dairy Queen',
+    r'(?i)\bCHICK-FIL-A\b': 'Restaurants.Chick-Fil-A',
+    r'(?i)\bMOD\sPIZZA\b': 'Restaurants.Mod Pizza',
+    r"(?i)\bTONY\sC'S\sCOAL\sFIRED\b": "Restaurants.Tony C's Coal Fired",
+    # Credit Card Payments
+    # Income
     r'(?i)\bGerson\sLehrman\sG\b': 'Income.Consulting.GL Group',
     r'(?i)\bHP\sINC*?\bPAYROLL\b': 'Income.HP Inc.',
-    r'(?i)\bAMAZON\s.*?\bPRIME\b': 'Shopping.Amazon Prime',
+    # Investment Transfers
 }
 
 
