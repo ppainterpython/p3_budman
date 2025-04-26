@@ -11,7 +11,7 @@ print("sys.path:", sys.path)
 
 # Ensure the path to p3Logging is added to sys.path
 #sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
-from p3Logging.p3LogConfig import *
+import p3Logging as p3l
 from main import *
 
 #------------------------------------------------------------------------------+

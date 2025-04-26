@@ -1,0 +1,40 @@
+{
+    /*
+    User configuration covers the file structure where user data is stored as 
+    settings for options and preferences. Keep it simple.
+    There is both an object model used in the application (in memory) and a
+    file system structure used to store the data. In addition, the idea is that 
+    users are placing new banking transactions in an "incoming" folder folder 
+    for processing through stages to arrive in updating the budget. Long-view is 
+    anticipate more than one bank or financial institution sourcing regular 
+    statements in spreadsheet format. So, the "budget" will cover multiple "banks"
+    information for a given user.
+    */
+    "budget_folder": "~/OneDrive/budget",
+    "institutions": {
+        "boa": {
+            "name": "Bank of America",
+            "type": "bank",
+            "folder": "boa",
+            "incoming_folder": "new",
+            "categorized_folder": "categorized",
+            "processed_folder": "processed"
+        },
+        "merrill": {
+            "name": "Merrill Lynch",
+            "type": "brokerage",
+            "folder": "merrill",
+            "incoming_folder": "new",
+            "categorized_folder": "categorized",
+            "processed_folder": "processed"
+        }
+    },
+    "options": {
+        "incoming_prefix": "new_",
+        "categorized_folder": "categorized_",
+        "processed_folder": "processed_",
+        "log_level": "DEBUG",
+        "log_file": "logs/p3ExcelBudget.log",
+        "json_log_file": "logs/p3ExcelBudget.jsonl"
+    }
+}

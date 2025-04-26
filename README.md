@@ -12,7 +12,7 @@ This project began with the goal of learning about `pandas`, `Jupyter` in `VS Co
 
 ## Notes about p3_excel_budget Project
 
-While getting this project off the ground, I started learning how to build python packacges for various subcompents. Although a bit of a learning curve, the structure has come together as follows. 
+While getting this project off the ground, I started learning how to build python packacges for various subcompents. Although a bit of a learning curve, the project structure has come together as follows.
 
 ```python
 p3_excel_budget/
@@ -53,6 +53,109 @@ p3_excel_budget/
 └── requirements.txt
 
 9 directories, 26 files
+```
+
+## Configuration and File System
+
+Trying to keep things simple from the beginning, the code works within some design decisions about where data is stored and the application data model when running.
+
+### Data Model
+
+```python
+# User configuration covers the file structure where user data is stored as 
+# settings for options and preferences. Keep it simple.
+# There is both an object model used in the application (in memory) and a
+# file system structure used to store the data. In addition, the idea is that 
+# users are placing new banking transactions in an "incoming" folder folder 
+# for processing through stages to arrive in updating the budget. Long-view is 
+# anticipate more than one bank or financial institution sourcing regular 
+# statements in spreadsheet format. So, the "budget" will cover multiple "banks"
+# information for a given user.
+budget_config = {
+    "budget_folder": "~/OneDrive/budget",
+    "institutions": {
+        "boa": {
+            "name": "Bank of America",
+            "type": "bank",
+            "folder": "boa",
+            # Incoming folder name and list of workbook names,
+            # e.g. ["new_boa-1391-2024-04-28.xlsx"]
+            "incoming_folder": "new",
+            "incoming_workbooks": [],                
+            # Categorized folder name and list of workbook names,
+            # e.g. ["categorized_boa-1391-2024-04-28.xlsx"]
+            "categorized_folder": "categorized",
+            "categorized_workbooks": [],                
+            # Processed folder name and list of workbook names,
+            # e.g. ["categorized_boa-1391-2024-03-28.xlsx"]
+            "processed_folder": "processed",
+            "processed_workbooks": [],                
+        },
+        "merrill": {
+            "name": "Merrill Lynch",
+            "type": "brokerage",
+            "folder": "merrill",
+            # Incoming folder name and list of workbook names,
+            # e.g. ["new_boa-1391-2024-04-28.xlsx"]
+            "incoming_folder": "new",
+            "incoming_workbooks": [],                
+            # Categorized folder name and list of workbook names,
+            # e.g. ["categorized_boa-1391-2024-04-28.xlsx"]
+            "categorized_folder": "categorized",
+            "categorized_workbooks": [],                
+            # Processed folder name and list of workbook names,
+            # e.g. ["categorized_boa-1391-2024-03-28.xlsx"]
+            "processed_folder": "processed",
+            "processed_workbooks": [],                
+        },   
+    },
+    "options": {
+        "incoming_prefix": "new_",
+        "categorized_folder": "categorized_",
+        "processed_folder": "processed_",
+        "log_level": logging.DEBUG,
+        "log_file": "logs/p3ExcelBudget.log",
+        "json_log_file": "logs/p3ExcelBudget.jsonl",
+    },
+}
+```
+
+### File System Storage Model
+
+```python
+├── boa/
+│   ├── data/
+│   │   ├── categorized/
+│   │   │   └── saved_BOAChecking2025.xlsx
+│   │   ├── new/
+│   │   │   ├── BOAChecking2023.xlsx
+│   │   │   ├── BOAChecking2024.xlsx
+│   │   │   └── BOAChecking2025.xlsx
+│   │   └── processed/
+│   │       ├── Manual-BOAChecking2023.xlsx
+│   │       ├── Manual-BOAChecking2024.xlsx
+│   │       └── Manual-BOAChecking2025.xlsx
+│   └── raw/
+│       ├── August2024_4747.csv
+│       ├── BOA2023.csv
+│       ├── BOA2023.xlsx
+│       ├── BOA2024.csv
+│       ├── BOA2024.xlsx
+│       ├── BOA2025.csv
+│       ├── BOA2025.xlsx
+│       ├── December2024_4747.csv
+│       ├── January2025_4747.csv
+│       ├── July2024_4747.csv
+│       ├── June2024_4747 (1).csv
+│       ├── May2024_4747 (1).csv
+│       ├── November2024_4747.csv
+│       ├── October2024_4747.csv
+│       ├── September2024_4747.csv
+│       ├── eStmt_2024-01-09.pdf
+│       ├── eStmt_2024-02-09.pdf
+│       ├── eStmt_2024-03-09.pdf
+│       └── eStmt_2024-04-09.pdf
+└── budget_config.jsonc
 ```
 
 ## Learning about Pandas with openpyxl
