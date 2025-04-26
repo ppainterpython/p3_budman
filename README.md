@@ -10,6 +10,51 @@ This project began with the goal of learning about `pandas`, `Jupyter` in `VS Co
    > **Note**
    > Begun in the winter of 2025, this was my first exerience with python, in VS Code and the current version of GitHub Copilot. I tried to spend a lot of time with GHC, to really understand what it can help with, and what it screws up.
 
+## Notes about p3_excel_budget Project
+
+While getting this project off the ground, I started learning how to build python packacges for various subcompents. Although a bit of a learning curve, the structure has come together as follows. 
+
+```python
+p3_excel_budget/
+├── .vscode/
+│   ├── launch.json
+│   ├── settings.json
+│   └── tasks.json
+├── logs/
+│   ├── p3ExcelBudget.log
+│   └── p3loggingDefault-file.log
+├── src/
+│   ├── data/
+│   │   ├── p3_banking_transactions/
+│   │   │   ├── __init__.py
+│   │   │   ├── apply_mapping_to_excel_file.py
+│   │   │   ├── budget_transactions.py
+│   │   │   └── transaction_files.py
+│   │   ├── p3_interactive_notebooks/
+│   │   │   ├── apply_mapping_to_excel_file.py
+│   │   │   └── read_excel_file.py
+│   │   └── __init__.py
+│   ├── experiments/
+│   │   └── fooey.py
+│   ├── utility/
+│   │   ├── __init__.py
+│   │   └── plot_settings.py
+│   ├── __init__.py
+│   ├── main.py
+│   └── p3_excel_budget_constants.py
+├── tests/
+│   └── test_main.py
+├── .coveragerc
+├── .env
+├── .gitignore
+├── README.md
+├── p3_excel_budget.code-workspace
+├── pytest.ini
+└── requirements.txt
+
+9 directories, 26 files
+```
+
 ## Learning about Pandas with openpyxl
 
 ```python
