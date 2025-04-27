@@ -292,7 +292,7 @@ def check_budget_category(sheet) -> bool:
         raise    
 #endregion check_budget_category() function
 # ---------------------------------------------------------------------------- +
-#region load_banking_transactions() function
+#region load_fi_transactions() function
 def map_budget_category(sheet,src,dst) -> None:
     """Map a src column to budget category putting result in dst column.
     
@@ -347,5 +347,5 @@ def map_budget_category(sheet,src,dst) -> None:
     except Exception as e:
         logger.error(p3l.exc_msg(me, e))
         raise    
-#endregion load_banking_transactions() function
+#endregion load_fi_transactions() function
 # ---------------------------------------------------------------------------- +

@@ -17,7 +17,7 @@ import p3logging as p3l, p3_utils as p3u
 
 # local packages and module libraries
 from p3_excel_budget_constants import  *
-import data.p3_fi_transactions as p3b
+import data.p3_fi_transactions as p3fi
 from openpyxl import Workbook
 
 logger = logging.getLogger(THIS_APP_NAME)
@@ -56,41 +56,44 @@ def configure_logging(logger_name : str = THIS_APP_NAME, logtest : bool = False)
         if(logtest): 
             p3l.quick_logging_test(THIS_APP_NAME, log_config, filenames, reload = False)
     except Exception as e:
-        logger.error(p3l.exc_msg(main, e))
+        logger.error(p3l.exc_msg(configure_logging, e))
         raise
 #endregion configure_logging() function
 # ---------------------------------------------------------------------------- +
-#region main() function
-def main():
+#region budmod() function
+def budmod():
     """Main function to run PyExcelBudget application."""
     try:
         trans_file = "BOAChecking2025.xlsx"
- 
-        configure_logging(THIS_APP_NAME)
         # Initalize the budget model.
-        bm = p3b.init_budget_model()
+        bm = p3fi.init_budget_model()
 
-        wb = p3b.load_banking_transactions(trans_file)
-        log_workbook_info(trans_file, wb)
-        sheet = wb.active
-        # Check for budget category column, add it if not present.
-        p3b.check_budget_category(sheet)
-        # BOA specific: Map the 'Original Description' column to the 'Budget Category' column.
-        p3b.map_budget_category(sheet, "Original Description", BUDGET_CATEGORY_COL)
-        p3b.save_banking_transactions(wb, trans_file)
+        for wbkey in p3fi.fi_if_workbook_keys("boa"):
+            print(f"wbkey: {wbkey}")
+            # process each workbook in the categorization process.
+            # create a journal proceess to track the transformation of the workbook.
+
+        # wb = p3fi.load_fi_transactions(trans_file)
+        # log_workbook_info(trans_file, wb)
+        # sheet = wb.active
+        # # Check for budget category column, add it if not present.
+        # p3fi.check_budget_category(sheet)
+        # # BOA specific: Map the 'Original Description' column to the 'Budget Category' column.
+        # p3fi.map_budget_category(sheet, "Original Description", BUDGET_CATEGORY_COL)
+        # p3fi.save_banking_transactions(wb, trans_file)
         _ = "pause"
     except Exception as e:
-        m = p3u.exc_msg(main, e)
+        m = p3u.exc_msg(budmod, e)
         logger.error(m)
         raise
-#endregion main() function
+#endregion budmod() function
 # ---------------------------------------------------------------------------- +
 #region Local __main__ stand-alone
 if __name__ == "__main__":
     try:
         configure_logging(THIS_APP_NAME)
         logger.setLevel(logging.DEBUG)
-        main() # Application Main()
+        budmod() # Application Main()
     except Exception as e:
         m = p3u.exc_msg("__main__", e)
         logger.error(m)

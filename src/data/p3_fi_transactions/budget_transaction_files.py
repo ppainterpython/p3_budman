@@ -321,16 +321,15 @@ def save_banking_transactions(workbook : Workbook = None, trans_file:str=None) -
         logger.info(f"Saved FI transactions to '{str(trans_path)}'")
         return
     except Exception as e:
-        logger.error(p3l.exc_msg(load_banking_transactions, e))
+        logger.error(p3l.exc_msg(load_fi_transactions, e))
         raise    
 #endregion save_banking_transactions() function
 # ---------------------------------------------------------------------------- +
-#region load_banking_transactions() function
-def load_banking_transactions(trans_file:str=None) -> Workbook:
+#region load_fi_transactions() function
+def load_fi_transactions(trans_file:str=None) -> Workbook:
     """Get the FI transactions from configured sources into a workbook.
     
-    Banking transactions downloaded from the bank are in a folder. 
-    From now, it is using Bank of America (BOA) downloads.
+    Transactions downloaded from an FI are in a folder. 
     The file is assumed to be in the folder specified in the budget_config. 
     A folder is specified in the budget_config.json file. That folder is scanned 
     for transactions in excel files if a particular file is not specified.
@@ -354,9 +353,32 @@ def load_banking_transactions(trans_file:str=None) -> Workbook:
 
         return wb
     except Exception as e:
-        logger.error(p3l.exc_msg(load_banking_transactions, e))
+        logger.error(p3l.exc_msg(load_fi_transactions, e))
         raise    
-#endregion load_banking_transactions() function
+#endregion load_fi_transactions() function
+#region fi_if_workbook_keys() function
+def fi_if_workbook_keys(inst_key:str=None) -> dict:
+    """Get the list of workbooks in the incoming folder for the specified institution.
+
+    Args:
+        inst_key (str): The key of the institution to get the workbooks for.
+
+    Returns:
+        dict: A dictionary of workbooks with the file name as the key.
+    """
+    try:
+        if inst_key is None or inst_key not in budget_model["institutions"]:
+            m = f"Invalid institution key: '{inst_key}'"
+            logger.error(m)
+            raise ValueError(m)
+        institution = budget_model[BT_FINANCIAL_INSTITUTIONS][inst_key]
+        workbooks = institution[IF_INCOMING_FOLDER_WORKBOOKS].keys()
+        return workbooks
+    except Exception as e:
+        logger.exception(p3l.exc_msg(fi_if_workbook_keys, e))
+        raise
+
+#endregion fi_if_workbook_keys() function
 # ---------------------------------------------------------------------------- +
 #region Local __main__ stand-alone
 if __name__ == "__main__":
@@ -374,7 +396,7 @@ if __name__ == "__main__":
         logger.info("+ ----------------------------------------------------- +")
         # init budget model
         bm = init_budget_model()
-        # load_banking_transactions()
+        # load_fi_transactions()
     except Exception as e:
         logger.error(p3l.exc_msg("__main__",e))
     logger.info(f"Exiting {THIS_APP_NAME}...")
