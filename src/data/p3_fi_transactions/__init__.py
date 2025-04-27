@@ -16,19 +16,28 @@ __license__ = "MIT"
 from .budget_transaction_files import (
     init_budget_model,
     load_fi_transactions, 
-    save_banking_transactions,
+    save_fi_transactions,
     fi_if_workbook_keys,
 )
 from .budget_categorization import (
     check_budget_category,
-    map_budget_category
+    map_budget_category,
+    process_incoming_categorization
+)
+
+from .category_mapping import (
+    map_category,
+    category_map_count,
 )
 
 __all__ = [
     "init_budget_model",
     "load_fi_transactions",
-    "save_banking_transactions",
+    "save_fi_transactions",
     "fi_if_workbook_keys",
     "check_budget_category",
     "map_budget_category",
+    "process_incoming_categorization",
+    "map_category",
+    "category_map_count",
 ]

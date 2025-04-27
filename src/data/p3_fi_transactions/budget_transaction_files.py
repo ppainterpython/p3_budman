@@ -25,7 +25,7 @@ from p3_excel_budget_constants import  *
 #region Globals and Constants
 logger = logging.getLogger(THIS_APP_NAME)
 # ---------------------------------------------------------------------------- +
-#region Budget Configuration
+#region Budget Model Configuration
 # Budget configuration covers the file structure where user data is stored as 
 # settings for options and preferences. Keep it simple.
 # There is both an object model used in the application (in memory) and a
@@ -35,7 +35,7 @@ logger = logging.getLogger(THIS_APP_NAME)
 # anticipate more than one bank or financial institution sourcing regular 
 # statements in spreadsheet format. So, the "budget" will cover multiple "banks"
 # information for a given user.
-budget_config_expected_keys = (BT_BUDGET_FOLDER, BT_FINANCIAL_INSTITUTIONS, 
+budget_config_expected_keys = (BM_BUDGET_FOLDER, BT_FINANCIAL_INSTITUTIONS, 
                                BMO_OPTIONS)
 valid_institutions_keys = ("boa", "merrill")
 institution_expected_keys = (
@@ -44,9 +44,9 @@ institution_expected_keys = (
     FI_FOLDER, 
     FI_FOLDER_ABS_PATH_STR,
     FI_FOLDER_ABS_PATH,
-    IF_INCOMING_FOLER,
-    IF_INCOMING_FOLER_ABS_PATH_STR,
-    IF_INCOMING_FOLER_ABS_PATH,
+    IF_INCOMING_FOLDER,
+    IF_INCOMING_FOLDER_ABS_PATH_STR,
+    IF_INCOMING_FOLDER_ABS_PATH,
     IF_INCOMING_FOLDER_WORKBOOKS,
     CF_CATEGORAIZED_FOLDER,
     CF_CATEGORAIZED_FOLDER_ABS_PATH_STR,
@@ -68,9 +68,10 @@ options_expected_keys = (
     )
 
 budget_config = {  # _abs_path is not serialized, only _abs_path_str is serialized
-    BT_BUDGET_FOLDER: "~/OneDrive/budget",
-    BT_BUDGET_FOLDER_ABS_PATH_STR: None, # Set in init_budget_model()
-    BT_BUDGET_FOLDER_ABS_PATH: None,    # Not serialized
+    BM_INITIALIZED: False,
+    BM_BUDGET_FOLDER: "~/OneDrive/budget",
+    BM_BUDGET_FOLDER_ABS_PATH_STR: None, # Set in init_budget_model()
+    BM_BUDGET_FOLDER_ABS_PATH: None,    # Not serialized
     BT_FINANCIAL_INSTITUTIONS: {
         "boa": {
             FI_NAME: "Bank of America",
@@ -80,9 +81,9 @@ budget_config = {  # _abs_path is not serialized, only _abs_path_str is serializ
             FI_FOLDER_ABS_PATH: None,    # Not serialized
             # Incoming folder name and list of workbook names,
             # e.g. ["new_boa-1391-2024-04-28.xlsx"]
-            IF_INCOMING_FOLER: "data/new",
-            IF_INCOMING_FOLER_ABS_PATH_STR: None,    # Set in init_budget_model()
-            IF_INCOMING_FOLER_ABS_PATH: None,    # Not serialized
+            IF_INCOMING_FOLDER: "data/new",
+            IF_INCOMING_FOLDER_ABS_PATH_STR: None,    # Set in init_budget_model()
+            IF_INCOMING_FOLDER_ABS_PATH: None,    # Not serialized
             IF_INCOMING_FOLDER_WORKBOOKS: {}, # key = file name, value = absolute path
             # Categorized folder name and list of workbook names,
             # e.g. ["categorized_boa-1391-2024-04-28.xlsx"]
@@ -105,9 +106,9 @@ budget_config = {  # _abs_path is not serialized, only _abs_path_str is serializ
             FI_FOLDER_ABS_PATH: None,    # Not serialized
             # Incoming folder name and list of workbook names,
             # e.g. ["new_boa-1391-2024-04-28.xlsx"]
-            IF_INCOMING_FOLER: "data/new",
-            IF_INCOMING_FOLER_ABS_PATH_STR: None,    # Set in init_budget_model()
-            IF_INCOMING_FOLER_ABS_PATH: None,    # Not serialized
+            IF_INCOMING_FOLDER: "data/new",
+            IF_INCOMING_FOLDER_ABS_PATH_STR: None,    # Set in init_budget_model()
+            IF_INCOMING_FOLDER_ABS_PATH: None,    # Not serialized
             IF_INCOMING_FOLDER_WORKBOOKS: {}, # key = file name, value = absolute path
             # Categorized folder name and list of workbook names,
             # e.g. ["categorized_boa-1391-2024-04-28.xlsx"]
@@ -129,11 +130,11 @@ budget_config = {  # _abs_path is not serialized, only _abs_path_str is serializ
         BMO_PROCESSED_PREFIX: "processed_",
         BMO_LOG_CONFIG: p3l.STDOUT_FILE_LOG_CONFIG_FILE,
         BMO_LOG_LEVEL: logging.DEBUG,
-        BMO_LOG_FILE: "logs/p3ExcelBudget.log",
-        BMO_JSON_LOG_FILE: "logs/p3ExcelBudget.jsonl"
+        BMO_LOG_FILE: "logs/p3BudgetModel.log",
+        BMO_JSON_LOG_FILE: "logs/p3BudgetModel.jsonl"
     }
 }
-#endregion BUdget Configuration
+#endregion Budget Model Configuration
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
@@ -230,8 +231,8 @@ def init_budget_model(create_missing_folders : bool = True, raise_errors : bool 
         # Set up Paths for the appropariate folders
         # Start with budget folder, then institution folder, then incoming folder
         # and categorized folder. Construct and validate absolute paths for all folders.
-        logger.debug(f"budget_folder: '{budget_model['budget_folder']}'")
-        budget_folder_path = Path.Path(budget_model["budget_folder"]).expanduser()
+        logger.debug(f"{BM_BUDGET_FOLDER}: '{budget_model[BM_BUDGET_FOLDER]}'")
+        budget_folder_path = Path.Path(budget_model[BM_BUDGET_FOLDER]).expanduser()
         budget_folder_abs_path = budget_folder_path.resolve()
         logger.debug(f"budget_folder_abs_path: '{budget_folder_abs_path}'")
         if not budget_folder_abs_path.exists():
@@ -242,7 +243,7 @@ def init_budget_model(create_missing_folders : bool = True, raise_errors : bool 
         budget_model["budget_folder_abs_path"] = budget_folder_abs_path
 
         # Institution folders
-        for institution_key, institution in budget_model["institutions"].items():
+        for institution_key, institution in budget_model[BT_FINANCIAL_INSTITUTIONS].items():
             institution_folder_path = budget_folder_path / institution["folder"]
             institution_folder_abs_path = institution_folder_path.resolve()
             logger.debug(f"{institution_key} folder: '{institution_folder_path}'")
@@ -257,11 +258,11 @@ def init_budget_model(create_missing_folders : bool = True, raise_errors : bool 
                         f"folder does not exist: '{str(institution_folder_abs_path)}'")
                     logger.error(m)
                     raise FileNotFoundError(m) if raise_errors else None
-            budget_model["institutions"][institution_key]["folder_abs_path_str"] = str(institution_folder_abs_path)
-            budget_model["institutions"][institution_key]["folder_abs_path"] = institution_folder_abs_path
+            budget_model[BT_FINANCIAL_INSTITUTIONS][institution_key]["folder_abs_path_str"] = str(institution_folder_abs_path)
+            budget_model[BT_FINANCIAL_INSTITUTIONS][institution_key]["folder_abs_path"] = institution_folder_abs_path
         
         # Create transaction subfolders if they do not exist
-        for institution in budget_config["institutions"].values():
+        for institution in budget_model[BT_FINANCIAL_INSTITUTIONS].values():
             for subfolder_type in ["incoming_folder", "categorized_folder", "processed_folder"]:
                 subfolder_path = institution["folder_abs_path"] / institution[subfolder_type]
                 if not subfolder_path.exists():
@@ -269,17 +270,18 @@ def init_budget_model(create_missing_folders : bool = True, raise_errors : bool 
                     subfolder_path.mkdir(parents=True, exist_ok=True)
                 logger.debug(f"Institution({institution["folder"]})[{subfolder_type}]: '{str(subfolder_path)}'")
                 institution[subfolder_type + "_abs_path_str"] = str(subfolder_path)
-                institution[subfolder_type + "_abs_path"] = subfolder_path.resolve()
+                institution[subfolder_type + ABS_PATH] = subfolder_path.resolve()
 
         # Look for subfolder workbooks
-        for institution in budget_config["institutions"].values():
-            for subfolder_type in ["incoming_folder", "categorized_folder", "processed_folder"]:
-                subfolder_path = institution[subfolder_type + "_abs_path"]
+        for institution in budget_config[BT_FINANCIAL_INSTITUTIONS].values():
+            for subfolder_type in [IF_INCOMING_FOLDER, CF_CATEGORAIZED_FOLDER, PF_PROCESSED_FOLDER]:
+                subfolder_path = institution[subfolder_type + ABS_PATH]
                 # Get the list of workbooks in the subfolder
                 workbooks = list(subfolder_path.glob("*.xlsx"))
                 # Add the workbook names to the budget model
                 institution[subfolder_type + "_workbooks"] = {path.name: path for path in workbooks}
                 logger.debug(f"Institution({institution["folder"]})[{subfolder_type}]: Workbooks: '{str(institution[subfolder_type + "_workbooks"])}'")
+        budget_model[BM_INITIALIZED] = True
         return budget_model
     except Exception as e:
         m = p3l.exc_msg(me, e)
@@ -289,8 +291,8 @@ def init_budget_model(create_missing_folders : bool = True, raise_errors : bool 
 # ---------------------------------------------------------------------------- +
 #endregion Budget Model (MVVM sense of Model)
 # ---------------------------------------------------------------------------- +
-#region save_banking_transactions() function
-def save_banking_transactions(workbook : Workbook = None, trans_file:str=None) -> None:
+#region save_fi_transactions() function
+def save_fi_transactions(workbook : Workbook = None, trans_file:str=None) -> None:
     """Save the FI transactions workbook to the filesystem.
     
     The file is assumed to be in the folder specified in the budget_config. 
@@ -309,6 +311,7 @@ def save_banking_transactions(workbook : Workbook = None, trans_file:str=None) -
 
     """
     try:
+        # TODO: add logic to for workbook open in excel, work around.
         if (budget_config["output_prefix"] is not None and 
             isinstance(budget_config["output_prefix"], str) and
             len(budget_config["output_prefix"]) > 0):
@@ -323,7 +326,7 @@ def save_banking_transactions(workbook : Workbook = None, trans_file:str=None) -
     except Exception as e:
         logger.error(p3l.exc_msg(load_fi_transactions, e))
         raise    
-#endregion save_banking_transactions() function
+#endregion save_fi_transactions() function
 # ---------------------------------------------------------------------------- +
 #region load_fi_transactions() function
 def load_fi_transactions(trans_file:str=None) -> Workbook:
@@ -356,6 +359,7 @@ def load_fi_transactions(trans_file:str=None) -> Workbook:
         logger.error(p3l.exc_msg(load_fi_transactions, e))
         raise    
 #endregion load_fi_transactions() function
+# ---------------------------------------------------------------------------- +
 #region fi_if_workbook_keys() function
 def fi_if_workbook_keys(inst_key:str=None) -> dict:
     """Get the list of workbooks in the incoming folder for the specified institution.
@@ -379,6 +383,34 @@ def fi_if_workbook_keys(inst_key:str=None) -> dict:
         raise
 
 #endregion fi_if_workbook_keys() function
+# ---------------------------------------------------------------------------- +
+#region fi_if_workbook_abs_paths() function
+def fi_if_workbook_abs_path(inst_key:str, wb_key : str) -> Path.Path:
+    """Get abs path of Incoming Folder workbook from an inst_key and wb_key.
+
+    For a Finacial Institution (FI) designated by inst_key, get the absolute path
+    of the workbook designated by wb_key. The workbook is assumed to be in the
+    incoming folder (if) for the institution.
+
+    Args:
+        inst_key (str): The key of the institution to get the workbooks for.
+        wb_key (str): The key of the workbook to get the absolute path for.
+
+    Returns:
+        Path: An abs path to the workbook with the wb_key as file name.
+    """
+    try:
+        if inst_key is None or inst_key not in budget_model["institutions"]:
+            m = f"Invalid institution key: '{inst_key}'"
+            logger.error(m)
+            raise ValueError(m)
+        institution = budget_model[BT_FINANCIAL_INSTITUTIONS][inst_key]
+        workbooks = institution[IF_INCOMING_FOLDER_WORKBOOKS].values()
+        return workbooks
+    except Exception as e:
+        logger.exception(p3l.exc_msg(fi_if_workbook_abs_path, e))
+        raise
+#endregion fi_if_workbook_abs_paths() function
 # ---------------------------------------------------------------------------- +
 #region Local __main__ stand-alone
 if __name__ == "__main__":

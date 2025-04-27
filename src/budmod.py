@@ -66,12 +66,8 @@ def budmod():
     try:
         trans_file = "BOAChecking2025.xlsx"
         # Initalize the budget model.
-        bm = p3fi.init_budget_model()
 
-        for wbkey in p3fi.fi_if_workbook_keys("boa"):
-            print(f"wbkey: {wbkey}")
-            # process each workbook in the categorization process.
-            # create a journal proceess to track the transformation of the workbook.
+        p3fi.process_incoming_categorization("boa")
 
         # wb = p3fi.load_fi_transactions(trans_file)
         # log_workbook_info(trans_file, wb)
@@ -80,7 +76,7 @@ def budmod():
         # p3fi.check_budget_category(sheet)
         # # BOA specific: Map the 'Original Description' column to the 'Budget Category' column.
         # p3fi.map_budget_category(sheet, "Original Description", BUDGET_CATEGORY_COL)
-        # p3fi.save_banking_transactions(wb, trans_file)
+        # p3fi.save_fi_transactions(wb, trans_file)
         _ = "pause"
     except Exception as e:
         m = p3u.exc_msg(budmod, e)
@@ -93,6 +89,7 @@ if __name__ == "__main__":
     try:
         configure_logging(THIS_APP_NAME)
         logger.setLevel(logging.DEBUG)
+        bm = p3fi.init_budget_model()
         budmod() # Application Main()
     except Exception as e:
         m = p3u.exc_msg("__main__", e)

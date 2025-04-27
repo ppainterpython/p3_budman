@@ -43,9 +43,9 @@ Constants are defined in `p3_excel_budget_constants.py`. Abbrevs used: BT-Bankin
 # statements in spreadsheet format. So, the "budget" will cover multiple "banks"
 # information for a given user. Constants are defined in p3_excel_budget_constants.py
 budget_config = {  # _abs_path is not serialized, only _abs_path_str is serialized
-    BT_BUDGET_FOLDER: "~/OneDrive/budget",
-    BT_BUDGET_FOLDER_ABS_PATH_STR: None, # Set in init_budget_model()
-    BT_BUDGET_FOLDER_ABS_PATH: None,    # Not serialized
+    BM_BUDGET_FOLDER: "~/OneDrive/budget",
+    BM_BUDGET_FOLDER_ABS_PATH_STR: None, # Set in init_budget_model()
+    BM_BUDGET_FOLDER_ABS_PATH: None,    # Not serialized
     BT_FINANCIAL_INSTITUTIONS: {
         "boa": {
             FI_NAME: "Bank of America",
@@ -55,9 +55,9 @@ budget_config = {  # _abs_path is not serialized, only _abs_path_str is serializ
             FI_FOLDER_ABS_PATH: None,    # Not serialized
             # Incoming folder name and list of workbook names,
             # e.g. ["new_boa-1391-2024-04-28.xlsx"]
-            IF_INCOMING_FOLER: "data/new",
-            IF_INCOMING_FOLER_ABS_PATH_STR: None,    # Set in init_budget_model()
-            IF_INCOMING_FOLER_ABS_PATH: None,    # Not serialized
+            IF_INCOMING_FOLDER: "data/new",
+            IF_INCOMING_FOLDER_ABS_PATH_STR: None,    # Set in init_budget_model()
+            IF_INCOMING_FOLDER_ABS_PATH: None,    # Not serialized
             IF_INCOMING_FOLDER_WORKBOOKS: {}, # key = file name, value = absolute path
             # Categorized folder name and list of workbook names,
             # e.g. ["categorized_boa-1391-2024-04-28.xlsx"]
@@ -80,9 +80,9 @@ budget_config = {  # _abs_path is not serialized, only _abs_path_str is serializ
             FI_FOLDER_ABS_PATH: None,    # Not serialized
             # Incoming folder name and list of workbook names,
             # e.g. ["new_boa-1391-2024-04-28.xlsx"]
-            IF_INCOMING_FOLER: "data/new",
-            IF_INCOMING_FOLER_ABS_PATH_STR: None,    # Set in init_budget_model()
-            IF_INCOMING_FOLER_ABS_PATH: None,    # Not serialized
+            IF_INCOMING_FOLDER: "data/new",
+            IF_INCOMING_FOLDER_ABS_PATH_STR: None,    # Set in init_budget_model()
+            IF_INCOMING_FOLDER_ABS_PATH: None,    # Not serialized
             IF_INCOMING_FOLDER_WORKBOOKS: {}, # key = file name, value = absolute path
             # Categorized folder name and list of workbook names,
             # e.g. ["categorized_boa-1391-2024-04-28.xlsx"]

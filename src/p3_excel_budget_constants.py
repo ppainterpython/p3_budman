@@ -3,15 +3,18 @@ THIS_APP_NAME = "p3_Budget_Model"
 # Well-known column names for banking transactions workbooks.
 BUDGET_CATEGORY_COL = "Budget Category"
 
-# Budget Model Constants                        # BT prefix for Budget Transactions
+# Budget Model Constants                        # BM prefix for Budget Model
 ABS_PATH = "_abs_path"                          # suffix Path absolute path value
 ABS_PATH_STR = ABS_PATH + "_str"                # suffix Path absolute path str repr
 WORKBOOKS = "_workbooks"                        # suffix Workbooks
 
+# Budget Model (BM) Constants
+BM_INITIALIZED = "budget_model_initialized"     # BM prefix
+
 # Parent folder for banking transactions (BT) data.
-BT_BUDGET_FOLDER = "budget_folder"              # BF prefix
-BT_BUDGET_FOLDER_ABS_PATH_STR = BT_BUDGET_FOLDER + ABS_PATH_STR # BF prefix
-BT_BUDGET_FOLDER_ABS_PATH = BT_BUDGET_FOLDER + ABS_PATH # BF prefix
+BM_BUDGET_FOLDER = "budget_folder"              # BF prefix
+BM_BUDGET_FOLDER_ABS_PATH_STR = BM_BUDGET_FOLDER + ABS_PATH_STR # BF prefix
+BM_BUDGET_FOLDER_ABS_PATH = BM_BUDGET_FOLDER + ABS_PATH # BF prefix
 
 # Information about each financial institution (FI).
 BT_FINANCIAL_INSTITUTIONS = "institutions"      # FI prefix Financial Institutions
@@ -22,10 +25,10 @@ FI_FOLDER_ABS_PATH_STR = FI_FOLDER + ABS_PATH_STR  # FI prefix
 FI_FOLDER_ABS_PATH = FI_FOLDER + ABS_PATH          # FI prefix
 
 # sub-folder names for each financial institution (FI).
-IF_INCOMING_FOLER = "incoming_folder"           # IF prefix
-IF_INCOMING_FOLER_ABS_PATH_STR = IF_INCOMING_FOLER + ABS_PATH_STR # IF prefix
-IF_INCOMING_FOLER_ABS_PATH = IF_INCOMING_FOLER + ABS_PATH # IF prefix
-IF_INCOMING_FOLDER_WORKBOOKS = IF_INCOMING_FOLER + WORKBOOKS # IF prefix
+IF_INCOMING_FOLDER = "incoming_folder"           # IF prefix
+IF_INCOMING_FOLDER_ABS_PATH_STR = IF_INCOMING_FOLDER + ABS_PATH_STR # IF prefix
+IF_INCOMING_FOLDER_ABS_PATH = IF_INCOMING_FOLDER + ABS_PATH # IF prefix
+IF_INCOMING_FOLDER_WORKBOOKS = IF_INCOMING_FOLDER + WORKBOOKS # IF prefix
 
 CF_CATEGORAIZED_FOLDER = "categorized_folder"   # CF prefix
 CF_CATEGORAIZED_FOLDER_ABS_PATH_STR = CF_CATEGORAIZED_FOLDER + ABS_PATH_STR # CF prefix
