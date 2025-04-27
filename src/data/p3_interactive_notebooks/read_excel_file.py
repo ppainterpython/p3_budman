@@ -32,7 +32,7 @@ data = data.drop(["sensor_15"], axis=1)
 # --------------------------------------------------------------
 # Plot data
 # --------------------------------------------------------------
-from utility import plot_settings
+from data.p3_interactive_notebooks import plot_settings
 
 data["sensor_00"].plot()
 data["sensor_01"].plot()

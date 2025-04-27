@@ -12,7 +12,7 @@ print("sys.path:", sys.path)
 # Ensure the path to p3logging is added to sys.path
 #sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
 import p3logging as p3l
-from main import *
+from budmod import *
 
 #------------------------------------------------------------------------------+
 def test_main_default(caplog) -> None:

@@ -10,9 +10,145 @@ This project began with the goal of learning about `pandas`, `Jupyter` in `VS Co
    > **Note**
    > Begun in the winter of 2025, this was my first exerience with python, in VS Code and the current version of GitHub Copilot. I tried to spend a lot of time with GHC, to really understand what it can help with, and what it screws up.
 
-## Notes about p3_excel_budget Project
+## Implementation Notes
+
+These are for the author, as the implementation proceeds. At first, the idea is to leverage excel spreadsheets as the containers and source of banking transactions. Also, a processing pipeline of sorts is used to intake new transactions, such as monthly statement excel file downloads, and progress them through stages of manipulation until they are processed and part of the current budget view. Initially, the budget concept includes analysis of what accounts were used, how money was moved or spent as transactions, and good categorization of the transactions. Time series views are sought to see the trends.
+
+### Budget Model Folders
+
+Folders structure the data associated with a budget model as well as represent stages in the modelling processes. Each budget model has a root "Budget Folder" (BF) containing a hierarchy of subfolders. Data flows into a process by arriving in a particular folder. In general, new data serves as input to processes and is not modified in that folder used as input. Modified data is placed in a subsequent folder, to then be used as input downstream, etc. Each Financial Institution (FI) setup by the user will have a decidated folder to contain all the folders and data associated with it. As new banking transaction files arrive, in raw or original form, they are placed in the "raw" folder for the FI. No modifications are permitted  to files in raw format. To start work flows, new files are copied into the "Incoming Folder" (IF).
+
+With configuration features, a user may map these functional folders to selected places in the filesystem. To start, there is also a "Categorized Folder" (CF) and a "Processed Folder" (PF).
+
+As a process, Categorization runs on the IF and outputs to the CF. There may be serveral cycles and the process can be run multiple times, including restarted from scratch. As long as input data resides in the IF, it will be processible.
 
 While getting this project off the ground, I started learning how to build python packacges for various subcompents. Although a bit of a learning curve, the project structure has come together as follows.
+
+## Configuration and File System
+
+Trying to keep things simple from the beginning, the code works within some design decisions about where data is stored and the application data model when running.
+
+### Data Model
+
+Constants are defined in `p3_excel_budget_constants.py`. Abbrevs used: BT-Banking Transactions, FI-Financial Institution, IF-Incoming Folder, CF-Categorized Folder, PF-Processed Folder, BMO=Budget Model Options
+
+```python
+# User configuration covers the file structure where user data is stored as 
+# settings for options and preferences. Keep it simple.
+# There is both an object model used in the application (in memory) and a
+# file system structure used to store the data. In addition, the idea is that 
+# users are placing new banking transactions in an "incoming" folder folder 
+# for processing through stages to arrive in updating the budget. Long-view is 
+# anticipate more than one bank or financial institution sourcing regular 
+# statements in spreadsheet format. So, the "budget" will cover multiple "banks"
+# information for a given user. Constants are defined in p3_excel_budget_constants.py
+budget_config = {  # _abs_path is not serialized, only _abs_path_str is serialized
+    BT_BUDGET_FOLDER: "~/OneDrive/budget",
+    BT_BUDGET_FOLDER_ABS_PATH_STR: None, # Set in init_budget_model()
+    BT_BUDGET_FOLDER_ABS_PATH: None,    # Not serialized
+    BT_FINANCIAL_INSTITUTIONS: {
+        "boa": {
+            FI_NAME: "Bank of America",
+            FI_TYPE: "bank",
+            FI_FOLDER: "boa",
+            FI_FOLDER_ABS_PATH_STR: None, # Set in init_budget_model()
+            FI_FOLDER_ABS_PATH: None,    # Not serialized
+            # Incoming folder name and list of workbook names,
+            # e.g. ["new_boa-1391-2024-04-28.xlsx"]
+            IF_INCOMING_FOLER: "data/new",
+            IF_INCOMING_FOLER_ABS_PATH_STR: None,    # Set in init_budget_model()
+            IF_INCOMING_FOLER_ABS_PATH: None,    # Not serialized
+            IF_INCOMING_FOLDER_WORKBOOKS: {}, # key = file name, value = absolute path
+            # Categorized folder name and list of workbook names,
+            # e.g. ["categorized_boa-1391-2024-04-28.xlsx"]
+            CF_CATEGORAIZED_FOLDER: "data/categorized",
+            CF_CATEGORAIZED_FOLDER_ABS_PATH_STR: None, # Set in init_budget_model()
+            CF_CATEGORAIZED_FOLDER_ABS_PATH: None,    # Not serialized
+            CF_CATEGORAIZED_FOLDER_WORKBOOKS: {}, # key = file name, value = absolute path
+            # Processed folder name and list of workbook names,
+            # e.g. ["categorized_boa-1391-2024-03-28.xlsx"]
+            PF_PROCESSED_FOLDER: "data/processed",
+            PF_PROCESSED_FOLDER_ABS_PATH_STR: None, # Set in init_budget_model()
+            PF_PROCESSED_FOLDER_ABS_PATH: None,    # Not serialized
+            PF_PROCESSED_FOLDER_WORKBOOKS: {} # key = file name, value = absolute path
+        },
+        "merrill": {
+            FI_NAME: "Merrill Lynch",
+            FI_TYPE: "brokerage",
+            FI_FOLDER: "merrill",
+            FI_FOLDER_ABS_PATH_STR: None, # Set in init_budget_model()
+            FI_FOLDER_ABS_PATH: None,    # Not serialized
+            # Incoming folder name and list of workbook names,
+            # e.g. ["new_boa-1391-2024-04-28.xlsx"]
+            IF_INCOMING_FOLER: "data/new",
+            IF_INCOMING_FOLER_ABS_PATH_STR: None,    # Set in init_budget_model()
+            IF_INCOMING_FOLER_ABS_PATH: None,    # Not serialized
+            IF_INCOMING_FOLDER_WORKBOOKS: {}, # key = file name, value = absolute path
+            # Categorized folder name and list of workbook names,
+            # e.g. ["categorized_boa-1391-2024-04-28.xlsx"]
+            CF_CATEGORAIZED_FOLDER: "data/categorized",
+            CF_CATEGORAIZED_FOLDER_ABS_PATH_STR: None, # Set in init_budget_model()
+            CF_CATEGORAIZED_FOLDER_ABS_PATH: None,    # Not serialized
+            CF_CATEGORAIZED_FOLDER_WORKBOOKS: {}, # key = file name, value = absolute path
+            # Processed folder name and list of workbook names,
+            # e.g. ["categorized_boa-1391-2024-03-28.xlsx"]
+            PF_PROCESSED_FOLDER: "data/processed",
+            PF_PROCESSED_FOLDER_ABS_PATH_STR: None, # Set in init_budget_model()
+            PF_PROCESSED_FOLDER_ABS_PATH: None,    # Not serialized
+            PF_PROCESSED_FOLDER_WORKBOOKS: {} # key = file name, value = absolute path
+        },
+    },
+    BMO_OPTIONS: {
+        BMO_INCOMING_PREFIX: "new_",
+        BMO_CATEGORIZED_PREFIX: "categorized_",
+        BMO_PROCESSED_PREFIX: "processed_",
+        BMO_LOG_CONFIG: p3l.STDOUT_FILE_LOG_CONFIG_FILE,
+        BMO_LOG_LEVEL: logging.DEBUG,
+        BMO_LOG_FILE: "logs/p3ExcelBudget.log",
+        BMO_JSON_LOG_FILE: "logs/p3ExcelBudget.jsonl"
+    }
+}
+```
+
+### File System Storage Model
+
+```python
+├── boa/
+│   ├── data/
+│   │   ├── categorized/
+│   │   │   └── saved_BOAChecking2025.xlsx
+│   │   ├── new/
+│   │   │   ├── BOAChecking2023.xlsx
+│   │   │   ├── BOAChecking2024.xlsx
+│   │   │   └── BOAChecking2025.xlsx
+│   │   └── processed/
+│   │       ├── Manual-BOAChecking2023.xlsx
+│   │       ├── Manual-BOAChecking2024.xlsx
+│   │       └── Manual-BOAChecking2025.xlsx
+│   └── raw/
+│       ├── August2024_4747.csv
+│       ├── BOA2023.csv
+│       ├── BOA2023.xlsx
+│       ├── BOA2024.csv
+│       ├── BOA2024.xlsx
+│       ├── BOA2025.csv
+│       ├── BOA2025.xlsx
+│       ├── December2024_4747.csv
+│       ├── January2025_4747.csv
+│       ├── July2024_4747.csv
+│       ├── June2024_4747 (1).csv
+│       ├── May2024_4747 (1).csv
+│       ├── November2024_4747.csv
+│       ├── October2024_4747.csv
+│       ├── September2024_4747.csv
+│       ├── eStmt_2024-01-09.pdf
+│       ├── eStmt_2024-02-09.pdf
+│       ├── eStmt_2024-03-09.pdf
+│       └── eStmt_2024-04-09.pdf
+└── budget_config.jsonc
+```
+
+## Project Structure: p3_excel_budget
 
 ```python
 p3_excel_budget/
@@ -53,109 +189,6 @@ p3_excel_budget/
 └── requirements.txt
 
 9 directories, 26 files
-```
-
-## Configuration and File System
-
-Trying to keep things simple from the beginning, the code works within some design decisions about where data is stored and the application data model when running.
-
-### Data Model
-
-```python
-# User configuration covers the file structure where user data is stored as 
-# settings for options and preferences. Keep it simple.
-# There is both an object model used in the application (in memory) and a
-# file system structure used to store the data. In addition, the idea is that 
-# users are placing new banking transactions in an "incoming" folder folder 
-# for processing through stages to arrive in updating the budget. Long-view is 
-# anticipate more than one bank or financial institution sourcing regular 
-# statements in spreadsheet format. So, the "budget" will cover multiple "banks"
-# information for a given user.
-budget_config = {
-    "budget_folder": "~/OneDrive/budget",
-    "institutions": {
-        "boa": {
-            "name": "Bank of America",
-            "type": "bank",
-            "folder": "boa",
-            # Incoming folder name and list of workbook names,
-            # e.g. ["new_boa-1391-2024-04-28.xlsx"]
-            "incoming_folder": "new",
-            "incoming_workbooks": [],                
-            # Categorized folder name and list of workbook names,
-            # e.g. ["categorized_boa-1391-2024-04-28.xlsx"]
-            "categorized_folder": "categorized",
-            "categorized_workbooks": [],                
-            # Processed folder name and list of workbook names,
-            # e.g. ["categorized_boa-1391-2024-03-28.xlsx"]
-            "processed_folder": "processed",
-            "processed_workbooks": [],                
-        },
-        "merrill": {
-            "name": "Merrill Lynch",
-            "type": "brokerage",
-            "folder": "merrill",
-            # Incoming folder name and list of workbook names,
-            # e.g. ["new_boa-1391-2024-04-28.xlsx"]
-            "incoming_folder": "new",
-            "incoming_workbooks": [],                
-            # Categorized folder name and list of workbook names,
-            # e.g. ["categorized_boa-1391-2024-04-28.xlsx"]
-            "categorized_folder": "categorized",
-            "categorized_workbooks": [],                
-            # Processed folder name and list of workbook names,
-            # e.g. ["categorized_boa-1391-2024-03-28.xlsx"]
-            "processed_folder": "processed",
-            "processed_workbooks": [],                
-        },   
-    },
-    "options": {
-        "incoming_prefix": "new_",
-        "categorized_folder": "categorized_",
-        "processed_folder": "processed_",
-        "log_level": logging.DEBUG,
-        "log_file": "logs/p3ExcelBudget.log",
-        "json_log_file": "logs/p3ExcelBudget.jsonl",
-    },
-}
-```
-
-### File System Storage Model
-
-```python
-├── boa/
-│   ├── data/
-│   │   ├── categorized/
-│   │   │   └── saved_BOAChecking2025.xlsx
-│   │   ├── new/
-│   │   │   ├── BOAChecking2023.xlsx
-│   │   │   ├── BOAChecking2024.xlsx
-│   │   │   └── BOAChecking2025.xlsx
-│   │   └── processed/
-│   │       ├── Manual-BOAChecking2023.xlsx
-│   │       ├── Manual-BOAChecking2024.xlsx
-│   │       └── Manual-BOAChecking2025.xlsx
-│   └── raw/
-│       ├── August2024_4747.csv
-│       ├── BOA2023.csv
-│       ├── BOA2023.xlsx
-│       ├── BOA2024.csv
-│       ├── BOA2024.xlsx
-│       ├── BOA2025.csv
-│       ├── BOA2025.xlsx
-│       ├── December2024_4747.csv
-│       ├── January2025_4747.csv
-│       ├── July2024_4747.csv
-│       ├── June2024_4747 (1).csv
-│       ├── May2024_4747 (1).csv
-│       ├── November2024_4747.csv
-│       ├── October2024_4747.csv
-│       ├── September2024_4747.csv
-│       ├── eStmt_2024-01-09.pdf
-│       ├── eStmt_2024-02-09.pdf
-│       ├── eStmt_2024-03-09.pdf
-│       └── eStmt_2024-04-09.pdf
-└── budget_config.jsonc
 ```
 
 ## Learning about Pandas with openpyxl

@@ -1,4 +1,4 @@
-THIS_APP_NAME = "p3ExcelBudget"
+THIS_APP_NAME = "p3_Budget_Model"
 
 # Well-known column names for banking transactions workbooks.
 BUDGET_CATEGORY_COL = "Budget Category"
