@@ -1,0 +1,13 @@
+[project]
+name = "p3_exel_budget"
+dynamic = ["version"]
+description = "Python 3 Excel Budgeting Application"
+readme = "README.md"
+requires-python = ">=3.13"
+license = "MIT"
+license-files = ["LICEN[CS]E*"]
+[build-system]
+requires = ["setuptools>=78", "wheel"]
+build-backend = "setuptools.build_meta"
+[project.urls]
+Homepage = "https://github.com/ppainterpython/p3_execl_budget"

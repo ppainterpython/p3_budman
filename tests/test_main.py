@@ -9,9 +9,9 @@ print("\nCurrent working directory:", os.getcwd())
 print("Resolving path to current file:", os.path.abspath(__file__))
 print("sys.path:", sys.path)
 
-# Ensure the path to p3Logging is added to sys.path
+# Ensure the path to p3logging is added to sys.path
 #sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
-import p3Logging as p3l
+import p3logging as p3l
 from main import *
 
 #------------------------------------------------------------------------------+
@@ -95,7 +95,7 @@ def test_setup_logging(caplog) -> None:
         root_logger = logging.getLogger()
         # Initialize the logger from a logging configuration file.
         ln = THIS_APP_NAME; cf = p3l.STDERR_JSON_FILE_LOG_CONFIG_FILE; verbose = True
-        setup_logging(cf)
+        p3l.setup_logging(cf)
         with caplog.at_level(logging.DEBUG):
             logger.debug("Debug message for testing")
             logger.info("Info message for testing")

@@ -65,6 +65,11 @@ def main():
     """Main function to run PyExcelBudget application."""
     try:
         trans_file = "BOAChecking2025.xlsx"
+ 
+        configure_logging(THIS_APP_NAME)
+        # Initalize the budget model.
+        bm = p3b.init_budget_model()
+
         wb = p3b.load_banking_transactions(trans_file)
         log_workbook_info(trans_file, wb)
         sheet = wb.active
@@ -75,7 +80,8 @@ def main():
         p3b.save_banking_transactions(wb, trans_file)
         _ = "pause"
     except Exception as e:
-        logger.error(p3l.exc_msg(main, e))
+        m = p3u.exc_msg(main, e)
+        logger.error(m)
         raise
 #endregion main() function
 # ---------------------------------------------------------------------------- +
@@ -86,7 +92,8 @@ if __name__ == "__main__":
         logger.setLevel(logging.DEBUG)
         main() # Application Main()
     except Exception as e:
-        logger.error(p3l.exc_msg("__main__",e))
+        m = p3u.exc_msg("__main__", e)
+        logger.error(m)
     logger.info(f"Exiting {THIS_APP_NAME}...")
     exit(1)
 #endregion Local __main__ stand-alone
