@@ -56,7 +56,7 @@ def configure_logging(logger_name : str = THIS_APP_NAME, logtest : bool = False)
         if(logtest): 
             p3l.quick_logging_test(THIS_APP_NAME, log_config, filenames, reload = False)
     except Exception as e:
-        logger.error(p3l.exc_msg(configure_logging, e))
+        logger.error(p3u.exc_msg(configure_logging, e))
         raise
 #endregion configure_logging() function
 # ---------------------------------------------------------------------------- +

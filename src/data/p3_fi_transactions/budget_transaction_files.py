@@ -19,7 +19,7 @@ import p3_utils as p3u, pyjson5, p3logging as p3l
 from openpyxl import Workbook, load_workbook
 
 # local modules and packages
-from p3_excel_budget_constants import  *
+from p3_excel_budget_constants import *
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -146,6 +146,37 @@ selected_institution : str = "boa"
 incoming_folder_abs_path : Path.Path = None
 categorized_folder_abs_path : Path.Path = None
 # ---------------------------------------------------------------------------- +
+#region get_budget_model() -> dict
+def get_budget_model() -> dict:
+    """Get the budget model.
+
+    Returns:
+        dict: The budget model.
+    """
+    global budget_model
+    return budget_model
+#endregion get_budget_model() -> dict
+# ---------------------------------------------------------------------------- +
+#region set_budget_config(model_value : dict) -> none
+def set_budget_model(model_value : dict) -> None:
+    """Set the budget model configuration.
+
+    Args:
+        model_value (dict): The budget model configuration.
+    """
+    global budget_model
+    try:
+        if model_value is None or not isinstance(model_value, dict):
+            m = "model_value parameter is not valid."
+            logger.error(m)
+            raise ValueError(m)
+        budget_model = model_value
+        logger.debug(f"budget_model was set.")
+    except Exception as e:
+        logger.error(p3u.exc_msg(set_budget_model, e))
+        raise   
+#endregion set_budget_config(model_value : dict) -> none
+# ---------------------------------------------------------------------------- +
 #region check_budget_model() -> bool
 def check_budget_model() -> bool:   
     """Quick check of the budget model schema is valid.
@@ -214,8 +245,8 @@ def init_budget_model(create_missing_folders : bool = True, raise_errors : bool 
         # Use the budget_config to set up the budget model
         # TODO: Load value from model storage (e.g. json file) if it exists.
 
-        # Deep copy budget_config using comprehensions
-        budget_model = {
+        # Create a budget_model (bm) from deep copy budget_config using comprehensions
+        bm = {
             key: (
                 {k: (v[:] if isinstance(v, list) else v) for k, v in value.items()}
                 if isinstance(value, dict) else value
@@ -223,27 +254,27 @@ def init_budget_model(create_missing_folders : bool = True, raise_errors : bool 
             for key, value in budget_config.items()
         }
         # Check the budget model schema
-        if not check_budget_model():
-            m = "Budget model schema is not valid."
-            logger.error(m)
-            raise ValueError(m)
+        # if not check_budget_model():
+        #     m = "Budget model schema is not valid."
+        #     logger.error(m)
+        #     raise ValueError(m)
         
         # Set up Paths for the appropariate folders
         # Start with budget folder, then institution folder, then incoming folder
         # and categorized folder. Construct and validate absolute paths for all folders.
-        logger.debug(f"{BM_BUDGET_FOLDER}: '{budget_model[BM_BUDGET_FOLDER]}'")
-        budget_folder_path = Path.Path(budget_model[BM_BUDGET_FOLDER]).expanduser()
+        logger.debug(f"{BM_BUDGET_FOLDER}: '{bm[BM_BUDGET_FOLDER]}'")
+        budget_folder_path = Path.Path(bm[BM_BUDGET_FOLDER]).expanduser()
         budget_folder_abs_path = budget_folder_path.resolve()
         logger.debug(f"budget_folder_abs_path: '{budget_folder_abs_path}'")
         if not budget_folder_abs_path.exists():
             m = f"Budget folder does not exist: '{str(budget_folder_abs_path)}' ."
             logger.error(m)
             raise FileNotFoundError(m)
-        budget_model["budget_folder_abs_path_str"] = str(budget_folder_abs_path)
-        budget_model["budget_folder_abs_path"] = budget_folder_abs_path
+        bm["budget_folder_abs_path_str"] = str(budget_folder_abs_path)
+        bm["budget_folder_abs_path"] = budget_folder_abs_path
 
         # Institution folders
-        for institution_key, institution in budget_model[BT_FINANCIAL_INSTITUTIONS].items():
+        for institution_key, institution in bm[BT_FINANCIAL_INSTITUTIONS].items():
             institution_folder_path = budget_folder_path / institution["folder"]
             institution_folder_abs_path = institution_folder_path.resolve()
             logger.debug(f"{institution_key} folder: '{institution_folder_path}'")
@@ -258,11 +289,11 @@ def init_budget_model(create_missing_folders : bool = True, raise_errors : bool 
                         f"folder does not exist: '{str(institution_folder_abs_path)}'")
                     logger.error(m)
                     raise FileNotFoundError(m) if raise_errors else None
-            budget_model[BT_FINANCIAL_INSTITUTIONS][institution_key]["folder_abs_path_str"] = str(institution_folder_abs_path)
-            budget_model[BT_FINANCIAL_INSTITUTIONS][institution_key]["folder_abs_path"] = institution_folder_abs_path
+            bm[BT_FINANCIAL_INSTITUTIONS][institution_key]["folder_abs_path_str"] = str(institution_folder_abs_path)
+            bm[BT_FINANCIAL_INSTITUTIONS][institution_key]["folder_abs_path"] = institution_folder_abs_path
         
         # Create transaction subfolders if they do not exist
-        for institution in budget_model[BT_FINANCIAL_INSTITUTIONS].values():
+        for institution in bm[BT_FINANCIAL_INSTITUTIONS].values():
             for subfolder_type in ["incoming_folder", "categorized_folder", "processed_folder"]:
                 subfolder_path = institution["folder_abs_path"] / institution[subfolder_type]
                 if not subfolder_path.exists():
@@ -273,7 +304,7 @@ def init_budget_model(create_missing_folders : bool = True, raise_errors : bool 
                 institution[subfolder_type + ABS_PATH] = subfolder_path.resolve()
 
         # Look for subfolder workbooks
-        for institution in budget_config[BT_FINANCIAL_INSTITUTIONS].values():
+        for institution in bm[BT_FINANCIAL_INSTITUTIONS].values():
             for subfolder_type in [IF_INCOMING_FOLDER, CF_CATEGORAIZED_FOLDER, PF_PROCESSED_FOLDER]:
                 subfolder_path = institution[subfolder_type + ABS_PATH]
                 # Get the list of workbooks in the subfolder
@@ -281,13 +312,29 @@ def init_budget_model(create_missing_folders : bool = True, raise_errors : bool 
                 # Add the workbook names to the budget model
                 institution[subfolder_type + "_workbooks"] = {path.name: path for path in workbooks}
                 logger.debug(f"Institution({institution["folder"]})[{subfolder_type}]: Workbooks: '{str(institution[subfolder_type + "_workbooks"])}'")
-        budget_model[BM_INITIALIZED] = True
-        return budget_model
+        bm[BM_INITIALIZED] = True
+        set_budget_model(bm)
+        return get_budget_model()
     except Exception as e:
-        m = p3l.exc_msg(me, e)
+        m = p3u.exc_msg(me, e)
         logger.error(m)
         raise
 #endregion init_budget_model(budget_config) -> None
+#regions validate_budget_model() -> None
+def validate_budget_model(bm:dict=None) -> None:  
+    """Validate budget_model is not None and initialized."""
+    try:
+        bm = get_budget_model() if bm is None else bm
+        if bm is None or not bm[BM_INITIALIZED]:
+            # Budget model is not initialized, raise an error.
+            m = "Budget model is not initialized."
+            logger.error(m)
+            raise RuntimeError(m)
+    except Exception as e:
+        m = p3u.exc_msg(validate_budget_model, e)
+        logger.error(m)
+        raise
+#endregion validate_budget_model() -> None
 # ---------------------------------------------------------------------------- +
 #endregion Budget Model (MVVM sense of Model)
 # ---------------------------------------------------------------------------- +
@@ -310,6 +357,8 @@ def save_fi_transactions(workbook : Workbook = None, trans_file:str=None) -> Non
         Workbook: The workbook containing the FI transactions.
 
     """
+    global budget_model
+    validate_budget_model()
     try:
         # TODO: add logic to for workbook open in excel, work around.
         if (budget_config["output_prefix"] is not None and 
@@ -324,7 +373,7 @@ def save_fi_transactions(workbook : Workbook = None, trans_file:str=None) -> Non
         logger.info(f"Saved FI transactions to '{str(trans_path)}'")
         return
     except Exception as e:
-        logger.error(p3l.exc_msg(load_fi_transactions, e))
+        logger.error(p3u.exc_msg(load_fi_transactions, e))
         raise    
 #endregion save_fi_transactions() function
 # ---------------------------------------------------------------------------- +
@@ -347,6 +396,8 @@ def load_fi_transactions(trans_file:str=None) -> Workbook:
         Workbook: The workbook containing the FI transactions.
 
     """
+    global budget_model
+    validate_budget_model()
     try:
         trans_path = Path.Path(budget_config["bank_transactions_folder"]) / trans_file
 
@@ -356,12 +407,12 @@ def load_fi_transactions(trans_file:str=None) -> Workbook:
 
         return wb
     except Exception as e:
-        logger.error(p3l.exc_msg(load_fi_transactions, e))
+        logger.error(p3u.exc_msg(load_fi_transactions, e))
         raise    
 #endregion load_fi_transactions() function
 # ---------------------------------------------------------------------------- +
 #region fi_if_workbook_keys() function
-def fi_if_workbook_keys(inst_key:str=None) -> dict:
+def fi_if_workbook_keys(inst_key:str=None,bm:dict=None) -> dict:
     """Get the list of workbooks in the incoming folder for the specified institution.
 
     Args:
@@ -371,15 +422,17 @@ def fi_if_workbook_keys(inst_key:str=None) -> dict:
         dict: A dictionary of workbooks with the file name as the key.
     """
     try:
-        if inst_key is None or inst_key not in budget_model["institutions"]:
+        bm = get_budget_model() if bm is None else bm
+        validate_budget_model(bm)
+        if inst_key is None or inst_key not in bm["institutions"]:
             m = f"Invalid institution key: '{inst_key}'"
             logger.error(m)
             raise ValueError(m)
-        institution = budget_model[BT_FINANCIAL_INSTITUTIONS][inst_key]
+        institution = bm[BT_FINANCIAL_INSTITUTIONS][inst_key]
         workbooks = institution[IF_INCOMING_FOLDER_WORKBOOKS].keys()
         return workbooks
     except Exception as e:
-        logger.exception(p3l.exc_msg(fi_if_workbook_keys, e))
+        logger.exception(p3u.exc_msg(fi_if_workbook_keys, e))
         raise
 
 #endregion fi_if_workbook_keys() function
@@ -400,6 +453,8 @@ def fi_if_workbook_abs_path(inst_key:str, wb_key : str) -> Path.Path:
         Path: An abs path to the workbook with the wb_key as file name.
     """
     try:
+        bm = get_budget_model() if bm is None else bm
+        validate_budget_model(bm)
         if inst_key is None or inst_key not in budget_model["institutions"]:
             m = f"Invalid institution key: '{inst_key}'"
             logger.error(m)
@@ -408,7 +463,8 @@ def fi_if_workbook_abs_path(inst_key:str, wb_key : str) -> Path.Path:
         workbooks = institution[IF_INCOMING_FOLDER_WORKBOOKS].values()
         return workbooks
     except Exception as e:
-        logger.exception(p3l.exc_msg(fi_if_workbook_abs_path, e))
+        m = p3u.exc_msg(fi_if_workbook_abs_path, e)
+        logger.error(m)
         raise
 #endregion fi_if_workbook_abs_paths() function
 # ---------------------------------------------------------------------------- +
@@ -430,7 +486,7 @@ if __name__ == "__main__":
         bm = init_budget_model()
         # load_fi_transactions()
     except Exception as e:
-        logger.error(p3l.exc_msg("__main__",e))
+        logger.error(p3u.exc_msg("__main__",e))
     logger.info(f"Exiting {THIS_APP_NAME}...")
     exit(1)
 #endregion

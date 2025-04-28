@@ -14,7 +14,10 @@ __description__ = "Work with Excel wookboo data for budgeting functions."
 __license__ = "MIT"
 
 from .budget_transaction_files import (
+    budget_model,
     init_budget_model,
+    check_budget_model,
+    validate_budget_model,
     load_fi_transactions, 
     save_fi_transactions,
     fi_if_workbook_keys,
@@ -31,8 +34,10 @@ from .category_mapping import (
 )
 
 __all__ = [
+    "budget_model",
     "init_budget_model",
-    "load_fi_transactions",
+    "check_budget_model",
+    "validate_budget_model",
     "save_fi_transactions",
     "fi_if_workbook_keys",
     "check_budget_category",

@@ -20,9 +20,10 @@ from openpyxl import Workbook, load_workbook
 
 # local modules and packages
 from p3_excel_budget_constants import  *
-from .category_mapping import map_category, category_map_count
-from .budget_transaction_files import (fi_if_workbook_keys, 
-                                load_fi_transactions, save_fi_transactions)
+from src.data.p3_fi_transactions.category_mapping import (
+    map_category, category_map_count)
+from src.data.p3_fi_transactions.budget_transaction_files import (
+    fi_if_workbook_keys, load_fi_transactions, save_fi_transactions)
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -150,6 +151,7 @@ def process_incoming_categorization(inst_key: str) -> None:
             # Save the categorized transactions to the CF (Categorized Folder).
             save_fi_transactions(wb, wbkey)
     except Exception as e:
-        logger.error(p3u.exc_msg(me, e))
+        m = p3u.exc_msg(me, e)
+        logger.error(m)
 #endregion process_incoming_categorization() function
 # ---------------------------------------------------------------------------- +
