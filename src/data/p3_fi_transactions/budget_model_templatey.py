@@ -1,6 +1,15 @@
 # ---------------------------------------------------------------------------- +
-#region p3_execl_budget.p3_banking_transactions transaction_files.py module
-""" Support for reading and writing excel files for FI transactions.
+#region p3_budget_model_template.py module
+""" Provide a functiona template class for the budget_model class.
+
+    Creates a functional instance from a declared dictionary used to document
+    the data structure and configure defaults. It is useful for validation
+    of constant names, different default settings, etc.
+
+    4/29/2025: Soon, the budget_model configuration and setup will be from a 
+    config file. The template could be used to create a pristing, new config 
+    file for a new budget_model instance. But for now, budget_model is a 
+    singleton class.
 
     Assumptions:
     - The FI transactions are in a folder specified in the budget_config.
@@ -425,7 +434,7 @@ class BudgetModel(metaclass=SingletonMeta):
         setattr(self, BM_WORKING_DATA, {})  # wd - budget model working data
     #endregion BudgetModel class constructor __init__()
     # ------------------------------------------------------------------------ +
-        #region BudgetModel internal class properties
+    #region BudgetModel internal class properties
     def to_dict(self):
         '''Return BudgetModelTemplate dictionary object. Used for serialization.'''
         ret = {
@@ -466,7 +475,6 @@ class BudgetModel(metaclass=SingletonMeta):
         ret += f"{BM_LAST_MODIFIED_BY} = '{self.bm_last_modified_by}', "
         ret += f"{BM_WORKING_DATA} = {self.bm_working_data}"
         return ret
-    #endregion BudgetModel internal class properties
     #endregion BudgetModel internal class properties
     # ------------------------------------------------------------------------ +
     #region BudgetModel public class properties
@@ -861,7 +869,7 @@ if __name__ == "__main__":
         logger.debug(f"Budget Model: str() = '{bms}'")
         logger.debug(f"Budget Model: repr() = '{bmr}'")
         logger.debug(f"Budget Model: to_dict() = '{bmd}'")
-        logger.info(f"Budget Model: {str(bm)}")
+
         _ = "pause"
     except Exception as e:
         m = p3u.exc_msg("__main__", e)
