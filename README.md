@@ -43,10 +43,10 @@ Constants are defined in `p3_excel_budget_constants.py`. Abbrevs used: BT-Bankin
 # statements in spreadsheet format. So, the "budget" will cover multiple "banks"
 # information for a given user. Constants are defined in p3_excel_budget_constants.py
 budget_config = {  # _abs_path is not serialized, only _abs_path_str is serialized
-    BM_BUDGET_FOLDER: "~/OneDrive/budget",
-    BM_BUDGET_FOLDER_ABS_PATH_STR: None, # Set in init_budget_model()
-    BM_BUDGET_FOLDER_ABS_PATH: None,    # Not serialized
-    BT_FINANCIAL_INSTITUTIONS: {
+    BM_BF: "~/OneDrive/budget",
+    BM_BF_ABS_PATH_STR: None, # Set in init_budget_model()
+    BM_BF_ABS_PATH: None,    # Not serialized
+    BM_FI: {
         "boa": {
             FI_NAME: "Bank of America",
             FI_TYPE: "bank",

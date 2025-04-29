@@ -42,19 +42,21 @@ def configure_logging(logger_name : str = THIS_APP_NAME, logtest : bool = False)
     """Setup the application logger."""
     try:
         # Configure logging
-        log_config = p3l.STDOUT_FILE_LOG_CONFIG_FILE
+        log_config_file = "budget_model_logging_config.jsonc"
         # Set the log filename for this application.
-        filenames = {"file": "logs/p3ExcelBudget.log"}
-        _ = p3l.setup_logging(logger_name = logger_name,
-                                           config_file = log_config,
-                                           filenames = filenames)
+        # filenames = {"file": "logs/p3ExcelBudget.log"}
+        _ = p3l.setup_logging(
+            logger_name = logger_name,
+            config_file = log_config_file
+            )
         p3l.set_log_flag(p3l.LOG_FLAG_PRINT_CONFIG_ERRORS, True)
         logger = logging.getLogger(THIS_APP_NAME)
+        logger.setLevel(logging.DEBUG)
         logger.info("+ ----------------------------------------------------- +")
         logger.info(f"+ Running {THIS_APP_NAME}...")
         logger.info("+ ----------------------------------------------------- +")
         if(logtest): 
-            p3l.quick_logging_test(THIS_APP_NAME, log_config, filenames, reload = False)
+            p3l.quick_logging_test(THIS_APP_NAME, log_config_file, reload = False)
     except Exception as e:
         logger.error(p3u.exc_msg(configure_logging, e))
         raise
@@ -89,7 +91,7 @@ if __name__ == "__main__":
     try:
         configure_logging(THIS_APP_NAME)
         logger.setLevel(logging.DEBUG)
-        bm = p3fi.init_budget_model()
+        bm = p3fi.init_budget_model()  # How to load the budget model config?
         budmod() # Application Main()
     except Exception as e:
         m = p3u.exc_msg("__main__", e)

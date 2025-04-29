@@ -3,48 +3,49 @@ THIS_APP_NAME = "p3_Budget_Model"
 # Well-known column names for banking transactions workbooks.
 BUDGET_CATEGORY_COL = "Budget Category"
 
-# Budget Model Constants                        # BM prefix for Budget Model
-ABS_PATH = "_abs_path"                          # suffix Path absolute path value
-ABS_PATH_STR = ABS_PATH + "_str"                # suffix Path absolute path str repr
-WORKBOOKS = "_workbooks"                        # suffix Workbooks
+# Budget Model Constants                           # BM prefix for Budget Model
+BM_DEFAULT_FILE_NAME = "budget_model.json"         # BM prefix
+ABS_PATH = "_abs_path"                             # suffix Path absolute path value
+ABS_PATH_STR = ABS_PATH + "_str"                   # suffix Path absolute path str repr
+WORKBOOKS = "_workbooks"                           # suffix Workbooks
 
-# Budget Model (BM) Constants
-BM_INITIALIZED = "budget_model_initialized"     # BM prefix
+# Budget Model (BM) attribute name Constants
+BM_INITIALIZED = "initialized"                     # BM prefix
+BM_BF = "budget_folder"                            # BM_BF prefix
+BM_FI = "financial_institutions"                   # FI prefix
+BM_STORE_URI = "budget_store_uri"                  # BM prefix
 
-# Parent folder for banking transactions (BT) data.
-BM_BUDGET_FOLDER = "budget_folder"              # BF prefix
-BM_BUDGET_FOLDER_ABS_PATH_STR = BM_BUDGET_FOLDER + ABS_PATH_STR # BF prefix
-BM_BUDGET_FOLDER_ABS_PATH = BM_BUDGET_FOLDER + ABS_PATH # BF prefix
+BM_BF_ABS_PATH_STR = BM_BF   # BM prefix
+BM_BF_ABS_PATH = BM_BF + ABS_PATH # BF prefix
 
 # Information about each financial institution (FI).
-BT_FINANCIAL_INSTITUTIONS = "institutions"      # FI prefix Financial Institutions
-FI_NAME = "name"                                # FI prefix
-FI_TYPE = "type"                                # FI prefix
-FI_FOLDER = "folder"                            # FI prefix
+FI_NAME = "name"                                   # FI prefix
+FI_TYPE = "type"                                   # FI prefix
+FI_FOLDER = "fi_folder"                      # FI prefix
 FI_FOLDER_ABS_PATH_STR = FI_FOLDER + ABS_PATH_STR  # FI prefix
 FI_FOLDER_ABS_PATH = FI_FOLDER + ABS_PATH          # FI prefix
 
 # sub-folder names for each financial institution (FI).
-IF_INCOMING_FOLDER = "incoming_folder"           # IF prefix
-IF_INCOMING_FOLDER_ABS_PATH_STR = IF_INCOMING_FOLDER + ABS_PATH_STR # IF prefix
-IF_INCOMING_FOLDER_ABS_PATH = IF_INCOMING_FOLDER + ABS_PATH # IF prefix
-IF_INCOMING_FOLDER_WORKBOOKS = IF_INCOMING_FOLDER + WORKBOOKS # IF prefix
+FI_IF = "incoming_folder"           # FI_IF prefix
+FI_IF_ABS_PATH_STR = FI_IF + ABS_PATH_STR # FI_IF prefix
+FI_IF_ABS_PATH = FI_IF + ABS_PATH # FI_IF prefix
+FI_IF_WORKBOOKS = FI_IF + WORKBOOKS # FI_IF prefix
 
-CF_CATEGORAIZED_FOLDER = "categorized_folder"   # CF prefix
-CF_CATEGORAIZED_FOLDER_ABS_PATH_STR = CF_CATEGORAIZED_FOLDER + ABS_PATH_STR # CF prefix
-CF_CATEGORAIZED_FOLDER_ABS_PATH = CF_CATEGORAIZED_FOLDER + ABS_PATH # CF prefix
-CF_CATEGORAIZED_FOLDER_WORKBOOKS = CF_CATEGORAIZED_FOLDER + WORKBOOKS # CF prefix0
+FI_CF = "categorized_folder"                       # FI_CF prefix
+FI_CF_ABS_PATH_STR = FI_CF + ABS_PATH_STR          # FI_CF prefix
+FI_CF_ABS_PATH = FI_CF + ABS_PATH                  # FI_CF prefix
+FI_CF_WORKBOOKS = FI_CF + WORKBOOKS                # FI_CF prefix0
 
-PF_PROCESSED_FOLDER = "processed_folder"        # PF prefix
-PF_PROCESSED_FOLDER_ABS_PATH_STR = PF_PROCESSED_FOLDER + ABS_PATH_STR # PF prefix
-PF_PROCESSED_FOLDER_ABS_PATH = PF_PROCESSED_FOLDER + ABS_PATH # PF prefix
-PF_PROCESSED_FOLDER_WORKBOOKS = PF_PROCESSED_FOLDER + WORKBOOKS # PF prefix
+FI_PF = "processed_folder"                         # FI_PF prefix
+FI_PF_ABS_PATH_STR = FI_PF + ABS_PATH_STR          # FI_PF prefix
+FI_PF_ABS_PATH = FI_PF + ABS_PATH                  # FI_PF prefix
+FI_PF_WORKBOOKS = FI_PF + WORKBOOKS                # FI_PF prefix
 
 # Budget Model Options Constants
-BMO_OPTIONS = "options"
-BMO_INCOMING_PREFIX = "incoming_prefix"
-BMO_CATEGORIZED_PREFIX = "categorized_prefix"
-BMO_PROCESSED_PREFIX = "processed_prefix"
+BM_OPTIONS = "options"                             # BMO prefix
+BMO_FI_IF_PREFIX = "incoming_prefix"
+BMO_FI_CF_PREFIX = "categorized_prefix"
+BMO_FI_PF_PREFIX = "processed_prefix"
 BMO_LOG_CONFIG = "log_config"
 BMO_LOG_LEVEL = "log_level"
 BMO_LOG_FILE = "log_file"

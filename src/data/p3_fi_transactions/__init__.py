@@ -13,7 +13,7 @@ __name__ = "p3_excel_budget"
 __description__ = "Work with Excel wookboo data for budgeting functions."
 __license__ = "MIT"
 
-from .budget_transaction_files import (
+from .budget_model import (
     budget_model,
     init_budget_model,
     check_budget_model,

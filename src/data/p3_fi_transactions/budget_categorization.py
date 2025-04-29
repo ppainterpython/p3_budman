@@ -22,7 +22,7 @@ from openpyxl import Workbook, load_workbook
 from p3_excel_budget_constants import  *
 from src.data.p3_fi_transactions.category_mapping import (
     map_category, category_map_count)
-from src.data.p3_fi_transactions.budget_transaction_files import (
+from data.p3_fi_transactions.budget_model import (
     fi_if_workbook_keys, load_fi_transactions, save_fi_transactions)
 #endregion Imports
 # ---------------------------------------------------------------------------- +
