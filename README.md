@@ -42,72 +42,57 @@ Constants are defined in `p3_excel_budget_constants.py`. Abbrevs used: BT-Bankin
 # anticipate more than one bank or financial institution sourcing regular 
 # statements in spreadsheet format. So, the "budget" will cover multiple "banks"
 # information for a given user. Constants are defined in p3_excel_budget_constants.py
-budget_config = {  # _abs_path is not serialized, only _abs_path_str is serialized
-    BM_BF: "~/OneDrive/budget",
-    BM_BF_ABS_PATH_STR: None, # Set in init_budget_model()
-    BM_BF_ABS_PATH: None,    # Not serialized
-    BM_FI: {
-        "boa": {
-            FI_NAME: "Bank of America",
-            FI_TYPE: "bank",
-            FI_FOLDER: "boa",
-            FI_FOLDER_ABS_PATH_STR: None, # Set in init_budget_model()
-            FI_FOLDER_ABS_PATH: None,    # Not serialized
-            # Incoming folder name and list of workbook names,
-            # e.g. ["new_boa-1391-2024-04-28.xlsx"]
-            IF_INCOMING_FOLDER: "data/new",
-            IF_INCOMING_FOLDER_ABS_PATH_STR: None,    # Set in init_budget_model()
-            IF_INCOMING_FOLDER_ABS_PATH: None,    # Not serialized
-            IF_INCOMING_FOLDER_WORKBOOKS: {}, # key = file name, value = absolute path
-            # Categorized folder name and list of workbook names,
-            # e.g. ["categorized_boa-1391-2024-04-28.xlsx"]
-            CF_CATEGORAIZED_FOLDER: "data/categorized",
-            CF_CATEGORAIZED_FOLDER_ABS_PATH_STR: None, # Set in init_budget_model()
-            CF_CATEGORAIZED_FOLDER_ABS_PATH: None,    # Not serialized
-            CF_CATEGORAIZED_FOLDER_WORKBOOKS: {}, # key = file name, value = absolute path
-            # Processed folder name and list of workbook names,
-            # e.g. ["categorized_boa-1391-2024-03-28.xlsx"]
-            PF_PROCESSED_FOLDER: "data/processed",
-            PF_PROCESSED_FOLDER_ABS_PATH_STR: None, # Set in init_budget_model()
-            PF_PROCESSED_FOLDER_ABS_PATH: None,    # Not serialized
-            PF_PROCESSED_FOLDER_WORKBOOKS: {} # key = file name, value = absolute path
+budget_model_template = {  # _abs_path is not serialized, only _abs_path_str is serialized
+        BM_INITIALIZED: False,
+        BM_BF: "~/OneDrive/budget",
+        # BM_BF_ABS_PATH_STR: None, # Set in init_budget_model()
+        # BM_BF_ABS_PATH: None,    # Not serialized
+        BM_FI: {
+            "boa": {
+                FI_NAME: "Bank of America",
+                FI_TYPE: "bank",
+                FI_FOLDER: "boa",
+                # Incoming folder name and list of workbook names,
+                # e.g. ["new_boa-1391-2024-04-28.xlsx"]
+                FI_IF: "data/new",
+                FI_IF_WORKBOOKS: {}, # key = file name, value = absolute path
+                # Categorized folder name and list of workbook names,
+                # e.g. ["categorized_boa-1391-2024-04-28.xlsx"]
+                FI_CF: "data/categorized",
+                FI_CF_WORKBOOKS: {}, # key = file name, value = absolute path
+                # Processed folder name and list of workbook names,
+                # e.g. ["categorized_boa-1391-2024-03-28.xlsx"]
+                FI_PF: "data/processed",
+                FI_PF_WORKBOOKS: {} # key = file name, value = absolute path
+            },
+            "merrill": {
+                FI_NAME: "Merrill Lynch",
+                FI_TYPE: "brokerage",
+                FI_FOLDER: "merrill",
+                # Incoming folder name and list of workbook names,
+                # e.g. ["new_boa-1391-2024-04-28.xlsx"]
+                FI_IF: "data/new",
+                FI_IF_WORKBOOKS: {}, # key = file name, value = absolute path
+                # Categorized folder name and list of workbook names,
+                # e.g. ["categorized_boa-1391-2024-04-28.xlsx"]
+                FI_CF: "data/categorized",
+                FI_CF_WORKBOOKS: {}, # key = file name, value = absolute path
+                # Processed folder name and list of workbook names,
+                # e.g. ["categorized_boa-1391-2024-03-28.xlsx"]
+                FI_PF: "data/processed",
+                FI_PF_WORKBOOKS: {} # key = file name, value = absolute path
+            },
         },
-        "merrill": {
-            FI_NAME: "Merrill Lynch",
-            FI_TYPE: "brokerage",
-            FI_FOLDER: "merrill",
-            FI_FOLDER_ABS_PATH_STR: None, # Set in init_budget_model()
-            FI_FOLDER_ABS_PATH: None,    # Not serialized
-            # Incoming folder name and list of workbook names,
-            # e.g. ["new_boa-1391-2024-04-28.xlsx"]
-            IF_INCOMING_FOLDER: "data/new",
-            IF_INCOMING_FOLDER_ABS_PATH_STR: None,    # Set in init_budget_model()
-            IF_INCOMING_FOLDER_ABS_PATH: None,    # Not serialized
-            IF_INCOMING_FOLDER_WORKBOOKS: {}, # key = file name, value = absolute path
-            # Categorized folder name and list of workbook names,
-            # e.g. ["categorized_boa-1391-2024-04-28.xlsx"]
-            CF_CATEGORAIZED_FOLDER: "data/categorized",
-            CF_CATEGORAIZED_FOLDER_ABS_PATH_STR: None, # Set in init_budget_model()
-            CF_CATEGORAIZED_FOLDER_ABS_PATH: None,    # Not serialized
-            CF_CATEGORAIZED_FOLDER_WORKBOOKS: {}, # key = file name, value = absolute path
-            # Processed folder name and list of workbook names,
-            # e.g. ["categorized_boa-1391-2024-03-28.xlsx"]
-            PF_PROCESSED_FOLDER: "data/processed",
-            PF_PROCESSED_FOLDER_ABS_PATH_STR: None, # Set in init_budget_model()
-            PF_PROCESSED_FOLDER_ABS_PATH: None,    # Not serialized
-            PF_PROCESSED_FOLDER_WORKBOOKS: {} # key = file name, value = absolute path
-        },
-    },
-    BMO_OPTIONS: {
-        BMO_INCOMING_PREFIX: "new_",
-        BMO_CATEGORIZED_PREFIX: "categorized_",
-        BMO_PROCESSED_PREFIX: "processed_",
-        BMO_LOG_CONFIG: p3l.STDOUT_FILE_LOG_CONFIG_FILE,
-        BMO_LOG_LEVEL: logging.DEBUG,
-        BMO_LOG_FILE: "logs/p3ExcelBudget.log",
-        BMO_JSON_LOG_FILE: "logs/p3ExcelBudget.jsonl"
+        BM_OPTIONS: {
+            BMO_FI_IF_PREFIX: "new_",
+            BMO_FI_CF_PREFIX: "categorized_",
+            BMO_FI_CF_PREFIX: "processed_",
+            BMO_LOG_CONFIG: "budget_model_logging_config.jsonc",
+            BMO_LOG_LEVEL: logging.DEBUG,
+            BMO_LOG_FILE: "logs/p3BudgetModel.log",
+            BMO_JSON_LOG_FILE: "logs/p3BudgetModel.jsonl"
+        }
     }
-}
 ```
 
 ### File System Storage Model
