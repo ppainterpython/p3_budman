@@ -22,6 +22,7 @@ from openpyxl import Workbook, load_workbook
 
 # local modules and packages
 from p3_excel_budget_constants import *
+from budget_model_template import _BudgetModelTemplate
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -39,356 +40,6 @@ class SingletonMeta(type):
         if cls not in cls._instances:
             cls._instances[cls] = super().__call__(*args, **kwargs)
         return cls._instances[cls]
-# ---------------------------------------------------------------------------- +
-class _BudgetModelTemplate:
-    """Default BbudgetModelTemplate class, contains default, example values.
-    
-    Defines the BudgetModel structure with two example Financial Institutions.
-    Convenient for developer.
-    """
-    # ------------------------------------------------------------------------ +
-    #region BudgetModelTemplate Configuration Template
-    # Budget configuration covers the file structure where user data is stored as 
-    # settings for options and preferences. Keep it simple.
-    # There is both an object model used in the application (in memory) and a
-    # file system structure used to store the data. In addition, the idea is that 
-    # users are placing new FI transactions in an "incoming" folder folder 
-    # for processing through stages to arrive in updating the budget. Long-view is 
-    # anticipate more than one bank or financial institution sourcing regular 
-    # statements in spreadsheet format. So, the "budget" will cover multiple "banks"
-    # information for a given user.
-    budget_config_expected_keys = (BM_INITIALIZED,BM_BF, BM_FI, 
-                                BM_OPTIONS)
-    valid_institutions_keys = ("boa", "merrill")
-    institution_expected_keys = (
-        FI_NAME, 
-        FI_TYPE, 
-        FI_FOLDER, 
-        FI_IF,
-        FI_IF_WORKBOOKS,
-        FI_CF,
-        FI_CF_WORKBOOKS,
-        FI_PF,
-        FI_PF_WORKBOOKS
-        )
-    options_expected_keys = (
-        BMO_FI_IF_PREFIX, 
-        BMO_FI_CF_PREFIX,
-        BMO_FI_PF_PREFIX,
-        BMO_LOG_CONFIG,
-        BMO_LOG_LEVEL,
-        BMO_LOG_FILE,
-        BMO_JSON_LOG_FILE
-        )
-    budget_model_template = {  # _abs_path is not serialized, only _abs_path_str is serialized
-        BM_INITIALIZED: False,
-        BM_BF: BM_DEFAULT_BUDGET_FOLDER,
-        BM_STORE_URI: None,
-        BM_FI: {
-            "boa": {
-                FI_NAME: "Bank of America",
-                FI_TYPE: "bank",
-                FI_FOLDER: "boa",
-                # Incoming folder name and list of workbook names,
-                # e.g. ["new_boa-1391-2024-04-28.xlsx"]
-                FI_IF: "data/new",
-                FI_IF_WORKBOOKS: {}, # key = file name, value = absolute path
-                # Categorized folder name and list of workbook names,
-                # e.g. ["categorized_boa-1391-2024-04-28.xlsx"]
-                FI_CF: "data/categorized",
-                FI_CF_WORKBOOKS: {}, # key = file name, value = absolute path
-                # Processed folder name and list of workbook names,
-                # e.g. ["categorized_boa-1391-2024-03-28.xlsx"]
-                FI_PF: "data/processed",
-                FI_PF_WORKBOOKS: {} # key = file name, value = absolute path
-            },
-            "merrill": {
-                FI_NAME: "Merrill Lynch",
-                FI_TYPE: "brokerage",
-                FI_FOLDER: "merrill",
-                # Incoming folder name and list of workbook names,
-                # e.g. ["new_boa-1391-2024-04-28.xlsx"]
-                FI_IF: "data/new",
-                FI_IF_WORKBOOKS: {}, # key = file name, value = absolute path
-                # Categorized folder name and list of workbook names,
-                # e.g. ["categorized_boa-1391-2024-04-28.xlsx"]
-                FI_CF: "data/categorized",
-                FI_CF_WORKBOOKS: {}, # key = file name, value = absolute path
-                # Processed folder name and list of workbook names,
-                # e.g. ["categorized_boa-1391-2024-03-28.xlsx"]
-                FI_PF: "data/processed",
-                FI_PF_WORKBOOKS: {} # key = file name, value = absolute path
-            },
-        },
-        BM_OPTIONS: {
-            BMO_FI_IF_PREFIX: "new_",
-            BMO_FI_CF_PREFIX: "categorized_",
-            BMO_FI_CF_PREFIX: "processed_",
-            BMO_LOG_CONFIG: "budget_model_logging_config.jsonc",
-            BMO_LOG_LEVEL: logging.DEBUG,
-            BMO_LOG_FILE: "logs/p3BudgetModel.log",
-            BMO_JSON_LOG_FILE: "logs/p3BudgetModel.jsonl"
-        }
-    }
-    # Template-only versions of structure attributes.
-    #endregion BudgetModelTemplate Configuration Template
-    # ------------------------------------------------------------------------ +
-    #region BudgetModelTemplate class constructor __init__.()
-    # __init__() method for the BudgetModelTemplate class
-    def __init__(self, create_missing_folders : bool = True,
-                 raise_errors : bool = True) -> None:
-        """Construct a BudgetModelTemplate object used to initialize the budget model.
-        
-        The template class is largely a dictionary populated with default values
-        and some example values. The idea is to use this template to create a new
-        budget model or to initialize a new budget model from the template. 
-        It is for internal use only.
-        """
-        try:
-            # Basic attribute atomic value inits. 
-            # logger = logging.getLogger(THIS_APP_NAME)
-            logger.debug("Start: BudgetModelTemplate() Initialization...")
-            setattr(self, BM_INITIALIZED, False)
-            setattr(self, BM_BF, None)  # budget folder path
-            setattr(self, BM_FI, {})  # financial institutions
-            setattr(self, BM_STORE_URI, None)  # uri for budget model store
-            setattr(self, BM_OPTIONS, {})  # budget model options
-            setattr(self, BM_CREATED_DATE, p3u.now_iso_date_string()) 
-            setattr(self, BM_LAST_MODIFIED_DATE, self._created_date)
-            setattr(self, BM_LAST_MODIFIED_BY, getpass.getuser())
-            setattr(self, BM_WORKING_DATA, {})  # wd - budget model working data
-            # Set attribute defaults for the budget model
-            logger.debug(f"{P2}BM_INITIALIZED('{BM_INITIALIZED}'): "
-                         f"{getattr(self,BM_INITIALIZED)}")
-            setattr(self, BM_BF, BM_DEFAULT_BUDGET_FOLDER) 
-            bf = getattr(self, BM_BF)  # budget folder setting, a str
-            bfp = Path(bf).expanduser() # budget folder path
-            bmc = bfp / BM_DEFAULT_BUDGET_MODEL_FILE_NAME # bmc: BM config file
-            bfp_exists = "exists." if bfp.exists() else "does not exist!"
-            bmc_exists = "exists." if bmc.exists() else "does not exist!"
-            bmc_uri = p3u.path_to_file_uri(bmc) # uri for budget model config
-            setattr(self, BM_STORE_URI, bmc_uri)
-            logger.debug(f"{P2}BM_BF('{BM_BF}'): '{getattr(self,BM_BF)}' {bfp_exists}")
-            logger.debug(
-                f"{P4}_bf_path(): '{self._bf_path()}' "
-                f"{bfp_exists}")
-            logger.debug(
-                f"{P4}_bf_abs_path(): '{self._bf_abs_path()}' "
-                f"{bfp_exists}")
-            logger.debug(
-                f"{P2}BM_STORE_URI('{BM_STORE_URI}): '{getattr(self,BM_STORE_URI)}' "
-                f"{bmc_exists}")
-
-            # Financial Institutions (FI) as a template        # Institution folders
-            bmt = _BudgetModelTemplate.budget_model_template
-            fic = len(bmt[BM_FI])  # financial institutions count
-            logger.debug(f"{P2}BM_FI('{BM_FI}')({fic})")
-            for inst_key, inst in bmt[BM_FI].items():
-                inst_folder_path = bfp / inst_key
-                inst_folder_abs_path = inst_folder_path.resolve()
-                ifap_exists = "exists." if inst_folder_abs_path.exists() else "does not exist!"
-                logger.debug(f"{P4}Inst('{inst_key}') folder: '{inst_folder_path}'")
-                if not inst_folder_abs_path.exists():
-                    # If create_missing_folders is True, create the folder
-                    if create_missing_folders:
-                        logger.debug(f"{P4}Creating folder: '{inst_folder_abs_path}'")
-                        inst_folder_abs_path.mkdir(parents=True, exist_ok=True)
-                    else:
-                        m = (f"{P4}Budget institution({inst_key}) " 
-                            f"folder does not exist: '{str(inst_folder_abs_path)}'")
-                        logger.error(m)
-                        raise FileNotFoundError(m) if raise_errors else None
-                getattr(self,BM_FI)[inst_key] = inst.copy()  # Copy the template values
-                logger.debug(f"{P6}'{inst_key}' {str(inst)}")
-                ifp = self._fi_path(inst_key)
-                ifp_exists = "exists." if ifp.exists() else "does not exist!"
-                logger.debug(f"{P6}_fi_path(): '{ifp}' "
-                             f"{ifp_exists}")
-                ifap = self._fi_abs_path(inst_key)
-                logger.debug(f"{P6}_fi_abs_path(): '{ifap}'"
-                             f"{ifap_exists}")
-
-            # Initialize Budget Model Options as a template
-            bmoc = len(bmt[BM_OPTIONS])
-            logger.debug(f"{P2}BM_OPTION('{BM_OPTIONS}')({bmoc})")
-            for opt_key, opt in bmt[BM_OPTIONS].items():
-                logger.debug(f"{P4}Option('{opt_key}') = '{opt}'")
-
-            # And the rest
-            logger.debug(f"{P2}BM_CREATED_DATE({BM_CREATED_DATE}'): "
-                         f"{getattr(self,BM_CREATED_DATE)}")
-            logger.debug(f"{P2}BM_LAST_MODIFIED_DATE({BM_LAST_MODIFIED_DATE}'): "
-                            f"{getattr(self,BM_LAST_MODIFIED_DATE)}")
-            logger.debug(f"{P2}BM_LAST_MODIFIED_BY({BM_LAST_MODIFIED_BY}'): "
-                            f"{getattr(self,BM_LAST_MODIFIED_BY)}")
-            logger.debug(f"{P2}BM_WORKING_DATA({BM_WORKING_DATA}'): "
-                            f"{getattr(self,BM_WORKING_DATA)}")
-            # BudgetModelTemplate initialization is complete.
-            setattr(self, BM_INITIALIZED, True)
-            logger.debug(f"{P2}{BM_INITIALIZED}: {getattr(self,BM_INITIALIZED)}")
-            logger.debug(f"Complete: BudgetModelTemplate() Initialization...")
-        except Exception as e:
-            m = p3u.exc_msg(self.__init__, e)
-            logger.error(m)
-            raise
-    #endregion BudgetModelTemplate class constructor __init__.()
-    # ------------------------------------------------------------------------ +
-    #region BudgetModelTemplate internal class properties
-    def to_dict(self):
-        '''Return BudgetModelTemplate dictionary object. Used for serialization.'''
-        ret = {
-            BM_INITIALIZED: self.bm_initialized,
-            BM_BF: self.bm_bf,
-            BM_FI: self.bm_fi,
-            BM_STORE_URI: self.bm_store_uri,
-            BM_OPTIONS: self.bm_options,
-            BM_CREATED_DATE: self.bm_created_date,
-            BM_LAST_MODIFIED_DATE: self.bm_last_modified_date,
-            BM_LAST_MODIFIED_BY: self.bm_last_modified_by,
-            BM_WORKING_DATA: self.bm_working_data
-        }
-        return ret
-    def __repr__(self) -> str:
-        ''' Return a str representation of the BudgetModel object '''
-        ret = f"{{ "
-        ret += f"'{BM_INITIALIZED}': {self.bm_initialized}, "
-        ret += f"'{BM_BF}': '{self.bm_bf}', "
-        ret += f"'{BM_FI}': '{self.bm_fi}', "
-        ret += f"'{BM_STORE_URI}': '{self.bm_store_uri}', "
-        ret += f"'{BM_OPTIONS}': '{self.bm_options}', "
-        ret += f"'{BM_CREATED_DATE}': '{self.bm_created_date}', "
-        ret += f"'{BM_LAST_MODIFIED_DATE}': '{self.bm_last_modified_date}', "
-        ret += f"'{BM_LAST_MODIFIED_BY}': '{self.bm_last_modified_by}', "
-        ret += f"'{BM_WORKING_DATA}': '{self.bm_working_data}' }} "
-        return ret
-    def __str__(self) -> str:
-        ''' Return a str representation of the BudgetModel object '''
-        ret = f"BudgetModlelTemplate({str(self.bm_bf)}): "
-        ret += f"{BM_INITIALIZED} = {str(self.bm_initialized)}, "
-        ret += f"{BM_BF} = '{str(self.bm_bf)}', "
-        ret += f"{BM_FI} = [{', '.join([repr(fi_key) for fi_key in self.bm_fi.keys()])}], "
-        ret += f"{BM_STORE_URI} = '{self.bm_store_uri}' "
-        ret += f"{BM_OPTIONS} = '{self.bm_options}' "
-        ret += f"{BM_CREATED_DATE} = '{self.bm_created_date}', "
-        ret += f"{BM_LAST_MODIFIED_DATE} = '{self.bm_last_modified_date}', "
-        ret += f"{BM_LAST_MODIFIED_BY} = '{self.bm_last_modified_by}', "
-        ret += f"{BM_WORKING_DATA} = {self.bm_working_data}"
-        return ret
-    #endregion BudgetModelTemplate internal class properties
-    # ------------------------------------------------------------------------ +
-    #region BudgetModelTemplate public class properties
-    @property
-    def bm_initialized(self) -> bool:
-        """The initialized value."""
-        return self._initialized
-    
-    @bm_initialized.setter
-    def bm_initialized(self, value )-> None:
-        """Set the initialized value."""
-        self._initialized = value
-
-    @property
-    def bm_bf(self) -> str:
-        """The budget folder path is a string, e.g., '~/OneDrive/."""
-        return self._budget_folder
-
-    @bm_bf.setter
-    def bm_bf(self, value: str) -> None:
-        """Set the budget folder path."""
-        self._budget_folder = value
-
-    @property
-    def bm_store_uri(self) -> str:
-        """The budget model store URI."""
-        return self._budget_model_store_uri
-    
-    @bm_store_uri.setter
-    def bm_store_uri(self, value: str) -> None:
-        """Set the budget model store URI."""
-        self._budget_model_store_uri = value
-
-    @property
-    def bm_fi(self) -> dict:
-        """The financial institutions dictionary."""
-        return self._financial_institutions
-    
-    @bm_fi.setter
-    def bm_fi(self, value: dict) -> None:
-        """Set the financial institutions dictionary."""
-        self._financial_institutions = value
-
-    @property
-    def bm_options(self) -> dict:
-        """The budget model options dictionary."""
-        return self._options
-    
-    @bm_options.setter
-    def bm_options(self, value: dict) -> None:
-        """Set the budget model options dictionary."""
-        self._options = value
-
-    @property
-    def bm_created_date(self) -> str:
-        """The created date."""
-        return self._created_date
-    
-    @bm_created_date.setter
-    def bm_created_date(self, value: str) -> None:  
-        """Set the created date."""
-        self._created_date = value
-
-    @property
-    def bm_last_modified_date(self) -> str:
-        """The last modified date."""
-        return self._last_modified_date
-    
-    @bm_last_modified_date.setter
-    def bm_last_modified_date(self, value: str) -> None:
-        """Set the last modified date."""
-        self._last_modified_date = value
-
-    @property
-    def bm_last_modified_by(self) -> str:
-        """The last modified by."""
-        return self._last_modified_by
-    
-    @bm_last_modified_by.setter
-    def bm_last_modified_by(self, value: str) -> None:
-        """Set the last modified by."""
-        self._last_modified_by = value
-    
-    @property
-    def bm_working_data(self) -> dict:
-        """The budget model working data."""
-        return self._wd
-    
-    @bm_working_data.setter
-    def bm_working_data(self, value: dict) -> None:
-        """Set the budget model working data."""
-        self._wd = value
-
-    #endregion BudgetModel public class properties
-    # ------------------------------------------------------------------------ +
-    #region BudgetModelTemplate public methods
-    # ------------------------------------------------------------------------ +
-    def _bf_path(self) -> str:
-        return Path(getattr(self,BM_BF)).expanduser()
-    def _bf_abs_path(self) -> str:
-        return self._bf_path().resolve()
-
-    def _fi_path(self, inst_key: str) -> str:
-        """Calculate the path of a Financial Institution folder in the
-        Budget Storage Model.
-        
-        Each FI key, or inst_key, maps to a file folder in the budget folder.
-        """
-        bfp = self._bf_path().expanduser()
-        bfip = bfp / inst_key # bank folder institution path
-        return bfip
-    def _fi_abs_path(self, inst_key: str) -> str:
-        return self._fi_path(inst_key).resolve()
-    #endregion BudgetModel public methods
-    # ------------------------------------------------------------------------ +       
 # ---------------------------------------------------------------------------- +
 class BudgetModel(metaclass=SingletonMeta):
     """BudgetModel class implementing Singleton pattern.
@@ -425,7 +76,7 @@ class BudgetModel(metaclass=SingletonMeta):
         setattr(self, BM_WORKING_DATA, {})  # wd - budget model working data
     #endregion BudgetModel class constructor __init__()
     # ------------------------------------------------------------------------ +
-        #region BudgetModel internal class properties
+    #region BudgetModel internal class properties
     def to_dict(self):
         '''Return BudgetModelTemplate dictionary object. Used for serialization.'''
         ret = {
@@ -580,21 +231,53 @@ class BudgetModel(metaclass=SingletonMeta):
             raise_errors (bool): Raise errors if True.
         """
         me = self.inititailize
+        bmconfig : dict = None
+        logger.debug(f"Start: BudgetModel.initialize()...")
         try:
-            if budget_model is None:
+            if bm_src is None:
                 # Use the BudgetModelTemplate as the config source
                 bmconfig = _BudgetModelTemplate(
                     create_missing_folders=create_missing_folders,
                     raise_errors=raise_errors)
             else:   
-                bmconfig = budget_model
-                # Create a new budget model from the provided configuration
-                self.budget_model_data = budget_model.copy()
+                bmconfig = bm_src
+            # Apply the configuration to the budget model (self)
+            self.bm_initialized = bmconfig.bm_initialized
+            self.bm_bf = bmconfig.bm_bf
+            self.bm_fi = bmconfig.bm_fi.copy()
+            self.bm_store_uri = bmconfig.bm_store_uri
+            self.bm_options = bmconfig.bm_options.copy()
+            self.bm_created_date = bmconfig.bm_created_date
+            self.bm_last_modified_date = bmconfig.bm_last_modified_date
+            self.bm_last_modified_by = bmconfig.bm_last_modified_by
+            self.bm_working_data = bmconfig.bm_working_data.copy()
+            logger.debug(f"Complete: BudgetModel.initialize()...")
         except Exception as e:
             m = p3u.exc_msg(me, e)
             logger.error(m)
             raise
     #endregion BudgetModel.initialize(self, budget_node : dict = None) public 
+    # ------------------------------------------------------------------------ +
+    #region bf_ Budget Folder methods
+    def bf_path(self) -> str:
+        return Path(getattr(self,BM_BF)).expanduser()
+    def bf_abs_path(self) -> str:
+        return self.bf_path().resolve()
+    #endregion bf_ Budget Folder methods
+    # ------------------------------------------------------------------------ +
+    #region fi_ Financial Institution methods
+    def fi_path(self, inst_key: str) -> str:
+        """Calculate the path of a Financial Institution folder in the
+        Budget Storage Model.
+        
+        Each FI key, or inst_key, maps to a file folder in the budget folder.
+        """
+        bfp = self.bf_path().expanduser()
+        bfip = bfp / inst_key # bank folder institution path
+        return bfip
+    def fi_abs_path(self, inst_key: str) -> str:
+        return self.fi_path(inst_key).resolve()
+    #endregion fi_ Financial Institution methods
     # ------------------------------------------------------------------------ +
     #region budget_model_working_data methods
     # budget_model_working_data is a dictionary to store dynamic, non-property data.
@@ -846,14 +529,13 @@ if __name__ == "__main__":
         p3l.set_log_flag(p3l.LOG_FLAG_PRINT_CONFIG_ERRORS, True)
         logger = logging.getLogger(logger_name)
         logger.setLevel(logging.DEBUG)
-        root_logger = logging.getLogger()
-        root_logger.setLevel(logging.DEBUG)
         logger.info("+ ----------------------------------------------------- +")
         logger.info(f"+ Running {THIS_APP_NAME} ...")
         logger.info("+ ----------------------------------------------------- +")
         logger.debug(f"Start: {THIS_APP_NAME}...")
 
-        bm = _BudgetModelTemplate()
+        bm = BudgetModel()
+        bm.inititailize()
         bms = str(bm)
         bmr = repr(bm)
         bmd = bm.to_dict()

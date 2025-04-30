@@ -7,14 +7,14 @@ a budget model. The package is designed to work with Excel workbooks, specifical
 """
 
 __author__ = "Paul Painter"
-__version__ = "1.0.0"
+__version__ = "0.1.0"
 __copyright__ = "2024 Paul Painter"
 __name__ = "p3_excel_budget"
 __description__ = "Work with Excel wookboo data for budgeting functions."
 __license__ = "MIT"
 
 from .budget_model import (
-    budget_model,
+    BudgetModel,
     check_budget_model,
     validate_budget_model,
     load_fi_transactions, 
@@ -33,7 +33,7 @@ from .category_mapping import (
 )
 
 __all__ = [
-    "budget_model",
+    "BudgetModel",
     "check_budget_model",
     "validate_budget_model",
     "load_fi_transactions",
