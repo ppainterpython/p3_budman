@@ -12,13 +12,13 @@
 import atexit, pathlib, logging, inspect, logging.config  #, logging.handlers
 
 # third-party  packages and module libraries
+from openpyxl import Workbook
 import inspect, pyjson5
 import p3logging as p3l, p3_utils as p3u
 
 # local packages and module libraries
 from p3_excel_budget_constants import  *
-import data.p3_fi_transactions as p3fi
-from openpyxl import Workbook
+import data.p3_budget_model as p3bm
 
 logger = logging.getLogger(THIS_APP_NAME)
 logger.propagate = True
@@ -67,18 +67,19 @@ def budmod():
     """Main function to run PyExcelBudget application."""
     try:
         trans_file = "BOAChecking2025.xlsx"
-        # Initalize the budget model.
+        # Initalize the p3_budget_model package.
+        bm = p3bm.BudgetModel()
+        bm.inititailize()
+        p3bm.process_incoming_categorization(bm, "boa")
 
-        p3fi.process_incoming_categorization("boa")
-
-        # wb = p3fi.load_fi_transactions(trans_file)
+        # wb = p3bm.load_fi_transactions(trans_file)
         # log_workbook_info(trans_file, wb)
         # sheet = wb.active
         # # Check for budget category column, add it if not present.
-        # p3fi.check_budget_category(sheet)
+        # p3bm.check_budget_category(sheet)
         # # BOA specific: Map the 'Original Description' column to the 'Budget Category' column.
-        # p3fi.map_budget_category(sheet, "Original Description", BUDGET_CATEGORY_COL)
-        # p3fi.save_fi_transactions(wb, trans_file)
+        # p3bm.map_budget_category(sheet, "Original Description", BUDGET_CATEGORY_COL)
+        # p3bm.save_fi_transactions(wb, trans_file)
         _ = "pause"
     except Exception as e:
         m = p3u.exc_msg(budmod, e)
@@ -91,7 +92,7 @@ if __name__ == "__main__":
     try:
         configure_logging(THIS_APP_NAME)
         logger.setLevel(logging.DEBUG)
-        bm = p3fi.init_budget_model()  # How to load the budget model config?
+        # bm = p3fi.init_budget_model()  # How to load the budget model config?
         budmod() # Application Main()
     except Exception as e:
         m = p3u.exc_msg("__main__", e)

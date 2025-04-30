@@ -12,7 +12,7 @@
 # ---------------------------------------------------------------------------- +
 #region Imports
 # python standard library modules and packages
-import logging, os, getpass
+import logging, os, getpass, time
 from pathlib import Path
 from typing import List
 
@@ -21,7 +21,7 @@ import p3_utils as p3u, pyjson5, p3logging as p3l
 from openpyxl import Workbook, load_workbook
 
 # local modules and packages
-from p3_excel_budget_constants import *
+from .budget_model_constants import *
 from budget_model_template import _BudgetModelTemplate
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -117,7 +117,6 @@ class BudgetModel(metaclass=SingletonMeta):
         ret += f"{BM_LAST_MODIFIED_BY} = '{self.bm_last_modified_by}', "
         ret += f"{BM_WORKING_DATA} = {self.bm_working_data}"
         return ret
-    #endregion BudgetModel internal class properties
     #endregion BudgetModel internal class properties
     # ------------------------------------------------------------------------ +
     #region BudgetModel public class properties
@@ -288,38 +287,68 @@ class BudgetModel(metaclass=SingletonMeta):
         return self.budget_model_working_data.get(key, 0)
     #endregion budget_model_data methods
     # ------------------------------------------------------------------------ +
+    #region fi_if_workbook_keys() function
+    def fi_if_workbook_keys(self, inst_key:str=None,bm:dict=None) -> dict:
+        """Get the list of workbooks in Incoming Folder (if) for the 
+        specified financial nstitution (fi) key.
+
+        Args:
+            inst_key (str): The key of the institution to get the workbooks for.
+
+        Returns:
+            dict: A dictionary of workbooks with the file name as the key.
+        """
+        me = self.fi_if_workbook_keys
+        try:
+
+            if inst_key is None or inst_key not in self.bm_fi:
+                m = f"Invalid institution key: '{inst_key}'"
+                logger.error(m)
+                raise ValueError(m)
+            inst = self.bm_fi[inst_key]
+            workbooks = inst[FI_IF_WORKBOOKS].keys()
+            return workbooks
+        except Exception as e:
+            logger.exception(p3u.exc_msg(me, e))
+            raise
+    #endregion fi_if_workbook_keys() function
+    # ------------------------------------------------------------------------ +
+    #region load_fi_transactions() function
+    def load_fi_transactions(self, inst_key:str, process_folder: str, 
+                             trans_file : str = None) -> Workbook:
+        """Get FI transactions from an excel file into an openpyxl.Workbook.
+        
+        Transactions downloaded from an FI are in a folder. 
+        The file is assumed to be in the folder specified in the budget_config. 
+        A folder is specified in the budget_config.json file. That folder is scanned 
+        for transactions in excel files if a particular file is not specified.
+
+        TODO: If trans_file is not specified, then scan the folder for files. 
+        Return a dictionary of workbooks with the file name as the key.
+
+        Args:
+            trans_file (str): The name of the transaction file to load.
+
+        Returns:
+            Workbook: The workbook containing the FI transactions.
+
+        """
+        me = self.load_fi_transactions
+        st = time.time()
+        try:
+            trans_path = self.fi_abs_path / trans_file
+            logger.info("Loading FI transactions...")
+            wb = load_workbook(filename=trans_path)
+            logger.info(f"Loaded FI transactions from {str(trans_path)}")
+            delta = f"{time.time() - st():.3f} seconds."
+            logger.info(f"Complete: {delta}")
+            return wb
+        except Exception as e:
+            logger.error(p3u.exc_msg(me, e))
+            raise    
+    #endregion load_fi_transactions() function
+    # ------------------------------------------------------------------------ +
     #endregion BudgetModel public methods
-# ---------------------------------------------------------------------------- +
-#region get_budget_model() -> dict
-def get_budget_model() -> dict:
-    """Get the budget model.
-
-    Returns:
-        dict: The budget model.
-    """
-    global budget_model
-    return budget_model
-#endregion get_budget_model() -> dict
-# ---------------------------------------------------------------------------- +
-#region set_budget_config(model_value : dict) -> none
-def set_budget_model(model_value : dict) -> None:
-    """Set the budget model configuration.
-
-    Args:
-        model_value (dict): The budget model configuration.
-    """
-    global budget_model
-    try:
-        if model_value is None or not isinstance(model_value, dict):
-            m = "model_value parameter is not valid."
-            logger.error(m)
-            raise ValueError(m)
-        budget_model = model_value
-        logger.debug(f"budget_model was set.")
-    except Exception as e:
-        logger.error(p3u.exc_msg(set_budget_model, e))
-        raise   
-#endregion set_budget_config(model_value : dict) -> none
 # ---------------------------------------------------------------------------- +
 #region check_budget_model() -> bool
 def check_budget_model() -> bool:   
@@ -402,8 +431,8 @@ def save_fi_transactions(workbook : Workbook = None, trans_file:str=None) -> Non
         Workbook: The workbook containing the FI transactions.
 
     """
-    global budget_model
-    validate_budget_model()
+    me = save_fi_transactions
+    st = time.time()
     try:
         # TODO: add logic to for workbook open in excel, work around.
         if (budget_config["output_prefix"] is not None and 
@@ -422,65 +451,6 @@ def save_fi_transactions(workbook : Workbook = None, trans_file:str=None) -> Non
         raise    
 #endregion save_fi_transactions() function
 # ---------------------------------------------------------------------------- +
-#region load_fi_transactions() function
-def load_fi_transactions(trans_file:str=None) -> Workbook:
-    """Get the FI transactions from configured sources into a workbook.
-    
-    Transactions downloaded from an FI are in a folder. 
-    The file is assumed to be in the folder specified in the budget_config. 
-    A folder is specified in the budget_config.json file. That folder is scanned 
-    for transactions in excel files if a particular file is not specified.
-
-    TODO: If trans_file is not specified, then scan the folder for files. 
-    Return a dictionary of workbooks with the file name as the key.
-
-    Args:
-        trans_file (str): The name of the transaction file to load.
-
-    Returns:
-        Workbook: The workbook containing the FI transactions.
-
-    """
-    global budget_model
-    validate_budget_model()
-    try:
-        trans_path = Path.Path(budget_config["bank_transactions_folder"]) / trans_file
-
-        logger.info("Loading FI transactions...")
-        wb = load_workbook(filename=trans_path)
-        logger.info(f"Loaded FI transactions from {str(trans_path)}")
-
-        return wb
-    except Exception as e:
-        logger.error(p3u.exc_msg(load_fi_transactions, e))
-        raise    
-#endregion load_fi_transactions() function
-# ---------------------------------------------------------------------------- +
-#region fi_if_workbook_keys() function
-def fi_if_workbook_keys(inst_key:str=None,bm:dict=None) -> dict:
-    """Get the list of workbooks in the incoming folder for the specified institution.
-
-    Args:
-        inst_key (str): The key of the institution to get the workbooks for.
-
-    Returns:
-        dict: A dictionary of workbooks with the file name as the key.
-    """
-    try:
-        bm = get_budget_model() if bm is None else bm
-        validate_budget_model(bm)
-        if inst_key is None or inst_key not in bm["institutions"]:
-            m = f"Invalid institution key: '{inst_key}'"
-            logger.error(m)
-            raise ValueError(m)
-        institution = bm[BM_FI][inst_key]
-        workbooks = institution[FI_IF_WORKBOOKS].keys()
-        return workbooks
-    except Exception as e:
-        logger.exception(p3u.exc_msg(fi_if_workbook_keys, e))
-        raise
-
-#endregion fi_if_workbook_keys() function
 # ---------------------------------------------------------------------------- +
 #region fi_if_workbook_abs_paths() function
 def fi_if_workbook_abs_path(inst_key:str, wb_key : str) -> Path:
@@ -498,7 +468,7 @@ def fi_if_workbook_abs_path(inst_key:str, wb_key : str) -> Path:
         Path: An abs path to the workbook with the wb_key as file name.
     """
     try:
-        bm = get_budget_model() if bm is None else bm
+        # bm = get_budget_model() if bm is None else bm
         validate_budget_model(bm)
         if inst_key is None or inst_key not in budget_model["institutions"]:
             m = f"Invalid institution key: '{inst_key}'"

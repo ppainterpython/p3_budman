@@ -12,18 +12,18 @@
 # ---------------------------------------------------------------------------- +
 #region Imports
 # python standard library modules and packages
-import re, pathlib as Path, logging
+import re, pathlib as Path, logging, time
 
 # third-party modules and packages
 import p3logging as p3l, p3_utils as p3u
 from openpyxl import Workbook, load_workbook
 
 # local modules and packages
-from p3_excel_budget_constants import  *
-from src.data.p3_fi_transactions.category_mapping import (
+from .budget_model_constants import  *
+from .category_mapping import (
     map_category, category_map_count)
-from data.p3_fi_transactions.budget_model import (
-    fi_if_workbook_keys, load_fi_transactions, save_fi_transactions)
+from .budget_model import BudgetModel
+# from data.p3_fi_transactions.budget_model import BudgetModel
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -120,7 +120,7 @@ def map_budget_category(sheet,src,dst) -> None:
 #endregion map_budget_category() function
 # ---------------------------------------------------------------------------- +
 #region process_incoming_categorization(inst_key: str) function
-def process_incoming_categorization(inst_key: str) -> None:
+def process_incoming_categorization(bm : BudgetModel, inst_key: str) -> None:
     """Process incoming categorization of transactions.
 
     Oversee the workflow process to examine all fi transaction files in the
@@ -133,23 +133,28 @@ def process_incoming_categorization(inst_key: str) -> None:
     """
     me = process_incoming_categorization
     cp = "Budget Model Categorization:"
+    st = time.time
     try:
+        logger.info(f"{cp}Start: ")
+        bm = BudgetModel() if bm is None else bm
         logger.info(f"{cp}Processing incoming files for '{inst_key}'...")
-        for wbkey in fi_if_workbook_keys(inst_key):
+        for wbkey in bm.fi_if_workbook_keys(inst_key):
             logger.info(f"{cp}    Workbook({wbkey})")
             # Load the workbook for the given key.
-            wb = load_fi_transactions(wbkey)
-            if wb is None:
-                logger.error(f"{cp}    Workbook({wbkey}): not loaded.")
-                continue
-            logger.info(f"{cp}    Workbook({wbkey}): with sheets: {str(wb.sheetnames)}")
-            sheet = wb.active
-            # Check for budget category column, add it if not present.
-            check_budget_category(sheet)
-            # Map the 'Original Description' column to the 'Budget Category' column.
-            map_budget_category(sheet, "Original Description", BUDGET_CATEGORY_COL)
-            # Save the categorized transactions to the CF (Categorized Folder).
-            save_fi_transactions(wb, wbkey)
+            # wb = load_fi_transactions(wbkey)
+            # if wb is None:
+            #     logger.error(f"{cp}    Workbook({wbkey}): not loaded.")
+            #     continue
+            # logger.info(f"{cp}    Workbook({wbkey}): with sheets: {str(wb.sheetnames)}")
+            # sheet = wb.active
+            # # Check for budget category column, add it if not present.
+            # check_budget_category(sheet)
+            # # Map the 'Original Description' column to the 'Budget Category' column.
+            # map_budget_category(sheet, "Original Description", BUDGET_CATEGORY_COL)
+            # # Save the categorized transactions to the CF (Categorized Folder).
+            # save_fi_transactions(wb, wbkey)
+        delta = f"{time.time() - st():.3f} seconds."
+        logger.info(f"Complete: {delta}")
     except Exception as e:
         m = p3u.exc_msg(me, e)
         logger.error(m)
