@@ -14,7 +14,7 @@ import p3logging as p3l, p3_utils as p3u
 from openpyxl import Workbook, load_workbook
 
 # local modules and packages
-from p3_excel_budget_constants import  *
+from .budget_model_constants import  *
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants

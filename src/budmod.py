@@ -66,11 +66,13 @@ def configure_logging(logger_name : str = THIS_APP_NAME, logtest : bool = False)
 def budmod():
     """Main function to run PyExcelBudget application."""
     try:
-        trans_file = "BOAChecking2025.xlsx"
-        # Initalize the p3_budget_model package.
-        bm = p3bm.BudgetModel()
-        bm.inititailize()
-        p3bm.process_incoming_categorization(bm, "boa")
+        p3bm.tryout_budget_model_template()
+
+        # trans_file = "BOAChecking2025.xlsx"
+        # # Initalize the p3_budget_model package.
+        # bm = p3bm.BudgetModel()
+        # bm.inititailize()
+        # p3bm.execute_worklow_categorization(bm, "boa", p3bm.BM_WF_CATEGORIZATION)
 
         # wb = p3bm.load_fi_transactions(trans_file)
         # log_workbook_info(trans_file, wb)

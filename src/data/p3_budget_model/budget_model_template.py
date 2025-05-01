@@ -30,7 +30,8 @@ import p3_utils as p3u, pyjson5, p3logging as p3l
 from openpyxl import Workbook, load_workbook
 
 # local modules and packages
-from p3_excel_budget_constants import *
+from .budget_model_constants import *
+from .budget_model import BudgetModel
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -40,7 +41,7 @@ logger = logging.getLogger(THIS_APP_NAME)
 # ---------------------------------------------------------------------------- +
 #region Budget Model Template and config support 
 # ---------------------------------------------------------------------------- +
-class _BudgetModelTemplate:
+class _BudgetModelTemplate(BudgetModel):
     """Default BbudgetModelTemplate class, contains default, example values.
     
     Defines the BudgetModel structure with two example Financial Institutions.
@@ -48,7 +49,9 @@ class _BudgetModelTemplate:
     """
     # ------------------------------------------------------------------------ +
     #region BudgetModelTemplate Configuration Template
-    # Budget configuration covers the file structure where user data is stored as 
+    # The main difference between the BudgetModel and the BudgetModelTemplate 
+    # is the following budget_model_template dictionary. The BudgetModelTemplate 
+    # covers the file structure where user data is stored as 
     # settings for options and preferences. Keep it simple.
     # There is both an object model used in the application (in memory) and a
     # file system structure used to store the data. In addition, the idea is that 
@@ -68,13 +71,13 @@ class _BudgetModelTemplate:
         FI_IF_WORKBOOKS,
         FI_CF,
         FI_CF_WORKBOOKS,
-        FI_PF,
-        FI_PF_WORKBOOKS
+        FI_FF,
+        FI_FF_WORKBOOKS
         )
     options_expected_keys = (
         BMO_FI_IF_PREFIX, 
         BMO_FI_CF_PREFIX,
-        BMO_FI_PF_PREFIX,
+        BMO_FI_FF_PREFIX,
         BMO_LOG_CONFIG,
         BMO_LOG_LEVEL,
         BMO_LOG_FILE,
@@ -84,40 +87,77 @@ class _BudgetModelTemplate:
         BM_INITIALIZED: False,
         BM_BF: BM_DEFAULT_BUDGET_FOLDER,
         BM_STORE_URI: None,
+        BM_SUPPORTED_WORKFLOWS: [
+            BM_WF_INTAKE, 
+            BM_WF_CATEGORIZATION, 
+            BM_WF_FINALIZATION
+            ],
         BM_FI: {
             "boa": {
                 FI_NAME: "Bank of America",
                 FI_TYPE: "bank",
                 FI_FOLDER: "boa",
-                # Incoming folder name and list of workbook names,
-                # e.g. ["new_boa-1391-2024-04-28.xlsx"]
-                FI_IF: "data/new",
-                FI_IF_WORKBOOKS: {}, # key = file name, value = absolute path
-                # Categorized folder name and list of workbook names,
-                # e.g. ["categorized_boa-1391-2024-04-28.xlsx"]
-                FI_CF: "data/categorized",
-                FI_CF_WORKBOOKS: {}, # key = file name, value = absolute path
-                # Processed folder name and list of workbook names,
-                # e.g. ["categorized_boa-1391-2024-03-28.xlsx"]
-                FI_PF: "data/processed",
-                FI_PF_WORKBOOKS: {} # key = file name, value = absolute path
+                FI_WORKFLOWS: {
+                    BM_WF_INTAKE: {
+                        WF_NAME: BM_WF_INTAKE,
+                        WF_FOLDER: "data/new",
+                        WF_WORKBOOKS: {}
+                    },
+                    BM_WF_CATEGORIZATION: {
+                        WF_NAME: BM_WF_CATEGORIZATION,
+                        WF_FOLDER: "data/categorized",
+                        WF_WORKBOOKS: {}
+                    },
+                    BM_WF_FINALIZATION: {
+                        WF_NAME: BM_WF_FINALIZATION,
+                        WF_FOLDER: "data/processed",
+                        WF_WORKBOOKS: {}
+                    }
+                },
+                # FI_IF: "data/new",
+                # FI_IF_WORKBOOKS: {}, # key = file name, value = absolute path
+                # # Categorized folder name and list of workbook names,
+                # # e.g. ["categorized_boa-1391-2024-04-28.xlsx"]
+                # FI_CF: "data/categorized",
+                # FI_CF_WORKBOOKS: {}, # key = file name, value = absolute path
+                # # Processed folder name and list of workbook names,
+                # # e.g. ["categorized_boa-1391-2024-03-28.xlsx"]
+                # FI_FF: "data/processed",
+                # FI_FF_WORKBOOKS: {} # key = file name, value = absolute path
             },
             "merrill": {
                 FI_NAME: "Merrill Lynch",
                 FI_TYPE: "brokerage",
                 FI_FOLDER: "merrill",
-                # Incoming folder name and list of workbook names,
-                # e.g. ["new_boa-1391-2024-04-28.xlsx"]
-                FI_IF: "data/new",
-                FI_IF_WORKBOOKS: {}, # key = file name, value = absolute path
-                # Categorized folder name and list of workbook names,
-                # e.g. ["categorized_boa-1391-2024-04-28.xlsx"]
-                FI_CF: "data/categorized",
-                FI_CF_WORKBOOKS: {}, # key = file name, value = absolute path
-                # Processed folder name and list of workbook names,
-                # e.g. ["categorized_boa-1391-2024-03-28.xlsx"]
-                FI_PF: "data/processed",
-                FI_PF_WORKBOOKS: {} # key = file name, value = absolute path
+                FI_WORKFLOWS: {
+                    BM_WF_INTAKE: {
+                        WF_NAME: BM_WF_INTAKE,
+                        WF_FOLDER: "data/new",
+                        WF_WORKBOOKS: {}
+                    },
+                    BM_WF_CATEGORIZATION: {
+                        WF_NAME: BM_WF_CATEGORIZATION,
+                        WF_FOLDER: "data/categorized",
+                        WF_WORKBOOKS: {}
+                    },
+                    BM_WF_FINALIZATION: {
+                        WF_NAME: BM_WF_FINALIZATION,
+                        WF_FOLDER: "data/processed",
+                        WF_WORKBOOKS: {}
+                    }
+                },
+                # # Incoming folder name and list of workbook names,
+                # # e.g. ["new_boa-1391-2024-04-28.xlsx"]
+                # FI_IF: "data/new",
+                # FI_IF_WORKBOOKS: {}, # key = file name, value = absolute path
+                # # Categorized folder name and list of workbook names,
+                # # e.g. ["categorized_boa-1391-2024-04-28.xlsx"]
+                # FI_CF: "data/categorized",
+                # FI_CF_WORKBOOKS: {}, # key = file name, value = absolute path
+                # # Processed folder name and list of workbook names,
+                # # e.g. ["categorized_boa-1391-2024-03-28.xlsx"]
+                # FI_FF: "data/finalized",
+                # FI_FF_WORKBOOKS: {} # key = file name, value = absolute path
             },
         },
         BM_OPTIONS: {
@@ -147,23 +187,15 @@ class _BudgetModelTemplate:
         try:
             # Basic attribute atomic value inits. 
             # logger = logging.getLogger(THIS_APP_NAME)
-            logger.debug("Start: BudgetModelTemplate() Initialization...")
-            setattr(self, BM_INITIALIZED, False)
-            setattr(self, BM_BF, None)  # budget folder path
-            setattr(self, BM_FI, {})  # financial institutions
-            setattr(self, BM_STORE_URI, None)  # uri for budget model store
-            setattr(self, BM_OPTIONS, {})  # budget model options
-            setattr(self, BM_CREATED_DATE, p3u.now_iso_date_string()) 
-            setattr(self, BM_LAST_MODIFIED_DATE, self._created_date)
-            setattr(self, BM_LAST_MODIFIED_BY, getpass.getuser())
-            setattr(self, BM_WORKING_DATA, {})  # wd - budget model working data
+            logger.debug("Start: BudgetModelTemplate().__init__() ...")
+            super().__init__()
             # Set attribute defaults for the budget model
             logger.debug(f"{P2}BM_INITIALIZED('{BM_INITIALIZED}'): "
                          f"{getattr(self,BM_INITIALIZED)}")
             setattr(self, BM_BF, BM_DEFAULT_BUDGET_FOLDER) 
             bf = getattr(self, BM_BF)  # budget folder setting, a str
             bfp = Path(bf).expanduser() # budget folder path
-            bmc = bfp / BM_DEFAULT_BUDGET_MODEL_FILE_NAME # bmc: BM config file
+            bmc = bfp / BMS_DEFAULT_BUDGET_MODEL_FILE_NAME # bmc: BM config file
             bfp_exists = "exists." if bfp.exists() else "does not exist!"
             bmc_exists = "exists." if bmc.exists() else "does not exist!"
             bmc_uri = p3u.path_to_file_uri(bmc) # uri for budget model config
@@ -178,7 +210,9 @@ class _BudgetModelTemplate:
             logger.debug(
                 f"{P2}BM_STORE_URI('{BM_STORE_URI}): '{getattr(self,BM_STORE_URI)}' "
                 f"{bmc_exists}")
-
+            logger.debug(
+                f"{P4}BM_SUPPORTED_WORKFLOWS('{BM_SUPPORTED_WORKFLOWS}'): "
+                f" '{self._supported_workflows}'")
             # Financial Institutions (FI) as a template        # Institution folders
             bmt = _BudgetModelTemplate.budget_model_template
             fic = len(bmt[BM_FI])  # financial institutions count
@@ -199,13 +233,13 @@ class _BudgetModelTemplate:
                         logger.error(m)
                         raise FileNotFoundError(m) if raise_errors else None
                 getattr(self,BM_FI)[inst_key] = inst.copy()  # Copy the template values
-                logger.debug(f"{P6}'{inst_key}' {str(inst)}")
-                ifp = self._fi_path(inst_key)
+                logger.debug(f"{P6}FI_KEY()'{inst_key}') {str(inst)}")
+                ifp = self._fi_f_path(inst_key)
                 ifp_exists = "exists." if ifp.exists() else "does not exist!"
-                logger.debug(f"{P6}_fi_path(): '{ifp}' "
+                logger.debug(f"{P6}_fi_f_path(): '{ifp}' "
                              f"{ifp_exists}")
-                ifap = self._fi_abs_path(inst_key)
-                logger.debug(f"{P6}_fi_abs_path(): '{ifap}'"
+                ifap = self._fi_f_abs_path(inst_key)
+                logger.debug(f"{P6}_fi_f_abs_path(): '{ifap}'"
                              f"{ifap_exists}")
 
             # Initialize Budget Model Options as a template
@@ -226,14 +260,14 @@ class _BudgetModelTemplate:
             # BudgetModelTemplate initialization is complete.
             setattr(self, BM_INITIALIZED, True)
             logger.debug(f"{P2}{BM_INITIALIZED}: {getattr(self,BM_INITIALIZED)}")
-            logger.debug(f"Complete: BudgetModelTemplate() Initialization...")
+            logger.debug(f"Complete: BudgetModelTemplate().__init__() ...")
         except Exception as e:
             m = p3u.exc_msg(self.__init__, e)
             logger.error(m)
             raise
     #endregion BudgetModelTemplate class constructor __init__.()
     # ------------------------------------------------------------------------ +
-    #region BudgetModelTemplate internal class properties
+    #region BudgetModelTemplate internal class methods
     def to_dict(self):
         '''Return BudgetModelTemplate dictionary object. Used for serialization.'''
         ret = {
@@ -274,7 +308,7 @@ class _BudgetModelTemplate:
         ret += f"{BM_LAST_MODIFIED_BY} = '{self.bm_last_modified_by}', "
         ret += f"{BM_WORKING_DATA} = {self.bm_working_data}"
         return ret
-    #endregion BudgetModelTemplate internal class properties
+    #endregion BudgetModelTemplate internal class methods
     # ------------------------------------------------------------------------ +
     #region BudgetModelTemplate public class properties
     @property
@@ -376,7 +410,7 @@ class _BudgetModelTemplate:
     def _bf_abs_path(self) -> str:
         return self._bf_path().resolve()
 
-    def _fi_path(self, inst_key: str) -> str:
+    def _fi_f_path(self, inst_key: str) -> str:
         """Calculate the path of a Financial Institution folder in the
         Budget Storage Model.
         
@@ -385,11 +419,63 @@ class _BudgetModelTemplate:
         bfp = self._bf_path().expanduser()
         bfip = bfp / inst_key # bank folder institution path
         return bfip
-    def _fi_abs_path(self, inst_key: str) -> str:
-        return self._fi_path(inst_key).resolve()
+    def _fi_f_abs_path(self, inst_key: str) -> str:
+        return self._fi_f_path(inst_key).resolve()
+
+    def resolve_wf_workbooks(self) -> None:
+        """Resolve the workbooks for all workflows."""
+        try:
+            logger.debug("Start: resolve_wf_workbooks()...")
+            for inst_key, inst in self.bm_fi.items():
+                fi_folder = self._fi_f_path(inst_key)
+                fi_abs_folder = self._fi_f_abs_path(inst_key)
+                logger.debug(f"Financial Institution: '{fi_folder}'")
+                for wf_key, wf_dict in inst[FI_WORKFLOWS].items():
+                    wf_folder = fi_folder / wf_dict[WF_FOLDER]
+                    wf_abs_folder = fi_abs_folder / wf_dict[WF_FOLDER]
+                    logger.debug(f"Workflow('{wf_dict[WF_NAME]}'): "
+                                 f"Folder: '{wf_folder}' "
+                                 f"Workbooks: {wf_dict[WF_WORKBOOKS]}")
+
+
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise
+        return
     #endregion BudgetModel public methods
     # ------------------------------------------------------------------------ +       
 # ---------------------------------------------------------------------------- +
+#region tryout_budget_model_template() function
+def tryout_budget_model_template() -> None: 
+    """Test the BudgetModelTemplate class."""
+    try:
+        logger.debug("Start: tryout_budget_model_template()...")
+        bmt = _BudgetModelTemplate()
+        logger.debug(f"Budget Model Template: {str(bmt)}")
+        logger.debug(f"Budget Model Template: {repr(bmt)}")
+        logger.debug(f"Budget Model Template: {bmt.to_dict()}")
+
+        # Enumerate the financial institutions in the budget model template
+        for inst_key, inst in bmt.bm_fi.items():
+            n = inst[FI_NAME]
+            t = inst[FI_TYPE]
+            f = inst[FI_FOLDER]
+            wf = list(inst[FI_WORKFLOWS].keys()) 
+            logger.debug(f"Financial Institution: {f}:{t}:{n}:{str(wf)}")
+            for wf_key, wf_dict in inst[FI_WORKFLOWS].items():
+                logger.debug(f"Workflow('{wf_dict[WF_NAME]}'): "
+                             f"Folder: '{wf_dict[WF_FOLDER]}' "
+                             f"Workbooks: {wf_dict[WF_WORKBOOKS]}")
+                bmfiwf_workbooks = bmt.bm_fi[inst_key][FI_WORKFLOWS][wf_key][WF_WORKBOOKS]
+        ...
+    except Exception as e:
+        m = p3u.exc_err_msg(e)
+        logger.error(m)
+        raise
+    logger.debug("Complete: tryout_budget_model_template()...")
+#endregion tryout_budget_model_template() function
+# # ---------------------------------------------------------------------------- +       
 # ---------------------------------------------------------------------------- +
 #region Local __main__ stand-alone
 if __name__ == "__main__":

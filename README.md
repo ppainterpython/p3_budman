@@ -62,8 +62,8 @@ budget_model_template = {  # _abs_path is not serialized, only _abs_path_str is 
                 FI_CF_WORKBOOKS: {}, # key = file name, value = absolute path
                 # Processed folder name and list of workbook names,
                 # e.g. ["categorized_boa-1391-2024-03-28.xlsx"]
-                FI_PF: "data/processed",
-                FI_PF_WORKBOOKS: {} # key = file name, value = absolute path
+                FI_FF: "data/processed",
+                FI_FF_WORKBOOKS: {} # key = file name, value = absolute path
             },
             "merrill": {
                 FI_NAME: "Merrill Lynch",
@@ -79,8 +79,8 @@ budget_model_template = {  # _abs_path is not serialized, only _abs_path_str is 
                 FI_CF_WORKBOOKS: {}, # key = file name, value = absolute path
                 # Processed folder name and list of workbook names,
                 # e.g. ["categorized_boa-1391-2024-03-28.xlsx"]
-                FI_PF: "data/processed",
-                FI_PF_WORKBOOKS: {} # key = file name, value = absolute path
+                FI_FF: "data/processed",
+                FI_FF_WORKBOOKS: {} # key = file name, value = absolute path
             },
         },
         BM_OPTIONS: {

@@ -1,12 +1,12 @@
 # ---------------------------------------------------------------------------- +
 #region p3_budget_categorization.py module
-""" Apply a budget model to financial institution transactions.
+""" Financial Budget Workflow: "categorization" of transaction workbooks.
 
-    Assumptions:
-    - The FI transactions are in a folders
-    - FI transaction files are typical excel spreadsheets. 
-    - Data content starts in cell A1.
-    - Row 1 contains column headers. All subsequent rows are data.
+    Workflow: cantegorization
+    Input Folder: Financial Institution (FI) Incoming Folder (IF)
+    Output Folder: Financial Institution (FI) Categorized Folder (CF)
+
+    FI transaction workbooks are typically excel files. 
 """
 #endregion p3_execl_budget.p3_banking_transactions budget_transactions.py module
 # ---------------------------------------------------------------------------- +
@@ -119,25 +119,31 @@ def map_budget_category(sheet,src,dst) -> None:
         raise    
 #endregion map_budget_category() function
 # ---------------------------------------------------------------------------- +
-#region process_incoming_categorization(inst_key: str) function
-def process_incoming_categorization(bm : BudgetModel, inst_key: str) -> None:
-    """Process incoming categorization of transactions.
+#region def workfloexecute_worklow_categorizationw_categorization(bm : BudgetModel, inst_key: str) -> None:
+def execute_worklow_categorization(bm : BudgetModel, inst_key: str, workflow:str) -> None:
+    """Process categorization workflow for Financial Institution's 
+    transaction workbooks.
 
-    Oversee the workflow process to examine all fi transaction files in the
-    IF (Incoming Folder) for the indicated FI (Financial Institution).
-    Each file is opened and the transactions are categorized and saved to the
-    CF (Categorized Folder) for the indicated FI.
+    Excecute the categorization workflow to examine all fi transaction 
+    workbooks presently in the IF (Incoming Folder) for the indicated 
+    FI (Financial Institution). Each workbook file is opened and the 
+    transactions are categorized and saved to the CF (Categorized Folder) 
+    for the indicated FI.
 
     Args:
+        bm (BudgetModel): The BudgetModel instance to use for processing.
         inst_key (str): The key for the financial institution.
     """
-    me = process_incoming_categorization
+    me = execute_worklow_categorization
+
     cp = "Budget Model Categorization:"
     st = time.time
     try:
-        logger.info(f"{cp}Start: ")
+        logger.info(f"{cp}Start: workflow: '{workflow}'")
         bm = BudgetModel() if bm is None else bm
         logger.info(f"{cp}Processing incoming files for '{inst_key}'...")
+        wb_name = "BOAChecking2025.xlsx"
+        wb = bm.fi_load_workbook("boa",BM_WF_INTAKE,wb_name)
         for wbkey in bm.fi_if_workbook_keys(inst_key):
             logger.info(f"{cp}    Workbook({wbkey})")
             # Load the workbook for the given key.
@@ -154,9 +160,9 @@ def process_incoming_categorization(bm : BudgetModel, inst_key: str) -> None:
             # # Save the categorized transactions to the CF (Categorized Folder).
             # save_fi_transactions(wb, wbkey)
         delta = f"{time.time() - st():.3f} seconds."
-        logger.info(f"Complete: {delta}")
+        logger.info(f"Complete: workflow: '{workflow}', elapsed: {delta}")
     except Exception as e:
         m = p3u.exc_msg(me, e)
         logger.error(m)
-#endregion process_incoming_categorization() function
+#endregion execute_worklow_categorization() function
 # ---------------------------------------------------------------------------- +
