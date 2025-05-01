@@ -131,6 +131,7 @@ class BudgetModel(metaclass=SingletonMeta):
             BM_BF: self.bm_bf,
             BM_FI: self.bm_fi,
             BM_STORE_URI: self.bm_store_uri,
+            BM_SUPPORTED_WORKFLOWS: self.bm_supported_workflows,
             BM_OPTIONS: self.bm_options,
             BM_CREATED_DATE: self.bm_created_date,
             BM_LAST_MODIFIED_DATE: self.bm_last_modified_date,
@@ -145,6 +146,7 @@ class BudgetModel(metaclass=SingletonMeta):
         ret += f"'{BM_BF}': '{self.bm_bf}', "
         ret += f"'{BM_FI}': '{self.bm_fi}', "
         ret += f"'{BM_STORE_URI}': '{self.bm_store_uri}', "
+        ret += f"'{BM_SUPPORTED_WORKFLOWS}': '{self.bm_supported_workflows}', "
         ret += f"'{BM_OPTIONS}': '{self.bm_options}', "
         ret += f"'{BM_CREATED_DATE}': '{self.bm_created_date}', "
         ret += f"'{BM_LAST_MODIFIED_DATE}': '{self.bm_last_modified_date}', "
@@ -153,11 +155,12 @@ class BudgetModel(metaclass=SingletonMeta):
         return ret
     def __str__(self) -> str:
         ''' Return a str representation of the BudgetModel object '''
-        ret = f"BudgetModlelTemplate({str(self.bm_bf)}): "
+        ret = f"{self.__class__.__name__}({str(self.bm_bf)}): "
         ret += f"{BM_INITIALIZED} = {str(self.bm_initialized)}, "
         ret += f"{BM_BF} = '{str(self.bm_bf)}', "
         ret += f"{BM_FI} = [{', '.join([repr(fi_key) for fi_key in self.bm_fi.keys()])}], "
         ret += f"{BM_STORE_URI} = '{self.bm_store_uri}' "
+        ret += f"{BM_SUPPORTED_WORKFLOWS} = '{self.bm_supported_workflows}' "
         ret += f"{BM_OPTIONS} = '{self.bm_options}' "
         ret += f"{BM_CREATED_DATE} = '{self.bm_created_date}', "
         ret += f"{BM_LAST_MODIFIED_DATE} = '{self.bm_last_modified_date}', "
@@ -196,6 +199,16 @@ class BudgetModel(metaclass=SingletonMeta):
     def bm_store_uri(self, value: str) -> None:
         """Set the budget model store URI."""
         self._budget_model_store_uri = value
+
+    @property
+    def bm_supported_workflows(self) -> list:
+        """The supported worklow names list of str."""
+        return self.bm_supported_workflows
+    
+    @bm_supported_workflows.setter
+    def bm_supported_workflows(self, value: list) -> None:
+        """Set the supported worklow names list of str."""
+        self.bm_supported_workflows = value
 
     @property
     def bm_fi(self) -> dict:
@@ -276,7 +289,6 @@ class BudgetModel(metaclass=SingletonMeta):
             create_missing_folders (bool): Create missing folders if True.
             raise_errors (bool): Raise errors if True.
         """
-        me = self.inititailize
         bmconfig : dict = None
         logger.debug(f"Start: BudgetModel.initialize()...")
         try:
@@ -299,7 +311,7 @@ class BudgetModel(metaclass=SingletonMeta):
             self.bm_working_data = bmconfig.bm_working_data.copy()
             logger.debug(f"Complete: BudgetModel.initialize()...")
         except Exception as e:
-            m = p3u.exc_msg(me, e)
+            m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
     #endregion BudgetModel.initialize(self, budget_node : dict = None) public 
