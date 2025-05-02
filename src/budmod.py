@@ -24,19 +24,6 @@ logger = logging.getLogger(THIS_APP_NAME)
 logger.propagate = True
 #endregion Imports
 # ---------------------------------------------------------------------------- +
-#region log_workbook_info() function
-def log_workbook_info(file_name : str = "unknown",wb : Workbook = None) -> None:  
-    if wb is None or not isinstance(wb, Workbook):
-        logger.error(f"Workbook({file_name}): None or not a Workbook.")
-        return
-    logger.info(f"Workbook({file_name}): with sheets: {str(wb.sheetnames)}")
-    # sheet = wb.active
-    # r = sheet.max_row
-    # c = sheet.max_column
-    logger.info(f"  Active sheet({wb.active.title}): " 
-                f"({wb.active.max_row} x {wb.active.max_column})")
-#endregion log_workbook_info() function
-# ---------------------------------------------------------------------------- +
 #region configure_logging() function
 def configure_logging(logger_name : str = THIS_APP_NAME, logtest : bool = False) -> None:
     """Setup the application logger."""
@@ -62,17 +49,33 @@ def configure_logging(logger_name : str = THIS_APP_NAME, logtest : bool = False)
         raise
 #endregion configure_logging() function
 # ---------------------------------------------------------------------------- +
+#region log_workbook_info() function
+def log_workbook_info(file_name : str = "unknown",wb : Workbook = None) -> None:  
+    if wb is None or not isinstance(wb, Workbook):
+        logger.error(f"Workbook({file_name}): None or not a Workbook.")
+        return
+    logger.info(f"Workbook({file_name}): with sheets: {str(wb.sheetnames)}")
+    # sheet = wb.active
+    # r = sheet.max_row
+    # c = sheet.max_column
+    logger.info(f"  Active sheet({wb.active.title}): " 
+                f"({wb.active.max_row} x {wb.active.max_column})")
+#endregion log_workbook_info() function
+# ---------------------------------------------------------------------------- +
 #region budmod() function
 def budmod():
     """Main function to run PyExcelBudget application."""
     try:
-        p3bm.tryout_budget_model_template()
+        # p3bm.tryout_budget_model_template()
 
-        # trans_file = "BOAChecking2025.xlsx"
-        # # Initalize the p3_budget_model package.
-        # bm = p3bm.BudgetModel()
-        # bm.inititailize()
-        # p3bm.execute_worklow_categorization(bm, "boa", p3bm.BM_WF_CATEGORIZATION)
+        trans_file = "BOAChecking2025.xlsx"
+        # Initalize the p3_budget_model package.
+        bmt = p3bm.BudgetModelTemplate()
+        bm = p3bm.BudgetModel()
+        bm.inititailize(bmt) # use the template to init
+        p3bm.log_BMD_info(bm)
+        p3bm.execute_worklow_categorization(bm, "boa", p3bm.BM_WF_CATEGORIZATION)
+
 
         # wb = p3bm.load_fi_transactions(trans_file)
         # log_workbook_info(trans_file, wb)

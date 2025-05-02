@@ -119,8 +119,8 @@ def map_budget_category(sheet,src,dst) -> None:
         raise    
 #endregion map_budget_category() function
 # ---------------------------------------------------------------------------- +
-#region def workfloexecute_worklow_categorizationw_categorization(bm : BudgetModel, inst_key: str) -> None:
-def execute_worklow_categorization(bm : BudgetModel, inst_key: str, workflow:str) -> None:
+#region def workfloexecute_worklow_categorizationw_categorization(bm : BudgetModel, fi_key: str) -> None:
+def execute_worklow_categorization(bm : BudgetModel, fi_key: str, workflow:str) -> None:
     """Process categorization workflow for Financial Institution's 
     transaction workbooks.
 
@@ -132,20 +132,25 @@ def execute_worklow_categorization(bm : BudgetModel, inst_key: str, workflow:str
 
     Args:
         bm (BudgetModel): The BudgetModel instance to use for processing.
-        inst_key (str): The key for the financial institution.
+        fi_key (str): The key for the financial institution.
     """
-    me = execute_worklow_categorization
-
+    st = p3u.start_timer()
+    wb_name = "BOAChecking2025.xlsx"
     cp = "Budget Model Categorization:"
-    st = time.time
     try:
-        logger.info(f"{cp}Start: workflow: '{workflow}'")
-        bm = BudgetModel() if bm is None else bm
-        logger.info(f"{cp}Processing incoming files for '{inst_key}'...")
-        wb_name = "BOAChecking2025.xlsx"
-        wb = bm.fi_load_workbook("boa",BM_WF_INTAKE,wb_name)
-        for wbkey in bm.fi_if_workbook_keys(inst_key):
-            logger.info(f"{cp}    Workbook({wbkey})")
+        logger.info(f"{cp} Start: workflow: '{workflow}'")
+        logger.info(f"{cp}Processing incoming files for '{fi_key}'...")
+        # Doing BM_WF_CATEGORIZATION workflow, so workbooks input from
+        # BM_WF_INTAKE workbooks folder.
+        # TODO: scheme to declare in config inputs and outputs for each workflow.
+        workbooks_dict = bm.get_bm_fi_wf_workbooks(fi_key, BM_WF_INTAKE)
+        if workbooks_dict is None or len(workbooks_dict) == 0:
+            logger.error(f"{cp} No workbooks found for '{fi_key}:{workflow}'")
+            return
+        for wb_name, wb_ap in reversed(workbooks_dict.items()):
+            logger.info(f"{cp}    Workbook({wb_name})")
+            wb = bm.bms_load_workbook(wb_ap)
+            # TODO: add logs directory to the budget folder.
             # Load the workbook for the given key.
             # wb = load_fi_transactions(wbkey)
             # if wb is None:
@@ -159,10 +164,10 @@ def execute_worklow_categorization(bm : BudgetModel, inst_key: str, workflow:str
             # map_budget_category(sheet, "Original Description", BUDGET_CATEGORY_COL)
             # # Save the categorized transactions to the CF (Categorized Folder).
             # save_fi_transactions(wb, wbkey)
-        delta = f"{time.time() - st():.3f} seconds."
-        logger.info(f"Complete: workflow: '{workflow}', elapsed: {delta}")
+        logger.info(f"{cp} Complete: workflow: '{workflow}' {p3u.stop_timer(st)}")
     except Exception as e:
-        m = p3u.exc_msg(me, e)
+        m = p3u.exc_err_msg(e)
         logger.error(m)
+        raise
 #endregion execute_worklow_categorization() function
 # ---------------------------------------------------------------------------- +

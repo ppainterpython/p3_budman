@@ -54,16 +54,6 @@ WF_NAME = "name"  # Also used as key in BM_FI workfloes dictionary.
 WF_FOLDER = "folder" # also used as key in BM_FI dictionary.
 WF_WORKBOOKS ="workbooks" # list of workflow dictianries
 
-# sub-folder names for each financial institution (FI).
-# FI_IF = BM_WF_INTAKE + FI_WF_KEY_SUFFIX
-# FI_IF_WORKBOOKS = FI_IF + WORKBOOKS
-
-# FI_CF = BM_WF_CATEGORIZATION + FI_WF_KEY_SUFFIX
-# FI_CF_WORKBOOKS = FI_CF + WORKBOOKS
-
-# FI_FF = BM_WF_FINALIZATION + FI_WF_KEY_SUFFIX
-# FI_FF_WORKBOOKS = FI_FF + WORKBOOKS
-
 # Budget Model Options Constants
 BMO_FI_IF_PREFIX = "incoming_prefix"
 BMO_FI_CF_PREFIX = "categorized_prefix"
