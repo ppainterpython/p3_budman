@@ -18,11 +18,10 @@ from .budget_model_constants import *
 from .budget_model import (
     BudgetModel,
     check_budget_model,
-    validate_budget_model,
 )
 
 from .budget_model_template import (
-    _BudgetModelTemplate,
+    BudgetModelTemplate,
     tryout_budget_model_template)
 
 from .budget_categorization import (
@@ -38,10 +37,8 @@ from .category_mapping import (
 
 __all__ = [
     "BudgetModel",
-    "_BudgetModelTemplate",
+    "BudgetModelTemplate",
     "tryout_budget_model_template",
     "execute_worklow_categorization"
     "check_budget_model",
-    "validate_budget_model",
-    "workflow_categorization",
 ]
