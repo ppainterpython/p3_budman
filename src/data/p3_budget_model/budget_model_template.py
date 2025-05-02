@@ -164,6 +164,9 @@ class BudgetModelTemplate(BudgetModel):
     # ------------------------------------------------------------------------ +
     #region BudgetModelTemplate class constructor __init__.()
     # __init__() method for the BudgetModelTemplate class
+    # Focus on populating the template for value inititialization in the
+    # BudgetModel Domain class. Leave all Budget Storage Model (BSM) setup
+    # for initialization elsewhere.
     def __init__(self, create_missing_folders : bool = True,
                  raise_errors : bool = True) -> None:
         """Construct a BudgetModelTemplate object used to initialize the budget model.
@@ -173,8 +176,7 @@ class BudgetModelTemplate(BudgetModel):
         budget model or to initialize a new budget model from the template. 
         It is for internal use only.
         """
-        # Make BudgetModel_template only about BM Domain initialization.
-        st = time.time()
+        st = p3u.start_timer()
         try:
             # Basic attribute atomic value inits. 
             logger.debug("Start:  ...")
@@ -183,17 +185,17 @@ class BudgetModelTemplate(BudgetModel):
 
             # Initialize values from the template as configuration values.
             bmt = BudgetModelTemplate.budget_model_template
-            self.bm_initialized = bmt[BM_INITIALIZED] 
+            self.bm_initialized = bmt[BM_INITIALIZED] # property
             logger.debug(f"{P2}BM_INITIALIZED('{BM_INITIALIZED}'): "
                          f"{self.bm_initialized}")
-            self.bm_bf = bmt[BM_DEFAULT_BUDGET_FOLDER] # budget folder setting, a str
+            self.bm_bf = bmt[BM_DEFAULT_BUDGET_FOLDER] # property
             bf_p = self.bms_bf_path() # budget folder path
             bmc = bf_p / BMS_DEFAULT_BUDGET_MODEL_FILE_NAME # bmc: BM config file
             bfp_exists = "exists." if bf_p.exists() else "does not exist!"
             bmc_exists = "exists." if bmc.exists() else "does not exist!"
             bmc_uri = p3u.path_to_file_uri(bmc) 
-            self.bm_store_uri = bmc_uri # uri for budget model config
-            self.bm_supported_workflows = bmt[BM_SUPPORTED_WORKFLOWS]
+            self.bm_store_uri = bmc_uri # property
+            self.bm_supported_workflows = bmt[BM_SUPPORTED_WORKFLOWS] # property
             logger.debug(f"{P2}BM_BF('{BM_BF}'): '{self.bm_store_uri}' {bfp_exists}")
             logger.debug(
                 f"{P4}bms_bf_path(): '{self.bms_bf_path()}' "
@@ -211,21 +213,10 @@ class BudgetModelTemplate(BudgetModel):
             fic = len(bmt[BM_FI])  # financial institutions count
             logger.debug(f"{P2}BM_FI('{BM_FI}')({fic})")
             for inst_key, inst in bmt[BM_FI].items():
-                self.bm_fi[inst_key] = inst.copy()  # Copy the template values
+                self.bm_fi[inst_key] = inst.copy()  # property, copy
                 fi_p = self.bms_fi_path(inst_key)  # FI folder path
                 fi_ap = self.bms_fi_abs_path(inst_key) # FI folder abs path
                 logger.debug(f"{P4}FI_KEY('{inst_key}') folder: '{fi_p}'")
-                # move mkdir() stuff to separate bms_initialize() method.
-                if not fi_ap.exists():
-                    # If create_missing_folders is True, create the folder
-                    if create_missing_folders:
-                        logger.debug(f"{P4}Creating folder: '{fi_ap}'")
-                        fi_ap.mkdir(parents=True, exist_ok=True)
-                    else:
-                        m = (f"{P4}Budget institution({inst_key}) " 
-                            f"folder does not exist: '{str(fi_ap)}'")
-                        logger.error(m)
-                        raise FileNotFoundError(m) if raise_errors else None
                 logger.debug(f"{P6}FI_KEY('{inst_key}') {str(inst)}")
                 if_p = self.bms_fi_path(inst_key)
                 if_p_exists = "exists." if if_p.exists() else "does not exist!"
@@ -256,8 +247,7 @@ class BudgetModelTemplate(BudgetModel):
             # BudgetModelTemplate initialization is complete.
             self.bm_initialized = True
             logger.debug(f"{P2}{BM_INITIALIZED}: {self.bm_initialized}")
-            delta = f"{time.time() - st:.3f} seconds."
-            logger.debug(f"Complete: {delta}")   
+            logger.debug(f"Complete: {p3u.stop_timer(st)}")   
         except Exception as e:
             m = p3u.exc_msg(self.__init__, e)
             logger.error(m)

@@ -289,8 +289,7 @@ class BudgetModel(metaclass=SingletonMeta):
                  create_missing_folders : bool = True,
                  raise_errors : bool = True
                  ) -> None:
-        """Initialize budget_model from bm_src as config, or use the 
-         builtin BudgetModelTemplate by default.
+        """Initialize BMD from config, either bm_src, or the template.
 
         Args:
             bm_src (dict): A BudgetModelStore object to configure from. If
@@ -298,13 +297,13 @@ class BudgetModel(metaclass=SingletonMeta):
             create_missing_folders (bool): Create missing folders if True.
             raise_errors (bool): Raise errors if True.
         """
+        st = p3u.start_timer()
         bmconfig : dict = None
-        if BudgetModel.config_template is None:
-            logger.debug("BudgetModel.config_template is None.")
-            return
-        bmconfig = BudgetModel.config_template
-        logger.debug(f"Start: BudgetModel.initialize()...")
         try:
+            if bm_src is None:
+                logger.debug("bm_src parameter is None, using builtin template.")
+                bmconfig = BudgetModel.config_template
+            logger.debug(f"Start: ...")
             # Apply the configuration to the budget model (self)
             self.bm_initialized = bmconfig.bm_initialized
             self.bm_bf = bmconfig.bm_bf
@@ -315,7 +314,7 @@ class BudgetModel(metaclass=SingletonMeta):
             self.bm_last_modified_date = bmconfig.bm_last_modified_date
             self.bm_last_modified_by = bmconfig.bm_last_modified_by
             self.bm_working_data = bmconfig.bm_working_data.copy()
-            logger.debug(f"Complete: BudgetModel.initialize()...")
+            logger.debug(f"Complete: {p3u.stop_timer(st)}")   
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
@@ -374,8 +373,9 @@ class BudgetModel(metaclass=SingletonMeta):
     #region BudgetModel Storage Model methods
     """ BudgetModel Storage Model (BSM) Methods
 
-    All storage is in the filesystem. BSM works with Path objects, but all
-    Paths should be persisted as strings. Internally, Path objects are used.
+    All storage is in the filesystem. BSM works with Path objects filenames,
+    folders, relative and absolute path names. All paths should be 
+    persisted as strings. Internally, Path objects are used.
 
     Naming Conventions:
     -------------------
@@ -386,7 +386,100 @@ class BudgetModel(metaclass=SingletonMeta):
     - _str uses str(path) to return a string representation of the path.
     """
     # ======================================================================== +
-    #region bf_ Budget Folder Path methods
+    #region BMS filesystem Path methods
+    """ Abbrevs used in method names: 
+        bmd - Budget Model Domain, the domain model of the budget model.
+        bms - Budget Storage Model, the filesystem storage model.
+        bm - BudgetModel class instance, parent of the Budget Model data structure.
+        bf - budget folder - attribute, root folder, used in path objects.
+        fi - financial institution dictionary, attribute of bm.
+             fi_key = int_key, short name of FI, e.g., "boa", "chase", etc.
+             fi_value = dict of info about the FI.
+        wf - workflow
+    """
+    # ------------------------------------------------------------------------ +    
+    #region bms_inititalize() method
+    def bms_inititalize(self, create_missing_folders:bool=True,
+                        raise_errors:bool=True) -> None:
+        """Initialize BSM aspects of the BDM.
+        
+        Examine elements of self, the BudgetModel class, representing the BDM.
+        Validate the mapping of the BDM data dependent on mapping to folders 
+        and files in the filesystem. Flags control whether to create the
+        filesystem structure if it is not present. Also scan the workflow 
+        folders for the presence of workbook excel files and load their 
+        references into the BDM as appropriate.
+
+        Args:
+            create_missing_folders (bool): Create missing folders if True.
+            raise_errors (bool): Raise errors if True.
+        """
+        st = p3u.start_timer()
+        try:
+            logger.debug("Start: ...")
+            # Check the budget folder path is set and exists.
+            if self.bm_bf is None:
+                m = f"Budget folder path is not set. "
+                m += f"Set the '{BM_BF}' property to a valid path."
+                logger.error(m)
+                raise ValueError(m)
+            logger.info(f"Checking budget forlder path: '{self.bm_bf}'")
+            bf_ap = self.bms_bf_abs_path()
+            if not bf_ap.exists():
+                m = f"Budget folder path does not exist: '{self.bm_bf}'"
+                logger.error(m)
+                if create_missing_folders:
+                    logger.info(f"Creating budget folder: '{self.bm_bf}'")
+                    os.makedirs(self.bm_bf_abs_path_str(), exist_ok=True)
+                else:
+                    raise ValueError(m)
+            # Enumerate the financial institutions in the budget model.
+            for inst_key, inst in self.bm_fi.items():
+                # Check each FI folder path is preesnt.
+                logger.info(f"Checking financial institution folder: '{inst_key}'")
+                fi_ap = self.bms_fi_abs_path(inst_key)
+                if not fi_ap.exists():
+                    m = f"Financial institution folder does not exist: '{fi_ap}'"
+                    logger.error(m)
+                    if create_missing_folders:
+                        logger.info(f"Creating financial institution folder: '{fi_ap}'")
+                        os.makedirs(fi_ap, exist_ok=True)
+                    else:
+                        raise ValueError(m)
+                for wf_key in self.bms_bf_fi_wf.keys():
+                    # Check each workflow folder path is present.
+                    logger.info(f"Checking folder for workflow: '{wf_key}'")
+                    wf_ap = self.bms_fi_wf_abs_path(inst_key, wf_key)
+                    if not wf_ap.exists():
+                        m = f"Workflow folder does not exist: '{wf_ap}'"
+                        logger.error(m)
+                        if create_missing_folders:
+                            logger.info(f"Creating workflow folder: '{wf_ap}'")
+                            os.makedirs(wf_ap, exist_ok=True)
+                        else:
+                            raise ValueError(m)
+                        # Resolve the WF_WORKBOOKS dictionary for the workflow.
+            # move mkdir() stuff to separate bms_initialize() method.
+            if not fi_ap.exists():
+                # If create_missing_folders is True, create the folder
+                if create_missing_folders:
+                    logger.debug(f"{P4}Creating folder: '{fi_ap}'")
+                    fi_ap.mkdir(parents=True, exist_ok=True)
+                else:
+                    m = (f"{P4}Budget institution({inst_key}) " 
+                        f"folder does not exist: '{str(fi_ap)}'")
+                    logger.error(m)
+                    raise FileNotFoundError(m) if raise_errors else None
+
+
+
+            logger.debug(f"Complete: {p3u.stop_timer(st)}")   
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise
+    #endregion bms_inititalize() method
+    # ------------------------------------------------------------------------ +    
     def bms_bf_path(self) -> Path:
         """ convert self.bm_bf property to Path object."""
         return Path(self.bm_bf).expanduser()
@@ -398,9 +491,6 @@ class BudgetModel(metaclass=SingletonMeta):
         return self.bms_bf_path().resolve()
     def bms_bf_abs_path_str(self) -> str:
         return str(self.bms_bf_abs_path())
-    #endregion bf_ Budget Folder Path methods
-    # ------------------------------------------------------------------------ +
-    #region fi_ Financial Institution Folder (fi_) Path methods
     def bms_fi_path(self, inst_key: str) -> Path:
         """Construct the path to Financial Institution Folder in the
         Budget Storage Model.
@@ -416,9 +506,6 @@ class BudgetModel(metaclass=SingletonMeta):
         return self.bms_fi_path(inst_key).resolve()
     def bms_fi_abs_path_str(self, inst_key: str) -> str:
         return str(self.bms_fi_abs_path(inst_key))
-    #endregion fi_ Financial Institution Folder (fi_f_) Path methods
-    # ------------------------------------------------------------------------ +
-    #region fi_ Financial Institution Workflow Folder (fi_wf_) Path methods
     def bms_fi_wf_path(self, inst_key : str, workflow : str) -> Path:
         """Construct the path of a FI Workflow Folder for indicated inst_key.
         Budget Storage Model.
@@ -436,11 +523,11 @@ class BudgetModel(metaclass=SingletonMeta):
         return self.bms_fi_wf_path(inst_key, workflow).resolve()
     def bms_fi_wf_abs_path_str(self, inst_key: str, workflow : str) -> str:
         return str(self.bms_fi_wf_abs_path(inst_key, workflow))
-    #endregion fi_ Financial Institution Folder (fi_wf_) Path methods
+    #endregion BMS filesystem Path methods
     # ------------------------------------------------------------------------ +
     #region bms_fi_wf_resolve_workbooks(self, inst_key: str, workflow : str) -> List:
     def bms_fi_wf_resolve_workbooks(self, inst_key: str, workflow : str) -> dict:
-        """Glob all of the workbook files in the Financial Institution Workflow 
+        """Return list of all of the workbook files in the fi_wf folder. 
         Folder and return a WF_WORKBOOKS dictionary for the specified workflow.
 
         WF_WORKBOOKS dict:
@@ -615,6 +702,7 @@ class BudgetModel(metaclass=SingletonMeta):
     #endregion save_fi_transactions() function
     # ======================================================================== +
     #endregion BudgetModel Storage Model methods
+    # ======================================================================== +
 # ---------------------------------------------------------------------------- +
 #region check_budget_model() -> bool
 def check_budget_model() -> bool:   
