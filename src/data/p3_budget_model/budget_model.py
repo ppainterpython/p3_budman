@@ -143,7 +143,7 @@ class BudgetModel(metaclass=SingletonMeta):
             BM_FOLDER: self.bm_folder,
             BM_FI: self.bm_fi,
             BM_STORE_URI: self.bm_store_uri,
-            BM_WORKFLOWS: self.bm_supported_workflows,
+            BM_WORKFLOWS: self.bm_workflows,
             BM_OPTIONS: self.bm_options,
             BM_CREATED_DATE: self.bm_created_date,
             BM_LAST_MODIFIED_DATE: self.bm_last_modified_date,
@@ -158,7 +158,7 @@ class BudgetModel(metaclass=SingletonMeta):
         ret += f"'{BM_FOLDER}': '{self.bm_folder}', "
         ret += f"'{BM_FI}': '{self.bm_fi}', "
         ret += f"'{BM_STORE_URI}': '{self.bm_store_uri}', "
-        ret += f"'{BM_WORKFLOWS}': '{self.bm_supported_workflows}', "
+        ret += f"'{BM_WORKFLOWS}': '{self.bm_workflows}', "
         ret += f"'{BM_OPTIONS}': '{self.bm_options}', "
         ret += f"'{BM_CREATED_DATE}': '{self.bm_created_date}', "
         ret += f"'{BM_LAST_MODIFIED_DATE}': '{self.bm_last_modified_date}', "
@@ -172,7 +172,7 @@ class BudgetModel(metaclass=SingletonMeta):
         ret += f"{BM_FOLDER} = '{str(self.bm_folder)}', "
         ret += f"{BM_FI} = [{', '.join([repr(fi_key) for fi_key in self.bm_fi.keys()])}], "
         ret += f"{BM_STORE_URI} = '{self.bm_store_uri}' "
-        ret += f"{BM_WORKFLOWS} = '{self.bm_supported_workflows}' "
+        ret += f"{BM_WORKFLOWS} = '{self.bm_workflows}' "
         ret += f"{BM_OPTIONS} = '{self.bm_options}' "
         ret += f"{BM_CREATED_DATE} = '{self.bm_created_date}', "
         ret += f"{BM_LAST_MODIFIED_DATE} = '{self.bm_last_modified_date}', "
@@ -319,7 +319,7 @@ class BudgetModel(metaclass=SingletonMeta):
             self.bm_folder = bm_config.bm_folder
             self.bm_fi = bm_config.bm_fi.copy() if bm_config.bm_fi else {}
             self.bm_store_uri = bm_config.bm_store_uri
-            self.bm_supported_workflows = bm_config.bm_supported_workflows.copy() if bm_config.bm_supported_workflows else None
+            self.bm_workflows = bm_config.bm_workflows.copy() if bm_config.bm_workflows else None
             self.bm_options = bm_config.bm_options.copy() if bm_config.bm_options else {}
             self.bm_created_date = bm_config.bm_created_date
             self.bm_last_modified_date = bm_config.bm_last_modified_date
@@ -378,10 +378,10 @@ class BudgetModel(metaclass=SingletonMeta):
     #region WF pseudo-Object properties
     def bmd_validate_wf_key(self, wf_key:str) -> bool:
         """Validate the workflow key."""
-        supp_wf = self.bm_supported_workflows
+        supp_wf = self.bm_workflows
         if supp_wf is None or wf_key not in supp_wf:
             m = f"Workflow('{wf_key}') not found supported workflows "
-            m += f"{self.bm_supported_workflows}"
+            m += f"{self.bm_workflows}"
             logger.error(m)
             raise ValueError(m)
         return True
@@ -520,8 +520,24 @@ class BudgetModel(metaclass=SingletonMeta):
     #endregion bms_inititalize() method
     # ------------------------------------------------------------------------ +    
     #region BM Folder (BF) Path methods
+    def bms_validate_bm_folder(self) -> bool:
+        """Validate the bm_folder property setting.
+        
+        Raise a ValueError if the bm_folder property is not set or is not
+        usable as part of a valid path string.
+        """
+        # TODO: expand and resolve flags?
+        if self.bm_folder is None or len(self.bm_folder) == 0:
+            m = f"Budget folder path is not set. "
+            m += f"Set the BM_FOLDER('{BM_FOLDER}') property to valid path value."
+            logger.error(m)
+            raise ValueError(m)
+        return True
     def bms_bm_folder_path_str(self) -> str:
         """str version of the BM_FOLDER value as a Path."""
+        # In the BMS, the bm_folder property must be a valid setting that will
+        # result in a valid Path. Raise a ValueError if not.
+        self.bms_validate_bm_folder() # Raises ValueError if not valid
         return str(Path(self.bm_folder))
     def bms_bm_folder_path(self) -> Path:
         """Path of self.bms_bm_folder_path_str().expanduser()."""
@@ -538,9 +554,18 @@ class BudgetModel(metaclass=SingletonMeta):
     # ------------------------------------------------------------------------ +   
     #region FI Path methods
     def bms_fi_folder_path_str(self, fi_key: str) -> str:
-        """str version of the FI_FOLDER value as a Path."""
-        bf_p_s = self.bms_bm_folder_path_str()
-        fi_p_s = str(Path(self.bmd_fi_folder(fi_key)))    
+        """str version of the FI_FOLDER value as a Path.
+        
+        Raises ValueError for invalid settings for any of: bm_folder property,
+        fi_key, of FI_FOLDER value of FI dictionary."""
+        bf_p_s = self.bms_bm_folder_path_str() # ValueError on BM_FOLDER property
+        self.bmd_validate_fi_key(fi_key) # ValueError fi_key
+        fi_p_s = str(Path(self.bmd_fi_folder(fi_key))) 
+        if fi_p_s is None or len(fi_p_s) == 0:
+            m = f"FI_FOLDER value is not set for FI_KEY('{fi_key}'). "
+            m += f"In the BudgetModel configuration, correct FI_FOLDER setting."
+            logger.error(m)
+            raise ValueError(m)   
         return str(Path(bf_p_s) / fi_p_s)
     def bms_fi_folder_path(self, fi_key: str) -> Path:
         """Path of self.bms_fi_folder_path_str().expanduser()."""
@@ -557,7 +582,7 @@ class BudgetModel(metaclass=SingletonMeta):
     # ------------------------------------------------------------------------ +   
     #region WF pseudo-Object methods
     # ------------------------------------------------------------------------ +   
-    #region bm_fi_wf_workbooks methods
+    #region WF WFDictionary pseudo-property methods
     def bms_wf_workbooks_in(self, wf_key:str) -> dict:
         """Get WF_WOOKBOOKS_IN value (dict) of the WF specified by wf_key.        """
         return self.bmd_wf_workbooks_in(wf_key)
@@ -568,15 +593,14 @@ class BudgetModel(metaclass=SingletonMeta):
     #endregion bm_fi_wf_workbooks methods
     # ------------------------------------------------------------------------ +   
     #region WF Path methods
-    def bms_wf_folder_in_str(self, fi_key : str, wf_key : str) -> str:
+    def bms_wf_folder_in_path_str(self, fi_key : str, wf_key : str) -> str:
         """str version of the WF_FOLDER_IN value for fi_key/wf_key."""
         fi_p_s = self.bms_fi_folder_path_str(fi_key) # FI_FOLDER Path component
         wf_p_s = self.bmd_wf_folder_in(wf_key)
-        combined_p = Path(fi_p_s) / wf_p_s
-        return str(combined_p)
+        return str(Path(fi_p_s) / wf_p_s) if wf_p_s is not None else None
     def bms_wf_folder_in_path(self, fi_key : str, wf_key : str) -> Path:
         """Path of self.bms_wf_folder_path_str().expanduser()."""
-        return Path(self.bms_wf_folder_in_str(fi_key, wf_key)).expanduser()
+        return Path(self.bms_wf_folder_in_path_str(fi_key, wf_key)).expanduser()
     def bms_wf_folder_in_abs_path(self, fi_key : str, wf_key : str) -> Path:
         """Path of self.bms_wf_folder_path().resolve()."""
         return Path(self.bms_wf_folder_in_path(fi_key, wf_key)).resolve()
@@ -766,7 +790,7 @@ def log_BMD_info(bmd : BudgetModel) -> None:
             f"{bmc_p_exists}")
         logger.debug(
             f"{P2}BM_WORKFLOWS('{BM_WORKFLOWS}'): "
-            f" '{bmd.bm_supported_workflows}'")
+            f" '{bmd.bm_workflows}'")
         # Enumerate the financial institutions in the budget model
         for fi_key, fi_dict in bmd.bm_fi.items():
             logger.debug(f"{P2}Financial Institution: {fi_dict[FI_FOLDER]}:"
