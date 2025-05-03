@@ -44,6 +44,8 @@ logger = logging.getLogger(THIS_APP_NAME)
 class BudgetModelTemplate(BudgetModel):
     """Default BbudgetModelTemplate class, contains default, example values.
     
+    Creates a BudgetModel object pre-poulated with default configuration values.
+
     Defines the BudgetModel structure with two example Financial Institutions.
     Convenient for developer.
     """
@@ -85,6 +87,7 @@ class BudgetModelTemplate(BudgetModel):
             },
             BM_WF_CATEGORIZATION: {            # bmd_fi_wf(fi_key, workflow)
                 # WF Object
+                WF_KEY: BM_WF_CATEGORIZATION,
                 WF_NAME: BM_WF_CATEGORIZATION,
                 WF_FOLDER_IN: "data/new", # bms_wf_folder_in(fi_key, workflow)
                 WF_WORKBOOKS_IN: {},
@@ -95,6 +98,7 @@ class BudgetModelTemplate(BudgetModel):
             },
             BM_WF_FINALIZATION: {              # bmd_fi_wf(fi_key, workflow)
                 # WF Object
+                WF_KEY: BM_WF_FINALIZATION,
                 WF_NAME: BM_WF_FINALIZATION,
                 WF_FOLDER_IN: "data/categorized",   # bms_wf_folder_in(fi_key, workflow)
                 WF_WORKBOOKS_IN: {},

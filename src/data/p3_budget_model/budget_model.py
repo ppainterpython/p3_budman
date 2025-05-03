@@ -343,7 +343,7 @@ class BudgetModel(metaclass=SingletonMeta):
         return self.budget_model_working_data.get(key, 0)
     #endregion budget_model_data methods
     # ------------------------------------------------------------------------ +
-    #region FI pseudo-Object properties
+    #region BMD FI pseudo-Object properties
     def bmd_validate_fi_key(self, fi_key:str) -> bool:
         """Validate the financial institution key."""
         if fi_key not in self.bm_fi.keys():
@@ -375,7 +375,7 @@ class BudgetModel(metaclass=SingletonMeta):
         return self.bmd_fi(fi_key)[FI_FOLDER]
     #endregion FI pseudo-Object properties
     # ------------------------------------------------------------------------ +
-    #region WF pseudo-Object properties
+    #region BMD WF pseudo-Object properties
     def bmd_validate_wf_key(self, wf_key:str) -> bool:
         """Validate the workflow key."""
         supp_wf = self.bm_workflows
@@ -505,13 +505,14 @@ class BudgetModel(metaclass=SingletonMeta):
                 verify_folder(fi_ap, create_missing_folders, raise_errors)
                 # Enumerate the workflows for the financial institution.
                 for wf_key, wf in self.bm_workflows.items():
-                    # Check each workflow folder path is present.
+                    # Check each workflow folder with a path value present.
                     logger.info(f"Checking folder for workflow: '{wf_key}'")
                     wf_ap = self.bms_wf_folder_in_abs_path(fi_key, wf_key)
-                    verify_folder(wf_ap, create_missing_folders, raise_errors)
-                    # Resolve the WF_WORKBOOKS_IN dictionary for the workflow.
-                    wf_dict = self.bms_fi_folder_wf_resolve_workbooks(fi_key, wf_key)
-                    self.bms_set_wf_workbooks_in(wf_key, wf_dict)
+                    if wf_ap is not None:
+                        verify_folder(wf_ap, create_missing_folders, raise_errors)
+                        # Resolve the WF_WORKBOOKS_IN dictionary for the workflow.
+                        wf_dict = self.bms_fi_folder_wf_resolve_workbooks(fi_key, wf_key)
+                        self.bms_set_wf_workbooks_in(wf_key, wf_dict)
             logger.debug(f"Complete: {p3u.stop_timer(st)}")   
         except Exception as e:
             m = p3u.exc_err_msg(e)
@@ -589,7 +590,7 @@ class BudgetModel(metaclass=SingletonMeta):
     
     def bms_set_wf_workbooks_in(self, wf_key : str, value: dict) -> None:
         """Set WF_WORKBOOKS_IN dict for specified FI fi_key and workflow."""
-        self.bmd_wf[wf_key][WF_WORKBOOKS_IN] = value
+        self.bmd_wf(wf_key)[WF_WORKBOOKS_IN] = value
     #endregion bm_fi_wf_workbooks methods
     # ------------------------------------------------------------------------ +   
     #region WF Path methods
@@ -600,13 +601,16 @@ class BudgetModel(metaclass=SingletonMeta):
         return str(Path(fi_p_s) / wf_p_s) if wf_p_s is not None else None
     def bms_wf_folder_in_path(self, fi_key : str, wf_key : str) -> Path:
         """Path of self.bms_wf_folder_path_str().expanduser()."""
-        return Path(self.bms_wf_folder_in_path_str(fi_key, wf_key)).expanduser()
+        p_s = self.bms_wf_folder_in_path_str(fi_key, wf_key)
+        return Path(p_s).expanduser() if p_s is not None else None
     def bms_wf_folder_in_abs_path(self, fi_key : str, wf_key : str) -> Path:
         """Path of self.bms_wf_folder_path().resolve()."""
-        return Path(self.bms_wf_folder_in_path(fi_key, wf_key)).resolve()
+        p = self.bms_wf_folder_in_path(fi_key, wf_key)
+        return p.resolve() if p is not None else None
     def bms_wf_folder_in_abs_path_str(self, fi_key : str, wf_key : str) -> str:
         """str of self.bms_wf_folder_abs_path()."""
-        return str(self.bms_wf_folder_in_abs_path(fi_key, wf_key))
+        p = self.bms_wf_folder_in_abs_path(fi_key, wf_key)
+        return str(p) if p is not None else None
     #endregion WF Path methods
     # ------------------------------------------------------------------------ +
     #region bms_fi_folder_wf_resolve_workbooks(self, fi_key, workflow) -> List:
@@ -625,7 +629,7 @@ class BudgetModel(metaclass=SingletonMeta):
             List[str]: A list of workbook file names in the workflow folder.
         """
         try:
-            fi_wf_ap = self.bms_fi_folder_wf_abs_path(fi_key, workflow)
+            fi_wf_ap = self.bms_wf_folder_in_abs_path(fi_key, workflow)
             wb_files = list(fi_wf_ap.glob("*.xlsx"))
             wf_dict = {}
             for wb_p in wb_files:

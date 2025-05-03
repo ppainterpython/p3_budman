@@ -52,6 +52,8 @@ FI_TYPE = "type"
 FI_FOLDER = "fi_folder" # also used as key in BM_FI dictionary.
 FI_EXPECTED_KEYS = (FI_KEY, FI_NAME, FI_TYPE, FI_FOLDER)
 VALID_FI_KEYS = ("boa", "merrill")
+VALID_FI_TYPES = ("bank", "brokerage")
+BMD_FI_NAMES = ("Bank of America", "Merrill Lynch")
 
 # WF psuedo-Object (Dictionary key names)
 WF_KEY = "wf_key"
