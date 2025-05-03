@@ -85,7 +85,7 @@ def map_budget_category(sheet,src,dst) -> None:
         if src in header_row:
             src_col_index = header_row.index(src) + 1
         else:
-            logger.Error(f"Source column '{src}' not found in header row.")
+            logger.error(f"Source column '{src}' not found in header row.")
             return
         if dst in header_row:
             dst_col_index = header_row.index(dst) + 1
@@ -115,7 +115,7 @@ def map_budget_category(sheet,src,dst) -> None:
         logger.info(f"Completed budget category mapping for '{num_rows}' rows.")
         return None
     except Exception as e:
-        logger.error(p3u.exc_msg(me, e))
+        logger.error(p3u.exc_err_msg(me, e))
         raise    
 #endregion map_budget_category() function
 # ---------------------------------------------------------------------------- +
@@ -134,36 +134,49 @@ def execute_worklow_categorization(bm : BudgetModel, fi_key: str, workflow:str) 
         bm (BudgetModel): The BudgetModel instance to use for processing.
         fi_key (str): The key for the financial institution.
     """
+    # TODO: add logs directory to the budget folder.
     st = p3u.start_timer()
     wb_name = "BOAChecking2025.xlsx"
     cp = "Budget Model Categorization:"
     try:
         logger.info(f"{cp} Start: workflow: '{workflow}'")
         logger.info(f"{cp}Processing incoming files for '{fi_key}'...")
-        # Doing BM_WF_CATEGORIZATION workflow, so workbooks input from
-        # BM_WF_INTAKE workbooks folder.
-        # TODO: scheme to declare in config inputs and outputs for each workflow.
-        workbooks_dict = bm.get_bm_fi_wf_workbooks(fi_key, BM_WF_INTAKE)
+        # WF_NAME: BM_WF_CATEGORIZATION workflow, so workbooks input from
+        # WF_FOLDER_IN: 
+
+        # Get the workbooks from WF_FOLDER_IN for the workflow.
+        workbooks_dict = bm.bms_wf_workbooks_in(fi_key, BM_WF_INTAKE)
         if workbooks_dict is None or len(workbooks_dict) == 0:
             logger.error(f"{cp} No workbooks found for '{fi_key}:{workflow}'")
             return
+        loaded_workbooks = {}
         for wb_name, wb_ap in reversed(workbooks_dict.items()):
             logger.info(f"{cp}    Workbook({wb_name})")
-            wb = bm.bms_load_workbook(wb_ap)
-            # TODO: add logs directory to the budget folder.
-            # Load the workbook for the given key.
-            # wb = load_fi_transactions(wbkey)
-            # if wb is None:
-            #     logger.error(f"{cp}    Workbook({wbkey}): not loaded.")
-            #     continue
-            # logger.info(f"{cp}    Workbook({wbkey}): with sheets: {str(wb.sheetnames)}")
-            # sheet = wb.active
-            # # Check for budget category column, add it if not present.
-            # check_budget_category(sheet)
-            # # Map the 'Original Description' column to the 'Budget Category' column.
-            # map_budget_category(sheet, "Original Description", BUDGET_CATEGORY_COL)
-            # # Save the categorized transactions to the CF (Categorized Folder).
-            # save_fi_transactions(wb, wbkey)
+            try:
+                # Check if the workbook is already loaded.
+                if wb_name in loaded_workbooks:
+                    logger.info(f"{cp}    Workbook({wb_name}) already loaded.")
+                    continue
+                # Load the workbook for the given key.
+                logger.info(f"{cp}    Loading workbook: {wb_ap}")
+                wb = bm.bms_load_workbook(wb_ap)
+                loaded_workbooks[wb_name] = wb
+            except Exception as e:
+                logger.error(f"{cp}    Error loading workbook: {wb_name}: {e}")
+                continue
+        if len(loaded_workbooks) == 0:
+            logger.error(f"{cp} No workbooks loaded for '{fi_key}:{workflow}'")
+            return
+        for wbkey, wb in loaded_workbooks.items():
+            logger.info(f"{cp}    Workbook({wbkey})")
+            sheet = wb.active
+            # Check for budget category column, add it if not present.
+            check_budget_category(sheet)
+            # Map the 'Original Description' column to the 'Budget Category' column.
+            map_budget_category(sheet, "Original Description", BUDGET_CATEGORY_COL)
+            # Save the categorized transactions to the CF (Categorized Folder).
+            # TODO: mangle the output file path.
+            # bms_save_workbook(wb, output_path)
         logger.info(f"{cp} Complete: workflow: '{workflow}' {p3u.stop_timer(st)}")
     except Exception as e:
         m = p3u.exc_err_msg(e)
