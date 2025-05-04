@@ -43,4 +43,16 @@ __all__ = [
     "tryout_budget_model_template",
     "execute_worklow_categorization"
     "check_budget_model",
+    "__create_config_template__"
 ]
+
+def __create_config_template__() -> BudgetModelTemplate:
+    """Create a BudgetModelTemplate instance."""
+    """
+
+    Returns:
+        BudgetModelTemplate: A BudgetModelTemplate instance.
+    """
+    # Create a BudgetModelTemplate instance.
+    bmt = BudgetModelTemplate()
+    return bmt

@@ -115,7 +115,7 @@ class BudgetModel(metaclass=SingletonMeta):
     # ------------------------------------------------------------------------ +
     #region    BudgetModel class constructor __init__()
     def __init__(self,classname : str = "BudgetModel") -> None:
-        """Initialize the BudgetModel class."""
+        """Constructor for the BudgetModel class."""
         self._classname = classname
         BudgetModel.config_template = self if classname == "BudgetModelTemplate" else None
 
@@ -290,7 +290,7 @@ class BudgetModel(metaclass=SingletonMeta):
     #region    BudgetModel Domain methods
     # ======================================================================== +
     #region    BudgetModel.initialize(self, budget_node : dict = None) public 
-    def inititailize(self, 
+    def initiailize(self, 
                  bm_config_src:dict=None, 
                  bms_init : bool = True,
                  create_missing_folders : bool = True,
@@ -311,6 +311,9 @@ class BudgetModel(metaclass=SingletonMeta):
             if bm_config_src is None:
                 logger.debug("bm_config_src parameter is None, using builtin template.")
                 bm_config = BudgetModel.config_template
+                if bm_config is None:
+                    from data.p3_budget_model.create_config_template import __create_config_template__
+                    bm_config = __create_config_template__()
             else:
                 bm_config = bm_config_src
             logger.debug(f"Start: ...")
