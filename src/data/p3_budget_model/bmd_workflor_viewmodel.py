@@ -1,9 +1,9 @@
-#region bmd_workflow_viewmodel.py module
-""" bmd_workflow_viewmodel and BMDWorkflowViewModel class
+#region bdm_workflow_viewmodel.py module
+""" bdm_workflow_viewmodel and BDMWorkflowViewModel class
 implements the workflow concerns for the Budget Domain Model, providing 
 an API to upstream actors such as User Interfaces and other system packages.
 
-Following a rough MVVM pattern, the BMDWorkflowViewModel class is  
+Following a rough MVVM pattern, the BDMWorkflowViewModel class is  
 the ViewModel. 
 
 At present, the BudgetModel class is a singleton class that manages the 
@@ -85,10 +85,10 @@ class SingletonMeta(type):
             cls._instances[cls] = super().__call__(*args, **kwargs)
         return cls._instances[cls]
 # ---------------------------------------------------------------------------- +
-class BMDWorkflowViewModel(metaclass=SingletonMeta):
+class BDMWorkflowViewModel(metaclass=SingletonMeta):
     
     def __init__(self, budget_model: BudgetModel = None) -> None:
-        """Initialize the BMDWorkflowViewModel class.
+        """Initialize the BDMWorkflowViewModel class.
 
         Args:
             budget_model (BudgetModel): The BudgetModel instance.

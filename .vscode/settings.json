@@ -118,5 +118,8 @@
         "webcolors",
         "webencodings",
         "xmlfile"
+    ],
+    "python.analysis.exclude": [
+        "**/.VSCodeCounter"
     ]
 }

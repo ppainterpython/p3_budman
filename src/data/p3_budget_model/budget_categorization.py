@@ -5,8 +5,12 @@
     Workflow: cantegorization
     Input Folder: Financial Institution (FI) Incoming Folder (IF)
     Output Folder: Financial Institution (FI) Categorized Folder (CF)
-
     FI transaction workbooks are typically excel files. 
+
+    Workflow Pathern: Apply a workflow_proccess (function) to each item in the 
+    input folder, placing items in the output folder as appropiate to the 
+    configured function. Each WorkFLow instance in the config applies one 
+    function to the input with resulting output.
 """
 #endregion p3_execl_budget.p3_banking_transactions budget_transactions.py module
 # ---------------------------------------------------------------------------- +
@@ -120,11 +124,11 @@ def map_budget_category(sheet,src,dst) -> None:
 #endregion map_budget_category() function
 # ---------------------------------------------------------------------------- +
 #region def workfloexecute_worklow_categorizationw_categorization(bm : BudgetModel, fi_key: str) -> None:
-def execute_worklow_categorization(bm : BudgetModel, fi_key: str, workflow:str) -> None:
-    """Process categorization workflow for Financial Institution's 
+def execute_worklow_categorization(bm : BudgetModel, fi_key: str, wf_key:str) -> None:
+    """Process categorization wf_key for Financial Institution's 
     transaction workbooks.
 
-    Excecute the categorization workflow to examine all fi transaction 
+    Excecute the categorization wf_key to examine all fi transaction 
     workbooks presently in the IF (Incoming Folder) for the indicated 
     FI (Financial Institution). Each workbook file is opened and the 
     transactions are categorized and saved to the CF (Categorized Folder) 
@@ -138,46 +142,52 @@ def execute_worklow_categorization(bm : BudgetModel, fi_key: str, workflow:str) 
     st = p3u.start_timer()
     wb_name = "BOAChecking2025.xlsx"
     cp = "Budget Model Categorization:"
+    loaded_workbooks = {}
+    # Execute a workflow for a specific financial institution (fi_key).
+    #   The pattern is to apply a function based on wf_key to each item in 
+    #   the input folder based on fi_key and wf_key.
+    #   Execute steps:
+    #     1: Load the input items from storage.
+    #     2: Apply the workflow function to each input item.
+    #     3: Save the output items to storage. 
     try:
-        logger.info(f"{cp} Start: workflow: '{workflow}'")
-        logger.info(f"{cp}Processing incoming files for '{fi_key}'...")
-        # WF_NAME: BM_WF_CATEGORIZATION workflow, so workbooks input from
-        # WF_FOLDER_IN: 
+        logger.info(f"{cp} Start: workflow: '{wf_key}' for FI('{fi_key}') ...")
 
-        # Get the workbooks from WF_FOLDER_IN for the workflow.
-        workbooks_dict = bm.bms_wf_workbooks_in(fi_key, BM_WF_INTAKE)
-        if workbooks_dict is None or len(workbooks_dict) == 0:
-            logger.error(f"{cp} No workbooks found for '{fi_key}:{workflow}'")
+        wb_c = bm.bms_WF_FOLDER_IN_count(fi_key, wf_key)
+        # workbooks_dict = bm.bms_WF_WORKBOOKS_IN(fi_key, BM_WF_INTAKE)
+        # if workbooks_dict is None or len(workbooks_dict) == 0:
+        if wb_c is None or wb_c == 0:
+            logger.info(f"{cp}    No workbooks for input.")
             return
-        loaded_workbooks = {}
-        for wb_name, wb_ap in reversed(workbooks_dict.items()):
+        logger.info(f"{cp}    {wb_c} workbooks for input.")
+        # Now process each input workbook.
+        # for wb_name, wb_ap in reversed(workbooks_dict.items()):
+        # Step 1: Load the workbooks sequentially.
+        for wb_name, wb in bm.bms_WF_FOLDER_IN_loader(fi_key, wf_key):
             logger.info(f"{cp}    Workbook({wb_name})")
-            try:
-                # Check if the workbook is already loaded.
-                if wb_name in loaded_workbooks:
-                    logger.info(f"{cp}    Workbook({wb_name}) already loaded.")
-                    continue
-                # Load the workbook for the given key.
-                logger.info(f"{cp}    Loading workbook: {wb_ap}")
-                wb = bm.bms_load_workbook(wb_ap)
-                loaded_workbooks[wb_name] = wb
+                
+            # Step 2: Process the workbooks applying the workflow function
+            try: 
+                logger.info(f"{cp}    Workbook({wb_name})")
+                sheet = wb.active
+                # Check for budget category column, add it if not present.
+                check_budget_category(sheet)
+                # Map the 'Original Description' column to the 'Budget Category' column.
+                map_budget_category(sheet, "Original Description", BUDGET_CATEGORY_COL)
             except Exception as e:
-                logger.error(f"{cp}    Error loading workbook: {wb_name}: {e}")
+                logger.error(f"{cp}    Error processing workbook: {wb_name}: {e}")
                 continue
-        if len(loaded_workbooks) == 0:
-            logger.error(f"{cp} No workbooks loaded for '{fi_key}:{workflow}'")
-            return
-        for wbkey, wb in loaded_workbooks.items():
-            logger.info(f"{cp}    Workbook({wbkey})")
-            sheet = wb.active
-            # Check for budget category column, add it if not present.
-            check_budget_category(sheet)
-            # Map the 'Original Description' column to the 'Budget Category' column.
-            map_budget_category(sheet, "Original Description", BUDGET_CATEGORY_COL)
-            # Save the categorized transactions to the CF (Categorized Folder).
-            # TODO: mangle the output file path.
-            # bms_save_workbook(wb, output_path)
-        logger.info(f"{cp} Complete: workflow: '{workflow}' {p3u.stop_timer(st)}")
+
+            # Step 3: Save the output items to storage.
+            try:
+                # TODO: mangle the output file path.
+                # get WF_FOLDER_OUT abs path, prepend prefix, create path,
+                # save out.
+                bm.bms_save_WF_FOLDER_OUT(wb, wb_name, fi_key, wf_key)
+            except Exception as e:
+                logger.error(f"{cp}    Error saving workbook: {wb_name}: {e}")
+                continue
+        logger.info(f"{cp} Complete: wf_key: '{wf_key}' {p3u.stop_timer(st)}")
     except Exception as e:
         m = p3u.exc_err_msg(e)
         logger.error(m)

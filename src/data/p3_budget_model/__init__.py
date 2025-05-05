@@ -17,7 +17,7 @@ from .budget_model_constants import *
 
 from .budget_model import (
     BudgetModel,
-    log_BMD_info,
+    log_BDM_info,
     check_budget_model,
 )
 
@@ -38,7 +38,7 @@ from .category_mapping import (
 
 __all__ = [
     "BudgetModel",
-    "log_BMD_info",
+    "log_BDM_info",
     "BudgetModelTemplate",
     "tryout_budget_model_template",
     "execute_worklow_categorization"

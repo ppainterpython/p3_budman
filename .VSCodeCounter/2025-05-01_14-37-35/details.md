@@ -21,7 +21,7 @@ Total : 23 files,  2116 codes, 454 comments, 301 blanks, all 2871 lines
 | [src/budmod.py](/src/budmod.py) | Python | 64 | 45 | 7 | 116 |
 | [src/data/\_\_init\_\_.py](/src/data/__init__.py) | Python | 6 | 0 | 2 | 8 |
 | [src/data/p3\_budget\_model/\_\_init\_\_.py](/src/data/p3_budget_model/__init__.py) | Python | 39 | 0 | 8 | 47 |
-| [src/data/p3\_budget\_model/bmd\_workflor\_viewmodel.py](/src/data/p3_budget_model/bmd_workflor_viewmodel.py) | Python | 72 | 14 | 17 | 103 |
+| [src/data/p3\_budget\_model/bdm\_workflor\_viewmodel.py](/src/data/p3_budget_model/bdm_workflor_viewmodel.py) | Python | 72 | 14 | 17 | 103 |
 | [src/data/p3\_budget\_model/budget\_categorization.py](/src/data/p3_budget_model/budget_categorization.py) | Python | 111 | 42 | 15 | 168 |
 | [src/data/p3\_budget\_model/budget\_model.py](/src/data/p3_budget_model/budget_model.py) | Python | 562 | 99 | 72 | 733 |
 | [src/data/p3\_budget\_model/budget\_model\_constants.py](/src/data/p3_budget_model/budget_model_constants.py) | Python | 41 | 28 | 13 | 82 |

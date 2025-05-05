@@ -69,38 +69,38 @@ class BudgetModelTemplate(BudgetModel):
     institution_expected_keys = FI_EXPECTED_KEYS
     options_expected_keys = BMO_EXPECTED_KEYS
     budget_model_template = {  
-        # BMD object
+        # BDM object
         BM_INITIALIZED: False,
         BM_FOLDER: BM_DEFAULT_BUDGET_FOLDER,               # bms_bm_folder_path()
         BM_STORE_URI: None,
         BM_WORKFLOWS: {
-            BM_WF_INTAKE: {                    # bmd_fi_wf(fi_key, workflow)
+            BM_WF_INTAKE: {                    # bdm_fi_wf(fi_key, workflow)
                 # WF Object - TODO: add WF_KEY, verify unique
                 WF_KEY: BM_WF_INTAKE,
                 WF_NAME: BM_WF_INTAKE,
-                WF_FOLDER_IN: None,         # bms_wf_folder_in(fi_key, workflow)
+                WF_FOLDER_IN: None,         # bms_WF_WORKBOOKS_IN(fi_key, workflow)
                 WF_WORKBOOKS_IN: {},
                 WF_IN_PREFIX: None,
                 WF_FOLDER_OUT: "data/new",
                 WF_WORKBOOKS_OUT: {},
                 WF_OUT_PREFIX: None
             },
-            BM_WF_CATEGORIZATION: {            # bmd_fi_wf(fi_key, workflow)
+            BM_WF_CATEGORIZATION: {            # bdm_fi_wf(fi_key, workflow)
                 # WF Object
                 WF_KEY: BM_WF_CATEGORIZATION,
                 WF_NAME: BM_WF_CATEGORIZATION,
-                WF_FOLDER_IN: "data/new", # bms_wf_folder_in(fi_key, workflow)
+                WF_FOLDER_IN: "data/new", # bms_WF_WORKBOOKS_IN(fi_key, workflow)
                 WF_WORKBOOKS_IN: {},
                 WF_IN_PREFIX: None,
                 WF_FOLDER_OUT: "data/categorized",
                 WF_WORKBOOKS_OUT: {},
                 WF_OUT_PREFIX: "categorized_"
             },
-            BM_WF_FINALIZATION: {              # bmd_fi_wf(fi_key, workflow)
+            BM_WF_FINALIZATION: {              # bdm_fi_wf(fi_key, workflow)
                 # WF Object
                 WF_KEY: BM_WF_FINALIZATION,
                 WF_NAME: BM_WF_FINALIZATION,
-                WF_FOLDER_IN: "data/categorized",   # bms_wf_folder_in(fi_key, workflow)
+                WF_FOLDER_IN: "data/categorized",   # bms_WF_WORKBOOKS_IN(fi_key, workflow)
                 WF_WORKBOOKS_IN: {},
                 WF_IN_PREFIX: "categorized_",
                 WF_FOLDER_OUT: "data/finalized",
@@ -109,7 +109,7 @@ class BudgetModelTemplate(BudgetModel):
             }
         },
         BM_FI: {
-            "boa": {                                   # bmd_fi(fi_key) -> object
+            "boa": {                                   # bdm_fi(fi_key) -> object
                 # FI Object - TODO: add FI_KEY, verify unique
                 FI_KEY: "boa",
                 FI_NAME: "Bank of America",
@@ -290,11 +290,11 @@ if __name__ == "__main__":
         bm = BudgetModelTemplate()
         bms = str(bm)
         bmr = repr(bm)
-        bmd = bm.to_dict()
+        bdm = bm.to_dict()
 
         logger.debug(f"Budget Model: str() = '{bms}'")
         logger.debug(f"Budget Model: repr() = '{bmr}'")
-        logger.debug(f"Budget Model: to_dict() = '{bmd}'")
+        logger.debug(f"Budget Model: to_dict() = '{bdm}'")
 
         _ = "pause"
     except Exception as e:

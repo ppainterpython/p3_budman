@@ -37,6 +37,9 @@
 			"timespec",
 			"tryit"
 		],
-		"files.autoSave": "onFocusChange"
-	}
+		"files.autoSave": "onFocusChange",
+		"python.analysis.exclude": [
+			"**/.VSCodeCounter"
+		]
+		}
 }
