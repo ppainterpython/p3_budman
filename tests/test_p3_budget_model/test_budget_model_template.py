@@ -45,8 +45,8 @@ def test_budget_model_template_constructor() -> None:
 # ---------------------------------------------------------------------------- +
 
 # ---------------------------------------------------------------------------- +
-def test_bms_initialize() -> None:
-    """Test the BudgetModelStorage.bms_initialize() Method."""
+def test_bsm_initialize() -> None:
+    """Test the BudgetModelStorage.bsm_initialize() Method."""
     try:
         # Initialize the logger from a logging configuration file.
         # p3l.setup_logging(THIS_APP_NAME,p3l.STDOUT_FILE_LOG_CONFIG_FILE)
@@ -58,14 +58,14 @@ def test_bms_initialize() -> None:
             "Budget model should be a BudgetModelStorage instance"
         
         assert bmt._initialized, "Budget model should be initialized"
-        bmt.bms_inititalize()
+        bmt.bsm_inititalize()
         assert bmt._initialized, "Budget model should be initialized"
 
 
     except Exception as e:
         pytest.fail(f"init_budget_model raised an exception: {str(e)}")
 # ---------------------------------------------------------------------------- +
-def test_bms_BM_Folder_Path_methods() -> None:
+def test_bsm_BM_Folder_Path_methods() -> None:
     """Test BM Folder (BF) Path methods."""
     try:
         logger.info("Testing BudgetModelStorage constructor.")
@@ -73,18 +73,18 @@ def test_bms_BM_Folder_Path_methods() -> None:
         assert isinstance(bmt, p3bt.BudgetModelTemplate), \
             "Budget model should be a BudgetModelTemplate instance"
         exptd_s = str(Path(p3bt.BM_DEFAULT_BUDGET_FOLDER))
-        assert (_s := bmt.bms_bm_folder_path_str()) == exptd_s, \
+        assert (_s := bmt.bsm_BM_FOLDER_path_str()) == exptd_s, \
             f"Expected: {exptd_s}, Got: {_s}"
         exptd_p = Path(_s).expanduser()
-        assert (_p := bmt.bms_bm_folder_path()) == exptd_p, \
+        assert (_p := bmt.bsm_BM_FOLDER_path()) == exptd_p, \
             f"Expected: {exptd_p}, Got: {_p}"
         exptd_ap = Path(_p).resolve()
-        assert (_ap := bmt.bms_bm_folder_abs_path()) == exptd_ap, \
+        assert (_ap := bmt.bsm_BM_FOLDER_abs_path()) == exptd_ap, \
             f"Expected: {exptd_ap}, Got: {_ap}" 
     except Exception as e:
         pytest.fail(f"init_budget_model raised an exception: {str(e)}")
 # ---------------------------------------------------------------------------- +
-def test_bms_FI_Path_methods() -> None:
+def test_bsm_FI_Path_methods() -> None:
     """Test FI Path methods."""
     try:
         logger.info("Testing BudgetModelStorage constructor.")
@@ -97,15 +97,15 @@ def test_bms_FI_Path_methods() -> None:
 
         # Expect valid values to work from default setup.
         for fi_key in p3bt.VALID_FI_KEYS:
-            assert bmt.bdm_validate_fi_key(fi_key), \
+            assert bmt.bdm_validate_FI_KEY(fi_key), \
                 f"Expected: {fi_key} to be a valid FI key."
-            assert bmt.bms_fi_folder_path_str(fi_key) is not None, \
+            assert bmt.bsm_FI_FOLDER_path_str(fi_key) is not None, \
                 f"Expected: {fi_key} folder path string to be valid."
-            assert bmt.bms_fi_folder_path(fi_key) is not None, \
+            assert bmt.bsm_FI_FOLDER_path(fi_key) is not None, \
                 f"Expected: {fi_key} folder path to be valid."
-            assert bmt.bms_fi_folder_abs_path(fi_key) is not None, \
+            assert bmt.bsm_FI_FOLDER_abs_path(fi_key) is not None, \
                 f"Expected: {fi_key} folder absolute path to be valid."
-            assert bmt.bms_fi_folder_abs_path_str(fi_key) is not None, \
+            assert bmt.bsm_FI_FOLDER_abs_path_str(fi_key) is not None, \
                 f"Expected: {fi_key} folder absolute path string to be valid."
     except Exception as e:
         pytest.fail(f"init_budget_model raised an exception: {str(e)}")
@@ -123,21 +123,21 @@ def test_WF_Path_methods() -> None:
 
         # Expect valid values to work from default setup.
         for fi_key in p3bt.VALID_FI_KEYS:
-            assert bmt.bdm_validate_fi_key(fi_key), \
+            assert bmt.bdm_validate_FI_KEY(fi_key), \
                 f"Expected: {fi_key} to be a valid FI key."
             for wf_key in p3bt.BM_VALID_WORKFLOWS:
                 assert bmt.bdm_validate_wf_key(wf_key), \
                     f"Expected: {wf_key} to be a valid WF key."
-                _s = bmt.bms_WF_FOLDER_IN_path_str(fi_key,wf_key)
-                logger.debug(f"WF: {wf_key} bms_WF_FOLDER_IN_path_str(): '{_s}'")
+                _s = bmt.bsm_WF_FOLDER_IN_path_str(fi_key,wf_key)
+                logger.debug(f"WF: {wf_key} bsm_WF_FOLDER_IN_path_str(): '{_s}'")
                 if _s is not None:
                     assert isinstance(_s, str), \
                         f"Expected: {wf_key} folder path to be string."
-                    assert (_p := bmt.bms_WF_FOLDER_IN_path(fi_key,wf_key)) is not None, \
+                    assert (_p := bmt.bsm_WF_FOLDER_IN_path(fi_key,wf_key)) is not None, \
                         f"Expected: {wf_key} folder path to be valid."
-                    assert (_ap := bmt.bms_WF_FOLDER_IN_abs_path(fi_key,wf_key)) is not None, \
+                    assert (_ap := bmt.bsm_WF_FOLDER_IN_abs_path(fi_key,wf_key)) is not None, \
                         f"Expected: {wf_key} folder absolute path to be valid."
-                    assert (_aps := bmt.bms_WF_FOLDER_IN_abs_path_str(fi_key,wf_key)) is not None, \
+                    assert (_aps := bmt.bsm_WF_FOLDER_IN_abs_path_str(fi_key,wf_key)) is not None, \
                         f"Expected: {wf_key} folder absolute path string to be valid."
     except Exception as e:
         pytest.fail(f"init_budget_model raised an exception: {str(e)}")
@@ -155,20 +155,20 @@ def test_BDM_FI_pseudo_Property_Methods():
 
         # Expect valid values to work from default setup.
         for fi_key in p3bt.VALID_FI_KEYS:
-            assert bmt.bdm_validate_fi_key(fi_key), \
+            assert bmt.bdm_validate_FI_KEY(fi_key), \
                 f"Expected: {fi_key} to be a valid FI key."
-            assert (bdm_fi := bmt.bdm_fi(fi_key)) is not None, \
+            assert (bdm_fi := bmt.bdm_FI_OBJECT(fi_key)) is not None, \
                 f"Expected: {fi_key} to be a valid FI dict."
-            assert len(bdm_fi) == len(p3bt.FI_EXPECTED_KEYS), \
+            assert len(bdm_fi) == len(p3bt.FI_OBJECT_VALID_KEYS), \
                 f"Expected: {fi_key} workbooks_in to be non-None."
             assert isinstance(bdm_fi, dict), \
                 f"Expected: {fi_key} workbooks_in to be valid dict."
-            assert bmt.bdm_fi_key(fi_key) == fi_key, \
-                f"Expected bdm_fi_key('{fi_key}'): '{fi_key}', got '{bdm_fi.bdm_fi_key(fi_key)}'."
-            assert bmt.bdm_fi_name(fi_key) in p3bt.BDM_FI_NAMES, \
-                f"Expected one of: {p3bt.BDM_FI_NAMES}, got '{bmt.bdm_fi_name(fi_key)}'"
-            assert bmt.bdm_fi_type(fi_key) in p3bt.VALID_FI_TYPES, \
-                f"Expected one of: {p3bt.BDM_FI_TYPES}, got '{bmt.bdm_fi_type(fi_key)}'"
+            assert bmt.bdm_FI_KEY(fi_key) == fi_key, \
+                f"Expected bdm_FI_KEY('{fi_key}'): '{fi_key}', got '{bdm_fi.bdm_FI_OBJECT_key(fi_key)}'."
+            assert bmt.bdm_FI_NAME(fi_key) in p3bt.BDM_FI_NAMES, \
+                f"Expected one of: {p3bt.BDM_FI_NAMES}, got '{bmt.bdm_FI_OBJECT_name(fi_key)}'"
+            assert bmt.bdm_FI_TYPE(fi_key) in p3bt.VALID_FI_TYPES, \
+                f"Expected one of: {p3bt.BDM_FI_TYPES}, got '{bmt.bdm_FI_OBJECT_type(fi_key)}'"
             assert (fldr := bmt.bdm_FI_FOLDER(fi_key)) is not None , \
                 f"Expected bmt.bdm_FI_FOLDER({fi_key}) to be non-None"
     except Exception as e:
@@ -191,7 +191,7 @@ def test_BDM_WF_Dictioonary_Pseudo_Property_Methods():
                 f"Expected: {wf_key} to be a valid WF key."
             assert (bdm_wf := bmt.bdm_wf(wf_key)) is not None, \
                 f"Expected: {wf_key} to be a valid WF dict."
-            assert len(bdm_wf) == len(p3bt.WF_EXPECTED_KEYS), \
+            assert len(bdm_wf) == len(p3bt.WF_OBJECT_VALID_KEYS), \
                 f"Expected: {wf_key} workbooks_in to be non-None."
             assert isinstance(bdm_wf, dict), \
                 f"Expected: {wf_key} workbooks_in to be valid dict."
@@ -214,11 +214,11 @@ def test_BDM_WF_Dictioonary_Pseudo_Property_Methods():
             assert isinstance(bmt.bdm_wf_out_prefix(wf_key), (str, type(None))), \
                 f"Expected bmt.bdm_wf_out_prefix({wf_key}) to be str or None" 
             
-            # assert bmt.bms_WF_WORKBOOKS_IN(wf_key) is not None, \
+            # assert bmt.bsm_WF_WORKBOOKS_IN(wf_key) is not None, \
             #     f"Expected: {wf_key} workbooks_in to be non-None."
-            # assert isinstance(bmt.bms_WF_WORKBOOKS_IN(wf_key), dict), \
+            # assert isinstance(bmt.bsm_WF_WORKBOOKS_IN(wf_key), dict), \
             #     f"Expected: {wf_key} workbooks_in to be valid dict."
-            # assert len(bmt.bms_WF_WORKBOOKS_IN(wf_key)) >= 0, \
+            # assert len(bmt.bsm_WF_WORKBOOKS_IN(wf_key)) >= 0, \
             #     f"Expected: {wf_key} workbooks_in to have valid length."
     except Exception as e:
         pytest.fail(f"init_budget_model raised an exception: {str(e)}")

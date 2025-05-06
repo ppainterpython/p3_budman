@@ -64,70 +64,77 @@ class BudgetModelTemplate(BudgetModel):
     # information for a given user.
     budget_config_expected_keys = BM_EXPECTED_KEYS
     valid_workflows = BM_VALID_WORKFLOWS
-    workflow_expected_keys = WF_EXPECTED_KEYS
+    workflow_expected_keys = WF_OBJECT_VALID_KEYS
     valid_institutions_keys = VALID_FI_KEYS
-    institution_expected_keys = FI_EXPECTED_KEYS
+    institution_expected_keys = FI_OBJECT_VALID_KEYS
     options_expected_keys = BMO_EXPECTED_KEYS
     budget_model_template = {  
         # BDM object
         BM_INITIALIZED: False,
-        BM_FOLDER: BM_DEFAULT_BUDGET_FOLDER,               # bms_bm_folder_path()
+        BM_FOLDER: BM_DEFAULT_BUDGET_FOLDER,               # bsm_BM_FOLDER_path()
         BM_STORE_URI: None,
-        BM_WORKFLOWS: {
+        BM_FI_COLLECTION: { # FI_COLLECTION (dict) {FI_KEY: FI_OBJECT}
+            "boa": # FI_KEY
+            {      # FI_OBJECT
+                FI_KEY: "boa",
+                FI_NAME: "Bank of America",
+                FI_TYPE: "bank",
+                FI_FOLDER: "boa",
+                FI_WORKFLOW_DATA: { # WF_WORKFLOWTA (dict) {wf_key: WF_WORKBOOK_DATA}
+                     BM_WF_CATEGORIZATION: {  # WF_WOBKBOOK_DATA dcit {key: [(),() ...]} 
+                        WF_WORKBOOKS_IN: [ # WF_WROKBOOK_LIST
+                            ( "input_prefix_wb_name_1", "wb_abs_path_1" ),
+                            ( "input_prefix_wb_name_2", "wb_abs_path_2" ),
+                            ( "input_prefix_wb_name_3", "wb_abs_path_3" )
+                        ], 
+                        WF_WORKBOOKS_OUT: [
+                            ( "output_prefix_wb_name_1", "wb_abs_path_4" ),
+                            ( "output_prefix_wb_name_2", "wb_abs_path_5" ),
+                            ( "output_prefix_wb_name_3", "wb_abs_path_6" )
+                        ]
+                        }
+                    },
+                },
+            "merrill": # FI_KEY
+            {          # FI_OBJECT
+                FI_KEY: "merrill",
+                FI_NAME: "Merrill Lynch",
+                FI_TYPE: "brokerage",
+                FI_FOLDER: "merrill",
+                FI_WORKFLOW_DATA: None,
+            },
+        },
+        BM_WF_COLLECTION: {
             BM_WF_INTAKE: {                    # bdm_fi_wf(fi_key, workflow)
                 # WF Object - TODO: add WF_KEY, verify unique
                 WF_KEY: BM_WF_INTAKE,
                 WF_NAME: BM_WF_INTAKE,
-                WF_FOLDER_IN: None,         # bms_WF_WORKBOOKS_IN(fi_key, workflow)
-                WF_WORKBOOKS_IN: {},
+                WF_FOLDER_IN: None,         # bsm_WF_WORKBOOKS_IN(fi_key, workflow)
                 WF_IN_PREFIX: None,
                 WF_FOLDER_OUT: "data/new",
-                WF_WORKBOOKS_OUT: {},
                 WF_OUT_PREFIX: None
             },
             BM_WF_CATEGORIZATION: {            # bdm_fi_wf(fi_key, workflow)
                 # WF Object
                 WF_KEY: BM_WF_CATEGORIZATION,
                 WF_NAME: BM_WF_CATEGORIZATION,
-                WF_FOLDER_IN: "data/new", # bms_WF_WORKBOOKS_IN(fi_key, workflow)
-                WF_WORKBOOKS_IN: {},
-                WF_IN_PREFIX: None,
+                WF_FOLDER_IN: "data/new", # bsm_WF_WORKBOOKS_IN(fi_key, workflow)
+                WF_WORKBOOKS_IN: "raw_data/",
                 WF_FOLDER_OUT: "data/categorized",
-                WF_WORKBOOKS_OUT: {},
+                WF_IN_PREFIX: None,
                 WF_OUT_PREFIX: "categorized_"
             },
             BM_WF_FINALIZATION: {              # bdm_fi_wf(fi_key, workflow)
                 # WF Object
                 WF_KEY: BM_WF_FINALIZATION,
                 WF_NAME: BM_WF_FINALIZATION,
-                WF_FOLDER_IN: "data/categorized",   # bms_WF_WORKBOOKS_IN(fi_key, workflow)
-                WF_WORKBOOKS_IN: {},
-                WF_IN_PREFIX: "categorized_",
+                WF_FOLDER_IN: "data/categorized",   # bsm_WF_WORKBOOKS_IN(fi_key, workflow)
                 WF_FOLDER_OUT: "data/finalized",
-                WF_WORKBOOKS_OUT: {},
+                WF_IN_PREFIX: "categorized_",
                 WF_OUT_PREFIX: "finalized_"
             }
         },
-        BM_FI: {
-            "boa": {                                   # bdm_fi(fi_key) -> object
-                # FI Object - TODO: add FI_KEY, verify unique
-                FI_KEY: "boa",
-                FI_NAME: "Bank of America",
-                FI_TYPE: "bank",
-                FI_FOLDER: "boa"                      # bms_fi_folder_path(fi_key)
-            },
-            "merrill": {
-                # FI Object
-                FI_KEY: "merrill",
-                FI_NAME: "Merrill Lynch",
-                FI_TYPE: "brokerage",
-                FI_FOLDER: "merrill"
-            },
-        },
         BM_OPTIONS: {
-            BMO_FI_IF_PREFIX: "new_",
-            BMO_FI_CF_PREFIX: "categorized_",
-            BMO_FI_CF_PREFIX: "final_",
             BMO_LOG_CONFIG: "budget_model_logging_config.jsonc",
             BMO_LOG_LEVEL: "DEBUG",
             BMO_LOG_FILE: "logs/p3BudgetModel.log",
@@ -168,42 +175,42 @@ class BudgetModelTemplate(BudgetModel):
             logger.debug(f"{P2}BM_INITIALIZED('{BM_INITIALIZED}'): "
                          f"{self.bm_initialized}")
             self.bm_folder = BM_DEFAULT_BUDGET_FOLDER   # property
-            bf_p = self.bms_bm_folder_path() # budget folder path
+            bf_p = self.bsm_BM_FOLDER_path() # budget folder path
             bmc = bf_p / BMS_DEFAULT_BUDGET_MODEL_FILE_NAME # bmc: BM config file
             bfp_exists = "exists." if bf_p.exists() else "does not exist!"
             bmc_exists = "exists." if bmc.exists() else "does not exist!"
             bmc_uri = p3u.path_to_file_uri(bmc) 
             self.bm_store_uri = bmc_uri # property
-            self.bm_workflows = bmt[BM_WORKFLOWS] # property
+            self.bm_wf_collection = bmt[BM_WF_COLLECTION] # property
             logger.debug(f"{P2}BM_FOLDER('{BM_FOLDER}'): '{self.bm_store_uri}' {bfp_exists}")
             logger.debug(
-                f"{P4}bms_bm_folder_path(): '{self.bms_bm_folder_path()}' "
+                f"{P4}bsm_BM_FOLDER_path(): '{self.bsm_BM_FOLDER_path()}' "
                 f"{bfp_exists}")
             logger.debug(
-                f"{P4}bms_bm_folder_abs_path(): '{self.bms_bm_folder_abs_path()}' "
+                f"{P4}bsm_BM_FOLDER_abs_path(): '{self.bsm_BM_FOLDER_abs_path()}' "
                 f"{bfp_exists}")
             logger.debug(
                 f"{P2}BM_STORE_URI('{BM_STORE_URI}): '{self.bm_store_uri}' "
                 f"{bmc_exists}")
             logger.debug(
-                f"{P2}BM_WORKFLOWS('{BM_WORKFLOWS}'): "
-                f" '{self.bm_workflows}'")
+                f"{P2}BM_WORKFLOWS('{BM_WF_COLLECTION}'): "
+                f" '{self.bm_wf_collection}'")
             # Financial Institutions (FI), copy from template.
-            fic = len(bmt[BM_FI])  # financial institutions count
-            logger.debug(f"{P2}BM_FI('{BM_FI}')({fic})")
-            for fi_key, fi_dict in bmt[BM_FI].items():
-                self.bm_fi[fi_key] = fi_dict.copy()  # property, copy
-                fi_p = self.bms_fi_folder_path(fi_key)  # FI folder path
-                fi_ap = self.bms_fi_folder_abs_path(fi_key) # FI folder abs path
+            fic = len(bmt[BM_FI_COLLECTION])  # financial institutions count
+            logger.debug(f"{P2}BM_FI('{BM_FI_COLLECTION}')({fic})")
+            for fi_key, fi_dict in bmt[BM_FI_COLLECTION].items():
+                self.bm_fi_collection[fi_key] = fi_dict.copy()  # property, copy
+                fi_p = self.bsm_FI_FOLDER_path(fi_key)  # FI folder path
+                fi_ap = self.bsm_FI_FOLDER_abs_path(fi_key) # FI folder abs path
                 logger.debug(f"{P4}FI_KEY('{fi_key}') folder: '{fi_p}'")
                 logger.debug(f"{P6}FI_KEY('{fi_key}') {str(fi_dict)}")
-                if_p = self.bms_fi_folder_path(fi_key)
+                if_p = self.bsm_FI_FOLDER_path(fi_key)
                 if_p_exists = "exists." if if_p.exists() else "does not exist!"
-                logger.debug(f"{P6}bms_fi_folder_path(): '{if_p}' "
+                logger.debug(f"{P6}bsm_FI_FOLDER_path(): '{if_p}' "
                              f"{if_p_exists}")
-                if_ap = self.bms_fi_folder_abs_path(fi_key)
+                if_ap = self.bsm_FI_FOLDER_abs_path(fi_key)
                 if_ap_exists = "exists." if if_ap.exists() else "does not exist!"
-                logger.debug(f"{P6}bms_fi_folder_abs_path(): '{if_ap}'"
+                logger.debug(f"{P6}bsm_FI_FOLDER_abs_path(): '{if_ap}'"
                              f"{if_ap_exists}")
 
             # Initialize Budget Model Options as a template
@@ -244,13 +251,13 @@ def tryout_budget_model_template() -> None:
     try:
         logger.debug("Start: ...")
         bmt = BudgetModelTemplate()
-        bmt.bms_inititalize() # initialize the budget storage model 
+        bmt.bsm_inititalize() # initialize the budget storage model 
         
         # Enumerate the financial institutions in the budget model template
-        for fi_key, fi_dict in bmt.bm_fi.items():
+        for fi_key, fi_dict in bmt.bm_fi_collection.items():
             logger.debug(f"Financial Institution: {fi_dict[FI_FOLDER]}:"
                          f"{fi_dict[FI_TYPE]}:{fi_dict[FI_NAME]}:")
-        for wf_key, wf_dict in bmt.bm_workflows.items():
+        for wf_key, wf_dict in bmt.bm_wf_collection.items():
             logger.debug(f"{P2}Workflow('{wf_dict[WF_NAME]}'): "
                             f"{P2}WM_FOLDER_IN: '{wf_dict[WF_FOLDER_IN]}' "
                             f"{P2}WM_WORKBOOS_IN: {wf_dict[WF_WORKBOOKS_IN]}")

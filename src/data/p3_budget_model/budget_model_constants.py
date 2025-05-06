@@ -24,60 +24,77 @@ WORKBOOKS = "_workbooks"
 # Well-known column names for banking transactions workbooks.
 BUDGET_CATEGORY_COL = "Budget Category"
 
-# Budget Model (BM) class attribute name Constants
+# BudgetModel (BM) class attribute name Constants
 BM_INITIALIZED = "_initialized"
 BM_FOLDER = "_budget_folder"
 BM_STORE_URI = "_budget_model_store_uri"
-BM_WORKFLOWS = "_workflows"
-BM_FI = "_financial_institutions"
+BM_FI_COLLECTION = "_financial_institutions"
+BM_WF_COLLECTION = "_workflows"
 BM_OPTIONS = "_options"
 BM_CREATED_DATE = "_created_date"
 BM_LAST_MODIFIED_DATE = "_last_modified_date"
 BM_LAST_MODIFIED_BY = "_last_modified_by"
 BM_WORKING_DATA = "_wd"
-BM_EXPECTED_KEYS = (BM_FOLDER, BM_STORE_URI, BM_WORKFLOWS, BM_FI, BM_OPTIONS,
-                  BM_CREATED_DATE, BM_LAST_MODIFIED_DATE, BM_LAST_MODIFIED_BY,
-                  BM_WORKING_DATA)
+BM_EXPECTED_KEYS = (BM_INITIALIZED, BM_FOLDER, BM_STORE_URI, 
+                    BM_FI_COLLECTION, BM_WF_COLLECTION,  BM_OPTIONS,
+                    BM_CREATED_DATE, BM_LAST_MODIFIED_DATE, 
+                    BM_LAST_MODIFIED_BY, BM_WORKING_DATA)
 
-# Supported BM Workflow Name Constants
+# Supported BM Workflow Names
 BM_WF_INTAKE = "intake"
 BM_WF_CATEGORIZATION = "categorization"
 BM_WF_FINALIZATION = "finalization"
 BM_VALID_WORKFLOWS = (BM_WF_INTAKE, BM_WF_CATEGORIZATION, BM_WF_FINALIZATION)
 
-# FI pseudo-Object (Dictionary key names)
-FI_KEY = "fi_key" # also used as key in BM_FI dictionary.
-FI_NAME = "name"
-FI_TYPE = "type"
-FI_FOLDER = "fi_folder" # also used as key in BM_FI dictionary.
-FI_EXPECTED_KEYS = (FI_KEY, FI_NAME, FI_TYPE, FI_FOLDER)
+# FI_OBJECT financial institution pseudo-Object (Dictionary key names)
+FI_KEY = "fi_key" 
+FI_NAME = "fi_name"
+FI_TYPE = "fi_type"
+FI_FOLDER = "fi_folder" 
+FI_WORKFLOW_DATA = "fi_workflow_data" 
+# Additional FI_OBJECT-related constants
+FI_OBJECT = dict #"fi_object"  # pseudo-type
+FI_OBJECT_VALID_KEYS = (FI_KEY, FI_NAME, FI_TYPE, FI_FOLDER, FI_WORKFLOW_DATA)
 VALID_FI_KEYS = ("boa", "merrill")
 VALID_FI_TYPES = ("bank", "brokerage")
 BDM_FI_NAMES = ("Bank of America", "Merrill Lynch")
 
-# WF psuedo-Object (Dictionary key names)
+# WF_OBJECT workflow psuedo-Object (Dictionary key names)
 WF_KEY = "wf_key"
-WF_NAME = "name"  # Also used as key in BM_FI workfloes dictionary.
-WF_FOLDER_IN = "folder_in" # also used as key in BM_FI dictionary.
-WF_WORKBOOKS_IN ="workbooks_in" # list of workflow dictianries
+WF_NAME = "wf_name"  # Also used as key in BM_FI workfloes dictionary.
+WF_FOLDER_IN = "wf_folder_in" # also used as key in BM_FI dictionary.
+WF_FOLDER_OUT = "wf_folder_out" # also used as key in BM_FI dictionary.
 WF_IN_PREFIX = "wf_in_prefix"
-WF_FOLDER_OUT = "folder_out" # also used as key in BM_FI dictionary.
-WF_WORKBOOKS_OUT ="workbooks_out" # list of workflow dictianries
 WF_OUT_PREFIX = "wf_out_prefix"
-WF_EXPECTED_KEYS = (WF_KEY, WF_NAME, WF_FOLDER_IN, WF_WORKBOOKS_IN,
-                    WF_IN_PREFIX, WF_FOLDER_OUT, WF_WORKBOOKS_OUT,
-                    WF_OUT_PREFIX)
+# Additional WF_OBJECT-related constants
+WF_OBJECT = "wf_object"  # pseudo-type
+WF_OBJECT_VALID_KEYS = (WF_KEY, WF_NAME, 
+                        WF_FOLDER_IN, WF_FOLDER_OUT,
+                        WF_IN_PREFIX, WF_OUT_PREFIX)
 
-# Budget Model Options Constants
-BMO_FI_IF_PREFIX = "incoming_prefix"
-BMO_FI_CF_PREFIX = "categorized_prefix"
-BMO_FI_FF_PREFIX = "finalized_prefix"
+# WF_DATA_COLLECTION workflow data collection (Dictionary key names)
+# A dict for each FI, to hold the data for each workflow.
+# { wf_key: WF_DATA_OBJECT, ... }
+WF_DATA_COLLECTION = dict #"wf_data_collection" # pseudo-type of object
+
+# WF_DATA_OBJECT workflow data object (Dictionary key names)
+# A dict for worflow to hold data for a specific FI
+WF_DATA_OBJECT = dict # pseudo-type of object
+WF_WORKBOOKS_IN = "wf_workbooks_in" # workbook list for input folder
+WF_WORKBOOKS_OUT ="wf_workbooks_out" # workbook list for output folder
+WF_DATA_OBJECT_VALID_KEYS = (WF_WORKBOOKS_IN, WF_WORKBOOKS_OUT)
+
+# WORKBOOK_LIST - the list of workbooks for a specific folder. It is a list
+# of WORKBOOK_ITEM tuples: (workbook_name, workbook_abs_path)
+WORKBOOK_LIST = "workbook_list" # pseudo-type of object
+WORKBOOK_ITEM = "workbook_item" # pseudo-type of object
+
+# BM_OPTIONS Budget Model Options (BMO)Constants
 BMO_LOG_CONFIG = "log_config"
 BMO_LOG_LEVEL = "log_level"
 BMO_LOG_FILE = "log_file"
 BMO_JSON_LOG_FILE = "json_log_file_name"
-BMO_EXPECTED_KEYS = (BMO_FI_IF_PREFIX, BMO_FI_CF_PREFIX, BMO_FI_FF_PREFIX,
-                    BMO_LOG_CONFIG, BMO_LOG_LEVEL, BMO_LOG_FILE,
+BMO_EXPECTED_KEYS = (BMO_LOG_CONFIG, BMO_LOG_LEVEL, BMO_LOG_FILE,
                     BMO_JSON_LOG_FILE)
 
 # Miscellaneous Convenience Constants

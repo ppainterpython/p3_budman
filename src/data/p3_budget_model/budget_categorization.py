@@ -153,8 +153,8 @@ def execute_worklow_categorization(bm : BudgetModel, fi_key: str, wf_key:str) ->
     try:
         logger.info(f"{cp} Start: workflow: '{wf_key}' for FI('{fi_key}') ...")
 
-        wb_c = bm.bms_WF_FOLDER_IN_count(fi_key, wf_key)
-        # workbooks_dict = bm.bms_WF_WORKBOOKS_IN(fi_key, BM_WF_INTAKE)
+        wb_c = bm.bsm_WF_FOLDER_IN_count(fi_key, wf_key)
+        # workbooks_dict = bm.bsm_WF_WORKBOOKS_IN(fi_key, BM_WF_INTAKE)
         # if workbooks_dict is None or len(workbooks_dict) == 0:
         if wb_c is None or wb_c == 0:
             logger.info(f"{cp}    No workbooks for input.")
@@ -163,7 +163,7 @@ def execute_worklow_categorization(bm : BudgetModel, fi_key: str, wf_key:str) ->
         # Now process each input workbook.
         # for wb_name, wb_ap in reversed(workbooks_dict.items()):
         # Step 1: Load the workbooks sequentially.
-        for wb_name, wb in bm.bms_WF_FOLDER_IN_loader(fi_key, wf_key):
+        for wb_name, wb in bm.bsm_WF_FOLDER_IN_loader(fi_key, wf_key):
             logger.info(f"{cp}    Workbook({wb_name})")
                 
             # Step 2: Process the workbooks applying the workflow function
@@ -183,7 +183,7 @@ def execute_worklow_categorization(bm : BudgetModel, fi_key: str, wf_key:str) ->
                 # TODO: mangle the output file path.
                 # get WF_FOLDER_OUT abs path, prepend prefix, create path,
                 # save out.
-                bm.bms_save_WF_FOLDER_OUT(wb, wb_name, fi_key, wf_key)
+                bm.bsm_save_WF_FOLDER_OUT(wb, wb_name, fi_key, wf_key)
             except Exception as e:
                 logger.error(f"{cp}    Error saving workbook: {wb_name}: {e}")
                 continue

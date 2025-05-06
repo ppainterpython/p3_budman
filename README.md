@@ -84,9 +84,6 @@ budget_model_template = {  # _abs_path is not serialized, only _abs_path_str is 
             },
         },
         BM_OPTIONS: {
-            BMO_FI_IF_PREFIX: "new_",
-            BMO_FI_CF_PREFIX: "categorized_",
-            BMO_FI_CF_PREFIX: "processed_",
             BMO_LOG_CONFIG: "budget_model_logging_config.jsonc",
             BMO_LOG_LEVEL: logging.DEBUG,
             BMO_LOG_FILE: "logs/p3BudgetModel.log",
