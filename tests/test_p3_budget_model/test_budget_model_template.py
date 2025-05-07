@@ -110,10 +110,10 @@ def test_bsm_FI_Path_methods() -> None:
     except Exception as e:
         pytest.fail(f"init_budget_model raised an exception: {str(e)}")
 # ---------------------------------------------------------------------------- +
-def test_WF_Path_methods() -> None:
-    """Test WF Path methods."""
+def test_WF_OBJECT_Path_methods() -> None:
+    """Test WF Object Path methods."""
     try:
-        logger.info("Testing WF Path methods.")
+        logger.info(test_WF_OBJECT_Path_methods.__doc__)
         bmt = p3bt.BudgetModelTemplate()
         assert isinstance(bmt, p3bt.BudgetModelTemplate), \
             "Budget model should be a BudgetModelTemplate instance"
@@ -143,10 +143,10 @@ def test_WF_Path_methods() -> None:
     except Exception as e:
         pytest.fail(f"init_budget_model raised an exception: {str(e)}")
 # ---------------------------------------------------------------------------- +
-def test_BDM_FI_pseudo_Property_Methods():
-    """Test BDM FI Pseudo Property Methods."""
+def test_BDM_FI_OBJECT_pseudo_Property_Methods():
+    """Test BDM FI Object Pseudo Property Methods."""
     try:
-        logger.info(test_BDM_FI_pseudo_Property_Methods.__doc__)
+        logger.info(test_BDM_FI_OBJECT_pseudo_Property_Methods.__doc__)
         bmt = p3bt.BudgetModelTemplate()
         assert isinstance(bmt, p3bt.BudgetModelTemplate), \
             "Budget model should be a BudgetModelTemplate instance"

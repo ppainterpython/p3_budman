@@ -17,7 +17,7 @@ THIS_APP_NAME = "p3_budget_model"
 # BSM - Budget Model Storage Sub-Domain
 
 # Budget Model Filesystem Path Constants 
-BSM_DEFAULT_BUDGET_MODEL_FILE_NAME = "budget_model.json"
+BSM_DEFAULT_BUDGET_MODEL_FILE_NAME = "budget_model.jsonc"
 BM_DEFAULT_BUDGET_FOLDER = "~/OneDrive/budget"
 PATH = "_path"
 ABS_PATH = "_abs_" + PATH
@@ -69,11 +69,12 @@ WF_FOLDER_IN = "wf_folder_in" # also used as key in BM_FI dictionary.
 WF_FOLDER_OUT = "wf_folder_out" # also used as key in BM_FI dictionary.
 WF_PREFIX_IN = "wf_prefix_in"
 WF_PREFIX_OUT = "wf_prefix_out"
+WF_WORKBOOK_MAP = "wf_workbook_map" # map of workbook names to paths
 # Additional WF_OBJECT-related constants
 WF_OBJECT = Dict  # pseudo-type
 WF_OBJECT_VALID_KEYS = (WF_KEY, WF_NAME, 
                         WF_FOLDER_IN, WF_FOLDER_OUT,
-                        WF_PREFIX_IN, WF_PREFIX_OUT)
+                        WF_PREFIX_IN, WF_PREFIX_OUT, WF_WORKBOOK_MAP)
 WF_FOLDER_PATH_ELEMENTS = (WF_FOLDER_IN, WF_FOLDER_OUT)
 
 # Some data values are used in conjunction with Path objects,
@@ -94,7 +95,7 @@ WF_DATA_COLLECTION = Dict #"wf_data_collection" # pseudo-type of object
 WF_DATA_OBJECT = Dict # pseudo-type of object
 WF_WORKBOOKS_IN = "wf_workbooks_in" # workbook list for input folder
 WF_WORKBOOKS_OUT ="wf_workbooks_out" # workbook list for output folder
-WF_DO_WORKBOOK_RELATED_KEYS = (WF_WORKBOOKS_IN, WF_WORKBOOKS_OUT)
+WF_WORKBOOK_TYPES = (WF_WORKBOOKS_IN, WF_WORKBOOKS_OUT)
 WF_DATA_OBJECT_KEYS = (WF_WORKBOOKS_IN, WF_WORKBOOKS_OUT)
 WF_DATA_OBJECT_VALID_KEYS = (WF_WORKBOOKS_IN, WF_WORKBOOKS_OUT)
 

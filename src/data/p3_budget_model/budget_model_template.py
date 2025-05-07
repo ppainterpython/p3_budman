@@ -106,7 +106,11 @@ class BudgetModelTemplate(BudgetModel):
                 WF_FOLDER_IN: None,         # bsm_WF_WORKBOOKS_IN(fi_key, workflow)
                 WF_PREFIX_IN: None,
                 WF_FOLDER_OUT: "data/new",
-                WF_PREFIX_OUT: None
+                WF_PREFIX_OUT: None,
+                WF_WORKBOOK_MAP:  {
+                    WF_WORKBOOKS_OUT: WF_FOLDER_OUT,
+                    WF_WORKBOOKS_IN: WF_FOLDER_IN
+                }
             },
             BM_WF_CATEGORIZATION: {            # bdm_fi_wf(fi_key, workflow)
                 # WF Object
@@ -115,7 +119,11 @@ class BudgetModelTemplate(BudgetModel):
                 WF_FOLDER_IN: "data/new", # bsm_WF_WORKBOOKS_IN(fi_key, workflow)
                 WF_FOLDER_OUT: "data/categorized",
                 WF_PREFIX_IN: None,
-                WF_PREFIX_OUT: "categorized_"
+                WF_PREFIX_OUT: "categorized_",
+                WF_WORKBOOK_MAP:  {
+                    WF_WORKBOOKS_OUT: WF_FOLDER_OUT,
+                    WF_WORKBOOKS_IN: WF_FOLDER_IN
+                }
             },
             BM_WF_FINALIZATION: {              # bdm_fi_wf(fi_key, workflow)
                 # WF Object
@@ -124,7 +132,11 @@ class BudgetModelTemplate(BudgetModel):
                 WF_FOLDER_IN: "data/categorized",   # bsm_WF_WORKBOOKS_IN(fi_key, workflow)
                 WF_FOLDER_OUT: "data/finalized",
                 WF_PREFIX_IN: "categorized_",
-                WF_PREFIX_OUT: "finalized_"
+                WF_PREFIX_OUT: "finalized_",
+                WF_WORKBOOK_MAP:  {
+                    WF_WORKBOOKS_OUT: WF_FOLDER_OUT,
+                    WF_WORKBOOKS_IN: WF_FOLDER_IN
+                }
             }
         },
         BM_OPTIONS: {

@@ -71,8 +71,7 @@ def budmod():
         trans_file = "BOAChecking2025.xlsx"
         # Initalize the p3_budget_model package.
         bmt = p3bm.BudgetModelTemplate()
-        bm = p3bm.BudgetModel()
-        bm.bdm_initialize(bmt) # use the template to init
+        bm = p3bm.BudgetModel().bdm_initialize(bmt) # use the template to init
         p3bm.log_BDM_info(bm)
         p3bm.execute_worklow_categorization(bm, "boa", p3bm.BM_WF_CATEGORIZATION)
 
