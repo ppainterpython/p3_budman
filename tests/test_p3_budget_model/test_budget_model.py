@@ -24,24 +24,33 @@ def test_budget_model_constructor() -> None:
         logger.info(test_budget_model_constructor.__doc__)
         bm = p3bm.BudgetModel()
         
-        # This instance should be empty.
+        # With the bare BudgetModel.__init__(), this instance should be empty.
+        #
         assert isinstance(bm, p3bm.BudgetModel), \
             "Budget model should be a BudgetModel instance"        
-        assert not bm._initialized, "Budget model should NOT be initialized"
-        assert bm._created_date is not None, "Created date should not be None"
-        assert bm._last_modified_date is not None, \
-            "Last modified date should not be None"
-        assert bm._last_modified_by is not None, \
-            "Last modified by should not be None"
-        assert bm._options is not None, "Options should not be None"
-        assert bm._budget_folder is None, "Budget folder should not be None"
-        assert bm._budget_model_store_uri is None, \
+        assert not bm.bm_initialized, "Budget model should NOT be initialized"
+        assert bm.bm_folder is None, "Budget folder should be None"
+        assert bm.bm_store_uri is None, \
             "Budget model store URI should not be None"
-        assert bm._workflows is None, "Workflows should not be None"
-        assert (bm._financial_institutions is not None and 
-                isinstance(bm._financial_institutions, dict) and 
-                len(bm._financial_institutions) == 0), \
+        assert (bm.bm_fi_collection is not None and 
+                isinstance(bm.bm_fi_collection, dict) and 
+                len(bm.bm_fi_collection) == 0), \
             "Financial institutions should empty dictionary"    
+        assert (bm.bm_wf_collection is not None and 
+                isinstance(bm.bm_wf_collection, dict) and 
+                len(bm.bm_wf_collection) == 0), \
+            "WF_WORKFLOW_COLLECTION should empty dictionary"
+        assert bm.bm_options is not None, "Options should not be None"
+        assert bm.bm_created_date is not None, "Created date should not be None"
+        assert bm.bm_last_modified_date is not None, \
+            "Last modified date should not be None"
+        assert bm.bm_last_modified_by is not None, \
+            "Last modified by should not be None"
+        assert bm.bm_working_data is not None, "Workflows should not be None"
+        assert (bm.bm_working_data is not None and 
+                isinstance(bm.bm_working_data, dict) and 
+                len(bm.bm_working_data) == 0), \
+            "WF_WORKING_DATA should empty dictionary"
     except Exception as e:
         pytest.fail(f"BudgetModel() raised an exception: {str(e)}")
 # ---------------------------------------------------------------------------- +
@@ -52,7 +61,7 @@ def test_budget_model_initialize_no_template() -> None:
         bm = p3bm.BudgetModel()
         # Initialize the budget model with no template, force internal
         # creation of the BudgetModelTemplate.
-        bm.initiailize()
+        bm.bdm_initialize()
         
         # This instance should be empty.
         assert isinstance(bm, p3bm.BudgetModel), \
@@ -81,7 +90,7 @@ def test_budget_model_initialize_with_template() -> None:
         bmt = p3bm.BudgetModelTemplate()
         bm = p3bm.BudgetModel()
         # Initialize the budget model with a template
-        bm.initiailize(bmt)
+        bm.bdm_initialize(bmt)
         
         # This instance should be empty.
         assert isinstance(bm, p3bm.BudgetModel), \

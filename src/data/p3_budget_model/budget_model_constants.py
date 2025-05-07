@@ -1,3 +1,6 @@
+from typing import Dict, List, Tuple
+
+
 THIS_APP_NAME = "p3_budget_model"
 
 # Prefix namespace
@@ -11,10 +14,10 @@ THIS_APP_NAME = "p3_budget_model"
 # FI_CF - Financial Institution Categorized Folder
 # FI_FF - Financial Institution Finalized Folder
 # BMO - for Budget Model Options
-# BMS - Budget Model Storage Sub-Domain
+# BSM - Budget Model Storage Sub-Domain
 
 # Budget Model Filesystem Path Constants 
-BMS_DEFAULT_BUDGET_MODEL_FILE_NAME = "budget_model.json"
+BSM_DEFAULT_BUDGET_MODEL_FILE_NAME = "budget_model.json"
 BM_DEFAULT_BUDGET_FOLDER = "~/OneDrive/budget"
 PATH = "_path"
 ABS_PATH = "_abs_" + PATH
@@ -35,16 +38,10 @@ BM_CREATED_DATE = "_created_date"
 BM_LAST_MODIFIED_DATE = "_last_modified_date"
 BM_LAST_MODIFIED_BY = "_last_modified_by"
 BM_WORKING_DATA = "_wd"
-BM_EXPECTED_KEYS = (BM_INITIALIZED, BM_FOLDER, BM_STORE_URI, 
+BM_VALID_PROPERTIES = (BM_INITIALIZED, BM_FOLDER, BM_STORE_URI, 
                     BM_FI_COLLECTION, BM_WF_COLLECTION,  BM_OPTIONS,
                     BM_CREATED_DATE, BM_LAST_MODIFIED_DATE, 
                     BM_LAST_MODIFIED_BY, BM_WORKING_DATA)
-
-# Supported BM Workflow Names
-BM_WF_INTAKE = "intake"
-BM_WF_CATEGORIZATION = "categorization"
-BM_WF_FINALIZATION = "finalization"
-BM_VALID_WORKFLOWS = (BM_WF_INTAKE, BM_WF_CATEGORIZATION, BM_WF_FINALIZATION)
 
 # FI_OBJECT financial institution pseudo-Object (Dictionary key names)
 FI_KEY = "fi_key" 
@@ -53,41 +50,58 @@ FI_TYPE = "fi_type"
 FI_FOLDER = "fi_folder" 
 FI_WORKFLOW_DATA = "fi_workflow_data" 
 # Additional FI_OBJECT-related constants
-FI_OBJECT = dict #"fi_object"  # pseudo-type
+FI_OBJECT = Dict #"fi_object"  # pseudo-type
 FI_OBJECT_VALID_KEYS = (FI_KEY, FI_NAME, FI_TYPE, FI_FOLDER, FI_WORKFLOW_DATA)
 VALID_FI_KEYS = ("boa", "merrill")
 VALID_FI_TYPES = ("bank", "brokerage")
 BDM_FI_NAMES = ("Bank of America", "Merrill Lynch")
+
+# Supported BM Workflow Names
+BM_WF_INTAKE = "intake"
+BM_WF_CATEGORIZATION = "categorization"
+BM_WF_FINALIZATION = "finalization"
+BM_VALID_WORKFLOWS = (BM_WF_INTAKE, BM_WF_CATEGORIZATION, BM_WF_FINALIZATION)
 
 # WF_OBJECT workflow psuedo-Object (Dictionary key names)
 WF_KEY = "wf_key"
 WF_NAME = "wf_name"  # Also used as key in BM_FI workfloes dictionary.
 WF_FOLDER_IN = "wf_folder_in" # also used as key in BM_FI dictionary.
 WF_FOLDER_OUT = "wf_folder_out" # also used as key in BM_FI dictionary.
-WF_IN_PREFIX = "wf_in_prefix"
-WF_OUT_PREFIX = "wf_out_prefix"
+WF_PREFIX_IN = "wf_prefix_in"
+WF_PREFIX_OUT = "wf_prefix_out"
 # Additional WF_OBJECT-related constants
-WF_OBJECT = "wf_object"  # pseudo-type
+WF_OBJECT = Dict  # pseudo-type
 WF_OBJECT_VALID_KEYS = (WF_KEY, WF_NAME, 
                         WF_FOLDER_IN, WF_FOLDER_OUT,
-                        WF_IN_PREFIX, WF_OUT_PREFIX)
+                        WF_PREFIX_IN, WF_PREFIX_OUT)
+WF_FOLDER_PATH_ELEMENTS = (WF_FOLDER_IN, WF_FOLDER_OUT)
+
+# Some data values are used in conjunction with Path objects,
+# as elements of a pathname, such as folders and file names.
+# All Path-related data values are treated as pseudo-Objects and have
+# methods to construct, manipulate, and resolve Path objects and handle
+# the various string representations of the Path objects.
+BM_VALID_PATH_ELEMENTS = (BM_FOLDER, BM_STORE_URI,
+                          FI_FOLDER, WF_FOLDER_IN, WF_FOLDER_OUT)
 
 # WF_DATA_COLLECTION workflow data collection (Dictionary key names)
 # A dict for each FI, to hold the data for each workflow.
 # { wf_key: WF_DATA_OBJECT, ... }
-WF_DATA_COLLECTION = dict #"wf_data_collection" # pseudo-type of object
+WF_DATA_COLLECTION = Dict #"wf_data_collection" # pseudo-type of object
 
 # WF_DATA_OBJECT workflow data object (Dictionary key names)
 # A dict for worflow to hold data for a specific FI
-WF_DATA_OBJECT = dict # pseudo-type of object
+WF_DATA_OBJECT = Dict # pseudo-type of object
 WF_WORKBOOKS_IN = "wf_workbooks_in" # workbook list for input folder
 WF_WORKBOOKS_OUT ="wf_workbooks_out" # workbook list for output folder
+WF_DO_WORKBOOK_RELATED_KEYS = (WF_WORKBOOKS_IN, WF_WORKBOOKS_OUT)
+WF_DATA_OBJECT_KEYS = (WF_WORKBOOKS_IN, WF_WORKBOOKS_OUT)
 WF_DATA_OBJECT_VALID_KEYS = (WF_WORKBOOKS_IN, WF_WORKBOOKS_OUT)
 
 # WORKBOOK_LIST - the list of workbooks for a specific folder. It is a list
 # of WORKBOOK_ITEM tuples: (workbook_name, workbook_abs_path)
-WORKBOOK_LIST = "workbook_list" # pseudo-type of object
-WORKBOOK_ITEM = "workbook_item" # pseudo-type of object
+WORKBOOK_LIST = List # pseudo-type of object
+WORKBOOK_ITEM = Tuple # pseudo-type of object
 
 # BM_OPTIONS Budget Model Options (BMO)Constants
 BMO_LOG_CONFIG = "log_config"

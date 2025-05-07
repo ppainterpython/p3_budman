@@ -62,12 +62,6 @@ class BudgetModelTemplate(BudgetModel):
     # anticipate more than one bank or financial institution sourcing regular 
     # statements in spreadsheet format. So, the "budget" will cover multiple "banks"
     # information for a given user.
-    budget_config_expected_keys = BM_EXPECTED_KEYS
-    valid_workflows = BM_VALID_WORKFLOWS
-    workflow_expected_keys = WF_OBJECT_VALID_KEYS
-    valid_institutions_keys = VALID_FI_KEYS
-    institution_expected_keys = FI_OBJECT_VALID_KEYS
-    options_expected_keys = BMO_EXPECTED_KEYS
     budget_model_template = {  
         # BDM object
         BM_INITIALIZED: False,
@@ -110,19 +104,18 @@ class BudgetModelTemplate(BudgetModel):
                 WF_KEY: BM_WF_INTAKE,
                 WF_NAME: BM_WF_INTAKE,
                 WF_FOLDER_IN: None,         # bsm_WF_WORKBOOKS_IN(fi_key, workflow)
-                WF_IN_PREFIX: None,
+                WF_PREFIX_IN: None,
                 WF_FOLDER_OUT: "data/new",
-                WF_OUT_PREFIX: None
+                WF_PREFIX_OUT: None
             },
             BM_WF_CATEGORIZATION: {            # bdm_fi_wf(fi_key, workflow)
                 # WF Object
                 WF_KEY: BM_WF_CATEGORIZATION,
                 WF_NAME: BM_WF_CATEGORIZATION,
                 WF_FOLDER_IN: "data/new", # bsm_WF_WORKBOOKS_IN(fi_key, workflow)
-                WF_WORKBOOKS_IN: "raw_data/",
                 WF_FOLDER_OUT: "data/categorized",
-                WF_IN_PREFIX: None,
-                WF_OUT_PREFIX: "categorized_"
+                WF_PREFIX_IN: None,
+                WF_PREFIX_OUT: "categorized_"
             },
             BM_WF_FINALIZATION: {              # bdm_fi_wf(fi_key, workflow)
                 # WF Object
@@ -130,8 +123,8 @@ class BudgetModelTemplate(BudgetModel):
                 WF_NAME: BM_WF_FINALIZATION,
                 WF_FOLDER_IN: "data/categorized",   # bsm_WF_WORKBOOKS_IN(fi_key, workflow)
                 WF_FOLDER_OUT: "data/finalized",
-                WF_IN_PREFIX: "categorized_",
-                WF_OUT_PREFIX: "finalized_"
+                WF_PREFIX_IN: "categorized_",
+                WF_PREFIX_OUT: "finalized_"
             }
         },
         BM_OPTIONS: {
@@ -145,7 +138,6 @@ class BudgetModelTemplate(BudgetModel):
         BM_LAST_MODIFIED_BY: None,
         BM_WORKING_DATA: None
     }
-    # Template-only versions of structure attributes.
     #endregion BudgetModelTemplate Configuration Template
     # ------------------------------------------------------------------------ +
     #region BudgetModelTemplate class constructor __init__.()
@@ -176,7 +168,7 @@ class BudgetModelTemplate(BudgetModel):
                          f"{self.bm_initialized}")
             self.bm_folder = BM_DEFAULT_BUDGET_FOLDER   # property
             bf_p = self.bsm_BM_FOLDER_path() # budget folder path
-            bmc = bf_p / BMS_DEFAULT_BUDGET_MODEL_FILE_NAME # bmc: BM config file
+            bmc = bf_p / BSM_DEFAULT_BUDGET_MODEL_FILE_NAME # bmc: BM config file
             bfp_exists = "exists." if bf_p.exists() else "does not exist!"
             bmc_exists = "exists." if bmc.exists() else "does not exist!"
             bmc_uri = p3u.path_to_file_uri(bmc) 

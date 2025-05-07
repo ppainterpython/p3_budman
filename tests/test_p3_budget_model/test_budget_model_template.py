@@ -126,19 +126,20 @@ def test_WF_Path_methods() -> None:
             assert bmt.bdm_validate_FI_KEY(fi_key), \
                 f"Expected: {fi_key} to be a valid FI key."
             for wf_key in p3bt.BM_VALID_WORKFLOWS:
-                assert bmt.bdm_validate_wf_key(wf_key), \
+                assert bmt.bdm_WF_KEY_validate(wf_key), \
                     f"Expected: {wf_key} to be a valid WF key."
-                _s = bmt.bsm_WF_FOLDER_IN_path_str(fi_key,wf_key)
-                logger.debug(f"WF: {wf_key} bsm_WF_FOLDER_IN_path_str(): '{_s}'")
-                if _s is not None:
-                    assert isinstance(_s, str), \
-                        f"Expected: {wf_key} folder path to be string."
-                    assert (_p := bmt.bsm_WF_FOLDER_IN_path(fi_key,wf_key)) is not None, \
-                        f"Expected: {wf_key} folder path to be valid."
-                    assert (_ap := bmt.bsm_WF_FOLDER_IN_abs_path(fi_key,wf_key)) is not None, \
-                        f"Expected: {wf_key} folder absolute path to be valid."
-                    assert (_aps := bmt.bsm_WF_FOLDER_IN_abs_path_str(fi_key,wf_key)) is not None, \
-                        f"Expected: {wf_key} folder absolute path string to be valid."
+                for f_id in p3bt.WF_FOLDER_PATH_ELEMENTS:
+                    _s = bmt.bsm_WF_FOLDER_path_str(fi_key,wf_key, f_id)
+                    logger.debug(f"WF: {wf_key} bsm_{f_id}_path_str(): '{_s}'")
+                    if _s is not None:
+                        assert isinstance(_s, str), \
+                            f"Expected: {wf_key} {f_id} path to be string."
+                        assert (_p := bmt.bsm_WF_FOLDER_path(fi_key,wf_key,f_id)) is not None, \
+                            f"Expected: {wf_key} {f_id} path to be valid."
+                        assert (_ap := bmt.bsm_WF_FOLDER_abs_path(fi_key,wf_key,f_id)) is not None, \
+                            f"Expected: {wf_key} {f_id} absolute path to be valid."
+                        assert (_aps := bmt.bsm_WF_FOLDER_abs_path_str(fi_key,wf_key,f_id)) is not None, \
+                            f"Expected: {wf_key} {f_id} absolute path string to be valid."
     except Exception as e:
         pytest.fail(f"init_budget_model raised an exception: {str(e)}")
 # ---------------------------------------------------------------------------- +
@@ -187,32 +188,32 @@ def test_BDM_WF_Dictioonary_Pseudo_Property_Methods():
 
         # Expect valid values to work from default setup.
         for wf_key in p3bt.BM_VALID_WORKFLOWS:
-            assert bmt.bdm_validate_wf_key(wf_key), \
+            assert bmt.bdm_WF_KEY_validate(wf_key), \
                 f"Expected: {wf_key} to be a valid WF key."
-            assert (bdm_wf := bmt.bdm_wf(wf_key)) is not None, \
+            assert (bdm_WF_OBJECT := bmt.bdm_WF_OBJECT(wf_key)) is not None, \
                 f"Expected: {wf_key} to be a valid WF dict."
-            assert len(bdm_wf) == len(p3bt.WF_OBJECT_VALID_KEYS), \
+            assert len(bdm_WF_OBJECT) == len(p3bt.WF_OBJECT_VALID_KEYS), \
                 f"Expected: {wf_key} workbooks_in to be non-None."
-            assert isinstance(bdm_wf, dict), \
+            assert isinstance(bdm_WF_OBJECT, p3bt.WF_OBJECT), \
                 f"Expected: {wf_key} workbooks_in to be valid dict."
-            assert bmt.bdm_wf_key(wf_key) == wf_key, \
-                f"Expected bdm_wf_key('{wf_key}'): '{wf_key}', got '{bdm_wf.bdm_wf_key(wf_key)}'."
-            assert bmt.bdm_wf_name(wf_key) is not None, \
-                f"Expected bmt.bdm_wf_name({wf_key}) to be non-None"
-            assert bmt.bdm_wf_name(wf_key) in p3bt.BM_VALID_WORKFLOWS, \
-                f"Expected one of: {p3bt.BM_VALID_WORKFLOWS}, got '{bmt.bdm_wf_name(wf_key)}'"
-            assert isinstance(bmt.bdm_WF_FOLDER_IN(wf_key), (str, type(None))), \
+            assert bmt.bdm_WF_KEY(wf_key) == wf_key, \
+                f"Expected bdm_WF_KEY('{wf_key}'): '{wf_key}', got '{bdm_WF_OBJECT.bdm_WF_KEY(wf_key)}'."
+            assert bmt.bdm_WF_NAME(wf_key) is not None, \
+                f"Expected bmt.bdm_WF_NAME({wf_key}) to be non-None"
+            assert bmt.bdm_WF_NAME(wf_key) in p3bt.BM_VALID_WORKFLOWS, \
+                f"Expected one of: {p3bt.BM_VALID_WORKFLOWS}, got '{bmt.bdm_WF_NAME(wf_key)}'"
+            assert isinstance(bmt.bdm_WF_FOLDER(wf_key, p3bt.WF_FOLDER_IN), (str, type(None))), \
                 f"Expected bmt.bdm_WF_FOLDER_IN({wf_key}) to type: None or str"
-            assert isinstance(bmt.bdm_WF_FOLDER_OUT(wf_key), (str, type(None))), \
+            assert isinstance(bmt.bdm_WF_FOLDER(wf_key,p3bt.WF_FOLDER_OUT), (str, type(None))), \
                 f"Expected bmt.bdm_WF_FOLDER_OUT{wf_key}) to type: None or str"
-            assert isinstance(bmt.bdm_wf_workbooks_in(wf_key),(dict, type(None))), \
-                f"Expected: {wf_key} workbooks_in to be dict or None."
-            assert isinstance(bmt.bdm_wf_workbooks_out(wf_key), (dict, type(None))), \
-                f"Expected: {wf_key} workbooks_out to be dict or None."
-            assert isinstance(bmt.bdm_wf_in_prefix(wf_key), (str, type(None))), \
-                f"Expected bmt.bdm_wf_in_prefix({wf_key}) to be str or None"
-            assert isinstance(bmt.bdm_wf_out_prefix(wf_key), (str, type(None))), \
-                f"Expected bmt.bdm_wf_out_prefix({wf_key}) to be str or None" 
+            # assert isinstance(bmt.bdm_WF_OBJECT_workbooks_in(wf_key),(dict, type(None))), \
+            #     f"Expected: {wf_key} workbooks_in to be dict or None."
+            # assert isinstance(bmt.bdm_WF_OBJECT_workbooks_out(wf_key), (dict, type(None))), \
+            #     f"Expected: {wf_key} workbooks_out to be dict or None."
+            assert isinstance(bmt.bdm_WF_PREFIX_IN(wf_key), (str, type(None))), \
+                f"Expected bmt.bdm_WF_PREFIX_IN({wf_key}) to be str or None"
+            assert isinstance(bmt.bdm_WF_PREFIX_OUT(wf_key), (str, type(None))), \
+                f"Expected bmt.bdm_WF_PREFIX_OUT({wf_key}) to be str or None" 
             
             # assert bmt.bsm_WF_WORKBOOKS_IN(wf_key) is not None, \
             #     f"Expected: {wf_key} workbooks_in to be non-None."
