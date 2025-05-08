@@ -30,7 +30,7 @@ BUDGET_CATEGORY_COL = "Budget Category"
 # BudgetModel (BM) class attribute name Constants
 BM_INITIALIZED = "_initialized"
 BM_FOLDER = "_budget_folder"
-BM_STORE_URI = "_budget_model_store_uri"
+BM_STORE = "_budget_model_store"
 BM_FI_COLLECTION = "_financial_institutions"
 BM_WF_COLLECTION = "_workflows"
 BM_OPTIONS = "_options"
@@ -38,7 +38,7 @@ BM_CREATED_DATE = "_created_date"
 BM_LAST_MODIFIED_DATE = "_last_modified_date"
 BM_LAST_MODIFIED_BY = "_last_modified_by"
 BM_WORKING_DATA = "_wd"
-BM_VALID_PROPERTIES = (BM_INITIALIZED, BM_FOLDER, BM_STORE_URI, 
+BM_VALID_PROPERTIES = (BM_INITIALIZED, BM_FOLDER, BM_STORE, 
                     BM_FI_COLLECTION, BM_WF_COLLECTION,  BM_OPTIONS,
                     BM_CREATED_DATE, BM_LAST_MODIFIED_DATE, 
                     BM_LAST_MODIFIED_BY, BM_WORKING_DATA)
@@ -82,7 +82,7 @@ WF_FOLDER_PATH_ELEMENTS = (WF_FOLDER_IN, WF_FOLDER_OUT)
 # All Path-related data values are treated as pseudo-Objects and have
 # methods to construct, manipulate, and resolve Path objects and handle
 # the various string representations of the Path objects.
-BM_VALID_PATH_ELEMENTS = (BM_FOLDER, BM_STORE_URI,
+BM_VALID_PATH_ELEMENTS = (BM_FOLDER, BM_STORE,
                           FI_FOLDER, WF_FOLDER_IN, WF_FOLDER_OUT)
 
 # WF_DATA_COLLECTION workflow data collection (Dictionary key names)

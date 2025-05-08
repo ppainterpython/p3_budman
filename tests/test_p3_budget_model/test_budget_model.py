@@ -30,8 +30,8 @@ def test_budget_model_constructor() -> None:
             "Budget model should be a BudgetModel instance"        
         assert not bm.bm_initialized, "Budget model should NOT be initialized"
         assert bm.bm_folder is None, "Budget folder should be None"
-        assert bm.bm_store_uri is None, \
-            "Budget model store URI should not be None"
+        assert bm.bm_store is None, \
+            "Budget model store path should not be None"
         assert (bm.bm_fi_collection is not None and 
                 isinstance(bm.bm_fi_collection, dict) and 
                 len(bm.bm_fi_collection) == 0), \
@@ -74,8 +74,8 @@ def test_budget_model_initialize_no_template() -> None:
             "Last modified by should not be None"
         assert bm._options is not None, "Options should not be None"
         assert bm._budget_folder is not None, "Budget folder should not be None"
-        assert bm._budget_model_store_uri is not None, \
-            "Budget model store URI should not be None"
+        assert bm._budget_model_store is not None, \
+            "Budget model store path should not be None"
         assert (bm._financial_institutions is not None and 
                 isinstance(bm._financial_institutions, dict) and 
                 len(bm._financial_institutions) > 0), \
@@ -103,8 +103,8 @@ def test_budget_model_initialize_with_template() -> None:
             "Last modified by should not be None"
         assert bm._options is not None, "Options should not be None"
         assert bm._budget_folder is not None, "Budget folder should not be None"
-        assert bm._budget_model_store_uri is not None, \
-            "Budget model store URI should not be None"
+        assert bm._budget_model_store is not None, \
+            "Budget model store should not be None"
         assert (bm._financial_institutions is not None and 
                 isinstance(bm._financial_institutions, dict) and 
                 len(bm._financial_institutions) > 0), \

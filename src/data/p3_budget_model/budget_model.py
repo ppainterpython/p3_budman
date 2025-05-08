@@ -123,7 +123,7 @@ class BudgetModel(metaclass=SingletonMeta):
         logger.debug("Start: BudgetModel().__init__() ...")
         setattr(self, BM_INITIALIZED, False)
         setattr(self, BM_FOLDER, None)  # budget folder path
-        setattr(self, BM_STORE_URI, None)  # uri for budget model store
+        setattr(self, BM_STORE, None)  # path for budget model store
         setattr(self, BM_FI_COLLECTION, {})  # financial institutions
         setattr(self, BM_WF_COLLECTION, {}) 
         setattr(self, BM_OPTIONS, {})  # budget model options
@@ -141,7 +141,7 @@ class BudgetModel(metaclass=SingletonMeta):
             BM_INITIALIZED: self.bm_initialized,
             BM_FOLDER: self.bm_folder,
             BM_FI_COLLECTION: self.bm_fi_collection,
-            BM_STORE_URI: self.bm_store_uri,
+            BM_STORE: self.bm_store,
             BM_WF_COLLECTION: self.bm_wf_collection,
             BM_OPTIONS: self.bm_options,
             BM_CREATED_DATE: self.bm_created_date,
@@ -156,7 +156,7 @@ class BudgetModel(metaclass=SingletonMeta):
         ret += f"'{BM_INITIALIZED}': {self.bm_initialized}, "
         ret += f"'{BM_FOLDER}': '{self.bm_folder}', "
         ret += f"'{BM_FI_COLLECTION}': '{self.bm_fi_collection}', "
-        ret += f"'{BM_STORE_URI}': '{self.bm_store_uri}', "
+        ret += f"'{BM_STORE}': '{self.bm_store}', "
         ret += f"'{BM_WF_COLLECTION}': '{self.bm_wf_collection}', "
         ret += f"'{BM_OPTIONS}': '{self.bm_options}', "
         ret += f"'{BM_CREATED_DATE}': '{self.bm_created_date}', "
@@ -170,7 +170,7 @@ class BudgetModel(metaclass=SingletonMeta):
         ret += f"{BM_INITIALIZED} = {str(self.bm_initialized)}, "
         ret += f"{BM_FOLDER} = '{str(self.bm_folder)}', "
         ret += f"{BM_FI_COLLECTION} = [{', '.join([repr(fi_key) for fi_key in self.bm_fi_collection.keys()])}], "
-        ret += f"{BM_STORE_URI} = '{self.bm_store_uri}' "
+        ret += f"{BM_STORE} = '{self.bm_store}' "
         ret += f"{BM_WF_COLLECTION} = '{self.bm_wf_collection}' "
         ret += f"{BM_OPTIONS} = '{self.bm_options}' "
         ret += f"{BM_CREATED_DATE} = '{self.bm_created_date}', "
@@ -202,14 +202,14 @@ class BudgetModel(metaclass=SingletonMeta):
         self._budget_folder = value
 
     @property
-    def bm_store_uri(self) -> str:
-        """The budget model store URI."""
-        return self._budget_model_store_uri
+    def bm_store(self) -> str:
+        """The budget model store abs path str."""
+        return self._budget_model_store
     
-    @bm_store_uri.setter
-    def bm_store_uri(self, value: str) -> None:
-        """Set the budget model store URI."""
-        self._budget_model_store_uri = value
+    @bm_store.setter
+    def bm_store(self, value: str) -> None:
+        """Set the budget model store abs path str."""
+        self._budget_model_store = value
 
     @property
     def bm_fi_collection(self) -> dict:
@@ -407,7 +407,7 @@ class BudgetModel(metaclass=SingletonMeta):
             # Apply the configuration to the budget model (self)
             self.bm_initialized = bm_config.bm_initialized
             self.bm_folder = bm_config.bm_folder
-            self.bm_store_uri = bm_config.bm_store_uri
+            self.bm_store = bm_config.bm_store
             self.bm_fi_collection = copy.deepcopy(bm_config.bm_fi_collection) if bm_config.bm_fi_collection else {}
             self.bm_wf_collection = copy.deepcopy(bm_config.bm_wf_collection) if bm_config.bm_wf_collection else None
             self.bm_options = bm_config.bm_options.copy() if bm_config.bm_options else {}
@@ -1151,7 +1151,7 @@ def log_BDM_info(bm : BudgetModel) -> None:
         logger.debug(f"{P2}BM_INITIALIZED['{BM_INITIALIZED}']: "
                      f"{bm.bm_initialized}")
         logger.debug(f"{P2}BM_FOLDER['{BM_FOLDER}']: '{bm.bm_folder}'")
-        logger.debug(f"{P2}BM_STORE_URI['{BM_STORE_URI}]: '{bm.bm_store_uri}'")
+        logger.debug(f"{P2}BM_STORE['{BM_STORE}]: '{bm.bm_store}'")
         # Enumerate the financial institutions in the budget model
         c = bm.bdm_FI_OBJECT_count()
         logger.debug(
@@ -1211,7 +1211,7 @@ def log_BSM_info(bm : BudgetModel) -> None:
         bmc_p = bf_p / BSM_DEFAULT_BUDGET_MODEL_FILE_NAME # bmc: BM config file
         bmc_p_exists = "exists." if bmc_p.exists() else "does not exist!"
         logger.debug(
-            f"{P2}BM_STORE_URI['{BM_STORE_URI}]: '{bm.bm_store_uri}' "
+            f"{P2}BM_STORE['{BM_STORE}]: '{bm.bm_store}' "
             f"{bmc_p_exists}")
         # Enumerate the financial institutions in the budget model
         c = bm.bdm_FI_OBJECT_count()

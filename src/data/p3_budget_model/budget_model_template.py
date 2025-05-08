@@ -66,7 +66,7 @@ class BudgetModelTemplate(BudgetModel):
         # BDM object
         BM_INITIALIZED: False,
         BM_FOLDER: BM_DEFAULT_BUDGET_FOLDER,               # bsm_BM_FOLDER_path()
-        BM_STORE_URI: None,
+        BM_STORE: None,
         BM_FI_COLLECTION: { # FI_COLLECTION (dict) {FI_KEY: FI_OBJECT}
             "boa": # FI_KEY
             {      # FI_OBJECT
@@ -180,13 +180,12 @@ class BudgetModelTemplate(BudgetModel):
                          f"{self.bm_initialized}")
             self.bm_folder = BM_DEFAULT_BUDGET_FOLDER   # property
             bf_p = self.bsm_BM_FOLDER_path() # budget folder path
-            bmc = bf_p / BSM_DEFAULT_BUDGET_MODEL_FILE_NAME # bmc: BM config file
+            bmc_path = bf_p / BSM_DEFAULT_BUDGET_MODEL_FILE_NAME # bmc: BM config file
             bfp_exists = "exists." if bf_p.exists() else "does not exist!"
-            bmc_exists = "exists." if bmc.exists() else "does not exist!"
-            bmc_uri = p3u.path_to_file_uri(bmc) 
-            self.bm_store_uri = bmc_uri # property
+            bmc_exists = "exists." if bmc_path.exists() else "does not exist!"
+            self.bm_store = str(bmc_path) # property
             self.bm_wf_collection = bmt[BM_WF_COLLECTION] # property
-            logger.debug(f"{P2}BM_FOLDER('{BM_FOLDER}'): '{self.bm_store_uri}' {bfp_exists}")
+            logger.debug(f"{P2}BM_FOLDER('{BM_FOLDER}'): '{self.bm_store}' {bfp_exists}")
             logger.debug(
                 f"{P4}bsm_BM_FOLDER_path(): '{self.bsm_BM_FOLDER_path()}' "
                 f"{bfp_exists}")
@@ -194,7 +193,7 @@ class BudgetModelTemplate(BudgetModel):
                 f"{P4}bsm_BM_FOLDER_abs_path(): '{self.bsm_BM_FOLDER_abs_path()}' "
                 f"{bfp_exists}")
             logger.debug(
-                f"{P2}BM_STORE_URI('{BM_STORE_URI}): '{self.bm_store_uri}' "
+                f"{P2}BM_STORE('{BM_STORE}): '{self.bm_store}' "
                 f"{bmc_exists}")
             logger.debug(
                 f"{P2}BM_WORKFLOWS('{BM_WF_COLLECTION}'): "
