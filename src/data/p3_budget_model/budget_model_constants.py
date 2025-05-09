@@ -112,6 +112,16 @@ BMO_JSON_LOG_FILE = "json_log_file_name"
 BMO_EXPECTED_KEYS = (BMO_LOG_CONFIG, BMO_LOG_LEVEL, BMO_LOG_FILE,
                     BMO_JSON_LOG_FILE)
 
+# Key values used for transient working_data
+BDWD_INITIIALIZED = "bdwd_initialized"
+BDWD_LOADED_WORKBOOKS = "bdwd_loaded_workbooks"
+#    Key Name: BDWD_LOADED_WORKBOOKS
+#   Key Value: list[Tuple(wb_name, Workbook object)]
+BDWD_INITIIALIZED = "bdwd_initialized"
+BDWD_WORKING_DATA_KEYS = (BDWD_INITIIALIZED,
+                          BDWD_LOADED_WORKBOOKS)
+
+
 # Miscellaneous Convenience Constants
 P2 = "  "  # 2 space padding
 P4 = "    "  # 4 space padding

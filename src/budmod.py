@@ -14,18 +14,18 @@ import atexit, pathlib, logging, inspect, logging.config  #, logging.handlers
 # third-party  packages and module libraries
 from openpyxl import Workbook
 import inspect, pyjson5
+from config import settings
 import p3logging as p3l, p3_utils as p3u
 
 # local packages and module libraries
-from p3_excel_budget_constants import  *
-import data.p3_budget_model as p3bm
-
-logger = logging.getLogger(THIS_APP_NAME)
+import view_model.budmod_command_view_model as p3bmvm
+import view.budmod_cli_view as p3bmv
+logger = logging.getLogger(settings.app_name)
 logger.propagate = True
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region configure_logging() function
-def configure_logging(logger_name : str = THIS_APP_NAME, logtest : bool = False) -> None:
+def configure_logging(logger_name : str = settings.app_name, logtest : bool = False) -> None:
     """Setup the application logger."""
     try:
         # Configure logging
@@ -37,13 +37,13 @@ def configure_logging(logger_name : str = THIS_APP_NAME, logtest : bool = False)
             config_file = log_config_file
             )
         p3l.set_log_flag(p3l.LOG_FLAG_PRINT_CONFIG_ERRORS, True)
-        logger = logging.getLogger(THIS_APP_NAME)
+        logger = logging.getLogger(settings.app_name)
         logger.setLevel(logging.DEBUG)
         logger.info("+ ----------------------------------------------------- +")
-        logger.info(f"+ Running {THIS_APP_NAME}...")
+        logger.info(f"+ Running {settings.app_name}...")
         logger.info("+ ----------------------------------------------------- +")
         if(logtest): 
-            p3l.quick_logging_test(THIS_APP_NAME, log_config_file, reload = False)
+            p3l.quick_logging_test(settings.app_name, log_config_file, reload = False)
     except Exception as e:
         logger.error(p3u.exc_msg(configure_logging, e))
         raise
@@ -69,21 +69,15 @@ def budmod():
         # p3bm.tryout_budget_model_template()
 
         trans_file = "BOAChecking2025.xlsx"
-        # Initalize the p3_budget_model package.
-        bmt = p3bm.BudgetModelTemplate()
-        bm = p3bm.BudgetModel().bdm_initialize(bmt) # use the template to init
-        p3bm.log_BDM_info(bm)
-        p3bm.execute_worklow_categorization(bm, "boa", p3bm.BM_WF_CATEGORIZATION)
+        # Initalize the ViewModel and View
+        # bmt = p3bm.BudgetModelTemplate()
+        # bm = p3bm.BudgetModel().bdm_initialize(bmt) # use the template to init
+        # p3bm.log_BDM_info(bm)
+        bmvm = p3bmvm.BudgetModelCommandViewModel()
+        bmvm.initialize() # Initialize the BudgetModelCommandViewModel
+        p3bmv.BudgetModelCLIView(bmvm).cmdloop() # Application CLI loop
 
-
-        # wb = p3bm.load_fi_transactions(trans_file)
-        # log_workbook_info(trans_file, wb)
-        # sheet = wb.active
-        # # Check for budget category column, add it if not present.
-        # p3bm.check_budget_category(sheet)
-        # # BOA specific: Map the 'Original Description' column to the 'Budget Category' column.
-        # p3bm.map_budget_category(sheet, "Original Description", BUDGET_CATEGORY_COL)
-        # p3bm.save_fi_transactions(wb, trans_file)
+        # p3bm.execute_worklow_categorization(bm, "boa", p3bm.BM_WF_CATEGORIZATION)
         _ = "pause"
     except Exception as e:
         m = p3u.exc_msg(budmod, e)
@@ -94,14 +88,15 @@ def budmod():
 #region Local __main__ stand-alone
 if __name__ == "__main__":
     try:
-        configure_logging(THIS_APP_NAME)
+
+        configure_logging(settings.app_name)
         logger.setLevel(logging.DEBUG)
         # bm = p3fi.init_budget_model()  # How to load the budget model config?
         budmod() # Application Main()
     except Exception as e:
         m = p3u.exc_msg("__main__", e)
         logger.error(m)
-    logger.info(f"Exiting {THIS_APP_NAME}...")
+    logger.info(f"Exiting {settings.app_name}...")
     exit(1)
 #endregion Local __main__ stand-alone
 # ---------------------------------------------------------------------------- +

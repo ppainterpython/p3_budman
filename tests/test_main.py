@@ -3,6 +3,7 @@
 #------------------------------------------------------------------------------+
 import os, sys
 import logging, pytest
+from config import settings
 
 # sys.path.insert(0,  '../src')
 print("\nCurrent working directory:", os.getcwd())
@@ -90,11 +91,11 @@ def test_main_queued_stderr_json_file(caplog) -> None:
 def test_setup_logging(caplog) -> None:
     """Test the setup_logging function."""
     try:
-        logger = logging.getLogger(THIS_APP_NAME)
+        logger = logging.getLogger(settings.app_name)
         logger.propagate = True        
         root_logger = logging.getLogger()
         # Initialize the logger from a logging configuration file.
-        ln = THIS_APP_NAME; cf = p3l.STDERR_JSON_FILE_LOG_CONFIG_FILE; verbose = True
+        ln = settings.app_name; cf = p3l.STDERR_JSON_FILE_LOG_CONFIG_FILE; verbose = True
         p3l.setup_logging(cf)
         with caplog.at_level(logging.DEBUG):
             logger.debug("Debug message for testing")

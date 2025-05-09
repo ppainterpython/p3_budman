@@ -21,6 +21,7 @@ debugpy==1.8.14
 decorator==5.2.1
 defusedxml==0.7.1
 docutils==0.21.2
+dynaconf==3.2.11
 et_xmlfile==2.0.0
 executing==2.2.0
 fastjsonschema==2.21.1
@@ -73,7 +74,7 @@ notebook_shim==0.2.4
 numpy==2.2.4
 openpyxl==3.1.5
 overrides==7.7.0
--e git+https://github.com/ppainterpython/p3_utils.git@069877c6755ac33d02df8a7f7dad04594ded1029#egg=p3_utils
+-e git+https://github.com/ppainterpython/p3_utils.git@89fcf35f7a9d795295853973bd31faada92477aa#egg=p3_utils
 -e git+https://github.com/ppainterpython/p3logging.git@037457d36e6b06476fc9fc9255e1fc0d12c15129#egg=p3logging
 packaging==24.2
 pandas==2.2.3

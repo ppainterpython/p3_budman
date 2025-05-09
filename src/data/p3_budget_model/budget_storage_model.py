@@ -55,14 +55,14 @@ def bsm_load(store_abs_path : Path) -> Dict:
         logger.info("loading BudgetModel store from a file.")
         if store_abs_path is None or not isinstance(store_abs_path, Path):
             store_abs_path = bsm_bm_store_abs_path()
-        if store_abs_path is None or not isinstance(store_path, Path):
+        if store_abs_path is None or not isinstance(store_abs_path, Path):
             raise ValueError("BudgetModel store path is None or not a Path.")
         if not store_abs_path.exists():
-            raise ValueError(f"BudgetModel store path does not exist: {store_path}")
+            raise ValueError(f"BudgetModel store path does not exist: {store_abs_path}")
         if not store_abs_path.is_file():
-            raise ValueError(f"BudgetModel store path is not a file: {store_path}")
+            raise ValueError(f"BudgetModel store path is not a file: {store_abs_path}")
         if not store_abs_path.suffix == ".jsonc":
-            raise ValueError(f"BudgetModel store path is not a .jsonc file: {store_path}")
+            raise ValueError(f"BudgetModel store path is not a .jsonc file: {store_abs_path}")
         with open(store_abs_path, "r") as f:
             jsonc_content = json5.decode(f)
         logger.info(f"loaded BudgetModel store from file: {store_abs_path}")
@@ -82,6 +82,6 @@ def bsm_bm_store_abs_path(bm_folder : str = BM_DEFAULT_BUDGET_FOLDER) -> Path:
         bm_store_abs_path = bm_folder_abs_path / BSM_DEFAULT_BUDGET_MODEL_FILE_NAME
         return bm_store_abs_path
     except Exception as e:
-        logger.error(p3u.exc_msg(bsm_store_path, e))
+        logger.error(p3u.exc_err_msg(e))
         raise
 # ---------------------------------------------------------------------------- +

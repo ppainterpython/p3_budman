@@ -282,11 +282,11 @@ class BudgetModel(metaclass=SingletonMeta):
         self._wd = value
 
     # budget_model_working_data is a dictionary to store dynamic, non-property data.
-    def set_budget_model_working_data(self, key, value):
-        self.budget_model_working_data[key] = value
+    def set_BM_WORKING_DATA(self, key, value):
+        self.bm_working_data[key] = value
 
-    def get_budget_model_working_data(self, key):
-        return self.budget_model_working_data.get(key, 0)
+    def get_BM_WORKING_DATA(self, key):
+        return self.bm_working_data.get(key, 0)
 
     #endregion BudgetModel public class properties
     # ------------------------------------------------------------------------ +
@@ -380,6 +380,7 @@ class BudgetModel(metaclass=SingletonMeta):
     def bdm_initialize(self, 
                  bm_config_src:dict=None, 
                  bsm_init : bool = True,
+                 wd_init : bool = True,
                  create_missing_folders : bool = True,
                  raise_errors : bool = True
                  ) -> "BudgetModel":
@@ -417,6 +418,8 @@ class BudgetModel(metaclass=SingletonMeta):
             self.bm_working_data = copy.deepcopy(bm_config.bm_working_data) if bm_config.bm_working_data else {}
             if bsm_init:
                 self.bsm_inititalize(create_missing_folders, raise_errors)
+            if wd_init:
+                self.bdm_working_data = self.bdm_BM_WORKING_DATA_initialize()
             logger.debug(f"Complete: {p3u.stop_timer(st)}")   
             return self
         except Exception as e:
@@ -424,6 +427,33 @@ class BudgetModel(metaclass=SingletonMeta):
             logger.error(m)
             raise
     #endregion BDM bdm_initialize(self, budget_node : dict = None) public 
+    # ------------------------------------------------------------------------ +
+    #region   BDM bdm_BM_WORKING_DATA_initialize() 
+    def bdm_BM_WORKING_DATA_initialize(self) -> dict:
+        """Initialize BDWD, the budget domain working data.
+        
+        When BudgetModel is initialized, the BM_WORKING_DATA property is
+        set to an empty dictionary. This method adds additional initial
+        values to that dictionary. 
+
+        Note: use the get_BM_WORKING_DATA() and 
+        set_BM_WORKING_DATA() methods to access the working data.
+        """
+        try:
+            logger.debug("Start: ...")
+            # Initialize the budget model working data.
+            for wd_key in BDWD_WORKING_DATA_KEYS:
+                if wd_key == BDWD_LOADED_WORKBOOKS:
+                    self.set_BM_WORKING_DATA(
+                        BDWD_LOADED_WORKBOOKS, list())
+            self.set_BM_WORKING_DATA(BDWD_INITIIALIZED, True)
+            logger.debug("Complete:")
+            return self.bm_working_data
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise
+    #endregion   BDM bdm_BM_WORKING_DATA_initialize() 
     # ------------------------------------------------------------------------ +
     #region BDM FI_OBJECT pseudo-Object properties
     def bdm_validate_FI_KEY(self, fi_key:str) -> bool:
@@ -910,7 +940,8 @@ class BudgetModel(metaclass=SingletonMeta):
             logger.error(m)
             raise
  
-    def bsm_WF_WORKBOOKS_resolve(self, wf_do: WF_DATA_OBJECT, fi_key: str, wf_key : str):
+    def bsm_WF_WORKBOOKS_resolve(self, wf_do: WF_DATA_OBJECT, 
+                                 fi_key: str, wf_key : str):
         """Resolve all WORKBOOK_LISTs for WF_FOLDERS(fi_key, wf_key) in the WF_DATA_OBJECT. 
 
         Workbooks are contained in folders in the filesystem. The folder_id 
@@ -977,6 +1008,7 @@ class BudgetModel(metaclass=SingletonMeta):
                 return
             for wb_name, wb_path in wbl:
                 wb = load_workbook(filename=wb_path)
+                self.bdwd_LOADED_WORKBOOKS_add(wb_name, wb)
                 yield (wb_name, wb)
         except Exception as e:
             m = p3u.exc_err_msg(e)
@@ -1140,6 +1172,64 @@ class BudgetModel(metaclass=SingletonMeta):
     # ------------------------------------------------------------------------ +
     #endregion BudgetModel Storage Model methods
     # ======================================================================== +
+
+    # ======================================================================== +
+    #region BDWD - Budget Domain Model Working Data methods
+    """ Budget Domain Model Working Data (BDWD) methods.
+    BDWD methods are used to access the working data in the BDM. The working
+    data is used by client packages for ViewModel, View, UX, CLI etc.
+    It is transient data derived from the BDM/BSM operations.
+
+    Note: the bdwd_ prefixed methodes only use the 
+    get_BM_WORKING_DATA() and set_BM_WORKING_DATA() 
+    methods to access the BM_WORKING_DATA property.
+    """
+    # --------------------------------------------------------------------- +
+    #region bdwd_LOADED_WORKBOOKS() methods
+    def bdwd_LOADED_WORKBOOKS(self) -> List[Tuple[str, Workbook]] | None:
+        """Get the loaded workbooks from the BM_WORKING_DATA.
+
+        Returns:
+            List(Tuple(wb_name: Workbook object))
+        """
+        try:
+            if self.bm_working_data is None:
+                m = f"BM_WORKING_DATA is not set. "
+                logger.error(m)
+                raise ValueError(m)
+            return self.get_BM_WORKING_DATA(BDWD_LOADED_WORKBOOKS)
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise
+    def bdwd_LOADED_WORKBOOKS_add(self,wb_name : str, wb : Workbook) -> None:
+        """Add an entry to BDWD_LOADED_WORKBOOKS in the BM_WORKING_DATA.
+
+        Returns:
+            None: on succcess.
+        Raises:
+            ValueError: if the BM_WORKING_DATA is not set.
+            TypeError: if wb_name is not a str.
+            TypeError: if wb is not a Workbook object.
+            ValueError: if wb_name is None or an empty str.
+            ValueError: if wb is None.
+        """
+        try:
+            p3u.str_empty(wb_name, raise_error = True)
+            p3u.is_obj_of_type("wb", wb, Workbook, raise_TypeError=True)
+            lwbs_list = self.bdwd_LOADED_WORKBOOKS()
+            lwbs_list.append((wb_name, wb))
+            logger.debug(f"Added ('{wb_name}', '{str(wb)}') "
+                         f"to BDWD_LOADED_WORKBOOKS.")
+            return None
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise
+    #endregion bdwd_LOADED_WORKBOOKS() methods
+    #endregion BDWD - Budget Domain Model Working Data methods
+    # ======================================================================== +
+
 # ---------------------------------------------------------------------------- +
 #region log_BDM_info() function
 def log_BDM_info(bm : BudgetModel) -> None:  
