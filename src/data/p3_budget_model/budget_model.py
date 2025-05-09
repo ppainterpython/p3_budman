@@ -106,7 +106,10 @@ class BudgetModel(metaclass=SingletonMeta):
         - options: A dictionary to store the options for the budget model.
         - budget_data: A dictionary to store non-persistent the budget data.
     """
+    # ------------------------------------------------------------------------ +
+    #region class variables
     config_template : object = None #
+    #endregion class variables
     # ------------------------------------------------------------------------ +
     def __init_subclass__(cls, **kwargs):
         # called at import time, not at runtime.
@@ -446,7 +449,7 @@ class BudgetModel(metaclass=SingletonMeta):
                 if wd_key == BDWD_LOADED_WORKBOOKS:
                     self.set_BM_WORKING_DATA(
                         BDWD_LOADED_WORKBOOKS, list())
-            self.set_BM_WORKING_DATA(BDWD_INITIIALIZED, True)
+            self.set_BM_WORKING_DATA(BDWD_INITIALIZED, True)
             logger.debug("Complete:")
             return self.bm_working_data
         except Exception as e:
@@ -718,16 +721,9 @@ class BudgetModel(metaclass=SingletonMeta):
             logger.debug("Start: ...")
             self.bsm_BM_FOLDER_resolve(create_missing_folders, raise_errors)
             # Enumerate the financial institutions.
-            for fi_key, fi_object in self.bm_fi_collection.items():
-                # Resolve FI_FOLDER path.
-                self.bsm_FI_FOLDER_resolve(fi_key, 
-                                           create_missing_folders, raise_errors)
-                # Resolve WF_FOLDER paths for the workflows.
-                self.bsm_WF_FOLDER_resolve(fi_key, 
-                                           create_missing_folders, raise_errors)
-                # Resolve the FI_WORKFLOW_DATA collection, refresh actual
-                # data from folders in BSM.
-                self.bsm_FI_WORKFLOW_DATA_resolve(fi_key)
+
+            _ = [self.bsm_FI_inititalize(fi_key, create_missing_folders, raise_errors) 
+                   for fi_key, fi_object in self.bm_fi_collection.items()]                
             logger.debug(f"Complete: {p3u.stop_timer(st)}")   
             return self
         except Exception as e:
@@ -735,6 +731,55 @@ class BudgetModel(metaclass=SingletonMeta):
             logger.error(m)
             raise
     #endregion bsm_inititalize() method
+    # ------------------------------------------------------------------------ +    
+    #region bsm_FI_inititalize() method
+    def bsm_FI_inititalize(self, fi_key : str, 
+                        create_missing_folders:bool=True,
+                        raise_errors:bool=True) -> bool:
+        """Initialize BSM aspects for a financial institution.
+        
+        Examine elements of self for the financial institution indicated by
+        fi_key. Validate the mapping of the BDM data dependent on mapping to 
+        folders and files in the filesystem. Flags control whether to create the
+        filesystem structure if it is not present. Also scan the workflow 
+        folders for the presence of workbook excel files and load their 
+        references into the BDM as appropriate.
+
+        Args:
+            fi_key (str): The financial institution key.
+            create_missing_folders (bool): Create missing folders if True.
+            raise_errors (bool): Raise errors if True.
+            
+        Returns:
+            bool: True if successful, False otherwise.
+
+        Raises:
+            TypeError: If the financial institution key is not a string.
+            ValueError: If the financial institution key is not valid.
+            Exception: If there is an error during initialization.
+        """
+        st = p3u.start_timer()
+        # Plan: validate filesystem folders: bf, fi, wf
+        #       update the BDM workbook mappings to BSM 
+        try:
+            logger.debug("Start: ...")
+            p3u.str_empty(fi_key, raise_error=True) # Raises TypeError, ValueError
+            # Resolve FI_FOLDER path.
+            self.bsm_FI_FOLDER_resolve(fi_key, 
+                                        create_missing_folders, raise_errors)
+            # Resolve WF_FOLDER paths for the workflows.
+            self.bsm_WF_FOLDER_resolve(fi_key, 
+                                        create_missing_folders, raise_errors)
+            # Resolve the FI_WORKFLOW_DATA collection, refresh actual
+            # data from folders in BSM.
+            self.bsm_FI_WORKFLOW_DATA_resolve(fi_key)
+            logger.debug(f"Complete: {p3u.stop_timer(st)}")   
+            return True
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise
+    #endregion bsm_FI_inititalize() method
     # ------------------------------------------------------------------------ +    
     #region BM_FOLDER Path methods
     def bsm_BM_FOLDER_validate(self) -> bool:
@@ -992,11 +1037,38 @@ class BudgetModel(metaclass=SingletonMeta):
             logger.error(p3u.exc_err_msg(e))
             raise
 
-    def bsm_FI_WF_WORKBOOK_generator(self,
+    def bsm_WF_WORKBOOKS_load(self,
+                fi_key : str, 
+                wf_key : str, 
+                wb_type : str): 
+        """Load all workbooks for a workflow into BDWD_LOADED_WORKBOOKS
+        
+        For fi_key,wf_key,wb_type, load all workbooks of type wb_type.
+        
+        Returns:
+            None: as success. Updates BM_WORKING_DATA.BDWD_LOADED_WORKBOOKS 
+            property with the loaded workbooks.
+        Raises: exceptions from any errors.
+        """
+        try:
+            wbl = self.bdm_FI_WF_WORKBOOK_LIST(fi_key, wf_key, wb_type)
+            if wbl is None:
+                return
+            for wb_name, wb_path in wbl:
+                wb = load_workbook(filename=wb_path)
+                self.bdwd_LOADED_WORKBOOKS_add(wb_name, wb)
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise
+
+    def bsm_FI_WF_WORKBOOK_generate(self,
                 fi_key : str, 
                 wf_key : str, 
                 wb_type : str) -> Generator[Tuple[str, Workbook], None, None]: 
-        """For fi_key,wf_key,wb_type, yield (wb_name, loaded_Workbook).
+        """Generate a list of loaded workbooks.
+        
+        For fi_key,wf_key,wb_type, yield (wb_name, loaded_Workbook).
         
         Yields:
             Tuple[str, Workbook]: a tuple containing the file name the 
@@ -1042,45 +1114,10 @@ class BudgetModel(metaclass=SingletonMeta):
             raise
     #endregion WF_OBJECT WF_DATA_OBJECT (WF_DO) pseudo-property methods
     # ------------------------------------------------------------------------ +   
-    #region load_fi_transactions() function
-    def load_fi_transactions(self, fi_key:str, process_folder: str, 
-                             trans_file : str = None) -> Workbook:
-        """Get FI transactions from an excel file into an openpyxl.Workbook.
-        
-        Transactions downloaded from an FI are in a folder. 
-        The file is assumed to be in the folder specified in the budget_config. 
-        A folder is specified in the budget_config.json file. That folder is scanned 
-        for transactions in excel files if a particular file is not specified.
-
-        TODO: If trans_file is not specified, then scan the folder for files. 
-        Return a dictionary of workbooks with the file name as the key.
-
-        Args:
-            trans_file (str): The name of the transaction file to load.
-
-        Returns:
-            Workbook: The workbook containing the FI transactions.
-
-        """
-        me = self.load_fi_transactions
-        st = time.time()
-        try:
-            trans_path = self.fi_abs_path / trans_file
-            logger.info("Loading FI transactions...")
-            wb = load_workbook(filename=trans_path)
-            logger.info(f"Loaded FI transactions from {str(trans_path)}")
-            delta = f"{time.time() - st:.3f} seconds."
-            logger.info(f"Complete: {delta}")
-            return wb
-        except Exception as e:
-            logger.error(p3u.exc_msg(me, e))
-            raise    
-    #endregion load_fi_transactions() function
-    # ------------------------------------------------------------------------ +
-    #region fi_load_workbook(self, fi_key:str, process_folder:str, file_name:str) function
-    def fi_load_workbook(self, fi_key:str, workflow:str, 
+    #region bsm_FI_WF_WORKBOOK_load(self, fi_key:str, process_folder:str, file_name:str) function
+    def bsm_FI_WF_WORKBOOK_load(self, fi_key:str, wf_key:str, 
                               workbook_name:str) -> Workbook:
-        """Load a transaction file for a Financial Institution Workflow.
+        """Load a workbook transaction file for a Financial Institution Workflow.
 
         ViewModel: This is a ViewModel function, mapping budget domain model 
         to how budget model data is stored in filesystem.
@@ -1093,12 +1130,12 @@ class BudgetModel(metaclass=SingletonMeta):
         Returns:
             Workbook: The loaded transaction workbook.
         """
-        me = self.fi_load_workbook
+        me = self.bsm_FI_WF_WORKBOOK_load
         try:
             # Budget Folder Financial Institution Workflow Folder absolute path
-            bffiwfap = self.bsm_FI_FOLDER_wf_abs_path(fi_key, workflow) 
+            bffiwfap = self.bsm_FI_FOLDER_wf_abs_path(fi_key, wf_key) 
             wbap = bffiwfap / workbook_name # workbook absolute path
-            m = f"BDM: Loading FI('{fi_key}') workflow('{workflow}') "
+            m = f"BDM: Loading FI_KEY('{fi_key}') WF_KEY('{wf_key}') "
             m += f"workbook('{workbook_name}'): abs_path: '{str(wbap)}'"
             logger.debug(m)
             wb = self.bsm_load_workbook(wbap)
@@ -1106,7 +1143,7 @@ class BudgetModel(metaclass=SingletonMeta):
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
-    #endregion fi_load_workbook(self, fi_key:str, process_folder:str) function
+    #endregion bsm_FI_WF_WORKBOOK_load(self, fi_key:str, process_folder:str) function
     # ------------------------------------------------------------------------ +
     #region bsm_load_workbook(self, workbook_path:Path) function
     def bsm_load_workbook(self, workbook_path:Path) -> Workbook:
@@ -1186,8 +1223,8 @@ class BudgetModel(metaclass=SingletonMeta):
     """
     # --------------------------------------------------------------------- +
     #region bdwd_LOADED_WORKBOOKS() methods
-    def bdwd_LOADED_WORKBOOKS(self) -> List[Tuple[str, Workbook]] | None:
-        """Get the loaded workbooks from the BM_WORKING_DATA.
+    def bdwd_LOADED_WORKBOOKS_get(self) -> List[Tuple[str, Workbook]] | None:
+        """Get the BDWD_LOADED_WORKBOOKS from the BM_WORKING_DATA.
 
         Returns:
             List(Tuple(wb_name: Workbook object))
@@ -1202,6 +1239,7 @@ class BudgetModel(metaclass=SingletonMeta):
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
+
     def bdwd_LOADED_WORKBOOKS_add(self,wb_name : str, wb : Workbook) -> None:
         """Add an entry to BDWD_LOADED_WORKBOOKS in the BM_WORKING_DATA.
 
@@ -1217,7 +1255,7 @@ class BudgetModel(metaclass=SingletonMeta):
         try:
             p3u.str_empty(wb_name, raise_error = True)
             p3u.is_obj_of_type("wb", wb, Workbook, raise_TypeError=True)
-            lwbs_list = self.bdwd_LOADED_WORKBOOKS()
+            lwbs_list = self.bdwd_LOADED_WORKBOOKS_get()
             lwbs_list.append((wb_name, wb))
             logger.debug(f"Added ('{wb_name}', '{str(wb)}') "
                          f"to BDWD_LOADED_WORKBOOKS.")
@@ -1227,6 +1265,57 @@ class BudgetModel(metaclass=SingletonMeta):
             logger.error(m)
             raise
     #endregion bdwd_LOADED_WORKBOOKS() methods
+    # ------------------------------------------------------------------------ +
+    #region bdwd_FI methods
+    def bdwd_FI_WORKBOOKS_load(self, fi_key : str, wf_key : str,
+                               wb_type : str) -> None:
+        """Load workbooks for an FI workflow."""
+        try:
+            self.bsm_WF_WORKBOOKS_load(fi_key, wf_key, wb_type)
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise
+
+    def bdwd_FI_set(self, fi_key : str) -> None:
+        """Set the BDWD_FI in the BM_WORKING_DATA.
+
+        Args:
+            fi_key (str): The financial institution key.
+        """
+        try:
+            # fi_key must be a valid key or 'all'.
+            _ = p3u.str_empty(fi_key, raise_error=True) # Raises TypeError, ValueError
+            _ = self.bdm_validate_FI_KEY(fi_key) # Raises ValueError fi_key
+            self.set_BM_WORKING_DATA(BDWD_FI, fi_key)
+            logger.debug(f"Set BDWD_FI to '{fi_key}'")
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise
+    #endregion bdwd_FI methods
+    # ------------------------------------------------------------------------ +
+    #region bdwd_INITIALIZED methods
+    def bdwd_INITIALIZED_get(self) -> bool:
+        """Get the BDWD_INITIALIZED from the BM_WORKING_DATA.
+        """
+        try:
+           return self.get_BM_WORKING_DATA(BDWD_INITIALIZED) 
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise
+    def bdwd_INITIALIZED_set(self, value : bool) -> bool:
+        """Set the BDWD_INITIALIZED from the BM_WORKING_DATA.
+        """
+        try:
+           return self.set_BM_WORKING_DATA(BDWD_INITIALIZED, value) 
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise
+    #endregion bdwd_INITIALIZED methods
+    # ------------------------------------------------------------------------ +
     #endregion BDWD - Budget Domain Model Working Data methods
     # ======================================================================== +
 

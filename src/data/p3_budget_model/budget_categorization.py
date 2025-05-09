@@ -163,7 +163,7 @@ def execute_worklow_categorization(bm : BudgetModel, fi_key: str, wf_key:str) ->
         # Now process each input workbook.
         # for wb_name, wb_ap in reversed(workbooks_dict.items()):
         # Step 1: Load the workbooks sequentially.
-        for wb_name, wb in bm.bsm_FI_WF_WORKBOOK_generator(fi_key, wf_key, wb_type):
+        for wb_name, wb in bm.bsm_FI_WF_WORKBOOK_generate(fi_key, wf_key, wb_type):
             logger.info(f"{cp}    Workbook({wb_name})")
                 
             # Step 2: Process the workbooks applying the workflow function

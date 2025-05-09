@@ -16,6 +16,17 @@
             }
         },
         {
+            "name": "Py: File just my code",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": true,  // Allows stepping into third-party or library code
+            "env": {
+                "PYTHONPATH": "${workspaceFolder};${workspaceFolder}/src"
+            }
+        },
+        {
             "name": "Py: Package Directory",
             "type": "debugpy",
             "request": "launch",

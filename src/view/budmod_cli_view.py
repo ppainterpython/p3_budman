@@ -38,11 +38,15 @@ class MockViewModel():
 
 #endregion MockViewModel class
 # ---------------------------------------------------------------------------- +
-#region BudgetModelCLIView class
+
 class BudgetModelCLIView(cmd.Cmd):
-    """Command line interface for the BudgetModel.
+    # ======================================================================== +
+    #region BudgetModelCLIView class
+    """A view for BudgetModel, a command line interface.
     
-    Operates under MVVM pattern, strictly. BudgetModelCLIView"""
+    Operates under MVVM pattern, strictly. Instantiated with a blind view_model.
+    TODO: Use ABC for view_model interface.
+    """
     # https://pymotw.com/2/argparse/index.html#module-argparse
     #
     # Using cmd and argparse together, to integrate the help system, need to 
@@ -54,22 +58,73 @@ class BudgetModelCLIView(cmd.Cmd):
                  cmd_vm : object | MockViewModel = None) -> None:
         super().__init__()
         self.cmd_vm = MockViewModel() if cmd_vm is None else cmd_vm
+        self.wf = "caterization"  # default workflow
+        self.fi = "boa" # default financial institution
+    #endregion BudgetModelCLI class
+    # ======================================================================== +
+
+    # ======================================================================== +
+    #region CLIViewModel Cmd methods
+    # ======================================================================== +
+    # ------------------------------------------------------------------------ +
+    #region init command - initialize aspects of the BudgetModel application.
+    def _get_parser_init(self):
+        """Get the parser for the init command."""
+        try:
+            parser = argparse.ArgumentParser(
+                description="Init BugetModel properties and values.")
+            group = parser.add_mutually_exclusive_group(required=False)
+            group.add_argument("-fi", nargs="?", action="store", dest="fi", 
+                            default=None,
+                            const="all",
+                            help="Init for financial institution.")
+            group.add_argument("-bsm", action="store_true", dest="bsm",
+                            default = False,
+                            #    const=True,
+                            help="Init the BSM.") 
+            return parser
+        except argparse.ArgumentTypeError as e:
+            logger.error(p3u.exc_err_msg(e))
+        except argparse.ArgumentError as e:
+            logger.error(p3u.exc_err_msg(e))
+        except SystemExit as e:
+            # Handle the case where argparse exits the program
+            logger.error(p3u.exc_err_msg(e))
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+        return parser
+
+    def help_init(self):
+        """Show argarse-generated help for init command."""
+        parser = self._get_parser_init()
+        parser.print_help()
 
     def do_init(self, line: str):
         """Initialize the BudgetModel."""
         try:
+            parser = self._get_parser_init()
+            args = parser.parse_args(line.split())
             if self.cmd_vm is None:
-                print("BudgetModelCommandViewModel initialized.")
-                return
-            print(f"BudgetModelCommandViewModel already initialized.")
+                print("BudgetModelCommandViewModel is None.")
+            print(f"args: {str(args)}")
+            if args.fi:
+                self.cmd_vm.bdm_vm_BDWD_FI_initialize(args.fi)
+        except SystemExit:
+            # Handle the case where argparse exits the program
+            print("Not exiting due to SystemExit")
+            pass
         except Exception as e:
-            print(f"Error initializing BudgetModel: {e}")
-
+            print(f"Error init command: {e}")
+    #endregion init command - initialize aspects of the BudgetModel application.
+    # ------------------------------------------------------------------------ +
+    #region Show command - workbooks, status, etc.
     def _get_parser_show(self):
         """Get the parser for the show command."""
         parser = argparse.ArgumentParser(
-            description="Show BugetModle properties and values.")
+            description="Show BugetModel properties and values.")
         parser.add_argument("wb", nargs="?", action="store", default=False,
+                            help="Init workbooks.")
+        parser.add_argument("vmwb", nargs="?", action="store", default=False,
                             help="Show workbooks.")
         parser.add_argument("-l", action="store", default = False,
                             help="Show loaded workbooks.") 
@@ -91,7 +146,7 @@ class BudgetModelCLIView(cmd.Cmd):
             # self.budget_model.bm_show()
             args = parser.parse_args(arg.split())
             # TODO: vm method to load the workflow workbooks.
-            lwbs = self.cmd_vm.get_LOADED_WORKBOOKS()
+            lwbs = self.cmd_vm.bdm_vm_BDWD_LOADED_WORKBOOKS_get()
         except argparse.ArgumentError as e:
             print(f"Error parsing arguments: {e}")
         except SystemExit:
@@ -100,13 +155,23 @@ class BudgetModelCLIView(cmd.Cmd):
             pass
         except Exception as e:
             print(f"Error showing BudgetModel: {e}")
-    def do_save(self, line: str):
-        """Save the BudgetModel to a file."""
-        try:
-            # self.budget_model.bm_save()
-            print("BudgetModel saved.")
-        except Exception as e:
-            print(f"Error saving BudgetModel: {e}")
+    #endregion Show command
+    # ------------------------------------------------------------------------ +
+    #region Load command - load workbooks
+    def _get_parser_load(self):
+        """Get the parser for the load command."""
+        parser = argparse.ArgumentParser(
+            description="Load BugetModel workbooks into app session.")
+        parser.add_argument("wb", nargs="?", action="store", default=True,
+                            help="Load workbooks.")
+        parser.add_argument("-w", action="store", default = "categorization",
+                            help="Workflow for workbooks to load.") 
+        return parser
+    
+    def help_load(self):
+        """Show argarse-generated help for show command."""
+        parser = self._get_parser_load()
+        parser.print_help()
 
     def do_load(self, line: str):
         """Load the BudgetModel from a file."""
@@ -115,6 +180,16 @@ class BudgetModelCLIView(cmd.Cmd):
             print("BudgetModel loaded.")
         except Exception as e:
             print(f"Error loading BudgetModel: {e}")
+    #endregion Load command - load workbooks
+    # ------------------------------------------------------------------------ +
+    def do_save(self, line: str):
+        """Save the BudgetModel to a file."""
+        try:
+            # self.budget_model.bm_save()
+            print("BudgetModel saved.")
+        except Exception as e:
+            print(f"Error saving BudgetModel: {e}")
+
     
     def do_exit(self, line: str):
         """Exit the BudgetModel CLI."""
@@ -126,13 +201,12 @@ class BudgetModelCLIView(cmd.Cmd):
         print("Quitting BudgetModel CLI.")
         return True 
     
-#endregion BudgetModelCLI class
 # ---------------------------------------------------------------------------- +
 #region Local __main__ stand-alone
 if __name__ == "__main__":
     try:
         from budmod import configure_logging
-        import view_model.budmod_command_view_model as p3vm
+        import view_model.bdm_view_model as p3vm
         import data.p3_budget_model as p3b
         configure_logging(settings.app_name)
         logger.setLevel(logging.DEBUG)

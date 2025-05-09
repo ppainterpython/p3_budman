@@ -43,6 +43,14 @@ BM_VALID_PROPERTIES = (BM_INITIALIZED, BM_FOLDER, BM_STORE,
                     BM_CREATED_DATE, BM_LAST_MODIFIED_DATE, 
                     BM_LAST_MODIFIED_BY, BM_WORKING_DATA)
 
+# BM_OPTIONS Budget Model Options (BMO)Constants
+BMO_LOG_CONFIG = "log_config"
+BMO_LOG_LEVEL = "log_level"
+BMO_LOG_FILE = "log_file"
+BMO_JSON_LOG_FILE = "json_log_file_name"
+BMO_EXPECTED_KEYS = (BMO_LOG_CONFIG, BMO_LOG_LEVEL, BMO_LOG_FILE,
+                    BMO_JSON_LOG_FILE)
+
 # FI_OBJECT financial institution pseudo-Object (Dictionary key names)
 FI_KEY = "fi_key" 
 FI_NAME = "fi_name"
@@ -104,22 +112,23 @@ WF_DATA_OBJECT_VALID_KEYS = (WF_WORKBOOKS_IN, WF_WORKBOOKS_OUT)
 WORKBOOK_LIST = List # pseudo-type of object
 WORKBOOK_ITEM = Tuple # pseudo-type of object
 
-# BM_OPTIONS Budget Model Options (BMO)Constants
-BMO_LOG_CONFIG = "log_config"
-BMO_LOG_LEVEL = "log_level"
-BMO_LOG_FILE = "log_file"
-BMO_JSON_LOG_FILE = "json_log_file_name"
-BMO_EXPECTED_KEYS = (BMO_LOG_CONFIG, BMO_LOG_LEVEL, BMO_LOG_FILE,
-                    BMO_JSON_LOG_FILE)
-
 # Key values used for transient working_data
-BDWD_INITIIALIZED = "bdwd_initialized"
+BDWD_INITIALIZED = "bdwd_initialized"
+#    Key Name: BDWD_INITIIALIZED
+#   Key Value: bool True | False
+# Description: Indicates if the BDWB has been initialized.
 BDWD_LOADED_WORKBOOKS = "bdwd_loaded_workbooks"
 #    Key Name: BDWD_LOADED_WORKBOOKS
 #   Key Value: list[Tuple(wb_name, Workbook object)]
-BDWD_INITIIALIZED = "bdwd_initialized"
-BDWD_WORKING_DATA_KEYS = (BDWD_INITIIALIZED,
-                          BDWD_LOADED_WORKBOOKS)
+# Description: A list of tuples of wb_name, Workbook objects loaded into BDWD.
+BDWD_FI = "bdwd_fi"
+#    Key Name: BDWD_FI
+#   Key Value: fi_key | "all"
+# Description: fi_key of FI loaded, or "all" if all FIs are loaded.
+#              To load a single FI, use bdwd_FI_load(fi_key) method.
+BDWD_WORKING_DATA_KEYS = (BDWD_INITIALIZED,
+                          BDWD_LOADED_WORKBOOKS,
+                          BDWD_FI)
 
 
 # Miscellaneous Convenience Constants

@@ -18,7 +18,7 @@ from config import settings
 import p3logging as p3l, p3_utils as p3u
 
 # local packages and module libraries
-import view_model.budmod_command_view_model as p3bmvm
+import view_model.bdm_view_model as p3bmvm
 import view.budmod_cli_view as p3bmv
 logger = logging.getLogger(settings.app_name)
 logger.propagate = True
@@ -75,6 +75,7 @@ def budmod():
         # p3bm.log_BDM_info(bm)
         bmvm = p3bmvm.BudgetModelCommandViewModel()
         bmvm.initialize() # Initialize the BudgetModelCommandViewModel
+        p3u.set_print_output(True)
         p3bmv.BudgetModelCLIView(bmvm).cmdloop() # Application CLI loop
 
         # p3bm.execute_worklow_categorization(bm, "boa", p3bm.BM_WF_CATEGORIZATION)
@@ -97,7 +98,7 @@ if __name__ == "__main__":
         m = p3u.exc_msg("__main__", e)
         logger.error(m)
     logger.info(f"Exiting {settings.app_name}...")
-    exit(1)
+    exit(0)
 #endregion Local __main__ stand-alone
 # ---------------------------------------------------------------------------- +
 #region tryit() function
