@@ -28,6 +28,10 @@ class BudgetModelCommandViewModel():
     # ======================================================================== +
     #region BudgetModelCommandViewModel class
     """Command action view_model for the BudgetModel."""
+    # ======================================================================== +
+    #                                                                          +
+    # ------------------------------------------------------------------------ +
+    #region __init__() constructor method
     def __init__(self,bm : p3bm.BudgetModel = None) -> None:
         super().__init__()
         self.intitialized : bool = False
@@ -35,7 +39,9 @@ class BudgetModelCommandViewModel():
         self.FI_KEY : str = None
         self.WF_KEY : str = None
         self.WB_TYPE : str = None
-
+    #endregion __init__() constructor method
+    # ------------------------------------------------------------------------ +
+    #region initialize() method
     def initialize(self) -> None:
         """Initialize the command view_model."""
         try:
@@ -48,6 +54,8 @@ class BudgetModelCommandViewModel():
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
+    #endregion initialize() method
+    # ------------------------------------------------------------------------ +
     #endregion BudgetModelCommandViewModel class
     # ======================================================================== +
 
@@ -144,17 +152,13 @@ class BudgetModelCommandViewModel():
     # ======================================================================== +
     #                                                                          +
     # ------------------------------------------------------------------------ +
-    #region bdm_vm_BDWD_LOAD_WORKBOOKS() method
+    #region bdm_vm_BDWD_LOAD_WORKBOOKS() command methods
     def bdm_vm_BDWD_LOADED_WORKBOOKS_get(self) -> List[Tuple[str, object]]: 
-        """Get the loaded workbooks from BMWD_LOADED_WORKBOOKS working data."""
-        return self.budget_model.bdwd_LOADED_WORKBOOKS_get()
-
-    def bdm_vm_BDWD_LOADED_WORKBOOKS_load(self, fi_key : str, wf_key : str) -> List[Tuple[str, object]]: 
         """Get the loaded workbooks from BMWD_LOADED_WORKBOOKS working data."""
         return self.budget_model.bdwd_LOADED_WORKBOOKS_get()
     #endregion bdm_vm_BDWD_LOAD_WORKBOOKS() method
     # ------------------------------------------------------------------------ +
-    #region bdm_vm_BDWD_FI() methods
+    #region bdm_vm_BDWD_FI() command methods
     def bdm_vm_BDWD_FI_initialize(self, fi_key : str = None) -> None: 
         """Initialize for a specific FI or 'all'."""
         try:
@@ -179,3 +183,29 @@ class BudgetModelCommandViewModel():
     #endregion BDM view_model Command Methods                                  +
     # ======================================================================== +
 
+    # ======================================================================== +
+    #region BDM view_model Service Methods                                     +
+    """BDM view_model Service Methods.
+    These methods are the service methods for the BDM view_model. Used by
+    client packages up-stream in View-land, some are data requests and
+    others perform work on the view_model state.    
+    """
+    # ======================================================================== +
+    #                                                                          +
+    # ------------------------------------------------------------------------ +
+    #region 
+    def bdm_vm_BDWD_LOADED_WORKBOOKS_get_names(self) -> List[str]: 
+        """Return names of all loaded workbooks from BMWD_LOADED_WORKBOOKS."""
+        try:
+            # Retrieve the BDWD_LOADED_WORKBOOKS.
+            bdwd_wb_list = self.budget_model.bdwd_LOADED_WORKBOOKS_get()
+            wb_name_list = []
+            for wb_name, _ in bdwd_wb_list:
+                wb_name_list.append(wb_name)
+            return wb_name_list
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+        return self.budget_model.bdwd_LOADED_WORKBOOKS_get()
+    #endregion BDM view_model Service Methods                                  +
+    # ======================================================================== +

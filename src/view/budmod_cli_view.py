@@ -5,17 +5,20 @@
 #endregion budmod_cli_view.py module
 # ---------------------------------------------------------------------------- +
 #region Imports
+
 # python standard library modules and packages
 import logging, os, getpass, time, copy
 from pathlib import Path
 from typing import List, Type, Generator, Dict, Tuple, Any
-import cmd, argparse
 
 # third-party modules and packages
 from config import settings
 import p3_utils as p3u, pyjson5, p3logging as p3l
+import cmd2
+from cmd2 import (Cmd2ArgumentParser, with_argparser)
 
 # local modules and packages
+
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -39,7 +42,7 @@ class MockViewModel():
 #endregion MockViewModel class
 # ---------------------------------------------------------------------------- +
 
-class BudgetModelCLIView(cmd.Cmd):
+class BudgetModelCLIView(cmd2.Cmd):
     # ======================================================================== +
     #region BudgetModelCLIView class
     """A view for BudgetModel, a command line interface.
@@ -68,88 +71,54 @@ class BudgetModelCLIView(cmd.Cmd):
     # ======================================================================== +
     # ------------------------------------------------------------------------ +
     #region init command - initialize aspects of the BudgetModel application.
-    def _get_parser_init(self):
-        """Get the parser for the init command."""
+    # init command line arguments                                              +
+    init_parser = Cmd2ArgumentParser()
+    group = init_parser.add_mutually_exclusive_group(required=False)
+    group.add_argument("-fi", nargs="?", action="store", dest="fi", 
+                    default=None,
+                    const="all",
+                    help="Initialize one or all of the financial institutions.")
+    group.add_argument("-bsm", action="store_true", dest="bsm",
+                    default = False,
+                    help="Initialize the BSM.")     
+    # init command implementation                                              +
+    @with_argparser(init_parser)
+    def do_init(self, opts):
+        """Init BugetModel properties and values.."""
         try:
-            parser = argparse.ArgumentParser(
-                description="Init BugetModel properties and values.")
-            group = parser.add_mutually_exclusive_group(required=False)
-            group.add_argument("-fi", nargs="?", action="store", dest="fi", 
-                            default=None,
-                            const="all",
-                            help="Init for financial institution.")
-            group.add_argument("-bsm", action="store_true", dest="bsm",
-                            default = False,
-                            #    const=True,
-                            help="Init the BSM.") 
-            return parser
-        except argparse.ArgumentTypeError as e:
-            logger.error(p3u.exc_err_msg(e))
-        except argparse.ArgumentError as e:
-            logger.error(p3u.exc_err_msg(e))
-        except SystemExit as e:
-            # Handle the case where argparse exits the program
-            logger.error(p3u.exc_err_msg(e))
-        except Exception as e:
-            logger.error(p3u.exc_err_msg(e))
-        return parser
-
-    def help_init(self):
-        """Show argarse-generated help for init command."""
-        parser = self._get_parser_init()
-        parser.print_help()
-
-    def do_init(self, line: str):
-        """Initialize the BudgetModel."""
-        try:
-            parser = self._get_parser_init()
-            args = parser.parse_args(line.split())
-            if self.cmd_vm is None:
-                print("BudgetModelCommandViewModel is None.")
-            print(f"args: {str(args)}")
-            if args.fi:
-                self.cmd_vm.bdm_vm_BDWD_FI_initialize(args.fi)
+            self.poutput(f"args: {str(opts)}")
+            if opts.fi:
+                self.cmd_vm.bdm_vm_BDWD_FI_initialize(opts.fi)
         except SystemExit:
             # Handle the case where argparse exits the program
-            print("Not exiting due to SystemExit")
+            self.pwarning("Not exiting due to SystemExit")
             pass
         except Exception as e:
             print(f"Error init command: {e}")
     #endregion init command - initialize aspects of the BudgetModel application.
     # ------------------------------------------------------------------------ +
     #region Show command - workbooks, status, etc.
-    def _get_parser_show(self):
-        """Get the parser for the show command."""
-        parser = argparse.ArgumentParser(
-            description="Show BugetModel properties and values.")
-        parser.add_argument("wb", nargs="?", action="store", default=False,
-                            help="Init workbooks.")
-        parser.add_argument("vmwb", nargs="?", action="store", default=False,
-                            help="Show workbooks.")
-        parser.add_argument("-l", action="store", default = False,
-                            help="Show loaded workbooks.") 
-        return parser
-    
-    def help_show(self):
-        """Show argarse-generated help for show command."""
-        parser = self._get_parser_show()
-        parser.print_help()
-
-    def do_show(self, arg):
-        """Show objects and properties from BudgetModel.
-        
-        Method self._get_parser_show() generates the parser for the show command.
-        The second argument determines what to show, defaults to loaded workbooks.
-        """
+    # show command line arguments                                              +
+    show_parser = Cmd2ArgumentParser()
+    show_parser.add_argument("wb", nargs="?", action="store", default=False,
+                        help="Show loaded workbooks.")
+    show_parser.add_argument("vmwb", nargs="?", action="store", default=False,
+                        help="Show workbooks.")
+    show_parser.add_argument("-l", action="store_true", default = False,
+                             dest="loaded_workbooks",
+                        help="Show loaded workbooks.") 
+    # show command implementation                                              +
+    @with_argparser(show_parser)
+    def do_show(self, opts):
+        """Show BugetModel properties and values."""
         try:
-            parser = self._get_parser_show()
-            # self.budget_model.bm_show()
-            args = parser.parse_args(arg.split())
             # TODO: vm method to load the workflow workbooks.
-            lwbs = self.cmd_vm.bdm_vm_BDWD_LOADED_WORKBOOKS_get()
-        except argparse.ArgumentError as e:
-            print(f"Error parsing arguments: {e}")
-        except SystemExit:
+            if opts.loaded_workbooks:
+                names = self.cmd_vm.bdm_vm_BDWD_LOADED_WORKBOOKS_get_names()
+                self.poutput(f"Loaded workbooks({len(names)}): {names}")
+        # except Cmd2Arg as e:
+        #     print(f"Error parsing arguments: {e}")
+        except SystemExit as e:
             # Handle the case where argparse exits the program
             # print("Exiting due to SystemExit")
             pass
@@ -158,23 +127,16 @@ class BudgetModelCLIView(cmd.Cmd):
     #endregion Show command
     # ------------------------------------------------------------------------ +
     #region Load command - load workbooks
-    def _get_parser_load(self):
-        """Get the parser for the load command."""
-        parser = argparse.ArgumentParser(
-            description="Load BugetModel workbooks into app session.")
-        parser.add_argument("wb", nargs="?", action="store", default=True,
-                            help="Load workbooks.")
-        parser.add_argument("-w", action="store", default = "categorization",
-                            help="Workflow for workbooks to load.") 
-        return parser
-    
-    def help_load(self):
-        """Show argarse-generated help for show command."""
-        parser = self._get_parser_load()
-        parser.print_help()
-
-    def do_load(self, line: str):
-        """Load the BudgetModel from a file."""
+    # load command line arguments                                              +
+    load_parser = Cmd2ArgumentParser()
+    load_parser.add_argument("wb", nargs="?", action="store", default=True,
+                        help="Load workbooks.")
+    load_parser.add_argument("-w", action="store", default = "categorization",
+                        help="Workflow for workbooks to load.") 
+    # load command implementation                                              +
+    @with_argparser(load_parser)
+    def do_load(self, opts):
+        """Load BugetModel data items into app session."""
         try:
             # self.budget_model.bm_load()
             print("BudgetModel loaded.")

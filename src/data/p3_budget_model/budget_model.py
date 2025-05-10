@@ -1223,6 +1223,10 @@ class BudgetModel(metaclass=SingletonMeta):
     """
     # --------------------------------------------------------------------- +
     #region bdwd_LOADED_WORKBOOKS() methods
+    def bdwd_LOADED_WORKBOOKS_count(self) -> int:
+        """Return total count of BDWD_LOADED_WORKBOOKS dictionary."""
+        return len(self.bdwd_LOADED_WORKBOOKS_get())
+
     def bdwd_LOADED_WORKBOOKS_get(self) -> List[Tuple[str, Workbook]] | None:
         """Get the BDWD_LOADED_WORKBOOKS from the BM_WORKING_DATA.
 
