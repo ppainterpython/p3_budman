@@ -126,7 +126,7 @@ def test_BDM_FI_OBJECT_pseudo_Property_Methods():
 
         # Expect valid values to work from default setup.
         for fi_key in p3bm.VALID_FI_KEYS:
-            assert bm.bdm_validate_FI_KEY(fi_key), \
+            assert bm.bdm_FI_KEY_validate(fi_key), \
                 f"Expected: {fi_key} to be a valid FI key."
             assert (bdm_fi := bm.bdm_FI_OBJECT(fi_key)) is not None, \
                 f"Expected: {fi_key} to be a valid FI dict."

@@ -58,11 +58,21 @@ class BudgetModelCLIView(cmd2.Cmd):
     intro = "Welcome to the BudgetModel CLI. Type help or ? to list commands.\n"
 
     def __init__(self, 
-                 cmd_vm : object | MockViewModel = None) -> None:
+                 data_context : object | MockViewModel = None) -> None:
         super().__init__()
-        self.cmd_vm = MockViewModel() if cmd_vm is None else cmd_vm
-        self.wf = "caterization"  # default workflow
-        self.fi = "boa" # default financial institution
+        self._data_context = MockViewModel() if data_context is None else data_context
+    
+    @property
+    def data_context(self) -> object:
+        """Get the data_context property."""
+        return self._data_context
+    
+    @data_context.setter
+    def data_context(self, value: object) -> None:
+        """Set the data_context property."""
+        if not isinstance(value, (MockViewModel, object)):
+            raise ValueError("data_context must be a MockViewModel or object.")
+        self._data_context = value
     #endregion BudgetModelCLI class
     # ======================================================================== +
 
@@ -88,13 +98,13 @@ class BudgetModelCLIView(cmd2.Cmd):
         try:
             self.poutput(f"args: {str(opts)}")
             if opts.fi:
-                self.cmd_vm.bdm_vm_BDWD_FI_initialize(opts.fi)
+                self.data_context.FI_init_cmd(opts.fi)
         except SystemExit:
             # Handle the case where argparse exits the program
             self.pwarning("Not exiting due to SystemExit")
             pass
         except Exception as e:
-            print(f"Error init command: {e}")
+            self.pexcept(e)
     #endregion init command - initialize aspects of the BudgetModel application.
     # ------------------------------------------------------------------------ +
     #region Show command - workbooks, status, etc.
@@ -114,7 +124,7 @@ class BudgetModelCLIView(cmd2.Cmd):
         try:
             # TODO: vm method to load the workflow workbooks.
             if opts.loaded_workbooks:
-                names = self.cmd_vm.bdm_vm_BDWD_LOADED_WORKBOOKS_get_names()
+                names = self.data_context.bdm_vm_BDWD_LOADED_WORKBOOKS_get_names()
                 self.poutput(f"Loaded workbooks({len(names)}): {names}")
         # except Cmd2Arg as e:
         #     print(f"Error parsing arguments: {e}")
@@ -123,7 +133,7 @@ class BudgetModelCLIView(cmd2.Cmd):
             # print("Exiting due to SystemExit")
             pass
         except Exception as e:
-            print(f"Error showing BudgetModel: {e}")
+            self.perror(f"Error showing BudgetModel: {e}")
     #endregion Show command
     # ------------------------------------------------------------------------ +
     #region Load command - load workbooks
@@ -139,9 +149,10 @@ class BudgetModelCLIView(cmd2.Cmd):
         """Load BugetModel data items into app session."""
         try:
             # self.budget_model.bm_load()
+            1 / 0  # TODO: remove this line
             print("BudgetModel loaded.")
         except Exception as e:
-            print(f"Error loading BudgetModel: {e}")
+            self.pexcept(e)
     #endregion Load command - load workbooks
     # ------------------------------------------------------------------------ +
     def do_save(self, line: str):
@@ -150,7 +161,7 @@ class BudgetModelCLIView(cmd2.Cmd):
             # self.budget_model.bm_save()
             print("BudgetModel saved.")
         except Exception as e:
-            print(f"Error saving BudgetModel: {e}")
+            self.perror(f"Error saving BudgetModel: {e}")
 
     
     def do_exit(self, line: str):

@@ -97,7 +97,7 @@ def test_bsm_FI_Path_methods() -> None:
 
         # Expect valid values to work from default setup.
         for fi_key in p3bt.VALID_FI_KEYS:
-            assert bmt.bdm_validate_FI_KEY(fi_key), \
+            assert bmt.bdm_FI_KEY_validate(fi_key), \
                 f"Expected: {fi_key} to be a valid FI key."
             assert bmt.bsm_FI_FOLDER_path_str(fi_key) is not None, \
                 f"Expected: {fi_key} folder path string to be valid."
@@ -123,7 +123,7 @@ def test_WF_OBJECT_Path_methods() -> None:
 
         # Expect valid values to work from default setup.
         for fi_key in p3bt.VALID_FI_KEYS:
-            assert bmt.bdm_validate_FI_KEY(fi_key), \
+            assert bmt.bdm_FI_KEY_validate(fi_key), \
                 f"Expected: {fi_key} to be a valid FI key."
             for wf_key in p3bt.BM_VALID_WORKFLOWS:
                 assert bmt.bdm_WF_KEY_validate(wf_key), \
@@ -156,7 +156,7 @@ def test_BDM_FI_OBJECT_pseudo_Property_Methods():
 
         # Expect valid values to work from default setup.
         for fi_key in p3bt.VALID_FI_KEYS:
-            assert bmt.bdm_validate_FI_KEY(fi_key), \
+            assert bmt.bdm_FI_KEY_validate(fi_key), \
                 f"Expected: {fi_key} to be a valid FI key."
             assert (bdm_fi := bmt.bdm_FI_OBJECT(fi_key)) is not None, \
                 f"Expected: {fi_key} to be a valid FI dict."

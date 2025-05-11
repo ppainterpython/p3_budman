@@ -459,7 +459,7 @@ class BudgetModel(metaclass=SingletonMeta):
     #endregion   BDM bdm_BM_WORKING_DATA_initialize() 
     # ------------------------------------------------------------------------ +
     #region BDM FI_OBJECT pseudo-Object properties
-    def bdm_validate_FI_KEY(self, fi_key:str) -> bool:
+    def bdm_FI_KEY_validate(self, fi_key:str) -> bool:
         """Validate the financial institution key."""
         if fi_key not in self.bm_fi_collection.keys():
             m = f"Financial Institution '{fi_key}' not found in "
@@ -470,7 +470,7 @@ class BudgetModel(metaclass=SingletonMeta):
 
     def bdm_FI_OBJECT(self, fi_key:str) -> FI_OBJECT:
         """Return the FI_OBJECT for fi_key."""
-        self.bdm_validate_FI_KEY(fi_key)
+        self.bdm_FI_KEY_validate(fi_key)
         return self.bm_fi_collection[fi_key]
     
     def bdm_FI_OBJECT_count(self) -> int:
@@ -528,7 +528,7 @@ class BudgetModel(metaclass=SingletonMeta):
                                 fi_key:str, wf_key:str, 
                                 wb_type:str) -> WORKBOOK_LIST:
         """Return the WORKBOOK_LIST for the specified fi_key, wf_key, wb_type."""
-        if not self.bdm_validate_FI_KEY(fi_key):
+        if not self.bdm_FI_KEY_validate(fi_key):
             m = f"Invalid financial institution key '{fi_key}'."
             logger.error(m)
             raise ValueError(m)
@@ -575,7 +575,7 @@ class BudgetModel(metaclass=SingletonMeta):
         supp_wf = self.bm_wf_collection
         if supp_wf is None or wf_key not in supp_wf:
             m = f"Workflow('{wf_key}') not found supported workflows "
-            m += f"{self.bm_wf_collection}"
+            m += f"{str(self.bm_wf_collection)}"
             logger.error(m)
             raise ValueError(m)
         return True
@@ -840,7 +840,7 @@ class BudgetModel(metaclass=SingletonMeta):
         Raises ValueError for invalid settings for any of: bm_folder property,
         fi_key, of FI_FOLDER value of FI dictionary."""
         bf_p_s = self.bsm_BM_FOLDER_path_str() # ValueError on BM_FOLDER property
-        self.bdm_validate_FI_KEY(fi_key) # ValueError fi_key
+        self.bdm_FI_KEY_validate(fi_key) # ValueError fi_key
         fi_p_s = str(Path(self.bdm_FI_FOLDER(fi_key))) 
         if fi_p_s is None or len(fi_p_s) == 0:
             m = f"FI_FOLDER value is not set for FI_KEY('{fi_key}'). "
@@ -1290,7 +1290,7 @@ class BudgetModel(metaclass=SingletonMeta):
         try:
             # fi_key must be a valid key or 'all'.
             _ = p3u.str_empty(fi_key, raise_error=True) # Raises TypeError, ValueError
-            _ = self.bdm_validate_FI_KEY(fi_key) # Raises ValueError fi_key
+            _ = self.bdm_FI_KEY_validate(fi_key) # Raises ValueError fi_key
             self.set_BM_WORKING_DATA(BDWD_FI, fi_key)
             logger.debug(f"Set BDWD_FI to '{fi_key}'")
         except Exception as e:
