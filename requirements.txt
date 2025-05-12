@@ -11,9 +11,11 @@ bleach==6.2.0
 certifi==2025.1.31
 cffi==1.17.1
 charset-normalizer==3.4.1
+cmd2==2.5.11
 colorama==0.4.6
 comm==0.2.2
 concurrent-log-handler==0.9.25
+config==0.5.1
 contourpy==1.3.1
 coverage==7.8.0
 cycler==0.12.1
@@ -74,7 +76,7 @@ notebook_shim==0.2.4
 numpy==2.2.4
 openpyxl==3.1.5
 overrides==7.7.0
--e git+https://github.com/ppainterpython/p3_utils.git@89fcf35f7a9d795295853973bd31faada92477aa#egg=p3_utils
+-e git+https://github.com/ppainterpython/p3_utils.git@87847e7daf6b7e760421788b0c5b9a1c08e1850b#egg=p3_utils
 -e git+https://github.com/ppainterpython/p3logging.git@037457d36e6b06476fc9fc9255e1fc0d12c15129#egg=p3logging
 packaging==24.2
 pandas==2.2.3
@@ -92,6 +94,8 @@ pycparser==2.22
 Pygments==2.19.1
 pyjson5==1.6.8
 pyparsing==3.2.3
+pyperclip==1.9.0
+pyreadline3==3.5.4
 pytest==8.3.5
 pytest-cov==6.1.1
 python-dateutil==2.9.0.post0

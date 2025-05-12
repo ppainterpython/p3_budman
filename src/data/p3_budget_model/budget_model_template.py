@@ -183,7 +183,7 @@ class BudgetModelTemplate(BudgetModel):
             bmc_path = bf_p / BSM_DEFAULT_BUDGET_MODEL_FILE_NAME # bmc: BM config file
             bfp_exists = "exists." if bf_p.exists() else "does not exist!"
             bmc_exists = "exists." if bmc_path.exists() else "does not exist!"
-            self.bm_store = str(bmc_path) # property
+            self.bm_store = bmc_path # property
             self.bm_wf_collection = bmt[BM_WF_COLLECTION] # property
             logger.debug(f"{P2}BM_FOLDER('{BM_FOLDER}'): '{self.bm_store}' {bfp_exists}")
             logger.debug(

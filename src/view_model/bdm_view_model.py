@@ -27,7 +27,7 @@ logger = logging.getLogger(settings.app_name)
 class BudgetModelCommandViewModel():
     # ======================================================================== +
     #region BudgetModelCommandViewModel class
-    """Command action view_model for the BudgetModel."""
+    """A Budget Model View Model to support Commands and Data Context."""
     # ======================================================================== +
     #                                                                          +
     # ------------------------------------------------------------------------ +
@@ -60,17 +60,22 @@ class BudgetModelCommandViewModel():
     # ======================================================================== +
 
     # ======================================================================== +
-    #region BDM view_model Command Methods                                     +
-    """BDM view_model Command Methods.
+    #region BudgetModel View Model Command Interface Methods                                     +
+    """Budget Model View Model Command Interface Methods.
     
-    In View Model form, these methods execute the actions for a command 
+    In View Model form, these methods provide an Interface for executing
+    Commands as a design pattern. Commands take actions for a command 
     initiated by an upstream View, or other client caller. Of course, 
     the upstream caller is mapping their specific domain of focus to the View Model
-    interface. In general, there are a command methods and other "Data Context"
+    interface. In general, there are a Command methods and other "Data Context"
     methods in a subsequent section.
 
     Throughout the BudgetModel (budmon) application, a design language is
     used as a convention for naming within the code-base. 
+
+    Convention: <Domain_Model_Object_Name>_<action_verb>()
+                <Domain_Model_Object_Name>_<action_verb>_<dc_item>()
+                dc_item: a reference to data in the Data Context
 
     Budget Model Domain Design Language 
     -----------------------------------
@@ -208,12 +213,20 @@ class BudgetModelCommandViewModel():
     # ======================================================================== +
     #                                                                          +
     # ------------------------------------------------------------------------ +
-    #region bdm_vm_BDWD_LOAD_WORKBOOKS() command methods
-    #endregion bdm_vm_BDWD_LOAD_WORKBOOKS() method
-    # ------------------------------------------------------------------------ +
     #region FI_init_command() command method
     def FI_init_cmd(self, fi_key : str = None) -> None: 
-        """Execute FI_init command for one fi_key or 'all'."""
+        """Execute FI_init command for one fi_key or 'all'.
+        
+        This command initializes the Data Context aspects of the View Model to
+        contain workbooks and other information for the specified financial
+        institution (FI) which may be 'all' or a specific FI key.
+
+        Arguments:
+            fi_key (str): The key for the financial institution. If None, 
+                no action is taken. If 'all', all workbooks are loaded.
+        Raises:
+            RuntimeError: If the fi_key is None or invalid.
+        """
         try:
             pfx = f"{self.__class__.__name__}.{self.FI_init_cmd.__name__}: "
             if not p3u.is_non_empty_str("fi_key",fi_key,pfx):
@@ -244,25 +257,45 @@ class BudgetModelCommandViewModel():
             raise
     #endregion FI_init_command() command method
     # ------------------------------------------------------------------------ +
+    #region template() command methods
+    #endregion template() method
+    # ------------------------------------------------------------------------ +
     #                                                                          +
-    #endregion BDM view_model Command Methods                                  +
+    #endregion BudgetModel View Model Command Interface Methods                                  +
     # ======================================================================== +
 
     # ======================================================================== +
-    #region BDM view_model Service Methods                                     +
-    """BDM view_model Service Methods.
-    These methods are the service methods for the BDM view_model. Used by
-    client packages up-stream in View-land, some are data requests and
-    others perform work on the view_model state.    
+    #region BDM view_model Data Context Methods                                +
+    """BDM view_model Data Context Methods.
+
+    These methods are to access the View Model as a Data Context from a View.
+    Used by client packages up-stream in View-land, some are data requests and
+    others perform work on the view_model Data Context state while owning
+    the concern for syncing with the Model downstream.    
+
+    This View Model leverages the BDWD (Budget Domain Working Data) feature 
+    of the BudgetModel. All data is transient and not automatically saved to
+    the BudgetModel store. 
     """
     # ======================================================================== +
     #                                                                          +
     # ------------------------------------------------------------------------ +
-    #region 
-    def bdm_vm_BDWD_LOADED_WORKBOOKS_get_names(self) -> List[str]: 
-        """Return names of all loaded workbooks from BMWD_LOADED_WORKBOOKS."""
+    #region FI_get_loaded_workbooks_count() method
+    def FI_get_loaded_workbooks_count(self) -> int: 
+        """Return count of all loaded workbooks from Data Context."""
         try:
-            # Retrieve the BDWD_LOADED_WORKBOOKS.
+            # Reference the BDWD_LOADED_WORKBOOKS.
+            return self.budget_model.bdwd_LOADED_WORKBOOKS_count()
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion FI_get_loaded_workbooks_count() method
+    # ------------------------------------------------------------------------ +
+    #region FI_get_loaded_workbook_names() method
+    def FI_get_loaded_workbook_names(self) -> List[str]: 
+        """Return names of all loaded workbooks from Data Context."""
+        try:
+            # Reference the BDWD_LOADED_WORKBOOKS.
             bdwd_wb_list = self.budget_model.bdwd_LOADED_WORKBOOKS_get()
             wb_name_list = []
             for wb_name, _ in bdwd_wb_list:
@@ -271,6 +304,7 @@ class BudgetModelCommandViewModel():
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
-        return self.budget_model.bdwd_LOADED_WORKBOOKS_get()
-    #endregion BDM view_model Service Methods                                  +
+    #endregion FI_get_loaded_workbook_names() method
+    # ------------------------------------------------------------------------ +
+    #endregion BDM view_model Data Context Methods                             +
     # ======================================================================== +
