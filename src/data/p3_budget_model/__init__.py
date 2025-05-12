@@ -5,12 +5,11 @@ Budget Model applies mostly to transactions from financial institutions (FI). Th
 has the functionality to intake transactions from a financial institution (FI) and process them into
 a budget model. The package is designed to work with Excel workbooks, specifically for budgeting.
 """
-
+__version__ = "0.2.0"
 __author__ = "Paul Painter"
-__version__ = "0.1.0"
 __copyright__ = "2024 Paul Painter"
-__name__ = "p3_excel_budget"
-__description__ = "Work with Excel wookboo data for budgeting functions."
+__name__ = "p3_budman"
+__description__ = "Budget Manager (BudMan) a p3 application."
 __license__ = "MIT"
 
 from .budget_model_constants import *
