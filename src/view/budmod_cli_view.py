@@ -1,6 +1,27 @@
 # ---------------------------------------------------------------------------- +
 #region budmod_cli_view.py module
 """ budmod_cli_view.py cli-style view for BudgetModel (budmod).
+
+A simple command line interface for the BudgetModel application. Using the cmd2
+package which embeds the argparse package. Cmd2 handles the command structure and
+argparse handles the argument lists for each command. The BudgetModelCLIView
+class is a subclass of cmd2.Cmd and implements the command line interface for the
+user.
+
+This is an MVVM View class for the BudgetModel. It uses a DataContext object to
+interact with the BudgetModel. The DataContext object is a View Model and 
+provides a defined interface supporting Commands and other DC-related methods
+needed to let a user View interact.
+
+CLI Argument Parsing
+--------------------
+
+Argparse is very declarative. To separate the command line parsing from the 
+code that executes commands, where the View Model methods are called, we use the
+class BudgetModelCLIParser to manage all of the argparse setup work. It is
+considered an inner class of the BudgetModelCLIView class. But the argument
+declarations are contained in that one class, separate from the View code.
+
 """
 #endregion budmod_cli_view.py module
 # ---------------------------------------------------------------------------- +
@@ -16,9 +37,7 @@ from config import settings
 import p3_utils as p3u, pyjson5, p3logging as p3l
 import cmd2
 from cmd2 import (Cmd2ArgumentParser, with_argparser)
-from  .budmod_cli_parser import (init_cmd_parser, 
-                                 show_cmd_parser, 
-                                 load_cmd_parser)
+from  .budmod_cli_parser import BudgetModelCLIParser
 
 # local modules and packages
 
@@ -44,6 +63,18 @@ class MockViewModel():
 
 #endregion MockViewModel class
 # ---------------------------------------------------------------------------- +
+# Setup the command line argument parsers. This is required due to the
+# cmd2.with_argparser decorator, which requires a callable to return a 
+# Cmd2ArgumentParser object. If one fails during setup(), the goal is the
+# whole app won't fail, and will display the error message for the
+# particular command parser.
+cli_parser : BudgetModelCLIParser = BudgetModelCLIParser()
+def init_cmd_parser() -> Cmd2ArgumentParser:
+    return cli_parser.init_cmd_parser if cli_parser else None
+def show_cmd_parser() -> Cmd2ArgumentParser:
+    return cli_parser.show_cmd_parser if cli_parser else None
+def load_cmd_parser() -> Cmd2ArgumentParser:
+    return cli_parser.load_cmd_parser if cli_parser else None
 
 class BudgetModelCLIView(cmd2.Cmd):
     # ======================================================================== +
@@ -58,9 +89,10 @@ class BudgetModelCLIView(cmd2.Cmd):
     prompt = "p3b> "
     intro = "Welcome to the BudgetModel CLI. Type help or ? to list commands.\n"
 
-    def __init__(self, 
-                 data_context : object | MockViewModel = None) -> None:
+    def __init__(self, data_context : object | MockViewModel = None) -> None:
         super().__init__()
+        self.initialized = False
+        self.cli_parser : BudgetModelCLIParser = cli_parser
         self._data_context = MockViewModel() if data_context is None else data_context
     
     @property
@@ -74,6 +106,19 @@ class BudgetModelCLIView(cmd2.Cmd):
         if not isinstance(value, (MockViewModel, object)):
             raise ValueError("data_context must be a MockViewModel or object.")
         self._data_context = value
+    # ------------------------------------------------------------------------ +
+    #region initialize() method
+    def initialize(self) -> None:
+        """Initialize the BudgetModelCLIView class."""
+        try:
+            self.cli_parser.view_cmd = self
+            self.initialized = True
+            return self
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise
+    #endregion initialize() method
+    # ------------------------------------------------------------------------ +
     #endregion BudgetModelCLI class
     # ======================================================================== +
 
@@ -82,13 +127,15 @@ class BudgetModelCLIView(cmd2.Cmd):
     # ======================================================================== +
     # ------------------------------------------------------------------------ +
     #region init command - initialize aspects of the BudgetModel application.
-    @with_argparser(init_cmd_parser)
+    @with_argparser(init_cmd_parser())
     def do_init(self, opts):
         """Init BugetModel properties and values.."""
         try:
             self.poutput(f"args: {str(opts)}")
-            if opts.fi:
-                self.data_context.FI_init_cmd(opts.fi)
+            if opts.init_cmd in ["financial_institution", "fi", "FI"]:
+                fi_key = opts.fi_key if opts.fi_key else None
+                self.data_context.FI_init_cmd(opts.fi_key)
+                self.poutput(f"Initialized financial institution: {fi_key}")
         except SystemExit:
             # Handle the case where argparse exits the program
             self.pwarning("Not exiting due to SystemExit")
@@ -97,12 +144,12 @@ class BudgetModelCLIView(cmd2.Cmd):
     #endregion init command - initialize aspects of the BudgetModel application.
     # ------------------------------------------------------------------------ +
     #region Show command - workbooks, status, etc.
-    @with_argparser(show_cmd_parser)
+    @with_argparser(show_cmd_parser())
     def do_show(self, opts):
         """Show BugetModel domain information."""
         try:
             self.poutput(f"args: {str(opts)}")
-            if opts.show_cmd.lower() in ["workbook", "wb", "WB"]:
+            if opts.show_cmd in ["workbook", "wb", "WB"]:
                 wb_name = opts.wb_name if opts.wb_name else None
                 c = self.data_context.FI_get_loaded_workbooks_count()
                 self.poutput(f"Loaded workbooks: {c}")
@@ -111,7 +158,7 @@ class BudgetModelCLIView(cmd2.Cmd):
                     [self.poutput(f"  {i}: {n}") for i, n in enumerate(names)]
                 else:
                     self.poutput("No loaded workbooks.")
-            elif opts.show_cmd.lower() in ["financial_institution", "fi", "FI"]:
+            elif opts.show_cmd in ["financial_institution", "fi", "FI"]:
                 fi_key = opts.fi_key if opts.fi_key else None
                 c = self.data_context.FI_get_loaded_workbooks_count()
                 self.poutput(f"Loaded workbooks: {c}")
@@ -131,7 +178,7 @@ class BudgetModelCLIView(cmd2.Cmd):
     #endregion Show command
     # ------------------------------------------------------------------------ +
     #region Load command - load workbooks
-    @with_argparser(load_cmd_parser)
+    @with_argparser(load_cmd_parser())
     def do_load(self, opts):
         """Load BugetModel data items into app session."""
         try:

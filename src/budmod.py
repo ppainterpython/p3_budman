@@ -76,7 +76,7 @@ def budmod():
         bmvm = p3bmvm.BudgetModelCommandViewModel()
         bmvm.initialize() # Initialize the BudgetModelCommandViewModel
         p3u.set_print_output(False)
-        p3bmv.BudgetModelCLIView(bmvm).cmdloop() # Application CLI loop
+        p3bmv.BudgetModelCLIView(bmvm).initialize().cmdloop() # Application CLI loop
 
         # p3bm.execute_worklow_categorization(bm, "boa", p3bm.BM_WF_CATEGORIZATION)
         _ = "pause"
