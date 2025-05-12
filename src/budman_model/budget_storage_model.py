@@ -15,7 +15,7 @@ import p3_utils as p3u, pyjson5, p3logging as p3l
 import pyjson5 as json5 
 # local modules and packages
 from .budget_model_constants import *
-from .budget_model import BudgetModel
+from .budget_domain_model import BudgetModel
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants

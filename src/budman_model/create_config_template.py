@@ -1,6 +1,6 @@
 # ---------------------------------------------------------------------------- +
 #region create_config_template.py module
-""" Procide a means to create a configuration template for the budget model.
+""" Provide a means to create a configuration template for the budget model.
 The BudgetModelTemplate class is used a a configuration template, but it
 is a subclass of BudgetModel class. This approach is to have a simple module
 to create the template without circular imports between BudgetModel class and

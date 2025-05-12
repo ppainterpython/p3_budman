@@ -31,7 +31,7 @@ from openpyxl import Workbook, load_workbook
 
 # local modules and packages
 from .budget_model_constants import *
-from .budget_model import BudgetModel # lazy import, avoid circular
+from .budget_domain_model import BudgetModel # lazy import, avoid circular
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants

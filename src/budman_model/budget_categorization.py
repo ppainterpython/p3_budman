@@ -24,9 +24,9 @@ from openpyxl import Workbook, load_workbook
 
 # local modules and packages
 from .budget_model_constants import  *
-from .category_mapping import (
+from .budget_category_mapping import (
     map_category, category_map_count)
-from .budget_model import BudgetModel
+from .budget_domain_model import BudgetModel
 # from data.p3_fi_transactions.budget_model import BudgetModel
 #endregion Imports
 # ---------------------------------------------------------------------------- +

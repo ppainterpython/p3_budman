@@ -12,32 +12,32 @@ __name__ = "p3_budman"
 __description__ = "Budget Manager (BudMan) a p3 application."
 __license__ = "MIT"
 
-from .budget_model_constants import *
+from ..budman_model.budget_model_constants import *
 
-from .budget_model import (
+from ..budman_model.budget_domain_model import (
     BudgetModel,
     log_BDM_info,
     log_BSM_info,
     check_budget_model,
 )
 
-from .budget_model_template import (
+from ..budman_model.budget_model_template import (
     BudgetModelTemplate,
     tryout_budget_model_template)
 
-from .budget_storage_model import (
+from ..budman_model.budget_storage_model import (
     bsm_save,
     bsm_load,
     bsm_bm_store_abs_path,
 )
 
-from .budget_categorization import (
+from ..budman_model.budget_categorization import (
     execute_worklow_categorization,
     check_budget_category,
     map_budget_category,
 )
 
-from .category_mapping import (
+from ..budman_model.budget_category_mapping import (
     map_category,
     category_map_count,
 )
