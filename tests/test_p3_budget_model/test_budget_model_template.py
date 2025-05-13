@@ -36,7 +36,7 @@ def test_budget_model_template_constructor() -> None:
         assert bmt._last_modified_by is not None, "Last modified by should not be None"
         assert bmt._options is not None, "Options should not be None"
         assert bmt._budget_folder is not None, "Budget folder should not be None"
-        assert bmt._budget_model_store is not None, "Budget model store path should not be None"
+        assert bmt._bdm_url is not None, "Budget model store path should not be None"
         assert bmt._workflows is not None, "Workflows should not be None"
         assert bmt._financial_institutions is not None, "Financial institutions should not be None"
                 

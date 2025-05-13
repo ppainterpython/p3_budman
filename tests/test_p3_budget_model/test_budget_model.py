@@ -74,7 +74,7 @@ def test_budget_model_initialize_no_template() -> None:
             "Last modified by should not be None"
         assert bm._options is not None, "Options should not be None"
         assert bm._budget_folder is not None, "Budget folder should not be None"
-        assert bm._budget_model_store is not None, \
+        assert bm._bdm_url is not None, \
             "Budget model store path should not be None"
         assert (bm._financial_institutions is not None and 
                 isinstance(bm._financial_institutions, dict) and 
@@ -103,7 +103,7 @@ def test_budget_model_initialize_with_template() -> None:
             "Last modified by should not be None"
         assert bm._options is not None, "Options should not be None"
         assert bm._budget_folder is not None, "Budget folder should not be None"
-        assert bm._budget_model_store is not None, \
+        assert bm._bdm_url is not None, \
             "Budget model store should not be None"
         assert (bm._financial_institutions is not None and 
                 isinstance(bm._financial_institutions, dict) and 

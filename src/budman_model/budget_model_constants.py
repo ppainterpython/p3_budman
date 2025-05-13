@@ -1,11 +1,13 @@
 from typing import Dict, List, Tuple
 
 
-THIS_APP_NAME = "p3_budget_model"
+THIS_APP_NAME = "p3_budget_manager"
+THIS_APP_SHORT_NAME = "budman"
 
 # Prefix namespace
-# BDM - Budget Model Domain
-# BM - Budget Model
+# BDM - Budget Domain Model
+# BSM - Budget Storage Model
+# BM - Budget Model (BDM synonym)
 # BF - Budget Folder, contains FI folders with data files
 # FI - Financial Institution
 # FI_F - Financial Institution Folder
@@ -14,13 +16,13 @@ THIS_APP_NAME = "p3_budget_model"
 # FI_CF - Financial Institution Categorized Folder
 # FI_FF - Financial Institution Finalized Folder
 # BMO - for Budget Model Options
-# BSM - Budget Model Storage Sub-Domain
 
 # Budget Model Filesystem Path Constants 
-BSM_DEFAULT_BUDGET_MODEL_FILE_NAME = "budget_model.jsonc"
+BSM_DEFAULT_BUDGET_MODEL_FILE_NAME = THIS_APP_NAME
+BSM_DEFAULT_BUDGET_MODEL_FILE_TYPE = ".jsonc"
 BM_DEFAULT_BUDGET_FOLDER = "~/OneDrive/budget"
 PATH = "_path"
-ABS_PATH = "_abs_" + PATH
+ABS_PATH = "_abs" + PATH
 WORKBOOKS = "_workbooks"
 
 # Budget Model Domain Constants
@@ -28,9 +30,10 @@ WORKBOOKS = "_workbooks"
 BUDGET_CATEGORY_COL = "Budget Category"
 
 # BudgetModel (BM) class attribute name Constants
+BDM_ID = "_bdm_id"
 BM_INITIALIZED = "_initialized"
 BM_FOLDER = "_budget_folder"
-BM_STORE = "_budget_model_store"
+BDM_URL = "_bdm_url"
 BM_FI_COLLECTION = "_financial_institutions"
 BM_WF_COLLECTION = "_workflows"
 BM_OPTIONS = "_options"
@@ -38,7 +41,7 @@ BM_CREATED_DATE = "_created_date"
 BM_LAST_MODIFIED_DATE = "_last_modified_date"
 BM_LAST_MODIFIED_BY = "_last_modified_by"
 BM_WORKING_DATA = "_wd"
-BM_VALID_PROPERTIES = (BM_INITIALIZED, BM_FOLDER, BM_STORE, 
+BM_VALID_PROPERTIES = (BM_INITIALIZED, BM_FOLDER, BDM_URL, 
                     BM_FI_COLLECTION, BM_WF_COLLECTION,  BM_OPTIONS,
                     BM_CREATED_DATE, BM_LAST_MODIFIED_DATE, 
                     BM_LAST_MODIFIED_BY, BM_WORKING_DATA)
@@ -94,7 +97,7 @@ WF_FOLDER_PATH_ELEMENTS = (WF_FOLDER_IN, WF_FOLDER_OUT)
 # All Path-related data values are treated as pseudo-Objects and have
 # methods to construct, manipulate, and resolve Path objects and handle
 # the various string representations of the Path objects.
-BM_VALID_PATH_ELEMENTS = (BM_FOLDER, BM_STORE,
+BM_VALID_PATH_ELEMENTS = (BM_FOLDER, BDM_URL,
                           FI_FOLDER, WF_FOLDER_IN, WF_FOLDER_OUT)
 
 # WF_DATA_COLLECTION workflow data collection (Dictionary key names)

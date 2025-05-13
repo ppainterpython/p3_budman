@@ -68,7 +68,8 @@ from openpyxl import Workbook, load_workbook
 
 # local modules and packages
 from .budget_model_constants import *
-from .budget_storage_model import bsm_BM_STORE_load, bsm_BM_STORE_save
+from .budget_domain_model_identity import BudgetDomainModelIdentity
+# from .budget_storage_model import bsm_BDM_URL_load, bsm_BDM_URL_save
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -139,9 +140,11 @@ class BudgetModel(metaclass=SingletonMeta):
         # Private attributes initialization, basic stuff only.
         # for serialization ease, always persist dates as str type.
         logger.debug("Start: BudgetModel().__init__() ...")
+        bdm_id = BudgetDomainModelIdentity()
+        setattr(self, BDM_ID, bdm_id.uid)  # BudgetDomainModelIdentity
         setattr(self, BM_INITIALIZED, False)
         setattr(self, BM_FOLDER, None)  # budget folder path
-        setattr(self, BM_STORE, None)  # path for budget model store
+        setattr(self, BDM_URL, bdm_id.bdm_path().as_uri())  # path for budget model store
         setattr(self, BM_FI_COLLECTION, {})  # financial institutions
         setattr(self, BM_WF_COLLECTION, {}) 
         setattr(self, BM_OPTIONS, {})  # budget model options
@@ -159,7 +162,7 @@ class BudgetModel(metaclass=SingletonMeta):
             BM_INITIALIZED: self.bm_initialized,
             BM_FOLDER: self.bm_folder,
             BM_FI_COLLECTION: self.bm_fi_collection,
-            BM_STORE: self.bm_store,
+            BDM_URL: self.bm_store,
             BM_WF_COLLECTION: self.bm_wf_collection,
             BM_OPTIONS: self.bm_options,
             BM_CREATED_DATE: self.bm_created_date,
@@ -174,7 +177,7 @@ class BudgetModel(metaclass=SingletonMeta):
         ret += f"'{BM_INITIALIZED}': {self.bm_initialized}, "
         ret += f"'{BM_FOLDER}': '{self.bm_folder}', "
         ret += f"'{BM_FI_COLLECTION}': '{self.bm_fi_collection}', "
-        ret += f"'{BM_STORE}': '{self.bm_store}', "
+        ret += f"'{BDM_URL}': '{self.bm_store}', "
         ret += f"'{BM_WF_COLLECTION}': '{self.bm_wf_collection}', "
         ret += f"'{BM_OPTIONS}': '{self.bm_options}', "
         ret += f"'{BM_CREATED_DATE}': '{self.bm_created_date}', "
@@ -188,7 +191,7 @@ class BudgetModel(metaclass=SingletonMeta):
         ret += f"{BM_INITIALIZED} = {str(self.bm_initialized)}, "
         ret += f"{BM_FOLDER} = '{str(self.bm_folder)}', "
         ret += f"{BM_FI_COLLECTION} = [{', '.join([repr(fi_key) for fi_key in self.bm_fi_collection.keys()])}], "
-        ret += f"{BM_STORE} = '{self.bm_store}' "
+        ret += f"{BDM_URL} = '{self.bm_store}' "
         ret += f"{BM_WF_COLLECTION} = '{self.bm_wf_collection}' "
         ret += f"{BM_OPTIONS} = '{self.bm_options}' "
         ret += f"{BM_CREATED_DATE} = '{self.bm_created_date}', "
@@ -222,12 +225,12 @@ class BudgetModel(metaclass=SingletonMeta):
     @property
     def bm_store(self) -> str:
         """The budget model store abs path str."""
-        return self._budget_model_store
+        return self._bdm_url
     
     @bm_store.setter
     def bm_store(self, value: str) -> None:
         """Set the budget model store abs path str."""
-        self._budget_model_store = value
+        self._bdm_url = value
 
     @property
     def bm_fi_collection(self) -> dict:
@@ -476,13 +479,13 @@ class BudgetModel(metaclass=SingletonMeta):
             raise
     #endregion BDM bdm_initialize(self, bm_config_src, bsm_init, wd_init, ...) 
     # ------------------------------------------------------------------------ +
-    #region bdm_initialize_from_BM_STORE(self)
-    def bdm_initialize_from_BM_STORE(self,bsm_init:bool=True,
+    #region bdm_initialize_from_BDM_URL(self)
+    def bdm_initialize_from_BDM_URL(self,bsm_init:bool=True,
                                      wd_init:bool=True) -> None:
         """Initialize the BudgetModel, dynamically, from BM_CONFIG values.
 
         The current session state of the BudgetModel configuration can be stored
-        using the Budget Storage Model based on the URI in the BM_STORE
+        using the Budget Storage Model based on the URI in the BDM_URL
         property. Load that and apply the values to the BudgetModel instance.
 
         Returns:
@@ -491,10 +494,10 @@ class BudgetModel(metaclass=SingletonMeta):
         try:
             st = p3u.start_timer()
             logger.debug(f"Start: ...")
-            # Initialize from the BM_STORE persisted configuration and data.
+            # Initialize from the BDM_URL persisted configuration and data.
             # Load the BudgetModel Store values as a Dict with persisted
             # attributes.
-            bm_config : Dict = bsm_BM_STORE_load(self)
+            bm_config : Dict = bsm_BDM_URL_load(self)
             # Apply the configuration to the budget model (self)
             # BSM_PERSISTED_PROPERTIES defines the attributes to be applied.
             for attr in BSM_PERSISTED_PROPERTIES:
@@ -511,7 +514,7 @@ class BudgetModel(metaclass=SingletonMeta):
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
-    #endregion bdm_initialize_from_BM_STORE(self)
+    #endregion bdm_initialize_from_BDM_URL(self)
     # ------------------------------------------------------------------------ +
     #region   BDM bdm_BM_WORKING_DATA_initialize() 
     def bdm_BM_WORKING_DATA_initialize(self) -> dict:
@@ -913,55 +916,55 @@ class BudgetModel(metaclass=SingletonMeta):
             raise
     #endregion BM_FOLDER Path methods
     # ------------------------------------------------------------------------ +
-    #region BM_STORE Path methods
-    def bsm_BM_STORE_validate(self) -> bool:
-        """Validate the BM_STORE property setting.
+    #region BDM_URL Path methods
+    def bsm_BDM_URL_validate(self) -> bool:
+        """Validate the BDM_URL property setting.
         
-        Raise a ValueError if the BM_STORE property is not set or is not
+        Raise a ValueError if the BDM_URL property is not set or is not
         usable as part of a valid path string.
         """
         # TODO: expand and resolve flags?
         if self.bm_store is None or not isinstance(self.bm_store,str) or len(self.bm_store) == 0:
-            m = f"BM_STORE value is not set to a non-zero length str. "
-            m += f"Set the BM_STORE('{BM_STORE}') property to valid path str."
+            m = f"BDM_URL value is not set to a non-zero length str. "
+            m += f"Set the BDM_URL('{BDM_URL}') property to valid path str."
             logger.error(m)
             raise ValueError(m)
         return True
-    def bsm_BM_STORE_path_str(self) -> str:
-        """str version of the BM_STORE validated as a Path."""
-        # In the BSM, the BM_STORE property must be a valid setting that will
+    def bsm_BDM_URL_path_str(self) -> str:
+        """str version of the BDM_URL validated as a Path."""
+        # In the BSM, the BDM_URL property must be a valid setting that will
         # result in a valid Path. Raise a ValueError if not.
-        self.bsm_BM_STORE_validate() # Raises ValueError if not valid
+        self.bsm_BDM_URL_validate() # Raises ValueError if not valid
         return str(Path(self.bm_store))
-    def bsm_BM_STORE_path(self) -> Path:
-        """Path of self.bsm_BM_STORE_path_str().expanduser()."""
-        return Path(self.bsm_BM_STORE_path_str()).expanduser()
-    def bsm_BM_STORE_abs_path(self) -> Path:
-        """Path of self.bsm_BM_STORE_path().resolve()."""
-        return self.bsm_BM_STORE_path().resolve()
-    def bsm_BM_STORE_abs_path_str(self) -> str:
-        """str of self.bsm_BM_STORE_abs_path()."""
-        return str(self.bsm_BM_STORE_abs_path())
+    def bsm_BDM_URL_path(self) -> Path:
+        """Path of self.bsm_BDM_URL_path_str().expanduser()."""
+        return Path(self.bsm_BDM_URL_path_str()).expanduser()
+    def bsm_BDM_URL_abs_path(self) -> Path:
+        """Path of self.bsm_BDM_URL_path().resolve()."""
+        return self.bsm_BDM_URL_path().resolve()
+    def bsm_BDM_URL_abs_path_str(self) -> str:
+        """str of self.bsm_BDM_URL_abs_path()."""
+        return str(self.bsm_BDM_URL_abs_path())
     
-    def bsm_BM_STORE_resolve(self, 
+    def bsm_BDM_URL_resolve(self, 
                               create_missing_folders : bool=True,
                               raise_errors : bool=True) -> None:
-        """Resolve the BM_STORE path and create it if it does not exist."""
+        """Resolve the BDM_URL path and create it if it does not exist."""
         try:
-            logger.info(f"Checking BM_STORE path: '{self.bm_store}'")
+            logger.info(f"Checking BDM_URL path: '{self.bm_store}'")
             if self.bm_store is None:
                 m = f"Budget folder path is not set. "
-                m += f"Set the '{BM_STORE}' property to a valid path."
+                m += f"Set the '{BDM_URL}' property to a valid path."
                 logger.error(m)
                 raise ValueError(m)
-            # Resolve the BM_STORE path.
-            bf_ap = self.bsm_BM_STORE_abs_path()
+            # Resolve the BDM_URL path.
+            bf_ap = self.bsm_BDM_URL_abs_path()
             bsm_verify_folder(bf_ap, create_missing_folders, raise_errors)
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
-    #endregion BM_STORE Path methods
+    #endregion BDM_URL Path methods
     # ------------------------------------------------------------------------ +
     #region FI_OBJECT pseudo-Object methods
     # ------------------------------------------------------------------------ +   
@@ -1466,7 +1469,7 @@ def log_BDM_info(bm : BudgetModel) -> None:
         logger.debug(f"{P2}BM_INITIALIZED['{BM_INITIALIZED}']: "
                      f"{bm.bm_initialized}")
         logger.debug(f"{P2}BM_FOLDER['{BM_FOLDER}']: '{bm.bm_folder}'")
-        logger.debug(f"{P2}BM_STORE['{BM_STORE}]: '{bm.bm_store}'")
+        logger.debug(f"{P2}BDM_URL['{BDM_URL}]: '{bm.bm_store}'")
         # Enumerate the financial institutions in the budget model
         c = bm.bdm_FI_OBJECT_count()
         logger.debug(
@@ -1526,7 +1529,7 @@ def log_BSM_info(bm : BudgetModel) -> None:
         bmc_p = bf_p / BSM_DEFAULT_BUDGET_MODEL_FILE_NAME # bmc: BM config file
         bmc_p_exists = "exists." if bmc_p.exists() else "does not exist!"
         logger.debug(
-            f"{P2}BM_STORE['{BM_STORE}]: '{bm.bm_store}' "
+            f"{P2}BDM_URL['{BDM_URL}]: '{bm.bm_store}' "
             f"{bmc_p_exists}")
         # Enumerate the financial institutions in the budget model
         c = bm.bdm_FI_OBJECT_count()

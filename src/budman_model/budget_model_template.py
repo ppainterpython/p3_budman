@@ -64,9 +64,10 @@ class BudgetModelTemplate(BudgetModel):
     # information for a given user.
     budget_model_template = {  
         # BDM object
+        BDM_ID: "1a2b3c4d",  # random, but unique BMT Id.
         BM_INITIALIZED: False,
         BM_FOLDER: BM_DEFAULT_BUDGET_FOLDER,               # bsm_BM_FOLDER_path()
-        BM_STORE: None,
+        BDM_URL: None,
         BM_FI_COLLECTION: { # FI_COLLECTION (dict) {FI_KEY: FI_OBJECT}
             "boa": # FI_KEY
             {      # FI_OBJECT
@@ -173,13 +174,15 @@ class BudgetModelTemplate(BudgetModel):
             # Basic attribute atomic value inits. 
             logger.debug("Start:  ...")
             super().__init__(classname=BudgetModelTemplate.__name__)
+            # BudgetModel properties work now, after super().__init__()
             # Initialize values from the template as configuration values.
             bmt_dict = BudgetModelTemplate.budget_model_template
+            self.bdm_id = bmt_dict[BDM_ID] # property
             self.bm_initialized = bmt_dict[BM_INITIALIZED] # property
             self.bm_folder = BM_DEFAULT_BUDGET_FOLDER   # property
             bf_p = self.bsm_BM_FOLDER_path() # budget folder path
             bmc_path = bf_p / BSM_DEFAULT_BUDGET_MODEL_FILE_NAME # bmc: BM config file
-            self.bm_store = str(bmc_path) # property
+            self.bm_url = str(bmc_path) # property
             self.bm_wf_collection = bmt_dict[BM_WF_COLLECTION].copy() # property
             for fi_key, fi_dict in bmt_dict[BM_FI_COLLECTION].items():
                 self.bm_fi_collection[fi_key] = fi_dict.copy()  # property, copy
@@ -205,7 +208,7 @@ class BudgetModelTemplate(BudgetModel):
             logger.debug(f"{P2}BM_INITIALIZED('{BM_INITIALIZED}'): "
                          f"{bmt.bm_initialized}")
             logger.debug(f"{P2}BM_FOLDER('{BM_FOLDER}'): '{bmt.bm_store}'")
-            logger.debug(f"{P2}BM_STORE('{BM_STORE}): '{bmt.bm_store}' ")
+            logger.debug(f"{P2}BDM_URL('{BDM_URL}): '{bmt.bm_store}' ")
             logger.debug(f"{P2}BM_WORKFLOWS('{BM_WF_COLLECTION}'): "
                          f" '{bmt.bm_wf_collection}'")
             # Enumerate Financial Institutions (FI)
