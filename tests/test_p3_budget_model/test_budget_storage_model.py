@@ -11,7 +11,7 @@ import inspect, pyjson5 as json5
 
 # local libraries
 import logging, p3_utils as p3u, p3logging as p3l
-import data.p3_budget_model as p3bm
+import budman_model as p3bm
 #endregion imports
 # ---------------------------------------------------------------------------- +
 #region Globals
@@ -22,6 +22,8 @@ def test_bsm_save():
     """Test bsm_save() function."""
     try:
         logger.info(test_bsm_save.__doc__)
+        # bmt = p3bm.BudgetModelTemplate()
+        # bm = p3bm.BudgetModel().bdm_initialize(bm_config_src=bmt)
         bm = p3bm.BudgetModel().bdm_initialize()
         assert isinstance(bm, p3bm.BudgetModel), \
             "Budget model should be a BudgetModel instance"
@@ -35,6 +37,7 @@ def test_bsm_load():
     """Test bsm_load() function."""
     try:
         logger.info(test_bsm_load.__doc__)
+        bm = p3bm.BudgetModel().bdm_initialize(bm_store_dict)
         store_abs_path = p3bm.bsm_bm_store_abs_path()
         assert store_abs_path is not None, \
             "Budget model store path should not be None"
@@ -42,7 +45,8 @@ def test_bsm_load():
             "Budget model store path should be a Path object"
         assert isinstance((bm_store_dict := p3bm.bsm_load(store_abs_path)), dict), \
             "Budget model store should be a dictionary"
-        bm = p3bm.BudgetModel().bdm_initialize(bm_store_dict)
+
+
         assert isinstance(bm, p3bm.BudgetModel), \
             "Budget model should be a BudgetModel instance"
     except Exception as e:

@@ -16,7 +16,7 @@ import p3_utils as p3u, pyjson5, p3logging as p3l
 
 # local modules and packages
 from p3_excel_budget_constants import  *
-import data.p3_budget_model as p3bm
+import budman_model as p3bm
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants

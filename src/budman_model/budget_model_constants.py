@@ -42,6 +42,10 @@ BM_VALID_PROPERTIES = (BM_INITIALIZED, BM_FOLDER, BM_STORE,
                     BM_FI_COLLECTION, BM_WF_COLLECTION,  BM_OPTIONS,
                     BM_CREATED_DATE, BM_LAST_MODIFIED_DATE, 
                     BM_LAST_MODIFIED_BY, BM_WORKING_DATA)
+BSM_PERSISTED_PROPERTIES = (BM_FOLDER, BM_FI_COLLECTION, BM_WF_COLLECTION,  
+                            BM_OPTIONS,
+                            BM_CREATED_DATE, BM_LAST_MODIFIED_DATE, 
+                            BM_LAST_MODIFIED_BY)
 
 # BM_OPTIONS Budget Model Options (BMO)Constants
 BMO_LOG_CONFIG = "log_config"

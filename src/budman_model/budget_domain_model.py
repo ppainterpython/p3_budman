@@ -68,6 +68,7 @@ from openpyxl import Workbook, load_workbook
 
 # local modules and packages
 from .budget_model_constants import *
+from .budget_storage_model import bsm_BM_STORE_load, bsm_BM_STORE_save
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -75,6 +76,15 @@ logger = logging.getLogger(THIS_APP_NAME)
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
+
+def dscr(_inst) -> str:
+    try:
+        if _inst is None: return "None"
+        _id = hex(id(_inst))
+        _cn = _inst.__class__.__name__
+        return f"<instance '{_cn}':{_id}>"
+    except Exception as e:
+        return f"{type(e).__name__}()"
 class SingletonMeta(type):
     """Metaclass for implementing the Singleton pattern for subclasses."""
     _instances = {}
@@ -82,7 +92,11 @@ class SingletonMeta(type):
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances:
             # Invokes cls.__init__()
-            cls._instances[cls] = super().__call__(*args, **kwargs)
+            # BudgetModel<0x1faebd98590>   
+            _new_inst = super().__call__(*args, **kwargs)
+            cls._instances[cls] = _new_inst
+            logger.debug(f"Created first {dscr(_new_inst)}")
+        logger.debug(f"Return {dscr(cls._instances[cls])}")
         return cls._instances[cls]
 # ---------------------------------------------------------------------------- +
 class BudgetModel(metaclass=SingletonMeta):
@@ -108,12 +122,13 @@ class BudgetModel(metaclass=SingletonMeta):
     """
     # ------------------------------------------------------------------------ +
     #region class variables
+    # A config Template should be a BudgetModel object, or a sub
     config_template : object = None #
     #endregion class variables
     # ------------------------------------------------------------------------ +
-    def __init_subclass__(cls, **kwargs):
-        # called at import time, not at runtime.
-        print(f"BudgetModel.__init_subclass__({cls}): called")
+    # def __init_subclass__(cls, **kwargs):
+    #     # called at import time, not at runtime.
+    #     print(f"BudgetModel.__init_subclass__({cls}): called")
     # ------------------------------------------------------------------------ +
     #region    BudgetModel class constructor __init__()
     def __init__(self,classname : str = "BudgetModel") -> None:
@@ -379,15 +394,19 @@ class BudgetModel(metaclass=SingletonMeta):
         wf - workflow
     """
     # ======================================================================== +
-    #region    BDM bdm_initialize(self, budget_node : dict = None) public 
+    #region    BDM bdm_initialize(self, bm_config_src, bsm_init, wd_init, ...)
     def bdm_initialize(self, 
-                 bm_config_src:dict=None, 
+                 bm_config_src : "BudgetModel" | Dict | None = None, 
                  bsm_init : bool = True,
                  wd_init : bool = True,
                  create_missing_folders : bool = True,
                  raise_errors : bool = True
                  ) -> "BudgetModel":
-        """Initialize BDM from config, either bm_config_src, or the template.
+        """Initialize BDM, from a BudgetModel object such as the BMT template.
+
+        Current support is for initializing at instantiation time, from the BMT
+        template. Currently, BudgetModel is a singleton class, so the BMT
+        template is the only source of configuration data for the first instance.
 
         Args:
             bm_config_src (dict): A BudgetModel object to configure from. If
@@ -397,17 +416,11 @@ class BudgetModel(metaclass=SingletonMeta):
             raise_errors (bool): Raise errors if True.
         """
         st = p3u.start_timer()
+        logger.debug(f"Start: ...")
         bm_config : dict = None
         try:
-            if bm_config_src is None:
-                logger.debug("bm_config_src parameter is None, using builtin template.")
-                bm_config = BudgetModel.config_template
-                if bm_config is None:
-                    from data.p3_budget_model.create_config_template import __create_config_template__
-                    bm_config = __create_config_template__()
-            else:
-                bm_config = bm_config_src
-            logger.debug(f"Start: ...")
+            # Initialize from a BudgetModel-based object such as the BMT template.
+            bm_config = self.bdm_resolve_config_src(bm_config_src)
             # Apply the configuration to the budget model (self)
             self.bm_initialized = bm_config.bm_initialized
             self.bm_folder = bm_config.bm_folder
@@ -415,10 +428,10 @@ class BudgetModel(metaclass=SingletonMeta):
             self.bm_fi_collection = copy.deepcopy(bm_config.bm_fi_collection) if bm_config.bm_fi_collection else {}
             self.bm_wf_collection = copy.deepcopy(bm_config.bm_wf_collection) if bm_config.bm_wf_collection else None
             self.bm_options = bm_config.bm_options.copy() if bm_config.bm_options else {}
-            self.bm_created_date = bm_config.bm_created_date
+            self.bm_created_date = bm_config._created_date
             self.bm_last_modified_date = bm_config.bm_last_modified_date
             self.bm_last_modified_by = bm_config.bm_last_modified_by
-            self.bm_working_data = copy.deepcopy(bm_config.bm_working_data) if bm_config.bm_working_data else {}
+            self.bm_working_data = {} # working data not persisted, fresh start.
             if bsm_init:
                 self.bsm_inititalize(create_missing_folders, raise_errors)
             if wd_init:
@@ -429,7 +442,76 @@ class BudgetModel(metaclass=SingletonMeta):
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
-    #endregion BDM bdm_initialize(self, budget_node : dict = None) public 
+    #endregion BDM bdm_initialize(self, bm_config_src, bsm_init, wd_init, ...) 
+    # ------------------------------------------------------------------------ +
+    #region bdm_resolve_config_src(self, bm_config_src) -> BudgetModel
+    def bdm_resolve_config_src(self, bm_config_src: "BudgetModel" ) -> "BudgetModel":
+        """Resolve the configuration source to initialize BudgetModel.
+
+        Args:
+            bm_config_src (BudgetModel | None): The configuration source.
+
+        Returns:
+            BudgetModel: The resolved configuration source.
+        """
+        try:
+            if bm_config_src is None:
+                # If bm_config_src is None, use the previous template instance.
+                logger.debug("bm_config_src parameter is None, using builtin template.")
+                bm_config = BudgetModel.config_template  # Obj used for __init__()
+                if bm_config is None:
+                    # Last, try creating the template for first use.
+                    from budman_model.create_config_template import __create_config_template__
+                    bm_config = __create_config_template__()
+            else:
+                bm_config = bm_config_src
+            if not isinstance(bm_config, BudgetModel):
+                m = f"bm_config_src must be type('BudgetModel'), " 
+                m += f"but is: type('{type(bm_config)}'."
+                raise TypeError(m)
+            return bm_config
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise
+    #endregion BDM bdm_initialize(self, bm_config_src, bsm_init, wd_init, ...) 
+    # ------------------------------------------------------------------------ +
+    #region bdm_initialize_from_BM_STORE(self)
+    def bdm_initialize_from_BM_STORE(self,bsm_init:bool=True,
+                                     wd_init:bool=True) -> None:
+        """Initialize the BudgetModel, dynamically, from BM_CONFIG values.
+
+        The current session state of the BudgetModel configuration can be stored
+        using the Budget Storage Model based on the URI in the BM_STORE
+        property. Load that and apply the values to the BudgetModel instance.
+
+        Returns:
+            None: on success, else raises an exception.
+        """
+        try:
+            st = p3u.start_timer()
+            logger.debug(f"Start: ...")
+            # Initialize from the BM_STORE persisted configuration and data.
+            # Load the BudgetModel Store values as a Dict with persisted
+            # attributes.
+            bm_config : Dict = bsm_BM_STORE_load(self)
+            # Apply the configuration to the budget model (self)
+            # BSM_PERSISTED_PROPERTIES defines the attributes to be applied.
+            for attr in BSM_PERSISTED_PROPERTIES:
+                if attr in bm_config and hasattr(self, attr):
+                    setattr(self, attr, bm_config[attr])
+            if bsm_init:
+                self.bsm_inititalize()
+            if wd_init:
+                self.bdm_working_data = self.bdm_BM_WORKING_DATA_initialize()
+            self.bm_initialized = True
+            logger.debug(f"Complete: {p3u.stop_timer(st)}")   
+            return 
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise
+    #endregion bdm_initialize_from_BM_STORE(self)
     # ------------------------------------------------------------------------ +
     #region   BDM bdm_BM_WORKING_DATA_initialize() 
     def bdm_BM_WORKING_DATA_initialize(self) -> dict:
@@ -830,6 +912,56 @@ class BudgetModel(metaclass=SingletonMeta):
             logger.error(m)
             raise
     #endregion BM_FOLDER Path methods
+    # ------------------------------------------------------------------------ +
+    #region BM_STORE Path methods
+    def bsm_BM_STORE_validate(self) -> bool:
+        """Validate the BM_STORE property setting.
+        
+        Raise a ValueError if the BM_STORE property is not set or is not
+        usable as part of a valid path string.
+        """
+        # TODO: expand and resolve flags?
+        if self.bm_store is None or not isinstance(self.bm_store,str) or len(self.bm_store) == 0:
+            m = f"BM_STORE value is not set to a non-zero length str. "
+            m += f"Set the BM_STORE('{BM_STORE}') property to valid path str."
+            logger.error(m)
+            raise ValueError(m)
+        return True
+    def bsm_BM_STORE_path_str(self) -> str:
+        """str version of the BM_STORE validated as a Path."""
+        # In the BSM, the BM_STORE property must be a valid setting that will
+        # result in a valid Path. Raise a ValueError if not.
+        self.bsm_BM_STORE_validate() # Raises ValueError if not valid
+        return str(Path(self.bm_store))
+    def bsm_BM_STORE_path(self) -> Path:
+        """Path of self.bsm_BM_STORE_path_str().expanduser()."""
+        return Path(self.bsm_BM_STORE_path_str()).expanduser()
+    def bsm_BM_STORE_abs_path(self) -> Path:
+        """Path of self.bsm_BM_STORE_path().resolve()."""
+        return self.bsm_BM_STORE_path().resolve()
+    def bsm_BM_STORE_abs_path_str(self) -> str:
+        """str of self.bsm_BM_STORE_abs_path()."""
+        return str(self.bsm_BM_STORE_abs_path())
+    
+    def bsm_BM_STORE_resolve(self, 
+                              create_missing_folders : bool=True,
+                              raise_errors : bool=True) -> None:
+        """Resolve the BM_STORE path and create it if it does not exist."""
+        try:
+            logger.info(f"Checking BM_STORE path: '{self.bm_store}'")
+            if self.bm_store is None:
+                m = f"Budget folder path is not set. "
+                m += f"Set the '{BM_STORE}' property to a valid path."
+                logger.error(m)
+                raise ValueError(m)
+            # Resolve the BM_STORE path.
+            bf_ap = self.bsm_BM_STORE_abs_path()
+            bsm_verify_folder(bf_ap, create_missing_folders, raise_errors)
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise
+    #endregion BM_STORE Path methods
     # ------------------------------------------------------------------------ +
     #region FI_OBJECT pseudo-Object methods
     # ------------------------------------------------------------------------ +   

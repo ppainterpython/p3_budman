@@ -12,14 +12,13 @@
 import atexit, pathlib, logging, inspect, logging.config  #, logging.handlers
 
 # third-party  packages and module libraries
-from openpyxl import Workbook
-import inspect, pyjson5
 from config import settings
+from openpyxl import Workbook
 import p3logging as p3l, p3_utils as p3u
 
 # local packages and module libraries
-import view_model.bdm_view_model as p3bmvm
-import view.budmod_cli_view as p3bmv
+import budman_view_model.bdm_view_model as p3bmvm
+import budman_cli_view.budmod_cli_view as p3bmv
 logger = logging.getLogger(settings.app_name)
 logger.propagate = True
 #endregion Imports
@@ -63,25 +62,32 @@ def log_workbook_info(file_name : str = "unknown",wb : Workbook = None) -> None:
 #endregion log_workbook_info() function
 # ---------------------------------------------------------------------------- +
 #region budmod() function
-def budmod():
-    """Main function to run PyExcelBudget application."""
+def budman_app_cli_cmdloop():
+    """CLI cmdloop function."""
     try:
-        # p3bm.tryout_budget_model_template()
-
-        trans_file = "BOAChecking2025.xlsx"
-        # Initalize the ViewModel and View
-        # bmt = p3bm.BudgetModelTemplate()
-        # bm = p3bm.BudgetModel().bdm_initialize(bmt) # use the template to init
-        # p3bm.log_BDM_info(bm)
         bmvm = p3bmvm.BudgetModelCommandViewModel()
         bmvm.initialize() # Initialize the BudgetModelCommandViewModel
-        p3u.set_print_output(False)
         p3bmv.BudgetModelCLIView(bmvm).initialize().cmdloop() # Application CLI loop
-
-        # p3bm.execute_worklow_categorization(bm, "boa", p3bm.BM_WF_CATEGORIZATION)
         _ = "pause"
     except Exception as e:
-        m = p3u.exc_msg(budmod, e)
+        m = p3u.exc_err_msg(e)
+        logger.error(m)
+        raise
+#endregion budmod() function
+# ---------------------------------------------------------------------------- +
+#region budmod() function
+def budman_app_start():
+    """Main function to run PyExcelBudget application."""
+    try:
+        # Here is where argv would be applied.
+        # But for now, budman_app_cli is the only option to run.
+        configure_logging(settings.app_name)
+        logger.setLevel(logging.DEBUG)
+        p3u.set_print_output(False)
+        budman_app_cli_cmdloop()
+        _ = "pause"
+    except Exception as e:
+        m = p3u.exc_err_msg(e)
         logger.error(m)
         raise
 #endregion budmod() function
@@ -89,11 +95,7 @@ def budmod():
 #region Local __main__ stand-alone
 if __name__ == "__main__":
     try:
-
-        configure_logging(settings.app_name)
-        logger.setLevel(logging.DEBUG)
-        # bm = p3fi.init_budget_model()  # How to load the budget model config?
-        budmod() # Application Main()
+        budman_app_start() # Application Main()
     except Exception as e:
         m = p3u.exc_msg("__main__", e)
         logger.error(m)

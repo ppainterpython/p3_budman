@@ -152,99 +152,103 @@ class BudgetModelTemplate(BudgetModel):
     }
     #endregion BudgetModelTemplate Configuration Template
     # ------------------------------------------------------------------------ +
-    #region BudgetModelTemplate class constructor __init__.()
+    #region BudgetModelTemplate class constructor __init__()
     # __init__() method for the BudgetModelTemplate class
     # Focus on populating the template for value inititialization in the
     # BudgetModel Domain class. Leave all Budget Storage Model (BSM) setup
     # for initialization elsewhere.
-    def __init__(self, create_missing_folders : bool = True,
-                 raise_errors : bool = True) -> None:
-        """Construct a BudgetModelTemplate object used to initialize the budget model.
+    def __init__(self) -> None:
+        """Construct a BudgetModelTemplate object used for configuration.
         
-        The template class is largely a dictionary populated with default values
-        and some example values. The idea is to use this template to create a new
-        budget model or to initialize a new budget model from the template. 
+        The BudgetModelTemplate class is used to populate new 
+        BudgetModel objects with default and example values.
         It is for internal use only.
+
+        budget_model_template: dict (class variable)
+            The dictionary that defines the structure of the budget model and
+            gives default and example values.
         """
         st = p3u.start_timer()
         try:
             # Basic attribute atomic value inits. 
             logger.debug("Start:  ...")
             super().__init__(classname=BudgetModelTemplate.__name__)
-            # Use of properties okay now.
-
             # Initialize values from the template as configuration values.
-            bmt = BudgetModelTemplate.budget_model_template
-            self.bm_initialized = bmt[BM_INITIALIZED] # property
-            logger.debug(f"{P2}BM_INITIALIZED('{BM_INITIALIZED}'): "
-                         f"{self.bm_initialized}")
+            bmt_dict = BudgetModelTemplate.budget_model_template
+            self.bm_initialized = bmt_dict[BM_INITIALIZED] # property
             self.bm_folder = BM_DEFAULT_BUDGET_FOLDER   # property
             bf_p = self.bsm_BM_FOLDER_path() # budget folder path
             bmc_path = bf_p / BSM_DEFAULT_BUDGET_MODEL_FILE_NAME # bmc: BM config file
-            bfp_exists = "exists." if bf_p.exists() else "does not exist!"
-            bmc_exists = "exists." if bmc_path.exists() else "does not exist!"
-            self.bm_store = bmc_path # property
-            self.bm_wf_collection = bmt[BM_WF_COLLECTION] # property
-            logger.debug(f"{P2}BM_FOLDER('{BM_FOLDER}'): '{self.bm_store}' {bfp_exists}")
-            logger.debug(
-                f"{P4}bsm_BM_FOLDER_path(): '{self.bsm_BM_FOLDER_path()}' "
-                f"{bfp_exists}")
-            logger.debug(
-                f"{P4}bsm_BM_FOLDER_abs_path(): '{self.bsm_BM_FOLDER_abs_path()}' "
-                f"{bfp_exists}")
-            logger.debug(
-                f"{P2}BM_STORE('{BM_STORE}): '{self.bm_store}' "
-                f"{bmc_exists}")
-            logger.debug(
-                f"{P2}BM_WORKFLOWS('{BM_WF_COLLECTION}'): "
-                f" '{self.bm_wf_collection}'")
-            # Financial Institutions (FI), copy from template.
-            fic = len(bmt[BM_FI_COLLECTION])  # financial institutions count
-            logger.debug(f"{P2}BM_FI('{BM_FI_COLLECTION}')({fic})")
-            for fi_key, fi_dict in bmt[BM_FI_COLLECTION].items():
+            self.bm_store = str(bmc_path) # property
+            self.bm_wf_collection = bmt_dict[BM_WF_COLLECTION].copy() # property
+            for fi_key, fi_dict in bmt_dict[BM_FI_COLLECTION].items():
                 self.bm_fi_collection[fi_key] = fi_dict.copy()  # property, copy
-                fi_p = self.bsm_FI_FOLDER_path(fi_key)  # FI folder path
-                fi_ap = self.bsm_FI_FOLDER_abs_path(fi_key) # FI folder abs path
-                logger.debug(f"{P4}FI_KEY('{fi_key}') folder: '{fi_p}'")
-                logger.debug(f"{P6}FI_KEY('{fi_key}') {str(fi_dict)}")
-                if_p = self.bsm_FI_FOLDER_path(fi_key)
-                if_p_exists = "exists." if if_p.exists() else "does not exist!"
-                logger.debug(f"{P6}bsm_FI_FOLDER_path(): '{if_p}' "
-                             f"{if_p_exists}")
-                if_ap = self.bsm_FI_FOLDER_abs_path(fi_key)
-                if_ap_exists = "exists." if if_ap.exists() else "does not exist!"
-                logger.debug(f"{P6}bsm_FI_FOLDER_abs_path(): '{if_ap}'"
-                             f"{if_ap_exists}")
-
-            # Initialize Budget Model Options as a template
-            self.bm_options = bmt[BM_OPTIONS].copy() # property
-            bmoc = len(bmt[BM_OPTIONS])
-            logger.debug(f"{P2}BM_OPTION('{BM_OPTIONS}')({bmoc})")
-            for opt_key, opt in bmt[BM_OPTIONS].items():
-                logger.debug(f"{P4}Option('{opt_key}') = '{opt}'")
-
-            # And the rest
+            self.bm_options = bmt_dict[BM_OPTIONS].copy() # property
             self.bm_created_date = p3u.now_iso_date_string() # property
             self.bm_last_modified_date = self.bm_created_date # property
             self.bm_last_modified_by = getpass.getuser() # property
-            self.bm_working_data = bmt[BM_WORKING_DATA] # property
-            logger.debug(f"{P2}BM_CREATED_DATE({BM_CREATED_DATE}'): "
-                         f"{self.bm_created_date}")
-            logger.debug(f"{P2}BM_LAST_MODIFIED_DATE({BM_LAST_MODIFIED_DATE}'): "
-                            f"{self.bm_last_modified_date}")
-            logger.debug(f"{P2}BM_LAST_MODIFIED_BY({BM_LAST_MODIFIED_BY}'): "
-                            f"{self.bm_last_modified_by}")
-            logger.debug(f"{P2}BM_WORKING_DATA({BM_WORKING_DATA}'): "
-                            f"{self.bm_working_data}")
-            # BudgetModelTemplate initialization is complete.
+            self.bm_working_data = bmt_dict[BM_WORKING_DATA] # property
             self.bm_initialized = True
-            logger.debug(f"{P2}{BM_INITIALIZED}: {self.bm_initialized}")
             logger.debug(f"Complete: {p3u.stop_timer(st)}")   
         except Exception as e:
             m = p3u.exc_msg(self.__init__, e)
             logger.error(m)
             raise
-    #endregion BudgetModelTemplate class constructor __init__.()
+    #endregion BudgetModelTemplate class constructor __init__()
+    # ------------------------------------------------------------------------ +
+    #region log_BMT_info()
+    @staticmethod
+    def log_BMT_info(bmt : "BudgetModelTemplate") -> None:
+        """Log the BudgetModelTemplate class information."""
+        try:
+            logger.debug("Start:  ...")
+            logger.debug(f"{P2}BM_INITIALIZED('{BM_INITIALIZED}'): "
+                         f"{bmt.bm_initialized}")
+            logger.debug(f"{P2}BM_FOLDER('{BM_FOLDER}'): '{bmt.bm_store}'")
+            logger.debug(f"{P2}BM_STORE('{BM_STORE}): '{bmt.bm_store}' ")
+            logger.debug(f"{P2}BM_WORKFLOWS('{BM_WF_COLLECTION}'): "
+                         f" '{bmt.bm_wf_collection}'")
+            # Enumerate Financial Institutions (FI)
+            fi_c = len(bmt.bm_fi_collection)  # financial institutions count
+            logger.debug(f"{P2}BM_FI('{BM_FI_COLLECTION}')({fi_c})")
+            for fi_key, fi_object in bmt.bm_fi_collection.items():
+                logger.debug(f"{P4}Financial Institution: "
+                         f"{fi_key}:{fi_object[FI_NAME]}:"
+                         f"{fi_object[FI_TYPE]}: '{fi_object[FI_FOLDER]}'")
+            # Enumerate Workflows in the budget model
+            c = len(bmt.bm_wf_collection)
+            logger.debug(
+                f"{P2}BM_WF_COLLECTION['{BM_WF_COLLECTION}']({c}): "
+                f"{str(list(bm.bm_wf_collection.keys()))}")
+            for wf_key, wf_object in bm.bm_wf_collection.items():
+                logger.debug(f"{P4}Workflow:({wf_key}:{wf_object[WF_NAME]}: ")
+                logger.debug(f"{P6}WF_WORKBOOKS_IN: '{bmt.wf_object[WF_FOLDER_IN]}'")
+                logger.debug(f"{P6}WF_FOLDER_OUT: '{bmt.wf_object[WF_FOLDER_OUT]}'")
+                logger.debug(f"{P6}WF_PREFIX_IN: '{bmt.wf_object[WF_PREFIX_IN]}' "
+                            f"WF_PREFIX_OUT: '{bmt.wf_object[WF_PREFIX_OUT]}'")
+                logger.debug(f"{P6}WF_WORKBOOK_MAP: {str(bmt.wf_object[WF_WORKBOOK_MAP])}")
+            # Enumerate Budget Model Options
+            bmo_c = len(bmt.bm_options)
+            logger.debug(f"{P2}BM_OPTION('{BM_OPTIONS}')({bmo_c})")
+            for opt_key, opt in bmt.bm_options.items():
+                logger.debug(f"{P4}Option('{opt_key}') = '{opt}'")
+
+            # "And the rest. Here on Gilligan's Isle..."
+            logger.debug(f"{P2}BM_CREATED_DATE({BM_CREATED_DATE}'): "
+                         f"{bmt.bm_created_date}")
+            logger.debug(f"{P2}BM_LAST_MODIFIED_DATE({BM_LAST_MODIFIED_DATE}'): "
+                            f"{bmt.bm_last_modified_date}")
+            logger.debug(f"{P2}BM_LAST_MODIFIED_BY({BM_LAST_MODIFIED_BY}'): "
+                            f"{bmt.bm_last_modified_by}")
+            logger.debug(f"{P2}BM_WORKING_DATA({BM_WORKING_DATA}'): "
+                            f"{bmt.bm_working_data}")
+            logger.debug(f"Complete:")   
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise
+
+    #endregion log_BMT_info()
     # ------------------------------------------------------------------------ +
 # ---------------------------------------------------------------------------- +
 #region tryout_budget_model_template() function

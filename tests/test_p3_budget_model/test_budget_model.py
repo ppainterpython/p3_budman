@@ -11,7 +11,7 @@ import inspect
 
 # local libraries
 import logging, p3_utils as p3u, p3logging as p3l
-import data.p3_budget_model as p3bm
+import budman_model as p3bm
 #endregion imports
 # ---------------------------------------------------------------------------- +
 #region Globals
