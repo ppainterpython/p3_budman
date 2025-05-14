@@ -34,5 +34,14 @@ def test_budget_domain_model_identity():
             "BudgetDomainModelIdentity name should not be None"
         assert isinstance(bdm.name, str), \
             "BudgetDomainModelIdentity name should be a string"
+        bdm_store_path = bdm.bdm_store_abs_path()
+        assert bdm_store_path is not None, \
+            "BudgetDomainModelIdentity store path should not be None"
+        assert isinstance(bdm_store_path, Path), \
+            "BudgetDomainModelIdentity store path should be a Path object"
+        # Brand new bdmi should not resolve yet.
+        with pytest.raises(Exception) as excinfo:
+            bdm.bdm_stor()
+        
     except Exception as e:
         pytest.fail(f"BudgetDomainModelIdentity raised an exception: {str(e)}")

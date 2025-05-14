@@ -19,7 +19,7 @@ from p3_budman.p3_budman import *
 def test_main_default(caplog) -> None:
     """Test operation of default logging config."""
     with caplog.at_level(logging.DEBUG):
-        budmod()
+        budman_app_start()
     assert "Warning message" in caplog.text, \
         "Expected 'Warning message' in log output"
     assert "Debug message" in caplog.text, \
@@ -37,7 +37,7 @@ def test_main_default(caplog) -> None:
 def test_main_stdout(caplog) -> None:
     """Test operation of AT_STDOUT_LOG_CONFIG_FILE logging config."""
     with caplog.at_level(logging.DEBUG):
-        budmod(p3l.STDOUT_LOG_CONFIG_FILE)
+        budman_app_start()
     assert "Warning message" in caplog.text, \
         "Expected 'Warning message' in log output"
     assert "Debug message" in caplog.text, \
@@ -55,7 +55,7 @@ def test_main_stdout(caplog) -> None:
 def test_main_stderr_json_file(caplog) -> None:
     """Test operation of AT_STDERR_JSON_FILE_LOG_CONFIG_FILE logging config."""
     with caplog.at_level(logging.DEBUG):
-        budmod(p3l.STDERR_JSON_FILE_LOG_CONFIG_FILE)
+        budman_app_start()
     assert "Warning message" in caplog.text, \
         "Expected 'Warning message' in log output"
     assert "Debug message" in caplog.text, \
@@ -73,7 +73,7 @@ def test_main_stderr_json_file(caplog) -> None:
 def test_main_queued_stderr_json_file(caplog) -> None:
     """Test operation of AT_QUEUED_STDERR_JSON_FILE_LOG_CONFIG_FILE logging config."""
     with caplog.at_level(logging.DEBUG):
-        budmod(p3l.QUEUED_STDERR_JSON_FILE_LOG_CONFIG_FILE)
+        budman_app_start()
     assert "Warning message" in caplog.text, \
         "Expected 'Warning message' in log output"
     assert "Debug message" in caplog.text, \

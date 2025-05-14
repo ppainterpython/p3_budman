@@ -144,7 +144,7 @@ class BudgetModel(metaclass=SingletonMeta):
         setattr(self, BDM_ID, bdm_id.uid)  # BudgetDomainModelIdentity
         setattr(self, BM_INITIALIZED, False)
         setattr(self, BM_FOLDER, None)  # budget folder path
-        setattr(self, BDM_URL, bdm_id.bdm_path().as_uri())  # path for budget model store
+        setattr(self, BDM_URL, bdm_id.bdm_store_abs_path().as_uri())  # path for budget model store
         setattr(self, BM_FI_COLLECTION, {})  # financial institutions
         setattr(self, BM_WF_COLLECTION, {}) 
         setattr(self, BM_OPTIONS, {})  # budget model options
@@ -202,6 +202,16 @@ class BudgetModel(metaclass=SingletonMeta):
     #endregion BudgetModel internal class methods
     # ------------------------------------------------------------------------ +
     #region    BudgetModel public class properties
+    @property
+    def bdm_id(self) -> str:
+        """The budget model ID."""
+        return getattr(self, BDM_ID)
+    @bdm_id.setter
+    def bdm_id(self, value: str) -> None:
+        """Set the budget model ID."""
+        if not isinstance(value, str):
+            raise ValueError(f"bm_id must be a string: {value}")
+        setattr(self, BDM_ID, value)
     @property
     def bm_initialized(self) -> bool:
         """The initialized value."""
@@ -497,7 +507,7 @@ class BudgetModel(metaclass=SingletonMeta):
             # Initialize from the BDM_URL persisted configuration and data.
             # Load the BudgetModel Store values as a Dict with persisted
             # attributes.
-            bm_config : Dict = bsm_BDM_URL_load(self)
+            bm_config : Dict = None #bsm_BDM_URL_load(self)
             # Apply the configuration to the budget model (self)
             # BSM_PERSISTED_PROPERTIES defines the attributes to be applied.
             for attr in BSM_PERSISTED_PROPERTIES:

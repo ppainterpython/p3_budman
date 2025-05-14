@@ -23,14 +23,15 @@ def test_budget_model_template_constructor() -> None:
     try:
         # Initialize the logger from a logging configuration file.
         # p3l.setup_logging(THIS_APP_NAME,p3l.STDOUT_FILE_LOG_CONFIG_FILE)
-        logger.info("Testing BudgetModelTemplate constructor.")
+        st = p3u.start_timer()
+        logger.info(test_budget_model_template_constructor.__doc__)
         bmt = p3bt.BudgetModelTemplate()
         
         # Check if the budget model is a dictionary
         assert isinstance(bmt, p3bt.BudgetModelTemplate), \
-            "Budget model should be a BudgetModelTemplate instance"
-        
+            "Budget model should be a BudgetModelTemplate instance"        
         assert bmt._initialized, "Budget model should be initialized"
+        assert bmt._bdm_id is not None, "Created date should not be None"
         assert bmt._created_date is not None, "Created date should not be None"
         assert bmt._last_modified_date is not None, "Last modified date should not be None"
         assert bmt._last_modified_by is not None, "Last modified by should not be None"
@@ -39,7 +40,7 @@ def test_budget_model_template_constructor() -> None:
         assert bmt._bdm_url is not None, "Budget model store path should not be None"
         assert bmt._workflows is not None, "Workflows should not be None"
         assert bmt._financial_institutions is not None, "Financial institutions should not be None"
-                
+        logger.debug(f"Test Complete: {p3u.stop_timer(st)}")   
     except Exception as e:
         pytest.fail(f"init_budget_model raised an exception: {str(e)}")
 # ---------------------------------------------------------------------------- +
@@ -50,7 +51,8 @@ def test_bsm_initialize() -> None:
     try:
         # Initialize the logger from a logging configuration file.
         # p3l.setup_logging(THIS_APP_NAME,p3l.STDOUT_FILE_LOG_CONFIG_FILE)
-        logger.info("Testing BudgetModelStorage constructor.")
+        st = p3u.start_timer()
+        logger.info(test_bsm_initialize.__doc__)
         bmt = p3bt.BudgetModelTemplate()
         
         # Check if the budget model is a dictionary
@@ -60,15 +62,14 @@ def test_bsm_initialize() -> None:
         assert bmt._initialized, "Budget model should be initialized"
         bmt.bsm_inititalize()
         assert bmt._initialized, "Budget model should be initialized"
-
-
+        logger.debug(f"Test Complete: {p3u.stop_timer(st)}")   
     except Exception as e:
         pytest.fail(f"init_budget_model raised an exception: {str(e)}")
 # ---------------------------------------------------------------------------- +
 def test_bsm_BM_Folder_Path_methods() -> None:
     """Test BM Folder (BF) Path methods."""
     try:
-        logger.info("Testing BudgetModelStorage constructor.")
+        logger.info(test_bsm_BM_Folder_Path_methods.__doc__)
         bmt = p3bt.BudgetModelTemplate()
         assert isinstance(bmt, p3bt.BudgetModelTemplate), \
             "Budget model should be a BudgetModelTemplate instance"

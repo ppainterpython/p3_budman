@@ -1,4 +1,4 @@
-THIS_APP_NAME = "p3_Budget_Model"
+THIS_APP_NAME = "p3_Budget_Manager"
 
 
 # Miscellaneous Constants

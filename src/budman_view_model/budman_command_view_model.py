@@ -15,16 +15,15 @@ from config import settings
 import p3_utils as p3u, pyjson5, p3logging as p3l
 
 # local modules and packages
-from p3_excel_budget_constants import  *
 import budman_model as p3bm
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
-logger = logging.getLogger(settings.app_name)
+logger = logging.getLogger(settings[p3bm.APP_NAME])
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
-class BudgetModelCommandViewModel():
+class BudManCommandViewModel():
     # ======================================================================== +
     #region BudgetModelCommandViewModel class
     """A Budget Model View Model to support Commands and Data Context."""
@@ -35,6 +34,7 @@ class BudgetModelCommandViewModel():
     def __init__(self,bm : p3bm.BudgetModel = None) -> None:
         super().__init__()
         self.intitialized : bool = False
+        self.BUDMAN_STORE_loaded : bool = False
         self.budget_model : p3bm.BudgetModel = bm
         self.FI_KEY : str = None
         self.WF_KEY : str = None
@@ -42,15 +42,25 @@ class BudgetModelCommandViewModel():
     #endregion __init__() constructor method
     # ------------------------------------------------------------------------ +
     #region initialize() method
-    def initialize(self) -> None:
+    def initialize(self, load_user_store : bool = False) -> "BudManCommandViewModel":
         """Initialize the command view_model."""
         try:
+            # Check if the budget model is initialized.
             if (self.budget_model is None or 
                 not isinstance(self.budget_model, p3bm.BudgetModel)):
+                # There is no valid budget_model. Load a BM_STORE file?
+                if load_user_store:
+                    # Load the budget model store from a BSM file.
+                    budman_store_dict = self.BUDMAN_STORE_load()
+                else:
+                    # Create a new budget model.
+                    self.budget_model = p3bm.BudgetModel().bdm_initialize()
+                    # TODO: modify BudgetModel() to accect dict for config.: 
                 self.budget_model = p3bm.BudgetModel().bdm_initialize()
             if not self.budget_model.bm_initialized: 
                 raise ValueError("BudgetModel is not initialized.")
             self.intitialized = True
+            return self
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
@@ -308,3 +318,42 @@ class BudgetModelCommandViewModel():
     # ------------------------------------------------------------------------ +
     #endregion BDM view_model Data Context Methods                             +
     # ======================================================================== +
+
+    # ======================================================================== +
+    #region BDM/BSM model Data Methods                                         +
+    """BDM/BSM model Data Methods.
+
+    These methods are to access the Model interfaces for BDM and BSM.
+
+    In out MVVM design, the View has no knowledge of the Model, only the
+    ViewModel invokes Model interfaces.  
+    """
+    # ======================================================================== +
+    #                                                                          +
+    # ------------------------------------------------------------------------ +
+    #region BUDMAN_STORE_load() method
+    def BUDMAN_STORE_load(self) -> Dict:
+        """Load the Budget Manager store (BUDMAN_STORE) file from the BSM.
+
+        A 
+
+        Returns:
+            Dict: The BudgetModel store as a dictionary.
+        """
+        try:
+            # Load the BUDMAN_STORE file with the BSM.
+            # Use the BUDMAN_STORE configured in BUDMAN_SETTINGS.
+            budman_store_value = settings[p3bm.BUDMAN_STORE]
+            budman_folder = settings[p3bm.BUDMAN_FOLDER]
+            budman_folder_abs_path = Path(budman_folder).expanduser().resolve()
+            budman_store_abs_path = budman_folder_abs_path / budman_store_value
+            # Load the BUDMAN_STORE file.
+            budman_store_dict = p3bm.bsm_BUDMAN_STORE_load(budman_store_abs_path)
+            self.BUDMAN_STORE_loaded = True
+            return budman_store_dict
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion BUDMAN_STORE_load() method
+    # ------------------------------------------------------------------------ +
+    #endregion BDM view_model Data Context Methods                             +

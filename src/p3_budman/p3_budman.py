@@ -17,7 +17,7 @@ from openpyxl import Workbook
 import p3logging as p3l, p3_utils as p3u
 
 # local packages and module libraries
-import budman_view_model.bdm_view_model as p3bmvm
+import budman_view_model.budman_command_view_model as p3bmvm
 import budman_cli_view.budmod_cli_view as p3bmv
 logger = logging.getLogger(settings.app_name)
 logger.propagate = True
@@ -65,7 +65,7 @@ def log_workbook_info(file_name : str = "unknown",wb : Workbook = None) -> None:
 def budman_app_cli_cmdloop():
     """CLI cmdloop function."""
     try:
-        bmvm = p3bmvm.BudgetModelCommandViewModel()
+        bmvm = p3bmvm.BudManCommandViewModel()
         bmvm.initialize() # Initialize the BudgetModelCommandViewModel
         p3bmv.BudgetModelCLIView(bmvm).initialize().cmdloop() # Application CLI loop
         _ = "pause"

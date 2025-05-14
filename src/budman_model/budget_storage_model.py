@@ -6,7 +6,7 @@
 # ---------------------------------------------------------------------------- +
 #region Imports
 # python standard library modules and packages
-import logging, os, getpass, time, copy
+import logging, os, time
 from pathlib import Path
 from typing import Dict
 
@@ -15,13 +15,68 @@ import p3_utils as p3u, pyjson5, p3logging as p3l
 import pyjson5 as json5 
 # local modules and packages
 from .budget_model_constants import *
-# from .budget_domain_model import *
+from .budget_domain_model_identity import *
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
 logger = logging.getLogger(THIS_APP_NAME)
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
+# ---------------------------------------------------------------------------- +
+#region bsm_BUDMAN_STORE_load() function
+def bsm_BUDMAN_STORE_load(store_path : Path) -> Dict:
+    """Load a BUDMAN_STORE file from the given Path value."""
+    try:
+        if store_path is None or not isinstance(store_path, Path):
+            raise ValueError("store_path is None or not a Path object.")
+        logger.info("loading BUDMAN_STORE from a file.")
+        if not store_path.exists():
+            raise FileNotFoundError(f"BDM_URL path does not exist: {store_path}")
+        if not store_path.is_file():
+            raise ValueError(f"BDM_URL path is not a file: {store_path}")
+        if not store_path.suffix == ".jsonc":
+            raise ValueError(f"BDM_URL path is not a .jsonc file: {store_path}")
+        with open(store_path, "r") as f:
+            jsonc_content = json5.decode(f.read())
+        if (jsonc_content is None or 
+            not isinstance(jsonc_content, dict) or 
+            len(jsonc_content) == 0):
+            raise ValueError(f"BDM_URL content is None, not a Dict or empty.")
+        logger.info(f"loaded BDM_URL content from file: {store_path}")
+        return jsonc_content
+    except json5.Json5DecoderException as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion bsm_BUDMAN_STORE_load() function
+# ---------------------------------------------------------------------------- +
+#region budget_storage_model_new module
+def budget_storage_model_new(name : str = BSM_DEFAULT_BUDGET_MODEL_FILE_NAME,
+                             folder : str = BM_DEFAULT_BUDGET_FOLDER,
+                             filetype : str = BSM_DEFAULT_BUDGET_MODEL_FILE_TYPE) -> str:
+    """Create a new budget storage model file."""
+    try:
+        st = p3u.start_timer()
+        logger.debug("Start: ...")
+        # Create a new budget storage model file.
+        bdm = BudgetDomainModelIdentity(filename=name, filetype=filetype)
+        bsm_folder_path = Path(folder).expanduser()
+        bsm_folder_abs_path = bsm_folder_path.resolve()
+        bsm_store_abs_path = bsm_folder_abs_path / bdm.filename
+        if not os.path.exists(bsm_store_abs_path):
+            with open(bsm_store_abs_path, "w") as f:
+                f.write("{}")
+            logger.info(f"Created new budget storage model file: {bsm_store_abs_path}")
+        else:
+            logger.warning(f"Budget storage model file already exists: {bsm_store_abs_path}")
+        logger.debug(f"Complete: {p3u.stop_timer(st)}")   
+        return str(bsm_store_abs_path)
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion budget_storage_model_new module
 # ---------------------------------------------------------------------------- +
 # def bsm_BDM_URL_save(bm : "BudgetModel") -> None:
 #     """Save the BudgetModel store to a .jsonc file."""

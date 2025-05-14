@@ -1,4 +1,11 @@
-app_name = "budmod"
+# ---------------------------------------------------------------------------- +
+# p3_budman configuration settings
+# ---------------------------------------------------------------------------- +
 
+app_name = "p3_budget_manager"    # used for some defaults in places
+short_app_name = "budman"         # ditto
 
-[p3_logging]
+[budman]
+budget_manager_folder = "~/OneDrive/budget"   # Where data files will go
+budget_manager_store = "p3_budget_manager_ca063e8b.jsonc"  # a BSM file
+

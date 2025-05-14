@@ -9,8 +9,8 @@ Excel workbooks, specifically for budgeting.
 """
 __version__ = "0.3.0"
 __author__ = "Paul Painter"
-__copyright__ = "2024 Paul Painter"
-__name__ = "p3_budman"
+__copyright__ = "2025 Paul Painter"
+__name__ = "p3_budget_manager"
 __description__ = "Budget Manager (BudMan) a p3 application."
 __license__ = "MIT"
 
@@ -29,11 +29,11 @@ from .budget_model_template import (
     BudgetModelTemplate,
     tryout_budget_model_template)
 
-# from .budget_storage_model import (
-#     bsm_save,
-#     bsm_load,
-#     bsm_bm_store_abs_path,
-# )
+from .budget_storage_model import (
+    bsm_BUDMAN_STORE_load,    # bsm_save,
+    # bsm_load,
+    budget_storage_model_new,
+)
 
 from .budget_categorization import (
     execute_worklow_categorization,
@@ -48,6 +48,8 @@ from .budget_category_mapping import (
 
 __all__ = [
     "BudgetDomainModelIdentity",
+    "bsm_BUDMAN_STORE_load",
+    "budget_storage_model_new",
     "bsm_save",
     "bsm_load",
     "bsm_bm_store_abs_path",

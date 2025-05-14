@@ -50,6 +50,15 @@ BSM_PERSISTED_PROPERTIES = (BM_FOLDER, BM_FI_COLLECTION, BM_WF_COLLECTION,
                             BM_CREATED_DATE, BM_LAST_MODIFIED_DATE, 
                             BM_LAST_MODIFIED_BY)
 
+# keys used in settings.toml configuration file
+BUDMAN_SETTINGS = "settings.toml"
+BUDMAN_FOLDER = "budman.budget_manager_folder" 
+BUDMAN_STORE = "budman.budget_manager_store" 
+APP_NAME = "app_name"
+SHORT_APP_NAME = "short_app_name"
+
+# Current (or last) session values.
+
 # BM_OPTIONS Budget Model Options (BMO)Constants
 BMO_LOG_CONFIG = "log_config"
 BMO_LOG_LEVEL = "log_level"

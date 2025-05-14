@@ -24,13 +24,15 @@ def test_budget_model_constructor() -> None:
         logger.info(test_budget_model_constructor.__doc__)
         bm = p3bm.BudgetModel()
         
-        # With the bare BudgetModel.__init__(), this instance should be empty.
+        # With bare BudgetModel.__init__(), this instance should be mostly empty.
         #
         assert isinstance(bm, p3bm.BudgetModel), \
             "Budget model should be a BudgetModel instance"        
         assert not bm.bm_initialized, "Budget model should NOT be initialized"
+        assert bm.bdm_id is not None, \
+            "Budget model ID should not be None"
         assert bm.bm_folder is None, "Budget folder should be None"
-        assert bm.bm_store is None, \
+        assert bm.bm_store is not None, \
             "Budget model store path should not be None"
         assert (bm.bm_fi_collection is not None and 
                 isinstance(bm.bm_fi_collection, dict) and 
@@ -52,6 +54,7 @@ def test_budget_model_constructor() -> None:
                 len(bm.bm_working_data) == 0), \
             "WF_WORKING_DATA should empty dictionary"
     except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
         pytest.fail(f"BudgetModel() raised an exception: {str(e)}")
 # ---------------------------------------------------------------------------- +
 def test_budget_model_initialize_no_template() -> None:

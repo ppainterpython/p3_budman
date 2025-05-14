@@ -31,6 +31,7 @@ from openpyxl import Workbook, load_workbook
 
 # local modules and packages
 from .budget_model_constants import *
+from .budget_domain_model_identity import BudgetDomainModelIdentity
 from .budget_domain_model import BudgetModel # lazy import, avoid circular
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -154,10 +155,6 @@ class BudgetModelTemplate(BudgetModel):
     #endregion BudgetModelTemplate Configuration Template
     # ------------------------------------------------------------------------ +
     #region BudgetModelTemplate class constructor __init__()
-    # __init__() method for the BudgetModelTemplate class
-    # Focus on populating the template for value inititialization in the
-    # BudgetModel Domain class. Leave all Budget Storage Model (BSM) setup
-    # for initialization elsewhere.
     def __init__(self) -> None:
         """Construct a BudgetModelTemplate object used for configuration.
         
@@ -177,20 +174,22 @@ class BudgetModelTemplate(BudgetModel):
             # BudgetModel properties work now, after super().__init__()
             # Initialize values from the template as configuration values.
             bmt_dict = BudgetModelTemplate.budget_model_template
-            self.bdm_id = bmt_dict[BDM_ID] # property
-            self.bm_initialized = bmt_dict[BM_INITIALIZED] # property
-            self.bm_folder = BM_DEFAULT_BUDGET_FOLDER   # property
-            bf_p = self.bsm_BM_FOLDER_path() # budget folder path
-            bmc_path = bf_p / BSM_DEFAULT_BUDGET_MODEL_FILE_NAME # bmc: BM config file
-            self.bm_url = str(bmc_path) # property
+            bmt_id = BudgetDomainModelIdentity(
+                uid = bmt_dict[BDM_ID],
+                filename = THIS_APP_NAME,
+                filetype = BSM_DEFAULT_BUDGET_MODEL_FILE_TYPE)
+            self.bdm_id = bmt_dict[BDM_ID]                            # property
+            self.bm_initialized = bmt_dict[BM_INITIALIZED]            # property
+            self.bm_folder = BM_DEFAULT_BUDGET_FOLDER                 # property
+            self.bm_url = bmt_id.bdm_store_abs_path().as_uri()        # property
             self.bm_wf_collection = bmt_dict[BM_WF_COLLECTION].copy() # property
             for fi_key, fi_dict in bmt_dict[BM_FI_COLLECTION].items():
-                self.bm_fi_collection[fi_key] = fi_dict.copy()  # property, copy
-            self.bm_options = bmt_dict[BM_OPTIONS].copy() # property
-            self.bm_created_date = p3u.now_iso_date_string() # property
-            self.bm_last_modified_date = self.bm_created_date # property
-            self.bm_last_modified_by = getpass.getuser() # property
-            self.bm_working_data = bmt_dict[BM_WORKING_DATA] # property
+                self.bm_fi_collection[fi_key] = fi_dict.copy()        # property
+            self.bm_options = bmt_dict[BM_OPTIONS].copy()             # property
+            self.bm_created_date = p3u.now_iso_date_string()          # property
+            self.bm_last_modified_date = self.bm_created_date         # property
+            self.bm_last_modified_by = getpass.getuser()              # property
+            self.bm_working_data = bmt_dict[BM_WORKING_DATA]          # property
             self.bm_initialized = True
             logger.debug(f"Complete: {p3u.stop_timer(st)}")   
         except Exception as e:
