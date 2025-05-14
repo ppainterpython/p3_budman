@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Dict
 
 # third-party modules and packages
+from config import settings
 import p3_utils as p3u, pyjson5, p3logging as p3l
 import pyjson5 as json5 
 # local modules and packages
@@ -19,7 +20,7 @@ from .budget_domain_model_identity import *
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
-logger = logging.getLogger(THIS_APP_NAME)
+logger = logging.getLogger(settings[APP_NAME])
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
@@ -77,6 +78,30 @@ def budget_storage_model_new(name : str = BSM_DEFAULT_BUDGET_MODEL_FILE_NAME,
         logger.error(p3u.exc_err_msg(e))
         raise
 #endregion budget_storage_model_new module
+# ---------------------------------------------------------------------------- +
+def bsm_BUDMAN_STORE_save(budman_store:Dict, store_path:Path) -> None:
+    """Save the Budget Manager Store to a .jsonc file."""
+    try:
+        if budman_store is None or not isinstance(budman_store, Dict):
+            raise ValueError("budman_store is None or not a Dict.")
+        logger.info("Saving Budget Manager Store to file.")
+        # Only persist the properties in BM_PERSISTED_PROPERTIES.
+        filtered_bsm = {k: v for k, v in budman_store.items() if k in BSM_PERSISTED_PROPERTIES}
+        jsonc_content = json5.encode(filtered_bsm)
+        with open(store_path, "w") as f:
+            f.write(jsonc_content)
+        logger.info(f"Saved BDM_URL to file: {store_path}")
+        return None
+    except json5.Json5UnstringifiableType as e:
+        logger.error(p3u.exc_err_msg(e))
+        logger.error(f"Unstringifiable type: {type(e.unstringifiable).__name__} value: '{str(e.unstringifiable)}'")
+        raise
+    except json5.Json5DecoderException as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
 # ---------------------------------------------------------------------------- +
 # def bsm_BDM_URL_save(bm : "BudgetModel") -> None:
 #     """Save the BudgetModel store to a .jsonc file."""
@@ -142,8 +167,8 @@ def bsm_BDM_URL_abs_path(bm_folder : str = BM_DEFAULT_BUDGET_FOLDER) -> Path:
     try:
         bm_folder_path = Path(bm_folder).expanduser()
         bm_folder_abs_path = bm_folder_path.resolve()
-        bm_store_abs_path = bm_folder_abs_path / BSM_DEFAULT_BUDGET_MODEL_FILE_NAME
-        return bm_store_abs_path
+        bdm_url_abs_path = bm_folder_abs_path / BSM_DEFAULT_BUDGET_MODEL_FILE_NAME
+        return bdm_url_abs_path
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise

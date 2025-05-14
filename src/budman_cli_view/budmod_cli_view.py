@@ -75,7 +75,14 @@ def show_cmd_parser() -> Cmd2ArgumentParser:
     return cli_parser.show_cmd_parser if cli_parser else None
 def load_cmd_parser() -> Cmd2ArgumentParser:
     return cli_parser.load_cmd_parser if cli_parser else None
-
+def save_cmd_parser() -> Cmd2ArgumentParser:
+    return cli_parser.save_cmd_parser if cli_parser else None
+def show_args_only(self,opts) -> bool:
+    oc = vars(opts).copy()
+    oc.pop('cmd2_statement')
+    oc.pop('cmd2_handler')
+    self.poutput(f"args: {str(oc)}")
+    return self.parse_only
 class BudgetModelCLIView(cmd2.Cmd):
     # ======================================================================== +
     #region BudgetModelCLIView class
@@ -92,6 +99,8 @@ class BudgetModelCLIView(cmd2.Cmd):
     def __init__(self, data_context : object | MockViewModel = None) -> None:
         super().__init__()
         self.initialized = False
+        self.parse_only = False
+        self.terminal_width = 100 # TODO: add to settings.
         self.cli_parser : BudgetModelCLIParser = cli_parser
         self._data_context = MockViewModel() if data_context is None else data_context
     
@@ -131,7 +140,9 @@ class BudgetModelCLIView(cmd2.Cmd):
     def do_init(self, opts):
         """Init BugetModel properties and values.."""
         try:
-            self.poutput(f"args: {str(opts)}")
+            if show_args_only(self, opts): return
+            # self.poutput(f"args: {str(opts)}")
+            if self.parse_only: return
             if opts.init_cmd in ["financial_institution", "fi", "FI"]:
                 fi_key = opts.fi_key if opts.fi_key else None
                 self.data_context.FI_init_cmd(opts.fi_key)
@@ -148,7 +159,9 @@ class BudgetModelCLIView(cmd2.Cmd):
     def do_show(self, opts):
         """Show BugetModel domain information."""
         try:
-            self.poutput(f"args: {str(opts)}")
+            if show_args_only(self, opts): return
+            # self.poutput(f"args: {str(opts)}")
+
             if opts.show_cmd in ["workbook", "wb", "WB"]:
                 wb_name = opts.wb_name if opts.wb_name else None
                 c = self.data_context.FI_get_loaded_workbooks_count()
@@ -182,21 +195,33 @@ class BudgetModelCLIView(cmd2.Cmd):
     def do_load(self, opts):
         """Load BugetModel data items into app session."""
         try:
-            # self.budget_model.bm_load()
-            self.poutput(f"args: {str(opts)}")
+            if show_args_only(self, opts): return
+            # self.poutput(f"args: {str(opts)}")
+
             print("BudgetModel loaded.")
         except Exception as e:
             self.pexcept(e)
     #endregion Load command - load workbooks
     # ------------------------------------------------------------------------ +
     #region Save command - save workbooks
-    def do_save(self, line: str):
-        """Save the BudgetModel to a file."""
+    @with_argparser(save_cmd_parser())
+    def do_save(self, opts):
+        """Save the BUDMAN_STORE file."""
         try:
-            # self.budget_model.bm_save()
-            print("BudgetModel saved.")
+            if show_args_only(self, opts): return
+            # self.poutput(f"args: {str(opts)}")
+            if (opts.save_cmd is None or 
+                opts.save_cmd in ["budget_manager_store", "store", "BMS"]):
+                self.data_context.BUDMAN_STORE_save()
+                self.poutput("Budget Manager Store saved.")
+            elif opts.save_cmd in ["workbook", "wb", "WB"]:
+                wb_name = opts.wb_name if opts.wb_name else None
+                self.data_context.FI_save_workbook(wb_name)
+                self.poutput(f"Workbook {wb_name} saved.")
+            else:
+                self.poutput("No workbooks to save.")
         except Exception as e:
-            self.perror(f"Error saving BudgetModel: {e}")
+            self.perror(f"Error saving Budget Manager Store: {e}")
     #endregion Save command - save workbooks
     # ------------------------------------------------------------------------ +    
     #region exit and quit commands

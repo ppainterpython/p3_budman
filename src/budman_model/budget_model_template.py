@@ -21,11 +21,12 @@
 # ---------------------------------------------------------------------------- +
 #region Imports
 # python standard library modules and packages
-import logging, time, os, getpass
+import logging, time, os, getpass, copy
 from pathlib import Path
 from typing import List
 
 # third-party modules and packages
+from config import settings
 import p3_utils as p3u, pyjson5, p3logging as p3l
 from openpyxl import Workbook, load_workbook
 
@@ -150,8 +151,28 @@ class BudgetModelTemplate(BudgetModel):
         BM_CREATED_DATE: None,
         BM_LAST_MODIFIED_DATE: None,
         BM_LAST_MODIFIED_BY: None,
-        BM_WORKING_DATA: None
+        BM_WORKING_DATA: {}
     }
+    @classmethod
+    def get_budget_model_template(cls) -> dict:
+        """Get a fresh copy of the budget model template dictionary."""
+        try:
+            logger.debug("Start:  ...")
+            bmt = cls.budget_model_template
+            fresh_bmt = copy.deepcopy(bmt) # make a fresh copy of the template
+            fresh_bmt[BM_CREATED_DATE] = p3u.now_iso_date_string()
+            fresh_bmt[BM_LAST_MODIFIED_DATE] = p3u.now_iso_date_string()
+            fresh_bmt[BM_LAST_MODIFIED_BY] = getpass.getuser()
+            # Fresh identity
+            bmt_id = BudgetDomainModelIdentity()
+            fresh_bmt[BDM_ID] = bmt_id.uid
+            fresh_bmt[BDM_URL] = bmt_id.bdm_store_abs_path().as_uri()
+            logger.debug(f"Complete:")   
+            return fresh_bmt
+        except Exception as e:
+            m = p3u.exc_msg(cls.get_budget_model_template, e)
+            logger.error(m)
+            raise
     #endregion BudgetModelTemplate Configuration Template
     # ------------------------------------------------------------------------ +
     #region BudgetModelTemplate class constructor __init__()
@@ -160,7 +181,17 @@ class BudgetModelTemplate(BudgetModel):
         
         The BudgetModelTemplate class is used to populate new 
         BudgetModel objects with default and example values.
-        It is for internal use only.
+        It is for internal use only. There are two means to apply it when
+        constructing a new BudgetModel object:
+        1. Instantiate the BudgetModelTemplate, which sets the 
+           BudgetModel._default_config_object class variable which should be
+           used when no config_object parameters is used with BudgetModel().
+        2. Use the BudgetModelTemplate.budget_model_template class variable
+           as the config_object parameter when instantiating BudgetModel, as
+           in BudgetModel(config_object = BudgetModelTemplate.budget_model_template)
+
+        The other common use case is to use the BUDMAN_STORE object as the 
+        config_object parameter when instantiating BudgetModel. 
 
         budget_model_template: dict (class variable)
             The dictionary that defines the structure of the budget model and
@@ -170,10 +201,15 @@ class BudgetModelTemplate(BudgetModel):
         try:
             # Basic attribute atomic value inits. 
             logger.debug("Start:  ...")
-            super().__init__(classname=BudgetModelTemplate.__name__)
-            # BudgetModel properties work now, after super().__init__()
             # Initialize values from the template as configuration values.
             bmt_dict = BudgetModelTemplate.budget_model_template
+            # Invoke the base BudgetModel.__init__() to finish instance creation.
+            # BudgetModel properties work after super().__init__()
+            super().__init__(config_object = bmt_dict)
+            # Make self the BudgetModel._default_config_object
+            BudgetModel._default_config_object = self
+
+            # Complete the BudgetModelTemplate instance initialization.
             bmt_id = BudgetDomainModelIdentity(
                 uid = bmt_dict[BDM_ID],
                 filename = THIS_APP_NAME,
@@ -206,8 +242,8 @@ class BudgetModelTemplate(BudgetModel):
             logger.debug("Start:  ...")
             logger.debug(f"{P2}BM_INITIALIZED('{BM_INITIALIZED}'): "
                          f"{bmt.bm_initialized}")
-            logger.debug(f"{P2}BM_FOLDER('{BM_FOLDER}'): '{bmt.bm_store}'")
-            logger.debug(f"{P2}BDM_URL('{BDM_URL}): '{bmt.bm_store}' ")
+            logger.debug(f"{P2}BM_FOLDER('{BM_FOLDER}'): '{bmt.bdm_url}'")
+            logger.debug(f"{P2}BDM_URL('{BDM_URL}): '{bmt.bdm_url}' ")
             logger.debug(f"{P2}BM_WORKFLOWS('{BM_WF_COLLECTION}'): "
                          f" '{bmt.bm_wf_collection}'")
             # Enumerate Financial Institutions (FI)

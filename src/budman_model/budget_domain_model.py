@@ -63,6 +63,7 @@ from pathlib import Path
 from typing import List, Type, Generator, Dict, Tuple, Any
 
 # third-party modules and packages
+from config import settings
 import p3_utils as p3u, pyjson5, p3logging as p3l
 from openpyxl import Workbook, load_workbook
 
@@ -73,7 +74,7 @@ from .budget_domain_model_identity import BudgetDomainModelIdentity
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
-logger = logging.getLogger(THIS_APP_NAME)
+logger = logging.getLogger(settings[APP_NAME])
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
@@ -90,12 +91,20 @@ class SingletonMeta(type):
     """Metaclass for implementing the Singleton pattern for subclasses."""
     _instances = {}
 
+    # As a metaclass, __call__() runs when an instance is created as an
+    # override to the normal __new__ method which is called by the type() 
+    # metaclass for all python classes. So, call super() to use the normal
+    # class behavior in addition to what SingletonMeta is doing.
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances:
-            # Invokes cls.__init__()
-            # BudgetModel<0x1faebd98590>   
+            # Runs only for the first instance of the cls (class).
+            # Invokes cls.__new__(), then cls.__init__(), which constructs 
+            # a new cls instance. By default, the type() metaclass does this.
             _new_inst = super().__call__(*args, **kwargs)
+            # Apply the singleton pattern, one instance per class.
             cls._instances[cls] = _new_inst
+            # Save the cls so code knows what subclass was instantiated.
+            _new_inst._subclassname = cls.__name__
             logger.debug(f"Created first {dscr(_new_inst)}")
         logger.debug(f"Return {dscr(cls._instances[cls])}")
         return cls._instances[cls]
@@ -124,24 +133,20 @@ class BudgetModel(metaclass=SingletonMeta):
     # ------------------------------------------------------------------------ +
     #region class variables
     # A config Template should be a BudgetModel object, or a sub
-    config_template : object = None #
+    _default_config_object : object = None #
     #endregion class variables
     # ------------------------------------------------------------------------ +
-    # def __init_subclass__(cls, **kwargs):
-    #     # called at import time, not at runtime.
-    #     print(f"BudgetModel.__init_subclass__({cls}): called")
-    # ------------------------------------------------------------------------ +
     #region    BudgetModel class constructor __init__()
-    def __init__(self,classname : str = "BudgetModel") -> None:
+    def __init__(self, config_object : object = None) -> None:
         """Constructor for the BudgetModel class."""
-        self._classname = classname
-        BudgetModel.config_template = self if classname == "BudgetModelTemplate" else None
+        # Note: _subclassname set by SingletonMeta after __init__() completes.
+        logger.debug("Start: ...")
 
         # Private attributes initialization, basic stuff only.
         # for serialization ease, always persist dates as str type.
-        logger.debug("Start: BudgetModel().__init__() ...")
         bdm_id = BudgetDomainModelIdentity()
         setattr(self, BDM_ID, bdm_id.uid)  # BudgetDomainModelIdentity
+        setattr(self, BDM_CONFIG_OBJECT,config_object)
         setattr(self, BM_INITIALIZED, False)
         setattr(self, BM_FOLDER, None)  # budget folder path
         setattr(self, BDM_URL, bdm_id.bdm_store_abs_path().as_uri())  # path for budget model store
@@ -159,10 +164,12 @@ class BudgetModel(metaclass=SingletonMeta):
     def to_dict(self):
         '''Return BudgetModelTemplate dictionary object. Used for serialization.'''
         ret = {
+            BDM_ID: self.bdm_id,
+            BDM_CONFIG_OBJECT: self.bdm_config_object,
             BM_INITIALIZED: self.bm_initialized,
             BM_FOLDER: self.bm_folder,
             BM_FI_COLLECTION: self.bm_fi_collection,
-            BDM_URL: self.bm_store,
+            BDM_URL: self.bdm_url,
             BM_WF_COLLECTION: self.bm_wf_collection,
             BM_OPTIONS: self.bm_options,
             BM_CREATED_DATE: self.bm_created_date,
@@ -174,10 +181,12 @@ class BudgetModel(metaclass=SingletonMeta):
     def __repr__(self) -> str:
         ''' Return a str representation of the BudgetModel object '''
         ret = f"{{ "
+        ret += f"'{BDM_ID}': {self.bdm_id}, "
+        ret += f"'{BDM_CONFIG_OBJECT}': {self.bdm_config_object}, "
         ret += f"'{BM_INITIALIZED}': {self.bm_initialized}, "
         ret += f"'{BM_FOLDER}': '{self.bm_folder}', "
         ret += f"'{BM_FI_COLLECTION}': '{self.bm_fi_collection}', "
-        ret += f"'{BDM_URL}': '{self.bm_store}', "
+        ret += f"'{BDM_URL}': '{self.bdm_url}', "
         ret += f"'{BM_WF_COLLECTION}': '{self.bm_wf_collection}', "
         ret += f"'{BM_OPTIONS}': '{self.bm_options}', "
         ret += f"'{BM_CREATED_DATE}': '{self.bm_created_date}', "
@@ -188,10 +197,12 @@ class BudgetModel(metaclass=SingletonMeta):
     def __str__(self) -> str:
         ''' Return a str representation of the BudgetModel object '''
         ret = f"{self.__class__.__name__}({str(self.bm_folder)}): "
+        ret += f"{BDM_ID} = {self.bdm_id}, "
+        ret += f"{BDM_CONFIG_OBJECT} = {str(self.bdm_config_object)}, "
         ret += f"{BM_INITIALIZED} = {str(self.bm_initialized)}, "
         ret += f"{BM_FOLDER} = '{str(self.bm_folder)}', "
         ret += f"{BM_FI_COLLECTION} = [{', '.join([repr(fi_key) for fi_key in self.bm_fi_collection.keys()])}], "
-        ret += f"{BDM_URL} = '{self.bm_store}' "
+        ret += f"{BDM_URL} = '{self.bdm_url}' "
         ret += f"{BM_WF_COLLECTION} = '{self.bm_wf_collection}' "
         ret += f"{BM_OPTIONS} = '{self.bm_options}' "
         ret += f"{BM_CREATED_DATE} = '{self.bm_created_date}', "
@@ -213,6 +224,16 @@ class BudgetModel(metaclass=SingletonMeta):
             raise ValueError(f"bm_id must be a string: {value}")
         setattr(self, BDM_ID, value)
     @property
+    def bdm_config_object(self) -> object:
+        """The budget model configuration object."""
+        return getattr(self, BDM_CONFIG_OBJECT)
+    @bdm_config_object.setter
+    def bdm_config_object(self, value: object) -> None:
+        """Set the budget model configuration object."""
+        if not isinstance(value, object):
+            raise ValueError(f"bm_config_object must be an object: {value}")
+        setattr(self, BDM_CONFIG_OBJECT, value)
+    @property
     def bm_initialized(self) -> bool:
         """The initialized value."""
         return self._initialized
@@ -233,13 +254,13 @@ class BudgetModel(metaclass=SingletonMeta):
         self._budget_folder = value
 
     @property
-    def bm_store(self) -> str:
-        """The budget model store abs path str."""
+    def bdm_url(self) -> str:
+        """The budget manager store file url."""
         return self._bdm_url
     
-    @bm_store.setter
-    def bm_store(self, value: str) -> None:
-        """Set the budget model store abs path str."""
+    @bdm_url.setter
+    def bdm_url(self, value: str) -> None:
+        """Set the budget manager store file url."""
         self._bdm_url = value
 
     @property
@@ -305,11 +326,13 @@ class BudgetModel(metaclass=SingletonMeta):
     @property
     def bm_working_data(self) -> dict:
         """The budget model working data."""
+        self._wd = {} if self._wd is None else self._wd
         return self._wd
     
     @bm_working_data.setter
     def bm_working_data(self, value: dict) -> None:
         """Set the budget model working data."""
+        self._wd = {} if self._wd is None else self._wd
         self._wd = value
 
     # budget_model_working_data is a dictionary to store dynamic, non-property data.
@@ -407,87 +430,80 @@ class BudgetModel(metaclass=SingletonMeta):
         wf - workflow
     """
     # ======================================================================== +
-    #region    BDM bdm_initialize(self, bm_config_src, bsm_init, wd_init, ...)
+    #region    BDM bdm_initialize(self, bsm_init, wd_init, ...)
     def bdm_initialize(self, 
-                 bm_config_src : "BudgetModel" | Dict | None = None, 
                  bsm_init : bool = True,
                  wd_init : bool = True,
                  create_missing_folders : bool = True,
                  raise_errors : bool = True
                  ) -> "BudgetModel":
-        """Initialize BDM, from a BudgetModel object such as the BMT template.
+        """Initialize BDM, from a config_object.
 
-        Current support is for initializing at instantiation time, from the BMT
-        template. Currently, BudgetModel is a singleton class, so the BMT
-        template is the only source of configuration data for the first instance.
+        Currently, as a singleton class, BudgetModel is initialized just once.
+        So, having a resolved config_object Dict is important, lest not much
+        can be initialized. That is the concern of bdm_resolve_config_src().
 
         Args:
-            bm_config_src (dict): A BudgetModel object to configure from. If
-                None, use the BudgetModelTemplate internally.
             bsm_init (bool): Initialize the BSM if True.
             create_missing_folders (bool): Create missing folders if True.
             raise_errors (bool): Raise errors if True.
         """
         st = p3u.start_timer()
         logger.debug(f"Start: ...")
-        bm_config : dict = None
+        bdm_config : Dict = None
         try:
+            if not hasattr(self, "_subclassname"):
+                # hmm, _subclassname should be set in SingletonMeta metaclass.
+                logger.debug("No subclass name, setting to None")
+                self._subclassname = None
             # Initialize from a BudgetModel-based object such as the BMT template.
-            bm_config = self.bdm_resolve_config_src(bm_config_src)
+            bdm_config = self.bdm_resolve_config_object()
             # Apply the configuration to the budget model (self)
-            self.bm_initialized = bm_config.bm_initialized
-            self.bm_folder = bm_config.bm_folder
-            self.bm_store = bm_config.bm_store
-            self.bm_fi_collection = copy.deepcopy(bm_config.bm_fi_collection) if bm_config.bm_fi_collection else {}
-            self.bm_wf_collection = copy.deepcopy(bm_config.bm_wf_collection) if bm_config.bm_wf_collection else None
-            self.bm_options = bm_config.bm_options.copy() if bm_config.bm_options else {}
-            self.bm_created_date = bm_config._created_date
-            self.bm_last_modified_date = bm_config.bm_last_modified_date
-            self.bm_last_modified_by = bm_config.bm_last_modified_by
-            self.bm_working_data = {} # working data not persisted, fresh start.
+            for k,v in bdm_config.items():
+                if k in BSM_PERSISTED_PROPERTIES and hasattr(self, k):
+                    setattr(self, k, v)
             if bsm_init:
                 self.bsm_inititalize(create_missing_folders, raise_errors)
             if wd_init:
                 self.bdm_working_data = self.bdm_BM_WORKING_DATA_initialize()
+            self.bm_initialized = True
             logger.debug(f"Complete: {p3u.stop_timer(st)}")   
             return self
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
-    #endregion BDM bdm_initialize(self, bm_config_src, bsm_init, wd_init, ...) 
+    #endregion BDM bdm_initialize(self, bsm_init, wd_init, ...) 
     # ------------------------------------------------------------------------ +
-    #region bdm_resolve_config_src(self, bm_config_src) -> BudgetModel
-    def bdm_resolve_config_src(self, bm_config_src: "BudgetModel" ) -> "BudgetModel":
-        """Resolve the configuration source to initialize BudgetModel.
+    #region bdm_resolve_config_object(self) -> Dict
+    def bdm_resolve_config_object(self) -> Dict:
+        """Resolve the configuration object to initialize BudgetModel.
 
-        Args:
-            bm_config_src (BudgetModel | None): The configuration source.
+        Best to provide a config_object to BudgetModel() at instantiation
+        time. If not, the BudgetModelTemplate is used as the default.
 
         Returns:
-            BudgetModel: The resolved configuration source.
+            Dict: The resolved configuration object.
         """
         try:
-            if bm_config_src is None:
-                # If bm_config_src is None, use the previous template instance.
-                logger.debug("bm_config_src parameter is None, using builtin template.")
-                bm_config = BudgetModel.config_template  # Obj used for __init__()
-                if bm_config is None:
-                    # Last, try creating the template for first use.
-                    from budman_model.create_config_template import __create_config_template__
-                    bm_config = __create_config_template__()
-            else:
-                bm_config = bm_config_src
-            if not isinstance(bm_config, BudgetModel):
-                m = f"bm_config_src must be type('BudgetModel'), " 
-                m += f"but is: type('{type(bm_config)}'."
-                raise TypeError(m)
-            return bm_config
+            if self.bdm_config_object is None:
+                # If bdm_config_object is None, use the BudgetModelTemplate.
+                logger.debug("bm_config_object property is None, "
+                             f"resolve with builtin BudgetModelTemplate.")
+                # Default is left behind if BudgetModelTemplate() is instantiated.
+                bdm_config = BudgetModel._default_config_object  
+                if bdm_config is None:
+                    # Last hope, obtain the BudgetModelTempleate without 
+                    # a circular reference, since it is a subclass.
+                    from budman_model.get_budget_model_template import __get_budget_model_template__
+                    bdm_config = __get_budget_model_template__()
+                self.bdm_config_object = bdm_config
+            return self.bdm_config_object
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
-    #endregion BDM bdm_initialize(self, bm_config_src, bsm_init, wd_init, ...) 
+    #endregion bdm_resolve_config_object(self) -> Dict 
     # ------------------------------------------------------------------------ +
     #region bdm_initialize_from_BDM_URL(self)
     def bdm_initialize_from_BDM_URL(self,bsm_init:bool=True,
@@ -507,12 +523,13 @@ class BudgetModel(metaclass=SingletonMeta):
             # Initialize from the BDM_URL persisted configuration and data.
             # Load the BudgetModel Store values as a Dict with persisted
             # attributes.
-            bm_config : Dict = None #bsm_BDM_URL_load(self)
             # Apply the configuration to the budget model (self)
             # BSM_PERSISTED_PROPERTIES defines the attributes to be applied.
+            self.__dict__.update(copy.deepcopy(self.bdm_config_object))
+            bdm_config : Dict = None #bsm_BDM_URL_load(self)
             for attr in BSM_PERSISTED_PROPERTIES:
-                if attr in bm_config and hasattr(self, attr):
-                    setattr(self, attr, bm_config[attr])
+                if attr in bdm_config and hasattr(self, attr):
+                    setattr(self, attr, bdm_config[attr])
             if bsm_init:
                 self.bsm_inititalize()
             if wd_init:
@@ -934,7 +951,7 @@ class BudgetModel(metaclass=SingletonMeta):
         usable as part of a valid path string.
         """
         # TODO: expand and resolve flags?
-        if self.bm_store is None or not isinstance(self.bm_store,str) or len(self.bm_store) == 0:
+        if self.bdm_url is None or not isinstance(self.bdm_url,str) or len(self.bdm_url) == 0:
             m = f"BDM_URL value is not set to a non-zero length str. "
             m += f"Set the BDM_URL('{BDM_URL}') property to valid path str."
             logger.error(m)
@@ -945,7 +962,7 @@ class BudgetModel(metaclass=SingletonMeta):
         # In the BSM, the BDM_URL property must be a valid setting that will
         # result in a valid Path. Raise a ValueError if not.
         self.bsm_BDM_URL_validate() # Raises ValueError if not valid
-        return str(Path(self.bm_store))
+        return str(Path(self.bdm_url))
     def bsm_BDM_URL_path(self) -> Path:
         """Path of self.bsm_BDM_URL_path_str().expanduser()."""
         return Path(self.bsm_BDM_URL_path_str()).expanduser()
@@ -961,8 +978,8 @@ class BudgetModel(metaclass=SingletonMeta):
                               raise_errors : bool=True) -> None:
         """Resolve the BDM_URL path and create it if it does not exist."""
         try:
-            logger.info(f"Checking BDM_URL path: '{self.bm_store}'")
-            if self.bm_store is None:
+            logger.info(f"Checking BDM_URL path: '{self.bdm_url}'")
+            if self.bdm_url is None:
                 m = f"Budget folder path is not set. "
                 m += f"Set the '{BDM_URL}' property to a valid path."
                 logger.error(m)
@@ -1479,7 +1496,7 @@ def log_BDM_info(bm : BudgetModel) -> None:
         logger.debug(f"{P2}BM_INITIALIZED['{BM_INITIALIZED}']: "
                      f"{bm.bm_initialized}")
         logger.debug(f"{P2}BM_FOLDER['{BM_FOLDER}']: '{bm.bm_folder}'")
-        logger.debug(f"{P2}BDM_URL['{BDM_URL}]: '{bm.bm_store}'")
+        logger.debug(f"{P2}BDM_URL['{BDM_URL}]: '{bm.bdm_url}'")
         # Enumerate the financial institutions in the budget model
         c = bm.bdm_FI_OBJECT_count()
         logger.debug(
@@ -1539,7 +1556,7 @@ def log_BSM_info(bm : BudgetModel) -> None:
         bmc_p = bf_p / BSM_DEFAULT_BUDGET_MODEL_FILE_NAME # bmc: BM config file
         bmc_p_exists = "exists." if bmc_p.exists() else "does not exist!"
         logger.debug(
-            f"{P2}BDM_URL['{BDM_URL}]: '{bm.bm_store}' "
+            f"{P2}BDM_URL['{BDM_URL}]: '{bm.bdm_url}' "
             f"{bmc_p_exists}")
         # Enumerate the financial institutions in the budget model
         c = bm.bdm_FI_OBJECT_count()

@@ -7,7 +7,7 @@
 #region Imports
 
 # python standard library modules and packages
-import logging
+import logging, shutil, argparse
 
 # third-party modules and packages
 from config import settings
@@ -24,6 +24,19 @@ logger = logging.getLogger(settings.app_name)
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
+class BudManCmd2ArgumentParser(cmd2.Cmd2ArgumentParser):
+    def __init__(self, *args, **kwargs):
+        """Initialize the BudManCmd2ArgumentParser class."""
+        terminal_width = shutil.get_terminal_size().columns
+        kwargs["formatter_class"] = lambda prog: argparse.HelpFormatter(
+            prog, max_help_position=terminal_width - 2,
+            width=terminal_width - 2)
+        super().__init__(*args, **kwargs)
+    def format_help(self):
+        """Dynamically adjust width before printing help text."""
+        terminal_width = shutil.get_terminal_size().columns  # Get current terminal width
+        self.formatter_class = lambda prog: argparse.HelpFormatter(prog, width=terminal_width)
+        return super().format_help()  # Call parent method
 
 class BudgetModelCLIParser():
     """A class to parse command line arguments for the BudgetModelCLIView class.
@@ -35,12 +48,14 @@ class BudgetModelCLIParser():
     def __init__(self, view_cmd_input : cmd2.Cmd = None) -> None:
         """Initialize the BudgetModelCLIParser class."""
         self.view_cmd : cmd2.Cmd = view_cmd_input
-        self.init_cmd_parser = Cmd2ArgumentParser()
-        self.show_cmd_parser = Cmd2ArgumentParser()
-        self.load_cmd_parser = Cmd2ArgumentParser()
+        self.init_cmd_parser = BudManCmd2ArgumentParser()
+        self.show_cmd_parser = BudManCmd2ArgumentParser()
+        self.load_cmd_parser = BudManCmd2ArgumentParser()
+        self.save_cmd_parser = BudManCmd2ArgumentParser()
         self.init_cmd_parser_setup()
         self.show_cmd_parser_setup()
         self.load_cmd_parser_setup()
+        self.save_cmd_parser_setup()
 
     def setup(self) -> None:
         """Setup the command line argument parsers."""
@@ -88,6 +103,7 @@ class BudgetModelCLIParser():
         try:
             self.show_cmd_subparsers = self.show_cmd_parser.add_subparsers(
                 dest="show_cmd")
+            # show FI subcommand
             self.show_fi_subcmd_parser = self.show_cmd_subparsers.add_parser(
                 "financial_institutions",
                 aliases=["fi", "FI"], 
@@ -96,6 +112,7 @@ class BudgetModelCLIParser():
                 "fi_key", nargs="?", 
                 default= "all",
                 help="FI key value.") 
+            # show WF subcommand
             self.show_wf_subcmd_parser  = self.show_cmd_subparsers.add_parser(
                 "workflows",
                 aliases=["wf", "WF"], 
@@ -105,6 +122,7 @@ class BudgetModelCLIParser():
                 action="store", 
                 default=None,
                 help="Workflow key value.")
+            # show WB subcommand
             self.show_wb_subcmd_parser  = self.show_cmd_subparsers.add_parser(
                 "workbooks",
                 aliases=["wb", "WB"], 
@@ -132,6 +150,19 @@ class BudgetModelCLIParser():
                 action="store", 
                 default = "categorization",
                 help="Workflow for workbooks to load.") 
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise
+
+    def save_cmd_parser_setup(self) -> None:
+        """Setup the command line argument parsers for the save command."""
+        try:
+            self.save_cmd_subparsers = self.save_cmd_parser.add_subparsers(
+                dest="save_cmd")
+            self.save_bm_store_subcmd_parser = self.save_cmd_subparsers.add_parser(
+                "budget_manager_store",
+                aliases=["store", "BMS"], 
+                help="Save the Budget Manager Store file.")
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise

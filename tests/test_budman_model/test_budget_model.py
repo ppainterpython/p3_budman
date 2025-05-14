@@ -18,100 +18,117 @@ import budman_model as p3bm
 logger = logging.getLogger(p3bm.THIS_APP_NAME)
 #endregion Globals
 # ---------------------------------------------------------------------------- +
-def test_budget_model_constructor() -> None:
-    """Test BudgetModel() constructor."""
+def test_budget_model_construction_with_no_config_object() -> None:
+    """Test BudgetModel() construction with no config_object."""
     try:
-        logger.info(test_budget_model_constructor.__doc__)
+        logger.info(test_budget_model_construction_with_no_config_object.__doc__)
+        # Expecting an empty core BudgetModel instance.
         bm = p3bm.BudgetModel()
         
-        # With bare BudgetModel.__init__(), this instance should be mostly empty.
-        #
+        # With no config_object provided to BudgetModel.__init__(), 
+        # this instance should be mostly empty.
         assert isinstance(bm, p3bm.BudgetModel), \
-            "Budget model should be a BudgetModel instance"        
-        assert not bm.bm_initialized, "Budget model should NOT be initialized"
-        assert bm.bdm_id is not None, \
-            "Budget model ID should not be None"
-        assert bm.bm_folder is None, "Budget folder should be None"
-        assert bm.bm_store is not None, \
-            "Budget model store path should not be None"
+            "BudgetModel() should return a BudgetModel instance"        
+        assert not bm.bm_initialized, "BudgetModel inst should NOT be initialized"
+        assert bm.bdm_id is not None, "bdm_id should be set, not be None"
+        assert bm.bm_folder is None, "bm_folder should be None"
+        assert bm.bdm_url is not None, "bdm_url should not be None"
         assert (bm.bm_fi_collection is not None and 
                 isinstance(bm.bm_fi_collection, dict) and 
                 len(bm.bm_fi_collection) == 0), \
-            "Financial institutions should empty dictionary"    
+            "bm_fi_collection should be empty dictionary"    
         assert (bm.bm_wf_collection is not None and 
                 isinstance(bm.bm_wf_collection, dict) and 
                 len(bm.bm_wf_collection) == 0), \
-            "WF_WORKFLOW_COLLECTION should empty dictionary"
-        assert bm.bm_options is not None, "Options should not be None"
-        assert bm.bm_created_date is not None, "Created date should not be None"
+            "bm_wf_collection should be empty dictionary"
+        assert bm.bm_options is not None, "bm_options should not be None"
+        assert bm.bm_created_date is not None, "bm_created_date should be set"
         assert bm.bm_last_modified_date is not None, \
-            "Last modified date should not be None"
+            "bm_last_modified_date should be set"
         assert bm.bm_last_modified_by is not None, \
-            "Last modified by should not be None"
-        assert bm.bm_working_data is not None, "Workflows should not be None"
+            "bm_last_modified_by should be set"
         assert (bm.bm_working_data is not None and 
                 isinstance(bm.bm_working_data, dict) and 
                 len(bm.bm_working_data) == 0), \
-            "WF_WORKING_DATA should empty dictionary"
+            "bm_working_data should empty dictionary"
+        logger.info(f"Complete:")
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         pytest.fail(f"BudgetModel() raised an exception: {str(e)}")
 # ---------------------------------------------------------------------------- +
-def test_budget_model_initialize_no_template() -> None:
-    """Test BudgetModel() constructor with no template."""
+def test_budget_model_construction_with_BMT_as_config_object() -> None:
+    """Test BudgetModel() construction with BMT as config_object."""
     try:
-        logger.info(test_budget_model_initialize_no_template.__doc__)
-        bm = p3bm.BudgetModel()
-        # Initialize the budget model with no template, force internal
-        # creation of the BudgetModelTemplate.
-        bm.bdm_initialize()
+        logger.info(test_budget_model_construction_with_BMT_as_config_object.__doc__)
+        # Expecting an empty core BudgetModel instance.
+        bm = p3bm.BudgetModel(p3bm.BudgetModelTemplate.get_budget_model_template())
         
-        # This instance should be empty.
+        # With no config_object provided to BudgetModel.__init__(), 
+        # this instance should be mostly empty.
         assert isinstance(bm, p3bm.BudgetModel), \
-            "Budget model should be a BudgetModel instance"        
-        assert bm._initialized, "Budget model should be initialized"
-        assert bm._created_date is not None, "Created date should not be None"
-        assert bm._last_modified_date is not None, \
-            "Last modified date should not be None"
-        assert bm._last_modified_by is not None, \
-            "Last modified by should not be None"
-        assert bm._options is not None, "Options should not be None"
-        assert bm._budget_folder is not None, "Budget folder should not be None"
-        assert bm._bdm_url is not None, \
-            "Budget model store path should not be None"
-        assert (bm._financial_institutions is not None and 
-                isinstance(bm._financial_institutions, dict) and 
-                len(bm._financial_institutions) > 0), \
-            "Financial institutions should non-empty dictionary"    
+            "BudgetModel() should return a BudgetModel instance"        
+        assert not bm.bm_initialized, "BudgetModel inst should NOT be initialized"
+        assert bm.bdm_id is not None, "bdm_id should be set, not be None"
+        assert bm.bm_folder is None, "bm_folder should be None"
+        assert bm.bdm_url is not None, "bdm_url should not be None"
+        assert (bm.bm_fi_collection is not None and 
+                isinstance(bm.bm_fi_collection, dict) and 
+                len(bm.bm_fi_collection) == 0), \
+            "bm_fi_collection should be empty dictionary"    
+        assert (bm.bm_wf_collection is not None and 
+                isinstance(bm.bm_wf_collection, dict) and 
+                len(bm.bm_wf_collection) == 0), \
+            "bm_wf_collection should be empty dictionary"
+        assert bm.bm_options is not None, "bm_options should not be None"
+        assert bm.bm_created_date is not None, "bm_created_date should be set"
+        assert bm.bm_last_modified_date is not None, \
+            "bm_last_modified_date should be set"
+        assert bm.bm_last_modified_by is not None, \
+            "bm_last_modified_by should be set"
+        assert (bm.bm_working_data is not None and 
+                isinstance(bm.bm_working_data, dict) and 
+                len(bm.bm_working_data) == 0), \
+            "bm_working_data should empty dictionary"
+        logger.info(f"Complete:")
     except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
         pytest.fail(f"BudgetModel() raised an exception: {str(e)}")
 # ---------------------------------------------------------------------------- +
 def test_budget_model_initialize_with_template() -> None:
     """Test BudgetModel() constructor with with template."""
     try:
         logger.info(test_budget_model_initialize_with_template.__doc__)
-        bmt = p3bm.BudgetModelTemplate()
-        bm = p3bm.BudgetModel()
-        # Initialize the budget model with a template
-        bm.bdm_initialize(bmt)
+        bm = p3bm.BudgetModel(p3bm.BudgetModelTemplate.get_budget_model_template())
+        # Initialize the budget model with the template as config_object.
+        bm.bdm_initialize()
         
-        # This instance should be empty.
+        # This instance should be full with resolved values and settings.
         assert isinstance(bm, p3bm.BudgetModel), \
             "Budget model should be a BudgetModel instance"        
-        assert bm._initialized, "Budget model should be initialized"
-        assert bm._created_date is not None, "Created date should not be None"
-        assert bm._last_modified_date is not None, \
-            "Last modified date should not be None"
-        assert bm._last_modified_by is not None, \
-            "Last modified by should not be None"
-        assert bm._options is not None, "Options should not be None"
-        assert bm._budget_folder is not None, "Budget folder should not be None"
-        assert bm._bdm_url is not None, \
-            "Budget model store should not be None"
-        assert (bm._financial_institutions is not None and 
-                isinstance(bm._financial_institutions, dict) and 
-                len(bm._financial_institutions) > 0), \
+        assert bm.bm_initialized, "Budget model should be initialized"
+        assert bm.bdm_id is not None, "bm.bdm_id should be set, not be None"
+        assert bm.bdm_config_object is not None, \
+            "bm.bdm_config_object should be set, not be None"
+        assert bm.bm_folder is not None, "bm.bm_folder should be set"
+        assert bm.bdm_url is not None, \
+            "bm.bdm_url should be None"
+        assert (bm.bm_fi_collection is not None and 
+                isinstance(bm.bm_fi_collection, dict) and 
+                len(bm.bm_fi_collection) > 0), \
             "Financial institutions should non-empty dictionary"    
+        assert (bm.bm_wf_collection is not None and 
+                isinstance(bm.bm_wf_collection, dict) and 
+                len(bm.bm_wf_collection) > 0), \
+            "bm.bm_wf_collection should be non-empty dictionary"    
+        assert bm.bm_options is not None, "bm.bm_options should be set"
+        assert bm.bm_created_date is not None, "bm.bm_created_date should be set"
+        assert bm.bm_last_modified_date is not None, \
+            "bm._last_modified_date should be set"
+        assert bm.bm_last_modified_by is not None, \
+            "bm.bm_last_modified_by should not be None"
+        assert (bm.bm_working_data is not None and 
+                isinstance(bm.bm_working_data, dict)), \
+            "bm.bm_working_data should be an empty dictionary"    
     except Exception as e:
         pytest.fail(f"BudgetModel() raised an exception: {str(e)}")
 # ---------------------------------------------------------------------------- +

@@ -31,11 +31,11 @@ class BudManCommandViewModel():
     #                                                                          +
     # ------------------------------------------------------------------------ +
     #region __init__() constructor method
-    def __init__(self,bm : p3bm.BudgetModel = None) -> None:
+    def __init__(self) -> None:
         super().__init__()
         self.intitialized : bool = False
         self.BUDMAN_STORE_loaded : bool = False
-        self.budget_model : p3bm.BudgetModel = bm
+        self.budget_model : p3bm.BudgetModel = None
         self.FI_KEY : str = None
         self.WF_KEY : str = None
         self.WB_TYPE : str = None
@@ -45,21 +45,24 @@ class BudManCommandViewModel():
     def initialize(self, load_user_store : bool = False) -> "BudManCommandViewModel":
         """Initialize the command view_model."""
         try:
+            st = p3u.start_timer()
+            logger.info(f"Start: Configure Budget Manager: ...")
             # Check if the budget model is initialized.
             if (self.budget_model is None or 
                 not isinstance(self.budget_model, p3bm.BudgetModel)):
                 # There is no valid budget_model. Load a BM_STORE file?
                 if load_user_store:
-                    # Load the budget model store from a BSM file.
-                    budman_store_dict = self.BUDMAN_STORE_load()
+                    # Use BM_STORE file as a config_object 
+                    config_object = self.BUDMAN_STORE_load()
                 else:
-                    # Create a new budget model.
-                    self.budget_model = p3bm.BudgetModel().bdm_initialize()
-                    # TODO: modify BudgetModel() to accect dict for config.: 
-                self.budget_model = p3bm.BudgetModel().bdm_initialize()
+                    # Use the builtin default template as a config_object.
+                    config_object = p3bm.BudgetModelTemplate.get_budget_model_template()
+                # Now to initialize the budget model.
+                self.budget_model = p3bm.BudgetModel(config_object).bdm_initialize()
             if not self.budget_model.bm_initialized: 
                 raise ValueError("BudgetModel is not initialized.")
             self.intitialized = True
+            logger.info(f"Complete: {p3u.stop_timer(st)}")
             return self
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
@@ -331,6 +334,39 @@ class BudManCommandViewModel():
     # ======================================================================== +
     #                                                                          +
     # ------------------------------------------------------------------------ +
+    def BUDMAN_STORE_save(self) -> None:
+        """Save the Budget Manager store (BUDMAN_STORE) file with the BSM.
+
+        Returns:
+            None: for success.
+        Raises:
+            RuntimeError: If the BUDMAN_STORE file cannot be saved.
+        """
+        try:
+            st = p3u.start_timer()
+            logger.info(f"Start: ...")
+            # Save the BUDMAN_STORE file with the BSM.
+            # Use the BUDMAN_STORE info configured in BUDMAN_SETTINGS.
+            budman_store_value = settings[p3bm.BUDMAN_STORE]
+            budman_folder = settings[p3bm.BUDMAN_FOLDER]
+            budman_folder_abs_path = Path(budman_folder).expanduser().resolve()
+            budman_store_abs_path = budman_folder_abs_path / budman_store_value
+            # Update some values prior to saving.
+            self.budget_model.bdm_url = budman_store_abs_path.as_uri()
+            self.budget_model.bm_last_modified_date = p3u.now_iso_date_string()
+            self.budget_model.bm_last_modified_by = getpass.getuser()
+            # Get a Dict of the BudgetModel to store.
+            budget_model_dict = self.budget_model.to_dict()
+            # Save the BUDMAN_STORE file.
+            p3bm.bsm_BUDMAN_STORE_save(budget_model_dict, budman_store_abs_path)
+            logger.info(f"Saved BUDMAN_STORE file: {budman_store_abs_path}")
+            logger.info(f"Complete: {p3u.stop_timer(st)}")
+            return None
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion BUDMAN_STORE_load() method
+    # ------------------------------------------------------------------------ +
     #region BUDMAN_STORE_load() method
     def BUDMAN_STORE_load(self) -> Dict:
         """Load the Budget Manager store (BUDMAN_STORE) file from the BSM.
@@ -341,6 +377,8 @@ class BudManCommandViewModel():
             Dict: The BudgetModel store as a dictionary.
         """
         try:
+            st = p3u.start_timer()
+            logger.info(f"Start: ...")
             # Load the BUDMAN_STORE file with the BSM.
             # Use the BUDMAN_STORE configured in BUDMAN_SETTINGS.
             budman_store_value = settings[p3bm.BUDMAN_STORE]
@@ -350,6 +388,7 @@ class BudManCommandViewModel():
             # Load the BUDMAN_STORE file.
             budman_store_dict = p3bm.bsm_BUDMAN_STORE_load(budman_store_abs_path)
             self.BUDMAN_STORE_loaded = True
+            logger.info(f"Complete: {p3u.stop_timer(st)}")
             return budman_store_dict
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))

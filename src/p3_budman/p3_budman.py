@@ -66,7 +66,7 @@ def budman_app_cli_cmdloop():
     """CLI cmdloop function."""
     try:
         bmvm = p3bmvm.BudManCommandViewModel()
-        bmvm.initialize() # Initialize the BudgetModelCommandViewModel
+        bmvm.initialize(load_user_store=True) # Initialize the BudgetModelCommandViewModel
         p3bmv.BudgetModelCLIView(bmvm).initialize().cmdloop() # Application CLI loop
         _ = "pause"
     except Exception as e:

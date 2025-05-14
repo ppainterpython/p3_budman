@@ -15,6 +15,7 @@ __description__ = "Budget Manager (BudMan) a p3 application."
 __license__ = "MIT"
 
 from .budget_model_constants import *
+
 from .budget_domain_model_identity import (
     BudgetDomainModelIdentity,
 )
@@ -30,8 +31,8 @@ from .budget_model_template import (
     tryout_budget_model_template)
 
 from .budget_storage_model import (
-    bsm_BUDMAN_STORE_load,    # bsm_save,
-    # bsm_load,
+    bsm_BUDMAN_STORE_load,
+    bsm_BUDMAN_STORE_save,
     budget_storage_model_new,
 )
 
@@ -49,10 +50,9 @@ from .budget_category_mapping import (
 __all__ = [
     "BudgetDomainModelIdentity",
     "bsm_BUDMAN_STORE_load",
+    "bsm_BUDMAN_STORE_save",
     "budget_storage_model_new",
-    "bsm_save",
-    "bsm_load",
-    "bsm_bm_store_abs_path",
+    "bsm_bdm_url_abs_path",
     "BudgetModel",
     "log_BDM_info",
     "log_BSM_info",
@@ -62,14 +62,3 @@ __all__ = [
     "check_budget_model",
     "__create_config_template__"
 ]
-
-def __create_config_template__() -> BudgetModelTemplate:
-    """Create a BudgetModelTemplate instance."""
-    """
-
-    Returns:
-        BudgetModelTemplate: A BudgetModelTemplate instance.
-    """
-    # Create a BudgetModelTemplate instance.
-    bmt = BudgetModelTemplate()
-    return bmt

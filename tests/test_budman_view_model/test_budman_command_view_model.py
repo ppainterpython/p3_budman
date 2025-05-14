@@ -9,9 +9,9 @@ from pathlib import Path
 # third-party libraries
 import inspect
 from config import settings
+import logging, p3_utils as p3u, p3logging as p3l
 
 # local libraries
-import logging, p3_utils as p3u, p3logging as p3l
 import budman_model as p3bm
 import budman_view_model.budman_command_view_model as p3bmvm
 #endregion imports
@@ -24,7 +24,8 @@ def test_BUDMAN_STORE_load():
     """Test the BudManCommandViewModel.BUDMAN_STORE_load() method."""
     try:
         logger.info(test_BUDMAN_STORE_load.__doc__)
-        # Create a BudgetDomainModelIdentity instance.
+        # Create a BudgetDomainModelIdentity instance and initialize it
+        # from the user's BM_STORE file.
         bmvm = p3bmvm.BudManCommandViewModel().initialize(load_user_store=True)
         assert isinstance(bmvm, p3bmvm.BudManCommandViewModel), \
             "Expected BudManCommandViewModel, got: " + str(type(bmvm))

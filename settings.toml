@@ -8,4 +8,5 @@ short_app_name = "budman"         # ditto
 [budman]
 budget_manager_folder = "~/OneDrive/budget"   # Where data files will go
 budget_manager_store = "p3_budget_manager_ca063e8b.jsonc"  # a BSM file
+budget_manager_store_filetype = ".jsonc"  # a BSM filetype
 

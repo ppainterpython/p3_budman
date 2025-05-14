@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import List, Dict
 
 # third-party modules and packages
+from config import settings
 import p3_utils as p3u, pyjson5, p3logging as p3l
 
 # local modules and packages
@@ -49,16 +50,17 @@ class BudgetDomainModelIdentity:
     """
     def __init__(self, 
                  uid : str = None, 
-                 filename : str = THIS_APP_NAME,
-                 filetype : str = BSM_DEFAULT_BUDGET_MODEL_FILE_TYPE) -> None:
+                 filename : str = settings[APP_NAME],
+                 filetype : str = settings[BUDMAN_STORE_FILETYPE]) -> None:
         """Initialize the BudgetDomainModelIdentity class.
 
         Args:
             uid : str to use as uniqueness.
         """
         self._uid = uuid.uuid4().hex[:8] if uid is None else uid
-        self._name : str = filename
-        self._filename : str = f"{filename}_{self._uid}{filetype}"
+        self._name : str = filename if filename is not None else THIS_APP_NAME
+        filetype_alt = filetype if filetype is not None else BSM_DEFAULT_BUDGET_MODEL_FILE_TYPE
+        self._filename : str = f"{filename}_{self._uid}{filetype_alt}"
         self._bdm_folder : str = BM_DEFAULT_BUDGET_FOLDER
     # ------------------------------------------------------------------------ +
     #region Properties

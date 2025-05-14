@@ -31,6 +31,7 @@ BUDGET_CATEGORY_COL = "Budget Category"
 
 # BudgetModel (BM) class attribute name Constants
 BDM_ID = "_bdm_id"
+BDM_CONFIG_OBJECT = "_bdm_config_object"
 BM_INITIALIZED = "_initialized"
 BM_FOLDER = "_budget_folder"
 BDM_URL = "_bdm_url"
@@ -45,7 +46,8 @@ BM_VALID_PROPERTIES = (BM_INITIALIZED, BM_FOLDER, BDM_URL,
                     BM_FI_COLLECTION, BM_WF_COLLECTION,  BM_OPTIONS,
                     BM_CREATED_DATE, BM_LAST_MODIFIED_DATE, 
                     BM_LAST_MODIFIED_BY, BM_WORKING_DATA)
-BSM_PERSISTED_PROPERTIES = (BM_FOLDER, BM_FI_COLLECTION, BM_WF_COLLECTION,  
+BSM_PERSISTED_PROPERTIES = (BDM_ID, BM_FOLDER, 
+                            BM_FI_COLLECTION, BM_WF_COLLECTION,  
                             BM_OPTIONS,
                             BM_CREATED_DATE, BM_LAST_MODIFIED_DATE, 
                             BM_LAST_MODIFIED_BY)
@@ -54,6 +56,7 @@ BSM_PERSISTED_PROPERTIES = (BM_FOLDER, BM_FI_COLLECTION, BM_WF_COLLECTION,
 BUDMAN_SETTINGS = "settings.toml"
 BUDMAN_FOLDER = "budman.budget_manager_folder" 
 BUDMAN_STORE = "budman.budget_manager_store" 
+BUDMAN_STORE_FILETYPE = "budman.budget_manager_store_filetype"
 APP_NAME = "app_name"
 SHORT_APP_NAME = "short_app_name"
 

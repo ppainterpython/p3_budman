@@ -22,10 +22,10 @@ def test_budget_storage_model_new():
     """Test bsm_budget_storage_model_new() function."""
     try:
         logger.info(test_budget_storage_model_new.__doc__)
-        bm_store_path_str = p3bm.budget_storage_model_new()
-        assert bm_store_path_str is not None, \
+        bdm_url_path_str = p3bm.budget_storage_model_new()
+        assert bdm_url_path_str is not None, \
             "Budget model store path should not be None"
-        assert Path(bm_store_path_str).exists(), \
+        assert Path(bdm_url_path_str).exists(), \
             "Budget model store path should exist"
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
@@ -50,13 +50,13 @@ def test_budget_storage_model_new():
 #     """Test bsm_load() function."""
 #     try:
 #         logger.info(test_bsm_load.__doc__)
-#         bm = p3bm.BudgetModel().bdm_initialize(bm_store_dict)
-#         store_abs_path = p3bm.bsm_bm_store_abs_path()
+#         bm = p3bm.BudgetModel().bdm_initialize(bdm_url_dict)
+#         store_abs_path = p3bm.bsm_bdm_url_abs_path()
 #         assert store_abs_path is not None, \
 #             "Budget model store path should not be None"
 #         assert isinstance(store_abs_path, Path), \
 #             "Budget model store path should be a Path object"
-#         assert isinstance((bm_store_dict := p3bm.bsm_load(store_abs_path)), dict), \
+#         assert isinstance((bdm_url_dict := p3bm.bsm_load(store_abs_path)), dict), \
 #             "Budget model store should be a dictionary"
 
 
