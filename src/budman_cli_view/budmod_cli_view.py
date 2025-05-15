@@ -77,11 +77,13 @@ def load_cmd_parser() -> Cmd2ArgumentParser:
     return cli_parser.load_cmd_parser if cli_parser else None
 def save_cmd_parser() -> Cmd2ArgumentParser:
     return cli_parser.save_cmd_parser if cli_parser else None
+def val_cmd_parser() -> Cmd2ArgumentParser:
+    return cli_parser.val_cmd_parser if cli_parser else None
 def show_args_only(self,opts) -> bool:
     oc = vars(opts).copy()
     oc.pop('cmd2_statement')
     oc.pop('cmd2_handler')
-    self.poutput(f"args: {str(oc)}")
+    self.poutput(f"args: {str(oc)} parse_only: {self.parse_only}")
     return self.parse_only
 class BudgetModelCLIView(cmd2.Cmd):
     # ======================================================================== +
@@ -134,6 +136,7 @@ class BudgetModelCLIView(cmd2.Cmd):
     # ======================================================================== +
     #region CLIViewModel Cmd methods
     # ======================================================================== +
+    #                                                                          +
     # ------------------------------------------------------------------------ +
     #region init command - initialize aspects of the BudgetModel application.
     @with_argparser(init_cmd_parser())
@@ -160,17 +163,8 @@ class BudgetModelCLIView(cmd2.Cmd):
         """Show BugetModel domain information."""
         try:
             if show_args_only(self, opts): return
-            # self.poutput(f"args: {str(opts)}")
-
             if opts.show_cmd in ["workbook", "wb", "WB"]:
-                wb_name = opts.wb_name if opts.wb_name else None
-                c = self.data_context.FI_get_loaded_workbooks_count()
-                self.poutput(f"Loaded workbooks: {c}")
-                if c > 0:
-                    names = self.data_context.FI_get_loaded_workbook_names()
-                    [self.poutput(f"  {i}: {n}") for i, n in enumerate(names)]
-                else:
-                    self.poutput("No loaded workbooks.")
+                self.show_workbooks_subcommand(opts)
             elif opts.show_cmd in ["financial_institution", "fi", "FI"]:
                 fi_key = opts.fi_key if opts.fi_key else None
                 c = self.data_context.FI_get_loaded_workbooks_count()
@@ -216,14 +210,21 @@ class BudgetModelCLIView(cmd2.Cmd):
                 self.poutput("Budget Manager Store saved.")
             elif opts.save_cmd in ["workbook", "wb", "WB"]:
                 wb_ref = opts.wb_ref if opts.wb_ref else None
-                self.data_context.FI_save_workbook(wb_name)
-                self.poutput(f"Workbook {wb_name} saved.")
+                # self.data_context.FI_save_workbook(wb_name)
+                self.poutput(f"Workbook {wb_ref} saved.")
             else:
                 self.poutput("No workbooks to save.")
         except Exception as e:
             self.perror(f"Error saving Budget Manager Store: {e}")
     #endregion Save command - save workbooks
     # ------------------------------------------------------------------------ +    
+    #region Val command - workbooks, status, etc.
+    @with_argparser(val_cmd_parser())
+    def do_val(self, opts):
+        """Val command to examine and set Buget Manager information."""
+        self.val_command(opts)
+    #endregion Val command
+    # ------------------------------------------------------------------------ +
     #region exit and quit commands
     def do_exit(self, line: str):
         """Exit the BudgetModel CLI."""
@@ -237,6 +238,58 @@ class BudgetModelCLIView(cmd2.Cmd):
     #endregion exit and quit commands
     # ------------------------------------------------------------------------ +    
     #endregion CLIViewModel Cmd methods
+    # ======================================================================== +
+
+    # ======================================================================== +
+    #region Command and Subcommand Execution methods
+    # ======================================================================== +
+    #                                                                          +
+    # ------------------------------------------------------------------------ +    
+    #region show_workbooks_subcommand() method
+    def show_workbooks_subcommand(self, opts) -> None:
+        """Show loaded workbook information."""
+        try:
+            wb_c = self.data_context.FI_get_loaded_workbooks_count()
+            if wb_c == 0:
+                self.poutput("No loaded workbooks.")
+                return
+            if opts.wb_ref == 'all':
+                self.poutput(f"Loaded workbooks: {wb_c}")
+                wbl = self.data_context.FI_get_loaded_workbooks()
+                for i, (wb_name, wb) in enumerate(wbl):
+                    doc_props = wb.properties
+                    mod = doc_props.modified
+                    self.poutput(f"  {i}: {wb_name} ({mod})")
+            else:
+                self.poutput(f"Show: workbook({opts.wb_ref})")
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion show_workbooks_subcommand() method
+    # ------------------------------------------------------------------------ +
+    #region val_command() method
+    def val_command(self, opts) -> None:
+        """Show loaded workbook information."""
+        try:
+            _ = show_args_only(self, opts)
+            if opts.val_cmd in ["parse_only", "po", "PO"]:
+                if opts.po_value == "toggle":
+                    self.parse_only = not self.parse_only
+                elif opts.po_value == "on":
+                    self.parse_only = True
+                elif opts.po_value == "off":
+                    self.parse_only = False
+                else:
+                    self.poutput("Invalid value for parse_only. "
+                                 "Use on|off|toggle.")
+                self.poutput(f"parse_only: {self.parse_only}")
+                return
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion val_command() method
+    # ------------------------------------------------------------------------ +
+    #endregion Command and Subcommand Execution methods
     # ======================================================================== +
 
 # ---------------------------------------------------------------------------- +

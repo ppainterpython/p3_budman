@@ -52,10 +52,12 @@ class BudgetModelCLIParser():
         self.show_cmd_parser = BudManCmd2ArgumentParser()
         self.load_cmd_parser = BudManCmd2ArgumentParser()
         self.save_cmd_parser = BudManCmd2ArgumentParser()
+        self.val_cmd_parser = BudManCmd2ArgumentParser()
         self.init_cmd_parser_setup()
         self.show_cmd_parser_setup()
         self.load_cmd_parser_setup()
         self.save_cmd_parser_setup()
+        self.val_cmd_parser_setup()
 
     def setup(self) -> None:
         """Setup the command line argument parsers."""
@@ -120,7 +122,7 @@ class BudgetModelCLIParser():
             self.show_wf_subcmd_parser.add_argument(
                 "wf_key", nargs="?", 
                 action="store", 
-                default=None,
+                default='all',
                 help="Workflow key value.")
             # show WB subcommand
             self.show_wb_subcmd_parser  = self.show_cmd_subparsers.add_parser(
@@ -128,9 +130,9 @@ class BudgetModelCLIParser():
                 aliases=["wb", "WB"], 
                 help="Show workbook information.")
             self.show_wb_subcmd_parser.add_argument(
-                "wb_name", nargs="?", 
+                "wb_ref", nargs="?", 
                 action="store", 
-                default=None,
+                default='all',
                 help="Workbook name.")
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
@@ -172,9 +174,47 @@ class BudgetModelCLIParser():
             self.save_wb_subcmd_parser.add_argument(
                 "wb_ref", nargs="?", 
                 action="store", 
-                default=None,
+                default='all',
                 help="Workbook reference, name or number from show workbooks.")
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise
+    def val_cmd_parser_setup(self) -> None:
+        """Examine or Set values in the application settings and data."""
+        try:
+            self.val_cmd_subparsers = self.val_cmd_parser.add_subparsers(
+                dest="val_cmd")
+            # set parse_only subcommand
+            self.val_po_subcmd_parser = self.val_cmd_subparsers.add_parser(
+                "parse_only",
+                aliases=["po", "PO"], 
+                help="Set cli to parse-only mode to on|off|toggle ")
+            self.val_po_subcmd_parser.add_argument(
+                "po_value", nargs="?", 
+                default= "toggle",
+                help="parse-only value: on | off | toggle.")
+            # set wf_key subcommand
+            self.val_wf_key_subcmd_parser = self.val_cmd_subparsers.add_parser(
+                "current_wf_key",
+                aliases=["wf", "WF"], 
+                help="Set current wf_key value.")
+            self.val_wf_key_subcmd_parser.add_argument(
+                "wf_key", nargs="?", 
+                action="store", 
+                default='all',
+                help="wf_key value for valid workflow or 'all'.")
+            # show fi_key subcommand
+            self.val_fi_key_subcmd_parser  = self.val_cmd_subparsers.add_parser(
+                "current_fi_key",
+                aliases=["fi", "FI"], 
+                help="Set current fi_key.")
+            self.val_fi_key_subcmd_parser.add_argument(
+                "fi_ref", nargs="?", 
+                action="store", 
+                default='all',
+                help="fi_key value for valid Fin. Inst. or 'all'.")
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise
+
     # ------------------------------------------------------------------------ +

@@ -13,7 +13,7 @@ from typing import List, Type, Generator, Dict, Tuple, Any
 # third-party modules and packages
 from config import settings
 import p3_utils as p3u, pyjson5, p3logging as p3l
-from openpyxl import Workbook, load_workbook, save_workbook
+from openpyxl import Workbook, load_workbook
 
 # local modules and packages
 import budman_model as p3bm
@@ -304,6 +304,17 @@ class BudManCommandViewModel():
             logger.error(p3u.exc_err_msg(e))
             raise
     #endregion FI_get_loaded_workbooks_count() method
+    # ------------------------------------------------------------------------ +
+    #region FI_get_loaded_workbooks() method
+    def FI_get_loaded_workbooks(self) -> List[str]: 
+        """Return names of all loaded workbooks from Data Context."""
+        try:
+            # Reference the BDWD_LOADED_WORKBOOKS.
+            return self.budget_model.bdwd_LOADED_WORKBOOKS_get()
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion FI_get_loaded_workbook_names() method
     # ------------------------------------------------------------------------ +
     #region FI_get_loaded_workbook_names() method
     def FI_get_loaded_workbook_names(self) -> List[str]: 
