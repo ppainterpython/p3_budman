@@ -80,6 +80,18 @@ def save_cmd_parser() -> BudManCmd2ArgumentParser:
 def val_cmd_parser() -> BudManCmd2ArgumentParser:
     return cli_parser.val_cmd_parser if cli_parser else None
 
+def _filter_opts(opts) -> Dict[str, Any]:
+    if opts is None: return {}
+    oc = vars(opts).copy()
+    oc.pop('cmd2_statement')
+    oc.pop('cmd2_handler')
+    return oc
+def _log_cli_cmd_execute(self, opts):
+    """Log the command and options. Retrun True if parse_only."""
+    logger.info(f"Execute Command: {str(_filter_opts(opts))}")
+    return self.parse_only
+def _log_cli_cmd_complete(self, opts):
+    logger.info(f"Complete Command: {str(_filter_opts(opts))}")
 def _show_args_only(cli_view : "BudgetManagerCLIView", opts) -> bool:
     oc = vars(opts).copy()
     oc.pop('cmd2_statement')
@@ -87,6 +99,9 @@ def _show_args_only(cli_view : "BudgetManagerCLIView", opts) -> bool:
     cli_view.poutput(f"args: {str(oc)} parse_only: {cli_view.parse_only}")
     return cli_view.parse_only
 
+BMCLI_SYSTEM_EXIT_WARNING = "Not exiting due to SystemExit"
+PO_OFF_PROMPT = "p3budman> "
+PO_ON_PROMPT = "po-p3budman> "
 class BudgetManagerCLIView(cmd2.Cmd):
     # ======================================================================== +
     #region BudgetManagerCLIView class
@@ -97,8 +112,8 @@ class BudgetManagerCLIView(cmd2.Cmd):
     command structure and argpars handles the argument lists for each command.
     TODO: Use ABC for view_model interface.
     """
-    prompt = "p3b> "
-    intro = "Welcome to the BudgetModel CLI. Type help or ? to list commands.\n"
+    prompt = "budman> "
+    intro = "\nWelcome to the Budget Manager CLI. Type help or ? to list commands.\n"
 
     def __init__(self, data_context : object | MockViewModel = None) -> None:
         super().__init__()
@@ -107,7 +122,8 @@ class BudgetManagerCLIView(cmd2.Cmd):
         self.terminal_width = 100 # TODO: add to settings.
         self.cli_parser : BudgetManagerCLIParser = cli_parser
         self._data_context = MockViewModel() if data_context is None else data_context
-    
+        BudgetManagerCLIView.prompt = PO_ON_PROMPT if self.parse_only else PO_OFF_PROMPT
+    # ------------------------------------------------------------------------ +
     @property
     def data_context(self) -> object:
         """Get the data_context property."""
@@ -143,18 +159,14 @@ class BudgetManagerCLIView(cmd2.Cmd):
     #region init command - initialize aspects of the BudgetModel application.
     @with_argparser(init_cmd_parser())
     def do_init(self, opts):
-        """Init BugetModel properties and values.."""
+        """Init the data context in the Budget Manager application."""
         try:
-            if _show_args_only(self, opts): return
-            # self.poutput(f"args: {str(opts)}")
-            if self.parse_only: return
-            if opts.init_cmd in ["financial_institution", "fi", "FI"]:
-                fi_key = opts.fi_key if opts.fi_key else None
-                self.data_context.FI_init_cmd(opts.fi_key)
-                self.poutput(f"Initialized financial institution: {fi_key}")
+            if _log_cli_cmd_execute(self, opts): return
+            self.init_command(opts)
+            _log_cli_cmd_complete(self, opts)
         except SystemExit:
             # Handle the case where argparse exits the program
-            self.pwarning("Not exiting due to SystemExit")
+            self.pwarning(BMCLI_SYSTEM_EXIT_WARNING)
         except Exception as e:
             self.pexcept(e)
     #endregion init command - initialize aspects of the BudgetModel application.
@@ -162,9 +174,103 @@ class BudgetManagerCLIView(cmd2.Cmd):
     #region Show command - workbooks, status, etc.
     @with_argparser(show_cmd_parser())
     def do_show(self, opts):
-        """Show BugetModel domain information."""
+        """Show information in the Budget Manager application."""
         try:
-            if _show_args_only(self, opts): return
+            if _log_cli_cmd_execute(self, opts): return
+            self.show_command(opts)
+            _log_cli_cmd_complete(self, opts)
+        except SystemExit as e:
+            # Handle the case where argparse exits the program
+            self.pwarning(BMCLI_SYSTEM_EXIT_WARNING)
+        except Exception as e:
+            self.pexcept(e)
+    #endregion Show command
+    # ------------------------------------------------------------------------ +
+    #region Load command - load workbooks
+    @with_argparser(load_cmd_parser())
+    def do_load(self, opts):
+        """Load data in the Budget Manager application."""
+        try:
+            if _log_cli_cmd_execute(self, opts): return
+            self.poutput("BudgetModel loaded.")
+            _log_cli_cmd_complete(self, opts)
+        except SystemExit as e:
+            # Handle the case where argparse exits the program
+            self.pwarning(BMCLI_SYSTEM_EXIT_WARNING)
+        except Exception as e:
+            self.pexcept(e)
+    #endregion Load command - load workbooks
+    # ------------------------------------------------------------------------ +
+    #region Save command - save workbooks
+    @with_argparser(save_cmd_parser())
+    def do_save(self, opts):
+        """Save data in the Budget Manager application."""
+        try:
+            if _log_cli_cmd_execute(self, opts): return
+            self.save_command(opts)
+            _log_cli_cmd_complete(self, opts)
+        except SystemExit as e:
+            # Handle the case where argparse exits the program
+            self.pwarning(BMCLI_SYSTEM_EXIT_WARNING)
+        except Exception as e:
+            self.pexcept(e)
+    #endregion Save command - save workbooks
+    # ------------------------------------------------------------------------ +    
+    #region Val command - workbooks, status, etc.
+    @with_argparser(val_cmd_parser())
+    def do_val(self, opts):
+        """Val command to examine and set values in Budget Manager application."""
+        try:
+            _ = _log_cli_cmd_execute(self, opts)
+            self.val_command(opts)
+            _log_cli_cmd_complete(self, opts)
+        except SystemExit:
+            # Handle the case where argparse exits the program
+            self.pwarning(BMCLI_SYSTEM_EXIT_WARNING)
+        except Exception as e:
+            self.pexcept(e)
+    #endregion Val command
+    # ------------------------------------------------------------------------ +
+    #region exit and quit commands
+    def do_exit(self, opts):
+        """Exit the Budget Manager CLI."""
+        if _log_cli_cmd_execute(self, opts): return
+        print("Exiting Budget Manager CLI.")
+        _log_cli_cmd_complete(self, opts)
+        return True 
+    def do_quit(self, opts):
+        """Quit the BudgetModel CLI."""
+        if _log_cli_cmd_execute(self, opts): return
+        print("Quitting BudgetModel CLI.")
+        _log_cli_cmd_complete(self, opts)
+        return True 
+    #endregion exit and quit commands
+    # ------------------------------------------------------------------------ +    
+    #endregion CLIViewModel Cmd methods
+    # ======================================================================== +
+
+    # ======================================================================== +
+    #region Command and Subcommand Execution methods
+    # ======================================================================== +
+    #                                                                          +
+    # ------------------------------------------------------------------------ +
+    #region init_command() method
+    def init_command(self, opts) -> None:
+        """Execute the Init command."""
+        try:
+            if opts.init_cmd in ["financial_institution", "fi", "FI"]:
+                fi_key = opts.fi_key if opts.fi_key else None
+                self.data_context.FI_init_cmd(opts.fi_key)
+                self.poutput(f"Initialized financial institution: {fi_key}")
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion init_command() method
+    # ------------------------------------------------------------------------ +
+    #region show_command() method
+    def show_command(self, opts) -> None:
+        """Execute the Show command."""
+        try:
             if opts.show_cmd in ["workbook", "wb", "WB"]:
                 self.show_workbooks_subcommand(opts)
             elif opts.show_cmd in ["financial_institution", "fi", "FI"]:
@@ -176,76 +282,10 @@ class BudgetManagerCLIView(cmd2.Cmd):
                     [self.poutput(f"  {i}: {n}") for i, n in enumerate(names)]
                 else:
                     self.poutput("No loaded workbooks.")
-        # except Cmd2Arg as e:
-        #     print(f"Error parsing arguments: {e}")
-        except SystemExit as e:
-            # Handle the case where argparse exits the program
-            # print("Exiting due to SystemExit")
-            pass
         except Exception as e:
-            self.perror(f"Error showing BudgetModel: {e}")
-    #endregion Show command
-    # ------------------------------------------------------------------------ +
-    #region Load command - load workbooks
-    @with_argparser(load_cmd_parser())
-    def do_load(self, opts):
-        """Load BugetModel data items into app session."""
-        try:
-            if _show_args_only(self, opts): return
-            # self.poutput(f"args: {str(opts)}")
-
-            print("BudgetModel loaded.")
-        except Exception as e:
-            self.pexcept(e)
-    #endregion Load command - load workbooks
-    # ------------------------------------------------------------------------ +
-    #region Save command - save workbooks
-    @with_argparser(save_cmd_parser())
-    def do_save(self, opts):
-        """Save the BUDMAN_STORE file."""
-        try:
-            if _show_args_only(self, opts): return
-            # self.poutput(f"args: {str(opts)}")
-            if (opts.save_cmd is None or 
-                opts.save_cmd in ["budget_manager_store", "store", "BMS"]):
-                self.data_context.BUDMAN_STORE_save()
-                self.poutput("Budget Manager Store saved.")
-            elif opts.save_cmd in ["workbook", "wb", "WB"]:
-                wb_ref = opts.wb_ref if opts.wb_ref else None
-                # self.data_context.FI_save_workbook(wb_name)
-                self.poutput(f"Workbook {wb_ref} saved.")
-            else:
-                self.poutput("No workbooks to save.")
-        except Exception as e:
-            self.perror(f"Error saving Budget Manager Store: {e}")
-    #endregion Save command - save workbooks
-    # ------------------------------------------------------------------------ +    
-    #region Val command - workbooks, status, etc.
-    @with_argparser(val_cmd_parser())
-    def do_val(self, opts):
-        """Val command to examine and set Buget Manager information."""
-        self.val_command(opts)
-    #endregion Val command
-    # ------------------------------------------------------------------------ +
-    #region exit and quit commands
-    def do_exit(self, line: str):
-        """Exit the BudgetModel CLI."""
-        print("Exiting BudgetModel CLI.")
-        return True
-    
-    def do_quit(self, line: str):
-        """Quit the BudgetModel CLI."""
-        print("Quitting BudgetModel CLI.")
-        return True 
-    #endregion exit and quit commands
-    # ------------------------------------------------------------------------ +    
-    #endregion CLIViewModel Cmd methods
-    # ======================================================================== +
-
-    # ======================================================================== +
-    #region Command and Subcommand Execution methods
-    # ======================================================================== +
-    #                                                                          +
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion show_command() method
     # ------------------------------------------------------------------------ +    
     #region show_workbooks_subcommand() method
     def show_workbooks_subcommand(self, opts) -> None:
@@ -269,9 +309,30 @@ class BudgetManagerCLIView(cmd2.Cmd):
             raise
     #endregion show_workbooks_subcommand() method
     # ------------------------------------------------------------------------ +
+    #region save_command() method
+    def save_command(self, opts) -> None:
+        """Execute the Save command."""
+        try:
+            if (opts.save_cmd is None or 
+                opts.save_cmd in ["budget_manager_store", "store", "BMS"]):
+                # Save the BUDMAN_STORE
+                self.data_context.BUDMAN_STORE_save()
+                self.poutput("Budget Manager Store (BM_STORE) saved.")
+            elif opts.save_cmd in ["workbook", "wb", "WB"]:
+                # Save one or more workbooks.
+                wb_ref = opts.wb_ref if opts.wb_ref else None
+                # self.data_context.FI_save_workbook(wb_name)
+                self.poutput(f"Workbook {wb_ref} saved.")
+            else:
+                self.poutput(f"Nothing to do here: {str(opts)}.")
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion save_command() method
+    # ------------------------------------------------------------------------ +
     #region val_command() method
     def val_command(self, opts) -> None:
-        """Show loaded workbook information."""
+        """Examine or set values in Budget Manager."""
         try:
             _ = _show_args_only(self, opts)
             if opts.val_cmd in ["parse_only", "po", "PO"]:

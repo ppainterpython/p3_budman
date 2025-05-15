@@ -47,7 +47,6 @@ class BudgetManagerCLIParser():
     """
     def __init__(self) -> None:
         """Initialize the BudgetModelCLIParser class."""
-        # self.view_cmd : cmd2.Cmd = view_cmd_input
         self.init_cmd_parser = BudManCmd2ArgumentParser()
         self.show_cmd_parser = BudManCmd2ArgumentParser()
         self.load_cmd_parser = BudManCmd2ArgumentParser()
@@ -59,39 +58,26 @@ class BudgetManagerCLIParser():
         self.save_cmd_parser_setup()
         self.val_cmd_parser_setup()
 
-    # def setup(self) -> None:
-    #     """Setup the command line argument parsers."""
-    #     try:
-    #         if self.view_cmd is None or not isinstance(self.view_cmd, cmd2.Cmd):
-    #             m = "BudgetModelCLIParser: Error with configuration. "
-    #             m += "view_cmd is None or not a cmd2.Cmd object."
-    #             raise RuntimeError(m)
-    #         # Initialize the command line argument parsers.
-    #         self.init_cmd_parser_setup()
-    #         self.show_cmd_parser_setup()
-    #         self.load_cmd_parser_setup()
-    #     except Exception as e:
-    #         logger.exception(p3u.exc_err_msg(e))
-    #         raise
-
     def init_cmd_parser_setup(self) -> None:
         """Setup the command line argument parsers for the init command."""
         try:
             self.init_cmd_subparsers = self.init_cmd_parser.add_subparsers(
                 dest="init_cmd")
             self.init_wb_subcmd_parser = self.init_cmd_subparsers.add_parser(
-                "workbooks",
+                "workbooks", 
                 aliases=["wb", "WB"], 
                 help="Initialize workbook(s).")
+            self.init_wb_subcmd_parser.set_defaults(init_cmd="workbooks")
             self.init_wb_subcmd_parser.add_argument(
-                "wb_name", nargs="?", 
+                "wb_name", nargs="?",
                 action="store", 
                 default=None,
                 help="Workbook name.")
             self.init_fi_subcmd_parser = self.init_cmd_subparsers.add_parser(
-                "financial_institutions",
-                aliases=["fi", "FI"], 
+                "fin_inst",
+                aliases=["fi", "FI", "financial_institutions"], 
                 help="Initialize Financial Institution(s).")
+            self.init_fi_subcmd_parser.set_defaults(init_cmd="fin_inst")
             self.init_fi_subcmd_parser.add_argument(
                 "fi_key", nargs="?", 
                 default= "all",
@@ -107,9 +93,10 @@ class BudgetManagerCLIParser():
                 dest="show_cmd")
             # show FI subcommand
             self.show_fi_subcmd_parser = self.show_cmd_subparsers.add_parser(
-                "financial_institutions",
-                aliases=["fi", "FI"], 
+                "fin_inst",
+                aliases=["fi", "FI", "financial_institutions"], 
                 help="Show Financial Institution information.")
+            self.show_fi_subcmd_parser.set_defaults(show_cmd="fin_inst")
             self.show_fi_subcmd_parser.add_argument(
                 "fi_key", nargs="?", 
                 default= "all",
@@ -119,6 +106,7 @@ class BudgetManagerCLIParser():
                 "workflows",
                 aliases=["wf", "WF"], 
                 help="Show Workflow information.")
+            self.show_wf_subcmd_parser.set_defaults(show_cmd="workflows")
             self.show_wf_subcmd_parser.add_argument(
                 "wf_key", nargs="?", 
                 action="store", 
@@ -129,6 +117,7 @@ class BudgetManagerCLIParser():
                 "workbooks",
                 aliases=["wb", "WB"], 
                 help="Show workbook information.")
+            self.show_wb_subcmd_parser.set_defaults(show_cmd="workbooks")
             self.show_wb_subcmd_parser.add_argument(
                 "wb_ref", nargs="?", 
                 action="store", 
@@ -163,14 +152,16 @@ class BudgetManagerCLIParser():
             self.save_cmd_subparsers = self.save_cmd_parser.add_subparsers(
                 dest="save_cmd")
             self.save_bm_store_subcmd_parser = self.save_cmd_subparsers.add_parser(
-                "budget_manager_store",
-                aliases=["store", "BMS"], 
+                "BUDMAN_STORE",
+                aliases=["store", "BMS", "budget_manager_store","BUDMAN_STORE"], 
                 help="Save the Budget Manager Store file.")
+            self.save_bm_store_subcmd_parser.set_defaults(save_cmd="BUDMAN_STORE")
             # save workbooks subcommand
             self.save_wb_subcmd_parser  = self.save_cmd_subparsers.add_parser(
                 "workbooks",
                 aliases=["wb", "WB"], 
                 help="Save workbook information.")
+            self.save_wb_subcmd_parser.set_defaults(save_cmd="workbooks")
             self.save_wb_subcmd_parser.add_argument(
                 "wb_ref", nargs="?", 
                 action="store", 
@@ -179,6 +170,7 @@ class BudgetManagerCLIParser():
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise
+
     def val_cmd_parser_setup(self) -> None:
         """Examine or Set values in the application settings and data."""
         try:
@@ -188,26 +180,40 @@ class BudgetManagerCLIParser():
             self.val_po_subcmd_parser = self.val_cmd_subparsers.add_parser(
                 "parse_only",
                 aliases=["po", "PO"], 
-                help="Set cli to parse-only mode to on|off|toggle ")
+                help="Set cli parse-only mode to on|off|toggle, default is toggle.")
+            self.val_po_subcmd_parser.set_defaults(val_cmd="parse_only")
             self.val_po_subcmd_parser.add_argument(
                 "po_value", nargs="?", 
                 default= "toggle",
-                help="parse-only value: on | off | toggle.")
+                help="parse-only value: on | off | toggle. Default is toggle.")
             # set wf_key subcommand
             self.val_wf_key_subcmd_parser = self.val_cmd_subparsers.add_parser(
-                "current_wf_key",
+                "wf_key",
                 aliases=["wf", "WF"], 
                 help="Set current wf_key value.")
+            self.val_wf_key_subcmd_parser.set_defaults(val_cmd="wf_key")
             self.val_wf_key_subcmd_parser.add_argument(
                 "wf_key", nargs="?", 
                 action="store", 
                 default='all',
                 help="wf_key value for valid workflow or 'all'.")
+            # set wb_name subcommand
+            self.val_wb_name_subcmd_parser = self.val_cmd_subparsers.add_parser(
+                "wb_name",
+                aliases=["wb", "WB"], 
+                help="Set current wb_name value.")
+            self.val_wb_name_subcmd_parser.set_defaults(val_cmd="wb_name")
+            self.val_wb_name_subcmd_parser.add_argument(
+                "wb_ref", nargs="?", 
+                action="store", 
+                default=None,
+                help="wb_ref is a name for a workbook.")
             # show fi_key subcommand
             self.val_fi_key_subcmd_parser  = self.val_cmd_subparsers.add_parser(
-                "current_fi_key",
+                "fi_key",
                 aliases=["fi", "FI"], 
                 help="Set current fi_key.")
+            self.val_fi_key_subcmd_parser.set_defaults(val_cmd="fi_key")
             self.val_fi_key_subcmd_parser.add_argument(
                 "fi_ref", nargs="?", 
                 action="store", 

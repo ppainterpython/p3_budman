@@ -65,7 +65,7 @@ def log_workbook_info(file_name : str = "unknown",wb : Workbook = None) -> None:
 def budman_app_cli_cmdloop():
     """CLI cmdloop function."""
     try:
-        bmvm = p3bmvm.BudManCommandViewModel()
+        bmvm = p3bmvm.BudgetManagerCommandViewModel()
         bmvm.initialize(load_user_store=True) # Initialize the BudgetModelCommandViewModel
         p3bmv.BudgetManagerCLIView(bmvm).initialize().cmdloop() # Application CLI loop
         _ = "pause"

@@ -24,9 +24,9 @@ logger = logging.getLogger(settings[p3bm.APP_NAME])
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
-class BudManCommandViewModel():
+class BudgetManagerCommandViewModel():
     # ======================================================================== +
-    #region BudgetModelCommandViewModel class
+    #region BudgetManagerCommandViewModel class
     """A Budget Model View Model to support Commands and Data Context."""
     # ======================================================================== +
     #                                                                          +
@@ -40,10 +40,11 @@ class BudManCommandViewModel():
         self.FI_KEY : str = None
         self.WF_KEY : str = None
         self.WB_TYPE : str = None
+        self.WB_NAME : str = None
     #endregion __init__() constructor method
     # ------------------------------------------------------------------------ +
     #region initialize() method
-    def initialize(self, load_user_store : bool = False) -> "BudManCommandViewModel":
+    def initialize(self, load_user_store : bool = False) -> "BudgetManagerCommandViewModel":
         """Initialize the command view_model."""
         try:
             st = p3u.start_timer()
@@ -70,11 +71,11 @@ class BudManCommandViewModel():
             raise
     #endregion initialize() method
     # ------------------------------------------------------------------------ +
-    #endregion BudgetModelCommandViewModel class
+    #endregion BudgetManagerCommandViewModel class
     # ======================================================================== +
 
     # ======================================================================== +
-    #region BudgetModel View Model Command Interface Methods                                     +
+    #region FICommandInterface Budget Manager View Model Command Interface
     """Budget Model View Model Command Interface Methods.
     
     In View Model form, these methods provide an Interface for executing
@@ -228,7 +229,10 @@ class BudManCommandViewModel():
     #                                                                          +
     # ------------------------------------------------------------------------ +
     #region FI_init_command() command method
-    def FI_init_cmd(self, fi_key : str = None) -> None: 
+    def FI_init_cmd(self, fi_key : str = None,
+                    wf_key : str = p3bm.BM_WF_CATEGORIZATION,
+                    wb_type : str = p3bm.WF_WORKBOOKS_IN,
+                    wb_name : str = None) -> None: 
         """Execute FI_init command for one fi_key or 'all'.
         
         This command initializes the Data Context aspects of the View Model to
@@ -238,10 +242,17 @@ class BudManCommandViewModel():
         Arguments:
             fi_key (str): The key for the financial institution. If None, 
                 no action is taken. If 'all', all workbooks are loaded.
+            wf_key (str): The key for the workflow.
+            wb_type (str): The type of workbook, either input or output.
+            wb_name (str): The name of the workbook. If None, all workbooks
+                modified since open are saved. If 'all', all workbooks are saved.
         Raises:
             RuntimeError: If the fi_key is None or invalid.
         """
         try:
+            st = p3u.start_timer()
+            logger.info(f"Start Command: 'Init' fi_key: {fi_key}, "
+                        f"wf_key: {wf_key}, wb_type: {wb_type}, wb_name: {wb_name}")
             pfx = f"{self.__class__.__name__}.{self.FI_init_cmd.__name__}: "
             if not p3u.is_non_empty_str("fi_key",fi_key,pfx):
                 m = f"fi_key is None, no action taken."
@@ -265,6 +276,68 @@ class BudManCommandViewModel():
             self.FI_KEY = fi_key
             self.WF_KEY = wf_key
             self.WB_TYPE = wb_type
+            logger.info(f"Complete Command: 'Save' {p3u.stop_timer(st)}")   
+            return None
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion FI_init_command() command method
+    # ------------------------------------------------------------------------ +
+    #region FI_save_cmd() command method
+    def FI_save_cmd(self, 
+                    fi_key : str = None,
+                    wf_key : str = p3bm.BM_WF_CATEGORIZATION,
+                    wb_type : str = p3bm.WF_WORKBOOKS_IN,
+                    wb_name : str = None) -> None: 
+        """Execute FI_save command for one fi_key or 'all'.
+        
+        This command saves the Data Context aspects of the View Model to
+        contain workbooks and other information for the specified financial
+        institution.
+
+        FIs have associated financial documents (FD), for example workbooks,
+        that are processed within workflows, typically moving through a 
+        series of named workflows. A given FD is either of type input or output 
+        with respect to the workflow (wb_type). Also, FDs are individually 
+        named (wb_name). Specifying a wb_name is optional, but will indicate
+        the command applies to just the named workbook.
+
+        Arguments:
+            fi_key (str): The key for the financial institution. If None, 
+                no action is taken. If 'all', all workbooks are loaded.
+            wf_key (str): The key for the workflow.
+            wb_type (str): The type of workbook, either input or output.
+            wb_name (str): The name of the workbook. If None, all workbooks
+                modified since open are saved. If 'all', all workbooks are saved.
+        Raises:
+            RuntimeError: For excemptions.
+        """
+        try:
+            st = p3u.start_timer()
+            logger.info(f"Start Command: 'Save' fi_key: {fi_key}, "
+                        f"wf_key: {wf_key}, wb_type: {wb_type}, wb_name: {wb_name}")
+            pfx = f"{self.__class__.__name__}.{self.FI_save_cmd.__name__}: "
+            if not p3u.is_non_empty_str("fi_key",fi_key,pfx):
+                m = f"fi_key is None, no action taken."
+                logger.error(m)
+                raise RuntimeError(f"{pfx}{m}")
+            # Check for 'all'
+            if fi_key == "all":
+                raise NotImplementedError(f"{pfx}fi_key 'all' not implemented.")
+            # Check if valid fi_key            
+            try:
+                _ = self.budget_model.bdm_FI_KEY_validate(fi_key)
+            except ValueError as e:
+                m = f"ValueError({str(e)})"
+                logger.error(m)
+                raise RuntimeError(f"{pfx}{m}")
+            # Save the workbooks for the specified FI, WF, and WB-type.
+            ret = self.budget_model.bdwd_FI_WORKBOOKS_save(fi_key, wf_key, wb_type)
+            # Set this fi_key as the latest or current FI key.
+            self.FI_KEY = fi_key
+            self.WF_KEY = wf_key
+            self.WB_TYPE = wb_type
+            logger.info(f"Complete Command: 'Save' {p3u.stop_timer(st)}")   
             return None
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
@@ -275,11 +348,11 @@ class BudManCommandViewModel():
     #endregion template() method
     # ------------------------------------------------------------------------ +
     #                                                                          +
-    #endregion BudgetModel View Model Command Interface Methods                                  +
+    #endregion FICommandInterface Budget Manager View Model Command Interface                                  +
     # ======================================================================== +
 
     # ======================================================================== +
-    #region BDM view_model Data Context Methods                                +
+    #region FIDataContextInterface view_model Data Context Interface                                +
     """BDM view_model Data Context Methods.
 
     These methods are to access the View Model as a Data Context from a View.
@@ -361,7 +434,7 @@ class BudManCommandViewModel():
             raise
     #endregion FI_get_loaded_workbook_by_name() method
     # ------------------------------------------------------------------------ +
-    #endregion BDM view_model Data Context Methods                             +
+    #endregion FIDataContextInterface view_model Data Context Methods                                +                             +
     # ======================================================================== +
 
     # ======================================================================== +
