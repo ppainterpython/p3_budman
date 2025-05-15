@@ -99,7 +99,7 @@ class BudgetModelCLIView(cmd2.Cmd):
     def __init__(self, data_context : object | MockViewModel = None) -> None:
         super().__init__()
         self.initialized = False
-        self.parse_only = False
+        self.parse_only = True
         self.terminal_width = 100 # TODO: add to settings.
         self.cli_parser : BudgetModelCLIParser = cli_parser
         self._data_context = MockViewModel() if data_context is None else data_context
@@ -215,7 +215,7 @@ class BudgetModelCLIView(cmd2.Cmd):
                 self.data_context.BUDMAN_STORE_save()
                 self.poutput("Budget Manager Store saved.")
             elif opts.save_cmd in ["workbook", "wb", "WB"]:
-                wb_name = opts.wb_name if opts.wb_name else None
+                wb_ref = opts.wb_ref if opts.wb_ref else None
                 self.data_context.FI_save_workbook(wb_name)
                 self.poutput(f"Workbook {wb_name} saved.")
             else:

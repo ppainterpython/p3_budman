@@ -13,6 +13,7 @@ from typing import List, Type, Generator, Dict, Tuple, Any
 # third-party modules and packages
 from config import settings
 import p3_utils as p3u, pyjson5, p3logging as p3l
+from openpyxl import Workbook, load_workbook, save_workbook
 
 # local modules and packages
 import budman_model as p3bm
@@ -319,6 +320,36 @@ class BudManCommandViewModel():
             raise
     #endregion FI_get_loaded_workbook_names() method
     # ------------------------------------------------------------------------ +
+    #region FI_get_loaded_workbook_by_index() method
+    def FI_get_loaded_workbook_by_index(self, i:int=0) -> Workbook: 
+        """Reference loaded loaded workbooks by index, return Workbook object."""
+        try:
+            # Reference the BDWD_LOADED_WORKBOOKS.
+            bdwd_wb_list = self.budget_model.bdwd_LOADED_WORKBOOKS_get()
+            if i < len(bdwd_wb_list):
+                wb_name, wb = bdwd_wb_list[i]
+                return wb
+            return None
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion FI_get_loaded_workbook_by_index() method
+    # ------------------------------------------------------------------------ +
+    #region FI_get_loaded_workbook_by_name() method
+    def FI_get_loaded_workbook_by_name(self, name:str=None) -> Workbook: 
+        """Reference loaded loaded workbooks by name, return Workbook object."""
+        try:
+            # Reference the BDWD_LOADED_WORKBOOKS.
+            bdwd_wb_list = self.budget_model.bdwd_LOADED_WORKBOOKS_get()
+            for wb_name, wb in bdwd_wb_list:
+                if wb_name == name:
+                    return wb
+            return None
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion FI_get_loaded_workbook_by_name() method
+    # ------------------------------------------------------------------------ +
     #endregion BDM view_model Data Context Methods                             +
     # ======================================================================== +
 
@@ -334,6 +365,7 @@ class BudManCommandViewModel():
     # ======================================================================== +
     #                                                                          +
     # ------------------------------------------------------------------------ +
+    #region BUDMAN_STORE_save() method
     def BUDMAN_STORE_save(self) -> None:
         """Save the Budget Manager store (BUDMAN_STORE) file with the BSM.
 
@@ -365,7 +397,7 @@ class BudManCommandViewModel():
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
-    #endregion BUDMAN_STORE_load() method
+    #endregion BUDMAN_STORE_save() method
     # ------------------------------------------------------------------------ +
     #region BUDMAN_STORE_load() method
     def BUDMAN_STORE_load(self) -> Dict:
@@ -396,3 +428,4 @@ class BudManCommandViewModel():
     #endregion BUDMAN_STORE_load() method
     # ------------------------------------------------------------------------ +
     #endregion BDM view_model Data Context Methods                             +
+    # ======================================================================== +

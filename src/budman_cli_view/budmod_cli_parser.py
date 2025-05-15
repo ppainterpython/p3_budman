@@ -157,12 +157,23 @@ class BudgetModelCLIParser():
     def save_cmd_parser_setup(self) -> None:
         """Setup the command line argument parsers for the save command."""
         try:
+            # Save budget_manager_store subcommand
             self.save_cmd_subparsers = self.save_cmd_parser.add_subparsers(
                 dest="save_cmd")
             self.save_bm_store_subcmd_parser = self.save_cmd_subparsers.add_parser(
                 "budget_manager_store",
                 aliases=["store", "BMS"], 
                 help="Save the Budget Manager Store file.")
+            # save workbooks subcommand
+            self.save_wb_subcmd_parser  = self.save_cmd_subparsers.add_parser(
+                "workbooks",
+                aliases=["wb", "WB"], 
+                help="Save workbook information.")
+            self.save_wb_subcmd_parser.add_argument(
+                "wb_ref", nargs="?", 
+                action="store", 
+                default=None,
+                help="Workbook reference, name or number from show workbooks.")
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise
