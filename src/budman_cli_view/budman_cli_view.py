@@ -4,7 +4,7 @@
 
 A simple command line interface for the BudgetModel application. Using the cmd2
 package which embeds the argparse package. Cmd2 handles the command structure and
-argparse handles the argument lists for each command. The BudgetModelCLIView
+argparse handles the argument lists for each command. The BudgetManagerCLIView
 class is a subclass of cmd2.Cmd and implements the command line interface for the
 user.
 
@@ -19,7 +19,7 @@ CLI Argument Parsing
 Argparse is very declarative. To separate the command line parsing from the 
 code that executes commands, where the View Model methods are called, we use the
 class BudgetModelCLIParser to manage all of the argparse setup work. It is
-considered an inner class of the BudgetModelCLIView class. But the argument
+considered an inner class of the BudgetManagerCLIView class. But the argument
 declarations are contained in that one class, separate from the View code.
 
 """
@@ -37,7 +37,7 @@ from config import settings
 import p3_utils as p3u, pyjson5, p3logging as p3l
 import cmd2
 from cmd2 import (Cmd2ArgumentParser, with_argparser)
-from  .budmod_cli_parser import BudgetModelCLIParser
+from  .budman_cli_parser import BudgetManagerCLIParser, BudManCmd2ArgumentParser
 
 # local modules and packages
 
@@ -68,26 +68,28 @@ class MockViewModel():
 # Cmd2ArgumentParser object. If one fails during setup(), the goal is the
 # whole app won't fail, and will display the error message for the
 # particular command parser.
-cli_parser : BudgetModelCLIParser = BudgetModelCLIParser()
-def init_cmd_parser() -> Cmd2ArgumentParser:
+cli_parser : BudgetManagerCLIParser = BudgetManagerCLIParser()
+def init_cmd_parser() -> BudManCmd2ArgumentParser:
     return cli_parser.init_cmd_parser if cli_parser else None
-def show_cmd_parser() -> Cmd2ArgumentParser:
+def show_cmd_parser() -> BudManCmd2ArgumentParser:
     return cli_parser.show_cmd_parser if cli_parser else None
-def load_cmd_parser() -> Cmd2ArgumentParser:
+def load_cmd_parser() -> BudManCmd2ArgumentParser:
     return cli_parser.load_cmd_parser if cli_parser else None
-def save_cmd_parser() -> Cmd2ArgumentParser:
+def save_cmd_parser() -> BudManCmd2ArgumentParser:
     return cli_parser.save_cmd_parser if cli_parser else None
-def val_cmd_parser() -> Cmd2ArgumentParser:
+def val_cmd_parser() -> BudManCmd2ArgumentParser:
     return cli_parser.val_cmd_parser if cli_parser else None
-def show_args_only(self,opts) -> bool:
+
+def _show_args_only(cli_view : "BudgetManagerCLIView", opts) -> bool:
     oc = vars(opts).copy()
     oc.pop('cmd2_statement')
     oc.pop('cmd2_handler')
-    self.poutput(f"args: {str(oc)} parse_only: {self.parse_only}")
-    return self.parse_only
-class BudgetModelCLIView(cmd2.Cmd):
+    cli_view.poutput(f"args: {str(oc)} parse_only: {cli_view.parse_only}")
+    return cli_view.parse_only
+
+class BudgetManagerCLIView(cmd2.Cmd):
     # ======================================================================== +
-    #region BudgetModelCLIView class
+    #region BudgetManagerCLIView class
     """An MVVM View class for BudgetModel implementing a command line interface.
     
     Operates under MVVM pattern, strictly. Instantiated with a blind view_model.
@@ -103,7 +105,7 @@ class BudgetModelCLIView(cmd2.Cmd):
         self.initialized = False
         self.parse_only = True
         self.terminal_width = 100 # TODO: add to settings.
-        self.cli_parser : BudgetModelCLIParser = cli_parser
+        self.cli_parser : BudgetManagerCLIParser = cli_parser
         self._data_context = MockViewModel() if data_context is None else data_context
     
     @property
@@ -120,7 +122,7 @@ class BudgetModelCLIView(cmd2.Cmd):
     # ------------------------------------------------------------------------ +
     #region initialize() method
     def initialize(self) -> None:
-        """Initialize the BudgetModelCLIView class."""
+        """Initialize the BudgetManagerCLIView class."""
         try:
             self.cli_parser.view_cmd = self
             self.initialized = True
@@ -143,7 +145,7 @@ class BudgetModelCLIView(cmd2.Cmd):
     def do_init(self, opts):
         """Init BugetModel properties and values.."""
         try:
-            if show_args_only(self, opts): return
+            if _show_args_only(self, opts): return
             # self.poutput(f"args: {str(opts)}")
             if self.parse_only: return
             if opts.init_cmd in ["financial_institution", "fi", "FI"]:
@@ -162,7 +164,7 @@ class BudgetModelCLIView(cmd2.Cmd):
     def do_show(self, opts):
         """Show BugetModel domain information."""
         try:
-            if show_args_only(self, opts): return
+            if _show_args_only(self, opts): return
             if opts.show_cmd in ["workbook", "wb", "WB"]:
                 self.show_workbooks_subcommand(opts)
             elif opts.show_cmd in ["financial_institution", "fi", "FI"]:
@@ -189,7 +191,7 @@ class BudgetModelCLIView(cmd2.Cmd):
     def do_load(self, opts):
         """Load BugetModel data items into app session."""
         try:
-            if show_args_only(self, opts): return
+            if _show_args_only(self, opts): return
             # self.poutput(f"args: {str(opts)}")
 
             print("BudgetModel loaded.")
@@ -202,7 +204,7 @@ class BudgetModelCLIView(cmd2.Cmd):
     def do_save(self, opts):
         """Save the BUDMAN_STORE file."""
         try:
-            if show_args_only(self, opts): return
+            if _show_args_only(self, opts): return
             # self.poutput(f"args: {str(opts)}")
             if (opts.save_cmd is None or 
                 opts.save_cmd in ["budget_manager_store", "store", "BMS"]):
@@ -271,7 +273,7 @@ class BudgetModelCLIView(cmd2.Cmd):
     def val_command(self, opts) -> None:
         """Show loaded workbook information."""
         try:
-            _ = show_args_only(self, opts)
+            _ = _show_args_only(self, opts)
             if opts.val_cmd in ["parse_only", "po", "PO"]:
                 if opts.po_value == "toggle":
                     self.parse_only = not self.parse_only

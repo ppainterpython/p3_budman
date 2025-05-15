@@ -18,7 +18,7 @@ import p3logging as p3l, p3_utils as p3u
 
 # local packages and module libraries
 import budman_view_model.budman_command_view_model as p3bmvm
-import budman_cli_view.budmod_cli_view as p3bmv
+import budman_cli_view.budman_cli_view as p3bmv
 logger = logging.getLogger(settings.app_name)
 logger.propagate = True
 #endregion Imports
@@ -67,7 +67,7 @@ def budman_app_cli_cmdloop():
     try:
         bmvm = p3bmvm.BudManCommandViewModel()
         bmvm.initialize(load_user_store=True) # Initialize the BudgetModelCommandViewModel
-        p3bmv.BudgetModelCLIView(bmvm).initialize().cmdloop() # Application CLI loop
+        p3bmv.BudgetManagerCLIView(bmvm).initialize().cmdloop() # Application CLI loop
         _ = "pause"
     except Exception as e:
         m = p3u.exc_err_msg(e)

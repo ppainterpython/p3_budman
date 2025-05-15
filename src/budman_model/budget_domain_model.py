@@ -495,7 +495,7 @@ class BudgetModel(metaclass=SingletonMeta):
                 if bdm_config is None:
                     # Last hope, obtain the BudgetModelTempleate without 
                     # a circular reference, since it is a subclass.
-                    from budman_model.get_budget_model_template import __get_budget_model_template__
+                    from get_budget_model_template import __get_budget_model_template__
                     bdm_config = __get_budget_model_template__()
                 self.bdm_config_object = bdm_config
             return self.bdm_config_object

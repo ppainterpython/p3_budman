@@ -38,16 +38,16 @@ class BudManCmd2ArgumentParser(cmd2.Cmd2ArgumentParser):
         self.formatter_class = lambda prog: argparse.HelpFormatter(prog, width=terminal_width)
         return super().format_help()  # Call parent method
 
-class BudgetModelCLIParser():
+class BudgetManagerCLIParser():
     """A class to parse command line arguments for the BudgetModelCLIView class.
 
     This class is used to parse command line arguments for the BudgetModelCLIView
     class. It uses the cmd2 library to create a command line interface for the
     BudgetModel application.
     """
-    def __init__(self, view_cmd_input : cmd2.Cmd = None) -> None:
+    def __init__(self) -> None:
         """Initialize the BudgetModelCLIParser class."""
-        self.view_cmd : cmd2.Cmd = view_cmd_input
+        # self.view_cmd : cmd2.Cmd = view_cmd_input
         self.init_cmd_parser = BudManCmd2ArgumentParser()
         self.show_cmd_parser = BudManCmd2ArgumentParser()
         self.load_cmd_parser = BudManCmd2ArgumentParser()
@@ -59,20 +59,20 @@ class BudgetModelCLIParser():
         self.save_cmd_parser_setup()
         self.val_cmd_parser_setup()
 
-    def setup(self) -> None:
-        """Setup the command line argument parsers."""
-        try:
-            if self.view_cmd is None or not isinstance(self.view_cmd, cmd2.Cmd):
-                m = "BudgetModelCLIParser: Error with configuration. "
-                m += "view_cmd is None or not a cmd2.Cmd object."
-                raise RuntimeError(m)
-            # Initialize the command line argument parsers.
-            self.init_cmd_parser_setup()
-            self.show_cmd_parser_setup()
-            self.load_cmd_parser_setup()
-        except Exception as e:
-            logger.exception(p3u.exc_err_msg(e))
-            raise
+    # def setup(self) -> None:
+    #     """Setup the command line argument parsers."""
+    #     try:
+    #         if self.view_cmd is None or not isinstance(self.view_cmd, cmd2.Cmd):
+    #             m = "BudgetModelCLIParser: Error with configuration. "
+    #             m += "view_cmd is None or not a cmd2.Cmd object."
+    #             raise RuntimeError(m)
+    #         # Initialize the command line argument parsers.
+    #         self.init_cmd_parser_setup()
+    #         self.show_cmd_parser_setup()
+    #         self.load_cmd_parser_setup()
+    #     except Exception as e:
+    #         logger.exception(p3u.exc_err_msg(e))
+    #         raise
 
     def init_cmd_parser_setup(self) -> None:
         """Setup the command line argument parsers for the init command."""
