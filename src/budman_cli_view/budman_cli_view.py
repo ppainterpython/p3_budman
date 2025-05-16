@@ -35,7 +35,7 @@ from typing import List, Type, Generator, Dict, Tuple, Any
 # third-party modules and packages
 from config import settings
 import p3_utils as p3u, pyjson5, p3logging as p3l
-import cmd2
+import cmd2, argparse
 from cmd2 import (Cmd2ArgumentParser, with_argparser)
 from  .budman_cli_parser import BudgetManagerCLIParser, BudManCmd2ArgumentParser
 
@@ -48,21 +48,7 @@ logger = logging.getLogger(settings.app_name)
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
-#region MockViewModel class
-class MockViewModel():
-    """Mock view_model object for the BudgetModel.
-    
-    Simulates an unknown view_model object for the BudgetModel.
-    Supports dot notation for accessing attributes."""
-    # TODO: Use ABC for view_model interface. 
-    def __getattr__(self, item):
-        return self[item] if item in self.__dict__ else None
-    
-    def __setattr__(self, item, value):
-        self[item] = value
-
-#endregion MockViewModel class
-# ---------------------------------------------------------------------------- +
+#region Module Variables and Functions
 # Setup the command line argument parsers. This is required due to the
 # cmd2.with_argparser decorator, which requires a callable to return a 
 # Cmd2ArgumentParser object. If one fails during setup(), the goal is the
@@ -102,6 +88,23 @@ def _show_args_only(cli_view : "BudgetManagerCLIView", opts) -> bool:
 BMCLI_SYSTEM_EXIT_WARNING = "Not exiting due to SystemExit"
 PO_OFF_PROMPT = "p3budman> "
 PO_ON_PROMPT = "po-p3budman> "
+#endregion Module Variables and Functions 
+# ---------------------------------------------------------------------------- +
+#region MockViewModel class
+class MockViewModel():
+    """Mock view_model object for the BudgetModel.
+    
+    Simulates an unknown view_model object for the BudgetModel.
+    Supports dot notation for accessing attributes."""
+    # TODO: Use ABC for view_model interface. 
+    def __getattr__(self, item):
+        return self[item] if item in self.__dict__ else None
+    
+    def __setattr__(self, item, value):
+        self[item] = value
+
+#endregion MockViewModel class
+# ---------------------------------------------------------------------------- +
 class BudgetManagerCLIView(cmd2.Cmd):
     # ======================================================================== +
     #region BudgetManagerCLIView class
@@ -112,18 +115,27 @@ class BudgetManagerCLIView(cmd2.Cmd):
     command structure and argpars handles the argument lists for each command.
     TODO: Use ABC for view_model interface.
     """
+    # ------------------------------------------------------------------------ +
+    # Class variables
     prompt = "budman> "
     intro = "\nWelcome to the Budget Manager CLI. Type help or ? to list commands.\n"
-
+    # Class Methods
+    @classmethod
+    def create_cmd(opts : argparse.Namespace) -> Dict[str, Any]:
+        """Create a command dictionary from the options."""
+        return _filter_opts(opts)
+    # ------------------------------------------------------------------------ +
+    # Constructor
     def __init__(self, data_context : object | MockViewModel = None) -> None:
         super().__init__()
+        self._data_context = MockViewModel() if data_context is None else data_context
         self.initialized = False
         self.parse_only = True
         self.terminal_width = 100 # TODO: add to settings.
-        self.cli_parser : BudgetManagerCLIParser = cli_parser
-        self._data_context = MockViewModel() if data_context is None else data_context
+        # self.cli_parser : BudgetManagerCLIParser = cli_parser
         BudgetManagerCLIView.prompt = PO_ON_PROMPT if self.parse_only else PO_OFF_PROMPT
     # ------------------------------------------------------------------------ +
+    # Properties
     @property
     def data_context(self) -> object:
         """Get the data_context property."""
@@ -152,9 +164,22 @@ class BudgetManagerCLIView(cmd2.Cmd):
     # ======================================================================== +
 
     # ======================================================================== +
-    #region CLIViewModel Cmd methods
+    #region CLIViewModel Cmd2 Interface methods
     # ======================================================================== +
     #                                                                          +
+    # ------------------------------------------------------------------------ +
+    #region init command - initialize aspects of the BudgetModel application.
+    def execute_cmd(self, opts : argparse.Namespace) -> Dict[str, Any]:
+        """Send a cmd through the data_context using 
+        BudgetManagerCommandInterface implementation."""
+        # TODO: implement BMVM_execute_cmd() method in the data_context.
+        try:
+            cmd = BudgetManagerCLIView.create_cmd(opts)
+            result = self.data_context.BMVM_execute_cmd(cmd)
+            return result
+        except Exception as e:
+            self.pexcept(e)
+    #endregion init command - initialize aspects of the BudgetModel application.
     # ------------------------------------------------------------------------ +
     #region init command - initialize aspects of the BudgetModel application.
     @with_argparser(init_cmd_parser())
@@ -335,7 +360,7 @@ class BudgetManagerCLIView(cmd2.Cmd):
         """Examine or set values in Budget Manager."""
         try:
             _ = _show_args_only(self, opts)
-            if opts.val_cmd in ["parse_only", "po", "PO"]:
+            if opts.val_cmd == "parse_only":
                 if opts.po_value == "toggle":
                     self.parse_only = not self.parse_only
                 elif opts.po_value == "on":
@@ -346,7 +371,14 @@ class BudgetManagerCLIView(cmd2.Cmd):
                     self.poutput("Invalid value for parse_only. "
                                  "Use on|off|toggle.")
                 self.poutput(f"parse_only: {self.parse_only}")
-                return
+            elif opts.val_cmd == "wf_key":
+                _ = opts.wf_ref
+            elif opts.val_cmd == "wb_name":
+                _ = opts.wb.ref
+            elif opts.val_cmd == "fi_key":
+                _ = opts.fi_ref
+            else:
+                self.poutput(f"Nothing to do here: {str(opts)}.")
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise

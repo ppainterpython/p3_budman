@@ -193,7 +193,7 @@ class BudgetManagerCLIParser():
                 help="Set current wf_key value.")
             self.val_wf_key_subcmd_parser.set_defaults(val_cmd="wf_key")
             self.val_wf_key_subcmd_parser.add_argument(
-                "wf_key", nargs="?", 
+                "wf_ref", nargs="?", 
                 action="store", 
                 default='all',
                 help="wf_key value for valid workflow or 'all'.")
