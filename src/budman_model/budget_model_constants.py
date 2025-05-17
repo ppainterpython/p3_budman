@@ -67,6 +67,7 @@ BMO_LOG_CONFIG = "log_config"
 BMO_LOG_LEVEL = "log_level"
 BMO_LOG_FILE = "log_file"
 BMO_JSON_LOG_FILE = "json_log_file_name"
+BMO_COLLECTION = Dict
 BMO_EXPECTED_KEYS = (BMO_LOG_CONFIG, BMO_LOG_LEVEL, BMO_LOG_FILE,
                     BMO_JSON_LOG_FILE)
 
@@ -77,9 +78,10 @@ FI_TYPE = "fi_type"
 FI_FOLDER = "fi_folder" 
 FI_WORKFLOW_DATA = "fi_workflow_data" 
 # Additional FI_OBJECT-related constants
+FI_COLLECTION = Dict
 FI_OBJECT = Dict #"fi_object"  # pseudo-type
 FI_OBJECT_VALID_KEYS = (FI_KEY, FI_NAME, FI_TYPE, FI_FOLDER, FI_WORKFLOW_DATA)
-VALID_FI_KEYS = ("boa", "merrill")
+VALID_FI_KEYS = ("all", "boa", "merrill")
 VALID_FI_TYPES = ("bank", "brokerage")
 BDM_FI_NAMES = ("Bank of America", "Merrill Lynch")
 
@@ -87,7 +89,8 @@ BDM_FI_NAMES = ("Bank of America", "Merrill Lynch")
 BM_WF_INTAKE = "intake"
 BM_WF_CATEGORIZATION = "categorization"
 BM_WF_FINALIZATION = "finalization"
-BM_VALID_WORKFLOWS = (BM_WF_INTAKE, BM_WF_CATEGORIZATION, BM_WF_FINALIZATION)
+BM_VALID_WORKFLOWS = (BM_WF_INTAKE, BM_WF_CATEGORIZATION, BM_WF_FINALIZATION,
+                      "all")
 
 # WF_OBJECT workflow psuedo-Object (Dictionary key names)
 WF_KEY = "wf_key"
@@ -99,6 +102,7 @@ WF_PREFIX_OUT = "wf_prefix_out"
 WF_WORKBOOK_MAP = "wf_workbook_map" # map of workbook names to paths
 # Additional WF_OBJECT-related constants
 WF_OBJECT = Dict  # pseudo-type
+WF_COLLECTION = Dict
 WF_OBJECT_VALID_KEYS = (WF_KEY, WF_NAME, 
                         WF_FOLDER_IN, WF_FOLDER_OUT,
                         WF_PREFIX_IN, WF_PREFIX_OUT, WF_WORKBOOK_MAP)
@@ -132,6 +136,7 @@ WORKBOOK_LIST = List # pseudo-type of object
 WORKBOOK_ITEM = Tuple # pseudo-type of object
 
 # Key values used for transient working_data
+BDM_WORING_DATA = Dict
 BDWD_INITIALIZED = "bdwd_initialized"
 #    Key Name: BDWD_INITIIALIZED
 #   Key Value: bool True | False

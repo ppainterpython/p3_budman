@@ -61,8 +61,10 @@ class BudgetManagerCLIParser():
     def init_cmd_parser_setup(self) -> None:
         """Setup the command line argument parsers for the init command."""
         try:
+            # init subcommands: workbooks, and fin_inst
             self.init_cmd_subparsers = self.init_cmd_parser.add_subparsers(
                 dest="init_cmd")
+            # subcommand init workbooks [wb_name] [-fi [fi_key] [-wf [wf_key]]
             self.init_wb_subcmd_parser = self.init_cmd_subparsers.add_parser(
                 "workbooks", 
                 aliases=["wb", "WB"], 
@@ -73,6 +75,16 @@ class BudgetManagerCLIParser():
                 action="store", 
                 default=None,
                 help="Workbook name.")
+            self.init_wb_subcmd_parser.add_argument(
+                "-fi", nargs="?", dest="fi_key", 
+                default= "all",
+                help="FI key value.")
+            self.init_wb_subcmd_parser.add_argument(
+                "-wf", nargs="?", dest="wf_key", 
+                action="store", 
+                default='all',
+                help="Workflow key value.")
+            # subcommand init fin_int [fi_key] [-wf [wf_key]] [-wb [wb_name]]
             self.init_fi_subcmd_parser = self.init_cmd_subparsers.add_parser(
                 "fin_inst",
                 aliases=["fi", "FI", "financial_institutions"], 
@@ -82,6 +94,16 @@ class BudgetManagerCLIParser():
                 "fi_key", nargs="?", 
                 default= "all",
                 help="FI key value.")
+            self.init_fi_subcmd_parser.add_argument(
+                "-wf", nargs="?", dest="wf_key", 
+                action="store", 
+                default='all',
+                help="Workflow key value.")
+            self.init_fi_subcmd_parser.add_argument(
+                "-wb", nargs="?", dest="wb_name", 
+                action="store", 
+                default='all',
+                help="Workbook name.")
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise
@@ -89,9 +111,10 @@ class BudgetManagerCLIParser():
     def show_cmd_parser_setup(self) -> None:
         """Setup the command line argument parsers for the show command."""
         try:
+            # show subcommands: workbooks, fin_inst, workflows, and workbooks
             self.show_cmd_subparsers = self.show_cmd_parser.add_subparsers(
                 dest="show_cmd")
-            # show FI subcommand
+            # subcommand show fi_inst [fi_key] [-wf [wf_key]] [-wb [wb_name]]
             self.show_fi_subcmd_parser = self.show_cmd_subparsers.add_parser(
                 "fin_inst",
                 aliases=["fi", "FI", "financial_institutions"], 
@@ -101,7 +124,7 @@ class BudgetManagerCLIParser():
                 "fi_key", nargs="?", 
                 default= "all",
                 help="FI key value.") 
-            # show WF subcommand
+            # show workflows subcommand
             self.show_wf_subcmd_parser  = self.show_cmd_subparsers.add_parser(
                 "workflows",
                 aliases=["wf", "WF"], 
@@ -112,7 +135,7 @@ class BudgetManagerCLIParser():
                 action="store", 
                 default='all',
                 help="Workflow key value.")
-            # show WB subcommand
+            # show workbooks subcommand
             self.show_wb_subcmd_parser  = self.show_cmd_subparsers.add_parser(
                 "workbooks",
                 aliases=["wb", "WB"], 
@@ -122,7 +145,7 @@ class BudgetManagerCLIParser():
                 "wb_ref", nargs="?", 
                 action="store", 
                 default='all',
-                help="Workbook name.")
+                help="Workbook reference, name or number from show workbooks.")
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise
@@ -130,17 +153,34 @@ class BudgetManagerCLIParser():
     def load_cmd_parser_setup(self) -> None:
         """Setup the command line argument parsers for the load command."""
         try:
-            self.load_cmd_parser.add_argument(
-                "wb", 
-                nargs="?", 
+            # Load subcommands: BUDMAN_STORE, workbooks
+            self.load_cmd_subparsers = self.load_cmd_parser.add_subparsers(
+                dest="load_cmd")
+            # subcommand load BUDMAN_STORE
+            self.load_bm_store_subcmd_parser = self.load_cmd_subparsers.add_parser(
+                "BUDMAN_STORE",
+                aliases=["store", "bms", "BMS", "budget_manager_store","BUDMAN_STORE"], 
+                help="Load the Budget Manager Store file.")
+            self.load_bm_store_subcmd_parser.set_defaults(load_cmd="BUDMAN_STORE")
+            # subcommand load workbooks [wb_name] [fi_key]
+            self.load_wb_subcmd_parser  = self.load_cmd_subparsers.add_parser(
+                "workbooks",
+                aliases=["wb", "WB"], 
+                help="Load workbook information.")
+            self.load_wb_subcmd_parser.set_defaults(load_cmd="workbooks")
+            self.load_wb_subcmd_parser.add_argument(
+                "wb_ref", nargs="?",
                 action="store", 
-                default=True,
-                help="Load workbooks.")
-            self.load_cmd_parser.add_argument(
-                "-w", 
-                action="store", 
-                default = "categorization",
-                help="Workflow for workbooks to load.") 
+                default='all',
+                help="Workbook reference, name or number from show workbooks.")
+            self.load_wb_subcmd_parser.add_argument(
+                "-fi", nargs="?", dest="fi_key", 
+                default= "all",
+                help="FI key value.") 
+            self.load_wb_subcmd_parser.add_argument(
+                "-wf", nargs="?", dest="wf_key", 
+                default= "all",
+                help="WF key value.") 
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise
@@ -148,25 +188,34 @@ class BudgetManagerCLIParser():
     def save_cmd_parser_setup(self) -> None:
         """Setup the command line argument parsers for the save command."""
         try:
-            # Save budget_manager_store subcommand
+            # Save subcommands: BUDMAN_STORE, workbooks
             self.save_cmd_subparsers = self.save_cmd_parser.add_subparsers(
                 dest="save_cmd")
+            # subcommand save BUDMAN_STORE
             self.save_bm_store_subcmd_parser = self.save_cmd_subparsers.add_parser(
                 "BUDMAN_STORE",
-                aliases=["store", "BMS", "budget_manager_store","BUDMAN_STORE"], 
+                aliases=["store", "bms", "BMS", "budget_manager_store","BUDMAN_STORE"], 
                 help="Save the Budget Manager Store file.")
             self.save_bm_store_subcmd_parser.set_defaults(save_cmd="BUDMAN_STORE")
-            # save workbooks subcommand
+            # subcommand save workbooks [wb_name] [fi_key]
             self.save_wb_subcmd_parser  = self.save_cmd_subparsers.add_parser(
                 "workbooks",
                 aliases=["wb", "WB"], 
                 help="Save workbook information.")
             self.save_wb_subcmd_parser.set_defaults(save_cmd="workbooks")
             self.save_wb_subcmd_parser.add_argument(
-                "wb_ref", nargs="?", 
+                "-wb", nargs="?", dest="wb_ref",
                 action="store", 
                 default='all',
                 help="Workbook reference, name or number from show workbooks.")
+            self.save_wb_subcmd_parser.add_argument(
+                "-fi", nargs="?", dest="fi_key", 
+                default= "all",
+                help="FI key value.") 
+            self.save_wb_subcmd_parser.add_argument(
+                "-wf", nargs="?", dest="wf_key", 
+                default= "all",
+                help="WF key value.") 
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise
@@ -176,7 +225,7 @@ class BudgetManagerCLIParser():
         try:
             self.val_cmd_subparsers = self.val_cmd_parser.add_subparsers(
                 dest="val_cmd")
-            # set parse_only subcommand
+            # val parse_only subcommand
             self.val_po_subcmd_parser = self.val_cmd_subparsers.add_parser(
                 "parse_only",
                 aliases=["po", "PO"], 
@@ -186,7 +235,7 @@ class BudgetManagerCLIParser():
                 "po_value", nargs="?", 
                 default= "toggle",
                 help="parse-only value: on | off | toggle. Default is toggle.")
-            # set wf_key subcommand
+            # val wf_key subcommand
             self.val_wf_key_subcmd_parser = self.val_cmd_subparsers.add_parser(
                 "wf_key",
                 aliases=["wf", "WF"], 
@@ -197,7 +246,7 @@ class BudgetManagerCLIParser():
                 action="store", 
                 default='all',
                 help="wf_key value for valid workflow or 'all'.")
-            # set wb_name subcommand
+            # val wb_name subcommand
             self.val_wb_name_subcmd_parser = self.val_cmd_subparsers.add_parser(
                 "wb_name",
                 aliases=["wb", "WB"], 
@@ -208,7 +257,7 @@ class BudgetManagerCLIParser():
                 action="store", 
                 default=None,
                 help="wb_ref is a name for a workbook.")
-            # show fi_key subcommand
+            # val fi_key subcommand
             self.val_fi_key_subcmd_parser  = self.val_cmd_subparsers.add_parser(
                 "fi_key",
                 aliases=["fi", "FI"], 

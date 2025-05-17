@@ -1224,6 +1224,31 @@ class BudgetModel(metaclass=SingletonMeta):
             logger.error(m)
             raise
 
+    def bsm_WF_WORKBOOKS_save(self,
+                fi_key : str, 
+                wf_key : str, 
+                wb_type : str): 
+        """Save all workbooks for a workflow to storage
+        
+        For fi_key,wf_key,wb_type, save all workbooks of type wb_type.
+        
+        Returns:
+            None: as success. Updates BM_WORKING_DATA.BDWD_LOADED_WORKBOOKS 
+            property with the loaded workbooks.
+        Raises: exceptions from any errors.
+        """
+        try:
+            wbl = self.bdwd_LOADED_WORKBOOKS_get(fi_key, wf_key, wb_type)
+            if wbl is None:
+                return
+            for wb_name, wb in wbl:
+                wb.save(wb_path)
+                self.bdwd_LOADED_WORKBOOKS_add(wb_name, wb)
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise
+
     def bsm_FI_WF_WORKBOOK_generate(self,
                 fi_key : str, 
                 wf_key : str, 
@@ -1442,6 +1467,16 @@ class BudgetModel(metaclass=SingletonMeta):
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
+
+    def bdwd_FI_WORKBOOKS_save(self, fi_key : str, wf_key : str,
+                               wb_type : str) -> None:
+        """Save workbooks for an FI workflow."""
+        try:
+            self.bsm_WF_WORKBOOKS_save(fi_key, wf_key, wb_type)
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise            
 
     def bdwd_FI_set(self, fi_key : str) -> None:
         """Set the BDWD_FI in the BM_WORKING_DATA.

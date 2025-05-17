@@ -56,7 +56,8 @@ logger = logging.getLogger(settings.app_name)
 # particular command parser.
 cli_parser : BudgetManagerCLIParser = BudgetManagerCLIParser()
 def init_cmd_parser() -> BudManCmd2ArgumentParser:
-    return cli_parser.init_cmd_parser if cli_parser else None
+    subcmd_parser = cli_parser.init_cmd_parser if cli_parser else None
+    return subcmd_parser
 def show_cmd_parser() -> BudManCmd2ArgumentParser:
     return cli_parser.show_cmd_parser if cli_parser else None
 def load_cmd_parser() -> BudManCmd2ArgumentParser:
@@ -121,7 +122,7 @@ class BudgetManagerCLIView(cmd2.Cmd):
     intro = "\nWelcome to the Budget Manager CLI. Type help or ? to list commands.\n"
     # Class Methods
     @classmethod
-    def create_cmd(opts : argparse.Namespace) -> Dict[str, Any]:
+    def create_cmd(cls, opts : argparse.Namespace) -> Dict[str, Any]:
         """Create a command dictionary from the options."""
         return _filter_opts(opts)
     # ------------------------------------------------------------------------ +
@@ -130,7 +131,7 @@ class BudgetManagerCLIView(cmd2.Cmd):
         super().__init__()
         self._data_context = MockViewModel() if data_context is None else data_context
         self.initialized = False
-        self.parse_only = True
+        self.parse_only = False
         self.terminal_width = 100 # TODO: add to settings.
         # self.cli_parser : BudgetManagerCLIParser = cli_parser
         BudgetManagerCLIView.prompt = PO_ON_PROMPT if self.parse_only else PO_OFF_PROMPT
@@ -152,7 +153,7 @@ class BudgetManagerCLIView(cmd2.Cmd):
     def initialize(self) -> None:
         """Initialize the BudgetManagerCLIView class."""
         try:
-            self.cli_parser.view_cmd = self
+            # self.cli_parser.view_cmd = self
             self.initialized = True
             return self
         except Exception as e:
@@ -217,7 +218,12 @@ class BudgetManagerCLIView(cmd2.Cmd):
         """Load data in the Budget Manager application."""
         try:
             if _log_cli_cmd_execute(self, opts): return
-            self.poutput("BudgetModel loaded.")
+            status, result = self.execute_cmd(opts)
+            if status:
+                self.poutput(f"Result: {str(result)}")
+            else:
+                self.poutput(f"Error: {str(result)}")
+            self.poutput(f"Result: {str(result)}")
             _log_cli_cmd_complete(self, opts)
         except SystemExit as e:
             # Handle the case where argparse exits the program
@@ -283,10 +289,12 @@ class BudgetManagerCLIView(cmd2.Cmd):
     def init_command(self, opts) -> None:
         """Execute the Init command."""
         try:
-            if opts.init_cmd in ["financial_institution", "fi", "FI"]:
-                fi_key = opts.fi_key if opts.fi_key else None
-                self.data_context.FI_init_cmd(opts.fi_key)
-                self.poutput(f"Initialized financial institution: {fi_key}")
+            result = self.execute_cmd(opts)
+            self.poutput(f"Result: {str(result)}")
+            # if opts.init_cmd == "fin_inst":
+            #     fi_key = opts.fi_key if opts.fi_key else None
+                # self.data_context.FI_init_cmd(opts.fi_key)
+            # self.poutput(f"Initialized financial institution: {fi_key}")
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
@@ -296,17 +304,19 @@ class BudgetManagerCLIView(cmd2.Cmd):
     def show_command(self, opts) -> None:
         """Execute the Show command."""
         try:
-            if opts.show_cmd in ["workbook", "wb", "WB"]:
-                self.show_workbooks_subcommand(opts)
-            elif opts.show_cmd in ["financial_institution", "fi", "FI"]:
-                fi_key = opts.fi_key if opts.fi_key else None
-                c = self.data_context.FI_get_loaded_workbooks_count()
-                self.poutput(f"Loaded workbooks: {c}")
-                if c > 0:
-                    names = self.data_context.FI_get_loaded_workbook_names()
-                    [self.poutput(f"  {i}: {n}") for i, n in enumerate(names)]
-                else:
-                    self.poutput("No loaded workbooks.")
+            result = self.execute_cmd(opts)
+            self.poutput(f"Result: {str(result)}")
+            # if opts.show_cmd in ["workbook", "wb", "WB"]:
+            #     self.show_workbooks_subcommand(opts)
+            # elif opts.show_cmd in ["financial_institution", "fi", "FI"]:
+            #     fi_key = opts.fi_key if opts.fi_key else None
+            #     c = self.data_context.FI_get_loaded_workbooks_count()
+            #     self.poutput(f"Loaded workbooks: {c}")
+            #     if c > 0:
+            #         names = self.data_context.FI_get_loaded_workbook_names()
+            #         [self.poutput(f"  {i}: {n}") for i, n in enumerate(names)]
+            #     else:
+            #         self.poutput("No loaded workbooks.")
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
@@ -338,18 +348,20 @@ class BudgetManagerCLIView(cmd2.Cmd):
     def save_command(self, opts) -> None:
         """Execute the Save command."""
         try:
-            if (opts.save_cmd is None or 
-                opts.save_cmd in ["budget_manager_store", "store", "BMS"]):
-                # Save the BUDMAN_STORE
-                self.data_context.BUDMAN_STORE_save()
-                self.poutput("Budget Manager Store (BM_STORE) saved.")
-            elif opts.save_cmd in ["workbook", "wb", "WB"]:
-                # Save one or more workbooks.
-                wb_ref = opts.wb_ref if opts.wb_ref else None
-                # self.data_context.FI_save_workbook(wb_name)
-                self.poutput(f"Workbook {wb_ref} saved.")
-            else:
-                self.poutput(f"Nothing to do here: {str(opts)}.")
+            result = self.execute_cmd(opts)
+            self.poutput(f"Result: {str(result)}")
+            # if (opts.save_cmd is None or 
+            #     opts.save_cmd in ["budget_manager_store", "store", "BMS"]):
+            #     # Save the BUDMAN_STORE
+            #     self.data_context.BUDMAN_STORE_save()
+            #     self.poutput("Budget Manager Store (BM_STORE) saved.")
+            # elif opts.save_cmd in ["workbook", "wb", "WB"]:
+            #     # Save one or more workbooks.
+            #     wb_ref = opts.wb_ref if opts.wb_ref else None
+            #     # self.data_context.FI_save_workbook(wb_name)
+            #     self.poutput(f"Workbook {wb_ref} saved.")
+            # else:
+            #     self.poutput(f"Nothing to do here: {str(opts)}.")
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
