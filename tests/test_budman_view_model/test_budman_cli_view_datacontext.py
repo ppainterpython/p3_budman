@@ -52,7 +52,7 @@ def test_BudgetManagerCLIViewDataContext__init__with_viewmodel():
         bmvm = p3bmvm.BudgetManagerViewModelInterface().initialize()
         assert isinstance(bmvm, p3bmvm.BudgetManagerViewModelInterface), \
             "Expected BudManCommandViewModel, got: " + str(type(bmvm))
-        assert bmv_dc.view_model.initialized, \
+        assert bmvm.initialized, \
             "view_model should be initialized"
         # Create a BudgetManagerCLIViewDataContext instance with a ViewModel      
         bmv_dc = bm_view_dc.BudgetManagerCLIViewDataContext(bmvm)

@@ -156,6 +156,13 @@ BDWD_WORKING_DATA_KEYS = (BDWD_INITIALIZED,
                           BDWD_LOADED_WORKBOOKS,
                           BDWD_FI)
 
+DATA_CONTEXT_KEYS = (
+    FI_KEY,
+    WF_KEY,
+    WB_NAME,
+    WB_TYPE,
+    BDWD_LOADED_WORKBOOKS,)
+
 
 # Miscellaneous Convenience Constants
 P2 = "  "  # 2 space padding

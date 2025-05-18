@@ -325,7 +325,9 @@ class BudgetManagerViewModelInterface():
     #region Command Processing methods
     # ------------------------------------------------------------------------ +
     #region BMVM_execute_cmd() Command Processing method
-    def BMVM_execute_cmd(self, cmd : Dict = None) -> Tuple[bool, Any]:
+    def BMVM_execute_cmd(self, 
+                         cmd : Dict = None,
+                         raise_errors : bool = False) -> Tuple[bool, Any]:
         """Execute a command for the Budget Model View Model.
 
         This method executes a command for the Budget Model View Model. 
@@ -335,11 +337,17 @@ class BudgetManagerViewModelInterface():
         indicate an error occurred and have an error message.
 
         Arguments:
-            cmd (Dict): The command to execute along with any arguments.
+            cmd (Dict): A valid BudMan View Model Command object.
+            raise_errors (bool): If True, raise any errors encountered.
         
         Returns:
             Tuple[success : bool, result : Any]: The outcome of the command 
-            execution.
+            execution. If success is True, result contains result of the 
+            command, if False, a description of the error.
+
+        Raises:
+            If raise-errors is True, RuntimeError: A description of the
+            root error is contained in the exception message.
         """
         try:
             st = p3u.start_timer()
@@ -365,6 +373,8 @@ class BudgetManagerViewModelInterface():
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
+            if raise_errors:
+                raise RuntimeError(m)
             return False, m
     #endregion BMVM_execute_cmd() Command Processing method
     #region BMVM_validate_cmd() Command Processing method
@@ -418,7 +428,7 @@ class BudgetManagerViewModelInterface():
                 elif key == "wb_name": continue
                 elif key == "wf_key":
                     if value not in p3bm.BM_VALID_WORKFLOWS:
-                        m = f"Invalid fi_key value: '{value}'."
+                        m = f"Invalid wf_key value: '{value}'."
                         logger.error(m)
                         return False, m
                     continue
@@ -443,18 +453,26 @@ class BudgetManagerViewModelInterface():
         """Execute FI_init command for one fi_key or 'all'.
         
         This command initializes the Data Context aspects of the View Model to
-        contain workbooks and other information for the specified financial
-        institution (FI) which may be 'all' or a specific FI key.
+        contain the current information for the specified financial
+        institution (FI) which may be 'all' or a specific FI key. When completed 
+        successfully, returns a string representation of the following FI data 
+        for each applicable financial institution:
+        - fi_key: The key for the financial institution.
+        - wf_key: The key for the workflow.
+        - wb_type: The type of workbooks, either input or output.
+        - wb_name: The name of the workbooks within each type.
 
         Arguments:
-            fi_key (str): The key for the financial institution. If None, 
-                no action is taken. If 'all', all workbooks are loaded.
-            wf_key (str): The key for the workflow.
-            wb_type (str): The type of workbook, either input or output.
-            wb_name (str): The name of the workbook. If None, all workbooks
-                modified since open are saved. If 'all', all workbooks are saved.
+            cmd (Dict): A valid BudMan View Model Command object.
+
+        Returns:
+            Tuple[success : bool, result : Any]: The outcome of the command 
+            execution. If success is True, result contains result of the 
+            command, if False, a description of the error.
+            
         Raises:
-            RuntimeError: If the fi_key is None or invalid.
+            RuntimeError: A description of the
+            root error is contained in the exception message.
         """
         try:
             st = p3u.start_timer()
@@ -467,8 +485,7 @@ class BudgetManagerViewModelInterface():
             wf_key = cmd.get("wf_key", p3bm.BM_WF_CATEGORIZATION)
             wb_type = cmd.get("wb_type", p3bm.WF_WORKBOOKS_IN)
             wb_name = cmd.get("wb_name", None)
-            logger.info(f"Start Command: 'Init' fi_key: {fi_key}, "
-                        f"wf_key: {wf_key}, wb_type: {wb_type}, wb_name: {wb_name}")
+            logger.info(f"Start: {str(cmd)}")
             if not p3u.is_non_empty_str("fi_key",fi_key,pfx):
                 m = f"fi_key is None, no action taken."
                 logger.error(m)
@@ -483,19 +500,18 @@ class BudgetManagerViewModelInterface():
                 m = f"ValueError({str(e)})"
                 logger.error(m)
                 raise RuntimeError(f"{pfx}{m}")
-            wf_key = p3bm.BM_WF_CATEGORIZATION
-            wb_type = p3bm.WF_WORKBOOKS_IN
             # Load the workbooks for the specified FI and workflow.
             ret = self.budget_model.bdwd_FI_WORKBOOKS_load(fi_key, wf_key, wb_type)
-            # Set this fi_key as the latest or current FI key.
-            self.FI_KEY = fi_key
-            self.WF_KEY = wf_key
-            self.WB_TYPE = wb_type
+            # Set last values initialized in the DC.
+            self.dc_FI_KEY = fi_key
+            self.dc_WF_KEY = wf_key
+            self.dc_WB_TYPE = wb_type
+            self.dc_WB_NAME = wb_name
             logger.info(f"Complete Command: 'Save' {p3u.stop_timer(st)}")   
             return None
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
-            raise
+            raise RuntimeError(m) from e
     #endregion FI_init_command() command method
     # ------------------------------------------------------------------------ +
     #region FI_save_cmd() command method
@@ -552,10 +568,11 @@ class BudgetManagerViewModelInterface():
                 raise RuntimeError(f"{pfx}{m}")
             # Save the workbooks for the specified FI, WF, and WB-type.
             ret = self.budget_model.bdwd_FI_WORKBOOKS_save(fi_key, wf_key, wb_type)
-            # Set this fi_key as the latest or current FI key.
-            self.FI_KEY = fi_key
-            self.WF_KEY = wf_key
-            self.WB_TYPE = wb_type
+            # Set last values initialized in the DC.
+            self.dc_FI_KEY = fi_key
+            self.dc_WF_KEY = wf_key
+            self.dc_WB_TYPE = wb_type
+            self.dc_WB_NAME = wb_name
             logger.info(f"Complete Command: 'Save' {p3u.stop_timer(st)}")   
             return None
         except Exception as e:
@@ -636,14 +653,29 @@ class BudgetManagerViewModelInterface():
     #region BudgetManagerViewModelDataContextInterface implementation          +
     """BDM view_model Data Context Methods.
 
-    These methods are to access the View Model as a Data Context from a View.
-    Used by client packages up-stream in View-land, some are data requests and
+    Budget Manager is designed around the MVVM (Model View ViewModel) design
+    pattern. In MVVM implementations, a View binds to a ViewModel through an
+    abstract Data Context (DC) object interface. Also, there is often a Command
+    Processing pattern to map command actions from a user interface View to 
+    data actions in the DC. 
+    
+    Herein, the design is to have the DC support Commands as well as DC
+    properties and methods. To keep the details of the View Model limited in
+    the design of commands, all understanding of the structure of the data in 
+    in the DC, the ViewModel and beyond it, the Model, the DC properties and
+    methods are where downstream APIs are used, not in the Command Binding
+    Implementation methods.
+    
+    These DC methods are used by Commands to access DC data values.
+    As an API, the DC methods are an abstraction to support a View trying to
+    interact with a user. Some are data requests and
     others perform work on the view_model Data Context state while owning
     the concern for syncing with the Model downstream.    
 
-    This View Model leverages the BDWD (Budget Domain Working Data) feature 
-    of the BudgetModel. All data is transient and not automatically saved to
-    the BudgetModel store. 
+    This View Model leverages the DC leverages BudgetManager Domain Model (BDM)
+    "library" to reference actual data for the application, in memory. 
+    When storage actions are required, the BudgetManager Storage Model (BSM)
+    library.
     """
     # ======================================================================== +
     #                                                                          +
@@ -698,56 +730,56 @@ class BudgetManagerViewModelInterface():
             logger.error(p3u.exc_err_msg(e))
             raise
     @property
-    def FI_KEY(self) -> str:
+    def dc_FI_KEY(self) -> str:
         """Return the current financial institution key value in DC."""
         dc = self._valid_DC()
         if not hasattr(dc, p3bm.FI_KEY):
             setattr(dc, p3bm.FI_KEY, None)
         return self._data_context[p3bm.FI_KEY]
-    @FI_KEY.setter
-    def FI_KEY(self, value: str) -> None:
+    @dc_FI_KEY.setter
+    def dc_FI_KEY(self, value: str) -> None:
         """Set the current financial institution key value in DC."""
         dc = self._valid_DC()
         if not hasattr(dc, p3bm.FI_KEY):
             setattr(dc, p3bm.FI_KEY, None)
         self._data_context[p3bm.FI_KEY] = value
     @property
-    def WF_KEY(self) -> str:
+    def dc_WF_KEY(self) -> str:
         """Return the current workflow key value in DC."""
         dc = self._valid_DC()
         if not hasattr(dc, p3bm.WF_KEY):
             setattr(dc, p3bm.WF_KEY, None)
         return self._data_context[p3bm.WF_KEY]
-    @WF_KEY.setter
-    def WF_KEY(self, value: str) -> None:
+    @dc_WF_KEY.setter
+    def dc_WF_KEY(self, value: str) -> None:
         """Set the current workflow key value in DC."""
         dc = self._valid_DC()
         if not hasattr(dc, p3bm.WF_KEY):
             setattr(dc, p3bm.WF_KEY, None)
         self._data_context[p3bm.WF_KEY] = value
     @property
-    def WB_TYPE(self) -> str:
+    def dc_WB_TYPE(self) -> str:
         """Return the current workbook type value in DC."""
         dc = self._valid_DC()
         if not hasattr(dc, p3bm.WB_TYPE):
             setattr(dc, p3bm.WB_TYPE, None)
         return self._data_context[p3bm.WB_TYPE]
-    @WB_TYPE.setter
-    def WB_TYPE(self, value: str) -> None:
+    @dc_WB_TYPE.setter
+    def dc_WB_TYPE(self, value: str) -> None:
         """Set the current workbook type value in DC."""
         dc = self._valid_DC()
         if not hasattr(dc, p3bm.WB_TYPE):
             setattr(dc, p3bm.WB_TYPE, None)
         self._data_context[p3bm.WB_TYPE] = value
     @property
-    def WB_NAME(self) -> str:
+    def dc_WB_NAME(self) -> str:
         """Return the current workbook name value in DC."""
         dc = self._valid_DC()
         if not hasattr(dc, p3bm.WB_NAME):
             setattr(dc, p3bm.WB_NAME, None)
         return self._data_context[p3bm.WB_NAME]
-    @WB_NAME.setter
-    def WB_NAME(self, value: str) -> None:
+    @dc_WB_NAME.setter
+    def dc_WB_NAME(self, value: str) -> None:
         """Set the current workbook name value in DC."""
         dc = self._valid_DC()
         if not hasattr(dc, p3bm.WB_NAME):
@@ -760,6 +792,17 @@ class BudgetManagerViewModelInterface():
     # ------------------------------------------------------------------------ +
     #region Data Context Methods
     #                                                                          +
+    # ------------------------------------------------------------------------ +
+    #region FI_get_loaded_workbooks_count() method
+    def dc_FI_WORKBOOKS_load(self, fi_key : str, wf_key : str, wb_type : str) -> int: 
+        """Return count of all loaded workbooks from Data Context."""
+        try:
+            # Reference the BDWD_LOADED_WORKBOOKS.
+            return self.budget_model.bdwd_LOADED_WORKBOOKS_count()
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion FI_get_loaded_workbooks_count() method
     # ------------------------------------------------------------------------ +
     #region FI_get_loaded_workbooks_count() method
     def FI_get_loaded_workbooks_count(self) -> int: 

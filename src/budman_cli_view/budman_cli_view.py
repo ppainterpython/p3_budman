@@ -176,7 +176,7 @@ class BudgetManagerCLIView(cmd2.Cmd):
         # TODO: implement BMVM_execute_cmd() method in the data_context.
         try:
             cmd = BudgetManagerCLIView.create_cmd(opts)
-            result = self.data_context.BMVM_execute_cmd(cmd)
+            result = self.data_context.execute_cmd(cmd)
             return result
         except Exception as e:
             self.pexcept(e)
