@@ -24,6 +24,8 @@ BM_DEFAULT_BUDGET_FOLDER = "~/OneDrive/budget"
 PATH = "_path"
 ABS_PATH = "_abs" + PATH
 WORKBOOKS = "_workbooks"
+WB_TYPE = "wb_type"
+WB_NAME = "wb_name"
 
 # Budget Model Domain Constants
 # Well-known column names for banking transactions workbooks.

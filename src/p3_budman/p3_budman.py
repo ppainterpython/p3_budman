@@ -17,7 +17,8 @@ from openpyxl import Workbook
 import p3logging as p3l, p3_utils as p3u
 
 # local packages and module libraries
-import budman_view_model.budman_command_view_model as p3bmvm
+import budman_view_model.budman_cli_view_datacontext as p3bm_view_dc
+import budman_view_model.budman_view_model_interface as p3bmvm
 import budman_cli_view.budman_cli_view as p3bmv
 logger = logging.getLogger(settings.app_name)
 logger.propagate = True
@@ -62,12 +63,19 @@ def log_workbook_info(file_name : str = "unknown",wb : Workbook = None) -> None:
 #endregion log_workbook_info() function
 # ---------------------------------------------------------------------------- +
 #region budmod() function
-def budman_app_cli_cmdloop():
+def budman_app_cli_cmdloop(startup : bool = True) -> None:
     """CLI cmdloop function."""
     try:
-        bmvm = p3bmvm.BudgetManagerCommandViewModel()
+        # create and initialize view model
+        bmvm = p3bmvm.BudgetManagerViewModelInterface()
         bmvm.initialize(load_user_store=True) # Initialize the BudgetModelCommandViewModel
-        p3bmv.BudgetManagerCLIView(bmvm).initialize().cmdloop() # Application CLI loop
+        # create and initialize a data context, for the view model
+        bm_cliview_dc = p3bm_view_dc.BudgetManagerCLIViewDataContext(bmvm)
+        bm_cliview_dc.initialize(cp=bmvm.BMVM_execute_cmd,dc=bmvm.data_context) 
+        # create and initialize the view
+        clview = p3bmv.BudgetManagerCLIView(bm_cliview_dc).initialize()
+        # startup the view or not
+        clview.cmdloop() if startup else None # Application CLI loop
         _ = "pause"
     except Exception as e:
         m = p3u.exc_err_msg(e)

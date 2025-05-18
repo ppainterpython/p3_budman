@@ -1,8 +1,9 @@
 # ---------------------------------------------------------------------------- +
-#region bdm_view_model.py module
-""" bdm_view_model.py command-style view_model for Budget Domain Model (budmod).
+#region budman_view_model_interface.py module
+""" budman_view_model_interface.py implements the BudgetManagerViewModelInterface
+class, serving as the ViewModel for the Budgat Manager application.
 """
-#endregion bdm_view_model.py module
+#endregion budman_view_model_interface.py module
 # ---------------------------------------------------------------------------- +
 #region Imports
 # python standard library modules and packages
@@ -24,10 +25,19 @@ logger = logging.getLogger(settings[p3bm.APP_NAME])
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
-class BudgetManagerCommandViewModel():
+class BudgetManagerViewModelInterface():
     # ======================================================================== +
-    #region BudgetManagerCommandViewModel class
-    """A Budget Model View Model to support Commands and Data Context."""
+    #region BudgetManagerViewModelInterface class
+    """A Budget Model View Model to support Commands and Data Context.
+    
+    This ViewModel support two primary interfaces: Command processing to the 
+    Model (from upstream Views and other clients) and Data Context properties
+    and methods. The Data Context (DC) is the main medium of exchange of
+    data between the ViewModel and the View. Commands are sent from the 
+    View, to be processed by the ViewModel in the context of the DC. Command
+    implementation methods access the APIs of the Model to perform the
+    requested actions.
+    """
     # ======================================================================== +
     #                                                                          +
     # ------------------------------------------------------------------------ +
@@ -37,18 +47,58 @@ class BudgetManagerCommandViewModel():
     #region __init__() constructor method
     def __init__(self) -> None:
         super().__init__()
-        self.intitialized : bool = False
+        self._intitialized : bool = False
         self.BUDMAN_STORE_loaded : bool = False
-        self.budget_model : p3bm.BudgetModel = None
-        self.FI_KEY : str = None
-        self.WF_KEY : str = None
-        self.WB_TYPE : str = None
-        self.WB_NAME : str = None
-        self.cmd_map : Dict[str, Callable] = None
+        self._budget_model : p3bm.BudgetModel = None
+        self._data_context : Dict = {}
+        self._cmd_map : Dict[str, Callable] = None
     #endregion __init__() constructor method
     # ------------------------------------------------------------------------ +
+    #region Properties
+    @property
+    def initialized(self) -> bool:
+        """Return True if the ViewModel is initialized."""
+        return self._intitialized
+    @initialized.setter
+    def initialized(self, value: bool) -> None:
+        """Set the initialized property."""
+        if not isinstance(value, bool):
+            raise ValueError("initialized must be a boolean value.")
+        self._intitialized = value
+    @property
+    def budget_model(self) -> p3bm.BudgetModel:
+        """Return the BudgetModel instance."""
+        return self._budget_model
+    @budget_model.setter
+    def budget_model(self, value: p3bm.BudgetModel) -> None:
+        """Set the BudgetModel instance."""
+        if not isinstance(value, p3bm.BudgetModel):
+            raise ValueError("budget_model must be a BudgetModel instance.")
+        self._budget_model = value
+    @property
+    def data_context(self) -> Dict:
+        """Return the data context dictionary."""
+        return self._data_context
+    @data_context.setter
+    def data_context(self, value: Dict) -> None:
+        """Set the data context dictionary."""
+        if not isinstance(value, dict):
+            raise ValueError("data_context must be a dictionary.")
+        self._data_context = value
+    @property
+    def cmd_map(self) -> Dict[str, Callable]:
+        """Return the command map dictionary."""
+        return self._cmd_map
+    @cmd_map.setter
+    def cmd_map(self, value: Dict[str, Callable]) -> None:
+        """Set the command map dictionary."""
+        if not isinstance(value, dict):
+            raise ValueError("cmd_map must be a dictionary.")
+        self._cmd_map = value
+    #endregion Properties
+    # ------------------------------------------------------------------------ +
     #region initialize() method
-    def initialize(self, load_user_store : bool = False) -> "BudgetManagerCommandViewModel":
+    def initialize(self, load_user_store : bool = False) -> "BudgetManagerViewModelInterface":
         """Initialize the command view_model."""
         try:
             st = p3u.start_timer()
@@ -68,7 +118,7 @@ class BudgetManagerCommandViewModel():
             if not self.budget_model.bm_initialized: 
                 raise ValueError("BudgetModel is not initialized.")
             self.initialize_cmd_map()
-            self.intitialized = True
+            self.initialized = True
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             return self
         except Exception as e:
@@ -92,13 +142,33 @@ class BudgetManagerCommandViewModel():
             raise
     #endregion initialize_cmd_map() method
     # ------------------------------------------------------------------------ +
-    #endregion BudgetManagerCommandViewModel class
+    #endregion BudgetManagerViewModelInterface class
     # ======================================================================== +
 
     # ======================================================================== +
-    #region FICommandInterface Budget Manager View Model Command Interface
-    """Budget Model View Model Command Interface Methods.
+    #region BudgetManagerViewModelInterface implementation                     +
+    """BudgetModelViewModelInterface provides two interfaces:
+       1. BudgetManagerViewModelCommandInterface.
+       2. BudgetManagerViewModelDataContextInterface.
     
+    BudgetManagerViewModelCommandInterface
+    --------------------------------------
+
+    - Provides Command Processing for the command pattern, used by Views and
+      other upstream clients to submit commands to the ViewModel. The command
+    - Provides the Command Binding Implementations. The cmd_map property 
+      holds a map from the supported command_keys to the methods that
+      implement them. This map binds the commands to the code that implements
+      each Command.
+
+    BudgetManagerViewModelDataContextInterface
+    ------------------------------------------
+
+    - Provides Data Context access to the ViewModel. This interface is
+      functional, not requiring the upstream caller to know much about the
+      data apart from attribute names. It uses dict objects to represent
+      objects.
+
     In View Model form, these methods provide an Interface for executing
     Commands as a design pattern. Commands take actions for a command 
     initiated by an upstream View, or other client caller. Of course, 
@@ -248,8 +318,13 @@ class BudgetManagerCommandViewModel():
     """
     # ======================================================================== +
     #                                                                          +
+    # ======================================================================== +
+    #region BudgetManagerViewModelCommandInterface implementation              +
+    #                                                                          +
     # ------------------------------------------------------------------------ +
-    #region BMVM_execute_cmd() command method
+    #region Command Processing methods
+    # ------------------------------------------------------------------------ +
+    #region BMVM_execute_cmd() Command Processing method
     def BMVM_execute_cmd(self, cmd : Dict = None) -> Tuple[bool, Any]:
         """Execute a command for the Budget Model View Model.
 
@@ -269,7 +344,7 @@ class BudgetManagerCommandViewModel():
         try:
             st = p3u.start_timer()
             logger.info(f"Start Command: {cmd}")
-            if not self.intitialized:
+            if not self.initialized:
                 m = f"{self.__class__.__name__} is not initialized."
                 logger.error(m)
                 return False, m
@@ -291,8 +366,8 @@ class BudgetManagerCommandViewModel():
             m = p3u.exc_err_msg(e)
             logger.error(m)
             return False, m
-    #endregion BMVM_execute_cmd() command method
-    #region BMVM_validate_cmd() command method
+    #endregion BMVM_execute_cmd() Command Processing method
+    #region BMVM_validate_cmd() Command Processing method
     def BMVM_validate_cmd(self, cmd : Dict = None) -> Tuple[bool, str]:
         """Validate the cmd for the Budget Manager View Model.
 
@@ -307,7 +382,7 @@ class BudgetManagerCommandViewModel():
                 False, the message will contain an error message.
         """
         try:
-            if not self.intitialized:
+            if not self.initialized:
                 m = f"{self.__class__.__name__} is not initialized."
                 logger.error(m)
                 return False, m
@@ -354,7 +429,14 @@ class BudgetManagerCommandViewModel():
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
-    #endregion BMVM_validate_cmd() command method
+    #endregion BMVM_validate_cmd() Command Processing method
+    # ------------------------------------------------------------------------ +
+    #endregion Command Processing methods
+    # ------------------------------------------------------------------------ +
+    #                                                                          +
+    # ------------------------------------------------------------------------ +
+    #region Command Binding Implementations
+    #                                                                          +
     # ------------------------------------------------------------------------ +
     #region FI_init_command() command method
     def FI_init_cmd(self, cmd : Dict = None) -> Tuple[bool, str]: 
@@ -481,15 +563,77 @@ class BudgetManagerCommandViewModel():
             raise
     #endregion FI_init_command() command method
     # ------------------------------------------------------------------------ +
-    #region template() command methods
-    #endregion template() method
+    #region BUDMAN_STORE_save() method
+    def BUDMAN_STORE_save(self) -> None:
+        """Save the Budget Manager store (BUDMAN_STORE) file with the BSM.
+
+        Returns:
+            None: for success.
+        Raises:
+            RuntimeError: If the BUDMAN_STORE file cannot be saved.
+        """
+        try:
+            st = p3u.start_timer()
+            logger.info(f"Start: ...")
+            # Save the BUDMAN_STORE file with the BSM.
+            # Use the BUDMAN_STORE info configured in BUDMAN_SETTINGS.
+            budman_store_value = settings[p3bm.BUDMAN_STORE]
+            budman_folder = settings[p3bm.BUDMAN_FOLDER]
+            budman_folder_abs_path = Path(budman_folder).expanduser().resolve()
+            budman_store_abs_path = budman_folder_abs_path / budman_store_value
+            # Update some values prior to saving.
+            self.budget_model.bdm_url = budman_store_abs_path.as_uri()
+            self.budget_model.bm_last_modified_date = p3u.now_iso_date_string()
+            self.budget_model.bm_last_modified_by = getpass.getuser()
+            # Get a Dict of the BudgetModel to store.
+            budget_model_dict = self.budget_model.to_dict()
+            # Save the BUDMAN_STORE file.
+            p3bm.bsm_BUDMAN_STORE_save(budget_model_dict, budman_store_abs_path)
+            logger.info(f"Saved BUDMAN_STORE file: {budman_store_abs_path}")
+            logger.info(f"Complete: {p3u.stop_timer(st)}")
+            return None
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion BUDMAN_STORE_save() method
+    # ------------------------------------------------------------------------ +
+    #region BUDMAN_STORE_load_cmd() method
+    def BUDMAN_STORE_load_cmd(self) -> Dict:
+        """Load the Budget Manager store (BUDMAN_STORE) file from the BSM.
+
+        A 
+
+        Returns:
+            Dict: The BudgetModel store as a dictionary.
+        """
+        try:
+            st = p3u.start_timer()
+            logger.info(f"Start: ...")
+            # Load the BUDMAN_STORE file with the BSM.
+            # Use the BUDMAN_STORE configured in BUDMAN_SETTINGS.
+            budman_store_value = settings[p3bm.BUDMAN_STORE]
+            budman_folder = settings[p3bm.BUDMAN_FOLDER]
+            budman_folder_abs_path = Path(budman_folder).expanduser().resolve()
+            budman_store_abs_path = budman_folder_abs_path / budman_store_value
+            # Load the BUDMAN_STORE file.
+            budman_store_dict = p3bm.bsm_BUDMAN_STORE_load(budman_store_abs_path)
+            self.BUDMAN_STORE_loaded = True
+            logger.info(f"Complete: {p3u.stop_timer(st)}")
+            return budman_store_dict
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion BUDMAN_STORE_load_cmd() method
     # ------------------------------------------------------------------------ +
     #                                                                          +
-    #endregion FICommandInterface Budget Manager View Model Command Interface                                  +
+    #endregion Command Binding Implementations
+    # ------------------------------------------------------------------------ +
+    #                                                                          +
+    #endregion BudgetManagerViewModelCommandInterface implementation           +
     # ======================================================================== +
-
+    #                                                                          +
     # ======================================================================== +
-    #region FIDataContextInterface view_model Data Context Interface                                +
+    #region BudgetManagerViewModelDataContextInterface implementation          +
     """BDM view_model Data Context Methods.
 
     These methods are to access the View Model as a Data Context from a View.
@@ -502,6 +646,119 @@ class BudgetManagerCommandViewModel():
     the BudgetModel store. 
     """
     # ======================================================================== +
+    #                                                                          +
+    # ------------------------------------------------------------------------ +
+    #region Data Context Interface methods
+    # ------------------------------------------------------------------------ +
+    #region get_DC() method
+    def get_DC(self) -> Dict:
+        """Return the Data Context for the ViewModel.
+
+        This method returns the Data Context for the ViewModel. The Data
+        Context is a dictionary that contains all of the data for the
+        ViewModel. It is used to bind the ViewModel to the View.
+        """
+        try:
+            # Reference the BDWD_LOADED_WORKBOOKS.
+            return self.budget_model.bdwd_LOADED_WORKBOOKS_get()
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion get_DC() method
+    # ------------------------------------------------------------------------ +
+    #region set_DC() method
+    def set_DC(self, dc : Dict) -> None:
+        """Set the Data Context for the ViewModel.
+
+        This method sets the Data Context for the ViewModel. The Data
+        Context is a dictionary that contains all of the data for the
+        ViewModel. It is used to bind the ViewModel to the View.
+        """
+        try:
+            # Reference the BDWD_LOADED_WORKBOOKS.
+            self.budget_model.bdwd_LOADED_WORKBOOKS_set(dc)
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion set_DC() method
+    # ------------------------------------------------------------------------ +
+    #endregion Data Context Interface methods
+    # ------------------------------------------------------------------------ +
+    #                                                                          +
+    # ------------------------------------------------------------------------ +
+    #region Data Context Properties                                            +
+    #                                                                          +
+    # ------------------------------------------------------------------------ +
+    def _valid_DC(self) -> Dict:
+        """Init self._data_context if it is None."""
+        try:
+            self._data_context = self._data_context if self._data_context else {}
+            return self._data_context
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    @property
+    def FI_KEY(self) -> str:
+        """Return the current financial institution key value in DC."""
+        dc = self._valid_DC()
+        if not hasattr(dc, p3bm.FI_KEY):
+            setattr(dc, p3bm.FI_KEY, None)
+        return self._data_context[p3bm.FI_KEY]
+    @FI_KEY.setter
+    def FI_KEY(self, value: str) -> None:
+        """Set the current financial institution key value in DC."""
+        dc = self._valid_DC()
+        if not hasattr(dc, p3bm.FI_KEY):
+            setattr(dc, p3bm.FI_KEY, None)
+        self._data_context[p3bm.FI_KEY] = value
+    @property
+    def WF_KEY(self) -> str:
+        """Return the current workflow key value in DC."""
+        dc = self._valid_DC()
+        if not hasattr(dc, p3bm.WF_KEY):
+            setattr(dc, p3bm.WF_KEY, None)
+        return self._data_context[p3bm.WF_KEY]
+    @WF_KEY.setter
+    def WF_KEY(self, value: str) -> None:
+        """Set the current workflow key value in DC."""
+        dc = self._valid_DC()
+        if not hasattr(dc, p3bm.WF_KEY):
+            setattr(dc, p3bm.WF_KEY, None)
+        self._data_context[p3bm.WF_KEY] = value
+    @property
+    def WB_TYPE(self) -> str:
+        """Return the current workbook type value in DC."""
+        dc = self._valid_DC()
+        if not hasattr(dc, p3bm.WB_TYPE):
+            setattr(dc, p3bm.WB_TYPE, None)
+        return self._data_context[p3bm.WB_TYPE]
+    @WB_TYPE.setter
+    def WB_TYPE(self, value: str) -> None:
+        """Set the current workbook type value in DC."""
+        dc = self._valid_DC()
+        if not hasattr(dc, p3bm.WB_TYPE):
+            setattr(dc, p3bm.WB_TYPE, None)
+        self._data_context[p3bm.WB_TYPE] = value
+    @property
+    def WB_NAME(self) -> str:
+        """Return the current workbook name value in DC."""
+        dc = self._valid_DC()
+        if not hasattr(dc, p3bm.WB_NAME):
+            setattr(dc, p3bm.WB_NAME, None)
+        return self._data_context[p3bm.WB_NAME]
+    @WB_NAME.setter
+    def WB_NAME(self, value: str) -> None:
+        """Set the current workbook name value in DC."""
+        dc = self._valid_DC()
+        if not hasattr(dc, p3bm.WB_NAME):
+            setattr(dc, p3bm.WB_NAME, None)
+        self._data_context[p3bm.WB_NAME] = value
+    # ------------------------------------------------------------------------ +
+    #endregion Data Context Properties
+    # ------------------------------------------------------------------------ +
+    #                                                                          +
+    # ------------------------------------------------------------------------ +
+    #region Data Context Methods
     #                                                                          +
     # ------------------------------------------------------------------------ +
     #region FI_get_loaded_workbooks_count() method
@@ -571,82 +828,11 @@ class BudgetManagerCommandViewModel():
             raise
     #endregion FI_get_loaded_workbook_by_name() method
     # ------------------------------------------------------------------------ +
-    #endregion FIDataContextInterface view_model Data Context Methods                                +                             +
-    # ======================================================================== +
-
-    # ======================================================================== +
-    #region BDM/BSM model Data Methods                                         +
-    """BDM/BSM model Data Methods.
-
-    These methods are to access the Model interfaces for BDM and BSM.
-
-    In out MVVM design, the View has no knowledge of the Model, only the
-    ViewModel invokes Model interfaces.  
-    """
+    #endregion Data Context Methods
+    # ------------------------------------------------------------------------ +
+    #                                                                          +
+    #endregion BudgetManagerViewModelDataContextInterface implementation       +
     # ======================================================================== +
     #                                                                          +
-    # ------------------------------------------------------------------------ +
-    #region BUDMAN_STORE_save() method
-    def BUDMAN_STORE_save(self) -> None:
-        """Save the Budget Manager store (BUDMAN_STORE) file with the BSM.
-
-        Returns:
-            None: for success.
-        Raises:
-            RuntimeError: If the BUDMAN_STORE file cannot be saved.
-        """
-        try:
-            st = p3u.start_timer()
-            logger.info(f"Start: ...")
-            # Save the BUDMAN_STORE file with the BSM.
-            # Use the BUDMAN_STORE info configured in BUDMAN_SETTINGS.
-            budman_store_value = settings[p3bm.BUDMAN_STORE]
-            budman_folder = settings[p3bm.BUDMAN_FOLDER]
-            budman_folder_abs_path = Path(budman_folder).expanduser().resolve()
-            budman_store_abs_path = budman_folder_abs_path / budman_store_value
-            # Update some values prior to saving.
-            self.budget_model.bdm_url = budman_store_abs_path.as_uri()
-            self.budget_model.bm_last_modified_date = p3u.now_iso_date_string()
-            self.budget_model.bm_last_modified_by = getpass.getuser()
-            # Get a Dict of the BudgetModel to store.
-            budget_model_dict = self.budget_model.to_dict()
-            # Save the BUDMAN_STORE file.
-            p3bm.bsm_BUDMAN_STORE_save(budget_model_dict, budman_store_abs_path)
-            logger.info(f"Saved BUDMAN_STORE file: {budman_store_abs_path}")
-            logger.info(f"Complete: {p3u.stop_timer(st)}")
-            return None
-        except Exception as e:
-            logger.error(p3u.exc_err_msg(e))
-            raise
-    #endregion BUDMAN_STORE_save() method
-    # ------------------------------------------------------------------------ +
-    #region BUDMAN_STORE_load_cmd() method
-    def BUDMAN_STORE_load_cmd(self) -> Dict:
-        """Load the Budget Manager store (BUDMAN_STORE) file from the BSM.
-
-        A 
-
-        Returns:
-            Dict: The BudgetModel store as a dictionary.
-        """
-        try:
-            st = p3u.start_timer()
-            logger.info(f"Start: ...")
-            # Load the BUDMAN_STORE file with the BSM.
-            # Use the BUDMAN_STORE configured in BUDMAN_SETTINGS.
-            budman_store_value = settings[p3bm.BUDMAN_STORE]
-            budman_folder = settings[p3bm.BUDMAN_FOLDER]
-            budman_folder_abs_path = Path(budman_folder).expanduser().resolve()
-            budman_store_abs_path = budman_folder_abs_path / budman_store_value
-            # Load the BUDMAN_STORE file.
-            budman_store_dict = p3bm.bsm_BUDMAN_STORE_load(budman_store_abs_path)
-            self.BUDMAN_STORE_loaded = True
-            logger.info(f"Complete: {p3u.stop_timer(st)}")
-            return budman_store_dict
-        except Exception as e:
-            logger.error(p3u.exc_err_msg(e))
-            raise
-    #endregion BUDMAN_STORE_load_cmd() method
-    # ------------------------------------------------------------------------ +
-    #endregion BDM view_model Data Context Methods                             +
+    #endregion BudgetManagerViewModelInterface implementation
     # ======================================================================== +
