@@ -465,10 +465,15 @@ class BudgetManagerViewModelInterface():
                         m = f"Invalid wf_key value: '{value}'."
                         logger.error(m)
                         return False, m
+                    if value == p3bm.ALL_KEY:
+                        logger.warning(f"wf_key: '{p3bm.ALL_KEY}' not implemented."
+                                    f" Defaulting to {p3bm.BM_WF_CATEGORIZATION}.")
+                        cmd[key] = p3bm.BM_WF_CATEGORIZATION
                     continue
                 else:
                     m = f"Unchedked argument key: '{key}': '{value}'."
                     logger.debug(m)
+            logger.debug(f"Full command key: '{full_cmd_key}' cmd: {str(cmd)}")
             return True, full_cmd_key
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))

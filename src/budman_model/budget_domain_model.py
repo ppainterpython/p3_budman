@@ -556,6 +556,12 @@ class BudgetModel(metaclass=SingletonMeta):
         """
         try:
             logger.debug("Start: ...")
+            # If the BM_EORKING_DATA is already inititalized, return it.
+            if (hasattr(self, BM_WORKING_DATA) and
+                isinstance(self.bm_working_data, dict) and
+                BDWD_INITIALIZED in self.bm_working_data and
+                self.bm_working_data[BDWD_INITIALIZED]): 
+                return self.bm_working_data
             # Initialize the budget model working data.
             for wd_key in BDWD_WORKING_DATA_KEYS:
                 if wd_key == BDWD_LOADED_WORKBOOKS:
@@ -660,7 +666,7 @@ class BudgetModel(metaclass=SingletonMeta):
         wf_wbl = wf_do[wb_type]
         if wf_wbl is None:
             return None
-        if not isinstance(wf_wbl, WORKBOOK_LIST):
+        if not isinstance(wf_wbl, list):
             m = f"FI_WORKFLOW_DATA '{fi_key}' '{wf_key}' is not a WORKBOOK_LIST"
             m += f"{type(wf_wbl)}"
             logger.error(m)
@@ -1124,7 +1130,7 @@ class BudgetModel(metaclass=SingletonMeta):
             if wf_do is None or len(wf_do) == 0:
                 logger.debug(f"  WF_DATA_OBJECT is empty.")
                 return
-            logger.debug(f"  WF_DATA_OBJECT({len(wf_do)} keys): {str(wf_do.keys())}")
+            logger.debug(f"  WF_DATA_OBJECT({len(wf_do)} keys): {str(list(wf_do.keys()))}")
             # Resolve all keys in the WF_DATA_OBJECT.
             did_workbooks = False
             for wf_do_key, wf_do_value in wf_do.items():
@@ -1465,10 +1471,11 @@ class BudgetModel(metaclass=SingletonMeta):
                                wb_type : str) -> LOADED_WORKBOOKS_LIST:
         """Load workbooks for an FI workflow, returns LOADED_WORKBOOKS_LIST."""
         try:
+            # Use the BSM to load the workbooks for fi_key, wf_key and wb_type.
             new_lwbl = self.bsm_WF_WORKBOOKS_load(fi_key, wf_key, wb_type)
-            if new_lwbl is None: return []
+            if new_lwbl is None or len(new_lwbl) == 0: return []
             current_lwbl = self.bdwd_LOADED_WORKBOOKS_get()
-            if current_lwbl is None: return new_lwbl
+            if current_lwbl is None or len(current_lwbl) == 0: return new_lwbl
             # TODO: How to handle duplicates?
             return current_lwbl.extend(new_lwbl)
         except Exception as e:
@@ -1505,6 +1512,24 @@ class BudgetModel(metaclass=SingletonMeta):
     #endregion bdwd_FI methods
     # ------------------------------------------------------------------------ +
     #region bdwd_INITIALIZED methods
+    def bdwd_INITIALIZED(self) -> bool:
+        """Test if BM_WORKING_DATA was initialized. Raise RuntimeError if not.
+        """
+        try:
+            if (hasattr(self, BM_WORKING_DATA) and
+                isinstance(self.bm_working_data, dict) and
+                BDWD_INITIALIZED in self.bm_working_data and
+                self.bm_working_data[BDWD_INITIALIZED]): return True
+            m = f"BM_WORKING_DATA was not initialized. "
+            m += f"Use the bdm_BM_WORKING_DATA_initialize() method."
+            logger.error(m)
+            raise RuntimeError(m)
+        except RuntimeError as e:
+            raise
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise
     def bdwd_INITIALIZED_get(self) -> bool:
         """Get the BDWD_INITIALIZED from the BDM_WORKING_DATA.
         """
