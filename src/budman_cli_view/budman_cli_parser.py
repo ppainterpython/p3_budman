@@ -77,7 +77,7 @@ class BudgetManagerCLIParser():
                 help="Workbook name.")
             self.init_wb_subcmd_parser.add_argument(
                 "-fi", nargs="?", dest="fi_key", 
-                default= "all",
+                default = "all",
                 help="FI key value.")
             self.init_wb_subcmd_parser.add_argument(
                 "-wf", nargs="?", dest="wf_key", 
@@ -97,7 +97,7 @@ class BudgetManagerCLIParser():
             self.init_fi_subcmd_parser.add_argument(
                 "-wf", nargs="?", dest="wf_key", 
                 action="store", 
-                default='all',
+                default = 'all',
                 help="Workflow key value.")
             self.init_fi_subcmd_parser.add_argument(
                 "-wb", nargs="?", dest="wb_name", 
@@ -133,7 +133,7 @@ class BudgetManagerCLIParser():
             self.show_wf_subcmd_parser.add_argument(
                 "wf_key", nargs="?", 
                 action="store", 
-                default='all',
+                default = 'all',
                 help="Workflow key value.")
             # show workbooks subcommand
             self.show_wb_subcmd_parser  = self.show_cmd_subparsers.add_parser(
@@ -244,7 +244,7 @@ class BudgetManagerCLIParser():
             self.val_wf_key_subcmd_parser.add_argument(
                 "wf_ref", nargs="?", 
                 action="store", 
-                default='all',
+                default = 'all',
                 help="wf_key value for valid workflow or 'all'.")
             # val wb_name subcommand
             self.val_wb_name_subcmd_parser = self.val_cmd_subparsers.add_parser(
@@ -266,7 +266,7 @@ class BudgetManagerCLIParser():
             self.val_fi_key_subcmd_parser.add_argument(
                 "fi_ref", nargs="?", 
                 action="store", 
-                default='all',
+                default = 'all',
                 help="fi_key value for valid Fin. Inst. or 'all'.")
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))

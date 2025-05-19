@@ -1,5 +1,5 @@
 from typing import Dict, List, Tuple
-
+from openpyxl import Workbook
 
 THIS_APP_NAME = "p3_budget_manager"
 THIS_APP_SHORT_NAME = "budman"
@@ -24,6 +24,9 @@ BM_DEFAULT_BUDGET_FOLDER = "~/OneDrive/budget"
 PATH = "_path"
 ABS_PATH = "_abs" + PATH
 WORKBOOKS = "_workbooks"
+
+# Common Key Names
+ALL_KEY = 'all'
 WB_TYPE = "wb_type"
 WB_NAME = "wb_name"
 
@@ -83,7 +86,7 @@ FI_WORKFLOW_DATA = "fi_workflow_data"
 FI_COLLECTION = Dict
 FI_OBJECT = Dict #"fi_object"  # pseudo-type
 FI_OBJECT_VALID_KEYS = (FI_KEY, FI_NAME, FI_TYPE, FI_FOLDER, FI_WORKFLOW_DATA)
-VALID_FI_KEYS = ("all", "boa", "merrill")
+VALID_FI_KEYS = ("boa", "merrill")
 VALID_FI_TYPES = ("bank", "brokerage")
 BDM_FI_NAMES = ("Bank of America", "Merrill Lynch")
 
@@ -91,8 +94,7 @@ BDM_FI_NAMES = ("Bank of America", "Merrill Lynch")
 BM_WF_INTAKE = "intake"
 BM_WF_CATEGORIZATION = "categorization"
 BM_WF_FINALIZATION = "finalization"
-BM_VALID_WORKFLOWS = (BM_WF_INTAKE, BM_WF_CATEGORIZATION, BM_WF_FINALIZATION,
-                      "all")
+BM_VALID_WORKFLOWS = (BM_WF_INTAKE, BM_WF_CATEGORIZATION, BM_WF_FINALIZATION)
 
 # WF_OBJECT workflow psuedo-Object (Dictionary key names)
 WF_KEY = "wf_key"
@@ -134,8 +136,9 @@ WF_DATA_OBJECT_VALID_KEYS = (WF_WORKBOOKS_IN, WF_WORKBOOKS_OUT)
 
 # WORKBOOK_LIST - the list of workbooks for a specific folder. It is a list
 # of WORKBOOK_ITEM tuples: (workbook_name, workbook_abs_path)
-WORKBOOK_LIST = List # pseudo-type of object
+WORKBOOK_LIST = List[Tuple[str, str]] # pseudo-type of object
 WORKBOOK_ITEM = Tuple # pseudo-type of object
+LOADED_WORKBOOKS_LIST = List[Tuple[str, Workbook]]
 
 # Key values used for transient working_data
 BDM_WORING_DATA = Dict
@@ -143,7 +146,7 @@ BDWD_INITIALIZED = "bdwd_initialized"
 #    Key Name: BDWD_INITIIALIZED
 #   Key Value: bool True | False
 # Description: Indicates if the BDWB has been initialized.
-BDWD_LOADED_WORKBOOKS = "bdwd_loaded_workbooks"
+BDWD_LOADED_WORKBOOKS = "bdwd_loaded_workbooks" # key name
 #    Key Name: BDWD_LOADED_WORKBOOKS
 #   Key Value: list[Tuple(wb_name, Workbook object)]
 # Description: A list of tuples of wb_name, Workbook objects loaded into BDWD.

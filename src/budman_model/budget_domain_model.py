@@ -573,8 +573,8 @@ class BudgetModel(metaclass=SingletonMeta):
     #region BDM FI_OBJECT pseudo-Object properties
     def bdm_FI_KEY_validate(self, fi_key:str) -> bool:
         """Validate the financial institution key."""
-        if fi_key not in self.bm_fi_collection.keys():
-            m = f"Financial Institution '{fi_key}' not found in "
+        if fi_key not in self.bm_fi_collection and fi_key != ALL_KEY:
+            m = f"Financial Institution '{fi_key}' not 'all' or not found in "
             m += f"{self.bm_fi_collection.keys()}"
             logger.error(m)
             raise ValueError(m)
@@ -685,8 +685,8 @@ class BudgetModel(metaclass=SingletonMeta):
     def bdm_WF_KEY_validate(self, wf_key:str) -> bool:
         """Validate the workflow key."""
         supp_wf = self.bm_wf_collection
-        if supp_wf is None or wf_key not in supp_wf:
-            m = f"Workflow('{wf_key}') not found supported workflows "
+        if supp_wf is None or (wf_key not in supp_wf and wf_key != ALL_KEY):
+            m = f"Workflow('{wf_key}') is not 'all' and not found in "
             m += f"{str(self.bm_wf_collection)}"
             logger.error(m)
             raise ValueError(m)
@@ -743,7 +743,7 @@ class BudgetModel(metaclass=SingletonMeta):
     # ======================================================================== +
 
     # ======================================================================== +
-    #region Budget model Storage Model (BSM) methods
+    #region BudgetModel Storage Model (BSM) methods
     """ Budget model Storage Model (BSM) Documentation.
 
     All BDM data is stored in the filesystem by the BSM. BSM works with Path 
@@ -1202,8 +1202,8 @@ class BudgetModel(metaclass=SingletonMeta):
     def bsm_WF_WORKBOOKS_load(self,
                 fi_key : str, 
                 wf_key : str, 
-                wb_type : str): 
-        """Load all workbooks for a workflow into BDWD_LOADED_WORKBOOKS
+                wb_type : str) -> LOADED_WORKBOOKS_LIST: 
+        """Load all workbooks for a workflow returning a LOADED_WORKBOOKS_LIST
         
         For fi_key,wf_key,wb_type, load all workbooks of type wb_type.
         
@@ -1216,9 +1216,12 @@ class BudgetModel(metaclass=SingletonMeta):
             wbl = self.bdm_FI_WF_WORKBOOK_LIST(fi_key, wf_key, wb_type)
             if wbl is None:
                 return
+            returned_wb_list = []
             for wb_name, wb_path in wbl:
                 wb = load_workbook(filename=wb_path)
-                self.bdwd_LOADED_WORKBOOKS_add(wb_name, wb)
+                # self.bdwd_LOADED_WORKBOOKS_add(wb_name, wb)
+                returned_wb_list.append((wb_name, wb))
+            return returned_wb_list
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
@@ -1459,10 +1462,15 @@ class BudgetModel(metaclass=SingletonMeta):
     # ------------------------------------------------------------------------ +
     #region bdwd_FI methods
     def bdwd_FI_WORKBOOKS_load(self, fi_key : str, wf_key : str,
-                               wb_type : str) -> None:
-        """Load workbooks for an FI workflow."""
+                               wb_type : str) -> LOADED_WORKBOOKS_LIST:
+        """Load workbooks for an FI workflow, returns LOADED_WORKBOOKS_LIST."""
         try:
-            self.bsm_WF_WORKBOOKS_load(fi_key, wf_key, wb_type)
+            new_lwbl = self.bsm_WF_WORKBOOKS_load(fi_key, wf_key, wb_type)
+            if new_lwbl is None: return []
+            current_lwbl = self.bdwd_LOADED_WORKBOOKS_get()
+            if current_lwbl is None: return new_lwbl
+            # TODO: How to handle duplicates?
+            return current_lwbl.extend(new_lwbl)
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
