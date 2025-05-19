@@ -169,18 +169,17 @@ class BudgetManagerCLIView(cmd2.Cmd):
     # ======================================================================== +
     #                                                                          +
     # ------------------------------------------------------------------------ +
-    #region init command - initialize aspects of the BudgetModel application.
+    #region execute_cmd method.
     def execute_cmd(self, opts : argparse.Namespace) -> Dict[str, Any]:
         """Send a cmd through the data_context using 
         BudgetManagerCommandInterface implementation."""
-        # TODO: implement BMVM_execute_cmd() method in the data_context.
         try:
             cmd = BudgetManagerCLIView.create_cmd(opts)
             result = self.data_context.execute_cmd(cmd)
             return result
         except Exception as e:
             self.pexcept(e)
-    #endregion init command - initialize aspects of the BudgetModel application.
+    #endregion execute_cmd method.
     # ------------------------------------------------------------------------ +
     #region init command - initialize aspects of the BudgetModel application.
     @with_argparser(init_cmd_parser())
@@ -263,17 +262,17 @@ class BudgetManagerCLIView(cmd2.Cmd):
     #endregion Val command
     # ------------------------------------------------------------------------ +
     #region exit and quit commands
-    def do_exit(self, opts):
+    def do_exit(self, args):
         """Exit the Budget Manager CLI."""
-        if _log_cli_cmd_execute(self, opts): return
-        print("Exiting Budget Manager CLI.")
-        _log_cli_cmd_complete(self, opts)
+        # if _log_cli_cmd_execute(self, args): return
+        self.poutput("Exiting Budget Manager CLI.")
+        # _log_cli_cmd_complete(self, args)
         return True 
-    def do_quit(self, opts):
+    def do_quit(self, args):
         """Quit the BudgetModel CLI."""
-        if _log_cli_cmd_execute(self, opts): return
-        print("Quitting BudgetModel CLI.")
-        _log_cli_cmd_complete(self, opts)
+        # if _log_cli_cmd_execute(self, args): return
+        self.poutput("Quitting BudgetModel CLI.")
+        # _log_cli_cmd_complete(self, args)
         return True 
     #endregion exit and quit commands
     # ------------------------------------------------------------------------ +    

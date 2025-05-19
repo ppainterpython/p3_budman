@@ -557,11 +557,11 @@ class BudgetModel(metaclass=SingletonMeta):
         try:
             logger.debug("Start: ...")
             # If the BM_EORKING_DATA is already inititalized, return it.
-            if (hasattr(self, BM_WORKING_DATA) and
-                isinstance(self.bm_working_data, dict) and
-                BDWD_INITIALIZED in self.bm_working_data and
-                self.bm_working_data[BDWD_INITIALIZED]): 
-                return self.bm_working_data
+            if (hasattr(self, BDM_WORKING_DATA) and
+                isinstance(self.bdm_working_data, dict) and
+                BDWD_INITIALIZED in self.bdm_working_data and
+                self.bdm_working_data[BDWD_INITIALIZED]): 
+                return self.bdm_working_data
             # Initialize the budget model working data.
             for wd_key in BDWD_WORKING_DATA_KEYS:
                 if wd_key == BDWD_LOADED_WORKBOOKS:
@@ -1421,6 +1421,7 @@ class BudgetModel(metaclass=SingletonMeta):
     #region bdwd_LOADED_WORKBOOKS() methods
     def bdwd_LOADED_WORKBOOKS_count(self) -> int:
         """Return total count of BDWD_LOADED_WORKBOOKS dictionary."""
+        self.bdwd_INITIALIZED()
         return len(self.bdwd_LOADED_WORKBOOKS_get())
 
     def bdwd_LOADED_WORKBOOKS_get(self) -> List[Tuple[str, Workbook]] | None:
@@ -1430,6 +1431,7 @@ class BudgetModel(metaclass=SingletonMeta):
             List(Tuple(wb_name: Workbook object))
         """
         try:
+            self.bdwd_INITIALIZED()
             if self.bdm_working_data is None:
                 m = f"BDM_WORKING_DATA is not set. "
                 logger.error(m)
@@ -1453,6 +1455,7 @@ class BudgetModel(metaclass=SingletonMeta):
             ValueError: if wb is None.
         """
         try:
+            self.bdwd_INITIALIZED()
             p3u.str_empty(wb_name, raise_error = True)
             p3u.is_obj_of_type("wb", wb, Workbook, raise_TypeError=True)
             lwbs_list = self.bdwd_LOADED_WORKBOOKS_get()
@@ -1471,11 +1474,13 @@ class BudgetModel(metaclass=SingletonMeta):
                                wb_type : str) -> LOADED_WORKBOOKS_LIST:
         """Load workbooks for an FI workflow, returns LOADED_WORKBOOKS_LIST."""
         try:
+            self.bdwd_INITIALIZED()
             # Use the BSM to load the workbooks for fi_key, wf_key and wb_type.
+            new_lwbl : LOADED_WORKBOOKS_LIST = []
             new_lwbl = self.bsm_WF_WORKBOOKS_load(fi_key, wf_key, wb_type)
             if new_lwbl is None or len(new_lwbl) == 0: return []
             current_lwbl = self.bdwd_LOADED_WORKBOOKS_get()
-            if current_lwbl is None or len(current_lwbl) == 0: return new_lwbl
+            # add the loaded workbooks to the current LOADED_WORKBOOKS_LIST.
             # TODO: How to handle duplicates?
             return current_lwbl.extend(new_lwbl)
         except Exception as e:
@@ -1487,6 +1492,7 @@ class BudgetModel(metaclass=SingletonMeta):
                                wb_type : str) -> None:
         """Save workbooks for an FI workflow."""
         try:
+            self.bdwd_INITIALIZED()
             self.bsm_WF_WORKBOOKS_save(fi_key, wf_key, wb_type)
         except Exception as e:
             m = p3u.exc_err_msg(e)
@@ -1500,6 +1506,7 @@ class BudgetModel(metaclass=SingletonMeta):
             fi_key (str): The financial institution key.
         """
         try:
+            self.bdwd_INITIALIZED()
             # fi_key must be a valid key or 'all'.
             _ = p3u.str_empty(fi_key, raise_error=True) # Raises TypeError, ValueError
             _ = self.bdm_FI_KEY_validate(fi_key) # Raises ValueError fi_key
@@ -1516,10 +1523,10 @@ class BudgetModel(metaclass=SingletonMeta):
         """Test if BM_WORKING_DATA was initialized. Raise RuntimeError if not.
         """
         try:
-            if (hasattr(self, BM_WORKING_DATA) and
-                isinstance(self.bm_working_data, dict) and
-                BDWD_INITIALIZED in self.bm_working_data and
-                self.bm_working_data[BDWD_INITIALIZED]): return True
+            if (hasattr(self, BDM_WORKING_DATA) and
+                isinstance(self.bdm_working_data, dict) and
+                BDWD_INITIALIZED in self.bdm_working_data and
+                self.bdm_working_data[BDWD_INITIALIZED]): return True
             m = f"BM_WORKING_DATA was not initialized. "
             m += f"Use the bdm_BM_WORKING_DATA_initialize() method."
             logger.error(m)
@@ -1534,7 +1541,8 @@ class BudgetModel(metaclass=SingletonMeta):
         """Get the BDWD_INITIALIZED from the BDM_WORKING_DATA.
         """
         try:
-           return self.get_BDM_WORKING_DATA(BDWD_INITIALIZED) 
+            self.bdwd_INITIALIZED()
+            return self.get_BDM_WORKING_DATA(BDWD_INITIALIZED) 
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
@@ -1543,7 +1551,8 @@ class BudgetModel(metaclass=SingletonMeta):
         """Set the BDWD_INITIALIZED from the BDM_WORKING_DATA.
         """
         try:
-           return self.set_BDM_WORKING_DATA(BDWD_INITIALIZED, value) 
+            self.bdwd_INITIALIZED()
+            return self.set_BDM_WORKING_DATA(BDWD_INITIALIZED, value) 
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)

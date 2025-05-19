@@ -403,7 +403,7 @@ class BudgetManagerViewModelInterface():
             result = f"Executing command: {function_name}({str(cmd)})"
             logger.info(result)
             result = self.cmd_map.get(full_cmd_key)(cmd)
-            return True, result
+            return result
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
@@ -426,31 +426,14 @@ class BudgetManagerViewModelInterface():
                 False, the message will contain an error message.
         """
         try:
-            if not self.initialized:
-                m = f"{self.__class__.__name__} is not initialized."
-                logger.error(m)
-                return False, m
-            pfx = f"{self.__class__.__name__}.{self.BMVM_execute_cmd.__name__}: "
-            if cmd is None or not isinstance(cmd, dict) or len(cmd) == 0:
-                m = f"cmd argument is None, no action taken."
-                logger.error(m)
-                return False, m
-            # Check if the cmd contains a valid cmd_key.
-            cmd_key = next((key for key in cmd.keys() if "_cmd" in key), None)
-            if p3u.str_empty(cmd_key):
-                m = f"No command key found in: {str(cmd)}"
-                logger.error(m)
-                return False, m
-            # Acquire sub-command key if present.
-            sub_cmd = cmd[cmd_key]
-            full_cmd_key = cmd_key + '_' + sub_cmd if p3u.str_notempty(sub_cmd) else cmd_key
-            # Check the cmd_key against the command map.
-            if full_cmd_key not in self.cmd_map:
-                m = f"Command key '{full_cmd_key}' not found in command map."
-                logger.error(m)
-                return False, m
-
-            # Have a valid cmd_key, now check the arguments.
+            # Extract a valid, full cmd key from the cmd, or error out.
+            success, result = self.BMVM_full_cmd_key(cmd)
+            if not success: return False, result
+            full_cmd_key = result
+            # Have a valid full_cmd_key, now check the arguments.
+            success, result = self.BMVM_cmd_key(cmd)
+            if not success: return False, result
+            cmd_key = result
             for key, value in cmd.items():
                 if key == cmd_key: continue
                 elif key == "fi_key":
@@ -479,6 +462,51 @@ class BudgetManagerViewModelInterface():
             logger.error(p3u.exc_err_msg(e))
             raise
     #endregion BMVM_validate_cmd() Command Processing method
+    #region BMVM_cmd_key() Command Processing method
+    def BMVM_cmd_key(self, cmd : Dict = None) -> Tuple[bool, str]:
+        """Extract and return the cmd key from cmd."""
+        try:
+            if not self.initialized:
+                m = f"{self.__class__.__name__} is not initialized."
+                logger.error(m)
+                return False, m
+            pfx = f"{self.__class__.__name__}.{self.BMVM_execute_cmd.__name__}: "
+            if cmd is None or not isinstance(cmd, dict) or len(cmd) == 0:
+                m = f"cmd argument is None, no action taken."
+                logger.error(m)
+                return False, m
+            # Check if the cmd contains a valid cmd_key.
+            cmd_key = next((key for key in cmd.keys() if "_cmd" in key), None)
+            if p3u.str_empty(cmd_key):
+                m = f"No command key found in: {str(cmd)}"
+                logger.error(m)
+                return False, m
+            return True, cmd_key
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion BMVM_cmd_key() Command Processing method
+    #region BMVM_full_cmd_key() Command Processing method
+    def BMVM_full_cmd_key(self, cmd : Dict = None) -> Tuple[bool, str]:
+        """Extract and return full cmd key from cmd, if subcommand given."""
+        try:
+            # Extract a cmd key from the cmd, or error out.
+            success, result = self.BMVM_cmd_key(cmd)
+            if not success: return False, result
+            cmd_key = result
+            # Acquire sub-command key if present.
+            sub_cmd = cmd[cmd_key]
+            full_cmd_key = cmd_key + '_' + sub_cmd if p3u.str_notempty(sub_cmd) else cmd_key
+            # Check the cmd_key against the command map.
+            if full_cmd_key not in self.cmd_map:
+                m = f"Command key '{full_cmd_key}' not found in command map."
+                logger.error(m)
+                return False, m
+            return True, full_cmd_key
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion BMVM_full_cmd_key() Command Processing method
     # ------------------------------------------------------------------------ +
     #endregion Command Processing methods
     # ------------------------------------------------------------------------ +
@@ -549,7 +577,7 @@ class BudgetManagerViewModelInterface():
             # Create result
             lwbl_names = self.FI_get_loaded_workbook_names()
             result = f"Loaded {len(lwbl_names)} Workbooks: {str(lwbl_names)}"
-            logger.info(f"Complete Command: 'Save' {p3u.stop_timer(st)}")   
+            logger.info(f"Complete Command: 'Init' {p3u.stop_timer(st)}")   
             return True, result
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
