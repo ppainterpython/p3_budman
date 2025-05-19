@@ -156,7 +156,7 @@ class BudgetModel(metaclass=SingletonMeta):
         setattr(self, BM_CREATED_DATE, p3u.now_iso_date_string()) 
         setattr(self, BM_LAST_MODIFIED_DATE, self._created_date)
         setattr(self, BM_LAST_MODIFIED_BY, getpass.getuser())
-        setattr(self, BM_WORKING_DATA, {})  # wd - budget model working data
+        setattr(self, BDM_WORKING_DATA, {})  # wd - budget model working data
         logger.debug("Complete: BudgetModel().__init__() ...")
     #endregion BudgetModel class constructor __init__()
     # ------------------------------------------------------------------------ +
@@ -175,7 +175,7 @@ class BudgetModel(metaclass=SingletonMeta):
             BM_CREATED_DATE: self.bm_created_date,
             BM_LAST_MODIFIED_DATE: self.bm_last_modified_date,
             BM_LAST_MODIFIED_BY: self.bm_last_modified_by,
-            BM_WORKING_DATA: self.bm_working_data
+            BDM_WORKING_DATA: self.bdm_working_data
         }
         return ret
     def __repr__(self) -> str:
@@ -192,7 +192,7 @@ class BudgetModel(metaclass=SingletonMeta):
         ret += f"'{BM_CREATED_DATE}': '{self.bm_created_date}', "
         ret += f"'{BM_LAST_MODIFIED_DATE}': '{self.bm_last_modified_date}', "
         ret += f"'{BM_LAST_MODIFIED_BY}': '{self.bm_last_modified_by}', "
-        ret += f"'{BM_WORKING_DATA}': '{self.bm_working_data}' }} "
+        ret += f"'{BDM_WORKING_DATA}': '{self.bdm_working_data}' }} "
         return ret
     def __str__(self) -> str:
         ''' Return a str representation of the BudgetModel object '''
@@ -208,7 +208,7 @@ class BudgetModel(metaclass=SingletonMeta):
         ret += f"{BM_CREATED_DATE} = '{self.bm_created_date}', "
         ret += f"{BM_LAST_MODIFIED_DATE} = '{self.bm_last_modified_date}', "
         ret += f"{BM_LAST_MODIFIED_BY} = '{self.bm_last_modified_by}', "
-        ret += f"{BM_WORKING_DATA} = {self.bm_working_data}"
+        ret += f"{BDM_WORKING_DATA} = {self.bdm_working_data}"
         return ret
     #endregion BudgetModel internal class methods
     # ------------------------------------------------------------------------ +
@@ -324,23 +324,23 @@ class BudgetModel(metaclass=SingletonMeta):
         self._last_modified_by = value
     
     @property
-    def bm_working_data(self) -> dict:
-        """The budget model working data."""
+    def bdm_working_data(self) -> dict:
+        """The budget domain model working data."""
         self._wd = {} if self._wd is None else self._wd
         return self._wd
     
-    @bm_working_data.setter
-    def bm_working_data(self, value: dict) -> None:
-        """Set the budget model working data."""
+    @bdm_working_data.setter
+    def bdm_working_data(self, value: dict) -> None:
+        """Set the budget domain model working data."""
         self._wd = {} if self._wd is None else self._wd
         self._wd = value
 
     # budget_model_working_data is a dictionary to store dynamic, non-property data.
-    def set_BM_WORKING_DATA(self, key, value):
-        self.bm_working_data[key] = value
+    def set_BDM_WORKING_DATA(self, key, value):
+        self.bdm_working_data[key] = value
 
-    def get_BM_WORKING_DATA(self, key):
-        return self.bm_working_data.get(key, 0)
+    def get_BDM_WORKING_DATA(self, key):
+        return self.bdm_working_data.get(key, 0)
 
     #endregion BudgetModel public class properties
     # ------------------------------------------------------------------------ +
@@ -465,7 +465,7 @@ class BudgetModel(metaclass=SingletonMeta):
             if bsm_init:
                 self.bsm_inititalize(create_missing_folders, raise_errors)
             if wd_init:
-                self.bdm_working_data = self.bdm_BM_WORKING_DATA_initialize()
+                self.bdm_working_data = self.bdm_BDM_WORKING_DATA_initialize()
             self.bm_initialized = True
             logger.debug(f"Complete: {p3u.stop_timer(st)}")   
             return self
@@ -533,7 +533,7 @@ class BudgetModel(metaclass=SingletonMeta):
             if bsm_init:
                 self.bsm_inititalize()
             if wd_init:
-                self.bdm_working_data = self.bdm_BM_WORKING_DATA_initialize()
+                self.bdm_working_data = self.bdm_BDM_WORKING_DATA_initialize()
             self.bm_initialized = True
             logger.debug(f"Complete: {p3u.stop_timer(st)}")   
             return 
@@ -543,32 +543,32 @@ class BudgetModel(metaclass=SingletonMeta):
             raise
     #endregion bdm_initialize_from_BDM_URL(self)
     # ------------------------------------------------------------------------ +
-    #region   BDM bdm_BM_WORKING_DATA_initialize() 
-    def bdm_BM_WORKING_DATA_initialize(self) -> dict:
+    #region   BDM bdm_BDM_WORKING_DATA_initialize() 
+    def bdm_BDM_WORKING_DATA_initialize(self) -> dict:
         """Initialize BDWD, the budget domain working data.
         
-        When BudgetModel is initialized, the BM_WORKING_DATA property is
+        When BudgetModel is initialized, the BDM_WORKING_DATA property is
         set to an empty dictionary. This method adds additional initial
         values to that dictionary. 
 
-        Note: use the get_BM_WORKING_DATA() and 
-        set_BM_WORKING_DATA() methods to access the working data.
+        Note: use the get_BDM_WORKING_DATA() and 
+        set_BDM_WORKING_DATA() methods to access the working data.
         """
         try:
             logger.debug("Start: ...")
             # Initialize the budget model working data.
             for wd_key in BDWD_WORKING_DATA_KEYS:
                 if wd_key == BDWD_LOADED_WORKBOOKS:
-                    self.set_BM_WORKING_DATA(
+                    self.set_BDM_WORKING_DATA(
                         BDWD_LOADED_WORKBOOKS, list())
-            self.set_BM_WORKING_DATA(BDWD_INITIALIZED, True)
+            self.set_BDM_WORKING_DATA(BDWD_INITIALIZED, True)
             logger.debug("Complete:")
-            return self.bm_working_data
+            return self.bdm_working_data
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
-    #endregion   BDM bdm_BM_WORKING_DATA_initialize() 
+    #endregion   BDM bdm_BDM_WORKING_DATA_initialize() 
     # ------------------------------------------------------------------------ +
     #region BDM FI_OBJECT pseudo-Object properties
     def bdm_FI_KEY_validate(self, fi_key:str) -> bool:
@@ -1208,7 +1208,7 @@ class BudgetModel(metaclass=SingletonMeta):
         For fi_key,wf_key,wb_type, load all workbooks of type wb_type.
         
         Returns:
-            None: as success. Updates BM_WORKING_DATA.BDWD_LOADED_WORKBOOKS 
+            None: as success. Updates BDM_WORKING_DATA.BDWD_LOADED_WORKBOOKS 
             property with the loaded workbooks.
         Raises: exceptions from any errors.
         """
@@ -1236,7 +1236,7 @@ class BudgetModel(metaclass=SingletonMeta):
         For fi_key,wf_key,wb_type, save all workbooks of type wb_type.
         
         Returns:
-            None: as success. Updates BM_WORKING_DATA.BDWD_LOADED_WORKBOOKS 
+            None: as success. Updates BDM_WORKING_DATA.BDWD_LOADED_WORKBOOKS 
             property with the loaded workbooks.
         Raises: exceptions from any errors.
         """
@@ -1408,8 +1408,8 @@ class BudgetModel(metaclass=SingletonMeta):
     It is transient data derived from the BDM/BSM operations.
 
     Note: the bdwd_ prefixed methodes only use the 
-    get_BM_WORKING_DATA() and set_BM_WORKING_DATA() 
-    methods to access the BM_WORKING_DATA property.
+    get_BDM_WORKING_DATA() and set_BDM_WORKING_DATA() 
+    methods to access the BDM_WORKING_DATA property.
     """
     # --------------------------------------------------------------------- +
     #region bdwd_LOADED_WORKBOOKS() methods
@@ -1418,29 +1418,29 @@ class BudgetModel(metaclass=SingletonMeta):
         return len(self.bdwd_LOADED_WORKBOOKS_get())
 
     def bdwd_LOADED_WORKBOOKS_get(self) -> List[Tuple[str, Workbook]] | None:
-        """Get the BDWD_LOADED_WORKBOOKS from the BM_WORKING_DATA.
+        """Get the BDWD_LOADED_WORKBOOKS from the BDM_WORKING_DATA.
 
         Returns:
             List(Tuple(wb_name: Workbook object))
         """
         try:
-            if self.bm_working_data is None:
-                m = f"BM_WORKING_DATA is not set. "
+            if self.bdm_working_data is None:
+                m = f"BDM_WORKING_DATA is not set. "
                 logger.error(m)
                 raise ValueError(m)
-            return self.get_BM_WORKING_DATA(BDWD_LOADED_WORKBOOKS)
+            return self.get_BDM_WORKING_DATA(BDWD_LOADED_WORKBOOKS)
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
 
     def bdwd_LOADED_WORKBOOKS_add(self,wb_name : str, wb : Workbook) -> None:
-        """Add an entry to BDWD_LOADED_WORKBOOKS in the BM_WORKING_DATA.
+        """Add an entry to BDWD_LOADED_WORKBOOKS in the BDM_WORKING_DATA.
 
         Returns:
             None: on succcess.
         Raises:
-            ValueError: if the BM_WORKING_DATA is not set.
+            ValueError: if the BDM_WORKING_DATA is not set.
             TypeError: if wb_name is not a str.
             TypeError: if wb is not a Workbook object.
             ValueError: if wb_name is None or an empty str.
@@ -1487,7 +1487,7 @@ class BudgetModel(metaclass=SingletonMeta):
             raise            
 
     def bdwd_FI_set(self, fi_key : str) -> None:
-        """Set the BDWD_FI in the BM_WORKING_DATA.
+        """Set the BDWD_FI in the BDM_WORKING_DATA.
 
         Args:
             fi_key (str): The financial institution key.
@@ -1496,7 +1496,7 @@ class BudgetModel(metaclass=SingletonMeta):
             # fi_key must be a valid key or 'all'.
             _ = p3u.str_empty(fi_key, raise_error=True) # Raises TypeError, ValueError
             _ = self.bdm_FI_KEY_validate(fi_key) # Raises ValueError fi_key
-            self.set_BM_WORKING_DATA(BDWD_FI, fi_key)
+            self.set_BDM_WORKING_DATA(BDWD_FI, fi_key)
             logger.debug(f"Set BDWD_FI to '{fi_key}'")
         except Exception as e:
             m = p3u.exc_err_msg(e)
@@ -1506,19 +1506,19 @@ class BudgetModel(metaclass=SingletonMeta):
     # ------------------------------------------------------------------------ +
     #region bdwd_INITIALIZED methods
     def bdwd_INITIALIZED_get(self) -> bool:
-        """Get the BDWD_INITIALIZED from the BM_WORKING_DATA.
+        """Get the BDWD_INITIALIZED from the BDM_WORKING_DATA.
         """
         try:
-           return self.get_BM_WORKING_DATA(BDWD_INITIALIZED) 
+           return self.get_BDM_WORKING_DATA(BDWD_INITIALIZED) 
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
     def bdwd_INITIALIZED_set(self, value : bool) -> bool:
-        """Set the BDWD_INITIALIZED from the BM_WORKING_DATA.
+        """Set the BDWD_INITIALIZED from the BDM_WORKING_DATA.
         """
         try:
-           return self.set_BM_WORKING_DATA(BDWD_INITIALIZED, value) 
+           return self.set_BDM_WORKING_DATA(BDWD_INITIALIZED, value) 
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
@@ -1574,8 +1574,8 @@ def log_BDM_info(bm : BudgetModel) -> None:
                         f"{bm.bm_last_modified_date}")
         logger.debug(f"{P2}BM_LAST_MODIFIED_BY['{BM_LAST_MODIFIED_BY}']: "
                         f"'{bm.bm_last_modified_by}'")
-        logger.debug(f"{P2}BM_WORKING_DATA('{BM_WORKING_DATA}'): "
-                        f"'{bm.bm_working_data}'")
+        logger.debug(f"{P2}BDM_WORKING_DATA('{BDM_WORKING_DATA}'): "
+                        f"'{bm.bdm_working_data}'")
     except Exception as e:
         m = p3u.exc_err_msg(e)
         logger.error(m)

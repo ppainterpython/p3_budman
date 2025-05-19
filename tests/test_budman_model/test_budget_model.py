@@ -47,10 +47,10 @@ def test_budget_model_construction_with_no_config_object() -> None:
             "bm_last_modified_date should be set"
         assert bm.bm_last_modified_by is not None, \
             "bm_last_modified_by should be set"
-        assert (bm.bm_working_data is not None and 
-                isinstance(bm.bm_working_data, dict) and 
-                len(bm.bm_working_data) == 0), \
-            "bm_working_data should empty dictionary"
+        assert (bm.bdm_working_data is not None and 
+                isinstance(bm.bdm_working_data, dict) and 
+                len(bm.bdm_working_data) == 0), \
+            "bdm_working_data should empty dictionary"
         logger.info(f"Complete:")
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
@@ -85,10 +85,10 @@ def test_budget_model_construction_with_BMT_as_config_object() -> None:
             "bm_last_modified_date should be set"
         assert bm.bm_last_modified_by is not None, \
             "bm_last_modified_by should be set"
-        assert (bm.bm_working_data is not None and 
-                isinstance(bm.bm_working_data, dict) and 
-                len(bm.bm_working_data) == 0), \
-            "bm_working_data should empty dictionary"
+        assert (bm.bdm_working_data is not None and 
+                isinstance(bm.bdm_working_data, dict) and 
+                len(bm.bdm_working_data) == 0), \
+            "bdm_working_data should empty dictionary"
         logger.info(f"Complete:")
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
@@ -126,9 +126,9 @@ def test_budget_model_initialize_with_template() -> None:
             "bm._last_modified_date should be set"
         assert bm.bm_last_modified_by is not None, \
             "bm.bm_last_modified_by should not be None"
-        assert (bm.bm_working_data is not None and 
-                isinstance(bm.bm_working_data, dict)), \
-            "bm.bm_working_data should be an empty dictionary"    
+        assert (bm.bdm_working_data is not None and 
+                isinstance(bm.bdm_working_data, dict)), \
+            "bm.bdm_working_data should be an empty dictionary"    
     except Exception as e:
         pytest.fail(f"BudgetModel() raised an exception: {str(e)}")
 # ---------------------------------------------------------------------------- +

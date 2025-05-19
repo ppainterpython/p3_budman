@@ -151,7 +151,7 @@ class BudgetModelTemplate(BudgetModel):
         BM_CREATED_DATE: None,
         BM_LAST_MODIFIED_DATE: None,
         BM_LAST_MODIFIED_BY: None,
-        BM_WORKING_DATA: {}
+        BDM_WORKING_DATA: {}
     }
     @classmethod
     def get_budget_model_template(cls) -> dict:
@@ -225,7 +225,7 @@ class BudgetModelTemplate(BudgetModel):
             self.bm_created_date = p3u.now_iso_date_string()          # property
             self.bm_last_modified_date = self.bm_created_date         # property
             self.bm_last_modified_by = getpass.getuser()              # property
-            self.bm_working_data = bmt_dict[BM_WORKING_DATA]          # property
+            self.bdm_working_data = bmt_dict[BDM_WORKING_DATA]          # property
             self.bm_initialized = True
             logger.debug(f"Complete: {p3u.stop_timer(st)}")   
         except Exception as e:
@@ -278,8 +278,8 @@ class BudgetModelTemplate(BudgetModel):
                             f"{bmt.bm_last_modified_date}")
             logger.debug(f"{P2}BM_LAST_MODIFIED_BY({BM_LAST_MODIFIED_BY}'): "
                             f"{bmt.bm_last_modified_by}")
-            logger.debug(f"{P2}BM_WORKING_DATA({BM_WORKING_DATA}'): "
-                            f"{bmt.bm_working_data}")
+            logger.debug(f"{P2}BDM_WORKING_DATA({BDM_WORKING_DATA}'): "
+                            f"{bmt.bdm_working_data}")
             logger.debug(f"Complete:")   
         except Exception as e:
             m = p3u.exc_err_msg(e)

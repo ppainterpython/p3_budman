@@ -46,11 +46,11 @@ BM_OPTIONS = "_options"
 BM_CREATED_DATE = "_created_date"
 BM_LAST_MODIFIED_DATE = "_last_modified_date"
 BM_LAST_MODIFIED_BY = "_last_modified_by"
-BM_WORKING_DATA = "_wd"
+BDM_WORKING_DATA = "_wd"
 BM_VALID_PROPERTIES = (BM_INITIALIZED, BM_FOLDER, BDM_URL, 
                     BM_FI_COLLECTION, BM_WF_COLLECTION,  BM_OPTIONS,
                     BM_CREATED_DATE, BM_LAST_MODIFIED_DATE, 
-                    BM_LAST_MODIFIED_BY, BM_WORKING_DATA)
+                    BM_LAST_MODIFIED_BY, BDM_WORKING_DATA)
 BSM_PERSISTED_PROPERTIES = (BDM_ID, BM_FOLDER, 
                             BM_FI_COLLECTION, BM_WF_COLLECTION,  
                             BM_OPTIONS,

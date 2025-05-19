@@ -826,7 +826,7 @@ class BudgetManagerViewModelInterface():
     def dc_FI_WORKBOOKS_load(self, fi_key : str, wf_key : str, wb_type : str) -> int: 
         """Return count of all loaded workbooks from Data Context."""
         try:
-            if fi_key == 'all' or fi_key in pebm.VALID_FI_KEYS:
+            if fi_key == 'all' or fi_key in p3bm.VALID_FI_KEYS:
                 return True
             return False
         except Exception as e:
