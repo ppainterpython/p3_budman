@@ -109,7 +109,7 @@ class BudgetManagerViewModelInterface():
                 # There is no valid budget_model. Load a BM_STORE file?
                 if load_user_store:
                     # Use BM_STORE file as a config_object 
-                    config_object = self.BUDMAN_STORE_load_cmd()
+                    config_object = p3bm.bsm_BUDMAN_STORE_load()
                 else:
                     # Use the builtin default template as a config_object.
                     config_object = p3bm.BudgetModelTemplate.get_budget_model_template()
@@ -117,6 +117,10 @@ class BudgetManagerViewModelInterface():
                 self.budget_model = p3bm.BudgetModel(config_object).bdm_initialize()
             if not self.budget_model.bm_initialized: 
                 raise ValueError("BudgetModel is not initialized.")
+            # Initialize the data context. This View Model uses a DC object from
+            # the Model which places data in it.
+            self.data_context = self.budget_model.data_context
+            # Initialize the command map.
             self.initialize_cmd_map()
             self.initialized = True
             logger.info(f"Complete: {p3u.stop_timer(st)}")
@@ -133,8 +137,8 @@ class BudgetManagerViewModelInterface():
             # Use the following cmd_map to dispatch the command for execution.
             self.cmd_map = {
                 "init_cmd_fin_inst": self.FI_init_cmd,
-                "save_cmd_workbooks": self.FI_save_cmd,
-                "load_cmd_BUDMAN_STORE": self.BUDMAN_STORE_load_cmd,
+                "save_cmd_workbooks": self.FI_LOADED_WORKBOOKS_save_cmd,
+                "load_cmd_BUDMAN_STORE": self.BUDMAN_STORE_load,
                 "save_cmd_BUDMAN_STORE": self.BUDMAN_STORE_save,
             }
         except Exception as e:
@@ -400,10 +404,9 @@ class BudgetManagerViewModelInterface():
             full_cmd_key = result
             func = self.cmd_map.get(full_cmd_key)
             function_name = func.__name__
-            result = f"Executing command: {function_name}({str(cmd)})"
-            logger.info(result)
-            result = self.cmd_map.get(full_cmd_key)(cmd)
-            return result
+            logger.info(f"Executing command: {function_name}({str(cmd)})")
+            status, result = self.cmd_map.get(full_cmd_key)(cmd)
+            return status, result
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
@@ -584,8 +587,8 @@ class BudgetManagerViewModelInterface():
             raise RuntimeError(m) from e
     #endregion FI_init_command() command method
     # ------------------------------------------------------------------------ +
-    #region FI_save_cmd() command method
-    def FI_save_cmd(self, cmd : Dict = None) -> None: 
+    #region FI_LOADED_WORKBOOKS_save_cmd() command method
+    def FI_LOADED_WORKBOOKS_save_cmd(self, cmd : Dict = None) -> None: 
         """Execute FI_save command for one fi_key or 'all'.
         
         This command saves the Data Context aspects of the View Model to
@@ -616,19 +619,31 @@ class BudgetManagerViewModelInterface():
                 m = f"Invalid cmd object, no action taken."
                 logger.error(m)
                 raise RuntimeError(f"{pfx}{m}")
+            # Get the command arguments.
             fi_key = cmd.get("fi_key", None)
             wf_key = cmd.get("wf_key", p3bm.BM_WF_CATEGORIZATION)
             wb_type = cmd.get("wb_type", p3bm.WF_WORKBOOKS_IN)
             wb_name = cmd.get("wb_name", None)
-            logger.info(f"Start Command: 'Save' fi_key: {fi_key}, "
-                        f"wf_key: {wf_key}, wb_type: {wb_type}, wb_name: {wb_name}")
-            if not p3u.is_non_empty_str("fi_key",fi_key,pfx):
-                m = f"fi_key is None, no action taken."
-                logger.error(m)
-                raise RuntimeError(f"{pfx}{m}")
-            # Check for 'all'
-            if fi_key == "all":
-                raise NotImplementedError(f"{pfx}fi_key 'all' not implemented.")
+            # Resolve with currect DC values.
+            if fi_key != self.dc_FI_KEY:
+                logger.warning(f"fi_key: arg '{fi_key}' differs from "
+                                f" current value '{self.dc_FI_KEY}'")
+                fi_key = self.dc_FI_KEY
+                logger.warning(f"fi_key: using current value '{self.dc_FI_KEY}'")
+            if wf_key != self.dc_WF_KEY:
+                logger.warning(f"wf_key: arg '{wf_key}' differs from "
+                                f" current value '{self.dc_WF_KEY}'")
+                wf_key = self.dc_WF_KEY
+                logger.warning(f"wf_key: using current value '{self.dc_WF_KEY}'")
+            if wb_name != self.dc_WB_NAME:
+                logger.warning(f"wb_name: arg '{wb_name}' differs from "
+                                f" current value '{self.dc_WB_NAME}'")
+            if wb_type != self.dc_WB_TYPE:
+                logger.warning(f"wb_type: arg '{wb_type}' differs from "
+                                f" current value '{self.dc_WB_TYPE}'")
+                wb_type = self.dc_WB_TYPE
+                logger.warning(f"wb_type: using current value '{self.dc_WB_TYPE}'")
+            logger.info(f"Start: {str(cmd)}")
             # Check if valid fi_key            
             try:
                 _ = self.budget_model.bdm_FI_KEY_validate(fi_key)
@@ -636,22 +651,25 @@ class BudgetManagerViewModelInterface():
                 m = f"ValueError({str(e)})"
                 logger.error(m)
                 raise RuntimeError(f"{pfx}{m}")
+            # Get the WORKBOOK_LIST from the BDM.
+            # wbl = self.bdm_FI_WF_WORKBOOK_LIST(fi_key, wf_key, wb_type)
+            # Get the LOADED_WORKBOOKS_LIST from the BDM_WORKING_DATA.
+            lwbl = self.dc_LOADED_WORKBOOKS
+            # For each loaded workbook, save it to its the path .
+            for wb_name, wb in lwbl:
+                self.budget_model.bsm_FI_WF_WORKBOOK_save(wb, wb_name,
+                                                          fi_key, wf_key, wb_type)
             # Save the workbooks for the specified FI, WF, and WB-type.
-            ret = self.budget_model.bdwd_FI_WORKBOOKS_save(fi_key, wf_key, wb_type)
-            # Set last values initialized in the DC.
-            self.dc_FI_KEY = fi_key
-            self.dc_WF_KEY = wf_key
-            self.dc_WB_TYPE = wb_type
-            self.dc_WB_NAME = wb_name
+            # ret = self.budget_model.bdwd_FI_WORKBOOKS_save(fi_key, wf_key, wb_type)
             logger.info(f"Complete Command: 'Save' {p3u.stop_timer(st)}")   
             return None
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
-    #endregion FI_init_command() command method
+    #endregion FI_LOADED_WORKBOOKS_save_cmd() command method
     # ------------------------------------------------------------------------ +
     #region BUDMAN_STORE_save() method
-    def BUDMAN_STORE_save(self) -> None:
+    def BUDMAN_STORE_save(self, cmd : Dict) -> None:
         """Save the Budget Manager store (BUDMAN_STORE) file with the BSM.
 
         Returns:
@@ -684,17 +702,31 @@ class BudgetManagerViewModelInterface():
             raise
     #endregion BUDMAN_STORE_save() method
     # ------------------------------------------------------------------------ +
-    #region BUDMAN_STORE_load_cmd() method
-    def BUDMAN_STORE_load_cmd(self) -> Dict:
+    #region BUDMAN_STORE_load() method
+    def BUDMAN_STORE_load(self, cmd : Dict) -> Tuple[bool, str]:
         """Load the Budget Manager store (BUDMAN_STORE) file from the BSM.
 
-        A 
+        Arguments:
+            cmd (Dict): A valid BudMan View Model Command object. For this
+            command, must containt load_cmd = 'BUDMAN_STORE' resulting in
+            a full command key of 'load_cmd_BUDMAN_STORE'.
 
         Returns:
-            Dict: The BudgetModel store as a dictionary.
+            Tuple[success : bool, result : Any]: The outcome of the command 
+            execution. If success is True, result contains result of the 
+            command, if False, a description of the error.
+            
+        Raises:
+            RuntimeError: A description of the
+            root error is contained in the exception message.
         """
         try:
             st = p3u.start_timer()
+            pfx = f"{self.__class__.__name__}.{self.FI_init_cmd.__name__}: "
+            if p3u.is_not_obj_of_type("cmd",cmd,dict,pfx):
+                m = f"Invalid cmd object, no action taken."
+                logger.error(m)
+                raise RuntimeError(f"{pfx}{m}")
             logger.info(f"Start: ...")
             # Load the BUDMAN_STORE file with the BSM.
             # Use the BUDMAN_STORE configured in BUDMAN_SETTINGS.
@@ -704,13 +736,14 @@ class BudgetManagerViewModelInterface():
             budman_store_abs_path = budman_folder_abs_path / budman_store_value
             # Load the BUDMAN_STORE file.
             budman_store_dict = p3bm.bsm_BUDMAN_STORE_load(budman_store_abs_path)
+            self.dc_FI_KEY = budman_store_dict
             self.BUDMAN_STORE_loaded = True
             logger.info(f"Complete: {p3u.stop_timer(st)}")
-            return budman_store_dict
+            return True, budman_store_dict
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
-    #endregion BUDMAN_STORE_load_cmd() method
+    #endregion BUDMAN_STORE_load() method
     # ------------------------------------------------------------------------ +
     #                                                                          +
     #endregion Command Binding Implementations
@@ -847,6 +880,30 @@ class BudgetManagerViewModelInterface():
         """Set the current workbook name value in DC."""
         dc = self._valid_DC()
         self._data_context[p3bm.WB_NAME] = value
+    @property
+    def dc_BUDMAN_STORE(self) -> str:
+        """Return the current BUDMAN_STORE value in DC."""
+        dc = self._valid_DC()
+        if p3bm.DC_BUDMAN_STORE not in dc:
+            self._data_context[p3bm.DC_BUDMAN_STORE] = None
+        return self._data_context[p3bm.DC_BUDMAN_STORE]
+    @dc_BUDMAN_STORE.setter
+    def dc_BUDMAN_STORE(self, value: str) -> None:
+        """Set the current BUDMAN_STORE value in DC."""
+        dc = self._valid_DC()
+        self._data_context[p3bm.DC_BUDMAN_STORE] = value
+    @property 
+    def dc_LOADED_WORKBOOKS(self) -> p3bm.LOADED_WORKBOOKS_LIST:
+        """Return the current loaded workbooks value in DC."""
+        dc = self._valid_DC()
+        if p3bm.DC_LOADED_WORKBOOKS not in dc:
+            self._data_context[p3bm.DC_LOADED_WORKBOOKS] = None
+        return self._data_context[p3bm.DC_LOADED_WORKBOOKS]
+    @dc_LOADED_WORKBOOKS.setter
+    def dc_LOADED_WORKBOOKS(self, value: p3bm.LOADED_WORKBOOKS_LIST) -> None:
+        """Set the current loaded workbooks value in DC."""
+        dc = self._valid_DC()
+        self._data_context[p3bm.DC_LOADED_WORKBOOKS] = value
     # ------------------------------------------------------------------------ +
     #endregion Data Context Properties
     # ------------------------------------------------------------------------ +
@@ -855,19 +912,7 @@ class BudgetManagerViewModelInterface():
     #region Data Context Methods
     #                                                                          +
     # ------------------------------------------------------------------------ +
-    #region dc_FI_WORKBOOKS_load() method
-    def dc_FI_WORKBOOKS_load(self, fi_key : str, wf_key : str, wb_type : str) -> int: 
-        """Return count of all loaded workbooks from Data Context."""
-        try:
-            if fi_key == 'all' or fi_key in p3bm.VALID_FI_KEYS:
-                return True
-            return False
-        except Exception as e:
-            logger.error(p3u.exc_err_msg(e))
-            raise
-    #endregion dc_FI_WORKBOOKS_load() method
-    # ------------------------------------------------------------------------ +
-    #region dc_WF_WORKBOOKS_load() method
+    #region dc_WF_KEY_validate() method
     def dc_WF_KEY_validate(self, wf_key : str) -> bool: 
         """Return True if the wf_key is valid."""
         try:

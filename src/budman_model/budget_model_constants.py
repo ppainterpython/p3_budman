@@ -1,4 +1,4 @@
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Any
 from openpyxl import Workbook
 
 THIS_APP_NAME = "p3_budget_manager"
@@ -140,13 +140,18 @@ WORKBOOK_LIST = List[Tuple[str, str]] # pseudo-type of object
 WORKBOOK_ITEM = Tuple # pseudo-type of object
 LOADED_WORKBOOKS_LIST = List[Tuple[str, Workbook]]
 
-# Key values used for transient working_data
-BDM_WORING_DATA = Dict
+# The BDM_WORKING_DATA dictionary also serves as the
+# DATA_CONTEXT for the BudgetModel. So, it has key names that are
+# generic. 
+# TODO: really need to use an abstract interface for DATA_CONTEXT
+BDM_WORING_DATA = Dict[str, Any]
+DATA_CONTEXT = Dict[str, Any]
 BDWD_INITIALIZED = "bdwd_initialized"
 #    Key Name: BDWD_INITIIALIZED
 #   Key Value: bool True | False
 # Description: Indicates if the BDWB has been initialized.
 BDWD_LOADED_WORKBOOKS = "bdwd_loaded_workbooks" # key name
+DC_LOADED_WORKBOOKS = BDWD_LOADED_WORKBOOKS
 #    Key Name: BDWD_LOADED_WORKBOOKS
 #   Key Value: list[Tuple(wb_name, Workbook object)]
 # Description: A list of tuples of wb_name, Workbook objects loaded into BDWD.
@@ -159,12 +164,14 @@ BDWD_WORKING_DATA_KEYS = (BDWD_INITIALIZED,
                           BDWD_LOADED_WORKBOOKS,
                           BDWD_FI)
 
+DC_BUDMAN_STORE = "budman_store"
 DATA_CONTEXT_KEYS = (
     FI_KEY,
     WF_KEY,
     WB_NAME,
     WB_TYPE,
-    BDWD_LOADED_WORKBOOKS,)
+    BDWD_LOADED_WORKBOOKS,
+    DC_BUDMAN_STORE)
 
 
 # Miscellaneous Convenience Constants

@@ -335,6 +335,16 @@ class BudgetModel(metaclass=SingletonMeta):
         self._wd = {} if self._wd is None else self._wd
         self._wd = value
 
+    @property
+    def data_context(self) -> DATA_CONTEXT:
+        """The data context for the budget model."""
+        return self.bdm_working_data 
+       
+    @data_context.setter
+    def data_context(self, value: DATA_CONTEXT) -> None:
+        """Set the data context for the budget model."""
+        self.bdm_working_data = value
+
     # budget_model_working_data is a dictionary to store dynamic, non-property data.
     def set_BDM_WORKING_DATA(self, key, value):
         self.bdm_working_data[key] = value
@@ -430,10 +440,9 @@ class BudgetModel(metaclass=SingletonMeta):
         wf - workflow
     """
     # ======================================================================== +
-    #region    BDM bdm_initialize(self, bsm_init, wd_init, ...)
+    #region    BDM bdm_initialize(self, bsm_init, ...)
     def bdm_initialize(self, 
                  bsm_init : bool = True,
-                 wd_init : bool = True,
                  create_missing_folders : bool = True,
                  raise_errors : bool = True
                  ) -> "BudgetModel":
@@ -464,8 +473,7 @@ class BudgetModel(metaclass=SingletonMeta):
                     setattr(self, k, v)
             if bsm_init:
                 self.bsm_inititalize(create_missing_folders, raise_errors)
-            if wd_init:
-                self.bdm_working_data = self.bdm_BDM_WORKING_DATA_initialize()
+            self.bdm_working_data = self.bdm_BDM_WORKING_DATA_initialize()
             self.bm_initialized = True
             logger.debug(f"Complete: {p3u.stop_timer(st)}")   
             return self
@@ -473,9 +481,9 @@ class BudgetModel(metaclass=SingletonMeta):
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
-    #endregion BDM bdm_initialize(self, bsm_init, wd_init, ...) 
+    #endregion BDM bdm_initialize(self, bsm_init, ...) 
     # ------------------------------------------------------------------------ +
-    #region bdm_resolve_config_object(self) -> Dict
+    #region    bdm_resolve_config_object(self) -> Dict
     def bdm_resolve_config_object(self) -> Dict:
         """Resolve the configuration object to initialize BudgetModel.
 
@@ -505,9 +513,8 @@ class BudgetModel(metaclass=SingletonMeta):
             raise
     #endregion bdm_resolve_config_object(self) -> Dict 
     # ------------------------------------------------------------------------ +
-    #region bdm_initialize_from_BDM_URL(self)
-    def bdm_initialize_from_BDM_URL(self,bsm_init:bool=True,
-                                     wd_init:bool=True) -> None:
+    #region    bdm_initialize_from_BDM_URL(self)
+    def bdm_initialize_from_BDM_URL(self,bsm_init:bool=True) -> None:
         """Initialize the BudgetModel, dynamically, from BM_CONFIG values.
 
         The current session state of the BudgetModel configuration can be stored
@@ -532,8 +539,7 @@ class BudgetModel(metaclass=SingletonMeta):
                     setattr(self, attr, bdm_config[attr])
             if bsm_init:
                 self.bsm_inititalize()
-            if wd_init:
-                self.bdm_working_data = self.bdm_BDM_WORKING_DATA_initialize()
+            self.bdm_working_data = self.bdm_BDM_WORKING_DATA_initialize()
             self.bm_initialized = True
             logger.debug(f"Complete: {p3u.stop_timer(st)}")   
             return 
@@ -543,7 +549,7 @@ class BudgetModel(metaclass=SingletonMeta):
             raise
     #endregion bdm_initialize_from_BDM_URL(self)
     # ------------------------------------------------------------------------ +
-    #region   BDM bdm_BDM_WORKING_DATA_initialize() 
+    #region    BDM bdm_BDM_WORKING_DATA_initialize() 
     def bdm_BDM_WORKING_DATA_initialize(self) -> dict:
         """Initialize BDWD, the budget domain working data.
         
@@ -576,7 +582,7 @@ class BudgetModel(metaclass=SingletonMeta):
             raise
     #endregion   BDM bdm_BDM_WORKING_DATA_initialize() 
     # ------------------------------------------------------------------------ +
-    #region BDM FI_OBJECT pseudo-Object properties
+    #region    BDM FI_OBJECT pseudo-Object properties
     def bdm_FI_KEY_validate(self, fi_key:str) -> bool:
         """Validate the financial institution key."""
         if fi_key not in self.bm_fi_collection and fi_key != ALL_KEY:
@@ -687,7 +693,7 @@ class BudgetModel(metaclass=SingletonMeta):
         return len(wf_wbl)
     #endregion FI pseudo-Object properties
     # ------------------------------------------------------------------------ +
-    #region BDM WF_OBJECT pseudo-Object properties
+    #region    BDM WF_OBJECT pseudo-Object properties
     def bdm_WF_KEY_validate(self, wf_key:str) -> bool:
         """Validate the workflow key."""
         supp_wf = self.bm_wf_collection
@@ -749,7 +755,7 @@ class BudgetModel(metaclass=SingletonMeta):
     # ======================================================================== +
 
     # ======================================================================== +
-    #region BudgetModel Storage Model (BSM) methods
+    #region    BudgetModel Storage Model (BSM) methods
     """ Budget model Storage Model (BSM) Documentation.
 
     All BDM data is stored in the filesystem by the BSM. BSM works with Path 
@@ -1034,7 +1040,7 @@ class BudgetModel(metaclass=SingletonMeta):
         bsm_verify_folder(fi_ap, create_missing_folders, raise_errors)
     #endregion FI_OBJECT FI_FOLDER Path methods
     # ------------------------------------------------------------------------ +   
-    #region FI_OBJECT FI_WORKFLOW_DATA pseudo-Object methods
+    #region bsm_FI_WORKFLOW_DATA_resolve() method
     def bsm_FI_WORKFLOW_DATA_resolve(self, fi_key:str) -> None:
         """Resolve the FI_WORKFLOW_DATA for the specified fi_key and wf_key."""
         try:
@@ -1046,13 +1052,13 @@ class BudgetModel(metaclass=SingletonMeta):
             wf_dc : WF_DATA_COLLECTION = self.bdm_FI_WORKFLOW_DATA(fi_key)
             for wf_key, wf_data_object in wf_dc.items():
                 # Resolve each WF_DATA_OBJECT in the collection.
-                self.bms_WF_DATA_OBJECT_resolve(wf_data_object,
+                self.bsm_WF_DATA_OBJECT_resolve(wf_data_object,
                                                 fi_key, wf_key)
         except Exception as e:
                 m = p3u.exc_err_msg(e)
                 logger.error(m)
                 raise
-    #endregion FI_OBJECT FI_WORKFLOW_DATA pseudo-Object methods
+    #endregion bsm_FI_WORKFLOW_DATA_resolve() method
     # ------------------------------------------------------------------------ +   
     #endregion FI FI_OBJECT pseudo-Object methods 
     # ------------------------------------------------------------------------ +   
@@ -1122,7 +1128,7 @@ class BudgetModel(metaclass=SingletonMeta):
     The key is the filename, or the workbook name, the value is the full path 
     to the file.
     """
-    def bms_WF_DATA_OBJECT_resolve(self, wf_do: WF_DATA_OBJECT,
+    def bsm_WF_DATA_OBJECT_resolve(self, wf_do: WF_DATA_OBJECT,
                                    fi_key : str, wf_key : str):
         """Resolve the WF_DATA_OBJECT based on the keys and values present."""
         try:
@@ -1407,7 +1413,7 @@ class BudgetModel(metaclass=SingletonMeta):
     # ======================================================================== +
 
     # ======================================================================== +
-    #region BDWD - Budget Domain Model Working Data methods
+    #region    BDWD - Budget Domain Model Working Data methods
     """ Budget Domain Model Working Data (BDWD) methods.
     BDWD methods are used to access the working data in the BDM. The working
     data is used by client packages for ViewModel, View, UX, CLI etc.

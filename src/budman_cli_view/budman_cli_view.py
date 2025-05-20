@@ -76,7 +76,7 @@ def _filter_opts(opts) -> Dict[str, Any]:
 def _log_cli_cmd_execute(self, opts):
     """Log the command and options. Retrun True if parse_only."""
     logger.info(f"Execute Command: {str(_filter_opts(opts))}")
-    return self.parse_only
+    return self.parse_only if not "val_cmd" in opts else False
 def _log_cli_cmd_complete(self, opts):
     logger.info(f"Complete Command: {str(_filter_opts(opts))}")
 def _show_args_only(cli_view : "BudgetManagerCLIView", opts) -> bool:
@@ -174,9 +174,19 @@ class BudgetManagerCLIView(cmd2.Cmd):
         """Send a cmd through the data_context using 
         BudgetManagerCommandInterface implementation."""
         try:
+            if _log_cli_cmd_execute(self, opts): return
             cmd = BudgetManagerCLIView.create_cmd(opts)
-            result = self.data_context.execute_cmd(cmd)
-            return result
+            status, result = self.data_context.execute_cmd(cmd)
+            if status:
+                # TODO: cleanup output when content is large.
+                self.poutput(f"Result: {str(result)}")
+            else:
+                self.poutput(f"Error: {str(result)}")
+            _log_cli_cmd_complete(self, opts)
+            return (status, result)
+        except SystemExit as e:
+            # Handle the case where argparse exits the program
+            self.pwarning(BMCLI_SYSTEM_EXIT_WARNING)
         except Exception as e:
             self.pexcept(e)
     #endregion execute_cmd method.
@@ -186,12 +196,7 @@ class BudgetManagerCLIView(cmd2.Cmd):
     def do_init(self, opts):
         """Init the data context in the Budget Manager application."""
         try:
-            if _log_cli_cmd_execute(self, opts): return
-            self.init_command(opts)
-            _log_cli_cmd_complete(self, opts)
-        except SystemExit:
-            # Handle the case where argparse exits the program
-            self.pwarning(BMCLI_SYSTEM_EXIT_WARNING)
+            status, result = self.execute_cmd(opts)
         except Exception as e:
             self.pexcept(e)
     #endregion init command - initialize aspects of the BudgetModel application.
@@ -204,9 +209,6 @@ class BudgetManagerCLIView(cmd2.Cmd):
             if _log_cli_cmd_execute(self, opts): return
             self.show_command(opts)
             _log_cli_cmd_complete(self, opts)
-        except SystemExit as e:
-            # Handle the case where argparse exits the program
-            self.pwarning(BMCLI_SYSTEM_EXIT_WARNING)
         except Exception as e:
             self.pexcept(e)
     #endregion Show command
@@ -216,14 +218,7 @@ class BudgetManagerCLIView(cmd2.Cmd):
     def do_load(self, opts):
         """Load data in the Budget Manager application."""
         try:
-            if _log_cli_cmd_execute(self, opts): return
             status, result = self.execute_cmd(opts)
-            if status:
-                self.poutput(f"Result: {str(result)}")
-            else:
-                self.poutput(f"Error: {str(result)}")
-            self.poutput(f"Result: {str(result)}")
-            _log_cli_cmd_complete(self, opts)
         except SystemExit as e:
             # Handle the case where argparse exits the program
             self.pwarning(BMCLI_SYSTEM_EXIT_WARNING)

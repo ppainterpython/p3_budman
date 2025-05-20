@@ -1,10 +1,10 @@
 # ---------------------------------------------------------------------------- +
-#region budget_storage_model.py module
+#region    budget_storage_model.py module\
 """ budget_storage_model.py implements file system storage for class BudgetModel.
 """
 #endregion budget_storagae_model.py module
 # ---------------------------------------------------------------------------- +
-#region Imports
+#region    Imports
 # python standard library modules and packages
 import logging, os, time
 from pathlib import Path
@@ -19,15 +19,16 @@ from .budget_model_constants import *
 from .budget_domain_model_identity import *
 #endregion Imports
 # ---------------------------------------------------------------------------- +
-#region Globals and Constants
+#region    Globals and Constants
 logger = logging.getLogger(settings[APP_NAME])
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
-#region bsm_BUDMAN_STORE_load() function
-def bsm_BUDMAN_STORE_load(store_path : Path) -> Dict:
+#region    bsm_BUDMAN_STORE_load() function
+def bsm_BUDMAN_STORE_load(store_path : Path = None) -> Dict:
     """Load a BUDMAN_STORE file from the given Path value."""
     try:
+        store_path = bsm_BUDMAN_STORE_abs_path() if store_path is None else store_path
         if store_path is None or not isinstance(store_path, Path):
             raise ValueError("store_path is None or not a Path object.")
         logger.info("loading BUDMAN_STORE from a file.")
@@ -53,7 +54,7 @@ def bsm_BUDMAN_STORE_load(store_path : Path) -> Dict:
         raise
 #endregion bsm_BUDMAN_STORE_load() function
 # ---------------------------------------------------------------------------- +
-#region budget_storage_model_new module
+#region    budget_storage_model_new module
 def budget_storage_model_new(name : str = BSM_DEFAULT_BUDGET_MODEL_FILE_NAME,
                              folder : str = BM_DEFAULT_BUDGET_FOLDER,
                              filetype : str = BSM_DEFAULT_BUDGET_MODEL_FILE_TYPE) -> str:
@@ -79,6 +80,7 @@ def budget_storage_model_new(name : str = BSM_DEFAULT_BUDGET_MODEL_FILE_NAME,
         raise
 #endregion budget_storage_model_new module
 # ---------------------------------------------------------------------------- +
+#region    bsm_BUDMAN_STORE_save() function
 def bsm_BUDMAN_STORE_save(budman_store:Dict, store_path:Path) -> None:
     """Save the Budget Manager Store to a .jsonc file."""
     try:
@@ -102,6 +104,22 @@ def bsm_BUDMAN_STORE_save(budman_store:Dict, store_path:Path) -> None:
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
+#endregion bsm_BUDMAN_STORE_save() function
+# ---------------------------------------------------------------------------- +
+#region    BUDMAN_STORE path methods
+def bsm_BUDMAN_STORE_abs_path() -> Path:
+    """Construct the default store path."""
+    try:
+        # Use the BUDMAN_STORE configured in BUDMAN_SETTINGS.
+        budman_store_value = settings[BUDMAN_STORE]
+        budman_folder = settings[BUDMAN_FOLDER]
+        budman_folder_abs_path = Path(budman_folder).expanduser().resolve()
+        budman_store_abs_path = budman_folder_abs_path / budman_store_value
+        return budman_store_abs_path
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion BUDMAN_STORE path methods
 # ---------------------------------------------------------------------------- +
 # def bsm_BDM_URL_save(bm : "BudgetModel") -> None:
 #     """Save the BudgetModel store to a .jsonc file."""
