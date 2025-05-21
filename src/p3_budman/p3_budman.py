@@ -1,11 +1,10 @@
 # ---------------------------------------------------------------------------- +
-#region PyExeclBudget - read Excel files from a bank and analyze budget.
-""" p3ExcelBudget - read Excel files from a bank and analyze budget.
+#region p3_budman.py The Budget Manager Application.
+""" Budget Manager (BudMan) - an app to help users track a financial budget.
 
-    This module is the main entry point for the p3ExcelBudget application.
-    It reads Excel files from a bank and analyzes the budget.
+    This module is the main entry point for the BudMan application.
 """
-#endregion PyExeclBudget - read Excel files from a bank and analyze budget.
+#endregion p3_budman.py The Budget Manager Application.
 # ---------------------------------------------------------------------------- +
 #region Imports
 # python standard libraries packages and modules 
@@ -30,8 +29,6 @@ def configure_logging(logger_name : str = settings.app_name, logtest : bool = Fa
     try:
         # Configure logging
         log_config_file = "budget_model_logging_config.jsonc"
-        # Set the log filename for this application.
-        # filenames = {"file": "logs/p3ExcelBudget.log"}
         _ = p3l.setup_logging(
             logger_name = logger_name,
             config_file = log_config_file
@@ -62,7 +59,7 @@ def log_workbook_info(file_name : str = "unknown",wb : Workbook = None) -> None:
                 f"({wb.active.max_row} x {wb.active.max_column})")
 #endregion log_workbook_info() function
 # ---------------------------------------------------------------------------- +
-#region budmod() function
+#region budman_app_cli_cmdloop() function
 def budman_app_cli_cmdloop(startup : bool = True) -> None:
     """CLI cmdloop function."""
     try:
@@ -81,24 +78,25 @@ def budman_app_cli_cmdloop(startup : bool = True) -> None:
         m = p3u.exc_err_msg(e)
         logger.error(m)
         raise
-#endregion budmod() function
+#endregion budman_app_cli_cmdloop() function
 # ---------------------------------------------------------------------------- +
-#region budmod() function
-def budman_app_start():
+#region budman_app_start() function
+def budman_app_start(testmode:bool=False):
     """Main function to run PyExcelBudget application."""
     try:
         # Here is where argv would be applied.
         # But for now, budman_app_cli is the only option to run.
-        configure_logging(settings.app_name)
+        configure_logging(settings.app_name, logtest=testmode)
         logger.setLevel(logging.DEBUG)
         p3u.set_print_output(False)
-        budman_app_cli_cmdloop()
+        startup = not testmode
+        budman_app_cli_cmdloop(startup=startup) # Application CLI loop
         _ = "pause"
     except Exception as e:
         m = p3u.exc_err_msg(e)
         logger.error(m)
         raise
-#endregion budmod() function
+#endregion budman_app_start() function
 # ---------------------------------------------------------------------------- +
 #region Local __main__ stand-alone
 if __name__ == "__main__":

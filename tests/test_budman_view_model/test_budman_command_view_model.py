@@ -36,4 +36,4 @@ def test_BUDMAN_STORE_load():
         assert isinstance(bmvm.budget_model, p3bm.BudgetModel), \
             "Expected bmvm.budget_model to be a BudgetModel instance, got: " + str(type(bmvm.budget_model))        
     except Exception as e:
-        pytest.fail(f"BudgetDomainModelIdentity raised an exception: {str(e)}")
+        pytest.fail(f"BudgetManagerViewModelInterface raised an exception: {str(e)}")

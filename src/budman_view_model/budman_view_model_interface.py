@@ -1,7 +1,7 @@
 # ---------------------------------------------------------------------------- +
 #region budman_view_model_interface.py module
 """ budman_view_model_interface.py implements the BudgetManagerViewModelInterface
-class, serving as the ViewModel for the Budgat Manager application.
+class, serving as the ViewModel for the Budget Manager application.
 """
 #endregion budman_view_model_interface.py module
 # ---------------------------------------------------------------------------- +
@@ -47,7 +47,7 @@ class BudgetManagerViewModelInterface():
     #region __init__() constructor method
     def __init__(self) -> None:
         super().__init__()
-        self._intitialized : bool = False
+        self._initialized : bool = False
         self.BUDMAN_STORE_loaded : bool = False
         self._budget_model : p3bm.BudgetModel = None
         self._data_context : Dict = {}
@@ -58,13 +58,13 @@ class BudgetManagerViewModelInterface():
     @property
     def initialized(self) -> bool:
         """Return True if the ViewModel is initialized."""
-        return self._intitialized
+        return self._initialized
     @initialized.setter
     def initialized(self, value: bool) -> None:
         """Set the initialized property."""
         if not isinstance(value, bool):
             raise ValueError("initialized must be a boolean value.")
-        self._intitialized = value
+        self._initialized = value
     @property
     def budget_model(self) -> p3bm.BudgetModel:
         """Return the BudgetModel instance."""
@@ -110,6 +110,7 @@ class BudgetManagerViewModelInterface():
                 if load_user_store:
                     # Use BM_STORE file as a config_object 
                     config_object = p3bm.bsm_BUDMAN_STORE_load()
+                    self.BUDMAN_STORE_loaded = True
                 else:
                     # Use the builtin default template as a config_object.
                     config_object = p3bm.BudgetModelTemplate.get_budget_model_template()
@@ -180,7 +181,7 @@ class BudgetManagerViewModelInterface():
     interface. In general, there are a Command methods and other "Data Context"
     methods in a subsequent section.
 
-    Throughout the BudgetModel (budmon) application, a design language is
+    Throughout the BudgetModel (budman) application, a design language is
     used as a convention for naming within the code-base. 
 
     Convention: <Domain_Model_Object_Name>_<action_verb>()
@@ -196,7 +197,7 @@ class BudgetManagerViewModelInterface():
     - Budget - a means of tracking financial transactions over time.
 
     - Budget Model (BM) - a functional model of budget processes. It is composed
-    of worflows that process transactions from financial institutions, income 
+    of worklows that process transactions from financial institutions, income 
     and expenses. Transactions are categorized by scanning input data and
     producing output data.
 
@@ -207,7 +208,7 @@ class BudgetManagerViewModelInterface():
     ---------------------
 
     Objects are considered things, pieces of data that commands do something to.
-    An app will executve commands to take action on an object. Object names are 
+    An app will execute commands to take action on an object. Object names are 
     nouns of the design language.
 
     - Workbook - typically an excel workbook, stored in a file on the user's
@@ -240,7 +241,7 @@ class BudgetManagerViewModelInterface():
     a loaded workbook, a financial institution (FI), or a workflow (WF). The
     command method name will include a noun (probably abbreviated) from the
     design language for objects and one of the a verb for the action: init, load, 
-    save, show, delet, add, etc., suffixed by '_cmd'. Additional method 
+    save, show, delete, add, etc., suffixed by '_cmd'. Additional method 
     naming conventions are described below.
 
     MVVM Design Pattern
@@ -260,7 +261,7 @@ class BudgetManagerViewModelInterface():
     in terms of the application data models, persistence, etc.
     
     These View Model commands have a verb, an noun (object reference), 
-    and supporting parameter arguements. The verb is the action to be taken,
+    and supporting parameter arguments. The verb is the action to be taken,
     the noun is the object to be acted upon, and the parameters are the
     supporting data for the action. The command methods are typically
     implemented as a single method. A naming convention reveals the verb and
@@ -272,8 +273,8 @@ class BudgetManagerViewModelInterface():
     - Method names are in prefix_snake_Camel_UPPER_lower_case.
     - Constants are in UPPER_SNAKE_CASE.
     - Seeing UPPER case in a mixed name implies the UPPER case part is also
-    a contant defined in the module or class and used to represent a single
-    value or a list of values both in the design langauge and the code.
+    a constant defined in the module or class and used to represent a single
+    value or a list of values both in the design language and the code.
 
     Method Naming convention: <scope>_<noun>_<verb>()
     where scope is the domain or sub-domain of the method (function), verb is the action to be taken, 
@@ -305,7 +306,7 @@ class BudgetManagerViewModelInterface():
     API design with high cohesion and low coupling reflect a consistent design
     language, and ruthless refactoring to keep it consistent and documented.
 
-    Also, adopting the practice of documenting the design langague in the code
+    Also, adopting the practice of documenting the design language in the code
     is proving to be beneficial for GPT coding assistance. In this case, 
     GitHub Copilot is mind-blowingly adept at applying the design language in
     all parts of a large application, not just the neighboring code. Thank
@@ -457,7 +458,7 @@ class BudgetManagerViewModelInterface():
                         cmd[key] = p3bm.BM_WF_CATEGORIZATION
                     continue
                 else:
-                    m = f"Unchedked argument key: '{key}': '{value}'."
+                    m = f"Unchecked argument key: '{key}': '{value}'."
                     logger.debug(m)
             logger.debug(f"Full command key: '{full_cmd_key}' cmd: {str(cmd)}")
             return True, full_cmd_key
@@ -610,7 +611,7 @@ class BudgetManagerViewModelInterface():
             wb_name (str): The name of the workbook. If None, all workbooks
                 modified since open are saved. If 'all', all workbooks are saved.
         Raises:
-            RuntimeError: For excemptions.
+            RuntimeError: For exceptions.
         """
         try:
             st = p3u.start_timer()
@@ -624,7 +625,7 @@ class BudgetManagerViewModelInterface():
             wf_key = cmd.get("wf_key", p3bm.BM_WF_CATEGORIZATION)
             wb_type = cmd.get("wb_type", p3bm.WF_WORKBOOKS_IN)
             wb_name = cmd.get("wb_name", None)
-            # Resolve with currect DC values.
+            # Resolve with current DC values.
             if fi_key != self.dc_FI_KEY:
                 logger.warning(f"fi_key: arg '{fi_key}' differs from "
                                 f" current value '{self.dc_FI_KEY}'")
@@ -708,7 +709,7 @@ class BudgetManagerViewModelInterface():
 
         Arguments:
             cmd (Dict): A valid BudMan View Model Command object. For this
-            command, must containt load_cmd = 'BUDMAN_STORE' resulting in
+            command, must contain load_cmd = 'BUDMAN_STORE' resulting in
             a full command key of 'load_cmd_BUDMAN_STORE'.
 
         Returns:

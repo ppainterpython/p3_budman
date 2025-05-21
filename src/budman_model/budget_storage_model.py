@@ -2,7 +2,7 @@
 #region    budget_storage_model.py module\
 """ budget_storage_model.py implements file system storage for class BudgetModel.
 """
-#endregion budget_storagae_model.py module
+#endregion budget_storage_model.py module
 # ---------------------------------------------------------------------------- +
 #region    Imports
 # python standard library modules and packages

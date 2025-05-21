@@ -60,7 +60,7 @@ def test_bsm_initialize() -> None:
             "Budget model should be a BudgetModelStorage instance"
         
         assert bmt._initialized, "Budget model should be initialized"
-        bmt.bsm_inititalize()
+        bmt.bsm_initialize()
         assert bmt._initialized, "Budget model should be initialized"
         logger.debug(f"Test Complete: {p3u.stop_timer(st)}")   
     except Exception as e:
@@ -74,13 +74,13 @@ def test_bsm_BM_Folder_Path_methods() -> None:
         assert isinstance(bmt, p3bt.BudgetModelTemplate), \
             "Budget model should be a BudgetModelTemplate instance"
         exptd_s = str(Path(p3bt.BM_DEFAULT_BUDGET_FOLDER))
-        assert (_s := bmt.bsm_BM_FOLDER_path_str()) == exptd_s, \
+        assert (_s := bmt.bsm_BDM_FOLDER_path_str()) == exptd_s, \
             f"Expected: {exptd_s}, Got: {_s}"
         exptd_p = Path(_s).expanduser()
-        assert (_p := bmt.bsm_BM_FOLDER_path()) == exptd_p, \
+        assert (_p := bmt.bsm_BDM_FOLDER_path()) == exptd_p, \
             f"Expected: {exptd_p}, Got: {_p}"
         exptd_ap = Path(_p).resolve()
-        assert (_ap := bmt.bsm_BM_FOLDER_abs_path()) == exptd_ap, \
+        assert (_ap := bmt.bsm_BDM_FOLDER_abs_path()) == exptd_ap, \
             f"Expected: {exptd_ap}, Got: {_ap}" 
     except Exception as e:
         pytest.fail(f"init_budget_model raised an exception: {str(e)}")
@@ -92,7 +92,7 @@ def test_bsm_FI_Path_methods() -> None:
         bmt = p3bt.BudgetModelTemplate()
         assert isinstance(bmt, p3bt.BudgetModelTemplate), \
             "Budget model should be a BudgetModelTemplate instance"
-        # Test expected valuees based on the settings in
+        # Test expected values based on the settings in
         # the budget_model_template in the source code. All default 
         # settings are mastered there and budget_model_constants.py.
 
@@ -118,7 +118,7 @@ def test_WF_OBJECT_Path_methods() -> None:
         bmt = p3bt.BudgetModelTemplate()
         assert isinstance(bmt, p3bt.BudgetModelTemplate), \
             "Budget model should be a BudgetModelTemplate instance"
-        # Test expected valuees based on the settings in
+        # Test expected values based on the settings in
         # the budget_model_template in the source code. All default 
         # settings are mastered there and budget_model_constants.py.
 
@@ -144,14 +144,14 @@ def test_WF_OBJECT_Path_methods() -> None:
     except Exception as e:
         pytest.fail(f"init_budget_model raised an exception: {str(e)}")
 # ---------------------------------------------------------------------------- +
-def test_BDM_FI_OBJECT_pseudo_Property_Methods():
+def test_BDM_FI_DATA_pseudo_Property_Methods():
     """Test BDM FI Object Pseudo Property Methods."""
     try:
-        logger.info(test_BDM_FI_OBJECT_pseudo_Property_Methods.__doc__)
+        logger.info(test_BDM_FI_DATA_pseudo_Property_Methods.__doc__)
         bmt = p3bt.BudgetModelTemplate()
         assert isinstance(bmt, p3bt.BudgetModelTemplate), \
             "Budget model should be a BudgetModelTemplate instance"
-        # Test expected valuees based on the settings in
+        # Test expected values based on the settings in
         # the budget_model_template in the source code. All default 
         # settings are mastered there and budget_model_constants.py.
 
@@ -161,29 +161,29 @@ def test_BDM_FI_OBJECT_pseudo_Property_Methods():
                 f"Expected: {fi_key} to be a valid FI key."
             assert (bdm_fi := bmt.bdm_FI_OBJECT(fi_key)) is not None, \
                 f"Expected: {fi_key} to be a valid FI dict."
-            assert len(bdm_fi) == len(p3bt.FI_OBJECT_VALID_KEYS), \
+            assert len(bdm_fi) == len(p3bt.FI_OBJECT_VALID_ATTR_KEYS), \
                 f"Expected: {fi_key} workbooks_in to be non-None."
             assert isinstance(bdm_fi, dict), \
                 f"Expected: {fi_key} workbooks_in to be valid dict."
             assert bmt.bdm_FI_KEY(fi_key) == fi_key, \
-                f"Expected bdm_FI_KEY('{fi_key}'): '{fi_key}', got '{bdm_fi.bdm_FI_OBJECT_key(fi_key)}'."
+                f"Expected bdm_FI_KEY('{fi_key}'): '{fi_key}', got '{bdm_fi.bdm_FI_KEY(fi_key)}'."
             assert bmt.bdm_FI_NAME(fi_key) in p3bt.BDM_FI_NAMES, \
-                f"Expected one of: {p3bt.BDM_FI_NAMES}, got '{bmt.bdm_FI_OBJECT_name(fi_key)}'"
+                f"Expected one of: {p3bt.BDM_FI_NAMES}, got '{bmt.bdm_FI_NAME(fi_key)}'"
             assert bmt.bdm_FI_TYPE(fi_key) in p3bt.VALID_FI_TYPES, \
-                f"Expected one of: {p3bt.BDM_FI_TYPES}, got '{bmt.bdm_FI_OBJECT_type(fi_key)}'"
-            assert (fldr := bmt.bdm_FI_FOLDER(fi_key)) is not None , \
+                f"Expected one of: {p3bt.BDM_FI_TYPES}, got '{bmt.bdm_FI_TYPE(fi_key)}'"
+            assert bmt.bdm_FI_FOLDER(fi_key) is not None , \
                 f"Expected bmt.bdm_FI_FOLDER({fi_key}) to be non-None"
     except Exception as e:
         pytest.fail(f"init_budget_model raised an exception: {str(e)}")
 # ---------------------------------------------------------------------------- +
-def test_BDM_WF_Dictioonary_Pseudo_Property_Methods():
+def test_BDM_WF_Dictionary_Pseudo_Property_Methods():
     """Test BDM WF Dictionary Pseudo Property Methods."""
     try:
-        logger.info(test_BDM_WF_Dictioonary_Pseudo_Property_Methods.__doc__)
+        logger.info(test_BDM_WF_Dictionary_Pseudo_Property_Methods.__doc__)
         bmt = p3bt.BudgetModelTemplate()
         assert isinstance(bmt, p3bt.BudgetModelTemplate), \
             "Budget model should be a BudgetModelTemplate instance"
-        # Test expected valuees based on the settings in
+        # Test expected values based on the settings in
         # the budget_model_template in the source code. All default 
         # settings are mastered there and budget_model_constants.py.
 
@@ -193,9 +193,9 @@ def test_BDM_WF_Dictioonary_Pseudo_Property_Methods():
                 f"Expected: {wf_key} to be a valid WF key."
             assert (bdm_WF_OBJECT := bmt.bdm_WF_OBJECT(wf_key)) is not None, \
                 f"Expected: {wf_key} to be a valid WF dict."
-            assert len(bdm_WF_OBJECT) == len(p3bt.WF_OBJECT_VALID_KEYS), \
+            assert len(bdm_WF_OBJECT) == len(p3bt.WF_OBJECT_VALID_ATTR_KEYS), \
                 f"Expected: {wf_key} workbooks_in to be non-None."
-            assert isinstance(bdm_WF_OBJECT, p3bt.WF_OBJECT), \
+            assert isinstance(bdm_WF_OBJECT, dict), \
                 f"Expected: {wf_key} workbooks_in to be valid dict."
             assert bmt.bdm_WF_KEY(wf_key) == wf_key, \
                 f"Expected bdm_WF_KEY('{wf_key}'): '{wf_key}', got '{bdm_WF_OBJECT.bdm_WF_KEY(wf_key)}'."

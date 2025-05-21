@@ -1,8 +1,8 @@
 # ---------------------------------------------------------------------------- +
-#region budmod_cli_parser.py module
-""" budmod_cli_parser.py cli argument parsing for BudgetModelCLIView class.
+#region budman_cli_parser.py module
+""" budman_cli_parser.py cli argument parsing for BudgetModelCLIView class.
 """
-#endregion budmod_cli_parser.py module
+#endregion budman_cli_parser.py module
 # ---------------------------------------------------------------------------- +
 #region Imports
 

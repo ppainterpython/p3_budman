@@ -45,7 +45,7 @@ class BudgetManagerCLIViewDataContext():
     #region __init__() constructor method
     def __init__(self, view_model : object) -> None:
         super().__init__()
-        self._intitialized : bool = False
+        self._initialized : bool = False
         self._view_model : object = view_model
         self._cp : Callable = None  # Command Processor
         self._dc : object = None    # Data Context
@@ -55,14 +55,14 @@ class BudgetManagerCLIViewDataContext():
     @property
     def initialized(self) -> bool:
         """Return True if the Data Context is initialized."""
-        return self._intitialized
+        return self._initialized
     
     @initialized.setter
     def initialized(self, value : bool) -> None:
         """Set the initialized property."""
         if not isinstance(value, bool):
             raise ValueError("initialized must be a boolean value.")
-        self._intitialized = value  
+        self._initialized = value  
     @property
     def view_model(self) -> object:
         """Return the view model."""
@@ -174,7 +174,7 @@ class BudgetManagerCLIViewDataContext():
     def get_DC(self, attr_name : str) -> Any:
         """Get an attribute from the the DC."""
         try:
-            if not self.intitialized:
+            if not self.initialized:
                 m = f"{self.__class__.__name__} is not initialized."
                 logger.error(m)
                 return False, m
@@ -197,7 +197,7 @@ class BudgetManagerCLIViewDataContext():
     def set_DC(self, attr_name : str, attr_value : Any) -> Any:
         """Get an attribute from the the DC."""
         try:
-            if not self.intitialized:
+            if not self.initialized:
                 m = f"{self.__class__.__name__} is not initialized."
                 logger.error(m)
                 return False, m

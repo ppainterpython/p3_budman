@@ -11,6 +11,7 @@
 			"asctime",
 			"caplog",
 			"capsys",
+			"clview",
 			"conversts",
 			"cpad",
 			"datefmt",

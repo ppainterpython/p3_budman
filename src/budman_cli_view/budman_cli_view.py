@@ -74,7 +74,7 @@ def _filter_opts(opts) -> Dict[str, Any]:
     oc.pop('cmd2_handler')
     return oc
 def _log_cli_cmd_execute(self, opts):
-    """Log the command and options. Retrun True if parse_only."""
+    """Log the command and options. Return True if parse_only."""
     logger.info(f"Execute Command: {str(_filter_opts(opts))}")
     return self.parse_only if not "val_cmd" in opts else False
 def _log_cli_cmd_complete(self, opts):
@@ -113,7 +113,7 @@ class BudgetManagerCLIView(cmd2.Cmd):
     
     Operates under MVVM pattern, strictly. Instantiated with a blind view_model.
     Using cmd2 package which embeds the argparse package. Cmd2 handles the
-    command structure and argpars handles the argument lists for each command.
+    command structure and argparse handles the argument lists for each command.
     TODO: Use ABC for view_model interface.
     """
     # ------------------------------------------------------------------------ +
@@ -178,7 +178,7 @@ class BudgetManagerCLIView(cmd2.Cmd):
             cmd = BudgetManagerCLIView.create_cmd(opts)
             status, result = self.data_context.execute_cmd(cmd)
             if status:
-                # TODO: cleanup output when content is large.
+                # TODO: cleanup output when 
                 self.poutput(f"Result: {str(result)}")
             else:
                 self.poutput(f"Error: {str(result)}")

@@ -44,9 +44,9 @@ logger = logging.getLogger(THIS_APP_NAME)
 #region Budget Model Template and config support 
 # ---------------------------------------------------------------------------- +
 class BudgetModelTemplate(BudgetModel):
-    """Default BbudgetModelTemplate class, contains default, example values.
+    """Default BudgetModelTemplate class, contains default, example values.
     
-    Creates a BudgetModel object pre-poulated with default configuration values.
+    Creates a BudgetModel object pre-populated with default configuration values.
 
     Defines the BudgetModel structure with two example Financial Institutions.
     Convenient for developer.
@@ -68,18 +68,18 @@ class BudgetModelTemplate(BudgetModel):
         # BDM object
         BDM_ID: "1a2b3c4d",  # random, but unique BMT Id.
         BM_INITIALIZED: False,
-        BM_FOLDER: BM_DEFAULT_BUDGET_FOLDER,               # bsm_BM_FOLDER_path()
+        BDM_FOLDER: BM_DEFAULT_BUDGET_FOLDER,               # bsm_BDM_FOLDER_path()
         BDM_URL: None,
-        BM_FI_COLLECTION: { # FI_COLLECTION (dict) {FI_KEY: FI_OBJECT}
+        BDM_FI_COLLECTION: { # FI_COLLECTION (dict) {FI_KEY: FI_DATA}
             "boa": # FI_KEY
-            {      # FI_OBJECT
+            {      # FI_DATA
                 FI_KEY: "boa",
                 FI_NAME: "Bank of America",
                 FI_TYPE: "bank",
                 FI_FOLDER: "boa",
-                FI_WORKFLOW_DATA: { # WF_WORKFLOWTA (dict) {wf_key: WF_WORKBOOK_DATA}
-                     BM_WF_CATEGORIZATION: {  # WF_WOBKBOOK_DATA dcit {key: [(),() ...]} 
-                        WF_WORKBOOKS_IN: [ # WF_WROKBOOK_LIST
+                FI_DATA_COLLECTION: { # WF_DATA_COLLECTION (dict) {wf_key: WF_WORKBOOK_DATA}
+                     BM_WF_CATEGORIZATION: {  # WF_WOBKBOOK_DATA dict {key: [(),() ...]} 
+                        WF_WORKBOOKS_IN: [ # WF_WORKBOOK_LIST
                             ( "input_prefix_wb_name_1", "wb_abs_path_1" ),
                             ( "input_prefix_wb_name_2", "wb_abs_path_2" ),
                             ( "input_prefix_wb_name_3", "wb_abs_path_3" )
@@ -93,15 +93,15 @@ class BudgetModelTemplate(BudgetModel):
                     },
                 },
             "merrill": # FI_KEY
-            {          # FI_OBJECT
+            {          # FI_DATA
                 FI_KEY: "merrill",
                 FI_NAME: "Merrill Lynch",
                 FI_TYPE: "brokerage",
                 FI_FOLDER: "merrill",
-                FI_WORKFLOW_DATA: None,
+                FI_DATA_COLLECTION: None,
             },
         },
-        BM_WF_COLLECTION: {
+        BDM_WF_COLLECTION: {
             BM_WF_INTAKE: {                    # bdm_fi_wf(fi_key, workflow)
                 # WF Object - TODO: add WF_KEY, verify unique
                 WF_KEY: BM_WF_INTAKE,
@@ -218,9 +218,9 @@ class BudgetModelTemplate(BudgetModel):
             self.bm_initialized = bmt_dict[BM_INITIALIZED]            # property
             self.bm_folder = BM_DEFAULT_BUDGET_FOLDER                 # property
             self.bm_url = bmt_id.bdm_store_abs_path().as_uri()        # property
-            self.bm_wf_collection = bmt_dict[BM_WF_COLLECTION].copy() # property
-            for fi_key, fi_dict in bmt_dict[BM_FI_COLLECTION].items():
-                self.bm_fi_collection[fi_key] = fi_dict.copy()        # property
+            self.bdm_wf_collection = bmt_dict[BDM_WF_COLLECTION].copy() # property
+            for fi_key, fi_dict in bmt_dict[BDM_FI_COLLECTION].items():
+                self.bdm_fi_collection[fi_key] = fi_dict.copy()        # property
             self.bm_options = bmt_dict[BM_OPTIONS].copy()             # property
             self.bm_created_date = p3u.now_iso_date_string()          # property
             self.bm_last_modified_date = self.bm_created_date         # property
@@ -242,23 +242,23 @@ class BudgetModelTemplate(BudgetModel):
             logger.debug("Start:  ...")
             logger.debug(f"{P2}BM_INITIALIZED('{BM_INITIALIZED}'): "
                          f"{bmt.bm_initialized}")
-            logger.debug(f"{P2}BM_FOLDER('{BM_FOLDER}'): '{bmt.bdm_url}'")
+            logger.debug(f"{P2}BDM_FOLDER('{BDM_FOLDER}'): '{bmt.bdm_url}'")
             logger.debug(f"{P2}BDM_URL('{BDM_URL}): '{bmt.bdm_url}' ")
-            logger.debug(f"{P2}BM_WORKFLOWS('{BM_WF_COLLECTION}'): "
-                         f" '{bmt.bm_wf_collection}'")
+            logger.debug(f"{P2}BM_WORKFLOWS('{BDM_WF_COLLECTION}'): "
+                         f" '{bmt.bdm_wf_collection}'")
             # Enumerate Financial Institutions (FI)
-            fi_c = len(bmt.bm_fi_collection)  # financial institutions count
-            logger.debug(f"{P2}BM_FI('{BM_FI_COLLECTION}')({fi_c})")
-            for fi_key, fi_object in bmt.bm_fi_collection.items():
+            fi_c = len(bmt.bdm_fi_collection)  # financial institutions count
+            logger.debug(f"{P2}BM_FI('{BDM_FI_COLLECTION}')({fi_c})")
+            for fi_key, fi_object in bmt.bdm_fi_collection.items():
                 logger.debug(f"{P4}Financial Institution: "
                          f"{fi_key}:{fi_object[FI_NAME]}:"
                          f"{fi_object[FI_TYPE]}: '{fi_object[FI_FOLDER]}'")
             # Enumerate Workflows in the budget model
-            c = len(bmt.bm_wf_collection)
+            c = len(bmt.bdm_wf_collection)
             logger.debug(
-                f"{P2}BM_WF_COLLECTION['{BM_WF_COLLECTION}']({c}): "
-                f"{str(list(bm.bm_wf_collection.keys()))}")
-            for wf_key, wf_object in bm.bm_wf_collection.items():
+                f"{P2}BDM_WF_COLLECTION['{BDM_WF_COLLECTION}']({c}): "
+                f"{str(list(bm.bdm_wf_collection.keys()))}")
+            for wf_key, wf_object in bm.bdm_wf_collection.items():
                 logger.debug(f"{P4}Workflow:({wf_key}:{wf_object[WF_NAME]}: ")
                 logger.debug(f"{P6}WF_WORKBOOKS_IN: '{bmt.wf_object[WF_FOLDER_IN]}'")
                 logger.debug(f"{P6}WF_FOLDER_OUT: '{bmt.wf_object[WF_FOLDER_OUT]}'")
@@ -299,10 +299,10 @@ def tryout_budget_model_template() -> None:
         bmt.bsm_inititalize() # initialize the budget storage model 
         
         # Enumerate the financial institutions in the budget model template
-        for fi_key, fi_dict in bmt.bm_fi_collection.items():
+        for fi_key, fi_dict in bmt.bdm_fi_collection.items():
             logger.debug(f"Financial Institution: {fi_dict[FI_FOLDER]}:"
                          f"{fi_dict[FI_TYPE]}:{fi_dict[FI_NAME]}:")
-        for wf_key, wf_dict in bmt.bm_wf_collection.items():
+        for wf_key, wf_dict in bmt.bdm_wf_collection.items():
             logger.debug(f"{P2}Workflow('{wf_dict[WF_NAME]}'): "
                             f"{P2}WM_FOLDER_IN: '{wf_dict[WF_FOLDER_IN]}' "
                             f"{P2}WM_WORKBOOS_IN: {wf_dict[WF_WORKBOOKS_IN]}")
