@@ -357,10 +357,10 @@ class BudgetModel(metaclass=SingletonMeta):
         self.bdm_working_data = value
 
     # budget_model_working_data is a dictionary to store dynamic, non-property data.
-    def set_BDM_WORKING_DATA(self, key, value):
+    def set_BDM_WORKING_DATA(self, key, value) -> None:
         self.bdm_working_data[key] = value
 
-    def get_BDM_WORKING_DATA(self, key):
+    def get_BDM_WORKING_DATA(self, key) -> Any:
         return self.bdm_working_data.get(key, 0)
 
     #endregion BudgetModel public class properties
@@ -582,7 +582,7 @@ class BudgetModel(metaclass=SingletonMeta):
                 self.bdm_working_data[BDWD_INITIALIZED]): 
                 return self.bdm_working_data
             # Initialize the budget model working data.
-            for wd_key in BDWD_WORKING_DATA_KEYS:
+            for wd_key in BDM_WORKING_DATA_VALID_ATTR_KEYS:
                 if wd_key == BDWD_LOADED_WORKBOOKS:
                     self.set_BDM_WORKING_DATA(
                         BDWD_LOADED_WORKBOOKS, list())
@@ -1048,12 +1048,12 @@ class BudgetModel(metaclass=SingletonMeta):
     def bsm_FI_DATA_COLLECTION_resolve(self, fi_key:str) -> None:
         """Resolve the FI_WORKFLOW_DATA for the specified fi_key and wf_key."""
         try:
-            if self.bdm_FI_WORKFLOW_DATA_count(fi_key) == 0:
+            if self.bdm_FI_DATA_COLLECTION_count(fi_key) == 0:
                 m = f"FI_KEY('{fi_key}') has no workflow data."
                 logger.debug(m)
                 return
             # Enumerate the FI_OBJECT WF_DATA_COLLECTION.
-            wf_dc : WF_DATA_COLLECTION = self.bdm_FI_WORKFLOW_DATA(fi_key)
+            wf_dc : WF_DATA_COLLECTION = self.bdm_FI_DATA_COLLECTION(fi_key)
             for wf_key, wf_data_object in wf_dc.items():
                 # Resolve each WF_DATA_OBJECT in the collection.
                 self.bsm_WF_DATA_OBJECT_resolve(wf_data_object,
@@ -1146,7 +1146,7 @@ class BudgetModel(metaclass=SingletonMeta):
             # Resolve all keys in the WF_DATA_OBJECT.
             did_workbooks = False
             for wf_do_key, wf_do_value in wf_do.items():
-                if wf_do_key not in WF_DATA_OBJECT_VALID_KEYS:
+                if wf_do_key not in WF_DATA_OBJECT_VALID_ATTR_KEYS:
                     m = f"Invalid WF_DATA_OBJECT key '{wf_do_key}' "
                     m += f"for FI_KEY('{fi_key}') and WF_KEY('{wf_key}')"
                     logger.error(m)
@@ -1560,7 +1560,7 @@ class BudgetModel(metaclass=SingletonMeta):
             logger.error(m)
             raise
     def bdwd_INITIALIZED_set(self, value : bool) -> bool:
-        """Set the BDWD_INITIALIZED from the BDM_WORKING_DATA.
+        """Set the BDWD_INITIALIZED in BDM_WORKING_DATA.
         """
         try:
             self.bdwd_INITIALIZED()

@@ -52,10 +52,12 @@ BDM_WORKING_DATA = Dict[str, Any]
 DATA_CONTEXT = Dict[str, Any]
 
 
-# Common Key Names
+# Base data attribute key names
+FI_KEY = 'fi_key'
+WF_KEY = 'wf_key'
+WB_NAME = 'wb_name'
+WB_TYPE = 'wb_type'
 ALL_KEY = 'all'
-WB_TYPE = "wb_type"
-WB_NAME = "wb_name"
 
 # Budget Model Domain Constants
 # Well-known column names for banking transactions workbooks.
@@ -102,8 +104,8 @@ BMO_JSON_LOG_FILE = "json_log_file_name"
 BMO_EXPECTED_KEYS = (BMO_LOG_CONFIG, BMO_LOG_LEVEL, BMO_LOG_FILE,
                     BMO_JSON_LOG_FILE)
 
-# FI_DATA financial institution pseudo-Object (Dictionary key names)
-FI_KEY = "fi_key" 
+# FI_OBJECT financial institution pseudo-Object (Dictionary key names)
+FI_KEY = FI_KEY 
 FI_NAME = "fi_name"
 FI_TYPE = "fi_type"
 FI_FOLDER = "fi_folder" 
@@ -111,8 +113,8 @@ FI_DATA_COLLECTION = "fi_data_collection"
 # Additional FI_DATA-related constants
 FI_OBJECT_VALID_ATTR_KEYS = (FI_KEY, FI_NAME, FI_TYPE, FI_FOLDER, FI_DATA_COLLECTION)
 VALID_FI_KEYS = ("boa", "merrill")
-VALID_FI_TYPES = ("bank", "brokerage")
-BDM_FI_NAMES = ("Bank of America", "Merrill Lynch")
+VALID_FI_TYPES = ("bank", "brokerage", "organization", "person")
+BDM_FI_NAMES = ("Bank of America", "Merrill Lynch", "CitiBANK")
 
 # Supported BM Workflow Names
 BM_WF_INTAKE = "intake"
@@ -121,7 +123,7 @@ BM_WF_FINALIZATION = "finalization"
 BM_VALID_WORKFLOWS = (BM_WF_INTAKE, BM_WF_CATEGORIZATION, BM_WF_FINALIZATION)
 
 # WF_OBJECT workflow pseudo-Object (Dictionary key names)
-WF_KEY = "wf_key"
+WF_KEY = WF_KEY
 WF_NAME = "wf_name"  # Also used as key in BM_FI workflows dictionary.
 WF_FOLDER_IN = "wf_folder_in" # also used as key in BM_FI dictionary.
 WF_FOLDER_OUT = "wf_folder_out" # also used as key in BM_FI dictionary.
@@ -150,37 +152,57 @@ WF_WORKBOOK_TYPES = (WF_WORKBOOKS_IN, WF_WORKBOOKS_OUT)
 # WF_DATA_OBJECT_KEYS = (WF_WORKBOOKS_IN, WF_WORKBOOKS_OUT)
 WF_DATA_OBJECT_VALID_ATTR_KEYS = (WF_WORKBOOKS_IN, WF_WORKBOOKS_OUT)
 
-# The BDM_WORKING_DATA dictionary also serves as the
-# DATA_CONTEXT for the BudgetModel. So, it has key names that are
-# generic. 
-# TODO: really need to use an abstract interface for DATA_CONTEXT
+# The BDM_WORKING_DATA (BDWD_OBJECT) is designed to be a simple abstraction
+# of the BudgetModel useful to View Models, Views, and other types of 
+# upstream callers. Specifically, it is intended to serve as the 
+# DATA_CONTEXT in an MVVM design pattern.
+# DATA_CONTEXT is an abstract interface which can be bound to concrete
+# implementations at runtime. BDWD implements the DATA_CONTEXT interface.
+# At the moment, this lightweight implementation is using a dictionary with
+# well-known attribute key names and data types as a "good guy" interface.
+# TODO: use an abstract base classes as proper interface for DATA_CONTEXT
+
+# BDWD_OBJECT "good guy" interface (Dictionary key names)
 BDWD_INITIALIZED = "bdwd_initialized"
-#    Key Name: BDWD_INITIALIZED
-#   Key Value: bool True | False
-# Description: Indicates if the BDWD has been initialized.
+# Name: BDWD_INITIALIZED
+# Type: bool True | False
+# Desc: Indicates if the BDWD has been initialized.
 BDWD_LOADED_WORKBOOKS = "bdwd_loaded_workbooks" # key name
-DC_LOADED_WORKBOOKS = BDWD_LOADED_WORKBOOKS
-#    Key Name: BDWD_LOADED_WORKBOOKS
-#   Key Value: list[Tuple(wb_name, Workbook object)]
-# Description: A list of tuples of wb_name, Workbook objects loaded into BDWD.
-BDWD_FI = "bdwd_fi"
-#    Key Name: BDWD_FI
-#   Key Value: fi_key | "all"
-# Description: fi_key of FI loaded, or "all" if all FIs are loaded.
-#              To load a single FI, use bdwd_FI_load(fi_key) method.
-BDWD_WORKING_DATA_KEYS = (BDWD_INITIALIZED,
+# Name: BDWD_LOADED_WORKBOOKS
+# Type: LOADED_WORKBOOKS_LIST : list of tuples
+# Desc: A list of tuples of wb_name, Workbook objects loaded into BDWD.
+BDWD_FI = FI_KEY
+# Name: BDWD_FI
+# Type: FI_KEY | "all" : str
+# Desc: FI_KEY of FI loaded, or "all" if all FIs are loaded.
+BDM_WORKING_DATA_VALID_ATTR_KEYS = (BDWD_INITIALIZED,
                           BDWD_LOADED_WORKBOOKS,
                           BDWD_FI)
 
+# DATA_CONTEXT "good guy" interface (Dictionary key names)
+DC_INITIALIZED = BDWD_INITIALIZED
+# Name: DC_INITIALIZED
+# Type: bool True | False
+# Desc: Indicates if the DC has been initialized.
+DC_LOADED_WORKBOOKS = BDWD_LOADED_WORKBOOKS
+# Name: DC_LOADED_WORKBOOKS
+# Type: LOADED_WORKBOOKS_LIST
+# Desc: A list of tuples of wb_name, Workbook objects loaded into BDWD.
 DC_BUDMAN_STORE = "budman_store"
-DATA_CONTEXT_KEYS = (
+# Name: DC_LOADED_WORKBOOKS
+# Type: Dict
+# Desc: Values loaded from Budget Manager configuration file , or "store".
+
+DATA_CONTEXT_VALID_ATTR_KEYS = (
+    DC_INITIALIZED,
     FI_KEY,
     WF_KEY,
     WB_NAME,
     WB_TYPE,
-    BDWD_LOADED_WORKBOOKS,
+    DC_LOADED_WORKBOOKS,
     DC_BUDMAN_STORE)
 
+BDWD_OBJECT_VALID_ATTR_KEYS = BDM_WORKING_DATA_VALID_ATTR_KEYS + DATA_CONTEXT_VALID_ATTR_KEYS
 
 # Miscellaneous Convenience Constants
 P2 = "  "  # 2 space padding
