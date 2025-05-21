@@ -1219,7 +1219,7 @@ class BudgetModel(metaclass=SingletonMeta):
     #endregion WF_DATA_OBJECT (WF_DO) pseudo-property methods
     # ------------------------------------------------------------------------ +   
     #region bsm_FI_WF Methods
-    def bsm_FI_WF_WORKBOOK_load(self,
+    def bsm_FI_WF_WORKBOOKS_load(self,
                 fi_key : str, 
                 wf_key : str, 
                 wb_type : str) -> LOADED_WORKBOOKS_LIST: 
@@ -1489,7 +1489,7 @@ class BudgetModel(metaclass=SingletonMeta):
             self.bdwd_INITIALIZED()
             # Use the BSM to load the workbooks for fi_key, wf_key and wb_type.
             new_lwbl : LOADED_WORKBOOKS_LIST = []
-            new_lwbl = self.bsm_FI_WF_WORKBOOK_load(fi_key, wf_key, wb_type)
+            new_lwbl = self.bsm_FI_WF_WORKBOOKS_load(fi_key, wf_key, wb_type)
             if new_lwbl is None or len(new_lwbl) == 0: return []
             current_lwbl = self.bdwd_LOADED_WORKBOOKS_get()
             # add the loaded workbooks to the current LOADED_WORKBOOKS_LIST.

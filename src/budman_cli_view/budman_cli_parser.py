@@ -111,9 +111,15 @@ class BudgetManagerCLIParser():
     def show_cmd_parser_setup(self) -> None:
         """Setup the command line argument parsers for the show command."""
         try:
-            # show subcommands: workbooks, fin_inst, workflows, and workbooks
+            # show subcommands: datacontext, workbooks, fin_inst, workflows, and workbooks
             self.show_cmd_subparsers = self.show_cmd_parser.add_subparsers(
                 dest="show_cmd")
+            self.show_datacontext_subcmd_parser = self.show_cmd_subparsers.add_parser(
+                "DATA_CONTEXT",
+                aliases=["dc", "DC"],
+                help="Show the data context information.")
+            self.show_datacontext_subcmd_parser.set_defaults(show_cmd="DATA_CONTEXT")
+
             # subcommand show fi_inst [fi_key] [-wf [wf_key]] [-wb [wb_name]]
             self.show_fi_subcmd_parser = self.show_cmd_subparsers.add_parser(
                 "fin_inst",

@@ -206,9 +206,10 @@ class BudgetManagerCLIView(cmd2.Cmd):
     def do_show(self, opts):
         """Show information in the Budget Manager application."""
         try:
-            if _log_cli_cmd_execute(self, opts): return
-            self.show_command(opts)
-            _log_cli_cmd_complete(self, opts)
+            status, result = self.execute_cmd(opts)
+            # if _log_cli_cmd_execute(self, opts): return
+            # self.show_command(opts)
+            # _log_cli_cmd_complete(self, opts)
         except Exception as e:
             self.pexcept(e)
     #endregion Show command
@@ -219,9 +220,9 @@ class BudgetManagerCLIView(cmd2.Cmd):
         """Load data in the Budget Manager application."""
         try:
             status, result = self.execute_cmd(opts)
-        except SystemExit as e:
-            # Handle the case where argparse exits the program
-            self.pwarning(BMCLI_SYSTEM_EXIT_WARNING)
+        # except SystemExit as e:
+        #     # Handle the case where argparse exits the program
+        #     self.pwarning(BMCLI_SYSTEM_EXIT_WARNING)
         except Exception as e:
             self.pexcept(e)
     #endregion Load command - load workbooks
@@ -231,12 +232,13 @@ class BudgetManagerCLIView(cmd2.Cmd):
     def do_save(self, opts):
         """Save data in the Budget Manager application."""
         try:
-            if _log_cli_cmd_execute(self, opts): return
-            self.save_command(opts)
-            _log_cli_cmd_complete(self, opts)
-        except SystemExit as e:
-            # Handle the case where argparse exits the program
-            self.pwarning(BMCLI_SYSTEM_EXIT_WARNING)
+            status, result = self.execute_cmd(opts)
+        #     if _log_cli_cmd_execute(self, opts): return
+        #     self.save_command(opts)
+        #     _log_cli_cmd_complete(self, opts)
+        # except SystemExit as e:
+        #     # Handle the case where argparse exits the program
+        #     self.pwarning(BMCLI_SYSTEM_EXIT_WARNING)
         except Exception as e:
             self.pexcept(e)
     #endregion Save command - save workbooks
@@ -283,8 +285,9 @@ class BudgetManagerCLIView(cmd2.Cmd):
     def init_command(self, opts) -> None:
         """Execute the Init command."""
         try:
-            result = self.execute_cmd(opts)
-            self.poutput(f"Result: {str(result)}")
+            status, result = self.execute_cmd(opts)
+            # result = self.execute_cmd(opts)
+            # self.poutput(f"Result: {str(result)}")
             # if opts.init_cmd == "fin_inst":
             #     fi_key = opts.fi_key if opts.fi_key else None
                 # self.data_context.FI_init_cmd(opts.fi_key)
@@ -298,8 +301,9 @@ class BudgetManagerCLIView(cmd2.Cmd):
     def show_command(self, opts) -> None:
         """Execute the Show command."""
         try:
-            result = self.execute_cmd(opts)
-            self.poutput(f"Result: {str(result)}")
+            status, result = self.execute_cmd(opts)
+            # result = self.execute_cmd(opts)
+            # self.poutput(f"Result: {str(result)}")
             # if opts.show_cmd in ["workbook", "wb", "WB"]:
             #     self.show_workbooks_subcommand(opts)
             # elif opts.show_cmd in ["financial_institution", "fi", "FI"]:

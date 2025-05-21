@@ -18,6 +18,7 @@ from openpyxl import Workbook, load_workbook
 
 # local modules and packages
 import budman_model as p3bm
+from budman_model import P2, P4, P6, P8, P10
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -139,8 +140,9 @@ class BudgetManagerViewModelInterface():
             self.cmd_map = {
                 "init_cmd_fin_inst": self.FI_init_cmd,
                 "save_cmd_workbooks": self.FI_LOADED_WORKBOOKS_save_cmd,
-                "load_cmd_BUDMAN_STORE": self.BUDMAN_STORE_load,
+                "load_cmd_BUDMAN_STORE": self.BUDMAN_STORE_load_cmd,
                 "save_cmd_BUDMAN_STORE": self.BUDMAN_STORE_save,
+                "show_cmd_DATA_CONTEXT": self.DATA_CONTEXT_show_cmd,
             }
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
@@ -703,8 +705,8 @@ class BudgetManagerViewModelInterface():
             raise
     #endregion BUDMAN_STORE_save() method
     # ------------------------------------------------------------------------ +
-    #region BUDMAN_STORE_load() method
-    def BUDMAN_STORE_load(self, cmd : Dict) -> Tuple[bool, str]:
+    #region BUDMAN_STORE_load_cmd() method
+    def BUDMAN_STORE_load_cmd(self, cmd : Dict) -> Tuple[bool, str]:
         """Load the Budget Manager store (BUDMAN_STORE) file from the BSM.
 
         Arguments:
@@ -737,14 +739,64 @@ class BudgetManagerViewModelInterface():
             budman_store_abs_path = budman_folder_abs_path / budman_store_value
             # Load the BUDMAN_STORE file.
             budman_store_dict = p3bm.bsm_BUDMAN_STORE_load(budman_store_abs_path)
-            self.dc_FI_KEY = budman_store_dict
+            self.dc_BUDMAN_STORE = budman_store_dict
             self.BUDMAN_STORE_loaded = True
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             return True, budman_store_dict
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
-    #endregion BUDMAN_STORE_load() method
+    #endregion BUDMAN_STORE_load_cmd() method
+    # ------------------------------------------------------------------------ +
+    #region DATA_CONTEXT_show_cmd() method
+    def DATA_CONTEXT_show_cmd(self, cmd : Dict) -> Tuple[bool, str]:
+        """Show information in the Budget Manager Data Context.
+
+        Arguments:
+            cmd (Dict): A valid BudMan View Model Command object. For this
+            command, must contain show_cmd = 'DATA_CONTEXT' resulting in
+            a full command key of 'show_cmd_DATA_CONTEXT'.
+
+        Returns:
+            Tuple[success : bool, result : Any]: The outcome of the command 
+            execution. If success is True, result contains result of the 
+            command, if False, a description of the error.
+            
+        Raises:
+            RuntimeError: A description of the
+            root error is contained in the exception message.
+        """
+        try:
+            st = p3u.start_timer()
+            pfx = f"{self.__class__.__name__}.{self.FI_init_cmd.__name__}: "
+            if p3u.is_not_obj_of_type("cmd",cmd,dict,pfx):
+                m = f"Invalid cmd object, no action taken."
+                logger.error(m)
+                raise RuntimeError(f"{pfx}{m}")
+            logger.info(f"Start: ...")
+            # Return the current content of the DATA_CONTEXT.
+            bs = self.dc_BUDMAN_STORE
+            bs_str = p3u.first_n(str(bs))
+            bs_msg = p3u.first_n(bs_str)
+            lwbl = self.dc_LOADED_WORKBOOKS
+            lwbl_count = len(lwbl) if lwbl else 0
+            result = f"Budget Manager Data Context:\n"
+            result += f"{P2}{p3bm.DC_INITIALIZED}: {self.dc_INITIALIZED}\n"
+            result += f"{P2}{p3bm.FI_KEY}: {self.dc_FI_KEY}\n"
+            result += f"{P2}{p3bm.WF_KEY}: {self.dc_WF_KEY}\n"
+            result += f"{P2}{p3bm.WB_TYPE}: {self.dc_WB_TYPE}\n"
+            result += f"{P2}{p3bm.WB_NAME}: {self.dc_WB_NAME}\n"
+            result += f"{P2}{p3bm.DC_BUDMAN_STORE}: {bs_msg}\n"
+            result += f"{P2}{p3bm.DC_LOADED_WORKBOOKS}: {lwbl_count}\n"
+            if lwbl_count > 0:
+                for wb_name, wb in lwbl:
+                    result += f"{P4}{wb_name}: {str(wb)}\n"
+            logger.info(f"Complete: {p3u.stop_timer(st)}")
+            return True, result
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion DATA_CONTEXT_show_cmd() method
     # ------------------------------------------------------------------------ +
     #                                                                          +
     #endregion Command Binding Implementations
@@ -834,77 +886,89 @@ class BudgetManagerViewModelInterface():
             logger.error(p3u.exc_err_msg(e))
             raise
     @property
+    def dc_INITIALIZED(self) -> bool:
+        """Return the value of the DC_INITIALIZED attribute."""
+        dc = self._valid_DC()
+        if p3bm.DC_INITIALIZED not in dc:
+            self.data_context[p3bm.DC_INITIALIZED] = False
+        return self.data_context[p3bm.DC_INITIALIZED]
+    @dc_INITIALIZED.setter
+    def dc_INITIALIZED(self, value: bool) -> None:
+        """Set the value of the DC_INITIALIZED attribute."""
+        dc = self._valid_DC()
+        self.data_context[p3bm.DC_INITIALIZED] = value
+    @property
     def dc_FI_KEY(self) -> str:
         """Return the current financial institution key value in DC."""
         dc = self._valid_DC()
         if p3bm.FI_KEY not in dc:
-            self._data_context[p3bm.FI_KEY] = None
-        return self._data_context[p3bm.FI_KEY]
+            self.data_context[p3bm.FI_KEY] = None
+        return self.data_context[p3bm.FI_KEY]
     @dc_FI_KEY.setter
     def dc_FI_KEY(self, value: str) -> None:
         """Set the current financial institution key value in DC."""
         dc = self._valid_DC()
-        self._data_context[p3bm.FI_KEY] = value
+        self.data_context[p3bm.FI_KEY] = value
     @property
     def dc_WF_KEY(self) -> str:
         """Return the current workflow key value in DC."""
         dc = self._valid_DC()
         if p3bm.WF_KEY not in dc:
-            self._data_context[p3bm.WF_KEY] = None
-        return self._data_context[p3bm.WF_KEY]
+            self.data_context[p3bm.WF_KEY] = None
+        return self.data_context[p3bm.WF_KEY]
     @dc_WF_KEY.setter
     def dc_WF_KEY(self, value: str) -> None:
         """Set the current workflow key value in DC."""
         dc = self._valid_DC()
-        self._data_context[p3bm.WF_KEY] = value
+        self.data_context[p3bm.WF_KEY] = value
     @property
     def dc_WB_TYPE(self) -> str:
         """Return the current workbook type value in DC."""
         dc = self._valid_DC()
         if p3bm.WB_TYPE not in dc:
-            self._data_context[p3bm.WB_TYPE] = None
-        return self._data_context[p3bm.WB_TYPE]
+            self.data_context[p3bm.WB_TYPE] = None
+        return self.data_context[p3bm.WB_TYPE]
     @dc_WB_TYPE.setter
     def dc_WB_TYPE(self, value: str) -> None:
         """Set the current workbook type value in DC."""
         dc = self._valid_DC()
-        self._data_context[p3bm.WB_TYPE] = value
+        self.data_context[p3bm.WB_TYPE] = value
     @property
     def dc_WB_NAME(self) -> str:
         """Return the current workbook name value in DC."""
         dc = self._valid_DC()
         if p3bm.WB_NAME not in dc:
-            self._data_context[p3bm.WB_NAME] = None
-        return self._data_context[p3bm.WB_NAME]
+            self.data_context[p3bm.WB_NAME] = None
+        return self.data_context[p3bm.WB_NAME]
     @dc_WB_NAME.setter
     def dc_WB_NAME(self, value: str) -> None:
         """Set the current workbook name value in DC."""
         dc = self._valid_DC()
-        self._data_context[p3bm.WB_NAME] = value
+        self.data_context[p3bm.WB_NAME] = value
     @property
     def dc_BUDMAN_STORE(self) -> str:
         """Return the current BUDMAN_STORE value in DC."""
         dc = self._valid_DC()
         if p3bm.DC_BUDMAN_STORE not in dc:
-            self._data_context[p3bm.DC_BUDMAN_STORE] = None
-        return self._data_context[p3bm.DC_BUDMAN_STORE]
+            self.data_context[p3bm.DC_BUDMAN_STORE] = None
+        return self.data_context[p3bm.DC_BUDMAN_STORE]
     @dc_BUDMAN_STORE.setter
     def dc_BUDMAN_STORE(self, value: str) -> None:
         """Set the current BUDMAN_STORE value in DC."""
         dc = self._valid_DC()
-        self._data_context[p3bm.DC_BUDMAN_STORE] = value
+        self.data_context[p3bm.DC_BUDMAN_STORE] = value
     @property 
     def dc_LOADED_WORKBOOKS(self) -> p3bm.LOADED_WORKBOOKS_LIST:
         """Return the current loaded workbooks value in DC."""
         dc = self._valid_DC()
         if p3bm.DC_LOADED_WORKBOOKS not in dc:
-            self._data_context[p3bm.DC_LOADED_WORKBOOKS] = None
-        return self._data_context[p3bm.DC_LOADED_WORKBOOKS]
+            self.data_context[p3bm.DC_LOADED_WORKBOOKS] = None
+        return self.data_context[p3bm.DC_LOADED_WORKBOOKS]
     @dc_LOADED_WORKBOOKS.setter
     def dc_LOADED_WORKBOOKS(self, value: p3bm.LOADED_WORKBOOKS_LIST) -> None:
         """Set the current loaded workbooks value in DC."""
         dc = self._valid_DC()
-        self._data_context[p3bm.DC_LOADED_WORKBOOKS] = value
+        self.data_context[p3bm.DC_LOADED_WORKBOOKS] = value
     # ------------------------------------------------------------------------ +
     #endregion Data Context Properties
     # ------------------------------------------------------------------------ +
