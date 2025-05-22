@@ -66,14 +66,14 @@ def test_bsm_initialize() -> None:
     except Exception as e:
         pytest.fail(f"init_budget_model raised an exception: {str(e)}")
 # ---------------------------------------------------------------------------- +
-def test_bsm_BM_Folder_Path_methods() -> None:
+def test_bsm_BDM_Folder_Path_methods() -> None:
     """Test BM Folder (BF) Path methods."""
     try:
-        logger.info(test_bsm_BM_Folder_Path_methods.__doc__)
+        logger.info(test_bsm_BDM_Folder_Path_methods.__doc__)
         bmt = p3bt.BudgetModelTemplate()
         assert isinstance(bmt, p3bt.BudgetModelTemplate), \
             "Budget model should be a BudgetModelTemplate instance"
-        exptd_s = str(Path(p3bt.BM_DEFAULT_BUDGET_FOLDER))
+        exptd_s = str(Path(p3bt.BDM_DEFAULT_BUDGET_FOLDER))
         assert (_s := bmt.bsm_BDM_FOLDER_path_str()) == exptd_s, \
             f"Expected: {exptd_s}, Got: {_s}"
         exptd_p = Path(_s).expanduser()
@@ -126,7 +126,7 @@ def test_WF_OBJECT_Path_methods() -> None:
         for fi_key in p3bt.VALID_FI_KEYS:
             assert bmt.bdm_FI_KEY_validate(fi_key), \
                 f"Expected: {fi_key} to be a valid FI key."
-            for wf_key in p3bt.BM_VALID_WORKFLOWS:
+            for wf_key in p3bt.BDM_VALID_WORKFLOWS:
                 assert bmt.bdm_WF_KEY_validate(wf_key), \
                     f"Expected: {wf_key} to be a valid WF key."
                 for f_id in p3bt.WF_FOLDER_PATH_ELEMENTS:
@@ -188,7 +188,7 @@ def test_BDM_WF_Dictionary_Pseudo_Property_Methods():
         # settings are mastered there and budget_model_constants.py.
 
         # Expect valid values to work from default setup.
-        for wf_key in p3bt.BM_VALID_WORKFLOWS:
+        for wf_key in p3bt.BDM_VALID_WORKFLOWS:
             assert bmt.bdm_WF_KEY_validate(wf_key), \
                 f"Expected: {wf_key} to be a valid WF key."
             assert (bdm_WF_OBJECT := bmt.bdm_WF_OBJECT(wf_key)) is not None, \
@@ -201,12 +201,12 @@ def test_BDM_WF_Dictionary_Pseudo_Property_Methods():
                 f"Expected bdm_WF_KEY('{wf_key}'): '{wf_key}', got '{bdm_WF_OBJECT.bdm_WF_KEY(wf_key)}'."
             assert bmt.bdm_WF_NAME(wf_key) is not None, \
                 f"Expected bmt.bdm_WF_NAME({wf_key}) to be non-None"
-            assert bmt.bdm_WF_NAME(wf_key) in p3bt.BM_VALID_WORKFLOWS, \
-                f"Expected one of: {p3bt.BM_VALID_WORKFLOWS}, got '{bmt.bdm_WF_NAME(wf_key)}'"
-            assert isinstance(bmt.bdm_WF_FOLDER(wf_key, p3bt.WF_FOLDER_IN), (str, type(None))), \
-                f"Expected bmt.bdm_WF_FOLDER_IN({wf_key}) to type: None or str"
-            assert isinstance(bmt.bdm_WF_FOLDER(wf_key,p3bt.WF_FOLDER_OUT), (str, type(None))), \
-                f"Expected bmt.bdm_WF_FOLDER_OUT{wf_key}) to type: None or str"
+            assert bmt.bdm_WF_NAME(wf_key) in p3bt.BDM_VALID_WORKFLOWS, \
+                f"Expected one of: {p3bt.BDM_VALID_WORKFLOWS}, got '{bmt.bdm_WF_NAME(wf_key)}'"
+            assert isinstance(bmt.bdm_WF_FOLDER(wf_key, p3bt.WF_INPUT_FOLDER), (str, type(None))), \
+                f"Expected bmt.bdm_WF_INPUT_FOLDER({wf_key}) to type: None or str"
+            assert isinstance(bmt.bdm_WF_FOLDER(wf_key,p3bt.WF_OUTPUT_FOLDER), (str, type(None))), \
+                f"Expected bmt.bdm_WF_OUTPUT_FOLDER{wf_key}) to type: None or str"
             # assert isinstance(bmt.bdm_WF_OBJECT_workbooks_in(wf_key),(dict, type(None))), \
             #     f"Expected: {wf_key} workbooks_in to be dict or None."
             # assert isinstance(bmt.bdm_WF_OBJECT_workbooks_out(wf_key), (dict, type(None))), \

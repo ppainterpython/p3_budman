@@ -67,8 +67,8 @@ class BudgetModelTemplate(BudgetModel):
     budget_model_template = {  
         # BDM object
         BDM_ID: "1a2b3c4d",  # random, but unique BMT Id.
-        BM_INITIALIZED: False,
-        BDM_FOLDER: BM_DEFAULT_BUDGET_FOLDER,               # bsm_BDM_FOLDER_path()
+        BDM_INITIALIZED: False,
+        BDM_FOLDER: BDM_DEFAULT_BUDGET_FOLDER,               # bsm_BDM_FOLDER_path()
         BDM_URL: None,
         BDM_FI_COLLECTION: { # FI_COLLECTION (dict) {FI_KEY: FI_DATA}
             "boa": # FI_KEY
@@ -78,7 +78,7 @@ class BudgetModelTemplate(BudgetModel):
                 FI_TYPE: "bank",
                 FI_FOLDER: "boa",
                 FI_DATA_COLLECTION: { # WF_DATA_COLLECTION (dict) {wf_key: WF_WORKBOOK_DATA}
-                     BM_WF_CATEGORIZATION: {  # WF_WOBKBOOK_DATA dict {key: [(),() ...]} 
+                     BDM_WF_CATEGORIZATION: {  # WF_WOBKBOOK_DATA dict {key: [(),() ...]} 
                         WF_WORKBOOKS_IN: [ # WF_WORKBOOK_LIST
                             ( "input_prefix_wb_name_1", "wb_abs_path_1" ),
                             ( "input_prefix_wb_name_2", "wb_abs_path_2" ),
@@ -102,55 +102,55 @@ class BudgetModelTemplate(BudgetModel):
             },
         },
         BDM_WF_COLLECTION: {
-            BM_WF_INTAKE: {                    # bdm_fi_wf(fi_key, workflow)
+            BDM_WF_INTAKE: {                    # bdm_fi_wf(fi_key, workflow)
                 # WF Object - TODO: add WF_KEY, verify unique
-                WF_KEY: BM_WF_INTAKE,
-                WF_NAME: BM_WF_INTAKE,
-                WF_FOLDER_IN: None,         # bsm_WF_WORKBOOKS_IN(fi_key, workflow)
+                WF_KEY: BDM_WF_INTAKE,
+                WF_NAME: BDM_WF_INTAKE,
+                WF_INPUT_FOLDER: None,         # bsm_WF_WORKBOOKS_IN(fi_key, workflow)
                 WF_PREFIX_IN: None,
-                WF_FOLDER_OUT: "data/new",
+                WF_OUTPUT_FOLDER: "data/new",
                 WF_PREFIX_OUT: None,
                 WF_WORKBOOK_MAP:  {
-                    WF_WORKBOOKS_OUT: WF_FOLDER_OUT,
-                    WF_WORKBOOKS_IN: WF_FOLDER_IN
+                    WF_WORKBOOKS_OUT: WF_OUTPUT_FOLDER,
+                    WF_WORKBOOKS_IN: WF_INPUT_FOLDER
                 }
             },
-            BM_WF_CATEGORIZATION: {            # bdm_fi_wf(fi_key, workflow)
+            BDM_WF_CATEGORIZATION: {            # bdm_fi_wf(fi_key, workflow)
                 # WF Object
-                WF_KEY: BM_WF_CATEGORIZATION,
-                WF_NAME: BM_WF_CATEGORIZATION,
-                WF_FOLDER_IN: "data/new", # bsm_WF_WORKBOOKS_IN(fi_key, workflow)
-                WF_FOLDER_OUT: "data/categorized",
+                WF_KEY: BDM_WF_CATEGORIZATION,
+                WF_NAME: BDM_WF_CATEGORIZATION,
+                WF_INPUT_FOLDER: "data/new", # bsm_WF_WORKBOOKS_IN(fi_key, workflow)
+                WF_OUTPUT_FOLDER: "data/categorized",
                 WF_PREFIX_IN: None,
                 WF_PREFIX_OUT: "categorized_",
                 WF_WORKBOOK_MAP:  {
-                    WF_WORKBOOKS_OUT: WF_FOLDER_OUT,
-                    WF_WORKBOOKS_IN: WF_FOLDER_IN
+                    WF_WORKBOOKS_OUT: WF_OUTPUT_FOLDER,
+                    WF_WORKBOOKS_IN: WF_INPUT_FOLDER
                 }
             },
-            BM_WF_FINALIZATION: {              # bdm_fi_wf(fi_key, workflow)
+            BDM_WF_FINALIZATION: {              # bdm_fi_wf(fi_key, workflow)
                 # WF Object
-                WF_KEY: BM_WF_FINALIZATION,
-                WF_NAME: BM_WF_FINALIZATION,
-                WF_FOLDER_IN: "data/categorized",   # bsm_WF_WORKBOOKS_IN(fi_key, workflow)
-                WF_FOLDER_OUT: "data/finalized",
+                WF_KEY: BDM_WF_FINALIZATION,
+                WF_NAME: BDM_WF_FINALIZATION,
+                WF_INPUT_FOLDER: "data/categorized",   # bsm_WF_WORKBOOKS_IN(fi_key, workflow)
+                WF_OUTPUT_FOLDER: "data/finalized",
                 WF_PREFIX_IN: "categorized_",
                 WF_PREFIX_OUT: "finalized_",
                 WF_WORKBOOK_MAP:  {
-                    WF_WORKBOOKS_OUT: WF_FOLDER_OUT,
-                    WF_WORKBOOKS_IN: WF_FOLDER_IN
+                    WF_WORKBOOKS_OUT: WF_OUTPUT_FOLDER,
+                    WF_WORKBOOKS_IN: WF_INPUT_FOLDER
                 }
             }
         },
-        BM_OPTIONS: {
+        BDM_OPTIONS: {
             BMO_LOG_CONFIG: "budget_model_logging_config.jsonc",
             BMO_LOG_LEVEL: "DEBUG",
             BMO_LOG_FILE: "logs/p3BudgetModel.log",
             BMO_JSON_LOG_FILE: "logs/p3BudgetModel.jsonl"
         },
-        BM_CREATED_DATE: None,
-        BM_LAST_MODIFIED_DATE: None,
-        BM_LAST_MODIFIED_BY: None,
+        BDM_OPTIONS: None,
+        BDM_LAST_MODIFIED_DATE: None,
+        BDM_LAST_MODIFIED_BY: None,
         BDM_WORKING_DATA: {}
     }
     @classmethod
@@ -160,9 +160,9 @@ class BudgetModelTemplate(BudgetModel):
             logger.debug("Start:  ...")
             bmt = cls.budget_model_template
             fresh_bmt = copy.deepcopy(bmt) # make a fresh copy of the template
-            fresh_bmt[BM_CREATED_DATE] = p3u.now_iso_date_string()
-            fresh_bmt[BM_LAST_MODIFIED_DATE] = p3u.now_iso_date_string()
-            fresh_bmt[BM_LAST_MODIFIED_BY] = getpass.getuser()
+            fresh_bmt[BDM_OPTIONS] = p3u.now_iso_date_string()
+            fresh_bmt[BDM_LAST_MODIFIED_DATE] = p3u.now_iso_date_string()
+            fresh_bmt[BDM_LAST_MODIFIED_BY] = getpass.getuser()
             # Fresh identity
             bmt_id = BudgetDomainModelIdentity()
             fresh_bmt[BDM_ID] = bmt_id.uid
@@ -215,13 +215,13 @@ class BudgetModelTemplate(BudgetModel):
                 filename = THIS_APP_NAME,
                 filetype = BSM_DEFAULT_BUDGET_MODEL_FILE_TYPE)
             self.bdm_id = bmt_dict[BDM_ID]                            # property
-            self.bm_initialized = bmt_dict[BM_INITIALIZED]            # property
-            self.bm_folder = BM_DEFAULT_BUDGET_FOLDER                 # property
+            self.bm_initialized = bmt_dict[BDM_INITIALIZED]            # property
+            self.bm_folder = BDM_DEFAULT_BUDGET_FOLDER                 # property
             self.bm_url = bmt_id.bdm_store_abs_path().as_uri()        # property
             self.bdm_wf_collection = bmt_dict[BDM_WF_COLLECTION].copy() # property
             for fi_key, fi_dict in bmt_dict[BDM_FI_COLLECTION].items():
                 self.bdm_fi_collection[fi_key] = fi_dict.copy()        # property
-            self.bm_options = bmt_dict[BM_OPTIONS].copy()             # property
+            self.bm_options = bmt_dict[BDM_OPTIONS].copy()             # property
             self.bm_created_date = p3u.now_iso_date_string()          # property
             self.bm_last_modified_date = self.bm_created_date         # property
             self.bm_last_modified_by = getpass.getuser()              # property
@@ -240,15 +240,15 @@ class BudgetModelTemplate(BudgetModel):
         """Log the BudgetModelTemplate class information."""
         try:
             logger.debug("Start:  ...")
-            logger.debug(f"{P2}BM_INITIALIZED('{BM_INITIALIZED}'): "
+            logger.debug(f"{P2}BDM_INITIALIZED('{BDM_INITIALIZED}'): "
                          f"{bmt.bm_initialized}")
             logger.debug(f"{P2}BDM_FOLDER('{BDM_FOLDER}'): '{bmt.bdm_url}'")
             logger.debug(f"{P2}BDM_URL('{BDM_URL}): '{bmt.bdm_url}' ")
-            logger.debug(f"{P2}BM_WORKFLOWS('{BDM_WF_COLLECTION}'): "
+            logger.debug(f"{P2}BDM_WORKFLOWS('{BDM_WF_COLLECTION}'): "
                          f" '{bmt.bdm_wf_collection}'")
             # Enumerate Financial Institutions (FI)
             fi_c = len(bmt.bdm_fi_collection)  # financial institutions count
-            logger.debug(f"{P2}BM_FI('{BDM_FI_COLLECTION}')({fi_c})")
+            logger.debug(f"{P2}BDM_FI('{BDM_FI_COLLECTION}')({fi_c})")
             for fi_key, fi_object in bmt.bdm_fi_collection.items():
                 logger.debug(f"{P4}Financial Institution: "
                          f"{fi_key}:{fi_object[FI_NAME]}:"
@@ -260,23 +260,23 @@ class BudgetModelTemplate(BudgetModel):
                 f"{str(list(bm.bdm_wf_collection.keys()))}")
             for wf_key, wf_object in bm.bdm_wf_collection.items():
                 logger.debug(f"{P4}Workflow:({wf_key}:{wf_object[WF_NAME]}: ")
-                logger.debug(f"{P6}WF_WORKBOOKS_IN: '{bmt.wf_object[WF_FOLDER_IN]}'")
-                logger.debug(f"{P6}WF_FOLDER_OUT: '{bmt.wf_object[WF_FOLDER_OUT]}'")
+                logger.debug(f"{P6}WF_WORKBOOKS_IN: '{bmt.wf_object[WF_INPUT_FOLDER]}'")
+                logger.debug(f"{P6}WF_OUTPUT_FOLDER: '{bmt.wf_object[WF_OUTPUT_FOLDER]}'")
                 logger.debug(f"{P6}WF_PREFIX_IN: '{bmt.wf_object[WF_PREFIX_IN]}' "
                             f"WF_PREFIX_OUT: '{bmt.wf_object[WF_PREFIX_OUT]}'")
                 logger.debug(f"{P6}WF_WORKBOOK_MAP: {str(bmt.wf_object[WF_WORKBOOK_MAP])}")
             # Enumerate Budget Model Options
             bmo_c = len(bmt.bm_options)
-            logger.debug(f"{P2}BM_OPTION('{BM_OPTIONS}')({bmo_c})")
+            logger.debug(f"{P2}BDM_OPTION('{BDM_OPTIONS}')({bmo_c})")
             for opt_key, opt in bmt.bm_options.items():
                 logger.debug(f"{P4}Option('{opt_key}') = '{opt}'")
 
             # "And the rest. Here on Gilligan's Isle..."
-            logger.debug(f"{P2}BM_CREATED_DATE({BM_CREATED_DATE}'): "
+            logger.debug(f"{P2}BDM_OPTIONS({BDM_OPTIONS}'): "
                          f"{bmt.bm_created_date}")
-            logger.debug(f"{P2}BM_LAST_MODIFIED_DATE({BM_LAST_MODIFIED_DATE}'): "
+            logger.debug(f"{P2}BDM_LAST_MODIFIED_DATE({BDM_LAST_MODIFIED_DATE}'): "
                             f"{bmt.bm_last_modified_date}")
-            logger.debug(f"{P2}BM_LAST_MODIFIED_BY({BM_LAST_MODIFIED_BY}'): "
+            logger.debug(f"{P2}BDM_LAST_MODIFIED_BY({BDM_LAST_MODIFIED_BY}'): "
                             f"{bmt.bm_last_modified_by}")
             logger.debug(f"{P2}BDM_WORKING_DATA({BDM_WORKING_DATA}'): "
                             f"{bmt.bdm_working_data}")
@@ -304,7 +304,7 @@ def tryout_budget_model_template() -> None:
                          f"{fi_dict[FI_TYPE]}:{fi_dict[FI_NAME]}:")
         for wf_key, wf_dict in bmt.bdm_wf_collection.items():
             logger.debug(f"{P2}Workflow('{wf_dict[WF_NAME]}'): "
-                            f"{P2}WM_FOLDER_IN: '{wf_dict[WF_FOLDER_IN]}' "
+                            f"{P2}WM_FOLDER_IN: '{wf_dict[WF_INPUT_FOLDER]}' "
                             f"{P2}WM_WORKBOOS_IN: {wf_dict[WF_WORKBOOKS_IN]}")
         # logger.debug(f"Budget Model Template:     str: '{str(bmt)}'")
         # logger.debug(f"Budget Model Template:    repr: '{repr(bmt)}'")

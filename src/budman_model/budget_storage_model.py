@@ -56,7 +56,7 @@ def bsm_BUDMAN_STORE_load(store_path : Path = None) -> Dict:
 # ---------------------------------------------------------------------------- +
 #region    budget_storage_model_new module
 def budget_storage_model_new(name : str = BSM_DEFAULT_BUDGET_MODEL_FILE_NAME,
-                             folder : str = BM_DEFAULT_BUDGET_FOLDER,
+                             folder : str = BDM_DEFAULT_BUDGET_FOLDER,
                              filetype : str = BSM_DEFAULT_BUDGET_MODEL_FILE_TYPE) -> str:
     """Create a new budget storage model file."""
     try:
@@ -86,8 +86,8 @@ def bsm_BUDMAN_STORE_save(budman_store:Dict, store_path:Path) -> None:
     try:
         if budman_store is None or not isinstance(budman_store, Dict):
             raise ValueError("budman_store is None or not a Dict.")
-        logger.info("Saving Budget Manager Store to file.")
-        # Only persist the properties in BM_PERSISTED_PROPERTIES.
+        logger.info("Saving Budget Manager Store to file: '{store_path}'")
+        # Only persist the properties in BDM_PERSISTED_PROPERTIES.
         filtered_bsm = {k: v for k, v in budman_store.items() if k in BSM_PERSISTED_PROPERTIES}
         jsonc_content = json5.encode(filtered_bsm)
         with open(store_path, "w") as f:
@@ -134,7 +134,7 @@ def bsm_BUDMAN_STORE_abs_path() -> Path:
 #         # Get the budget_model store abs_path. Trust the setting in the
 #         # BudgetModel instance.
 #         file_path = bm.bsm_BDM_URL_abs_path()
-#         # Only persist the properties in BM_PERSISTED_PROPERTIES.
+#         # Only persist the properties in BDM_PERSISTED_PROPERTIES.
 #         filtered_bsm = {k: v for k, v in bm.__dict__.items() if k in BSM_PERSISTED_PROPERTIES}
 #         jsonc_content = json5.encode(filtered_bsm)
 #         with open(file_path, "w") as f:
@@ -180,7 +180,7 @@ def bsm_BUDMAN_STORE_abs_path() -> Path:
 #         logger.error(p3u.exc_err_msg(e))
 #         raise
 # ---------------------------------------------------------------------------- +
-def bsm_BDM_URL_abs_path(bm_folder : str = BM_DEFAULT_BUDGET_FOLDER) -> Path:
+def bsm_BDM_URL_abs_path(bm_folder : str = BDM_DEFAULT_BUDGET_FOLDER) -> Path:
     """Construct the default store path."""
     try:
         bm_folder_path = Path(bm_folder).expanduser()

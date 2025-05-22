@@ -15,33 +15,33 @@ Input to a specific workflow is not modified by that workflow. Only results in t
 Where workflows are configured, the workflow (WF) object has the following configurable fields. Here 3 typical workflows are used for illustration.
 
 ```python
-                    BM_WF_INTAKE: {
+                    BDM_WF_INTAKE: {
                         # WF Object
-                        WF_NAME: BM_WF_INTAKE,
-                        WF_FOLDER_IN: "data/new",
+                        WF_NAME: BDM_WF_INTAKE,
+                        WF_INPUT_FOLDER: "data/new",
                         WF_WORKBOOKS_IN: {},
                         WF_PREFIX_IN: None,
-                        WF_FOLDER_OUT: "data/categorized",
+                        WF_OUTPUT_FOLDER: "data/categorized",
                         WF_WORKBOOKS_OUT: {},
                         WF_PREFIX_OUT: "categorized_",
                     },
-                    BM_WF_CATEGORIZATION: {
+                    BDM_WF_CATEGORIZATION: {
                         # WF Object
-                        WF_NAME: BM_WF_CATEGORIZATION,
-                        WF_FOLDER_IN: "data/categorized",
+                        WF_NAME: BDM_WF_CATEGORIZATION,
+                        WF_INPUT_FOLDER: "data/categorized",
                         WF_WORKBOOKS_IN: {},
                         WF_PREFIX_IN: "categorized_",
-                        WF_FOLDER_OUT: "data/processed",
+                        WF_OUTPUT_FOLDER: "data/processed",
                         WF_WORKBOOKS_OUT: {},
                         WF_PREFIX_OUT: "final_"
                     },
-                    BM_WF_FINALIZATION: {
+                    BDM_WF_FINALIZATION: {
                         # WF Object
-                        WF_NAME: BM_WF_FINALIZATION,
-                        WF_FOLDER_IN: "data/processed",
+                        WF_NAME: BDM_WF_FINALIZATION,
+                        WF_INPUT_FOLDER: "data/processed",
                         WF_WORKBOOKS_IN: {},
                         WF_PREFIX_IN: "final_",
-                        WF_FOLDER_OUT: None,
+                        WF_OUTPUT_FOLDER: None,
                         WF_WORKBOOKS_OUT: {},
                         WF_PREFIX_OUT: None
                     }

@@ -61,7 +61,7 @@ class BudgetDomainModelIdentity:
         self._name : str = filename if filename is not None else THIS_APP_NAME
         filetype_alt = filetype if filetype is not None else BSM_DEFAULT_BUDGET_MODEL_FILE_TYPE
         self._filename : str = f"{filename}_{self._uid}{filetype_alt}"
-        self._bdm_folder : str = BM_DEFAULT_BUDGET_FOLDER
+        self._bdm_folder : str = BDM_DEFAULT_BUDGET_FOLDER
     # ------------------------------------------------------------------------ +
     #region Properties
     @property
@@ -140,7 +140,7 @@ class BudgetDomainModelIdentity:
     #endregion Properties
     # ------------------------------------------------------------------------ +
     #region Methods
-    def bdm_store_abs_path(self, bdm_folder : str = BM_DEFAULT_BUDGET_FOLDER) -> Path:
+    def bdm_store_abs_path(self, bdm_folder : str = BDM_DEFAULT_BUDGET_FOLDER) -> Path:
         """Return the path to the BudgetDomainModel.
 
         Args:

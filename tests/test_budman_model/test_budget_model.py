@@ -197,7 +197,7 @@ def test_BDM_FI_WF_DATA_OBJECT_pseudo_Property_Methods():
             if bm.bdm_FI_DATA_COLLECTION_count(fi_key) == 0:
                 return
             # Test access to FI WF_DATA_OBJECTs.
-            for wf_key in p3bm.BM_VALID_WORKFLOWS:
+            for wf_key in p3bm.BDM_VALID_WORKFLOWS:
                 wf_do = bm.bdm_FI_WF_DATA_OBJECT(fi_key, wf_key)
                 assert isinstance(wf_do := bm.bdm_FI_WF_DATA_OBJECT(fi_key, wf_key),(dict,type(None))), \
                     f"bdm_FI_DATA({fi_key}, {wf_key}) should None or WF_DATA_OBJECT"
@@ -209,11 +209,11 @@ def test_BDM_FI_WF_DATA_OBJECT_pseudo_Property_Methods():
                         assert wf_do_key in p3bm.WF_DATA_OBJECT_VALID_ATTR_KEYS, \
                             f"Expected: {wf_do_key} to be a valid WF_OBJECT key."
                         if wf_do_key == p3bm.WF_WORKBOOKS_IN:
-                            assert bm.bdm_WF_WORKBOOK_MAP(wf_key,wf_do_key) == p3bm.WF_FOLDER_IN, \
-                                f"Expected: key: '{wf_do_key}' to be '{p3bm.WF_FOLDER_IN}'."
+                            assert bm.bdm_WF_WORKBOOK_MAP(wf_key,wf_do_key) == p3bm.WF_INPUT_FOLDER, \
+                                f"Expected: key: '{wf_do_key}' to be '{p3bm.WF_INPUT_FOLDER}'."
                         elif wf_do_key == p3bm.WF_WORKBOOKS_OUT:
-                            assert bm.bdm_WF_WORKBOOK_MAP(wf_key,wf_do_key) == p3bm.WF_FOLDER_OUT, \
-                                f"Expected: key: '{wf_do_key}' to be '{p3bm.WF_FOLDER_OUT}'."
+                            assert bm.bdm_WF_WORKBOOK_MAP(wf_key,wf_do_key) == p3bm.WF_OUTPUT_FOLDER, \
+                                f"Expected: key: '{wf_do_key}' to be '{p3bm.WF_OUTPUT_FOLDER}'."
     except Exception as e:
         pytest.fail(f"init_budget_model raised an exception: {str(e)}")
 # ---------------------------------------------------------------------------- +
@@ -236,7 +236,7 @@ def test_bdm_FI_WF_WORKBOOK_LIST():
             if bm.bdm_FI_DATA_COLLECTION_count(fi_key) == 0:
                 return
             # Test access to FI WF_DATA_OBJECTs.
-            for wf_key in p3bm.BM_VALID_WORKFLOWS:
+            for wf_key in p3bm.BDM_VALID_WORKFLOWS:
                 wf_do = bm.bdm_FI_WF_DATA_OBJECT(fi_key, wf_key)
                 assert isinstance(wf_do := bm.bdm_FI_WF_DATA_OBJECT(fi_key, wf_key),(dict,type(None))), \
                     f"bdm_FI_DATA({fi_key}, {wf_key}) should None or WF_DATA_OBJECT"

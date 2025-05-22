@@ -20,7 +20,7 @@ THIS_APP_SHORT_NAME = "budman"
 # Budget Model Filesystem Path Constants 
 BSM_DEFAULT_BUDGET_MODEL_FILE_NAME = THIS_APP_NAME
 BSM_DEFAULT_BUDGET_MODEL_FILE_TYPE = ".jsonc"
-BM_DEFAULT_BUDGET_FOLDER = "~/OneDrive/budget"
+BDM_DEFAULT_BUDGET_FOLDER = "~/OneDrive/budget"
 PATH = "_path"
 ABS_PATH = "_abs" + PATH
 WORKBOOKS = "_workbooks"
@@ -59,34 +59,38 @@ WB_NAME = 'wb_name'
 WB_TYPE = 'wb_type'
 ALL_KEY = 'all'
 
-# Budget Model Domain Constants
+#
+# Budget Domain Model Constants
+#
+# BudgetDomainModel (BDM) (BudgetModel-BM) class Property name Constants
+BDM_ID = "_bdm_id"                             # Type: str
+BDM_CONFIG_OBJECT = "_bdm_config_object"       # Type: DATA_OBJECT
+BDM_INITIALIZED = "_initialized"                # Type: bool
+BDM_FOLDER = "_budget_folder"                  # Type: str - path element
+BDM_URL = "_bdm_url"                           # Type: str
+BDM_FI_COLLECTION = "_financial_institutions"  # Type: FI_COLLECTION
+BDM_WF_COLLECTION = "_workflows"               # Type: WF_COLLECTION
+BDM_OPTIONS = "_options"                        # Type: BMO_COLLECTION
+BDM_OPTIONS = "_created_date"              # Type: str - ISO date string
+BDM_LAST_MODIFIED_DATE = "_last_modified_date"  # Type: str - ISO date string
+BDM_LAST_MODIFIED_BY = "_last_modified_by"      # Type: str - user name
+BDM_WORKING_DATA = "_wd"                       # Type: BDM_WORKING_DATA
+# Validation list constants
+BDM_VALID_PROPERTIES = (BDM_INITIALIZED, BDM_FOLDER, BDM_URL, 
+                    BDM_FI_COLLECTION, BDM_WF_COLLECTION,  BDM_OPTIONS,
+                    BDM_OPTIONS, BDM_LAST_MODIFIED_DATE, 
+                    BDM_LAST_MODIFIED_BY, BDM_WORKING_DATA)
+BSM_PERSISTED_PROPERTIES = (BDM_ID, BDM_FOLDER, 
+                            BDM_FI_COLLECTION, BDM_WF_COLLECTION,  
+                            BDM_OPTIONS,
+                            BDM_OPTIONS, BDM_LAST_MODIFIED_DATE, 
+                            BDM_LAST_MODIFIED_BY)
 # Well-known column names for banking transactions workbooks.
 BUDGET_CATEGORY_COL = "Budget Category"
 
-# BudgetModel (BM) class attribute name Constants
-BDM_ID = "_bdm_id"
-BDM_CONFIG_OBJECT = "_bdm_config_object"
-BM_INITIALIZED = "_initialized"
-BDM_FOLDER = "_budget_folder"
-BDM_URL = "_bdm_url"
-BDM_FI_COLLECTION = "_financial_institutions"
-BDM_WF_COLLECTION = "_workflows"
-BM_OPTIONS = "_options"
-BM_CREATED_DATE = "_created_date"
-BM_LAST_MODIFIED_DATE = "_last_modified_date"
-BM_LAST_MODIFIED_BY = "_last_modified_by"
-BDM_WORKING_DATA = "_wd"
-BM_VALID_PROPERTIES = (BM_INITIALIZED, BDM_FOLDER, BDM_URL, 
-                    BDM_FI_COLLECTION, BDM_WF_COLLECTION,  BM_OPTIONS,
-                    BM_CREATED_DATE, BM_LAST_MODIFIED_DATE, 
-                    BM_LAST_MODIFIED_BY, BDM_WORKING_DATA)
-BSM_PERSISTED_PROPERTIES = (BDM_ID, BDM_FOLDER, 
-                            BDM_FI_COLLECTION, BDM_WF_COLLECTION,  
-                            BM_OPTIONS,
-                            BM_CREATED_DATE, BM_LAST_MODIFIED_DATE, 
-                            BM_LAST_MODIFIED_BY)
-
-# keys used in settings.toml configuration file
+#
+# BUDMAN_SETTINGS Constants used in settings.toml configuration file
+#
 BUDMAN_SETTINGS = "settings.toml"
 BUDMAN_FOLDER = "budman.budget_manager_folder" 
 BUDMAN_STORE = "budman.budget_manager_store" 
@@ -94,9 +98,9 @@ BUDMAN_STORE_FILETYPE = "budman.budget_manager_store_filetype"
 APP_NAME = "app_name"
 SHORT_APP_NAME = "short_app_name"
 
-# Current (or last) session values.
-
-# BM_OPTIONS Budget Model Options (BMO)Constants
+#
+# BDM_OPTIONS Budget Model Options (BMO)Constants
+#
 BMO_LOG_CONFIG = "log_config"
 BMO_LOG_LEVEL = "log_level"
 BMO_LOG_FILE = "log_file"
@@ -117,32 +121,32 @@ VALID_FI_TYPES = ("bank", "brokerage", "organization", "person")
 BDM_FI_NAMES = ("Bank of America", "Merrill Lynch", "CitiBANK")
 
 # Supported BM Workflow Names
-BM_WF_INTAKE = "intake"
-BM_WF_CATEGORIZATION = "categorization"
-BM_WF_FINALIZATION = "finalization"
-BM_VALID_WORKFLOWS = (BM_WF_INTAKE, BM_WF_CATEGORIZATION, BM_WF_FINALIZATION)
+BDM_WF_INTAKE = "intake"
+BDM_WF_CATEGORIZATION = "categorization"
+BDM_WF_FINALIZATION = "finalization"
+BM_VALID_WORKFLOWS = (BDM_WF_INTAKE, BDM_WF_CATEGORIZATION, BDM_WF_FINALIZATION)
 
 # WF_OBJECT workflow pseudo-Object (Dictionary key names)
 WF_KEY = WF_KEY
 WF_NAME = "wf_name"  # Also used as key in BM_FI workflows dictionary.
-WF_FOLDER_IN = "wf_folder_in" # also used as key in BM_FI dictionary.
-WF_FOLDER_OUT = "wf_folder_out" # also used as key in BM_FI dictionary.
+WF_INPUT_FOLDER = "wf_folder_in" # also used as key in BM_FI dictionary.
+WF_OUTPUT_FOLDER = "wf_folder_out" # also used as key in BM_FI dictionary.
 WF_PREFIX_IN = "wf_prefix_in"
 WF_PREFIX_OUT = "wf_prefix_out"
 WF_WORKBOOK_MAP = "wf_workbook_map" # map of workbook names to paths
 # Additional WF_OBJECT-related constants
 WF_OBJECT_VALID_ATTR_KEYS = (WF_KEY, WF_NAME, 
-                        WF_FOLDER_IN, WF_FOLDER_OUT,
+                        WF_INPUT_FOLDER, WF_OUTPUT_FOLDER,
                         WF_PREFIX_IN, WF_PREFIX_OUT, WF_WORKBOOK_MAP)
-WF_FOLDER_PATH_ELEMENTS = (WF_FOLDER_IN, WF_FOLDER_OUT)
+WF_FOLDER_PATH_ELEMENTS = (WF_INPUT_FOLDER, WF_OUTPUT_FOLDER)
 
 # Some data values are used in conjunction with Path objects,
 # as elements of a pathname, such as folders and file names.
 # All Path-related data values are treated as pseudo-Objects and have
 # methods to construct, manipulate, and resolve Path objects and handle
 # the various string representations of the Path objects.
-BM_VALID_PATH_ELEMENTS = (BDM_FOLDER, BDM_URL,
-                          FI_FOLDER, WF_FOLDER_IN, WF_FOLDER_OUT)
+BDM_VALID_PATH_ELEMENTS = (BDM_FOLDER, BDM_URL,
+                          FI_FOLDER, WF_INPUT_FOLDER, WF_OUTPUT_FOLDER)
 
 
 # WF_DATA_OBJECT is a DATA_OBJECT (Dict) for FI_WF data.

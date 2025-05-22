@@ -107,9 +107,9 @@ class BudgetManagerViewModelInterface():
             # Check if the budget model is initialized.
             if (self.budget_model is None or 
                 not isinstance(self.budget_model, p3bm.BudgetModel)):
-                # There is no valid budget_model. Load a BM_STORE file?
+                # There is no valid budget_model. Load a BDM_STORE file?
                 if load_user_store:
-                    # Use BM_STORE file as a config_object 
+                    # Use BDM_STORE file as a config_object 
                     config_object = p3bm.bsm_BUDMAN_STORE_load()
                     self.BUDMAN_STORE_loaded = True
                 else:
@@ -141,7 +141,7 @@ class BudgetManagerViewModelInterface():
                 "init_cmd_fin_inst": self.FI_init_cmd,
                 "save_cmd_workbooks": self.FI_LOADED_WORKBOOKS_save_cmd,
                 "load_cmd_BUDMAN_STORE": self.BUDMAN_STORE_load_cmd,
-                "save_cmd_BUDMAN_STORE": self.BUDMAN_STORE_save,
+                "save_cmd_BUDMAN_STORE": self.BUDMAN_STORE_save_cmd,
                 "show_cmd_DATA_CONTEXT": self.DATA_CONTEXT_show_cmd,
             }
         except Exception as e:
@@ -409,6 +409,7 @@ class BudgetManagerViewModelInterface():
             function_name = func.__name__
             logger.info(f"Executing command: {function_name}({str(cmd)})")
             status, result = self.cmd_map.get(full_cmd_key)(cmd)
+            logger.info(f"Complete Command: [{p3u.stop_timer(st)}] {(status, str(result))}")
             return status, result
         except Exception as e:
             m = p3u.exc_err_msg(e)
@@ -456,8 +457,8 @@ class BudgetManagerViewModelInterface():
                         return False, m
                     if value == p3bm.ALL_KEY:
                         logger.warning(f"wf_key: '{p3bm.ALL_KEY}' not implemented."
-                                    f" Defaulting to {p3bm.BM_WF_CATEGORIZATION}.")
-                        cmd[key] = p3bm.BM_WF_CATEGORIZATION
+                                    f" Defaulting to {p3bm.BDM_WF_CATEGORIZATION}.")
+                        cmd[key] = p3bm.BDM_WF_CATEGORIZATION
                     continue
                 else:
                     m = f"Unchecked argument key: '{key}': '{value}'."
@@ -548,14 +549,13 @@ class BudgetManagerViewModelInterface():
             root error is contained in the exception message.
         """
         try:
-            st = p3u.start_timer()
             pfx = f"{self.__class__.__name__}.{self.FI_init_cmd.__name__}: "
             if p3u.is_not_obj_of_type("cmd",cmd,dict,pfx):
                 m = f"Invalid cmd object, no action taken."
                 logger.error(m)
                 raise RuntimeError(f"{pfx}{m}")
             fi_key = cmd.get("fi_key", None)
-            wf_key = cmd.get("wf_key", p3bm.BM_WF_CATEGORIZATION)
+            wf_key = cmd.get("wf_key", p3bm.BDM_WF_CATEGORIZATION)
             wb_type = cmd.get("wb_type", p3bm.WF_WORKBOOKS_IN)
             wb_name = cmd.get("wb_name", None)
             logger.info(f"Start: {str(cmd)}")
@@ -583,7 +583,6 @@ class BudgetManagerViewModelInterface():
             # Create result
             lwbl_names = self.FI_get_loaded_workbook_names()
             result = f"Loaded {len(lwbl_names)} Workbooks: {str(lwbl_names)}"
-            logger.info(f"Complete Command: 'Init' {p3u.stop_timer(st)}")   
             return True, result
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
@@ -624,7 +623,7 @@ class BudgetManagerViewModelInterface():
                 raise RuntimeError(f"{pfx}{m}")
             # Get the command arguments.
             fi_key = cmd.get("fi_key", None)
-            wf_key = cmd.get("wf_key", p3bm.BM_WF_CATEGORIZATION)
+            wf_key = cmd.get("wf_key", p3bm.BDM_WF_CATEGORIZATION)
             wb_type = cmd.get("wb_type", p3bm.WF_WORKBOOKS_IN)
             wb_name = cmd.get("wb_name", None)
             # Resolve with current DC values.
@@ -671,12 +670,16 @@ class BudgetManagerViewModelInterface():
             raise
     #endregion FI_LOADED_WORKBOOKS_save_cmd() command method
     # ------------------------------------------------------------------------ +
-    #region BUDMAN_STORE_save() method
-    def BUDMAN_STORE_save(self, cmd : Dict) -> None:
+    #region BUDMAN_STORE_save_cmd() method
+    def BUDMAN_STORE_save_cmd(self, cmd : Dict) -> None:
         """Save the Budget Manager store (BUDMAN_STORE) file with the BSM.
 
         Returns:
-            None: for success.
+            Tuple[success : bool, result : Any]: The outcome of the command 
+            execution. If success is True, result contains the 
+            BUDMAN_STORE dict after updating DC_BUDMAN_STORE in the DATA_CONTEXT.
+            If False, a description of the error.
+            
         Raises:
             RuntimeError: If the BUDMAN_STORE file cannot be saved.
         """
@@ -684,7 +687,8 @@ class BudgetManagerViewModelInterface():
             st = p3u.start_timer()
             logger.info(f"Start: ...")
             # Save the BUDMAN_STORE file with the BSM.
-            # Use the BUDMAN_STORE info configured in BUDMAN_SETTINGS.
+            # Construct the abs_path from BUDMAN_STORE info configured in 
+            # BUDMAN_SETTINGS.
             budman_store_value = settings[p3bm.BUDMAN_STORE]
             budman_folder = settings[p3bm.BUDMAN_FOLDER]
             budman_folder_abs_path = Path(budman_folder).expanduser().resolve()
@@ -699,11 +703,11 @@ class BudgetManagerViewModelInterface():
             p3bm.bsm_BUDMAN_STORE_save(budget_model_dict, budman_store_abs_path)
             logger.info(f"Saved BUDMAN_STORE file: {budman_store_abs_path}")
             logger.info(f"Complete: {p3u.stop_timer(st)}")
-            return None
+            return True, budget_model_dict
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
-    #endregion BUDMAN_STORE_save() method
+    #endregion BUDMAN_STORE_save_cmd() method
     # ------------------------------------------------------------------------ +
     #region BUDMAN_STORE_load_cmd() method
     def BUDMAN_STORE_load_cmd(self, cmd : Dict) -> Tuple[bool, str]:
@@ -789,8 +793,8 @@ class BudgetManagerViewModelInterface():
             result += f"{P2}{p3bm.DC_BUDMAN_STORE}: {bs_msg}\n"
             result += f"{P2}{p3bm.DC_LOADED_WORKBOOKS}: {lwbl_count}\n"
             if lwbl_count > 0:
-                for wb_name, wb in lwbl:
-                    result += f"{P4}{wb_name}: {str(wb)}\n"
+                for i, (wb_name, wb) in enumerate(lwbl):
+                    result += f"{P4}{i} {wb_name}\n"
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             return True, result
         except Exception as e:

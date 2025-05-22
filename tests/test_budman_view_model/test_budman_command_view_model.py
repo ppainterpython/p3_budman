@@ -25,7 +25,7 @@ def test_BUDMAN_STORE_load():
     try:
         logger.info(test_BUDMAN_STORE_load.__doc__)
         # Create a BudgetDomainModelIdentity instance and initialize it
-        # from the user's BM_STORE file.
+        # from the user's BDM_STORE file.
         bmvm = p3bmvm.BudgetManagerViewModelInterface().initialize(load_user_store=True)
         assert isinstance(bmvm, p3bmvm.BudgetManagerViewModelInterface), \
             "Expected BudManCommandViewModel, got: " + str(type(bmvm))

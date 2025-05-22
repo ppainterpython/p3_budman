@@ -154,7 +154,7 @@ def execute_worklow_categorization(bm : BudgetModel, fi_key: str, wf_key:str) ->
         logger.info(f"{cp} Start: workflow: '{wf_key}' for FI('{fi_key}') ...")
         wb_type = WF_WORKBOOKS_IN # input workbooks
         wb_c = bm.bdm_FI_WF_WORKBOOK_LIST_count(fi_key, wf_key, wb_type)
-        # workbooks_dict = bm.bsm_WF_WORKBOOKS_IN(fi_key, BM_WF_INTAKE)
+        # workbooks_dict = bm.bsm_WF_WORKBOOKS_IN(fi_key, BDM_WF_INTAKE)
         # if workbooks_dict is None or len(workbooks_dict) == 0:
         if wb_c is None or wb_c == 0:
             logger.info(f"{cp}    No workbooks for input.")

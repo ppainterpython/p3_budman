@@ -158,15 +158,15 @@ class BudgetModel(metaclass=SingletonMeta):
         bdm_id = BudgetDomainModelIdentity()
         setattr(self, BDM_ID, bdm_id.uid)  # BudgetDomainModelIdentity
         setattr(self, BDM_CONFIG_OBJECT,config_object)
-        setattr(self, BM_INITIALIZED, False)
+        setattr(self, BDM_INITIALIZED, False)
         setattr(self, BDM_FOLDER, None)  # budget folder path
         setattr(self, BDM_URL, bdm_id.bdm_store_abs_path().as_uri())  # path for budget model store
         setattr(self, BDM_FI_COLLECTION, {})  # financial institutions
         setattr(self, BDM_WF_COLLECTION, {}) 
-        setattr(self, BM_OPTIONS, {})  # budget model options
-        setattr(self, BM_CREATED_DATE, p3u.now_iso_date_string()) 
-        setattr(self, BM_LAST_MODIFIED_DATE, self._created_date)
-        setattr(self, BM_LAST_MODIFIED_BY, getpass.getuser())
+        setattr(self, BDM_OPTIONS, {})  # budget model options
+        setattr(self, BDM_OPTIONS, p3u.now_iso_date_string()) 
+        setattr(self, BDM_LAST_MODIFIED_DATE, self._created_date)
+        setattr(self, BDM_LAST_MODIFIED_BY, getpass.getuser())
         setattr(self, BDM_WORKING_DATA, {})  # wd - budget model working data
         logger.debug("Complete: BudgetModel().__init__() ...")
     #endregion BudgetModel class constructor __init__()
@@ -177,15 +177,15 @@ class BudgetModel(metaclass=SingletonMeta):
         ret = {
             BDM_ID: self.bdm_id,
             BDM_CONFIG_OBJECT: self.bdm_config_object,
-            BM_INITIALIZED: self.bm_initialized,
+            BDM_INITIALIZED: self.bm_initialized,
             BDM_FOLDER: self.bm_folder,
             BDM_FI_COLLECTION: self.bdm_fi_collection,
             BDM_URL: self.bdm_url,
             BDM_WF_COLLECTION: self.bdm_wf_collection,
-            BM_OPTIONS: self.bm_options,
-            BM_CREATED_DATE: self.bm_created_date,
-            BM_LAST_MODIFIED_DATE: self.bm_last_modified_date,
-            BM_LAST_MODIFIED_BY: self.bm_last_modified_by,
+            BDM_OPTIONS: self.bm_options,
+            BDM_OPTIONS: self.bm_created_date,
+            BDM_LAST_MODIFIED_DATE: self.bm_last_modified_date,
+            BDM_LAST_MODIFIED_BY: self.bm_last_modified_by,
             BDM_WORKING_DATA: self.bdm_working_data
         }
         return ret
@@ -194,15 +194,15 @@ class BudgetModel(metaclass=SingletonMeta):
         ret = f"{{ "
         ret += f"'{BDM_ID}': {self.bdm_id}, "
         ret += f"'{BDM_CONFIG_OBJECT}': {self.bdm_config_object}, "
-        ret += f"'{BM_INITIALIZED}': {self.bm_initialized}, "
+        ret += f"'{BDM_INITIALIZED}': {self.bm_initialized}, "
         ret += f"'{BDM_FOLDER}': '{self.bm_folder}', "
         ret += f"'{BDM_FI_COLLECTION}': '{self.bdm_fi_collection}', "
         ret += f"'{BDM_URL}': '{self.bdm_url}', "
         ret += f"'{BDM_WF_COLLECTION}': '{self.bdm_wf_collection}', "
-        ret += f"'{BM_OPTIONS}': '{self.bm_options}', "
-        ret += f"'{BM_CREATED_DATE}': '{self.bm_created_date}', "
-        ret += f"'{BM_LAST_MODIFIED_DATE}': '{self.bm_last_modified_date}', "
-        ret += f"'{BM_LAST_MODIFIED_BY}': '{self.bm_last_modified_by}', "
+        ret += f"'{BDM_OPTIONS}': '{self.bm_options}', "
+        ret += f"'{BDM_OPTIONS}': '{self.bm_created_date}', "
+        ret += f"'{BDM_LAST_MODIFIED_DATE}': '{self.bm_last_modified_date}', "
+        ret += f"'{BDM_LAST_MODIFIED_BY}': '{self.bm_last_modified_by}', "
         ret += f"'{BDM_WORKING_DATA}': '{self.bdm_working_data}' }} "
         return ret
     def __str__(self) -> str:
@@ -210,15 +210,15 @@ class BudgetModel(metaclass=SingletonMeta):
         ret = f"{self.__class__.__name__}({str(self.bm_folder)}): "
         ret += f"{BDM_ID} = {self.bdm_id}, "
         ret += f"{BDM_CONFIG_OBJECT} = {str(self.bdm_config_object)}, "
-        ret += f"{BM_INITIALIZED} = {str(self.bm_initialized)}, "
+        ret += f"{BDM_INITIALIZED} = {str(self.bm_initialized)}, "
         ret += f"{BDM_FOLDER} = '{str(self.bm_folder)}', "
         ret += f"{BDM_FI_COLLECTION} = [{', '.join([repr(fi_key) for fi_key in self.bdm_fi_collection.keys()])}], "
         ret += f"{BDM_URL} = '{self.bdm_url}' "
         ret += f"{BDM_WF_COLLECTION} = '{self.bdm_wf_collection}' "
-        ret += f"{BM_OPTIONS} = '{self.bm_options}' "
-        ret += f"{BM_CREATED_DATE} = '{self.bm_created_date}', "
-        ret += f"{BM_LAST_MODIFIED_DATE} = '{self.bm_last_modified_date}', "
-        ret += f"{BM_LAST_MODIFIED_BY} = '{self.bm_last_modified_by}', "
+        ret += f"{BDM_OPTIONS} = '{self.bm_options}' "
+        ret += f"{BDM_OPTIONS} = '{self.bm_created_date}', "
+        ret += f"{BDM_LAST_MODIFIED_DATE} = '{self.bm_last_modified_date}', "
+        ret += f"{BDM_LAST_MODIFIED_BY} = '{self.bm_last_modified_by}', "
         ret += f"{BDM_WORKING_DATA} = {self.bdm_working_data}"
         return ret
     #endregion BudgetModel internal class methods
@@ -369,7 +369,7 @@ class BudgetModel(metaclass=SingletonMeta):
     # ======================================================================== +
 
     # ======================================================================== +
-    #region    Budget model Domain Model (BDM) methods
+    #region    Budget model Domain Model (BDM) object methods
     """ Budget Model Domain Model (BDM) Documentation.
 
     Budget model Domain Model (BDM) is the conceptual model used to track and 
@@ -396,25 +396,31 @@ class BudgetModel(metaclass=SingletonMeta):
     is processed by workflow (WF) tasks that are configured for an FI. 
     Each FI has a unique fi_key which the api uses to keep data separated.
 
-    Throughout, the following identifiers are used as a convention:
-    
-    BDM_FOLDER - refers to the root folder for the budget model.
+    Throughout, the following identifiers are used in reference to parts of
+    the BDM.
+
+    BDM_FOLDER - refers to the root folder for the budget model. BDM_FOLDER is 
+    a path element, which is a str that will end up as a part of a Path str, 
+    which is the BSM concern. See bsm_BDM_FOLDER methods for that.
 
     FI_FOLDER - refers to the root folder configured for a specific 
-    Financial Institutions (FI). FI_FOLDER is a Path with various str reprs.
+    Financial Institutions (FI). FI_FOLDER is a path element, which is a 
+    str that will end up as a part of a Path str, which is the BSM concern.
+    See bsm_FI_FOLDER methods for that. There is only one FI_FOLDER for
+    each FI. The FI_FOLDER is a subfolder of the BDM_FOLDER.
 
-    WF_FOLDER_IN - refers to the input folder for a specific workflow, again, 
-    always in the context of a specific FI through the fi_key. WF_FOLDER_IN is
+    WF_INPUT_FOLDER - refers to the input folder for a specific workflow, again, 
+    always in the context of a specific FI through the fi_key. WF_INPUT_FOLDER is
     a Path with various str reprs.
 
     WF_WORKBOOKS_IN - refers to the collection of workbooks currently in the 
-    WF_FOLDER_IN folder.
+    WF_INPUT_FOLDER folder.
 
-    WF_FOLDER_OUT - refers to the output folder for a specific workflow. It is
+    WF_OUTPUT_FOLDER - refers to the output folder for a specific workflow. It is
     a Path with various str reprs.
 
     WF_WORKBOOKS_OUT - refers to the collection of workbooks currently in 
-    the WF_FOLDER_OUT folder.
+    the WF_OUTPUT_FOLDER folder.
 
     From the configuration data, the values of BDM_FOLDER, FI_FOLDER and
     WF_FOLDER are used to construct folder and file names for the file system
@@ -453,7 +459,37 @@ class BudgetModel(metaclass=SingletonMeta):
         wf - workflow
     """
     # ======================================================================== +
-    #region    BDM bdm_initialize(self, bsm_init, ...)
+    #region    BDM_CONFIG_OBJECT bdm_resolve_config_object(self) -> Dict
+    def bdm_resolve_config_object(self) -> Dict:
+        """Resolve the configuration object to initialize BudgetModel.
+
+        Best to provide a config_object to BudgetModel() at instantiation
+        time. If not, the BudgetModelTemplate is used as the default.
+
+        Returns:
+            Dict: The resolved configuration object.
+        """
+        try:
+            if self.bdm_config_object is None:
+                # If bdm_config_object is None, use the BudgetModelTemplate.
+                logger.debug("bm_config_object property is None, "
+                             f"resolve with builtin BudgetModelTemplate.")
+                # Default is left behind if BudgetModelTemplate() is instantiated.
+                bdm_config = BudgetModel._default_config_object  
+                if bdm_config is None:
+                    # Last hope, obtain the BudgetModelTemplate without 
+                    # a circular reference, since it is a subclass.
+                    from src.budman_model.get_budget_model_template import __get_budget_model_template__
+                    bdm_config = __get_budget_model_template__()
+                self.bdm_config_object = bdm_config
+            return self.bdm_config_object
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise
+    #endregion BDM_CONFIG_OBJECT bdm_resolve_config_object(self) -> Dict 
+    # ------------------------------------------------------------------------ +
+    #region    BDM_INITIALIZED BDM bdm_initialize(self, bsm_init, ...)
     def bdm_initialize(self, 
                  bsm_init : bool = True,
                  create_missing_folders : bool = True,
@@ -494,41 +530,11 @@ class BudgetModel(metaclass=SingletonMeta):
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
-    #endregion BDM bdm_initialize(self, bsm_init, ...) 
-    # ------------------------------------------------------------------------ +
-    #region    bdm_resolve_config_object(self) -> Dict
-    def bdm_resolve_config_object(self) -> Dict:
-        """Resolve the configuration object to initialize BudgetModel.
-
-        Best to provide a config_object to BudgetModel() at instantiation
-        time. If not, the BudgetModelTemplate is used as the default.
-
-        Returns:
-            Dict: The resolved configuration object.
-        """
-        try:
-            if self.bdm_config_object is None:
-                # If bdm_config_object is None, use the BudgetModelTemplate.
-                logger.debug("bm_config_object property is None, "
-                             f"resolve with builtin BudgetModelTemplate.")
-                # Default is left behind if BudgetModelTemplate() is instantiated.
-                bdm_config = BudgetModel._default_config_object  
-                if bdm_config is None:
-                    # Last hope, obtain the BudgetModelTemplate without 
-                    # a circular reference, since it is a subclass.
-                    from src.budman_model.get_budget_model_template import __get_budget_model_template__
-                    bdm_config = __get_budget_model_template__()
-                self.bdm_config_object = bdm_config
-            return self.bdm_config_object
-        except Exception as e:
-            m = p3u.exc_err_msg(e)
-            logger.error(m)
-            raise
-    #endregion bdm_resolve_config_object(self) -> Dict 
+    #endregion BDM_INITIALIZED BDM bdm_initialize(self, bsm_init, ...) 
     # ------------------------------------------------------------------------ +
     #region    bdm_initialize_from_BDM_URL(self)
     def bdm_initialize_from_BDM_URL(self,bsm_init:bool=True) -> None:
-        """Initialize the BudgetModel, dynamically, from BM_CONFIG values.
+        """Initialize the BudgetModel, dynamically, from BDM_CONFIG values.
 
         The current session state of the BudgetModel configuration can be stored
         using the Budget Storage Model based on the URI in the BDM_URL
@@ -575,7 +581,7 @@ class BudgetModel(metaclass=SingletonMeta):
         """
         try:
             logger.debug("Start: ...")
-            # If the BM_WORKING_DATA is already initialized, return it.
+            # If the BDM_WORKING_DATA is already initialized, return it.
             if (hasattr(self, BDM_WORKING_DATA) and
                 isinstance(self.bdm_working_data, dict) and
                 BDWD_INITIALIZED in self.bdm_working_data and
@@ -726,7 +732,7 @@ class BudgetModel(metaclass=SingletonMeta):
     def bdm_WF_FOLDER(self, wf_key:str, folder_id : str) -> str:
         """Return the WF_FOLDER value for (wf_key, folder_id).
         Not a full path, just the configuration value."""
-        if folder_id not in (WF_FOLDER_IN, WF_FOLDER_OUT):
+        if folder_id not in (WF_INPUT_FOLDER, WF_OUTPUT_FOLDER):
             m = f"Invalid folder_id '{folder_id}' for workflow '{wf_key}'."
             logger.error(m)
             raise ValueError(m)
@@ -761,7 +767,7 @@ class BudgetModel(metaclass=SingletonMeta):
     # ======================================================================== +
 
     # ======================================================================== +
-    #region    BudgetModel Storage Model (BSM) methods
+    #region    BudgetDomainModel Storage Model (BSM) methods
     """ Budget model Storage Model (BSM) Documentation.
 
     All BDM data is stored in the filesystem by the BSM. BSM works with Path 
@@ -781,18 +787,18 @@ class BudgetModel(metaclass=SingletonMeta):
     FI_FOLDER - refers to the root folder configured for a specific 
     Financial Institutions (FI). FI_FOLDER is a Path with various str reprs.
 
-    WF_FOLDER_IN - refers to the input folder for a specific workflow, again, 
-    always in the context of a specific FI through the fi_key. WF_FOLDER_IN is
+    WF_INPUT_FOLDER - refers to the input folder for a specific workflow, again, 
+    always in the context of a specific FI through the fi_key. WF_INPUT_FOLDER is
     a Path with various str reprs.
 
     WF_WORKBOOKS_IN - refers to the collection of workbooks currently in the 
-    WF_FOLDER_IN folder.
+    WF_INPUT_FOLDER folder.
 
-    WF_FOLDER_OUT - refers to the output folder for a specific workflow. It is
+    WF_OUTPUT_FOLDER - refers to the output folder for a specific workflow. It is
     a Path with various str reprs.
 
     WF_WORKBOOKS_OUT - refers to the collection of workbooks currently in 
-    the WF_FOLDER_OUT folder.
+    the WF_OUTPUT_FOLDER folder.
 
     The configuration data and stored budget model data contains str values 
     that are utilized in path names for folders and files. The following 
@@ -1072,7 +1078,7 @@ class BudgetModel(metaclass=SingletonMeta):
     def bsm_WF_FOLDER_path_str(self, fi_key : str, wf_key : str,
                                folder_id : str) -> str:
         """str version of the WF_FOLDER value for fi_key/wf_key/folder_id."""
-        if folder_id not in [WF_FOLDER_IN, WF_FOLDER_OUT]:
+        if folder_id not in [WF_INPUT_FOLDER, WF_OUTPUT_FOLDER]:
             m = f"Invalid folder_id '{folder_id}' for FI_KEY('{fi_key}') "
             m += f"and WF_KEY('{wf_key}')"
             logger.error(m)
@@ -1124,13 +1130,13 @@ class BudgetModel(metaclass=SingletonMeta):
     DATA_OBJECTs in the future. These methods are BSM-related.
 
     With the BSM, the wf_do properties relating to the storage model are 
-    WF_FOLDER_IN, WF_WORKBOOKS_IN, WF_FOLDER_OUT and WF_WORKBOOKS_OUT. These 
+    WF_INPUT_FOLDER, WF_WORKBOOKS_IN, WF_OUTPUT_FOLDER and WF_WORKBOOKS_OUT. These 
     concern actual access to data in the filesystem. The BDM methods are used to
     access the data in the BDM.
 
     One key overlap, is bsm_WF_WORKBOOKS_IN and bsm_WF_WORKBOOKS_OUT. These are 
     the same methods in both the BDM and BSM. Each are dictionaries with tuples
-    of each workbook in the corresponding WF_FOLDER_IN and WF_FOLDER_OUT folders.
+    of each workbook in the corresponding WF_INPUT_FOLDER and WF_OUTPUT_FOLDER folders.
     The key is the filename, or the workbook name, the value is the full path 
     to the file.
     """
@@ -1172,14 +1178,13 @@ class BudgetModel(metaclass=SingletonMeta):
         Workbooks are contained in folders in the filesystem. The folder_id 
         determines the absolute path to the folder, as per the following 
         mapping:
-        - WF_WORKBOOKS_IN -> WF_FOLDER_IN - input folder for the workflow.
-        - WF_WORKBOOKS_OUT -> WF_FOLDER_OUT - output folder for the workflow.
+        - WF_WORKBOOKS_IN -> WF_INPUT_FOLDER - input folder for the workflow.
+        - WF_WORKBOOKS_OUT -> WF_OUTPUT_FOLDER - output folder for the workflow.
 
         Args:
+            wf_do (WF_DATA_OBJECT): The workflow data object to resolve.
             fi_key (str): The key of the institution to get the workbooks for.
             wf_key (str): The workflow to get the workbooks for.
-            folder_id (str): The folder id to get the workbooks for. Must be
-            listed in BM_VALID_PATH_ELEMENTS.
 
         Returns:
             dict { str: str, ... }: A dict of workbook file names and their paths.
@@ -1220,27 +1225,35 @@ class BudgetModel(metaclass=SingletonMeta):
     # ------------------------------------------------------------------------ +   
     #region bsm_FI_WF Methods
     def bsm_FI_WF_WORKBOOKS_load(self,
-                fi_key : str, 
-                wf_key : str, 
-                wb_type : str) -> LOADED_WORKBOOKS_LIST: 
-        """Load all workbooks for a workflow returning a LOADED_WORKBOOKS_LIST
+                        wbl : WORKBOOK_LIST = None) -> LOADED_WORKBOOKS_LIST: 
+        """Load WORKBOOK_LIST returning a LOADED_WORKBOOKS_LIST
         
-        For fi_key,wf_key,wb_type, load all workbooks of type wb_type.
+        A WORKBOOK_LIST has pairs of wb_name and wb_abs_path. Iterate the
+        list and load each one. This is BSM-scope only, loads from the 
+        filesystem, no side effects.
+
+        Args:
+            wbl (WORKBOOK_LIST): A list of tuples containing the workbook name
+            and the absolute path to the workbook file.
         
         Returns:
-            None: as success. Updates BDM_WORKING_DATA.BDWD_LOADED_WORKBOOKS 
-            property with the loaded workbooks.
+            LOADED_WORKBOOKS_LIST: a new list of tuples containing the file name
+            and the loaded workbook object.
+
         Raises: exceptions from any errors.
         """
         try:
-            wbl = self.bdm_FI_WF_WORKBOOK_LIST(fi_key, wf_key, wb_type)
-            if wbl is None:
-                return
+            st = p3u.start_timer()
             returned_wb_list = []
+            if wbl is None:
+                logger.warning("No workbooks to load, wbl arg was None.")
+                return returned_wb_list
+            logger.debug(f"Loading {len(wbl)} workbooks.")
             for wb_name, wb_path in wbl:
                 wb = load_workbook(filename=wb_path)
-                # self.bdwd_LOADED_WORKBOOKS_add(wb_name, wb)
                 returned_wb_list.append((wb_name, wb))
+            logger.debug(f"Complete: Loaded {len(returned_wb_list)} workbooks. "
+                         f"{p3u.stop_timer(st)}")
             return returned_wb_list
         except Exception as e:
             m = p3u.exc_err_msg(e)
@@ -1301,7 +1314,7 @@ class BudgetModel(metaclass=SingletonMeta):
                                fi_key:str, wf_key:str, wb_type : str):
         """Save workbook output to storage associated (fi_key,wf_key,wb_type).
         
-        Map the fi_key and wf_key to the appropriate WF_FOLDER_OUT folder in 
+        Map the fi_key and wf_key to the appropriate WF_OUTPUT_FOLDER folder in 
         the filesystem.
         """
         try:
@@ -1415,7 +1428,7 @@ class BudgetModel(metaclass=SingletonMeta):
             raise    
     #endregion bsm_save_workbook() function
     # ------------------------------------------------------------------------ +
-    #endregion BudgetModel Storage Model methods
+    #endregion BudgetDomainModel Storage Model methods
     # ======================================================================== +
 
     # ======================================================================== +
@@ -1484,17 +1497,49 @@ class BudgetModel(metaclass=SingletonMeta):
     #region bdwd_FI methods
     def bdwd_FI_WORKBOOKS_load(self, fi_key : str, wf_key : str,
                                wb_type : str) -> LOADED_WORKBOOKS_LIST:
-        """Load workbooks for an FI workflow, returns LOADED_WORKBOOKS_LIST."""
+        """Load wbs for fi_key,wf_key,wb_type, merge to BDWD_LOADED_WORKBOOKS.
+
+        For a given fi_key, wf_key and wb_type, load the workbooks from the
+        filesystem and merge them into the BDWD_LOADED_WORKBOOKS list.
+
+        Args:
+            fi_key (str): The financial institution key.
+            wf_key (str): The workflow key.
+            wb_type (str): The workbook type.
+
+        Returns:
+            LOADED_WORKBOOKS_LIST: A list of tuples containing the 
+            workbook name and the loaded workbook object. Newly loaded
+            workbooks are appended to the BDWD_LOADED_WORKBOOKS list.
+        """
         try:
             self.bdwd_INITIALIZED()
+            # Get the WORKBOOK_LIST for fi_key, wf_key and wb_type from the BDM.
+            returned_wb_list = []
+            wbl = self.bdm_FI_WF_WORKBOOK_LIST(fi_key, wf_key, wb_type)
+            if wbl is None or len(wbl) == 0:
+                logger.debug(f"No workbooks to load for FI_KEY('{fi_key}') "
+                             f"WF_KEY('{wf_key}')")
+                return returned_wb_list
             # Use the BSM to load the workbooks for fi_key, wf_key and wb_type.
+            logger.debug(f"Loading {len(wbl)} workbooks for "
+                         f"FI_KEY('{fi_key}') WF_KEY('{wf_key}') "
+                         f"WB_TYPE('{wb_type}')")
             new_lwbl : LOADED_WORKBOOKS_LIST = []
-            new_lwbl = self.bsm_FI_WF_WORKBOOKS_load(fi_key, wf_key, wb_type)
+            new_lwbl = self.bsm_FI_WF_WORKBOOKS_load(wbl)
+            new_count = len(new_lwbl) if new_lwbl is not None else 0
+            logger.debug(f"Loaded {new_count} workbooks for "
+                         f"FI_KEY('{fi_key}') WF_KEY('{wf_key}') "
+                         f"WB_TYPE('{wb_type}')")
             if new_lwbl is None or len(new_lwbl) == 0: return []
-            current_lwbl = self.bdwd_LOADED_WORKBOOKS_get()
-            # add the loaded workbooks to the current LOADED_WORKBOOKS_LIST.
+            bdwd_lwbs = self.bdwd_LOADED_WORKBOOKS_get()
+            bdwd_lwbs_count = len(bdwd_lwbs) if bdwd_lwbs is not None else 0
             # TODO: How to handle duplicates?
-            return current_lwbl.extend(new_lwbl)
+            bdwd_lwbs.extend(new_lwbl)
+            logger.debug(f"Added {new_count} to "
+                         f"BDWD_LOADED_WORKBOOKS({bdwd_lwbs_count}) "
+                         f"total = {len(bdwd_lwbs)}")
+            return bdwd_lwbs
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
@@ -1532,15 +1577,15 @@ class BudgetModel(metaclass=SingletonMeta):
     # ------------------------------------------------------------------------ +
     #region bdwd_INITIALIZED methods
     def bdwd_INITIALIZED(self) -> bool:
-        """Test if BM_WORKING_DATA was initialized. Raise RuntimeError if not.
+        """Test if BDM_WORKING_DATA was initialized. Raise RuntimeError if not.
         """
         try:
             if (hasattr(self, BDM_WORKING_DATA) and
                 isinstance(self.bdm_working_data, dict) and
                 BDWD_INITIALIZED in self.bdm_working_data and
                 self.bdm_working_data[BDWD_INITIALIZED]): return True
-            m = f"BM_WORKING_DATA was not initialized. "
-            m += f"Use the bdm_BM_WORKING_DATA_initialize() method."
+            m = f"BDM_WORKING_DATA was not initialized. "
+            m += f"Use the bdm_BDM_WORKING_DATA_initialize() method."
             logger.error(m)
             raise RuntimeError(m)
         except RuntimeError as e:
@@ -1582,7 +1627,7 @@ def log_BDM_info(bdm : BudgetModel) -> None:
             logger.warning("bm parameter is None.")
             return None
         logger.debug("BDM Content:")
-        logger.debug(f"{P2}BM_INITIALIZED['{BM_INITIALIZED}']: "
+        logger.debug(f"{P2}BDM_INITIALIZED['{BDM_INITIALIZED}']: "
                      f"{bdm.bm_initialized}")
         logger.debug(f"{P2}BDM_FOLDER['{BDM_FOLDER}']: '{bdm.bm_folder}'")
         logger.debug(f"{P2}BDM_URL['{BDM_URL}]: '{bdm.bdm_url}'")
@@ -1602,23 +1647,23 @@ def log_BDM_info(bdm : BudgetModel) -> None:
             f"{str(list(bdm.bdm_wf_collection.keys()))}")
         for wf_key in bdm.bdm_wf_collection.keys():
             logger.debug(f"{P4}Workflow:({bdm.bdm_WF_KEY(wf_key)}:{bdm.bdm_WF_NAME(wf_key)}: ")
-            logger.debug(f"{P6}WF_WORKBOOKS_IN: '{bdm.bdm_WF_FOLDER(wf_key,WF_FOLDER_IN)}'")
-            logger.debug(f"{P6}WF_FOLDER_OUT: '{bdm.bdm_WF_FOLDER(wf_key,WF_FOLDER_OUT)}'")
+            logger.debug(f"{P6}WF_WORKBOOKS_IN: '{bdm.bdm_WF_FOLDER(wf_key,WF_INPUT_FOLDER)}'")
+            logger.debug(f"{P6}WF_OUTPUT_FOLDER: '{bdm.bdm_WF_FOLDER(wf_key,WF_OUTPUT_FOLDER)}'")
             logger.debug(f"{P6}WF_PREFIX_IN: '{bdm.bdm_WF_PREFIX_IN(wf_key)}' "
                          f"WF_PREFIX_OUT: '{bdm.bdm_WF_PREFIX_OUT(wf_key)}'")
             logger.debug(f"{P6}WF_WORKBOOK_MAP: {str(bdm.bdm_WF_WORKBOOK_MAP(wf_key))}")
         # Enumerate Budget Model Options
         bmoc = len(bdm.bm_options)
-        logger.debug(f"{P2}BM_OPTION['{BM_OPTIONS}']({bmoc})")
+        logger.debug(f"{P2}BDM_OPTION['{BDM_OPTIONS}']({bmoc})")
         for opt_key, opt in bdm.bm_options.items():
             logger.debug(f"{P4}Option('{opt_key}') = '{opt}'")
 
         # And the rest
-        logger.debug(f"{P2}BM_CREATED_DATE['{BM_CREATED_DATE}']: "
+        logger.debug(f"{P2}BDM_OPTIONS['{BDM_OPTIONS}']: "
                         f"{bdm.bm_created_date}")
-        logger.debug(f"{P2}BM_LAST_MODIFIED_DATE['{BM_LAST_MODIFIED_DATE}']: "
+        logger.debug(f"{P2}BDM_LAST_MODIFIED_DATE['{BDM_LAST_MODIFIED_DATE}']: "
                         f"{bdm.bm_last_modified_date}")
-        logger.debug(f"{P2}BM_LAST_MODIFIED_BY['{BM_LAST_MODIFIED_BY}']: "
+        logger.debug(f"{P2}BDM_LAST_MODIFIED_BY['{BDM_LAST_MODIFIED_BY}']: "
                         f"'{bdm.bm_last_modified_by}'")
         logger.debug(f"{P2}BDM_WORKING_DATA('{BDM_WORKING_DATA}'): "
                         f"'{bdm.bdm_working_data}'")
@@ -1667,8 +1712,8 @@ def log_BSM_info(bdm : BudgetModel) -> None:
             f"{str(list(bdm.bdm_wf_collection.keys()))}")
         for wf_key in bdm.bdm_wf_collection.keys():
             logger.debug(f"{P4}Workflow:({bdm.bdm_WF_KEY(wf_key)}:{bdm.bdm_WF_NAME(wf_key)}: ")
-            logger.debug(f"{P6}WF_FOLDER_IN: '{bdm.bdm_WF_FOLDER(wf_key,WF_FOLDER_IN)}'")
-            logger.debug(f"{P6}WF_FOLDER_OUT: '{bdm.bdm_WF_FOLDER(wf_key,WF_FOLDER_OUT)}'")
+            logger.debug(f"{P6}WF_INPUT_FOLDER: '{bdm.bdm_WF_FOLDER(wf_key,WF_INPUT_FOLDER)}'")
+            logger.debug(f"{P6}WF_OUTPUT_FOLDER: '{bdm.bdm_WF_FOLDER(wf_key,WF_OUTPUT_FOLDER)}'")
             logger.debug(f"{P6}WF_WORKBOOK_MAP: {str(bdm.bdm_WF_WORKBOOK_MAP(wf_key))}")
     except Exception as e:
         m = p3u.exc_err_msg(e)
