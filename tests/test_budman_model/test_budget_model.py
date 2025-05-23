@@ -23,15 +23,15 @@ def test_budget_model_construction_with_no_config_object() -> None:
     try:
         logger.info(test_budget_model_construction_with_no_config_object.__doc__)
         # Expecting an empty core BudgetModel instance.
-        bm = p3bm.BudgetModel()
+        bm = p3bm.BudgetDomainModel()
         
         # With no config_object provided to BudgetModel.__init__(), 
         # this instance should be mostly empty.
-        assert isinstance(bm, p3bm.BudgetModel), \
+        assert isinstance(bm, p3bm.BudgetDomainModel), \
             "BudgetModel() should return a BudgetModel instance"        
-        assert not bm.bm_initialized, "BudgetModel inst should NOT be initialized"
+        assert not bm.bdm_initialized, "BudgetModel inst should NOT be initialized"
         assert bm.bdm_id is not None, "bdm_id should be set, not be None"
-        assert bm.bm_folder is None, "bm_folder should be None"
+        assert bm.bdm_folder is None, "bm_folder should be None"
         assert bm.bdm_url is not None, "bdm_url should not be None"
         assert (bm.bdm_fi_collection is not None and 
                 isinstance(bm.bdm_fi_collection, dict) and 
@@ -41,12 +41,12 @@ def test_budget_model_construction_with_no_config_object() -> None:
                 isinstance(bm.bdm_wf_collection, dict) and 
                 len(bm.bdm_wf_collection) == 0), \
             "bdm_wf_collection should be empty dictionary"
-        assert bm.bm_options is not None, "bm_options should not be None"
-        assert bm.bm_created_date is not None, "bm_created_date should be set"
-        assert bm.bm_last_modified_date is not None, \
-            "bm_last_modified_date should be set"
-        assert bm.bm_last_modified_by is not None, \
-            "bm_last_modified_by should be set"
+        assert bm.bdm_options is not None, "bm_options should not be None"
+        assert bm.bdm_created_date is not None, "bdm_created_date should be set"
+        assert bm.bdm_last_modified_date is not None, \
+            "bdm_last_modified_date should be set"
+        assert bm.bdm_last_modified_by is not None, \
+            "bdm_last_modified_by should be set"
         assert (bm.bdm_working_data is not None and 
                 isinstance(bm.bdm_working_data, dict) and 
                 len(bm.bdm_working_data) == 0), \
@@ -61,15 +61,15 @@ def test_budget_model_construction_with_BMT_as_config_object() -> None:
     try:
         logger.info(test_budget_model_construction_with_BMT_as_config_object.__doc__)
         # Expecting an empty core BudgetModel instance.
-        bm = p3bm.BudgetModel(p3bm.BudgetModelTemplate.get_budget_model_template())
+        bm = p3bm.BudgetDomainModel(p3bm.BudgetModelTemplate.get_budget_model_template())
         
         # With no config_object provided to BudgetModel.__init__(), 
         # this instance should be mostly empty.
-        assert isinstance(bm, p3bm.BudgetModel), \
+        assert isinstance(bm, p3bm.BudgetDomainModel), \
             "BudgetModel() should return a BudgetModel instance"        
-        assert not bm.bm_initialized, "BudgetModel inst should NOT be initialized"
+        assert not bm.bdm_initialized, "BudgetModel inst should NOT be initialized"
         assert bm.bdm_id is not None, "bdm_id should be set, not be None"
-        assert bm.bm_folder is None, "bm_folder should be None"
+        assert bm.bdm_folder is None, "bm_folder should be None"
         assert bm.bdm_url is not None, "bdm_url should not be None"
         assert (bm.bdm_fi_collection is not None and 
                 isinstance(bm.bdm_fi_collection, dict) and 
@@ -79,12 +79,12 @@ def test_budget_model_construction_with_BMT_as_config_object() -> None:
                 isinstance(bm.bdm_wf_collection, dict) and 
                 len(bm.bdm_wf_collection) == 0), \
             "bdm_wf_collection should be empty dictionary"
-        assert bm.bm_options is not None, "bm_options should not be None"
-        assert bm.bm_created_date is not None, "bm_created_date should be set"
-        assert bm.bm_last_modified_date is not None, \
-            "bm_last_modified_date should be set"
-        assert bm.bm_last_modified_by is not None, \
-            "bm_last_modified_by should be set"
+        assert bm.bdm_options is not None, "bm_options should not be None"
+        assert bm.bdm_created_date is not None, "bdm_created_date should be set"
+        assert bm.bdm_last_modified_date is not None, \
+            "bdm_last_modified_date should be set"
+        assert bm.bdm_last_modified_by is not None, \
+            "bdm_last_modified_by should be set"
         assert (bm.bdm_working_data is not None and 
                 isinstance(bm.bdm_working_data, dict) and 
                 len(bm.bdm_working_data) == 0), \
@@ -98,18 +98,18 @@ def test_budget_model_initialize_with_template() -> None:
     """Test BudgetModel() constructor with with template."""
     try:
         logger.info(test_budget_model_initialize_with_template.__doc__)
-        bm = p3bm.BudgetModel(p3bm.BudgetModelTemplate.get_budget_model_template())
+        bm = p3bm.BudgetDomainModel(p3bm.BudgetModelTemplate.get_budget_model_template())
         # Initialize the budget model with the template as config_object.
         bm.bdm_initialize()
         
         # This instance should be full with resolved values and settings.
-        assert isinstance(bm, p3bm.BudgetModel), \
+        assert isinstance(bm, p3bm.BudgetDomainModel), \
             "Budget model should be a BudgetModel instance"        
-        assert bm.bm_initialized, "Budget model should be initialized"
+        assert bm.bdm_initialized, "Budget model should be initialized"
         assert bm.bdm_id is not None, "bm.bdm_id should be set, not be None"
         assert bm.bdm_config_object is not None, \
             "bm.bdm_config_object should be set, not be None"
-        assert bm.bm_folder is not None, "bm.bm_folder should be set"
+        assert bm.bdm_folder is not None, "bm.bdm_folder should be set"
         assert bm.bdm_url is not None, \
             "bm.bdm_url should be None"
         assert (bm.bdm_fi_collection is not None and 
@@ -120,12 +120,12 @@ def test_budget_model_initialize_with_template() -> None:
                 isinstance(bm.bdm_wf_collection, dict) and 
                 len(bm.bdm_wf_collection) > 0), \
             "bm.bdm_wf_collection should be non-empty dictionary"    
-        assert bm.bm_options is not None, "bm.bm_options should be set"
-        assert bm.bm_created_date is not None, "bm.bm_created_date should be set"
-        assert bm.bm_last_modified_date is not None, \
+        assert bm.bdm_options is not None, "bm.bdm_options should be set"
+        assert bm.bdm_created_date is not None, "bm.bdm_created_date should be set"
+        assert bm.bdm_last_modified_date is not None, \
             "bm._last_modified_date should be set"
-        assert bm.bm_last_modified_by is not None, \
-            "bm.bm_last_modified_by should not be None"
+        assert bm.bdm_last_modified_by is not None, \
+            "bm.bdm_last_modified_by should not be None"
         assert (bm.bdm_working_data is not None and 
                 isinstance(bm.bdm_working_data, dict)), \
             "bm.bdm_working_data should be an empty dictionary"    
@@ -137,9 +137,9 @@ def test_BDM_FI_DATA_pseudo_Property_Methods():
     try:
         from src.budman_model.get_budget_model_template import __get_budget_model_template__
         logger.info(test_BDM_FI_DATA_pseudo_Property_Methods.__doc__)
-        bm = p3bm.BudgetModel()
+        bm = p3bm.BudgetDomainModel()
         bm.bdm_initialize(bsm_init=True)
-        assert isinstance(bm, p3bm.BudgetModel), \
+        assert isinstance(bm, p3bm.BudgetDomainModel), \
             "Budget model should be a BudgetModel instance"
         # Test expected values based on the settings in
         # the budget_model_template in the source code. All default 
@@ -177,9 +177,9 @@ def test_BDM_FI_WF_DATA_OBJECT_pseudo_Property_Methods():
     """Test BDM_FI_WF_DATA_OBJECT() Pseudo Property Method."""
     try:
         logger.info(test_BDM_FI_WF_DATA_OBJECT_pseudo_Property_Methods.__doc__)
-        bm = p3bm.BudgetModel()
+        bm = p3bm.BudgetDomainModel()
         bm.bdm_initialize(bsm_init=True)
-        assert isinstance(bm, p3bm.BudgetModel), \
+        assert isinstance(bm, p3bm.BudgetDomainModel), \
             "Budget model should be a BudgetModel instance"
         # Test expected values based on the settings in
         # the budget_model_template in the source code. All default 
@@ -208,11 +208,11 @@ def test_BDM_FI_WF_DATA_OBJECT_pseudo_Property_Methods():
                     for wf_do_key in wf_do.keys():
                         assert wf_do_key in p3bm.WF_DATA_OBJECT_VALID_ATTR_KEYS, \
                             f"Expected: {wf_do_key} to be a valid WF_OBJECT key."
-                        if wf_do_key == p3bm.WF_WORKBOOKS_IN:
-                            assert bm.bdm_WF_WORKBOOK_MAP(wf_key,wf_do_key) == p3bm.WF_INPUT_FOLDER, \
+                        if wf_do_key == p3bm.WF_INPUT:
+                            assert bm.bdm_WF_TYPE_MAP(wf_key,wf_do_key) == p3bm.WF_INPUT_FOLDER, \
                                 f"Expected: key: '{wf_do_key}' to be '{p3bm.WF_INPUT_FOLDER}'."
-                        elif wf_do_key == p3bm.WF_WORKBOOKS_OUT:
-                            assert bm.bdm_WF_WORKBOOK_MAP(wf_key,wf_do_key) == p3bm.WF_OUTPUT_FOLDER, \
+                        elif wf_do_key == p3bm.WF_OUTPUT:
+                            assert bm.bdm_WF_TYPE_MAP(wf_key,wf_do_key) == p3bm.WF_OUTPUT_FOLDER, \
                                 f"Expected: key: '{wf_do_key}' to be '{p3bm.WF_OUTPUT_FOLDER}'."
     except Exception as e:
         pytest.fail(f"init_budget_model raised an exception: {str(e)}")
@@ -221,8 +221,8 @@ def test_bdm_FI_WF_WORKBOOK_LIST():
     """Test test_bdm_FI_WF_WORKBOOK_LIST() Pseudo Property Method."""
     try:
         logger.info(test_bdm_FI_WF_WORKBOOK_LIST.__doc__)
-        bm = p3bm.BudgetModel().bdm_initialize()
-        assert isinstance(bm, p3bm.BudgetModel), \
+        bm = p3bm.BudgetDomainModel().bdm_initialize()
+        assert isinstance(bm, p3bm.BudgetDomainModel), \
             "Budget model should be a BudgetModel instance"
 
         for fi_key in p3bm.VALID_FI_KEYS:
@@ -259,8 +259,8 @@ def test_log_BDM_info():
     """Test log_BDM_info() function."""
     try:
         logger.info(test_log_BDM_info.__doc__)
-        bm = p3bm.BudgetModel().bdm_initialize(bsm_init=True)
-        assert isinstance(bm, p3bm.BudgetModel), \
+        bm = p3bm.BudgetDomainModel().bdm_initialize(bsm_init=True)
+        assert isinstance(bm, p3bm.BudgetDomainModel), \
             "Budget model should be a BudgetModel instance"
         assert p3bm.log_BDM_info(bm) is None, \
             "log_BDM_info() should return None"
@@ -271,8 +271,8 @@ def test_log_BSM_info():
     """Test log_BSM_info() function."""
     try:
         logger.info(test_log_BSM_info.__doc__)
-        bm = p3bm.BudgetModel().bdm_initialize(bsm_init=True)
-        assert isinstance(bm, p3bm.BudgetModel), \
+        bm = p3bm.BudgetDomainModel().bdm_initialize(bsm_init=True)
+        assert isinstance(bm, p3bm.BudgetDomainModel), \
             "Budget model should be a BudgetModel instance"
         assert p3bm.log_BSM_info(bm) is None, \
             "log_BSM_info() should return None"

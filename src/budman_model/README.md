@@ -19,30 +19,30 @@ Where workflows are configured, the workflow (WF) object has the following confi
                         # WF Object
                         WF_NAME: BDM_WF_INTAKE,
                         WF_INPUT_FOLDER: "data/new",
-                        WF_WORKBOOKS_IN: {},
+                        WF_INPUT: {},
                         WF_PREFIX_IN: None,
                         WF_OUTPUT_FOLDER: "data/categorized",
-                        WF_WORKBOOKS_OUT: {},
+                        WF_OUTPUT: {},
                         WF_PREFIX_OUT: "categorized_",
                     },
                     BDM_WF_CATEGORIZATION: {
                         # WF Object
                         WF_NAME: BDM_WF_CATEGORIZATION,
                         WF_INPUT_FOLDER: "data/categorized",
-                        WF_WORKBOOKS_IN: {},
+                        WF_INPUT: {},
                         WF_PREFIX_IN: "categorized_",
                         WF_OUTPUT_FOLDER: "data/processed",
-                        WF_WORKBOOKS_OUT: {},
+                        WF_OUTPUT: {},
                         WF_PREFIX_OUT: "final_"
                     },
                     BDM_WF_FINALIZATION: {
                         # WF Object
                         WF_NAME: BDM_WF_FINALIZATION,
                         WF_INPUT_FOLDER: "data/processed",
-                        WF_WORKBOOKS_IN: {},
+                        WF_INPUT: {},
                         WF_PREFIX_IN: "final_",
                         WF_OUTPUT_FOLDER: None,
-                        WF_WORKBOOKS_OUT: {},
+                        WF_OUTPUT: {},
                         WF_PREFIX_OUT: None
                     }
 

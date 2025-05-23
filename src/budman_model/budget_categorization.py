@@ -26,7 +26,7 @@ from openpyxl import Workbook, load_workbook
 from .budget_model_constants import  *
 from .budget_category_mapping import (
     map_category, category_map_count)
-from .budget_domain_model import BudgetModel
+from .budget_domain_model import BudgetDomainModel
 # from data.p3_fi_transactions.budget_model import BudgetModel
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -124,7 +124,7 @@ def map_budget_category(sheet,src,dst) -> None:
 #endregion map_budget_category() function
 # ---------------------------------------------------------------------------- +
 #region def workfloexecute_worklow_categorizationw_categorization(bm : BudgetModel, fi_key: str) -> None:
-def execute_worklow_categorization(bm : BudgetModel, fi_key: str, wf_key:str) -> None:
+def execute_worklow_categorization(bm : BudgetDomainModel, fi_key: str, wf_key:str) -> None:
     """Process categorization wf_key for Financial Institution's 
     transaction workbooks.
 
@@ -152,9 +152,9 @@ def execute_worklow_categorization(bm : BudgetModel, fi_key: str, wf_key:str) ->
     #     3: Save the output items to storage. 
     try:
         logger.info(f"{cp} Start: workflow: '{wf_key}' for FI('{fi_key}') ...")
-        wb_type = WF_WORKBOOKS_IN # input workbooks
+        wb_type = WF_INPUT # input workbooks
         wb_c = bm.bdm_FI_WF_WORKBOOK_LIST_count(fi_key, wf_key, wb_type)
-        # workbooks_dict = bm.bsm_WF_WORKBOOKS_IN(fi_key, BDM_WF_INTAKE)
+        # workbooks_dict = bm.bsm_WF_INPUT(fi_key, BDM_WF_INTAKE)
         # if workbooks_dict is None or len(workbooks_dict) == 0:
         if wb_c is None or wb_c == 0:
             logger.info(f"{cp}    No workbooks for input.")
@@ -180,7 +180,7 @@ def execute_worklow_categorization(bm : BudgetModel, fi_key: str, wf_key:str) ->
 
             # Step 3: Save the output items to output storage.
             try:
-                bm.bsm_FI_WF_WORKBOOK_save(wb, wb_name, fi_key, wf_key, WF_WORKBOOKS_OUT)
+                bm.bsm_FI_WF_WORKBOOK_save(wb, wb_name, fi_key, wf_key, WF_OUTPUT)
             except Exception as e:
                 logger.error(f"{cp}    Error saving workbook: {wb_name}: {e}")
                 continue

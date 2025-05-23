@@ -127,10 +127,10 @@ def bsm_BUDMAN_STORE_abs_path() -> Path:
 #         if bm is None or not isinstance(bm, BudgetModel):
 #             raise ValueError("BudgetModel is None or not a BudgetModel.")
 #         logger.info("Saving BudgetModel to file.")
-#         if not bm.bm_initialized:
+#         if not bm.bdm_initialized:
 #             raise ValueError("BudgetModel is not initialized.")
-#         bm.bm_last_modified_by = getpass.getuser()
-#         bm.bm_last_modified_date = p3u.now_iso_date_string()
+#         bm.bdm_last_modified_by = getpass.getuser()
+#         bm.bdm_last_modified_date = p3u.now_iso_date_string()
 #         # Get the budget_model store abs_path. Trust the setting in the
 #         # BudgetModel instance.
 #         file_path = bm.bsm_BDM_URL_abs_path()

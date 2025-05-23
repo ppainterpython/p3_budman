@@ -20,7 +20,7 @@ from .budget_domain_model_identity import (
     BudgetDomainModelIdentity,
 )
 from .budget_domain_model import (
-    BudgetModel,
+    BudgetDomainModel,
     log_BDM_info,
     log_BSM_info,
     check_budget_model,
@@ -53,7 +53,7 @@ __all__ = [
     "bsm_BUDMAN_STORE_save",
     "budget_storage_model_new",
     "bsm_bdm_url_abs_path",
-    "BudgetModel",
+    "BudgetDomainModel",
     "log_BDM_info",
     "log_BSM_info",
     "BudgetModelTemplate",

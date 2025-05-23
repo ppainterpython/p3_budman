@@ -216,11 +216,11 @@ def test_BDM_WF_Dictionary_Pseudo_Property_Methods():
             assert isinstance(bmt.bdm_WF_PREFIX_OUT(wf_key), (str, type(None))), \
                 f"Expected bmt.bdm_WF_PREFIX_OUT({wf_key}) to be str or None" 
             
-            # assert bmt.bsm_WF_WORKBOOKS_IN(wf_key) is not None, \
+            # assert bmt.bsm_WF_INPUT(wf_key) is not None, \
             #     f"Expected: {wf_key} workbooks_in to be non-None."
-            # assert isinstance(bmt.bsm_WF_WORKBOOKS_IN(wf_key), dict), \
+            # assert isinstance(bmt.bsm_WF_INPUT(wf_key), dict), \
             #     f"Expected: {wf_key} workbooks_in to be valid dict."
-            # assert len(bmt.bsm_WF_WORKBOOKS_IN(wf_key)) >= 0, \
+            # assert len(bmt.bsm_WF_INPUT(wf_key)) >= 0, \
             #     f"Expected: {wf_key} workbooks_in to have valid length."
     except Exception as e:
         pytest.fail(f"init_budget_model raised an exception: {str(e)}")

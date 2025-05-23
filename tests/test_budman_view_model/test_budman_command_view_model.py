@@ -33,7 +33,7 @@ def test_BUDMAN_STORE_load():
             "BUDMAN_STORE should be loaded"
         assert bmvm.budget_model is not None, \
             "bmvm.budget_model should not be None"
-        assert isinstance(bmvm.budget_model, p3bm.BudgetModel), \
+        assert isinstance(bmvm.budget_model, p3bm.BudgetDomainModel), \
             "Expected bmvm.budget_model to be a BudgetModel instance, got: " + str(type(bmvm.budget_model))        
     except Exception as e:
         pytest.fail(f"BudgetManagerViewModelInterface raised an exception: {str(e)}")

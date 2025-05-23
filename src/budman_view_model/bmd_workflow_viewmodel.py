@@ -68,7 +68,7 @@ from openpyxl import Workbook, load_workbook
 
 # local modules and packages
 from ..budman_model.budget_model_constants import *
-from ..budman_model.budget_domain_model import BudgetModel
+from ..budman_model.budget_domain_model import BudgetDomainModel
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -87,13 +87,13 @@ class SingletonMeta(type):
 # ---------------------------------------------------------------------------- +
 class BDMWorkflowViewModel(metaclass=SingletonMeta):
     
-    def __init__(self, budget_model: BudgetModel = None) -> None:
+    def __init__(self, budget_model: BudgetDomainModel = None) -> None:
         """Initialize the BDMWorkflowViewModel class.
 
         Args:
             budget_model (BudgetModel): The BudgetModel instance.
         """
-        self._budget_model = budget_model if budget_model else BudgetModel()
+        self._budget_model = budget_model if budget_model else BudgetDomainModel()
         self._initialized = False
         self._created_date = time.time()
         self._last_modified_date = self._created_date

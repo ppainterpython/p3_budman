@@ -71,19 +71,19 @@ BDM_URL = "_bdm_url"                           # Type: str
 BDM_FI_COLLECTION = "_financial_institutions"  # Type: FI_COLLECTION
 BDM_WF_COLLECTION = "_workflows"               # Type: WF_COLLECTION
 BDM_OPTIONS = "_options"                        # Type: BMO_COLLECTION
-BDM_OPTIONS = "_created_date"              # Type: str - ISO date string
+BDM_CREATED_DATE = "_created_date"              # Type: str - ISO date string
 BDM_LAST_MODIFIED_DATE = "_last_modified_date"  # Type: str - ISO date string
 BDM_LAST_MODIFIED_BY = "_last_modified_by"      # Type: str - user name
 BDM_WORKING_DATA = "_wd"                       # Type: BDM_WORKING_DATA
 # Validation list constants
 BDM_VALID_PROPERTIES = (BDM_INITIALIZED, BDM_FOLDER, BDM_URL, 
                     BDM_FI_COLLECTION, BDM_WF_COLLECTION,  BDM_OPTIONS,
-                    BDM_OPTIONS, BDM_LAST_MODIFIED_DATE, 
+                    BDM_CREATED_DATE, BDM_LAST_MODIFIED_DATE, 
                     BDM_LAST_MODIFIED_BY, BDM_WORKING_DATA)
 BSM_PERSISTED_PROPERTIES = (BDM_ID, BDM_FOLDER, 
                             BDM_FI_COLLECTION, BDM_WF_COLLECTION,  
                             BDM_OPTIONS,
-                            BDM_OPTIONS, BDM_LAST_MODIFIED_DATE, 
+                            BDM_CREATED_DATE, BDM_LAST_MODIFIED_DATE, 
                             BDM_LAST_MODIFIED_BY)
 # Well-known column names for banking transactions workbooks.
 BUDGET_CATEGORY_COL = "Budget Category"
@@ -120,41 +120,53 @@ VALID_FI_KEYS = ("boa", "merrill")
 VALID_FI_TYPES = ("bank", "brokerage", "organization", "person")
 BDM_FI_NAMES = ("Bank of America", "Merrill Lynch", "CitiBANK")
 
+#
 # Supported BM Workflow Names
+#
 BDM_WF_INTAKE = "intake"
 BDM_WF_CATEGORIZATION = "categorization"
 BDM_WF_FINALIZATION = "finalization"
 BM_VALID_WORKFLOWS = (BDM_WF_INTAKE, BDM_WF_CATEGORIZATION, BDM_WF_FINALIZATION)
 
-# WF_OBJECT workflow pseudo-Object (Dictionary key names)
+#
+# WF_OBJECT workflow definition object (Dictionary key names)
+#
 WF_KEY = WF_KEY
 WF_NAME = "wf_name"  # Also used as key in BM_FI workflows dictionary.
-WF_INPUT_FOLDER = "wf_folder_in" # also used as key in BM_FI dictionary.
-WF_OUTPUT_FOLDER = "wf_folder_out" # also used as key in BM_FI dictionary.
+WF_INPUT_FOLDER = "wf_input_folder" # also used as key in FI_DATA_COLLECTION.
+WF_WORKING_FOLDER = "wf_working_folder" # also used as key in FI_DATA_COLLECTION.
+WF_OUTPUT_FOLDER = "wf_output_folder" # also used as key in FI_DATA_COLLECTION.
 WF_PREFIX_IN = "wf_prefix_in"
 WF_PREFIX_OUT = "wf_prefix_out"
-WF_WORKBOOK_MAP = "wf_workbook_map" # map of workbook names to paths
+WF_TYPE_MAP = "wf_type_map" # map of workbook names to paths
 # Additional WF_OBJECT-related constants
 WF_OBJECT_VALID_ATTR_KEYS = (WF_KEY, WF_NAME, 
-                        WF_INPUT_FOLDER, WF_OUTPUT_FOLDER,
-                        WF_PREFIX_IN, WF_PREFIX_OUT, WF_WORKBOOK_MAP)
-WF_FOLDER_PATH_ELEMENTS = (WF_INPUT_FOLDER, WF_OUTPUT_FOLDER)
+                        WF_INPUT_FOLDER, WF_WORKING_FOLDER, WF_OUTPUT_FOLDER,
+                        WF_PREFIX_IN, WF_PREFIX_OUT, WF_TYPE_MAP)
+WF_FOLDER_PATH_ELEMENTS = (WF_INPUT_FOLDER, WF_WORKING_FOLDER, WF_OUTPUT_FOLDER)
 
 # Some data values are used in conjunction with Path objects,
 # as elements of a pathname, such as folders and file names.
 # All Path-related data values are treated as pseudo-Objects and have
 # methods to construct, manipulate, and resolve Path objects and handle
 # the various string representations of the Path objects.
-BDM_VALID_PATH_ELEMENTS = (BDM_FOLDER, BDM_URL,
-                          FI_FOLDER, WF_INPUT_FOLDER, WF_OUTPUT_FOLDER)
+BDM_VALID_PATH_ELEMENTS = (BDM_FOLDER, BDM_URL, FI_FOLDER, 
+                           WF_INPUT_FOLDER, WF_WORKING_FOLDER, WF_OUTPUT_FOLDER)
 
-
-# WF_DATA_OBJECT is a DATA_OBJECT (Dict) for FI_WF data.
-WF_WORKBOOKS_IN = "wf_workbooks_in" # workbook list for input folder
-WF_WORKBOOKS_OUT ="wf_workbooks_out" # workbook list for output folder
-WF_WORKBOOK_TYPES = (WF_WORKBOOKS_IN, WF_WORKBOOKS_OUT)
-# WF_DATA_OBJECT_KEYS = (WF_WORKBOOKS_IN, WF_WORKBOOKS_OUT)
-WF_DATA_OBJECT_VALID_ATTR_KEYS = (WF_WORKBOOKS_IN, WF_WORKBOOKS_OUT)
+#
+# WF_DATA_OBJECT is a subclass of DATA_OBJECT (Dict) used to manage
+# Workflow-related (WF_) data (DATA_OBJECT) associated with a specific (FI_WF).
+# The primary data object now is the WORKBOOK (an excel workbook). There are
+# stored by the BSM in files in folders in the filesystem, so there are Path 
+# strings associated. In the BDM, a WORKBOOK has a unique name, and a type.
+# Workbook types (WB_TYPE) indicate use of a workbook as either input
+# or output for a specific workflow. 
+# The type is 'WF_INPUT' or 'WF_OUTPUT' with respect to the WorkFlow. 
+WF_INPUT = "wf_input" 
+WF_WORKING = "wf_working" 
+WF_OUTPUT ="wf_output" 
+WF_WORKBOOK_TYPES = (WF_INPUT, WF_WORKING, WF_OUTPUT)
+WF_DATA_OBJECT_VALID_ATTR_KEYS = (WF_INPUT, WF_WORKING, WF_OUTPUT)
 
 # The BDM_WORKING_DATA (BDWD_OBJECT) is designed to be a simple abstraction
 # of the BudgetModel useful to View Models, Views, and other types of 

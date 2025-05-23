@@ -50,7 +50,7 @@ class BudgetManagerViewModelInterface():
         super().__init__()
         self._initialized : bool = False
         self.BUDMAN_STORE_loaded : bool = False
-        self._budget_model : p3bm.BudgetModel = None
+        self._budget_model : p3bm.BudgetDomainModel = None
         self._data_context : Dict = {}
         self._cmd_map : Dict[str, Callable] = None
     #endregion __init__() constructor method
@@ -67,13 +67,13 @@ class BudgetManagerViewModelInterface():
             raise ValueError("initialized must be a boolean value.")
         self._initialized = value
     @property
-    def budget_model(self) -> p3bm.BudgetModel:
+    def budget_model(self) -> p3bm.BudgetDomainModel:
         """Return the BudgetModel instance."""
         return self._budget_model
     @budget_model.setter
-    def budget_model(self, value: p3bm.BudgetModel) -> None:
+    def budget_model(self, value: p3bm.BudgetDomainModel) -> None:
         """Set the BudgetModel instance."""
-        if not isinstance(value, p3bm.BudgetModel):
+        if not isinstance(value, p3bm.BudgetDomainModel):
             raise ValueError("budget_model must be a BudgetModel instance.")
         self._budget_model = value
     @property
@@ -106,7 +106,7 @@ class BudgetManagerViewModelInterface():
             logger.info(f"Start: Configure Budget Manager: ...")
             # Check if the budget model is initialized.
             if (self.budget_model is None or 
-                not isinstance(self.budget_model, p3bm.BudgetModel)):
+                not isinstance(self.budget_model, p3bm.BudgetDomainModel)):
                 # There is no valid budget_model. Load a BDM_STORE file?
                 if load_user_store:
                     # Use BDM_STORE file as a config_object 
@@ -116,8 +116,8 @@ class BudgetManagerViewModelInterface():
                     # Use the builtin default template as a config_object.
                     config_object = p3bm.BudgetModelTemplate.get_budget_model_template()
                 # Now to initialize the budget model.
-                self.budget_model = p3bm.BudgetModel(config_object).bdm_initialize()
-            if not self.budget_model.bm_initialized: 
+                self.budget_model = p3bm.BudgetDomainModel(config_object).bdm_initialize()
+            if not self.budget_model.bdm_initialized: 
                 raise ValueError("BudgetModel is not initialized.")
             # Initialize the data context. This View Model uses a DC object from
             # the Model which places data in it.
@@ -556,8 +556,10 @@ class BudgetManagerViewModelInterface():
                 raise RuntimeError(f"{pfx}{m}")
             fi_key = cmd.get("fi_key", None)
             wf_key = cmd.get("wf_key", p3bm.BDM_WF_CATEGORIZATION)
-            wb_type = cmd.get("wb_type", p3bm.WF_WORKBOOKS_IN)
+            wb_type = cmd.get("wb_type", p3bm.WF_WORKING)
             wb_name = cmd.get("wb_name", None)
+            # TODO: Enable defaults for fi_key, wf_key, wb_type, wb_name in
+            # settings.toml
             logger.info(f"Start: {str(cmd)}")
             if not p3u.is_non_empty_str("fi_key",fi_key,pfx):
                 m = f"fi_key is None, no action taken."
@@ -573,7 +575,7 @@ class BudgetManagerViewModelInterface():
                 m = f"ValueError({str(e)})"
                 logger.error(m)
                 raise RuntimeError(f"{pfx}{m}")
-            # Load the workbooks for the specified FI and workflow.
+            # Load the workbooks for the FI,WF specified in the DC.
             lwbl = self.budget_model.bdwd_FI_WORKBOOKS_load(fi_key, wf_key, wb_type)
             # Set last values of FI_init_cmd in the DC.
             self.dc_FI_KEY = fi_key
@@ -624,7 +626,7 @@ class BudgetManagerViewModelInterface():
             # Get the command arguments.
             fi_key = cmd.get("fi_key", None)
             wf_key = cmd.get("wf_key", p3bm.BDM_WF_CATEGORIZATION)
-            wb_type = cmd.get("wb_type", p3bm.WF_WORKBOOKS_IN)
+            wb_type = cmd.get("wb_type", p3bm.WF_INPUT)
             wb_name = cmd.get("wb_name", None)
             # Resolve with current DC values.
             if fi_key != self.dc_FI_KEY:
@@ -695,8 +697,8 @@ class BudgetManagerViewModelInterface():
             budman_store_abs_path = budman_folder_abs_path / budman_store_value
             # Update some values prior to saving.
             self.budget_model.bdm_url = budman_store_abs_path.as_uri()
-            self.budget_model.bm_last_modified_date = p3u.now_iso_date_string()
-            self.budget_model.bm_last_modified_by = getpass.getuser()
+            self.budget_model.bdm_last_modified_date = p3u.now_iso_date_string()
+            self.budget_model.bdm_last_modified_by = getpass.getuser()
             # Get a Dict of the BudgetModel to store.
             budget_model_dict = self.budget_model.to_dict()
             # Save the BUDMAN_STORE file.
