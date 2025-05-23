@@ -176,7 +176,7 @@ class BudgetManagerCLIView(cmd2.Cmd):
         BudgetManagerCommandInterface implementation."""
         try:
             st = p3u.start_timer()
-            if _log_cli_cmd_execute(self, opts): return
+            if _log_cli_cmd_execute(self, opts): return True, "parse_only"
             cmd = BudgetManagerCLIView.create_cmd(opts)
             status, result = self.data_context.execute_cmd(cmd)
             if status:
@@ -316,6 +316,7 @@ class BudgetManagerCLIView(cmd2.Cmd):
                 else:
                     self.poutput("Invalid value for parse_only. "
                                  "Use on|off|toggle.")
+                BudgetManagerCLIView.prompt = PO_ON_PROMPT if self.parse_only else PO_OFF_PROMPT
                 self.poutput(f"parse_only: {self.parse_only}")
             elif opts.val_cmd == "wf_key":
                 _ = opts.wf_ref

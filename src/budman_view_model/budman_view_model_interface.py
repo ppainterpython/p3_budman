@@ -23,6 +23,7 @@ from budman_model import P2, P4, P6, P8, P10
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
 logger = logging.getLogger(settings[p3bm.APP_NAME])
+WB_REF = "wb_ref"
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
@@ -123,7 +124,7 @@ class BudgetManagerViewModelInterface():
             # the Model which places data in it.
             self.data_context = self.budget_model.data_context
             # Initialize the command map.
-            self.initialize_cmd_map()
+            self.initialize_cmd_map()  # TODO: move to DataContext class
             self.initialized = True
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             return self
@@ -143,6 +144,8 @@ class BudgetManagerViewModelInterface():
                 "load_cmd_BUDMAN_STORE": self.BUDMAN_STORE_load_cmd,
                 "save_cmd_BUDMAN_STORE": self.BUDMAN_STORE_save_cmd,
                 "show_cmd_DATA_CONTEXT": self.DATA_CONTEXT_show_cmd,
+                "show_cmd_workbooks": self.WORKBOOKS_show_cmd,
+                "load_cmd_workbooks": self.WORKBOOKS_load_cmd,
             }
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
@@ -156,7 +159,7 @@ class BudgetManagerViewModelInterface():
     #region BudgetManagerViewModelInterface implementation                     +
     """BudgetModelViewModelInterface provides two interfaces:
        1. BudgetManagerViewModelCommandInterface.
-       2. BudgetManagerViewModelDataContextInterface.
+       2. BudgetManagerDataContextInterface.
     
     BudgetManagerViewModelCommandInterface
     --------------------------------------
@@ -168,7 +171,7 @@ class BudgetManagerViewModelInterface():
       implement them. This map binds the commands to the code that implements
       each Command.
 
-    BudgetManagerViewModelDataContextInterface
+    BudgetManagerDataContextInterface
     ------------------------------------------
 
     - Provides Data Context access to the ViewModel. This interface is
@@ -657,7 +660,7 @@ class BudgetManagerViewModelInterface():
                 raise RuntimeError(f"{pfx}{m}")
             # Get the WORKBOOK_LIST from the BDM.
             # wbl = self.bdm_FI_WF_WORKBOOK_LIST(fi_key, wf_key, wb_type)
-            # Get the LOADED_WORKBOOKS_LIST from the BDM_WORKING_DATA.
+            # Get the LOADED_WORKBOOK_LIST from the BDM_WORKING_DATA.
             lwbl = self.dc_LOADED_WORKBOOKS
             # For each loaded workbook, save it to its the path .
             for wb_name, wb in lwbl:
@@ -784,6 +787,8 @@ class BudgetManagerViewModelInterface():
             bs = self.dc_BUDMAN_STORE
             bs_str = p3u.first_n(str(bs))
             bs_msg = p3u.first_n(bs_str)
+            wbl = self.dc_WORKBOOKS
+            wbl_count = len(wbl) if wbl else 0
             lwbl = self.dc_LOADED_WORKBOOKS
             lwbl_count = len(lwbl) if lwbl else 0
             result = f"Budget Manager Data Context:\n"
@@ -793,6 +798,10 @@ class BudgetManagerViewModelInterface():
             result += f"{P2}{p3bm.WB_TYPE}: {self.dc_WB_TYPE}\n"
             result += f"{P2}{p3bm.WB_NAME}: {self.dc_WB_NAME}\n"
             result += f"{P2}{p3bm.DC_BUDMAN_STORE}: {bs_msg}\n"
+            result += f"{P2}{p3bm.DC_WORKBOOKS}: {wbl_count}\n"
+            if wbl_count > 0:
+                for i, (wb_name, wb_ap) in enumerate(wbl):
+                    result += f"{P4}{i} {wb_name} '{wb_ap}'\n"
             result += f"{P2}{p3bm.DC_LOADED_WORKBOOKS}: {lwbl_count}\n"
             if lwbl_count > 0:
                 for i, (wb_name, wb) in enumerate(lwbl):
@@ -804,6 +813,112 @@ class BudgetManagerViewModelInterface():
             raise
     #endregion DATA_CONTEXT_show_cmd() method
     # ------------------------------------------------------------------------ +
+    #region WORKBOOKS_show_cmd() method
+    def WORKBOOKS_show_cmd(self, cmd : Dict) -> Tuple[bool, str]:
+        """Show information about WORKBOOKS in the DC.
+
+        A show_cmd_workbooks command will use the wb_ref value in the cmd. 
+        Value is a number or a wb_name.
+
+        Arguments:
+            cmd (Dict): A valid BudMan View Model Command object. For this
+            command, must contain show_cmd = 'workbooks' resulting in
+            a full command key of 'show_cmd_workbooks'.
+
+        Returns:
+            Tuple[success : bool, result : Any]: The outcome of the command 
+            execution. If success is True, result contains result of the 
+            command, if False, a description of the error.
+            
+        Raises:
+            RuntimeError: A description of the
+            root error is contained in the exception message.
+        """
+        try:
+            pfx = f"{self.__class__.__name__}.{self.FI_init_cmd.__name__}: "
+            if p3u.is_not_obj_of_type("cmd",cmd,dict,pfx):
+                m = f"Invalid cmd object, no action taken."
+                logger.error(m)
+                raise RuntimeError(f"{pfx}{m}")
+            logger.info(f"Start: ...")
+            wb_ref = cmd.get(WB_REF, None)
+            if wb_ref is None:
+                m = f"wb_ref is None, no action taken."
+                logger.error(m)
+                raise RuntimeError(f"{pfx}{m}")
+            wb_count = len(self.dc_WORKBOOKS)
+            r = f"Budget Manager Workbooks({wb_count}):\n"
+            if wb_ref.isdigit():
+                wb_refnum = int(wb_ref)
+                wb_info = self.dc_WORKBOOKS[wb_refnum] if wb_refnum < wb_count else None
+                l = "Yes" if self.WB_loaded(wb_info[0]) else "No "
+                r += f"{P2}{wb_refnum:>2} {l} {wb_info[0]:<40} '{wb_info[1]}'\n"
+            elif wb_ref == p3bm.ALL_KEY:
+                for i, (wb_name, wb_ap) in enumerate(self.dc_WORKBOOKS):
+                    l = "Yes" if self.WB_loaded(wb_name) else "No "
+                    r += f"{P2}{i:>2} {l} {wb_name:<40} '{wb_ap}'\n"
+            return True, r
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion DATA_CONTEXT_show_cmd() method
+    # ------------------------------------------------------------------------ +
+    #region WORKBOOKS_load_cmd() method
+    def WORKBOOKS_load_cmd(self, cmd : Dict) -> Tuple[bool, str]:
+        """Load one or more WORKBOOKS in the DC.
+
+        A load_cmd_workbooks command will use the wb_ref value in the cmd. 
+        Value is a number or a wb_name.
+
+        Arguments:
+            cmd (Dict): A valid BudMan View Model Command object. For this
+            command, must contain load_cmd = 'workbooks' resulting in
+            a full command key of 'load_cmd_workbooks'.
+
+        Returns:
+            Tuple[success : bool, result : Any]: The outcome of the command 
+            execution. If success is True, result contains result of the 
+            command, if False, a description of the error.
+            
+        Raises:
+            RuntimeError: A description of the
+            root error is contained in the exception message.
+        """
+        try:
+            pfx = f"{self.__class__.__name__}.{self.FI_init_cmd.__name__}: "
+            if p3u.is_not_obj_of_type("cmd",cmd,dict,pfx):
+                m = f"Invalid cmd object, no action taken."
+                logger.error(m)
+                raise RuntimeError(f"{pfx}{m}")
+            logger.info(f"Start: ...")
+            wb_ref = cmd.get(WB_REF, None)
+            if wb_ref is None:
+                m = f"wb_ref is None, no action taken."
+                logger.error(m)
+                raise RuntimeError(f"{pfx}{m}")
+            fi_key = self.dc_FI_KEY
+            wf_key = self.dc_WF_KEY
+            wb_type = self.dc_WB_TYPE
+            wb_count = len(self.dc_WORKBOOKS)
+            r = f"Budget Manager Workbooks({wb_count}):\n"
+            if wb_ref.isdigit():
+                wb_refnum = int(wb_ref)
+                wb_info = self.dc_WORKBOOKS[wb_refnum] if wb_refnum < wb_count else None
+                if wb_info is not None:
+                    wb = self.budget_model.bdwd_WORKBOOK_load(wb_info[0])
+                    l = "Yes" if self.WB_loaded(wb_info[0]) else "No "
+                    r += f"{P2}{wb_refnum:>2} {l} {wb_info[0]:<40} '{wb_info[1]}'\n"
+            elif wb_ref == p3bm.ALL_KEY:
+                lwbl = self.budget_model.bdwd_FI_WORKBOOKS_load(fi_key, wf_key, wb_type)
+                for i, (wb_name, wb_ap) in enumerate(lwbl):
+                    l = "Yes" if self.WB_loaded(wb_name) else "No "
+                    r += f"{P2}{i:>2} {l} {wb_name:<40} '{wb_ap}'\n"
+            return True, r
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion WORKBOOKS_load_cmd() method
+    # ------------------------------------------------------------------------ +
     #                                                                          +
     #endregion Command Binding Implementations
     # ------------------------------------------------------------------------ +
@@ -812,8 +927,11 @@ class BudgetManagerViewModelInterface():
     # ======================================================================== +
     #                                                                          +
     # ======================================================================== +
-    #region BudgetManagerViewModelDataContextInterface implementation          +
-    """BDM view_model Data Context Methods.
+    #region BudgetManagerDataContextInterface implementation          +
+    """BDM view_model Data Context Interface Documentation.
+
+    Data Context (DC) Interface Overview
+    ------------------------------------
 
     Budget Manager is designed around the MVVM (Model View ViewModel) design
     pattern. In MVVM implementations, a View binds to a ViewModel through an
@@ -821,23 +939,47 @@ class BudgetManagerViewModelInterface():
     Processing pattern to map command actions from a user interface View to 
     data actions in the DC. 
     
-    Herein, the design is to have the DC support Commands as well as DC
-    properties and methods. To keep the details of the View Model limited in
-    the design of commands, all understanding of the structure of the data in 
-    in the DC, the ViewModel and beyond it, the Model, the DC properties and
+    Herein, the design is to have the DC interface provide support Commands 
+    as well as Data properties and methods. To keep the scope of the View Model 
+    limited concerning DC data, all understanding of the structure of  
+    data is in the DC which binds to the Model BDWD object. The DC properties and
     methods are where downstream APIs are used, not in the Command Binding
     Implementation methods.
     
-    These DC methods are used by Commands to access DC data values.
-    As an API, the DC methods are an abstraction to support a View trying to
-    interact with a user. Some are data requests and
-    others perform work on the view_model Data Context state while owning
+    These DC methods are used by Commands to access and perform actions on the
+    DC data values. As an API, the DC methods are an abstraction to support a 
+    View Model and View trying to interact upstream with a user. Some are data 
+    requests and others perform work on the Data Context state while owning
     the concern for syncing with the Model downstream.    
 
-    This View Model leverages the DC leverages BudgetManager Domain Model (BDM)
-    "library" to reference actual data for the application, in memory. 
-    When storage actions are required, the BudgetManager Storage Model (BSM)
-    library.
+    This View Model leverages the DC as a single interface to leverages 
+    BudgetManager Domain Model (BDM) through Budget Domain Working Data (BDWD)
+    "library" to reference actual data for the application Model, in memory. 
+    When storage actions are required, the DC may utilize the 
+    BudgetManager Storage Model (BSM) interface library.
+
+    Data Context Scope
+    ------------------
+
+    In the BudgetManager design language, the primary object concepts are
+    FI - Financial Institution, WF - Workflow, WB - Workbook, and BUDMAN_STORE
+    - Budget Manager Store where user-specific budget data is maintained. 
+    The Data Context data is always scoped to the current values of the 'keys' 
+    for these primary objects: FI_KEY, WF_KEY, WB_TYPE, and WB_NAME. Changing 
+    these values will cause the DC to flag the need for a refresh of the
+    underlying data.
+
+    Data Context Concrete Implementation
+    ------------------------------------
+    The BudgetManagerDataContextInterface is an abstract interface used by client
+    modules through binding to an object with a concrete implementation of the
+    interface. The concrete implementation is the BudgetManagerDataContext class 
+    in the Budget Manager application design. This singleton instance is 
+    referenced by the ViewModel and, possibly, View if needed.
+
+    DC is initialized with a reference to the BudgetDomainModel 
+    BudgetDomainWorkingData object, available in the BudgetDomainManager 
+    bdm_working_data property. 
     """
     # ======================================================================== +
     #                                                                          +
@@ -891,6 +1033,7 @@ class BudgetManagerViewModelInterface():
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
+
     @property
     def dc_INITIALIZED(self) -> bool:
         """Return the value of the DC_INITIALIZED attribute."""
@@ -903,6 +1046,7 @@ class BudgetManagerViewModelInterface():
         """Set the value of the DC_INITIALIZED attribute."""
         dc = self._valid_DC()
         self.data_context[p3bm.DC_INITIALIZED] = value
+
     @property
     def dc_FI_KEY(self) -> str:
         """Return the current financial institution key value in DC."""
@@ -915,6 +1059,7 @@ class BudgetManagerViewModelInterface():
         """Set the current financial institution key value in DC."""
         dc = self._valid_DC()
         self.data_context[p3bm.FI_KEY] = value
+
     @property
     def dc_WF_KEY(self) -> str:
         """Return the current workflow key value in DC."""
@@ -927,6 +1072,7 @@ class BudgetManagerViewModelInterface():
         """Set the current workflow key value in DC."""
         dc = self._valid_DC()
         self.data_context[p3bm.WF_KEY] = value
+
     @property
     def dc_WB_TYPE(self) -> str:
         """Return the current workbook type value in DC."""
@@ -939,6 +1085,7 @@ class BudgetManagerViewModelInterface():
         """Set the current workbook type value in DC."""
         dc = self._valid_DC()
         self.data_context[p3bm.WB_TYPE] = value
+
     @property
     def dc_WB_NAME(self) -> str:
         """Return the current workbook name value in DC."""
@@ -946,11 +1093,13 @@ class BudgetManagerViewModelInterface():
         if p3bm.WB_NAME not in dc:
             self.data_context[p3bm.WB_NAME] = None
         return self.data_context[p3bm.WB_NAME]
+
     @dc_WB_NAME.setter
     def dc_WB_NAME(self, value: str) -> None:
         """Set the current workbook name value in DC."""
         dc = self._valid_DC()
         self.data_context[p3bm.WB_NAME] = value
+
     @property
     def dc_BUDMAN_STORE(self) -> str:
         """Return the current BUDMAN_STORE value in DC."""
@@ -963,15 +1112,29 @@ class BudgetManagerViewModelInterface():
         """Set the current BUDMAN_STORE value in DC."""
         dc = self._valid_DC()
         self.data_context[p3bm.DC_BUDMAN_STORE] = value
+
     @property 
-    def dc_LOADED_WORKBOOKS(self) -> p3bm.LOADED_WORKBOOKS_LIST:
+    def dc_WORKBOOKS(self) -> p3bm.WORKBOOK_LIST:
+        """Return the current workbooks value in DC per FI_KEY, WF_KEY, WB_TYPE."""
+        dc = self._valid_DC()
+        if p3bm.DC_WORKBOOKS not in dc:
+            self.data_context[p3bm.DC_WORKBOOKS] = None
+        return self.data_context[p3bm.DC_WORKBOOKS]
+    @dc_WORKBOOKS.setter
+    def dc_WORKBOOKS(self, value: p3bm.WORKBOOK_LIST) -> None:
+        """Set the current  dc_WORKBOOK value in DC."""
+        dc = self._valid_DC()
+        self.data_context[p3bm.DC_WORKBOOKS] = value
+
+    @property 
+    def dc_LOADED_WORKBOOKS(self) -> p3bm.LOADED_WORKBOOK_LIST:
         """Return the current loaded workbooks value in DC."""
         dc = self._valid_DC()
         if p3bm.DC_LOADED_WORKBOOKS not in dc:
             self.data_context[p3bm.DC_LOADED_WORKBOOKS] = None
         return self.data_context[p3bm.DC_LOADED_WORKBOOKS]
     @dc_LOADED_WORKBOOKS.setter
-    def dc_LOADED_WORKBOOKS(self, value: p3bm.LOADED_WORKBOOKS_LIST) -> None:
+    def dc_LOADED_WORKBOOKS(self, value: p3bm.LOADED_WORKBOOK_LIST) -> None:
         """Set the current loaded workbooks value in DC."""
         dc = self._valid_DC()
         self.data_context[p3bm.DC_LOADED_WORKBOOKS] = value
@@ -1004,6 +1167,35 @@ class BudgetManagerViewModelInterface():
             logger.error(p3u.exc_err_msg(e))
             raise
     #endregion dc_FI_KEY_validate() method
+    # ------------------------------------------------------------------------ +
+    #region WB_loaded(wb_name) method
+    def WB_loaded(self, wb_name:str) -> bool: 
+        """Return True if wb_name is in the DC.LOADED_WORKBOOKS list."""
+        try:
+            _ = p3u.is_str_or_none("wb_name", wb_name, raise_TypeError=True)
+            # Reference the DC.LOADED_WORKBOOKS property.
+            lwbl = self.dc_LOADED_WORKBOOKS
+            if len(lwbl) == 0:
+                return False
+            for l_wb_name, _ in lwbl:
+                if l_wb_name == wb_name:
+                    return True
+            return False
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion WB_loaded(wb_name) method
+    # ------------------------------------------------------------------------ +
+    #region FI_get_loaded_workbooks() method
+    def FI_WORKBOOKS_get(self) -> List[str]: 
+        """Retrieve the current WORKBOOK_LIST for the DC fi_key,wf_key,wb_type."""
+        try:
+            # Reference the BDWD_LOADED_WORKBOOKS.
+            return self.budget_model.bdwd_LOADED_WORKBOOKS_get()
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion FI_get_loaded_workbook_names() method
     # ------------------------------------------------------------------------ +
     #region FI_get_loaded_workbooks_count() method
     def FI_get_loaded_workbooks_count(self) -> int: 
@@ -1075,7 +1267,7 @@ class BudgetManagerViewModelInterface():
     #endregion Data Context Methods
     # ------------------------------------------------------------------------ +
     #                                                                          +
-    #endregion BudgetManagerViewModelDataContextInterface implementation       +
+    #endregion BudgetManagerDataContextInterface implementation       +
     # ======================================================================== +
     #                                                                          +
     #endregion BudgetManagerViewModelInterface implementation

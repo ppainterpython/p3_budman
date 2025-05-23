@@ -159,7 +159,7 @@ class BudgetModelTemplate(BudgetDomainModel):
             BMO_LOG_FILE: "logs/p3BudgetModel.log",
             BMO_JSON_LOG_FILE: "logs/p3BudgetModel.jsonl"
         },
-        BDM_OPTIONS: None,
+        BDM_CREATED_DATE: None,
         BDM_LAST_MODIFIED_DATE: None,
         BDM_LAST_MODIFIED_BY: None,
         BDM_WORKING_DATA: {}

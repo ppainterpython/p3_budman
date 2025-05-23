@@ -2,13 +2,13 @@
 #region p3_budget_categorization.py module
 """ Financial Budget Workflow: "categorization" of transaction workbooks.
 
-    Workflow: cantegorization
+    Workflow: categorization
     Input Folder: Financial Institution (FI) Incoming Folder (IF)
     Output Folder: Financial Institution (FI) Categorized Folder (CF)
     FI transaction workbooks are typically excel files. 
 
-    Workflow Pathern: Apply a workflow_proccess (function) to each item in the 
-    input folder, placing items in the output folder as appropiate to the 
+    Workflow Pattern: Apply a workflow_process (function) to each item in the 
+    input folder, placing items in the output folder as appropriate to the 
     configured function. Each WorkFLow instance in the config applies one 
     function to the input with resulting output.
 """
@@ -21,6 +21,7 @@ import re, pathlib as Path, logging, time
 # third-party modules and packages
 import p3logging as p3l, p3_utils as p3u
 from openpyxl import Workbook, load_workbook
+from openpyxl.worksheet.worksheet import Worksheet
 
 # local modules and packages
 from .budget_model_constants import  *
@@ -32,11 +33,11 @@ from .budget_domain_model import BudgetDomainModel
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
 logger = logging.getLogger(THIS_APP_NAME)
-
+#endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
 #region check_budget_category() function
-def check_budget_category(sheet) -> bool:
-    """Check that the sheet is ready to budget category.
+def check_budget_category(sheet:Worksheet) -> bool:
+    """Check that the sheet is ready to process budget category.
     
     A column 'Budget Category' is added to the sheet if it does not exist.
 
@@ -45,7 +46,7 @@ def check_budget_category(sheet) -> bool:
     """
     try:
         me = check_budget_category
-        logger.info("Check sheet for budget category.")
+        logger.info("Check worksheet for budget category.")
         # Is BUDGET_CATEGORY_COL in the sheet?
         if BUDGET_CATEGORY_COL not in sheet.columns:
             # Add the column to the sheet.
@@ -67,7 +68,7 @@ def check_budget_category(sheet) -> bool:
 #endregion check_budget_category() function
 # ---------------------------------------------------------------------------- +
 #region map_budget_category() function
-def map_budget_category(sheet,src,dst) -> None:
+def map_budget_category(sheet:Worksheet,src,dst) -> None:
     """Map a src column to budget category putting result in dst column.
     
     The sheet has banking transaction data in rows and columns. 
@@ -83,6 +84,8 @@ def map_budget_category(sheet,src,dst) -> None:
     """
     me = map_budget_category
     try:
+        _ = p3u.is_str_or_none("src", src, raise_TypeError=True)
+        _ = p3u.is_str_or_none("dst", dst, raise_TypeError=True)
         rules_count = category_map_count()
         logger.info(f"Applying '{rules_count}' budget category mappings...")
         header_row = [cell.value for cell in sheet[1]] 
@@ -163,7 +166,7 @@ def execute_worklow_categorization(bm : BudgetDomainModel, fi_key: str, wf_key:s
         # Now process each input workbook.
         # for wb_name, wb_ap in reversed(workbooks_dict.items()):
         # Step 1: Load the workbooks sequentially.
-        for wb_name, wb in bm.bsm_FI_WF_WORKBOOK_generate(fi_key, wf_key, wb_type):
+        for wb_name, wb in bm.bsm_FI_WF_WORKBOOKS_generate(fi_key, wf_key, wb_type):
             logger.info(f"{cp}    Workbook({wb_name})")
                 
             # Step 2: Process the workbooks applying the workflow function

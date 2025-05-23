@@ -1,6 +1,8 @@
 # ---------------------------------------------------------------------------- +
 # p3_budman configuration settings
 # ---------------------------------------------------------------------------- +
+# TODO: import budman_dc_namespace for constants use herein, BDM_CATEGORIZATION, etc.
+# ---------------------------------------------------------------------------- +
 
 app_name = "p3_budget_manager"    # used for some defaults in places
 short_app_name = "budman"         # ditto
@@ -9,6 +11,7 @@ short_app_name = "budman"         # ditto
 budget_manager_folder = "~/OneDrive/budget"   # Where data files will go
 budget_manager_store = "p3_budget_manager_ca063e8b.jsonc"  # a BSM file
 budget_manager_store_filetype = ".jsonc"  # a BSM filetype
-budget_manager_default_workflow = "BDM_CATEGORIZATION" 
-budget_manager_default_workbook_type = "WF_WORKING" 
+budget_manager_default_fi = "boa" 
+budget_manager_default_workflow = "categorization" 
+budget_manager_default_workbook_type = "wf_working" 
 

@@ -84,7 +84,8 @@ def budman_app_cli_cmdloop(startup : bool = True) -> None:
 def budman_app_start(testmode:bool=False):
     """Main function to run PyExcelBudget application."""
     try:
-        # Here is where argv would be applied.
+        # Here is where argv would be 
+        # applied.
         # But for now, budman_app_cli is the only option to run.
         configure_logging(settings.app_name, logtest=testmode)
         logger.setLevel(logging.DEBUG)

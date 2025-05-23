@@ -130,7 +130,7 @@ def test_budget_model_initialize_with_template() -> None:
                 isinstance(bm.bdm_working_data, dict)), \
             "bm.bdm_working_data should be an empty dictionary"    
     except Exception as e:
-        pytest.fail(f"BudgetModel() raised an exception: {str(e)}")
+        pytest.fail(f"BudgetDomainModel() raised an exception: {str(e)}")
 # ---------------------------------------------------------------------------- +
 def test_BDM_FI_DATA_pseudo_Property_Methods():
     """Test BDM FI Object Pseudo Property Methods."""
