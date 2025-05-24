@@ -97,7 +97,7 @@ def map_budget_category(sheet:Worksheet,src,dst) -> None:
         if dst in header_row:
             dst_col_index = header_row.index(dst) + 1
         else:
-            logger.Error(f"Destination column '{dst}' not found in header row.")
+            logger.error(f"Destination column '{dst}' not found in header row.")
             return
 
         logger.info(f"Mapping '{src}'({src_col_index}) to "
@@ -122,16 +122,16 @@ def map_budget_category(sheet:Worksheet,src,dst) -> None:
         logger.info(f"Completed budget category mapping for '{num_rows}' rows.")
         return None
     except Exception as e:
-        logger.error(p3u.exc_err_msg(me, e))
+        logger.error(p3u.exc_err_msg(e))
         raise    
 #endregion map_budget_category() function
 # ---------------------------------------------------------------------------- +
-#region def workfloexecute_worklow_categorizationw_categorization(bm : BudgetModel, fi_key: str) -> None:
+#region def execute_worklow_categorization(bm : BudgetModel, fi_key: str) -> None:
 def execute_worklow_categorization(bm : BudgetDomainModel, fi_key: str, wf_key:str) -> None:
     """Process categorization wf_key for Financial Institution's 
     transaction workbooks.
 
-    Excecute the categorization wf_key to examine all fi transaction 
+    Execute the categorization wf_key to examine all fi transaction 
     workbooks presently in the IF (Incoming Folder) for the indicated 
     FI (Financial Institution). Each workbook file is opened and the 
     transactions are categorized and saved to the CF (Categorized Folder) 

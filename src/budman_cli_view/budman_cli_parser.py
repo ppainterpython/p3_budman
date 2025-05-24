@@ -52,11 +52,13 @@ class BudgetManagerCLIParser():
         self.load_cmd_parser = BudManCmd2ArgumentParser()
         self.save_cmd_parser = BudManCmd2ArgumentParser()
         self.val_cmd_parser = BudManCmd2ArgumentParser()
+        self.workflow_cmd_parser = BudManCmd2ArgumentParser()
         self.init_cmd_parser_setup()
         self.show_cmd_parser_setup()
         self.load_cmd_parser_setup()
         self.save_cmd_parser_setup()
         self.val_cmd_parser_setup()
+        self.workflow_cmd_parser_setup()
 
     def init_cmd_parser_setup(self) -> None:
         """Setup the command line argument parsers for the init command."""
@@ -274,6 +276,27 @@ class BudgetManagerCLIParser():
                 action="store", 
                 default = 'all',
                 help="fi_key value for valid Fin. Inst. or 'all'.")
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise
+
+    def workflow_cmd_parser_setup(self) -> None:
+        """Apply workflows to data in Budget Manager."""
+        try:
+            self.workflow_cmd_subparsers = self.workflow_cmd_parser.add_subparsers(
+                dest="workflow_cmd")
+            # val parse_only subcommand
+            self.workflow_categorization_subcmd_parser = self.workflow_cmd_subparsers.add_parser(
+                "categorization",
+                aliases=["cat", "CAT", "c"], 
+                help="Apply Categorization workflow.")
+            self.workflow_categorization_subcmd_parser.set_defaults(
+                workflow_cmd="categorization")
+            self.workflow_categorization_subcmd_parser.add_argument(
+                "wb_ref", nargs="?",
+                action="store", 
+                default='all',
+                help="Workbook reference, name or number of a loaded workbook.")
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise

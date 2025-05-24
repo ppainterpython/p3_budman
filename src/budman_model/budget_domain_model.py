@@ -1440,16 +1440,8 @@ class BudgetDomainModel(metaclass=SingletonMeta):
     # ------------------------------------------------------------------------ +
     #region bsm_save_workbook() function
     def bsm_save_workbook(self, workbook : Workbook = None, output_path:str=None) -> None:
-        """Save the FI transactions workbook to the filesystem.
+        """Save the workbook to the filesystem.
         
-        The file is assumed to be in the folder specified in the budget_config. 
-        Use the folder specified in the budget_config.json file. 
-        the budget_config may have an output_prefix specified which will be
-        prepended to the output_path name.
-
-        TODO: If output_path is not specified, then scan the folder for files. 
-        Return a dictionary of workbooks with the file name as the key.
-
         Args:
             output_path (str): The absolute path of the transaction file to save.
 
@@ -1457,20 +1449,13 @@ class BudgetDomainModel(metaclass=SingletonMeta):
             None
 
         """
-        me = self.save_fi_transactions
+        me = self.bsm_save_workbook
         st = time.time()
         try:
             # TODO: add logic to for workbook open in excel, work around.
-            if (budget_config["output_prefix"] is not None and 
-                isinstance(budget_config["output_prefix"], str) and
-                len(budget_config["output_prefix"]) > 0):
-                file_path = budget_config["output_prefix"] + output_path
-            else:
-                file_path = output_path
-            trans_path = Path(budget_config["bank_transactions_folder"]) / file_path
-            logger.info("Saving FI transactions...")
-            workbook.save(filename=trans_path)
-            logger.info(f"Saved FI transactions to '{str(trans_path)}'")
+            logger.info("Saving wb: ...")
+            workbook.save(filename=output_path)
+            logger.info(f"Saved wb to '{output_path}'")
             return
         except Exception as e:
             logger.error(p3u.exc_msg(me, e))
@@ -1637,6 +1622,35 @@ class BudgetDomainModel(metaclass=SingletonMeta):
             logger.error(m)
             raise
 
+    def bdwd_WORKBOOKS_resolve(self,initializing:bool=False) -> WORKBOOK_LIST:
+        """Refresh the BDWD_WORKBOOKS value relative to current BDM state.
+
+        Args:
+            wb_name (str): The name of the workbook to add.
+            wb_abs_path_str (str): The absolute path of the workbook to add.    
+
+        Returns:
+            BDWD_WORKBOOKS refreshed value on success.
+
+        Raises:
+            Exception: if error occurs downstream.
+            RunTimeException: if DC content error detected.
+        """
+        _ = self.bdwd_INITIALIZED() if not initializing else None
+        try:
+            fi_key = self.bdwd_FI_KEY
+            wf_key = self.bdwd_WF_KEY
+            wb_type = self.bdwd_WB_TYPE
+            d = data_desc(fi_key, wf_key, wb_type)
+
+            wbl = self.bdm_FI_WF_WORKBOOK_LIST(fi_key, wf_key, wb_type)
+            self.bdwd_WORKBOOKS = wbl
+            logger.debug(f"{d} BDWD_WORKS resolved to: {wbl}")
+            return self.bdwd_WORKBOOKS
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise
     def bdwd_WORKBOOK_load(self, wb_name) -> Workbook:
         """Load 1 workbook into the BDWD, based on current BDWD values.
 
@@ -1677,35 +1691,43 @@ class BudgetDomainModel(metaclass=SingletonMeta):
             logger.error(m)
             raise
 
-    def bdwd_WORKBOOKS_resolve(self,initializing:bool=False) -> WORKBOOK_LIST:
-        """Refresh the BDWD_WORKBOOKS value relative to current BDM state.
+    def bdwd_WORKBOOK_save(self, wb_name:str, wb:Workbook) -> None:
+        """Save 1 workbook into the BDWD, based on current BDWD values.
+
+        The named workbook is located for the current FI, WF, and WB_TYPE.
 
         Args:
-            wb_name (str): The name of the workbook to add.
-            wb_abs_path_str (str): The absolute path of the workbook to add.    
+            wb_name (str): The name of the workbook to load.
 
         Returns:
-            BDWD_WORKBOOKS refreshed value on success.
+            Loaded Workbook.
 
         Raises:
             Exception: if error occurs downstream.
             RunTimeException: if DC content error detected.
         """
-        _ = self.bdwd_INITIALIZED() if not initializing else None
+        _ = self.bdwd_INITIALIZED()
         try:
+            _ = p3u.is_str_or_none("wb_name", wb_name, raise_TypeError=True)
             fi_key = self.bdwd_FI_KEY
             wf_key = self.bdwd_WF_KEY
             wb_type = self.bdwd_WB_TYPE
             d = data_desc(fi_key, wf_key, wb_type)
 
             wbl = self.bdm_FI_WF_WORKBOOK_LIST(fi_key, wf_key, wb_type)
-            self.bdwd_WORKBOOKS = wbl
-            logger.debug(f"{d} BDWD_WORKS resolved to: {wbl}")
-            return self.bdwd_WORKBOOKS
+            wb_ap = [val for key, val in wbl if key == wb_name][0]
+            if wb_ap is None:
+                m = f"Workbook '{wb_name}' not found in BDWD_WORKBOOKS."
+                logger.error(m)
+                raise ValueError(m)
+            wb = self.bsm_save_workbook(wb,wb_ap)
+            logger.debug(f"{d} saved wb: '{wb_name}' to '{wb_ap}'")
+            return wb
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
+
     #endregion bdwd_LOADED_WORKBOOKS() methods
     # ------------------------------------------------------------------------ +
     #region bdwd_LOADED_WORKBOOKS() methods

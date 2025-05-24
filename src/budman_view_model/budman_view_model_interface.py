@@ -146,6 +146,7 @@ class BudgetManagerViewModelInterface():
                 "show_cmd_DATA_CONTEXT": self.DATA_CONTEXT_show_cmd,
                 "show_cmd_workbooks": self.WORKBOOKS_show_cmd,
                 "load_cmd_workbooks": self.WORKBOOKS_load_cmd,
+                "workflow_cmd_categorization": self.WORKFLOW_categorization_cmd,
             }
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
@@ -658,8 +659,6 @@ class BudgetManagerViewModelInterface():
                 m = f"ValueError({str(e)})"
                 logger.error(m)
                 raise RuntimeError(f"{pfx}{m}")
-            # Get the WORKBOOK_LIST from the BDM.
-            # wbl = self.bdm_FI_WF_WORKBOOK_LIST(fi_key, wf_key, wb_type)
             # Get the LOADED_WORKBOOK_LIST from the BDM_WORKING_DATA.
             lwbl = self.dc_LOADED_WORKBOOKS
             # For each loaded workbook, save it to its the path .
@@ -667,7 +666,6 @@ class BudgetManagerViewModelInterface():
                 self.budget_model.bsm_FI_WF_WORKBOOK_save(wb, wb_name,
                                                           fi_key, wf_key, wb_type)
             # Save the workbooks for the specified FI, WF, and WB-type.
-            # ret = self.budget_model.bdwd_FI_WORKBOOKS_save(fi_key, wf_key, wb_type)
             logger.info(f"Complete Command: 'Save' {p3u.stop_timer(st)}")   
             return None
         except Exception as e:
@@ -918,6 +916,79 @@ class BudgetManagerViewModelInterface():
             logger.error(p3u.exc_err_msg(e))
             raise
     #endregion WORKBOOKS_load_cmd() method
+    # ------------------------------------------------------------------------ +
+    #region WORKFLOW_categorization_cmd() method
+    def WORKFLOW_categorization_cmd(self, cmd : Dict) -> Tuple[bool, str]:
+        """Apply workflow to one or more WORKBOOKS in the DC.
+
+        A WORKFLOW_categorization_cmd command will use the wb_ref value in the cmd. 
+        Value is a number or a wb_name.
+
+        Arguments:
+            cmd (Dict): A valid BudMan View Model Command object. For this
+            command, must contain workflow_cmd = 'categorization' resulting in
+            a full command key of 'workflow_cmd_categorization'.
+
+        Returns:
+            Tuple[success : bool, result : Any]: The outcome of the command 
+            execution. If success is True, result contains result of the 
+            command, if False, a description of the error.
+            
+        Raises:
+            RuntimeError: A description of the
+            root error is contained in the exception message.
+        """
+        try:
+            pfx = f"{self.__class__.__name__}.{self.FI_init_cmd.__name__}: "
+            if p3u.is_not_obj_of_type("cmd",cmd,dict,pfx):
+                m = f"Invalid cmd object, no action taken."
+                logger.error(m)
+                raise RuntimeError(f"{pfx}{m}")
+            logger.info(f"Start: ...")
+            wb_ref = cmd.get(WB_REF, None)
+            if wb_ref is None:
+                m = f"wb_ref is None, no action taken."
+                logger.error(m)
+                raise RuntimeError(f"{pfx}{m}")
+            fi_key = self.dc_FI_KEY
+            wf_key = self.dc_WF_KEY
+            wb_type = self.dc_WB_TYPE
+            wb_name = self.dc_WB_NAME
+            wb_count = len(self.dc_WORKBOOKS)
+            wb_refnum = -1
+            wf_wbl = []
+            r = f"Budget Manager Categorization Workflow:\n"
+            if wb_ref.isdigit():
+                wb_refnum = int(wb_ref)
+                wb_info = self.dc_WORKBOOKS[wb_refnum] if wb_refnum < wb_count else None
+                if wb_info is not None:
+                    wb_name = wb_info[0]
+            elif wb_ref == p3bm.ALL_KEY:
+                wb_name = p3bm.ALL_KEY
+            # Build a list of LOADED_WORKBOOKS to process.
+            lwbl = self.dc_LOADED_WORKBOOKS
+            lwbl_count = len(lwbl) if lwbl else 0
+            if lwbl_count == 0:
+                m = f"No LOADED_WORKBOOKS found, no action taken."
+                logger.error(m)
+                return False, m
+            if not self.WB_loaded(wb_name):
+                m = f"wb_name '{wb_name}' not found in LOADED_WORKBOOKS."
+                logger.error(m)
+                return False, m
+            wb = self.budget_model.bdwd_WORKBOOK_load(wb_name)
+            ws = wb.active
+            # Check for budget category column, add it if not present.
+            p3bm.check_budget_category(ws)
+            # Map the 'Original Description' column to the 'Budget Category' column.
+            p3bm.map_budget_category(ws,"Original Description", p3bm.BUDGET_CATEGORY_COL)
+            self.budget_model.bdwd_WORKBOOK_save(wb_name, wb)
+            r += f"Categorization Workflow applied to '{wb_name}'\n"
+            return True, r
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion WORKFLOW_categorization_cmd() method
     # ------------------------------------------------------------------------ +
     #                                                                          +
     #endregion Command Binding Implementations

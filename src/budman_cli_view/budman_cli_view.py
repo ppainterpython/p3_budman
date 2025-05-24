@@ -66,6 +66,8 @@ def save_cmd_parser() -> BudManCmd2ArgumentParser:
     return cli_parser.save_cmd_parser if cli_parser else None
 def val_cmd_parser() -> BudManCmd2ArgumentParser:
     return cli_parser.val_cmd_parser if cli_parser else None
+def workflow_cmd_parser() -> BudManCmd2ArgumentParser:
+    return cli_parser.workflow_cmd_parser if cli_parser else None
 
 def _filter_opts(opts) -> Dict[str, Any]:
     if opts is None: return {}
@@ -118,7 +120,7 @@ class BudgetManagerCLIView(cmd2.Cmd):
     TODO: Use ABC for view_model interface.
     """
     # ------------------------------------------------------------------------ +
-    # Class variables
+    #region Class variables
     prompt = "budman> "
     intro = "\nWelcome to the Budget Manager CLI. Type help or ? to list commands.\n"
     # Class Methods
@@ -126,18 +128,22 @@ class BudgetManagerCLIView(cmd2.Cmd):
     def create_cmd(cls, opts : argparse.Namespace) -> Dict[str, Any]:
         """Create a command dictionary from the options."""
         return _filter_opts(opts)
+    #endregion Class variables
     # ------------------------------------------------------------------------ +
-    # Constructor
+    #region  Constructor
     def __init__(self, data_context : object | MockViewModel = None) -> None:
-        super().__init__()
+        shortcuts = dict(cmd2.DEFAULT_SHORTCUTS)
+        shortcuts.update({'wf': 'workflow'})
         self._data_context = MockViewModel() if data_context is None else data_context
         self.initialized = False
         self.parse_only = False
         self.terminal_width = 100 # TODO: add to settings.
-        # self.cli_parser : BudgetManagerCLIParser = cli_parser
+        cmd2.Cmd.__init__(self, shortcuts=shortcuts)
+        # super().__init__()
         BudgetManagerCLIView.prompt = PO_ON_PROMPT if self.parse_only else PO_OFF_PROMPT
+    #endregion  Constructor
     # ------------------------------------------------------------------------ +
-    # Properties
+    #region Properties
     @property
     def data_context(self) -> object:
         """Get the data_context property."""
@@ -149,6 +155,7 @@ class BudgetManagerCLIView(cmd2.Cmd):
         if not isinstance(value, (MockViewModel, object)):
             raise ValueError("data_context must be a MockViewModel or object.")
         self._data_context = value
+    #endregion Properties
     # ------------------------------------------------------------------------ +
     #region initialize() method
     def initialize(self) -> None:
@@ -265,7 +272,8 @@ class BudgetManagerCLIView(cmd2.Cmd):
 
         Arguments:
             opts (argparse.Namespace): The command line options after parsing
-            the arguments with argparse. 
+            the arguments with argparse. The opts dict becomes the command
+            object for the command processor.
         """
         try:
             _ = _log_cli_cmd_execute(self, opts)
@@ -274,6 +282,28 @@ class BudgetManagerCLIView(cmd2.Cmd):
         except SystemExit:
             # Handle the case where argparse exits the program
             self.pwarning(BMCLI_SYSTEM_EXIT_WARNING)
+        except Exception as e:
+            self.pexcept(e)
+    #endregion Val command
+    # ------------------------------------------------------------------------ +
+    #region Val command - workbooks, status, etc.
+    @with_argparser(workflow_cmd_parser())
+    def do_workflow(self, opts):
+        """Apply a workflow to Budget Manager data.
+        
+        Workflows are implemented by python code with configuration in the
+        BUDMAN_STORE file. In the DataContext (DC), there is a WF_KEY value
+        identifying the workflow to use if not specified explicitly in the 
+        cmd arguments.
+
+        Arguments:
+            opts (argparse.Namespace): The command line options after parsing
+            the arguments with argparse. The opts dict becomes the command
+            object for the command processor.
+
+        """
+        try:
+            status, result = self.execute_cmd(opts)
         except Exception as e:
             self.pexcept(e)
     #endregion Val command
