@@ -11,6 +11,8 @@
     input folder, placing items in the output folder as appropriate to the 
     configured function. Each WorkFLow instance in the config applies one 
     function to the input with resulting output.
+
+    TODO: Consider xlwings package for Excel integration.
 """
 #endregion p3_execl_budget.p3_banking_transactions budget_transactions.py module
 # ---------------------------------------------------------------------------- +
@@ -48,18 +50,18 @@ def check_budget_category(sheet:Worksheet) -> bool:
         me = check_budget_category
         logger.info("Check worksheet for budget category.")
         # Is BUDGET_CATEGORY_COL in the sheet?
-        if BUDGET_CATEGORY_COL not in sheet.columns:
-            # Add the column to the sheet.
-            i = sheet.max_column + 1
-            sheet.insert_cols(i)
-            sheet.cell(row=1, column=i).value = BUDGET_CATEGORY_COL
-            # Set the column width to 20.
-            sheet.column_dimensions[sheet.cell(row=1, column=i).column_letter].width = 20
-            logger.info(f"Adding column '{BUDGET_CATEGORY_COL}' at index = {i}, "
-                        f"column_letter = '{sheet.cell(row=1, column=i).column_letter}'")
-        else:
+        col_names = [cell.value for cell in sheet[1]]
+        if BUDGET_CATEGORY_COL in col_names:
             logger.info(f"Column '{BUDGET_CATEGORY_COL}' already exists in sheet.")
-
+            return True 
+        # Add the column to the sheet.
+        i = sheet.max_column + 1
+        sheet.insert_cols(i)
+        sheet.cell(row=1, column=i).value = BUDGET_CATEGORY_COL
+        # Set the column width to 20.
+        sheet.column_dimensions[sheet.cell(row=1, column=i).column_letter].width = 20
+        logger.info(f"Adding column '{BUDGET_CATEGORY_COL}' at index = {i}, "
+                    f"column_letter = '{sheet.cell(row=1, column=i).column_letter}'")
         logger.info(f"Completed checks for budget category.")
         return True
     except Exception as e:
@@ -87,7 +89,8 @@ def map_budget_category(sheet:Worksheet,src,dst) -> None:
         _ = p3u.is_str_or_none("src", src, raise_TypeError=True)
         _ = p3u.is_str_or_none("dst", dst, raise_TypeError=True)
         rules_count = category_map_count()
-        logger.info(f"Applying '{rules_count}' budget category mappings...")
+        logger.info(f"Applying '{rules_count}' budget category mappings "
+                    f"to {sheet.max_row-1} rows in sheet: '{sheet.title}' ")
         header_row = [cell.value for cell in sheet[1]] 
         if src in header_row:
             src_col_index = header_row.index(src) + 1
@@ -114,7 +117,6 @@ def map_budget_category(sheet:Worksheet,src,dst) -> None:
             dst_value = map_category(src_value)
             # Set the value in the destination column.
             sheet.cell(row=row_idx, column=dst_col_index).value = dst_value
-            # if dst_value != 'Other':
             logger.debug(f"Row {row_idx:04}: " 
                         f"({len(src_value):03})|{str(src_value):102}| -> " 
                         f"({len(dst_value):03})|{str(dst_value):40}|")

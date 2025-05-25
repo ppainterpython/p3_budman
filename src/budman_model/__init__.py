@@ -45,6 +45,7 @@ from .budget_categorization import (
 from .budget_category_mapping import (
     map_category,
     category_map_count,
+    category_map,
 )
 
 __all__ = [
@@ -60,5 +61,8 @@ __all__ = [
     "tryout_budget_model_template",
     "execute_worklow_categorization"
     "check_budget_model",
-    "__create_config_template__"
+    "map_budget_category",
+    "__create_config_template__",
+    "category_map_count",
+    "map_category",
 ]

@@ -1272,14 +1272,14 @@ class BudgetDomainModel(metaclass=SingletonMeta):
             raise
     #endregion WF_DATA_OBJECT (WF_DO) pseudo-property methods
     # ------------------------------------------------------------------------ +   
-    #region bsm_FI_WF Methods
-    def bsm_FI_WF_WORKBOOKS_load(self,
+    #region bsm_WORKBOOKS_LIST_load Methods
+    def bsm_WORKBOOKS_LIST_load(self,
                         wbl : WORKBOOK_LIST = None) -> LOADED_WORKBOOK_LIST: 
         """Load WORKBOOK_LIST returning a LOADED_WORKBOOK_LIST
         
-        A WORKBOOK_LIST has pairs of wb_name and wb_abs_path. Iterate the
+        A WORKBOOK_LIST has tuples of wb_name and wb_abs_path. Iterate the
         list and load each one. This is BSM-scope only, loads from the 
-        filesystem, no side effects.
+        filesystem, no side effects to the BDM or BDWD.
 
         Args:
             wbl (WORKBOOK_LIST): A list of tuples containing the workbook name
@@ -1309,26 +1309,38 @@ class BudgetDomainModel(metaclass=SingletonMeta):
             logger.error(m)
             raise
 
-    def bsm_FI_WF_WORKBOOKS_save(self,
-                fi_key : str, 
-                wf_key : str, 
-                wb_type : str): 
-        """Save all workbooks for a workflow to storage
+    def bsm_LOADED_WORKBOOKS_save(self,
+                                  lwbl : LOADED_WORKBOOK_LIST,
+                                  wbl : WORKBOOK_LIST) -> None: 
+        """Save LOADED_WORKBOOK_LIST to the filesystem.
         
-        For fi_key,wf_key,wb_type, save all workbooks of type wb_type.
+        A LOADED_WORKBOOK_LIST has tuples of wb_name and a loaded Workbook
+        object. Iterate the list, obtain the abs_path_str for each wb_name from 
+        the provided WORKBOOK_LIST, and save the workbook. This is BSM-scope 
+        only, saves to the filesystem, no side effects to the BDM or BDWD.
+
+        Args:
+            lwbl (LOADED_WORKBOOK_LIST): A list of tuples containing the 
+            workbook name and associated loaded Workbook object.
         
         Returns:
-            None: as success. Updates BDM_WORKING_DATA.BDWD_LOADED_WORKBOOKS 
-            property with the loaded workbooks.
+            None.
+
         Raises: exceptions from any errors.
         """
         try:
-            wbl = self.bdwd_LOADED_WORKBOOKS_get(fi_key, wf_key, wb_type)
-            if wbl is None:
+            if lwbl is None:
+                logger.warning("No loaded workbooks to save, lwbl arg was None.")
                 return
-            for wb_name, wb in wbl:
+            if wbl is None:
+                logger.warning("No workbooks abs_path_str, wbl arg was None.")
+                return None
+            for wb_name, wb in lwbl:
+                # Find the corresponding workbook path in the WORKBOOK_LIST.
+                for wbn, wb_path in wbl:
+                    if wbn == wb_name:
+                        break
                 wb.save(wb_path)
-                self.bdwd_LOADED_WORKBOOKS_add(wb_name, wb)
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
@@ -1466,7 +1478,7 @@ class BudgetDomainModel(metaclass=SingletonMeta):
     # ======================================================================== +
 
     # ======================================================================== +
-    #region    BDWD - Budget Domain Model Working Data methods
+    #region    BDWD - Budget Domain Model Working Data methods - DC Interface
     """ Budget Domain Model Working Data (BDWD) methods.
     BDWD methods are used to access the working data in the BDM. The working
     data is used by client packages for ViewModel, View, UX, CLI etc.
@@ -1610,8 +1622,13 @@ class BudgetDomainModel(metaclass=SingletonMeta):
         """
         try:
             self.bdwd_INITIALIZED()
-            p3u.str_empty(wb_name, raise_error = True)
-            p3u.str_empty(wb_abs_path_str,raise_TypeError=True)
+            p3u.is_str_or_none("wb_name", wb_name, raise_error = True)
+            p3u.is_str_or_none("wb_abs_path_str",wb_abs_path_str,raise_TypeError=True)
+            if self.bdwb_WORKBOOKS_member(wb_name):
+                # If the workbook is already a member, do not add it again.
+                m = f"Wb: '{wb_name}' already member of BDWD_WORKBOOKS."
+                logger.debug(m)
+                return None
             wbs_list = self.bdwd_WORKBOOKS_get()
             wbs_list.append((wb_name, wb_abs_path_str))
             logger.debug(f"Added ('{wb_name}', '{wb_abs_path_str}') "
@@ -1620,6 +1637,22 @@ class BudgetDomainModel(metaclass=SingletonMeta):
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
+            raise
+
+    def bdwb_WORKBOOKS_member(self, wb_name:str) -> bool: 
+        """Return True if wb_name is a member of DC.WORKBOOKS list."""
+        try:
+            _ = p3u.is_str_or_none("wb_name", wb_name, raise_TypeError=True)
+            # Reference the DC.WORKBOOKS property.
+            wbl = self.bdwd_WORKBOOKS_get()
+            if len(wbl) == 0:
+                return False
+            for target_wb_name, _ in wbl:
+                if target_wb_name == wb_name:
+                    return True
+            return False
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
             raise
 
     def bdwd_WORKBOOKS_resolve(self,initializing:bool=False) -> WORKBOOK_LIST:
@@ -1651,6 +1684,7 @@ class BudgetDomainModel(metaclass=SingletonMeta):
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
+
     def bdwd_WORKBOOK_load(self, wb_name) -> Workbook:
         """Load 1 workbook into the BDWD, based on current BDWD values.
 
@@ -1717,6 +1751,7 @@ class BudgetDomainModel(metaclass=SingletonMeta):
             wbl = self.bdm_FI_WF_WORKBOOK_LIST(fi_key, wf_key, wb_type)
             wb_ap = [val for key, val in wbl if key == wb_name][0]
             if wb_ap is None:
+                # This wb_name is not known in the BDM.
                 m = f"Workbook '{wb_name}' not found in BDWD_WORKBOOKS."
                 logger.error(m)
                 raise ValueError(m)
@@ -1728,7 +1763,33 @@ class BudgetDomainModel(metaclass=SingletonMeta):
             logger.error(m)
             raise
 
-    #endregion bdwd_LOADED_WORKBOOKS() methods
+    def bdwd_WORKBOOK_abs_path_str(self, wb_name:str) -> str:
+        """Get the absolute path of a workbook in the BDWD_WORKBOOKS.
+
+        Args:
+            wb_name (str): The name of the workbook to get the absolute path for.
+
+        Returns:
+            str: The absolute path of the workbook file.
+        
+        Raises:
+            ValueError: if the workbook is not found in BDWD_WORKBOOKS.
+        """
+        _ = self.bdwd_INITIALIZED()
+        try:
+            _ = p3u.is_str_or_none("wb_name", wb_name, raise_TypeError=True)
+            wbl = self.bdwd_WORKBOOKS_get()
+            wb_ap = [val for key, val in wbl if key == wb_name][0]
+            if wb_ap is None:
+                m = f"Workbook '{wb_name}' not found in BDWD_WORKBOOKS."
+                logger.error(m)
+                raise ValueError(m)
+            return wb_ap
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise
+    #endregion bdwd_WORKBOOKS() methods
     # ------------------------------------------------------------------------ +
     #region bdwd_LOADED_WORKBOOKS() methods
     def bdwd_LOADED_WORKBOOKS_count(self) -> int:
@@ -1757,6 +1818,10 @@ class BudgetDomainModel(metaclass=SingletonMeta):
     def bdwd_LOADED_WORKBOOKS_add(self,wb_name : str, wb : Workbook) -> None:
         """Add an entry to BDWD_LOADED_WORKBOOKS in the BDM_WORKING_DATA.
 
+        The BDWD_LOADED_WORKBOOKS list holds tuples of workbook name and
+        the loaded Workbook object. When adding an entry, if the wb_name is 
+        already in the list, then do not add it again.
+
         Returns:
             None: on success.
         Raises:
@@ -1768,9 +1833,14 @@ class BudgetDomainModel(metaclass=SingletonMeta):
         """
         try:
             self.bdwd_INITIALIZED()
-            p3u.str_empty(wb_name, raise_error = True)
+            p3u.is_str_or_none("wb_name",wb_name, raise_TypeError = True)
             p3u.is_obj_of_type("wb", wb, Workbook, raise_TypeError=True)
             lwbs_list = self.bdwd_LOADED_WORKBOOKS_get()
+            if self.bdwb_LOADED_WORKBOOKS_member(wb_name):
+                # If the workbook is already loaded, do not add it again.
+                m = f"Wb: '{wb_name}' already member of BDWD_LOADED_WORKBOOKS."
+                logger.debug(m)
+                return None
             lwbs_list.append((wb_name, wb))
             logger.debug(f"Added ('{wb_name}', '{str(wb)}') "
                          f"to BDWD_LOADED_WORKBOOKS.")
@@ -1779,11 +1849,28 @@ class BudgetDomainModel(metaclass=SingletonMeta):
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
+    
+    def bdwb_LOADED_WORKBOOKS_member(self, wb_name:str) -> bool: 
+        """Return True if wb_name is a member of DC.LOADED_WORKBOOKS list."""
+        try:
+            _ = p3u.is_str_or_none("wb_name", wb_name, raise_TypeError=True)
+            # Reference the DC.LOADED_WORKBOOKS property.
+            lwbl = self.bdwd_LOADED_WORKBOOKS_get()
+            if len(lwbl) == 0:
+                return False
+            for l_wb_name, _ in lwbl:
+                if l_wb_name == wb_name:
+                    return True
+            return False
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+
     #endregion bdwd_LOADED_WORKBOOKS() methods
     # ------------------------------------------------------------------------ +
     #region bdwd_FI methods
-    def bdwd_FI_WORKBOOKS_load(self, fi_key : str, wf_key : str,
-                               wb_type : str) -> LOADED_WORKBOOK_LIST:
+    def bdwd_FI_WORKBOOKS_load(self, fi_key : str, wf_key : str, wb_type : str
+                                                    ) -> LOADED_WORKBOOK_LIST:
         """Load wbs for fi_key,wf_key,wb_type, merge to BDWD_LOADED_WORKBOOKS.
 
         For a given fi_key, wf_key and wb_type, load the workbooks from the
@@ -1813,20 +1900,21 @@ class BudgetDomainModel(metaclass=SingletonMeta):
                          f"FI_KEY('{fi_key}') WF_KEY('{wf_key}') "
                          f"WB_TYPE('{wb_type}')")
             new_lwbl : LOADED_WORKBOOK_LIST = []
-            new_lwbl = self.bsm_FI_WF_WORKBOOKS_load(wbl)
+            new_lwbl = self.bsm_WORKBOOKS_LIST_load(wbl)
             new_count = len(new_lwbl) if new_lwbl is not None else 0
             logger.debug(f"Loaded {new_count} workbooks for "
                          f"FI_KEY('{fi_key}') WF_KEY('{wf_key}') "
                          f"WB_TYPE('{wb_type}')")
-            if new_lwbl is None or len(new_lwbl) == 0: return []
             bdwd_lwbs = self.bdwd_LOADED_WORKBOOKS_get()
             bdwd_lwbs_count = len(bdwd_lwbs) if bdwd_lwbs is not None else 0
+            if new_lwbl is None or len(new_lwbl) == 0: return bdwd_lwbs
             # TODO: How to handle duplicates?
-            bdwd_lwbs.extend(new_lwbl)
+            for new_wb_name, new_wb in new_lwbl:
+                self.bdwd_LOADED_WORKBOOKS_add(new_wb_name, new_wb)
             logger.debug(f"Added {new_count} to "
                          f"BDWD_LOADED_WORKBOOKS({bdwd_lwbs_count}) "
                          f"total = {len(bdwd_lwbs)}")
-            return bdwd_lwbs
+            return self.bdwd_LOADED_WORKBOOKS_get()
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
@@ -1837,7 +1925,19 @@ class BudgetDomainModel(metaclass=SingletonMeta):
         """Save workbooks for an FI workflow."""
         try:
             self.bdwd_INITIALIZED()
-            self.bsm_FI_WF_WORKBOOKS_save(fi_key, wf_key, wb_type)
+            lwbl = self.bdwd_LOADED_WORKBOOKS_get()
+            if lwbl is None or len(lwbl) == 0:
+                logger.debug(f"No loaded workbooks to save for "
+                             f"FI_KEY('{fi_key}') WF_KEY('{wf_key}') "
+                             f"WB_TYPE('{wb_type}')")
+                return
+            wbl = self.bdwd_WORKBOOKS_get()
+            if wbl is None or len(wbl) == 0:
+                logger.debug(f"No workbooks to save for "
+                             f"FI_KEY('{fi_key}') WF_KEY('{wf_key}') "
+                             f"WB_TYPE('{wb_type}')")
+                return
+            self.bsm_LOADED_WORKBOOKS_save(lwbl, wbl)
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)

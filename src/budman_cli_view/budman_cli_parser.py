@@ -154,6 +154,15 @@ class BudgetManagerCLIParser():
                 action="store", 
                 default='all',
                 help="Workbook reference, name or number from show workbooks.")
+            self.show_wb_subcmd_parser.add_argument(
+                "-i", "--info", 
+                nargs="?", 
+                required=False, 
+                dest="wb_info",
+                action="store",
+                const = 'info', 
+                default = None,  # info | verbose
+                help="Show additional information about the workbook.")
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise
@@ -283,9 +292,22 @@ class BudgetManagerCLIParser():
     def workflow_cmd_parser_setup(self) -> None:
         """Apply workflows to data in Budget Manager."""
         try:
+            # Workflow subcommands: categorization, reload
             self.workflow_cmd_subparsers = self.workflow_cmd_parser.add_subparsers(
                 dest="workflow_cmd")
-            # val parse_only subcommand
+            # Workflow subcommand: reload
+            self.workflow_reload_subcmd_parser = self.workflow_cmd_subparsers.add_parser(
+                "reload",
+                aliases=["r"], 
+                help="Reload modules.")
+            self.workflow_reload_subcmd_parser.set_defaults(
+                workflow_cmd="reload")
+            self.workflow_reload_subcmd_parser.add_argument(
+                "reload_target", nargs="?",
+                action="store", 
+                default='category_map',
+                help="Name of module to reload, or 'all' re-loadable.")
+            # workflow categorization subcommand
             self.workflow_categorization_subcmd_parser = self.workflow_cmd_subparsers.add_parser(
                 "categorization",
                 aliases=["cat", "CAT", "c"], 
@@ -297,6 +319,11 @@ class BudgetManagerCLIParser():
                 action="store", 
                 default='all',
                 help="Workbook reference, name or number of a loaded workbook.")
+            # -r reload argument for the workflow command
+            self.workflow_cmd_parser.add_argument(
+                "-r", nargs="?", dest="reload", 
+                default= "all",
+                help="FI key value.") 
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise

@@ -7,7 +7,7 @@ class, serving as the ViewModel for the Budget Manager application.
 # ---------------------------------------------------------------------------- +
 #region Imports
 # python standard library modules and packages
-import logging, os, getpass, time, copy
+import logging, os, getpass, time, copy, importlib
 from pathlib import Path
 from typing import List, Type, Generator, Dict, Tuple, Any, Callable
 
@@ -24,6 +24,8 @@ from budman_model import P2, P4, P6, P8, P10
 #region Globals and Constants
 logger = logging.getLogger(settings[p3bm.APP_NAME])
 WB_REF = "wb_ref"
+RELOAD_TARGET = "reload_target"
+CATEGORY_MAP = "category_map"
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
@@ -147,6 +149,7 @@ class BudgetManagerViewModelInterface():
                 "show_cmd_workbooks": self.WORKBOOKS_show_cmd,
                 "load_cmd_workbooks": self.WORKBOOKS_load_cmd,
                 "workflow_cmd_categorization": self.WORKFLOW_categorization_cmd,
+                "workflow_cmd_reload": self.WORKFLOW_reload_cmd,
             }
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
@@ -989,6 +992,56 @@ class BudgetManagerViewModelInterface():
             logger.error(p3u.exc_err_msg(e))
             raise
     #endregion WORKFLOW_categorization_cmd() method
+    # ------------------------------------------------------------------------ +
+    #region WORKFLOW_reload_cmd() method
+    def WORKFLOW_reload_cmd(self, cmd : Dict) -> Tuple[bool, str]:
+        """Reload code modules to support dev.
+
+        A WORKFLOW_reload_cmd command uses the reload_target value in the cmd. 
+        Value is a module name string or 'all'.
+
+        Arguments:
+            cmd (Dict): A valid BudMan View Model Command object. For this
+            command, must contain workflow_cmd = 'reload' resulting in
+            a full command key of 'workflow_cmd_reload'.
+
+        Returns:
+            Tuple[success : bool, result : Any]: The outcome of the command 
+            execution. If success is True, result contains result of the 
+            command, if False, a description of the error.
+            
+        Raises:
+            RuntimeError: A description of the
+            root error is contained in the exception message.
+        """
+        try:
+            pfx = f"{self.__class__.__name__}.{self.FI_init_cmd.__name__}: "
+            if p3u.is_not_obj_of_type("cmd",cmd,dict,pfx):
+                m = f"Invalid cmd object, no action taken."
+                logger.error(m)
+                raise RuntimeError(f"{pfx}{m}")
+            logger.info(f"Start: ...")
+            reload_target = cmd.get(RELOAD_TARGET, None)
+            if reload_target is None:
+                m = f"reload_target is None, no action taken."
+                logger.error(m)
+                raise RuntimeError(f"{pfx}{m}")
+            r = f"Budget Manager Workflow: reload '{reload_target}'\n"
+            if reload_target == CATEGORY_MAP:
+                cmc = p3bm.category_map_count()
+                m = f"{P4}Reloading target: '{reload_target}' count = {cmc}"
+                logger.info(m)
+                r += f"{m}\n"
+                importlib.reload(p3bm.budget_category_mapping)
+                cmc = p3bm.category_map_count()
+                m = f"{P4}reloaded modules for target: '{reload_target}' count = {cmc}\n"
+                logger.info(m)
+                r += f"{m}\n"
+            return True, r
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion WORKFLOW_reload_cmd() method
     # ------------------------------------------------------------------------ +
     #                                                                          +
     #endregion Command Binding Implementations

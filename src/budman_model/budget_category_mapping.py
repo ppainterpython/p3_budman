@@ -59,9 +59,13 @@ category_map = {
     r'(?i)\bCULLINGAN\b': 'Grape Cove.Culligan',
     r'(?i)\bRIGHTSPACE\sSTORAGE\b': 'Housing.Storage Unit',
     r'(?i)\bATT\b': 'Telecom.Cellular',
+    r'(?i)\bVZ\sWIRELESS\sVE': 'Telecom.Verizon',
     r'(?i)\bFSP\*ABC\sHOME\s&\sCOMMERCIAL': 'Housing.Pest Control',
     r'(?i)\bRING\sBASIC\sPLAN\b': 'Castle Pines.Ring Security Service',
     r'(?i)\bSTRAND\sBROTHERS\sSERVICE\b': 'Castle Pines.Maintenance.HVAC',
+    r'(?i)\bWHITTLESEY\sLANDSCAPE-11\s': 'Housing.Lawn Care',
+    r'(?i)\bTHE\sGRASS\sOUTLET': 'Housing.Lawn Care',
+    r'(?i)\bJack\sBrown\sCleaners': 'Housing.Dry Cleaning',
     # Auto
     r'(?i)\bDISCOUNT-TIRE-CO\b': 'Auto.Tires',
     r"(?i)\bO'REILLY\b": "Auto.Maintenance.O'Reilly",
@@ -99,8 +103,11 @@ category_map = {
     r'(?i)\bFINLEYS\sAVERY\sRANCH\b': 'Health and Fitness.Haircut Paul',
     r'(?i)\bCATHY\s\bDUNFORD\b': 'Health and Fitness.Coach Cathy',
     r'(?i)\bSNICOLA\s\bMCKERLIE\b': 'Health and Fitness.Nicola McKerlie',
+    r'(?i)\bQuest\s*Diagnostic\s': 'Health and Fitness.Lab Work',
+    r'(?i)\bLABORATORY\s*CORPORATION\s': 'Health and Fitness.Lab Work',
+    r'(?i)\bNEW\s*TECH\s*TENNIS': 'Health and Fitness.Tennis',
     # Streaming and Subscriptions
-    r'(?i)\bID:ANCESTO*RYCOM\b': 'Subscription.Ancestory-com',
+    r'(?i)\bID:ANCESTO*RYCOM\b': 'Subscription.Ancestry-com',
     r'(?i).*TEAMVIEWER.*': 'Subscription.TeamViewer',
     r'(?i)\bSXM\*SIRIUSXM\.COM/ACCT\b': 'Subscription.SiriusXM',
     r'(?i)\bID:ADOBE\sINC\b': 'Subscription.Adobe',
@@ -115,6 +122,8 @@ category_map = {
     r'(?i)\bID:NETFLIX\.COM\b': 'Subscription.Netflix',
     r'(?i)\bID:DROPBOX\b': 'Subscription.DropBox',
     r'(?i)\bwikimedia\b': 'Subscription.WikiPedia',
+    r'(?i)\bPAYPAL\b.*ID:CLEVERBRIDG': 'Subscription.Software',
+    r'(?i)\bCHECKCARD\b.*APPLE\sCOM\sBILL': 'Subscription.Apple',
     # Restaurants, Door Dash, Eating Out, Snacks
     r'(?i)\bID:STARBUCKS\b': 'Restaurants.Starbucks',
     r'(?i)\bSAVERS\b': 'Restaurants.Savers',
@@ -134,6 +143,7 @@ category_map = {
     r'(?i)\bTHE\s*LEAGUE\s*KITCHEN\b': 'Restaurants.The League Kitchen',
     r"(?i)\bTONY\sC'S\sCOAL\sFIRED\b": "Restaurants.Tony C's Coal Fired",
     r'(?i)\bTST\*SANTIAGOS\s*TEX\s*MEX\b': 'Restaurants.Santiagos Tex Mex',
+    r'(?i)\bPOTBELLY\s': 'Restaurants.PotBelly',
     # Shopping - Amazon, Apple, etc.
     r'(?i)\bID:RUNNINGWARE\b': 'Shopping.Clothing.Running Warehouse',
     r'(?i)\bID:UNDERWATER\sUNDE\b': 'Shopping.Apple',
@@ -150,15 +160,19 @@ category_map = {
     r'(?i)\bAMAZON\.com\*.*\b': 'Shopping.Amazon',
     r'(?i)\bAMAZON\s(MARKETPLA\s|MKTPLACE\s)\b': 'Shopping.Amazon Marketplace',
     r'(?i)\bAMAZON\s\b(DIGITAL|DIGI).*?\b(LINKEDIN|LINKWA)\b': 'Shopping.Amazon Digital',
+    r'(?i)\bAMAZON\s\b(DIGITAL|DIGI).*': 'Shopping.Amazon Digital',
     r'(?i)\b.*APPLE\.COM.*\b': 'Shopping.Apple',
     r'(?i)\bCIRCLE\sK\b': 'Shopping.Circle K',
     r'(?i)\b7-ELEVEN\s.*?MOBILE\sPURCHASE\b': 'vape',
-    r'(?i)\b7-ELEVEN\b': 'Shoppint.7-Eleven',
+    r'(?i)\b7-ELEVEN\b': 'Shopping.7-Eleven',
     r'(?i)\bMICHAELS\sSTORES\b': 'Shopping.Michaels',
     r'(?i)\bWALGREENS\s*(STORE)*\b': 'Shopping.Walgreens',
+    r'(?i)\bPAYPAL\s*(STORE)*\b': 'Shopping.Walgreens',
+    r'(?i)\bPAYPAL\s': 'Shopping.PayPal',
+    r'(?i)\bSMART\sSTOP': 'Shopping.Misc',
     # Pets
     r'(?i)\bPETSUITES\sGREAT\sOAKS\b': 'Pets.Boarding',
-    r'(?i)\bGREAT\sOAKS\sANIMAL\b': 'Pets.Veternary',
+    r'(?i)\bGREAT\sOAKS\sANIMAL\b': 'Pets.Veterinary',
     r'(?i)\bID:CHEWY\sINC\b': 'Pets.Dog Food',
     # Professional and Historical Organizations
     r'(?i)\bID:INSTITUTEEL\b': 'Professional.IEEE',
@@ -168,12 +182,14 @@ category_map = {
     r'(?i)\bEXECUTIVE\sCAREER\sUPGRA\b': 'Work-related.ECU Recruiting',
     r'(?i)\bOTTER\.AI\b': 'Work-related.OTTER-AI',
     r'(?i)\bID:LINKEDIN\b': 'Work-related.Linked In',
+    r'(?i)esferas.io': 'Work-related.ECU Recruiting',
     # Income
     r'(?i)\bInterest\sEarned\b': 'Income.Interest',
     r'(?i)\bGerson\sLehrman\sG\b': 'Income.Consulting.GL Group',
-    r'(?i)\bHP\sINC*?\bPAYROLL\b': 'Income.HP Inc.',
-    r'(?i)\bHP\sINC\.\s*\bDES:PAYROLL\b': 'Income.HP Inc.',
+    r'(?i)\bHP\sINC*?\bPAYROLL\b': 'Income.HP Inc',
+    r'(?i)\bHP\sINC\.\s*\bDES:PAYROLL\b': 'Income.HP Inc',
     r'(?i)\bTWC-BENEFITS\b': 'Income.TWC.',
+    r'(?i)\bBank\s*of\s*America.*CASHREWARD': 'Income.Bank Reward',
     # Banking, Finance and Taxes 
     r'(?i)\bCheck\s*x*\d*\b': 'Banking.Checks to Categorize',
     r'(?i)\bPreferred\s*Rewards.*\b': 'Banking.Preferred Rewards',
@@ -188,6 +204,16 @@ category_map = {
     r'(?i)\bBKOFAMERICA\sATM.*\bWITHDRWL\b': 'Banking.ATM',
     r'(?i)\bBKOFAMERICA\sMOBILE.*\bDEPOSIT\b': 'Banking.Mobile Deposit',
     r'(?i)\bGITKRAKEN\sSOFTWARE\b': 'Crypto.Gitkraken',
+    r'(?i)\bIRS\s': 'Taxes.Federal',
+    r'(?i)\bINTUIT\s': 'Taxes.Federal',
+    # Merrill Lynch transactions
+    r'(?i)\bINTEREST:\s': 'Banking.Merrill',
+    r'(?i)\bReinvestment\s*Program\s*': 'Banking.Merrill',
+    r'(?i)\bDIVIDEND:\s': 'Banking.Merrill',
+    r'(?i)\bBANK\sINTEREST:\sML\sBANK\s': 'Banking.Merrill',
+    r'(?i)\bPURCHASE:\s': 'Banking.Merrill',
+    r'(?i)\bREINVESTMENT\s*SHARE\(S\):': 'Banking.Merrill',
+    r'(?i)\bAdvisory\s*Program\s*Fee\s*INV.*': 'Banking.Merrill.Advisory Fee',
     # Credit Card Payments
     r'(?i)\bSYNCHRONY\sBANK\b': 'Credit Cards.Synchrony Bank',
     r'(?i)\bOnline\sBanking\spayment\sto\sCRD\b': 'Credit Cards.Bank of America',
@@ -233,6 +259,7 @@ category_map = {
     r'(?i)\bATGPay\sonline\b': 'Unknown.ATGPay',
     r'(?i)\bWISE\s*US\s*INC\b': 'Unknown.Wise Inc.',
     r'(?i)\bPAYPAL\s*DES:TRANSFER\s*ID:x*\d*\s*\b': 'Unknown.PayPal',
+    r'(?i)\bFIT\s*ROUND\s*LAKE-RURAL': 'Unknown',
 }
 #endregion Category Map
 # ---------------------------------------------------------------------------- +
