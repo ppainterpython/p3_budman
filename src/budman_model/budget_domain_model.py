@@ -1480,6 +1480,13 @@ class BudgetDomainModel(metaclass=SingletonMeta):
     # ======================================================================== +
     #region    BDWD - Budget Domain Model Working Data methods - DC Interface
     """ Budget Domain Model Working Data (BDWD) methods.
+
+    The BDWD is intended to serve as a transient data store for the
+    BudgetDomainModel (BDM) and BudgetStorageModel (BSM). Also, it is intended
+    to be a concrete implementation of the BudgetManagerDataContextInterface 
+    (BudManDCI). So, the BDWD methods are a superset of the BudManDCI methods. 
+    All BudManDCI required methods are mapped to the BDWD methods.
+
     BDWD methods are used to access the working data in the BDM. The working
     data is used by client packages for ViewModel, View, UX, CLI etc.
     It is transient data derived from the BDM/BSM operations.
@@ -1789,6 +1796,39 @@ class BudgetDomainModel(metaclass=SingletonMeta):
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
+    
+    def bdwd_WB_REF_validate(self, wb_ref:str|int) -> bool:
+        """Validate a workbook reference in the BDWD_WORKBOOKS.
+
+        Args:
+            wb_ref (str|int): The workbook reference to validate. 
+                If str, it is the workbook name or the index digit. 
+                If int, it is the index.
+
+        Returns:
+            bool: True if the workbook reference is valid, False otherwise.
+        
+        Raises:
+            TypeError: if wb_ref is not a str or int.
+        """
+        _ = self.bdwd_INITIALIZED()
+        try:
+            if isinstance(wb_ref, str):
+                if wb_ref.isdigit():
+                    # If the wb_ref is a digit, treat it as an index.
+                    wb_ref_index = int(wb_ref)
+                    wbl = self.bdwd_WORKBOOKS_get()
+                    return 0 <= wb_ref_index < len(wbl)
+                return self.bdwb_WORKBOOKS_member(wb_ref)
+            elif isinstance(wb_ref, int):
+                wbl = self.bdwd_WORKBOOKS_get()
+                return 0 <= wb_ref < len(wbl)
+            else:
+                raise TypeError(f"wb_ref must be str or int, got {type(wb_ref)}")
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise
     #endregion bdwd_WORKBOOKS() methods
     # ------------------------------------------------------------------------ +
     #region bdwd_LOADED_WORKBOOKS() methods
@@ -2004,6 +2044,23 @@ class BudgetDomainModel(metaclass=SingletonMeta):
     #endregion bdwd_INITIALIZED methods
     # ------------------------------------------------------------------------ +
     #endregion BDWD - Budget Domain Model Working Data methods
+    # ======================================================================== +
+
+    # ======================================================================== +
+    #region    BDWD - BudMan DataContext Interface methods.
+    # ------------------------------------------------------------------------ +
+    #region dc_WB_REF_validate() method
+    def dc_WB_REF_validate(self, wb_ref : str) -> bool: 
+        """Return True if the wb_ref is valid."""
+        try:
+            # Budget Domain Model Working Data (BDWD) validates wb_ref.
+            return self.bdwd_WB_REF_validate(wb_ref)
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion dc_WB_REF_validate() method
+    # ------------------------------------------------------------------------ +
+    #endregion BDWD - BDWD - BudMan DataContext Interface methods.
     # ======================================================================== +
 
 # ---------------------------------------------------------------------------- +

@@ -36,7 +36,8 @@
 			"testickle",
 			"testpaths",
 			"timespec",
-			"tryit"
+			"tryit",
+			"ZOOMCOMM"
 		],
 		"files.autoSave": "onFocusChange",
 		"python.analysis.exclude": [

@@ -132,7 +132,7 @@ category_map = {
     r'(?i)\bTST\*LA\sMARGARITA\b': 'Restaurants.La Margarita',
     r'(?i)\bSURF\sAND\sTURF\b': 'Restaurants.Surf and Turf',
     r'(?i)\bCASA\sOLE\b': 'Restaurants.Casa Ole',
-    r'(?i)\bID:DOORDASH\b': 'Resaurants.Door Dash',
+    r'(?i)\bID:DOORDASH\b': 'Restaurants.Door Dash',
     r'(?i)\bID:DOORDASHINC\b': 'Restaurants.Door Dash',
     r'(?i)\s\*DOORDASH\b': 'Restaurants.Door Dash',
     r'(?i)\bDAIRY\sQUEEN\b': 'Restaurants.Dairy Queen',

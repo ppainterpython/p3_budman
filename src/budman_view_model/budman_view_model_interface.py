@@ -23,7 +23,16 @@ from budman_model import P2, P4, P6, P8, P10
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
 logger = logging.getLogger(settings[p3bm.APP_NAME])
+FI_KEY = p3bm.FI_KEY
+WF_KEY = p3bm.WF_KEY
+WB_NAME = p3bm.WB_NAME
+WB_TYPE = p3bm.WB_TYPE
+ALL_KEY = p3bm.ALL_KEY
 WB_REF = "wb_ref"
+WB_INFO = "wb_info"
+WB_INFO_LEVEL_INFO = "info"
+WB_INFO_LEVEL_VERBOSE = "verbose"
+WB_INFO_VALID_LEVELS = [WB_INFO_LEVEL_INFO, WB_INFO_LEVEL_VERBOSE]
 RELOAD_TARGET = "reload_target"
 CATEGORY_MAP = "category_map"
 # ---------------------------------------------------------------------------- +
@@ -90,6 +99,18 @@ class BudgetManagerViewModelInterface():
             raise ValueError("data_context must be a dictionary.")
         self._data_context = value
     @property
+    def DC(self) -> Dict:
+        """Return the data context (DC) dictionary.
+        This is an alias for the data_context property."""
+        return self._data_context
+    @DC.setter
+    def DC(self, value: Dict) -> None:
+        """Set the data context (DC) dictionary.
+        This is an alias for the data_context property."""
+        if not isinstance(value, dict):
+            raise ValueError("data_context must be a dictionary.")
+        self._data_context = value
+    @property
     def cmd_map(self) -> Dict[str, Callable]:
         """Return the command map dictionary."""
         return self._cmd_map
@@ -124,7 +145,7 @@ class BudgetManagerViewModelInterface():
                 raise ValueError("BudgetModel is not initialized.")
             # Initialize the data context. This View Model uses a DC object from
             # the Model which places data in it.
-            self.data_context = self.budget_model.data_context
+            self.DC = self.budget_model.data_context
             # Initialize the command map.
             self.initialize_cmd_map()  # TODO: move to DataContext class
             self.initialized = True
@@ -440,33 +461,40 @@ class BudgetManagerViewModelInterface():
                 False, the message will contain an error message.
         """
         try:
-            # Extract a valid, full cmd key from the cmd, or error out.
-            success, result = self.BMVM_full_cmd_key(cmd)
+            # Validate full cmd key from the cmd, or error out.
+            success, result, cmd_key = self.BMVM_full_cmd_key(cmd)
             if not success: return False, result
             full_cmd_key = result
-            # Have a valid full_cmd_key, now check the arguments.
-            success, result = self.BMVM_cmd_key(cmd)
-            if not success: return False, result
-            cmd_key = result
+            # Validate the cmd arguments.
             for key, value in cmd.items():
                 if key == cmd_key: continue
-                elif key == "fi_key":
+                elif key == FI_KEY:
                     if not self.dc_FI_KEY_validate(value):
                         m = f"Invalid fi_key value: '{value}'."
                         logger.error(m)
                         return False, m
                     continue
-                elif key == "wb_name": continue
-                elif key == "wf_key":
+                elif key == WB_NAME: continue
+                elif key == WF_KEY:
                     if not self.dc_WF_KEY_validate(value):
                         m = f"Invalid wf_key value: '{value}'."
                         logger.error(m)
                         return False, m
-                    if value == p3bm.ALL_KEY:
+                    if value == ALL_KEY:
                         logger.warning(f"wf_key: '{p3bm.ALL_KEY}' not implemented."
                                     f" Defaulting to {p3bm.BDM_WF_CATEGORIZATION}.")
                         cmd[key] = p3bm.BDM_WF_CATEGORIZATION
                     continue
+                elif key == WB_REF:
+                    if not self.dc_WB_REF_validate(value):
+                        m = f"Invalid wb_ref level: '{value}'."
+                        logger.error(m)
+                        return False, m
+                elif key == WB_INFO:
+                    if not self.BMVM_cmd_WB_INFO_LEVEL_validate(value):
+                        m = f"Invalid wb_info level: '{value}'."
+                        logger.error(m)
+                        return False, m
                 else:
                     m = f"Unchecked argument key: '{key}': '{value}'."
                     logger.debug(m)
@@ -478,7 +506,13 @@ class BudgetManagerViewModelInterface():
     #endregion BMVM_validate_cmd() Command Processing method
     #region BMVM_cmd_key() Command Processing method
     def BMVM_cmd_key(self, cmd : Dict = None) -> Tuple[bool, str]:
-        """Extract and return the cmd key from cmd."""
+        """Validate a cmd_key is present in the cmd, return it.
+                
+        returns:
+            Tuple[success: bool, result: str: 
+                success = True: result = valid full_cmd_key value, cmd_key value.
+                success = False: result = an error message.
+        """
         try:
             if not self.initialized:
                 m = f"{self.__class__.__name__} is not initialized."
@@ -495,6 +529,7 @@ class BudgetManagerViewModelInterface():
                 m = f"No command key found in: {str(cmd)}"
                 logger.error(m)
                 return False, m
+            # Success, return the cmd_key.
             return True, cmd_key
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
@@ -502,25 +537,62 @@ class BudgetManagerViewModelInterface():
     #endregion BMVM_cmd_key() Command Processing method
     #region BMVM_full_cmd_key() Command Processing method
     def BMVM_full_cmd_key(self, cmd : Dict = None) -> Tuple[bool, str]:
-        """Extract and return full cmd key from cmd, if subcommand given."""
+        """Validate a full cmd key with subcommand if included.
+        
+        returns:
+            Tuple[success: bool, result: str, cmd_key: str|None]: 
+                A tuple containing a boolean indicating success or failure. 
+                True: result = valid full_cmd_key value, cmd_key value.
+                False: result = an error message.
+        """
         try:
             # Extract a cmd key from the cmd, or error out.
             success, result = self.BMVM_cmd_key(cmd)
-            if not success: return False, result
+            if not success: return False, result, None
             cmd_key = result
             # Acquire sub-command key if present.
             sub_cmd = cmd[cmd_key]
+            # Construct full_cmd_key from cmd_key and sub_cmd (may be None).
             full_cmd_key = cmd_key + '_' + sub_cmd if p3u.str_notempty(sub_cmd) else cmd_key
-            # Check the cmd_key against the command map.
+            # Validate the full_cmd_key against the command map.
             if full_cmd_key not in self.cmd_map:
                 m = f"Command key '{full_cmd_key}' not found in command map."
                 logger.error(m)
-                return False, m
-            return True, full_cmd_key
+                return False, m, None
+            return True, full_cmd_key, cmd_key
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
     #endregion BMVM_full_cmd_key() Command Processing method
+    #region BMVM_cmd_exception() Command Processing method
+    def BMVM_cmd_WB_INFO_LEVEL_validate(self, info_level) -> bool:
+        """Return True if info_level is a valid value."""
+        try:
+            return info_level == ALL_KEY or info_level in WB_INFO_VALID_LEVELS
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise
+    #endregion BMVM_cmd_exception() Command Processing method
+    #region BMVM_cmd_exception() Command Processing method
+    def BMVM_cmd_exception(self, e : Exception=None) -> Tuple[bool, str]:
+        """Handle cmd exceptions.
+        
+        returns:
+            Tuple[False, Error Message: str] 
+        """
+        try:
+            # Extract a cmd key from the cmd, or error out.
+            if e is None:
+                e = RuntimeError("Exception arg 'e' was None.")
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            return False, m
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            return False, m
+    #endregion BMVM_cmd_exception() Command Processing method
     # ------------------------------------------------------------------------ +
     #endregion Command Processing methods
     # ------------------------------------------------------------------------ +
@@ -843,6 +915,7 @@ class BudgetManagerViewModelInterface():
                 raise RuntimeError(f"{pfx}{m}")
             logger.info(f"Start: ...")
             wb_ref = cmd.get(WB_REF, None)
+            wb_info = cmd.get(WB_INFO, None)
             if wb_ref is None:
                 m = f"wb_ref is None, no action taken."
                 logger.error(m)
@@ -860,8 +933,9 @@ class BudgetManagerViewModelInterface():
                     r += f"{P2}{i:>2} {l} {wb_name:<40} '{wb_ap}'\n"
             return True, r
         except Exception as e:
-            logger.error(p3u.exc_err_msg(e))
-            raise
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            return False, m
     #endregion DATA_CONTEXT_show_cmd() method
     # ------------------------------------------------------------------------ +
     #region WORKBOOKS_load_cmd() method
@@ -1108,45 +1182,33 @@ class BudgetManagerViewModelInterface():
     # ======================================================================== +
     #                                                                          +
     # ------------------------------------------------------------------------ +
-    #region Data Context Interface methods
+    #region Data Context (DC) Object binding (client sdk) methods
     # ------------------------------------------------------------------------ +
     #region get_DC() method
-    def get_DC(self) -> Dict:
-        """Return the Data Context for the ViewModel.
-
-        This method returns the Data Context for the ViewModel. The Data
-        Context is a dictionary that contains all of the data for the
-        ViewModel. It is used to bind the ViewModel to the View.
-        """
+    def get_DC(self) -> Any:
+        """Return the Data Context for the ViewModel."""
         try:
-            # Reference the BDWD_LOADED_WORKBOOKS.
-            return self.budget_model.bdwd_LOADED_WORKBOOKS_get()
+            return self.DC
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
     #endregion get_DC() method
     # ------------------------------------------------------------------------ +
     #region set_DC() method
-    def set_DC(self, dc : Dict) -> None:
-        """Set the Data Context for the ViewModel.
-
-        This method sets the Data Context for the ViewModel. The Data
-        Context is a dictionary that contains all of the data for the
-        ViewModel. It is used to bind the ViewModel to the View.
-        """
+    def set_DC(self, dc : Any) -> None:
+        """Set the Data Context (DC) object binding for the ViewModel."""
         try:
-            # Reference the BDWD_LOADED_WORKBOOKS.
-            self.budget_model.bdwd_LOADED_WORKBOOKS_set(dc)
+            self.DC = dc
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
     #endregion set_DC() method
     # ------------------------------------------------------------------------ +
-    #endregion Data Context Interface methods
+    #endregion Data Context (DC) Object binding (client sdk) methods
     # ------------------------------------------------------------------------ +
     #                                                                          +
     # ------------------------------------------------------------------------ +
-    #region Data Context Properties                                            +
+    #region BudMan Data Context Interface (client sdk) Properties                                            +
     #                                                                          +
     # ------------------------------------------------------------------------ +
     def _valid_DC(self) -> Dict:
@@ -1163,123 +1225,112 @@ class BudgetManagerViewModelInterface():
         """Return the value of the DC_INITIALIZED attribute."""
         dc = self._valid_DC()
         if p3bm.DC_INITIALIZED not in dc:
-            self.data_context[p3bm.DC_INITIALIZED] = False
-        return self.data_context[p3bm.DC_INITIALIZED]
+            self.DC[p3bm.DC_INITIALIZED] = False
+        return self.DC[p3bm.DC_INITIALIZED]
     @dc_INITIALIZED.setter
     def dc_INITIALIZED(self, value: bool) -> None:
         """Set the value of the DC_INITIALIZED attribute."""
         dc = self._valid_DC()
-        self.data_context[p3bm.DC_INITIALIZED] = value
+        self.DC[p3bm.DC_INITIALIZED] = value
 
     @property
     def dc_FI_KEY(self) -> str:
         """Return the current financial institution key value in DC."""
         dc = self._valid_DC()
         if p3bm.FI_KEY not in dc:
-            self.data_context[p3bm.FI_KEY] = None
-        return self.data_context[p3bm.FI_KEY]
+            self.DC[p3bm.FI_KEY] = None
+        return self.DC[p3bm.FI_KEY]
     @dc_FI_KEY.setter
     def dc_FI_KEY(self, value: str) -> None:
         """Set the current financial institution key value in DC."""
         dc = self._valid_DC()
-        self.data_context[p3bm.FI_KEY] = value
+        self.DC[p3bm.FI_KEY] = value
 
     @property
     def dc_WF_KEY(self) -> str:
         """Return the current workflow key value in DC."""
         dc = self._valid_DC()
         if p3bm.WF_KEY not in dc:
-            self.data_context[p3bm.WF_KEY] = None
-        return self.data_context[p3bm.WF_KEY]
+            self.DC[p3bm.WF_KEY] = None
+        return self.DC[p3bm.WF_KEY]
     @dc_WF_KEY.setter
     def dc_WF_KEY(self, value: str) -> None:
         """Set the current workflow key value in DC."""
         dc = self._valid_DC()
-        self.data_context[p3bm.WF_KEY] = value
+        self.DC[p3bm.WF_KEY] = value
 
     @property
     def dc_WB_TYPE(self) -> str:
         """Return the current workbook type value in DC."""
         dc = self._valid_DC()
         if p3bm.WB_TYPE not in dc:
-            self.data_context[p3bm.WB_TYPE] = None
-        return self.data_context[p3bm.WB_TYPE]
+            self.DC[p3bm.WB_TYPE] = None
+        return self.DC[p3bm.WB_TYPE]
     @dc_WB_TYPE.setter
     def dc_WB_TYPE(self, value: str) -> None:
         """Set the current workbook type value in DC."""
         dc = self._valid_DC()
-        self.data_context[p3bm.WB_TYPE] = value
+        self.DC[p3bm.WB_TYPE] = value
 
     @property
     def dc_WB_NAME(self) -> str:
         """Return the current workbook name value in DC."""
         dc = self._valid_DC()
         if p3bm.WB_NAME not in dc:
-            self.data_context[p3bm.WB_NAME] = None
-        return self.data_context[p3bm.WB_NAME]
+            self.DC[p3bm.WB_NAME] = None
+        return self.DC[p3bm.WB_NAME]
 
     @dc_WB_NAME.setter
     def dc_WB_NAME(self, value: str) -> None:
         """Set the current workbook name value in DC."""
         dc = self._valid_DC()
-        self.data_context[p3bm.WB_NAME] = value
+        self.DC[p3bm.WB_NAME] = value
 
     @property
     def dc_BUDMAN_STORE(self) -> str:
         """Return the current BUDMAN_STORE value in DC."""
         dc = self._valid_DC()
         if p3bm.DC_BUDMAN_STORE not in dc:
-            self.data_context[p3bm.DC_BUDMAN_STORE] = None
-        return self.data_context[p3bm.DC_BUDMAN_STORE]
+            self.DC[p3bm.DC_BUDMAN_STORE] = None
+        return self.DC[p3bm.DC_BUDMAN_STORE]
     @dc_BUDMAN_STORE.setter
     def dc_BUDMAN_STORE(self, value: str) -> None:
         """Set the current BUDMAN_STORE value in DC."""
         dc = self._valid_DC()
-        self.data_context[p3bm.DC_BUDMAN_STORE] = value
+        self.DC[p3bm.DC_BUDMAN_STORE] = value
 
     @property 
     def dc_WORKBOOKS(self) -> p3bm.WORKBOOK_LIST:
         """Return the current workbooks value in DC per FI_KEY, WF_KEY, WB_TYPE."""
         dc = self._valid_DC()
         if p3bm.DC_WORKBOOKS not in dc:
-            self.data_context[p3bm.DC_WORKBOOKS] = None
-        return self.data_context[p3bm.DC_WORKBOOKS]
+            self.DC[p3bm.DC_WORKBOOKS] = None
+        return self.DC[p3bm.DC_WORKBOOKS]
     @dc_WORKBOOKS.setter
     def dc_WORKBOOKS(self, value: p3bm.WORKBOOK_LIST) -> None:
         """Set the current  dc_WORKBOOK value in DC."""
         dc = self._valid_DC()
-        self.data_context[p3bm.DC_WORKBOOKS] = value
+        self.DC[p3bm.DC_WORKBOOKS] = value
 
     @property 
     def dc_LOADED_WORKBOOKS(self) -> p3bm.LOADED_WORKBOOK_LIST:
         """Return the current loaded workbooks value in DC."""
         dc = self._valid_DC()
         if p3bm.DC_LOADED_WORKBOOKS not in dc:
-            self.data_context[p3bm.DC_LOADED_WORKBOOKS] = None
-        return self.data_context[p3bm.DC_LOADED_WORKBOOKS]
+            self.DC[p3bm.DC_LOADED_WORKBOOKS] = None
+        return self.DC[p3bm.DC_LOADED_WORKBOOKS]
     @dc_LOADED_WORKBOOKS.setter
     def dc_LOADED_WORKBOOKS(self, value: p3bm.LOADED_WORKBOOK_LIST) -> None:
         """Set the current loaded workbooks value in DC."""
         dc = self._valid_DC()
-        self.data_context[p3bm.DC_LOADED_WORKBOOKS] = value
+        self.DC[p3bm.DC_LOADED_WORKBOOKS] = value
     # ------------------------------------------------------------------------ +
-    #endregion Data Context Properties
+    #endregion BudMan Data Context Interface (client sdk) Properties
     # ------------------------------------------------------------------------ +
     #                                                                          +
     # ------------------------------------------------------------------------ +
-    #region Data Context Methods
+    #region Data Context  (client sdk) Methods
     #                                                                          +
-    # ------------------------------------------------------------------------ +
-    #region dc_WF_KEY_validate() method
-    def dc_WF_KEY_validate(self, wf_key : str) -> bool: 
-        """Return True if the wf_key is valid."""
-        try:
-            # Ask the Budget Domain Model to validate the wf_key.
-            return self.budget_model.bdm_WF_KEY_validate(wf_key)
-        except Exception as e:
-            logger.error(p3u.exc_err_msg(e))
-            raise
-    #endregion dc_WF_KEY_validate() method
     # ------------------------------------------------------------------------ +
     #region dc_FI_KEY_validate() method
     def dc_FI_KEY_validate(self, fi_key : str) -> int: 
@@ -1288,9 +1339,28 @@ class BudgetManagerViewModelInterface():
             # Ask the Budget Domain Model to validate the fi_key.
             return self.budget_model.bdm_FI_KEY_validate(fi_key)
         except Exception as e:
-            logger.error(p3u.exc_err_msg(e))
-            raise
+            return self.BMVM_cmd_exception(e)
     #endregion dc_FI_KEY_validate() method
+    # ------------------------------------------------------------------------ +
+    #region dc_WF_KEY_validate() method
+    def dc_WF_KEY_validate(self, wf_key : str) -> bool: 
+        """Return True if the wf_key is valid."""
+        try:
+            # Ask the Budget Domain Model to validate the wf_key.
+            return self.budget_model.bdm_WF_KEY_validate(wf_key)
+        except Exception as e:
+            return self.BMVM_cmd_exception(e)
+    #endregion dc_WF_KEY_validate() method
+    # ------------------------------------------------------------------------ +
+    #region dc_WB_REF_validate() method
+    def dc_WB_REF_validate(self, wb_ref : str) -> bool: 
+        """Return True if the wb_ref is valid."""
+        try:
+            # Bind through the DC (data_context) object
+            return self.DC.dc_WB_REF_validate(wb_ref)
+        except Exception as e:
+            return self.BMVM_cmd_exception(e)
+    #endregion dc_WB_REF_validate() method
     # ------------------------------------------------------------------------ +
     #region WB_loaded(wb_name) method
     def WB_loaded(self, wb_name:str) -> bool: 
