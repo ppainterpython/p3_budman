@@ -1814,6 +1814,8 @@ class BudgetDomainModel(metaclass=SingletonMeta):
         _ = self.bdwd_INITIALIZED()
         try:
             if isinstance(wb_ref, str):
+                if wb_ref == ALL_KEY:
+                    return True
                 if wb_ref.isdigit():
                     # If the wb_ref is a digit, treat it as an index.
                     wb_ref_index = int(wb_ref)

@@ -1357,7 +1357,7 @@ class BudgetManagerViewModelInterface():
         """Return True if the wb_ref is valid."""
         try:
             # Bind through the DC (data_context) object
-            return self.DC.dc_WB_REF_validate(wb_ref)
+            return self.budget_model.dc_WB_REF_validate(wb_ref)
         except Exception as e:
             return self.BMVM_cmd_exception(e)
     #endregion dc_WB_REF_validate() method
