@@ -85,11 +85,11 @@ class BudManDataContextClientInterface(BudManDataContextBaseInterface):
         self.data_context = value
 
     @property
-    def INITIALIZED(self) -> bool:
+    def dc_INITIALIZED(self) -> bool:
         """Indicates whether the data context has been initialized."""
         return self.DC.INITIALIZED
-    @INITIALIZED.setter
-    def INITIALIZED(self, value: bool) -> None:
+    @dc_INITIALIZED.setter
+    def dc_INITIALIZED(self, value: bool) -> None:
         """Set the initialized state of the data context."""
         self.DC.INITIALIZED = value
 
@@ -164,9 +164,9 @@ class BudManDataContextClientInterface(BudManDataContextBaseInterface):
     #endregion BudManDataContextClientInterface Properties
     # ------------------------------------------------------------------------ +
     #region BudManDataContextClientInterface Methods
-    def initialize(self) -> None:
+    def dc_initialize(self) -> None:
         """Initialize the data context."""
-        super().initialize()
+        super().dc_initialize()
         return self
 
     def dc_FI_KEY_validate(self, fi_key: str) -> bool:
@@ -189,33 +189,33 @@ class BudManDataContextClientInterface(BudManDataContextBaseInterface):
         """Validate the provided workbook reference."""
         return self.DC.dc_WB_REF_validate(wb_ref)
 
-    def WORKBOOK_loaded(self, wb_name: str) -> Workbook:
+    def dc_WORKBOOK_loaded(self, wb_name: str) -> Workbook:
         """Indicates whether the named workbook is loaded."""
-        return self.DC.WORKBOOK_loaded(wb_name)
+        return self.DC.dc_WORKBOOK_loaded(wb_name)
 
-    def WORKBOOK_load(self, wb_name: str) -> Workbook:
+    def dc_WORKBOOK_load(self, wb_name: str) -> Workbook:
         """Load the specified workbook by name."""
-        return self.DC.WORKBOOK_load(wb_name)
+        return self.DC.dc_WORKBOOK_load(wb_name)
 
-    def WORKBOOK_save(self, wb_name: str, wb: Workbook) -> None:
+    def dc_WORKBOOK_save(self, wb_name: str, wb: Workbook) -> None:
         """Save the specified workbook by name."""
-        return self.DC.WORKBOOK_save(wb_name, wb)
+        return self.DC.dc_WORKBOOK_save(wb_name, wb)
 
-    def WORKBOOK_remove(self, wb_name: str) -> None:
+    def dc_WORKBOOK_remove(self, wb_name: str) -> None:
         """Remove the specified workbook by name."""
-        return self.DC.WORKBOOK_remove(wb_name)
+        return self.DC.dc_WORKBOOK_remove(wb_name)
 
-    def WORKBOOK_add(self, wb_name: str, wb: Workbook) -> None:
+    def dc_WORKBOOK_add(self, wb_name: str, wb: Workbook) -> None:
         """Add a new workbook to the data context."""
-        return self.DC.WORKBOOK_add(wb_name, wb)
+        return self.DC.dc_WORKBOOK_add(wb_name, wb)
 
-    def BUDMAN_STORE_load(self, file_path: str) -> None:
+    def dc_BUDMAN_STORE_load(self, file_path: str) -> None:
         """Load the BUDMAN_STORE from the specified file path."""
-        return self.DC.BUDMAN_STORE_load(file_path)
+        return self.DC.dc_BUDMAN_STORE_load(file_path)
 
-    def BUDMAN_STORE_save(self, file_path: str) -> None:
+    def dc_BUDMAN_STORE_save(self, file_path: str) -> None:
         """Save the BUDMAN_STORE to the specified file path."""
-        return self.DC.BUDMAN_STORE_save(file_path)
+        return self.DC.dc_BUDMAN_STORE_save(file_path)
 
     #endregion BudManDataContextClientInterface Methods
     # ------------------------------------------------------------------------ +

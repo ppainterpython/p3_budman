@@ -744,7 +744,7 @@ class BudgetDomainModel(metaclass=SingletonMeta):
     # ------------------------------------------------------------------------ +
     #region    BDM_WORKING_DATA bdm_BDM_WORKING_DATA_initialize() 
     def bdm_BDM_WORKING_DATA_initialize(self, override:bool=False) -> BDM_WORKING_DATA_OBJECT:
-        """Initialize BDWD, the budget domain working data.
+        """Initialize BDMWD, the budget domain working data.
         
         When BudgetDomain Model is initialized, the BDM_WORKING_DATA property is
         initialized here. It should be the last step in the initialization 
@@ -762,8 +762,8 @@ class BudgetDomainModel(metaclass=SingletonMeta):
             # If the BDM_WORKING_DATA is already initialized, return it.
             if (hasattr(self, BDM_WORKING_DATA) and
                 isinstance(self.bdm_working_data, dict) and
-                BDWD_INITIALIZED in self.bdm_working_data and
-                self.bdm_working_data[BDWD_INITIALIZED] and
+                BDMWD_INITIALIZED in self.bdm_working_data and
+                self.bdm_working_data[BDMWD_INITIALIZED] and
                 not override):
                 logger.debug("BDM_WORKING_DATA already initialized, returning.")
                 return self.bdm_working_data
@@ -774,18 +774,18 @@ class BudgetDomainModel(metaclass=SingletonMeta):
             def_wbt = settings[BUDGET_MANAGER_DEFAULT_WORKBOOK_TYPE]
             # Initialize the budget model working data.
             self.bdm_working_data = {}
-            self.set_BDM_WORKING_DATA(BDWD_INITIALIZED, False)
-            self.set_BDM_WORKING_DATA(BDWD_FI_KEY, def_fi)
-            self.set_BDM_WORKING_DATA(BDWD_WF_KEY, def_wf)
-            self.set_BDM_WORKING_DATA(BDWD_WB_TYPE, def_wbt)
-            self.set_BDM_WORKING_DATA(BDWD_WB_NAME, None)
-            self.set_BDM_WORKING_DATA(BDWD_WORKBOOKS, list())
-            self.set_BDM_WORKING_DATA(BDWD_LOADED_WORKBOOKS, list())
+            self.set_BDM_WORKING_DATA(BDMWD_INITIALIZED, False)
+            self.set_BDM_WORKING_DATA(BDMWD_FI_KEY, def_fi)
+            self.set_BDM_WORKING_DATA(BDMWD_WF_KEY, def_wf)
+            self.set_BDM_WORKING_DATA(BDMWD_WB_TYPE, def_wbt)
+            self.set_BDM_WORKING_DATA(BDMWD_WB_NAME, None)
+            self.set_BDM_WORKING_DATA(BDMWD_WORKBOOKS, list())
+            self.set_BDM_WORKING_DATA(BDMWD_LOADED_WORKBOOKS, list())
             # Now resolve the bdwd content to current BDM state.
-            self.bdwd_WORKBOOKS_resolve(initializing=True)
-            # self.bdwd_LOADED_WORKBOOKS_resolve()
-            # BDWD initialization is now complete.
-            self.set_BDM_WORKING_DATA(BDWD_INITIALIZED, True)
+            self.bdmwd_WORKBOOKS_resolve(initializing=True)
+            # self.bdmwd_LOADED_WORKBOOKS_resolve()
+            # BDMWD initialization is now complete.
+            self.set_BDM_WORKING_DATA(BDMWD_INITIALIZED, True)
             logger.debug("Complete: BDM_WORKING_DATA initialized.")
             return self.bdm_working_data
         except Exception as e:
@@ -1279,7 +1279,7 @@ class BudgetDomainModel(metaclass=SingletonMeta):
         
         A WORKBOOK_LIST has tuples of wb_name and wb_abs_path. Iterate the
         list and load each one. This is BSM-scope only, loads from the 
-        filesystem, no side effects to the BDM or BDWD.
+        filesystem, no side effects to the BDM or BDMWD.
 
         Args:
             wbl (WORKBOOK_LIST): A list of tuples containing the workbook name
@@ -1317,7 +1317,7 @@ class BudgetDomainModel(metaclass=SingletonMeta):
         A LOADED_WORKBOOK_LIST has tuples of wb_name and a loaded Workbook
         object. Iterate the list, obtain the abs_path_str for each wb_name from 
         the provided WORKBOOK_LIST, and save the workbook. This is BSM-scope 
-        only, saves to the filesystem, no side effects to the BDM or BDWD.
+        only, saves to the filesystem, no side effects to the BDM or BDMWD.
 
         Args:
             lwbl (LOADED_WORKBOOK_LIST): A list of tuples containing the 
@@ -1364,7 +1364,7 @@ class BudgetDomainModel(metaclass=SingletonMeta):
                 return
             for wb_name, wb_path in wbl:
                 wb = load_workbook(filename=wb_path)
-                self.bdwd_LOADED_WORKBOOKS_add(wb_name, wb)
+                self.bdmwd_LOADED_WORKBOOKS_add(wb_name, wb)
                 yield (wb_name, wb)
         except Exception as e:
             m = p3u.exc_err_msg(e)
@@ -1478,26 +1478,26 @@ class BudgetDomainModel(metaclass=SingletonMeta):
     # ======================================================================== +
 
     # ======================================================================== +
-    #region    BDWD - Budget Domain Model Working Data methods - DC Interface
-    """ Budget Domain Model Working Data (BDWD) methods.
+    #region    BDMWD - Budget Domain Model Working Data methods - DC Interface
+    """ Budget Domain Model Working Data (BDMWD) methods.
 
-    The BDWD is intended to serve as a transient data store for the
+    The BDMWD is intended to serve as a transient data store for the
     BudgetDomainModel (BDM) and BudgetStorageModel (BSM). Also, it is intended
     to be a concrete implementation of the BudgetManagerDataContextInterface 
-    (BudManDCI). So, the BDWD methods are a superset of the BudManDCI methods. 
-    All BudManDCI required methods are mapped to the BDWD methods.
+    (BudManDCI). So, the BDMWD methods are a superset of the BudManDCI methods. 
+    All BudManDCI required methods are mapped to the BDMWD methods.
 
-    BDWD methods are used to access the working data in the BDM. The working
+    BDMWD methods are used to access the working data in the BDM. The working
     data is used by client packages for ViewModel, View, UX, CLI etc.
     It is transient data derived from the BDM/BSM operations.
 
-    Note: the bdwd_ prefixed methods only use the 
+    Note: the bdmwd_ prefixed methods only use the 
     get_BDM_WORKING_DATA() and set_BDM_WORKING_DATA() 
     methods to access the BDM_WORKING_DATA property.
     """
     # --------------------------------------------------------------------- +
     #region BDM_WORKING_DATA properties
-    def _valid_BDWD(self) -> BDM_WORKING_DATA_OBJECT:
+    def _valid_BDMWD(self) -> BDM_WORKING_DATA_OBJECT:
         """Init self.bdm_working_data if it None."""
         try:
             self.bdm_working_data = self.bdm_working_data if self.bdm_working_data else {}
@@ -1507,112 +1507,112 @@ class BudgetDomainModel(metaclass=SingletonMeta):
             raise
     
     @property
-    def bdwd_FI_KEY(self) -> str:
-        """Return the current BDWD_FI_KEY value in the BDWD."""
-        bdwd = self._valid_BDWD()
-        if BDWD_FI_KEY not in bdwd:
-            self.bdm_working_data[BDWD_FI_KEY] = None
-        return self.bdm_working_data[BDWD_FI_KEY]
-    @bdwd_FI_KEY.setter
-    def bdwd_FI_KEY(self, value: str) -> None:
-        """Set the current BDWD_FI_KEY value in the BDWD."""
-        _ = self._valid_BDWD()
-        self.bdm_working_data[BDWD_FI_KEY] = value
+    def bdmwd_FI_KEY(self) -> str:
+        """Return the current BDMWD_FI_KEY value in the BDMWD."""
+        bdwd = self._valid_BDMWD()
+        if BDMWD_FI_KEY not in bdwd:
+            self.bdm_working_data[BDMWD_FI_KEY] = None
+        return self.bdm_working_data[BDMWD_FI_KEY]
+    @bdmwd_FI_KEY.setter
+    def bdmwd_FI_KEY(self, value: str) -> None:
+        """Set the current BDMWD_FI_KEY value in the BDMWD."""
+        _ = self._valid_BDMWD()
+        self.bdm_working_data[BDMWD_FI_KEY] = value
 
     @property
-    def bdwd_WF_KEY(self) -> str:
-        """Return the current BDWD_WF_KEY value in the BDWD."""
-        bdwd = self._valid_BDWD()
-        if BDWD_WF_KEY not in bdwd:
-            self.bdm_working_data[BDWD_WF_KEY] = None
-        return self.bdm_working_data[BDWD_WF_KEY]
-    @bdwd_WF_KEY.setter
-    def bdwd_WF_KEY(self, value: str) -> None:
-        """Set the current BDWD_WF_KEY value in the BDWD."""
-        _ = self._valid_BDWD()
-        self.bdm_working_data[BDWD_WF_KEY] = value
+    def bdmwd_WF_KEY(self) -> str:
+        """Return the current BDMWD_WF_KEY value in the BDMWD."""
+        bdwd = self._valid_BDMWD()
+        if BDMWD_WF_KEY not in bdwd:
+            self.bdm_working_data[BDMWD_WF_KEY] = None
+        return self.bdm_working_data[BDMWD_WF_KEY]
+    @bdmwd_WF_KEY.setter
+    def bdmwd_WF_KEY(self, value: str) -> None:
+        """Set the current BDMWD_WF_KEY value in the BDMWD."""
+        _ = self._valid_BDMWD()
+        self.bdm_working_data[BDMWD_WF_KEY] = value
 
     @property
-    def bdwd_WB_TYPE(self) -> str:
-        """Return the current BDWD_WB_TYPE value in the BDWD."""
-        bdwd = self._valid_BDWD()
-        if BDWD_WB_TYPE not in bdwd:
-            self.bdm_working_data[BDWD_WB_TYPE] = None
-        return self.bdm_working_data[BDWD_WB_TYPE]
-    @bdwd_WB_TYPE.setter
-    def bdwd_WB_TYPE(self, value: str) -> None:
-        """Set the current BDWD_WB_TYPE value in the BDWD."""
-        _ = self._valid_BDWD()
-        self.bdm_working_data[BDWD_WB_TYPE] = value
+    def bdmwd_WB_TYPE(self) -> str:
+        """Return the current BDMWD_WB_TYPE value in the BDMWD."""
+        bdwd = self._valid_BDMWD()
+        if BDMWD_WB_TYPE not in bdwd:
+            self.bdm_working_data[BDMWD_WB_TYPE] = None
+        return self.bdm_working_data[BDMWD_WB_TYPE]
+    @bdmwd_WB_TYPE.setter
+    def bdmwd_WB_TYPE(self, value: str) -> None:
+        """Set the current BDMWD_WB_TYPE value in the BDMWD."""
+        _ = self._valid_BDMWD()
+        self.bdm_working_data[BDMWD_WB_TYPE] = value
 
     @property
-    def bdwd_WB_NAME(self) -> str:
-        """Return the current BDWD_WB_NAME value in the BDWD."""
-        bdwd = self._valid_BDWD()
-        if BDWD_WB_NAME not in bdwd:
-            self.bdm_working_data[BDWD_WB_NAME] = None
-        return self.bdm_working_data[BDWD_WB_NAME]
-    @bdwd_WB_NAME.setter
-    def bdwd_WB_NAME(self, value: str) -> None:
-        """Set the current BDWD_WB_NAME value in the BDWD."""
-        _ = self._valid_BDWD()
-        self.bdm_working_data[BDWD_WB_NAME] = value
+    def bdmwd_WB_NAME(self) -> str:
+        """Return the current BDMWD_WB_NAME value in the BDMWD."""
+        bdwd = self._valid_BDMWD()
+        if BDMWD_WB_NAME not in bdwd:
+            self.bdm_working_data[BDMWD_WB_NAME] = None
+        return self.bdm_working_data[BDMWD_WB_NAME]
+    @bdmwd_WB_NAME.setter
+    def bdmwd_WB_NAME(self, value: str) -> None:
+        """Set the current BDMWD_WB_NAME value in the BDMWD."""
+        _ = self._valid_BDMWD()
+        self.bdm_working_data[BDMWD_WB_NAME] = value
 
     @property 
-    def bdwd_WORKBOOKS(self) -> WORKBOOK_LIST:
-        """Return the current BDWD_WORKBOOKS value in BDWD."""
-        bdwd = self._valid_BDWD()
-        if BDWD_WORKBOOKS not in bdwd:
-            self.bdm_working_data[BDWD_WORKBOOKS] = None
-        return self.bdm_working_data[BDWD_WORKBOOKS]
-    @bdwd_WORKBOOKS.setter
-    def bdwd_WORKBOOKS(self, value: WORKBOOK_LIST) -> None:
-        """Set the current  BDWD_WORKBOOKS value in BDWD."""
-        _ = self._valid_BDWD()
-        self.bdm_working_data[BDWD_WORKBOOKS] = value
+    def bdmwd_WORKBOOKS(self) -> WORKBOOK_LIST:
+        """Return the current BDMWD_WORKBOOKS value in BDMWD."""
+        bdwd = self._valid_BDMWD()
+        if BDMWD_WORKBOOKS not in bdwd:
+            self.bdm_working_data[BDMWD_WORKBOOKS] = None
+        return self.bdm_working_data[BDMWD_WORKBOOKS]
+    @bdmwd_WORKBOOKS.setter
+    def bdmwd_WORKBOOKS(self, value: WORKBOOK_LIST) -> None:
+        """Set the current  BDMWD_WORKBOOKS value in BDMWD."""
+        _ = self._valid_BDMWD()
+        self.bdm_working_data[BDMWD_WORKBOOKS] = value
 
     @property 
-    def bdwd_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_LIST:
-        """Return the current BDWD_LOADED_WORKBOOKS value in BDWD."""
-        bdwd = self._valid_BDWD()
-        if BDWD_LOADED_WORKBOOKS not in bdwd:
-            self.bdm_working_data[BDWD_LOADED_WORKBOOKS] = None
-        return self.bdm_working_data[BDWD_LOADED_WORKBOOKS]
-    @bdwd_LOADED_WORKBOOKS.setter
-    def bdwd_LOADED_WORKBOOKS(self, value: LOADED_WORKBOOK_LIST) -> None:
-        """Set the current  BDWD_LOADED_WORKBOOKS value in BDWD."""
-        _ = self._valid_BDWD()
-        self.bdm_working_data[BDWD_LOADED_WORKBOOKS] = value
+    def bdmwd_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_LIST:
+        """Return the current BDMWD_LOADED_WORKBOOKS value in BDMWD."""
+        bdwd = self._valid_BDMWD()
+        if BDMWD_LOADED_WORKBOOKS not in bdwd:
+            self.bdm_working_data[BDMWD_LOADED_WORKBOOKS] = None
+        return self.bdm_working_data[BDMWD_LOADED_WORKBOOKS]
+    @bdmwd_LOADED_WORKBOOKS.setter
+    def bdmwd_LOADED_WORKBOOKS(self, value: LOADED_WORKBOOK_LIST) -> None:
+        """Set the current  BDMWD_LOADED_WORKBOOKS value in BDMWD."""
+        _ = self._valid_BDMWD()
+        self.bdm_working_data[BDMWD_LOADED_WORKBOOKS] = value
 
     #endregion BDM_WORKING_DATA properties 
     # --------------------------------------------------------------------- +
-    #region bdwd_WORKBOOKS() methods
-    def bdwd_WORKBOOKS_count(self) -> int:
-        """Return count of BDWD_WORKBOOKS value in BDWD."""
-        self.bdwd_INITIALIZED()
-        return len(self.bdwd_WORKBOOKS_get())
+    #region bdmwd_WORKBOOKS() methods
+    def bdmwd_WORKBOOKS_count(self) -> int:
+        """Return count of BDMWD_WORKBOOKS value in BDMWD."""
+        self.bdmwd_INITIALIZED()
+        return len(self.bdmwd_WORKBOOKS_get())
 
-    def bdwd_WORKBOOKS_get(self) -> LOADED_WORKBOOK_LIST | None:
-        """Get the BDWD_WORKBOOKS value from the BDM_WORKING_DATA.
+    def bdmwd_WORKBOOKS_get(self) -> LOADED_WORKBOOK_LIST | None:
+        """Get the BDMWD_WORKBOOKS value from the BDM_WORKING_DATA.
 
         Returns:
             WORKBOOK_LIST: A list of tuples containing the workbook name and
             the workbook abs_pat_str.
         """
         try:
-            self.bdwd_INITIALIZED()
+            self.bdmwd_INITIALIZED()
             if self.bdm_working_data is None:
                 m = f"BDM_WORKING_DATA is not set. "
                 logger.error(m)
                 raise ValueError(m)
-            return self.get_BDM_WORKING_DATA(BDWD_WORKBOOKS)
+            return self.get_BDM_WORKING_DATA(BDMWD_WORKBOOKS)
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
 
-    def bdwd_WORKBOOKS_add(self,wb_name : str, wb_abs_path_str : str) -> None:
-        """Add an entry to BDWD_WORKBOOKS in the BDM_WORKING_DATA.
+    def bdmwd_WORKBOOKS_add(self,wb_name : str, wb_abs_path_str : str) -> None:
+        """Add an entry to BDMWD_WORKBOOKS in the BDM_WORKING_DATA.
 
         Args:
             wb_name (str): The name of the workbook to add.
@@ -1628,18 +1628,18 @@ class BudgetDomainModel(metaclass=SingletonMeta):
             ValueError: if wb_abs_path_str is None or empty string.
         """
         try:
-            self.bdwd_INITIALIZED()
+            self.bdmwd_INITIALIZED()
             p3u.is_str_or_none("wb_name", wb_name, raise_error = True)
             p3u.is_str_or_none("wb_abs_path_str",wb_abs_path_str,raise_TypeError=True)
             if self.bdwb_WORKBOOKS_member(wb_name):
                 # If the workbook is already a member, do not add it again.
-                m = f"Wb: '{wb_name}' already member of BDWD_WORKBOOKS."
+                m = f"Wb: '{wb_name}' already member of BDMWD_WORKBOOKS."
                 logger.debug(m)
                 return None
-            wbs_list = self.bdwd_WORKBOOKS_get()
+            wbs_list = self.bdmwd_WORKBOOKS_get()
             wbs_list.append((wb_name, wb_abs_path_str))
             logger.debug(f"Added ('{wb_name}', '{wb_abs_path_str}') "
-                         f"to BDWD_WORKBOOKS.")
+                         f"to BDMWD_WORKBOOKS.")
             return None
         except Exception as e:
             m = p3u.exc_err_msg(e)
@@ -1651,7 +1651,7 @@ class BudgetDomainModel(metaclass=SingletonMeta):
         try:
             _ = p3u.is_str_or_none("wb_name", wb_name, raise_TypeError=True)
             # Reference the DC.WORKBOOKS property.
-            wbl = self.bdwd_WORKBOOKS_get()
+            wbl = self.bdmwd_WORKBOOKS_get()
             if len(wbl) == 0:
                 return False
             for target_wb_name, _ in wbl:
@@ -1662,41 +1662,41 @@ class BudgetDomainModel(metaclass=SingletonMeta):
             logger.error(p3u.exc_err_msg(e))
             raise
 
-    def bdwd_WORKBOOKS_resolve(self,initializing:bool=False) -> WORKBOOK_LIST:
-        """Refresh the BDWD_WORKBOOKS value relative to current BDM state.
+    def bdmwd_WORKBOOKS_resolve(self,initializing:bool=False) -> WORKBOOK_LIST:
+        """Refresh the BDMWD_WORKBOOKS value relative to current BDM state.
 
         Args:
             wb_name (str): The name of the workbook to add.
             wb_abs_path_str (str): The absolute path of the workbook to add.    
 
         Returns:
-            BDWD_WORKBOOKS refreshed value on success.
+            BDMWD_WORKBOOKS refreshed value on success.
 
         Raises:
             Exception: if error occurs downstream.
             RunTimeException: if DC content error detected.
         """
-        _ = self.bdwd_INITIALIZED() if not initializing else None
+        _ = self.bdmwd_INITIALIZED() if not initializing else None
         try:
-            fi_key = self.bdwd_FI_KEY
-            wf_key = self.bdwd_WF_KEY
-            wb_type = self.bdwd_WB_TYPE
+            fi_key = self.bdmwd_FI_KEY
+            wf_key = self.bdmwd_WF_KEY
+            wb_type = self.bdmwd_WB_TYPE
             d = data_desc(fi_key, wf_key, wb_type)
 
             wbl = self.bdm_FI_WF_WORKBOOK_LIST(fi_key, wf_key, wb_type)
-            self.bdwd_WORKBOOKS = wbl
-            logger.debug(f"{d} BDWD_WORKS resolved to: {wbl}")
-            return self.bdwd_WORKBOOKS
+            self.bdmwd_WORKBOOKS = wbl
+            logger.debug(f"{d} BDMWD_WORKS resolved to: {wbl}")
+            return self.bdmwd_WORKBOOKS
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
 
-    def bdwd_WORKBOOK_load(self, wb_name) -> Workbook:
-        """Load 1 workbook into the BDWD, based on current BDWD values.
+    def bdmwd_WORKBOOK_load(self, wb_name) -> Workbook:
+        """Load 1 workbook into the BDMWD, based on current BDMWD values.
 
         The named workbook is located for the current FI, WF, and WB_TYPE.
-        If loaded successfully, add it to the BDWD_LOADED_WORKBOOKS list.
+        If loaded successfully, add it to the BDMWD_LOADED_WORKBOOKS list.
         If the workbook is already loaded, return it.
 
         Args:
@@ -1709,22 +1709,22 @@ class BudgetDomainModel(metaclass=SingletonMeta):
             Exception: if error occurs downstream.
             RunTimeException: if DC content error detected.
         """
-        _ = self.bdwd_INITIALIZED()
+        _ = self.bdmwd_INITIALIZED()
         try:
             _ = p3u.is_str_or_none("wb_name", wb_name, raise_TypeError=True)
-            fi_key = self.bdwd_FI_KEY
-            wf_key = self.bdwd_WF_KEY
-            wb_type = self.bdwd_WB_TYPE
+            fi_key = self.bdmwd_FI_KEY
+            wf_key = self.bdmwd_WF_KEY
+            wb_type = self.bdmwd_WB_TYPE
             d = data_desc(fi_key, wf_key, wb_type)
 
             wbl = self.bdm_FI_WF_WORKBOOK_LIST(fi_key, wf_key, wb_type)
             wb_ap = [val for key, val in wbl if key == wb_name][0]
             if wb_ap is None:
-                m = f"Workbook '{wb_name}' not found in BDWD_WORKBOOKS."
+                m = f"Workbook '{wb_name}' not found in BDMWD_WORKBOOKS."
                 logger.error(m)
                 raise ValueError(m)
             wb = self.bsm_load_workbook(wb_ap)
-            self.bdwd_LOADED_WORKBOOKS_add(wb_name, wb)
+            self.bdmwd_LOADED_WORKBOOKS_add(wb_name, wb)
             logger.debug(f"{d} loaded wb: '{wb_name}' from '{wb_ap}'")
             return wb
         except Exception as e:
@@ -1732,8 +1732,8 @@ class BudgetDomainModel(metaclass=SingletonMeta):
             logger.error(m)
             raise
 
-    def bdwd_WORKBOOK_save(self, wb_name:str, wb:Workbook) -> None:
-        """Save 1 workbook into the BDWD, based on current BDWD values.
+    def bdmwd_WORKBOOK_save(self, wb_name:str, wb:Workbook) -> None:
+        """Save 1 workbook into the BDMWD, based on current BDMWD values.
 
         The named workbook is located for the current FI, WF, and WB_TYPE.
 
@@ -1747,19 +1747,19 @@ class BudgetDomainModel(metaclass=SingletonMeta):
             Exception: if error occurs downstream.
             RunTimeException: if DC content error detected.
         """
-        _ = self.bdwd_INITIALIZED()
+        _ = self.bdmwd_INITIALIZED()
         try:
             _ = p3u.is_str_or_none("wb_name", wb_name, raise_TypeError=True)
-            fi_key = self.bdwd_FI_KEY
-            wf_key = self.bdwd_WF_KEY
-            wb_type = self.bdwd_WB_TYPE
+            fi_key = self.bdmwd_FI_KEY
+            wf_key = self.bdmwd_WF_KEY
+            wb_type = self.bdmwd_WB_TYPE
             d = data_desc(fi_key, wf_key, wb_type)
 
             wbl = self.bdm_FI_WF_WORKBOOK_LIST(fi_key, wf_key, wb_type)
             wb_ap = [val for key, val in wbl if key == wb_name][0]
             if wb_ap is None:
                 # This wb_name is not known in the BDM.
-                m = f"Workbook '{wb_name}' not found in BDWD_WORKBOOKS."
+                m = f"Workbook '{wb_name}' not found in BDMWD_WORKBOOKS."
                 logger.error(m)
                 raise ValueError(m)
             wb = self.bsm_save_workbook(wb,wb_ap)
@@ -1770,8 +1770,8 @@ class BudgetDomainModel(metaclass=SingletonMeta):
             logger.error(m)
             raise
 
-    def bdwd_WORKBOOK_abs_path_str(self, wb_name:str) -> str:
-        """Get the absolute path of a workbook in the BDWD_WORKBOOKS.
+    def bdmwd_WORKBOOK_abs_path_str(self, wb_name:str) -> str:
+        """Get the absolute path of a workbook in the BDMWD_WORKBOOKS.
 
         Args:
             wb_name (str): The name of the workbook to get the absolute path for.
@@ -1780,15 +1780,15 @@ class BudgetDomainModel(metaclass=SingletonMeta):
             str: The absolute path of the workbook file.
         
         Raises:
-            ValueError: if the workbook is not found in BDWD_WORKBOOKS.
+            ValueError: if the workbook is not found in BDMWD_WORKBOOKS.
         """
-        _ = self.bdwd_INITIALIZED()
+        _ = self.bdmwd_INITIALIZED()
         try:
             _ = p3u.is_str_or_none("wb_name", wb_name, raise_TypeError=True)
-            wbl = self.bdwd_WORKBOOKS_get()
+            wbl = self.bdmwd_WORKBOOKS_get()
             wb_ap = [val for key, val in wbl if key == wb_name][0]
             if wb_ap is None:
-                m = f"Workbook '{wb_name}' not found in BDWD_WORKBOOKS."
+                m = f"Workbook '{wb_name}' not found in BDMWD_WORKBOOKS."
                 logger.error(m)
                 raise ValueError(m)
             return wb_ap
@@ -1797,8 +1797,8 @@ class BudgetDomainModel(metaclass=SingletonMeta):
             logger.error(m)
             raise
     
-    def bdwd_WB_REF_validate(self, wb_ref:str|int) -> bool:
-        """Validate a workbook reference in the BDWD_WORKBOOKS.
+    def bdmwd_WB_REF_validate(self, wb_ref:str|int) -> bool:
+        """Validate a workbook reference in the BDMWD_WORKBOOKS.
 
         Args:
             wb_ref (str|int): The workbook reference to validate. 
@@ -1811,7 +1811,7 @@ class BudgetDomainModel(metaclass=SingletonMeta):
         Raises:
             TypeError: if wb_ref is not a str or int.
         """
-        _ = self.bdwd_INITIALIZED()
+        _ = self.bdmwd_INITIALIZED()
         try:
             if isinstance(wb_ref, str):
                 if wb_ref == ALL_KEY:
@@ -1819,11 +1819,11 @@ class BudgetDomainModel(metaclass=SingletonMeta):
                 if wb_ref.isdigit():
                     # If the wb_ref is a digit, treat it as an index.
                     wb_ref_index = int(wb_ref)
-                    wbl = self.bdwd_WORKBOOKS_get()
+                    wbl = self.bdmwd_WORKBOOKS_get()
                     return 0 <= wb_ref_index < len(wbl)
                 return self.bdwb_WORKBOOKS_member(wb_ref)
             elif isinstance(wb_ref, int):
-                wbl = self.bdwd_WORKBOOKS_get()
+                wbl = self.bdmwd_WORKBOOKS_get()
                 return 0 <= wb_ref < len(wbl)
             else:
                 raise TypeError(f"wb_ref must be str or int, got {type(wb_ref)}")
@@ -1831,36 +1831,36 @@ class BudgetDomainModel(metaclass=SingletonMeta):
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
-    #endregion bdwd_WORKBOOKS() methods
+    #endregion bdmwd_WORKBOOKS() methods
     # ------------------------------------------------------------------------ +
-    #region bdwd_LOADED_WORKBOOKS() methods
-    def bdwd_LOADED_WORKBOOKS_count(self) -> int:
-        """Return total count of BDWD_LOADED_WORKBOOKS dictionary."""
-        self.bdwd_INITIALIZED()
-        return len(self.bdwd_LOADED_WORKBOOKS_get())
+    #region bdmwd_LOADED_WORKBOOKS() methods
+    def bdmwd_LOADED_WORKBOOKS_count(self) -> int:
+        """Return total count of BDMWD_LOADED_WORKBOOKS dictionary."""
+        self.bdmwd_INITIALIZED()
+        return len(self.bdmwd_LOADED_WORKBOOKS_get())
 
-    def bdwd_LOADED_WORKBOOKS_get(self) -> LOADED_WORKBOOK_LIST | None:
-        """Get the BDWD_LOADED_WORKBOOKS from the BDM_WORKING_DATA.
+    def bdmwd_LOADED_WORKBOOKS_get(self) -> LOADED_WORKBOOK_LIST | None:
+        """Get the BDMWD_LOADED_WORKBOOKS from the BDM_WORKING_DATA.
 
         Returns:
             List(Tuple(wb_name: Workbook object))
         """
         try:
-            self.bdwd_INITIALIZED()
+            self.bdmwd_INITIALIZED()
             if self.bdm_working_data is None:
                 m = f"BDM_WORKING_DATA is not set. "
                 logger.error(m)
                 raise ValueError(m)
-            return self.get_BDM_WORKING_DATA(BDWD_LOADED_WORKBOOKS)
+            return self.get_BDM_WORKING_DATA(BDMWD_LOADED_WORKBOOKS)
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
 
-    def bdwd_LOADED_WORKBOOKS_add(self,wb_name : str, wb : Workbook) -> None:
-        """Add an entry to BDWD_LOADED_WORKBOOKS in the BDM_WORKING_DATA.
+    def bdmwd_LOADED_WORKBOOKS_add(self,wb_name : str, wb : Workbook) -> None:
+        """Add an entry to BDMWD_LOADED_WORKBOOKS in the BDM_WORKING_DATA.
 
-        The BDWD_LOADED_WORKBOOKS list holds tuples of workbook name and
+        The BDMWD_LOADED_WORKBOOKS list holds tuples of workbook name and
         the loaded Workbook object. When adding an entry, if the wb_name is 
         already in the list, then do not add it again.
 
@@ -1874,18 +1874,18 @@ class BudgetDomainModel(metaclass=SingletonMeta):
             ValueError: if wb is None.
         """
         try:
-            self.bdwd_INITIALIZED()
+            self.bdmwd_INITIALIZED()
             p3u.is_str_or_none("wb_name",wb_name, raise_TypeError = True)
             p3u.is_obj_of_type("wb", wb, Workbook, raise_TypeError=True)
-            lwbs_list = self.bdwd_LOADED_WORKBOOKS_get()
+            lwbs_list = self.bdmwd_LOADED_WORKBOOKS_get()
             if self.bdwb_LOADED_WORKBOOKS_member(wb_name):
                 # If the workbook is already loaded, do not add it again.
-                m = f"Wb: '{wb_name}' already member of BDWD_LOADED_WORKBOOKS."
+                m = f"Wb: '{wb_name}' already member of BDMWD_LOADED_WORKBOOKS."
                 logger.debug(m)
                 return None
             lwbs_list.append((wb_name, wb))
             logger.debug(f"Added ('{wb_name}', '{str(wb)}') "
-                         f"to BDWD_LOADED_WORKBOOKS.")
+                         f"to BDMWD_LOADED_WORKBOOKS.")
             return None
         except Exception as e:
             m = p3u.exc_err_msg(e)
@@ -1897,7 +1897,7 @@ class BudgetDomainModel(metaclass=SingletonMeta):
         try:
             _ = p3u.is_str_or_none("wb_name", wb_name, raise_TypeError=True)
             # Reference the DC.LOADED_WORKBOOKS property.
-            lwbl = self.bdwd_LOADED_WORKBOOKS_get()
+            lwbl = self.bdmwd_LOADED_WORKBOOKS_get()
             if len(lwbl) == 0:
                 return False
             for l_wb_name, _ in lwbl:
@@ -1908,15 +1908,15 @@ class BudgetDomainModel(metaclass=SingletonMeta):
             logger.error(p3u.exc_err_msg(e))
             raise
 
-    #endregion bdwd_LOADED_WORKBOOKS() methods
+    #endregion bdmwd_LOADED_WORKBOOKS() methods
     # ------------------------------------------------------------------------ +
-    #region bdwd_FI methods
-    def bdwd_FI_WORKBOOKS_load(self, fi_key : str, wf_key : str, wb_type : str
+    #region bdmwd_FI methods
+    def bdmwd_FI_WORKBOOKS_load(self, fi_key : str, wf_key : str, wb_type : str
                                                     ) -> LOADED_WORKBOOK_LIST:
-        """Load wbs for fi_key,wf_key,wb_type, merge to BDWD_LOADED_WORKBOOKS.
+        """Load wbs for fi_key,wf_key,wb_type, merge to BDMWD_LOADED_WORKBOOKS.
 
         For a given fi_key, wf_key and wb_type, load the workbooks from the
-        filesystem and merge them into the BDWD_LOADED_WORKBOOKS list.
+        filesystem and merge them into the BDMWD_LOADED_WORKBOOKS list.
 
         Args:
             fi_key (str): The financial institution key.
@@ -1926,10 +1926,10 @@ class BudgetDomainModel(metaclass=SingletonMeta):
         Returns:
             LOADED_WORKBOOK_LIST: A list of tuples containing the 
             workbook name and the loaded workbook object. Newly loaded
-            workbooks are appended to the BDWD_LOADED_WORKBOOKS list.
+            workbooks are appended to the BDMWD_LOADED_WORKBOOKS list.
         """
         try:
-            self.bdwd_INITIALIZED()
+            self.bdmwd_INITIALIZED()
             # Get the WORKBOOK_LIST for fi_key, wf_key and wb_type from the BDM.
             returned_wb_list = []
             wbl = self.bdm_FI_WF_WORKBOOK_LIST(fi_key, wf_key, wb_type)
@@ -1947,33 +1947,33 @@ class BudgetDomainModel(metaclass=SingletonMeta):
             logger.debug(f"Loaded {new_count} workbooks for "
                          f"FI_KEY('{fi_key}') WF_KEY('{wf_key}') "
                          f"WB_TYPE('{wb_type}')")
-            bdwd_lwbs = self.bdwd_LOADED_WORKBOOKS_get()
-            bdwd_lwbs_count = len(bdwd_lwbs) if bdwd_lwbs is not None else 0
-            if new_lwbl is None or len(new_lwbl) == 0: return bdwd_lwbs
+            bdmwd_lwbs = self.bdmwd_LOADED_WORKBOOKS_get()
+            bdmwd_lwbs_count = len(bdmwd_lwbs) if bdmwd_lwbs is not None else 0
+            if new_lwbl is None or len(new_lwbl) == 0: return bdmwd_lwbs
             # TODO: How to handle duplicates?
             for new_wb_name, new_wb in new_lwbl:
-                self.bdwd_LOADED_WORKBOOKS_add(new_wb_name, new_wb)
+                self.bdmwd_LOADED_WORKBOOKS_add(new_wb_name, new_wb)
             logger.debug(f"Added {new_count} to "
-                         f"BDWD_LOADED_WORKBOOKS({bdwd_lwbs_count}) "
-                         f"total = {len(bdwd_lwbs)}")
-            return self.bdwd_LOADED_WORKBOOKS_get()
+                         f"BDMWD_LOADED_WORKBOOKS({bdmwd_lwbs_count}) "
+                         f"total = {len(bdmwd_lwbs)}")
+            return self.bdmwd_LOADED_WORKBOOKS_get()
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
 
-    def bdwd_FI_WORKBOOKS_save(self, fi_key : str, wf_key : str,
+    def bdmwd_FI_WORKBOOKS_save(self, fi_key : str, wf_key : str,
                                wb_type : str) -> None:
         """Save workbooks for an FI workflow."""
         try:
-            self.bdwd_INITIALIZED()
-            lwbl = self.bdwd_LOADED_WORKBOOKS_get()
+            self.bdmwd_INITIALIZED()
+            lwbl = self.bdmwd_LOADED_WORKBOOKS_get()
             if lwbl is None or len(lwbl) == 0:
                 logger.debug(f"No loaded workbooks to save for "
                              f"FI_KEY('{fi_key}') WF_KEY('{wf_key}') "
                              f"WB_TYPE('{wb_type}')")
                 return
-            wbl = self.bdwd_WORKBOOKS_get()
+            wbl = self.bdmwd_WORKBOOKS_get()
             if wbl is None or len(wbl) == 0:
                 logger.debug(f"No workbooks to save for "
                              f"FI_KEY('{fi_key}') WF_KEY('{wf_key}') "
@@ -1985,34 +1985,34 @@ class BudgetDomainModel(metaclass=SingletonMeta):
             logger.error(m)
             raise            
 
-    def bdwd_FI_set(self, fi_key : str) -> None:
-        """Set the BDWD_FI_KEY in the BDM_WORKING_DATA.
+    def bdmwd_FI_set(self, fi_key : str) -> None:
+        """Set the BDMWD_FI_KEY in the BDM_WORKING_DATA.
 
         Args:
             fi_key (str): The financial institution key.
         """
         try:
-            self.bdwd_INITIALIZED()
+            self.bdmwd_INITIALIZED()
             # fi_key must be a valid key or 'all'.
             _ = p3u.str_empty(fi_key, raise_error=True) # Raises TypeError, ValueError
             _ = self.bdm_FI_KEY_validate(fi_key) # Raises ValueError fi_key
-            self.set_BDM_WORKING_DATA(BDWD_FI_KEY, fi_key)
-            logger.debug(f"Set BDWD_FI_KEY to '{fi_key}'")
+            self.set_BDM_WORKING_DATA(BDMWD_FI_KEY, fi_key)
+            logger.debug(f"Set BDMWD_FI_KEY to '{fi_key}'")
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
-    #endregion bdwd_FI methods
+    #endregion bdmwd_FI methods
     # ------------------------------------------------------------------------ +
-    #region bdwd_INITIALIZED methods
-    def bdwd_INITIALIZED(self) -> bool:
+    #region bdmwd_INITIALIZED methods
+    def bdmwd_INITIALIZED(self) -> bool:
         """Test if BDM_WORKING_DATA was initialized. Raise RuntimeError if not.
         """
         try:
             if (hasattr(self, BDM_WORKING_DATA) and
                 isinstance(self.bdm_working_data, dict) and
-                BDWD_INITIALIZED in self.bdm_working_data and
-                self.bdm_working_data[BDWD_INITIALIZED]): return True
+                BDMWD_INITIALIZED in self.bdm_working_data and
+                self.bdm_working_data[BDMWD_INITIALIZED]): return True
             m = f"BDM_WORKING_DATA was not initialized. "
             m += f"Use the bdm_BDM_WORKING_DATA_initialize() method."
             logger.error(m)
@@ -2023,46 +2023,46 @@ class BudgetDomainModel(metaclass=SingletonMeta):
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
-    def bdwd_INITIALIZED_get(self) -> bool:
-        """Get the BDWD_INITIALIZED from the BDM_WORKING_DATA.
+    def bdmwd_INITIALIZED_get(self) -> bool:
+        """Get the BDMWD_INITIALIZED from the BDM_WORKING_DATA.
         """
         try:
-            self.bdwd_INITIALIZED()
-            return self.get_BDM_WORKING_DATA(BDWD_INITIALIZED) 
+            self.bdmwd_INITIALIZED()
+            return self.get_BDM_WORKING_DATA(BDMWD_INITIALIZED) 
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
-    def bdwd_INITIALIZED_set(self, value : bool) -> bool:
-        """Set the BDWD_INITIALIZED in BDM_WORKING_DATA.
+    def bdmwd_INITIALIZED_set(self, value : bool) -> bool:
+        """Set the BDMWD_INITIALIZED in BDM_WORKING_DATA.
         """
         try:
-            self.bdwd_INITIALIZED()
-            return self.set_BDM_WORKING_DATA(BDWD_INITIALIZED, value) 
+            self.bdmwd_INITIALIZED()
+            return self.set_BDM_WORKING_DATA(BDMWD_INITIALIZED, value) 
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
-    #endregion bdwd_INITIALIZED methods
+    #endregion bdmwd_INITIALIZED methods
     # ------------------------------------------------------------------------ +
-    #endregion BDWD - Budget Domain Model Working Data methods
+    #endregion BDMWD - Budget Domain Model Working Data methods
     # ======================================================================== +
 
     # ======================================================================== +
-    #region    BDWD - BudMan DataContext Interface methods.
+    #region    BDMWD - BudMan DataContext Interface methods.
     # ------------------------------------------------------------------------ +
     #region dc_WB_REF_validate() method
     def dc_WB_REF_validate(self, wb_ref : str) -> bool: 
         """Return True if the wb_ref is valid."""
         try:
-            # Budget Domain Model Working Data (BDWD) validates wb_ref.
-            return self.bdwd_WB_REF_validate(wb_ref)
+            # Budget Domain Model Working Data (BDMWD) validates wb_ref.
+            return self.bdmwd_WB_REF_validate(wb_ref)
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
     #endregion dc_WB_REF_validate() method
     # ------------------------------------------------------------------------ +
-    #endregion BDWD - BDWD - BudMan DataContext Interface methods.
+    #endregion BDMWD - BDMWD - BudMan DataContext Interface methods.
     # ======================================================================== +
 
 # ---------------------------------------------------------------------------- +

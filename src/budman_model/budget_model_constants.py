@@ -158,95 +158,95 @@ WF_OUTPUT ="wf_output"
 WF_WORKBOOK_TYPES = (WF_INPUT, WF_WORKING, WF_OUTPUT)
 WF_DATA_OBJECT_VALID_ATTR_KEYS = (WF_INPUT, WF_WORKING, WF_OUTPUT)
 
-# The BDM_WORKING_DATA (BDWD_OBJECT) is designed to be a simple abstraction
+# The BDM_WORKING_DATA (BDMWD_OBJECT) is designed to be a simple abstraction
 # of the BudgetModel useful to View Models, Views, and other types of 
 # upstream callers. Specifically, it is intended to serve as the 
 # DATA_CONTEXT in an MVVM design pattern concept.
 # DATA_CONTEXT is an abstract interface which can be bound to concrete
 # implementations at runtime. 
-# In BudgetManager, the BDWD implements the DATA_CONTEXT interface.
+# In BudgetManager, the BDMWD implements the DATA_CONTEXT interface.
 # At the moment, this lightweight implementation is using a dictionary with
 # well-known attribute key names and data types as a "good guy" interface.
 # TODO: use an abstract base classes as proper interface for DATA_CONTEXT
 
-# BDWD_OBJECT "good guy" interface (Dictionary key names)
-BDWD_INITIALIZED = "bdwd_initialized"
-# Name: BDWD_INITIALIZED
+# BDMWD_OBJECT "good guy" interface (Dictionary key names)
+BDMWD_INITIALIZED = "bdmwd_initialized"
+# Name: BDMWD_INITIALIZED
 # Type: bool True | False
-# Desc: Indicates if the BDWD has been initialized.
-BDWD_FI_KEY = FI_KEY
-# Name: BDWD_FI_KEY
+# Desc: Indicates if the BDMWD has been initialized.
+BDMWD_FI_KEY = FI_KEY
+# Name: BDMWD_FI_KEY
 # Type: FI_KEY | "all" : str
 # Desc: FI_KEY of the FI data in the DC, or "all" if all are loaded.
-BDWD_WF_KEY = WF_KEY
-# Name: BDWD_WF_KEY
+BDMWD_WF_KEY = WF_KEY
+# Name: BDMWD_WF_KEY
 # Type: WF_KEY | "all" : str
 # Desc: WF_KEY of the FI Workflow data in the DC, or "all" if all are loaded.
-BDWD_WB_TYPE = WB_TYPE
-# Name: BDWD_WB_TYPE
+BDMWD_WB_TYPE = WB_TYPE
+# Name: BDMWD_WB_TYPE
 # Type: WB_TYPE | "all" : str
 # Desc: WB_TYPE of the FI Workflow data in the DC, or "all" if all are loaded.
-BDWD_WB_NAME = WB_NAME
-# Name: BDWD_WB_NAME
+BDMWD_WB_NAME = WB_NAME
+# Name: BDMWD_WB_NAME
 # Type: WB_NAME | "all" : str
 # Desc: A specific WB_NAME, or "all" if all are loaded.
-BDWD_WORKBOOKS = "bdwd_workbooks" # key name
-# Name: BDWD_WORKBOOKS
+BDMWD_WORKBOOKS = "bdmwd_workbooks" # key name
+# Name: BDMWD_WORKBOOKS
 # Type: WORKBOOKS_LIST : list of tuples
 # Desc: A list of tuples of wb_name, abs_path objects for workbooks associated
 #       with the current FI_KEY, WF_KEY, and WB_TYPE.
-BDWD_LOADED_WORKBOOKS = "bdwd_loaded_workbooks" # key name
-# Name: BDWD_LOADED_WORKBOOKS
+BDMWD_LOADED_WORKBOOKS = "bdmwd_loaded_workbooks" # key name
+# Name: BDMWD_LOADED_WORKBOOKS
 # Type: LOADED_WORKBOOK_LIST : list of tuples
 # Desc: A list of tuples of wb_name, Workbook objects for workbooks associated
-#       with the current FI_KEY, WF_KEY, and WB_TYPE and are loaded into BDWD.
-BDWD_BUDMAN_STORE = "budman_store"
-# Name: BDWD_LOADED_WORKBOOKS
+#       with the current FI_KEY, WF_KEY, and WB_TYPE and are loaded into BDMWD.
+BDMWD_BUDMAN_STORE = "budman_store"
+# Name: BDMWD_LOADED_WORKBOOKS
 # Type: Dict
 # Desc: Values loaded from Budget Manager configuration file , or "store".
 # Key validation list.
 BDM_WORKING_DATA_VALID_ATTR_KEYS = (
-    BDWD_INITIALIZED, 
-    BDWD_FI_KEY, 
-    BDWD_WF_KEY, 
-    BDWD_WB_TYPE,
-    BDWD_WB_NAME, 
-    BDWD_WORKBOOKS, 
-    BDWD_LOADED_WORKBOOKS,
-    BDWD_BUDMAN_STORE)
+    BDMWD_INITIALIZED, 
+    BDMWD_FI_KEY, 
+    BDMWD_WF_KEY, 
+    BDMWD_WB_TYPE,
+    BDMWD_WB_NAME, 
+    BDMWD_WORKBOOKS, 
+    BDMWD_LOADED_WORKBOOKS,
+    BDMWD_BUDMAN_STORE)
 
 # DATA_CONTEXT "good guy" interface (Dictionary key names)
-DC_INITIALIZED = BDWD_INITIALIZED
+DC_INITIALIZED = BDMWD_INITIALIZED
 # Name: DC_INITIALIZED
 # Type: bool True | False
 # Desc: Indicates if the DC has been initialized.
-DC_FI_KEY = BDWD_FI_KEY
+DC_FI_KEY = BDMWD_FI_KEY
 # Name: DC_FI_KEY
 # Type: FI_KEY | "all" : str
 # Desc: FI_KEY of the FI data in the DC, or "all" if all are loaded.
-DC_WF_KEY = BDWD_WF_KEY
+DC_WF_KEY = BDMWD_WF_KEY
 # Name: DC_WF_KEY
 # Type: WF_KEY | "all" : str
 # Desc: WF_KEY of the FI Workflow data in the DC, or "all" if all are loaded.
-DC_WB_TYPE = BDWD_WB_TYPE
+DC_WB_TYPE = BDMWD_WB_TYPE
 # Name: DC_WB_TYPE
 # Type: WB_TYPE | "all" : str
 # Desc: WB_TYPE of the FI Workflow data in the DC, or "all" if all are loaded.
-DC_WB_NAME = BDWD_WB_NAME
+DC_WB_NAME = BDMWD_WB_NAME
 # Name: DC_WB_NAME
 # Type: WB_NAME | "all" : str
 # Desc: A specific WB_NAME, or "all" if all are loaded.
-DC_WORKBOOKS = BDWD_WORKBOOKS
+DC_WORKBOOKS = BDMWD_WORKBOOKS
 # Name: DC_WORKBOOKS
 # Type: WORKBOOKS_LIST
 # Desc: A list of tuples of wb_name, abs_path objects for workbooks associated
 #       with the current FI_KEY, WF_KEY, and WB_TYPE
-DC_LOADED_WORKBOOKS = BDWD_LOADED_WORKBOOKS
+DC_LOADED_WORKBOOKS = BDMWD_LOADED_WORKBOOKS
 # Name: DC_LOADED_WORKBOOKS
 # Type: LOADED_WORKBOOK_LIST
 # Desc: A list of tuples of wb_name, and Workbook objects for workbooks associated
 #       with the current FI_KEY, WF_KEY, and WB_TYPE
-DC_BUDMAN_STORE = BDWD_BUDMAN_STORE
+DC_BUDMAN_STORE = BDMWD_BUDMAN_STORE
 # Name: DC_LOADED_WORKBOOKS
 # Type: Dict
 # Desc: Values loaded from Budget Manager configuration file , or "store".
@@ -261,7 +261,7 @@ DATA_CONTEXT_VALID_ATTR_KEYS = (
     DC_WORKBOOKS,
     DC_BUDMAN_STORE)
 
-BDWD_OBJECT_VALID_ATTR_KEYS = BDM_WORKING_DATA_VALID_ATTR_KEYS + DATA_CONTEXT_VALID_ATTR_KEYS
+BDMWD_OBJECT_VALID_ATTR_KEYS = BDM_WORKING_DATA_VALID_ATTR_KEYS + DATA_CONTEXT_VALID_ATTR_KEYS
 
 #
 # BUDMAN_SETTINGS property name constants used in settings.toml configuration file

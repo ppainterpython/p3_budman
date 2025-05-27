@@ -319,7 +319,7 @@ class BudgetManagerViewModelInterface():
     "bsm" - Budget Storage Model
 
     bdm_vm - scope is the concern of the Budget Domain Model View Model
-    BDWD - scope is the concern of the Budget Domain Working Data
+    BDMWD - scope is the concern of the Budget Domain Working Data
 
     The term "Design Language" is abbreviated as "DL" or "dl" in the code. All
     constants are defined in a design_language.py module for the intended scope. 
@@ -655,7 +655,7 @@ class BudgetManagerViewModelInterface():
                 logger.error(m)
                 raise RuntimeError(f"{pfx}{m}")
             # Load the workbooks for the FI,WF specified in the DC.
-            lwbl = self.budget_model.bdwd_FI_WORKBOOKS_load(fi_key, wf_key, wb_type)
+            lwbl = self.budget_model.bdmwd_FI_WORKBOOKS_load(fi_key, wf_key, wb_type)
             # Set last values of FI_init_cmd in the DC.
             self.dc_FI_KEY = fi_key
             self.dc_WF_KEY = wf_key
@@ -980,11 +980,11 @@ class BudgetManagerViewModelInterface():
                 wb_refnum = int(wb_ref)
                 wb_info = self.dc_WORKBOOKS[wb_refnum] if wb_refnum < wb_count else None
                 if wb_info is not None:
-                    wb = self.budget_model.bdwd_WORKBOOK_load(wb_info[0])
+                    wb = self.budget_model.bdmwd_WORKBOOK_load(wb_info[0])
                     l = "Yes" if self.WB_loaded(wb_info[0]) else "No "
                     r += f"{P2}{wb_refnum:>2} {l} {wb_info[0]:<40} '{wb_info[1]}'\n"
             elif wb_ref == p3bm.ALL_KEY:
-                lwbl = self.budget_model.bdwd_FI_WORKBOOKS_load(fi_key, wf_key, wb_type)
+                lwbl = self.budget_model.bdmwd_FI_WORKBOOKS_load(fi_key, wf_key, wb_type)
                 for i, (wb_name, wb_ap) in enumerate(lwbl):
                     l = "Yes" if self.WB_loaded(wb_name) else "No "
                     r += f"{P2}{i:>2} {l} {wb_name:<40} '{wb_ap}'\n"
@@ -1053,13 +1053,13 @@ class BudgetManagerViewModelInterface():
                 m = f"wb_name '{wb_name}' not found in LOADED_WORKBOOKS."
                 logger.error(m)
                 return False, m
-            wb = self.budget_model.bdwd_WORKBOOK_load(wb_name)
+            wb = self.budget_model.bdmwd_WORKBOOK_load(wb_name)
             ws = wb.active
             # Check for budget category column, add it if not present.
             p3bm.check_budget_category(ws)
             # Map the 'Original Description' column to the 'Budget Category' column.
             p3bm.map_budget_category(ws,"Original Description", p3bm.BUDGET_CATEGORY_COL)
-            self.budget_model.bdwd_WORKBOOK_save(wb_name, wb)
+            self.budget_model.bdmwd_WORKBOOK_save(wb_name, wb)
             r += f"Categorization Workflow applied to '{wb_name}'\n"
             return True, r
         except Exception as e:
@@ -1140,7 +1140,7 @@ class BudgetManagerViewModelInterface():
     Herein, the design is to have the DC interface provide support Commands 
     as well as Data properties and methods. To keep the scope of the View Model 
     limited concerning DC data, all understanding of the structure of  
-    data is in the DC which binds to the Model BDWD object. The DC properties and
+    data is in the DC which binds to the Model BDMWD object. The DC properties and
     methods are where downstream APIs are used, not in the Command Binding
     Implementation methods.
     
@@ -1151,7 +1151,7 @@ class BudgetManagerViewModelInterface():
     the concern for syncing with the Model downstream.    
 
     This View Model leverages the DC as a single interface to leverages 
-    BudgetManager Domain Model (BDM) through Budget Domain Working Data (BDWD)
+    BudgetManager Domain Model (BDM) through Budget Domain Working Data (BDMWD)
     "library" to reference actual data for the application Model, in memory. 
     When storage actions are required, the DC may utilize the 
     BudgetManager Storage Model (BSM) interface library.
@@ -1384,8 +1384,8 @@ class BudgetManagerViewModelInterface():
     def FI_WORKBOOKS_get(self) -> List[str]: 
         """Retrieve the current WORKBOOK_LIST for the DC fi_key,wf_key,wb_type."""
         try:
-            # Reference the BDWD_LOADED_WORKBOOKS.
-            return self.budget_model.bdwd_LOADED_WORKBOOKS_get()
+            # Reference the BDMWD_LOADED_WORKBOOKS.
+            return self.budget_model.bdmwd_LOADED_WORKBOOKS_get()
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
@@ -1395,8 +1395,8 @@ class BudgetManagerViewModelInterface():
     def FI_get_loaded_workbooks_count(self) -> int: 
         """Return count of all loaded workbooks from Data Context."""
         try:
-            # Reference the BDWD_LOADED_WORKBOOKS.
-            return self.budget_model.bdwd_LOADED_WORKBOOKS_count()
+            # Reference the BDMWD_LOADED_WORKBOOKS.
+            return self.budget_model.bdmwd_LOADED_WORKBOOKS_count()
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
@@ -1406,8 +1406,8 @@ class BudgetManagerViewModelInterface():
     def FI_get_loaded_workbooks(self) -> List[str]: 
         """Return names of all loaded workbooks from Data Context."""
         try:
-            # Reference the BDWD_LOADED_WORKBOOKS.
-            return self.budget_model.bdwd_LOADED_WORKBOOKS_get()
+            # Reference the BDMWD_LOADED_WORKBOOKS.
+            return self.budget_model.bdmwd_LOADED_WORKBOOKS_get()
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
@@ -1417,10 +1417,10 @@ class BudgetManagerViewModelInterface():
     def FI_get_loaded_workbook_names(self) -> List[str]: 
         """Return names of all loaded workbooks from Data Context."""
         try:
-            # Reference the BDWD_LOADED_WORKBOOKS.
-            bdwd_wb_list = self.budget_model.bdwd_LOADED_WORKBOOKS_get()
+            # Reference the BDMWD_LOADED_WORKBOOKS.
+            bdmwd_wb_list = self.budget_model.bdmwd_LOADED_WORKBOOKS_get()
             wb_name_list = []
-            for wb_name, _ in bdwd_wb_list:
+            for wb_name, _ in bdmwd_wb_list:
                 wb_name_list.append(wb_name)
             return wb_name_list
         except Exception as e:
@@ -1432,10 +1432,10 @@ class BudgetManagerViewModelInterface():
     def FI_get_loaded_workbook_by_index(self, i:int=0) -> Workbook: 
         """Reference loaded loaded workbooks by index, return Workbook object."""
         try:
-            # Reference the BDWD_LOADED_WORKBOOKS.
-            bdwd_wb_list = self.budget_model.bdwd_LOADED_WORKBOOKS_get()
-            if i < len(bdwd_wb_list):
-                wb_name, wb = bdwd_wb_list[i]
+            # Reference the BDMWD_LOADED_WORKBOOKS.
+            bdmwd_wb_list = self.budget_model.bdmwd_LOADED_WORKBOOKS_get()
+            if i < len(bdmwd_wb_list):
+                wb_name, wb = bdmwd_wb_list[i]
                 return wb
             return None
         except Exception as e:
@@ -1447,9 +1447,9 @@ class BudgetManagerViewModelInterface():
     def FI_get_loaded_workbook_by_name(self, name:str=None) -> Workbook: 
         """Reference loaded loaded workbooks by name, return Workbook object."""
         try:
-            # Reference the BDWD_LOADED_WORKBOOKS.
-            bdwd_wb_list = self.budget_model.bdwd_LOADED_WORKBOOKS_get()
-            for wb_name, wb in bdwd_wb_list:
+            # Reference the BDMWD_LOADED_WORKBOOKS.
+            bdmwd_wb_list = self.budget_model.bdmwd_LOADED_WORKBOOKS_get()
+            for wb_name, wb in bdmwd_wb_list:
                 if wb_name == name:
                     return wb
             return None

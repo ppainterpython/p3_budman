@@ -12,7 +12,7 @@ from openpyxl import Workbook
 from src.budget_manager_domain_model import design_language_namespace as bdmns
 from budman_data_context_interface import BudManDataContextBaseInterface
 from budman_data_context_interface import BudManDataContextClientInterface
-from budman_data_context_interface import BudManDataContextInterface
+from budman_data_context_interface import BudManDataContext
 
 # local libraries
 import logging, p3_utils as p3u, p3logging as p3l
@@ -22,13 +22,12 @@ import logging, p3_utils as p3u, p3logging as p3l
 logger = logging.getLogger(bdmns.THIS_APP_NAME)
 #endregion Globals
 # ---------------------------------------------------------------------------- +
-def test_budman_data_context_interface_initialize():
-    """Test the BudManDataContextInterface class __init__() and initialize()."""
+def test_budman_data_context_initialize():
+    """Test the BudManDataContext class __init__() and initialize()."""
     try:
-        logger.info(test_budman_data_context_interface_initialize.__doc__)
-        # Try to instantiate the abstract base class, should raise TypeError.
-        bdmdc = BudManDataContextInterface()
-        assert not bdmdc.INITIALIZED, "Expected INITIALIZED to be False for new instance"
+        logger.info(test_budman_data_context_initialize.__doc__)
+        bdmdc = BudManDataContext()
+        assert not bdmdc.dc_INITIALIZED, "Expected INITIALIZED to be False for new instance"
         assert bdmdc.dc_FI_KEY is None, "Expected dc_FI_KEY to be None for new instance"
         assert bdmdc.dc_WF_KEY is None, "Expected dc_WF_KEY to be None for new instance"
         assert bdmdc.dc_WB_TYPE is None, "Expected dc_WB_TYPE to be None for new instance"
@@ -36,8 +35,8 @@ def test_budman_data_context_interface_initialize():
         assert bdmdc.dc_BUDMAN_STORE is None, "Expected dc_BUDMAN_STORE to be None for new instance"
         assert bdmdc.dc_WORKBOOKS is None, "Expected dc_WORKBOOKS to be None for new instance"
         assert bdmdc.dc_LOADED_WORKBOOKS is None, "Expected dc_LOADED_WORKBOOKS to be None for new instance"
-        bdmdc.initialize()
-        assert bdmdc.INITIALIZED is True, "Expected INITIALIZED to be True after initialization"
+        bdmdc.dc_initialize()
+        assert bdmdc.dc_INITIALIZED is True, "Expected INITIALIZED to be True after initialization"
     except Exception as e:
         pytest.fail(f"BudManDataContextBaseInterface() raised an exception: {str(e)}")
 # ---------------------------------------------------------------------------- +
@@ -46,17 +45,16 @@ def test_budman_data_context_client_interface_initialize():
     try:
         logger.info(test_budman_data_context_client_interface_initialize.__doc__)
         try:
-            # Try to instantiate the abstract base class, should raise TypeError.
-            bdmdc = BudManDataContextInterface().initialize()
+            bdmdc = BudManDataContext().dc_initialize()
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
-            pytest.fail(f"BudManDataContextInterface() raised an exception: {str(e)}")
-        assert bdmdc is not None, "BudManDataContextInterface() should not be None"
+            pytest.fail(f"BudManDataContext() raised an exception: {str(e)}")
+        assert bdmdc is not None, "BudManDataContext() should not be None"
         assert isinstance(bdmdc, BudManDataContextBaseInterface), \
-            "Expected BudManDataContextInterface to be a subclass of BudManDataContextInterface, got: " + str(type(bdmdc))
-        assert bdmdc.INITIALIZED is True, "Expected INITIALIZED to be True after instantiation"
+            "Expected BudManDataContext to be a subclass of BudManDataContextBaseInterface, got: " + str(type(bdmdc))
+        assert bdmdc.dc_INITIALIZED is True, "Expected INITIALIZED to be True after instantiation"
         try:
-            dc_client = BudManDataContextClientInterface(bdmdc).initialize()
+            dc_client = BudManDataContextClientInterface(bdmdc).dc_initialize()
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             pytest.fail(f"BudManDataContextClientInterface() raised TypeError: {str(e)}")
@@ -66,7 +64,7 @@ def test_budman_data_context_client_interface_initialize():
         assert dc_client.data_context is not None, "dc_client.data_context should not be None"
         assert isinstance(dc_client.data_context, BudManDataContextBaseInterface), \
             "Expected dc_client.data_context to be a BudManDataContextBaseInterface instance, got: " + str(type(dc_client.data_context))
-        assert dc_client.data_context.INITIALIZED is True, \
+        assert dc_client.data_context.dc_INITIALIZED is True, \
             "Expected dc_client.data_context.INITIALIZED to be True after instantiation"
     except Exception as e:
         pytest.fail(f"Something raised an exception: {str(e)}")
@@ -76,9 +74,8 @@ def test_budman_data_context_client_interface_properties():
     try:
         logger.info(test_budman_data_context_client_interface_properties.__doc__)
         try:
-            # Try to instantiate the abstract base class, should raise TypeError.
-            bdmdc = BudManDataContextInterface().initialize()
-            dc_client = BudManDataContextClientInterface(bdmdc).initialize()
+            bdmdc = BudManDataContext().dc_initialize()
+            dc_client = BudManDataContextClientInterface(bdmdc).dc_initialize()
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
@@ -89,7 +86,7 @@ def test_budman_data_context_client_interface_properties():
         assert dc_client.data_context is not None, "dc_client.data_context should not be None"
         assert isinstance(dc_client.data_context, BudManDataContextBaseInterface), \
             "Expected dc_client.data_context to be a BudManDataContextBaseInterface instance, got: " + str(type(dc_client.data_context))
-        assert dc_client.data_context.INITIALIZED is True, \
+        assert dc_client.data_context.dc_INITIALIZED is True, \
             "Expected dc_client.data_context.INITIALIZED to be True after instantiation"
         dc_client.dc_FI_KEY = "test_fi_key"
         assert dc_client.dc_FI_KEY == "test_fi_key", \
@@ -151,9 +148,8 @@ def test_budman_data_context_client_interface_methods():
     try:
         logger.info(test_budman_data_context_client_interface_methods.__doc__)
         try:
-            # Try to instantiate the abstract base class, should raise TypeError.
-            bdmdc = BudManDataContextInterface().initialize()
-            dc_client = BudManDataContextClientInterface(bdmdc).initialize()
+            bdmdc = BudManDataContext().dc_initialize()
+            dc_client = BudManDataContextClientInterface(bdmdc).dc_initialize()
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
@@ -162,9 +158,9 @@ def test_budman_data_context_client_interface_methods():
         assert isinstance(dc_client, BudManDataContextClientInterface), \
             "Expected dc_client to be a BudManDataContextClientInterface instance, got: " + str(type(dc_client))
         assert dc_client.data_context is not None, "dc_client.data_context should not be None"
-        assert isinstance(dc_client.data_context, BudManDataContextBaseInterface), \
-            "Expected dc_client.data_context to be a BudManDataContextBaseInterface instance, got: " + str(type(dc_client.data_context))
-        assert dc_client.data_context.INITIALIZED is True, \
+        assert isinstance(dc_client.data_context, BudManDataContext), \
+            "Expected dc_client.data_context to be a BudManDataContext, got: " + str(type(dc_client.data_context))
+        assert dc_client.data_context.dc_INITIALIZED is True, \
             "Expected dc_client.data_context.INITIALIZED to be True after instantiation"
         assert dc_client.dc_FI_KEY_validate("test_fi_key") is True, \
             "Expected dc_FI_KEY_validate to return True for valid FI_KEY"
@@ -186,11 +182,11 @@ def test_budman_data_context_client_interface_methods():
             "Expected dc_WB_REF_validate to return True for valid WB_REF"
         assert dc_client.dc_WB_REF_validate("") is False, \
             "Expected dc_WB_REF_validate to return False for empty WB_REF"
-        wb = dc_client.WORKBOOK_load("test_workbook.xlsx")
+        wb = dc_client.dc_WORKBOOK_load("test_workbook.xlsx")
         assert wb is not None, "WORKBOOK_load should return a Workbook instance"
         assert isinstance(wb, Workbook), \
             "Expected WORKBOOK_load to return a Workbook instance, got: " + str(type(wb))
-        assert dc_client.WORKBOOK_loaded("test_workbook.xlsx"), \
+        assert dc_client.dc_WORKBOOK_loaded("test_workbook.xlsx"), \
             "Expected WORKBOOK_loaded to return True for loaded workbook"
         
     except Exception as e:

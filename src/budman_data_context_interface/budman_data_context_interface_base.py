@@ -1,6 +1,6 @@
 # ---------------------------------------------------------------------------- +
 #region budman_data_context_base_interface.py module
-""" BudManDataContextBaseInterface: interface for a Budget Manager Data Context.
+""" BudManDataContextBaseInterface: Abstract Base Class interface.
 
     A Data Context (DC) is a component of the MVVM design pattern for 
     applications. It separates concerns by Model, View Model and View object
@@ -9,6 +9,12 @@
 
     The properties and methods reflect the application design language, in terms
     of the domain model objects, command processing, etc. 
+
+    A Data Context is not a Model, nor a View Model, it is a bridge between
+    the two. It provides a way to access and manipulate data without exposing
+    the underlying implementation details.
+
+    Each property and method herein documents its purpose. 
 """
 #endregion budman_data_context_base_interface.py module
 # ---------------------------------------------------------------------------- +
@@ -17,46 +23,44 @@
 from abc import ABC, abstractmethod
 # third-party modules and packages
 from openpyxl import Workbook
-
 # local modules and packages
 from src.budget_manager_domain_model import design_language_namespace as bdmns
-# from .budget_model_constants import  *
-# from .budget_category_mapping import (
-#     map_category, category_map_count)
-# from .budget_domain_model import BudgetDomainModel
-# from data.p3_fi_transactions.budget_model import BudgetModel
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 class BudManDataContextBaseInterface(ABC):
-    """BudManDataContextBaseInterface: Interface for a Budget Manager Data Context."""
-    # ------------------------------------------------------------------------ +
+    """Abstract Base Class Interface for Budget Manager Data Context."""
+
     #region Abstract Properties
     @property
     @abstractmethod
-    def INITIALIZED(self) -> bool:
+    def dc_INITIALIZED(self) -> bool:
         """Indicates whether the data context has been initialized."""
         pass
-    @INITIALIZED.setter
+    @dc_INITIALIZED.setter
     @abstractmethod
-    def INITIALIZED(self, value: bool) -> None:
+    def dc_INITIALIZED(self, value: bool) -> None:
         """Set the initialized state of the data context."""
         pass
 
     @property
     @abstractmethod
     def dc_FI_KEY(self) -> str:
-        """Return the FI_KEY for the financial institution."""
+        """Return the FI_KEY of the current Financial Institution.
+        Current means that the other data in the DC is for this FI.
+        """
         pass
     @dc_FI_KEY.setter
     @abstractmethod
     def dc_FI_KEY(self, value: str) -> None:
-        """Set the FI_KEY for the financial institution."""
+        """Set the FI_KEY of the current Financial Institution."""
         pass
 
     @property
     @abstractmethod
     def dc_WF_KEY(self) -> str:
-        """Return the WF_KEY for the workflow."""
+        """Return the WF_KEY for the current workflow of interest.
+        Current means that the other data in the DC is for this workflow.
+        """
         pass
     @dc_WF_KEY.setter
     @abstractmethod
@@ -67,7 +71,11 @@ class BudManDataContextBaseInterface(ABC):
     @property
     @abstractmethod
     def dc_WB_TYPE(self) -> str:
-        """Return the WB_TYPE workbook type."""
+        """Return the current WB_TYPE (workbook type) .
+        Current means that the other data in the DC is for this workbook type. 
+        This indicates the type of data in the workflow being processed,
+        e.g., 'input', 'output', 'working', etc.
+        """
         pass
     @dc_WB_TYPE.setter
     @abstractmethod
@@ -78,7 +86,12 @@ class BudManDataContextBaseInterface(ABC):
     @property
     @abstractmethod
     def dc_WB_NAME(self) -> str:
-        """Return the WB_NAME workbook name."""
+        """Return the current WB_NAME workbook name.
+        
+        Current means that the other data in the DC is for this workbook, and 
+        that a user has specified this workbook specifically by name.
+        This indicates the name of the workbook being processed, e.g., 'budget.xlsx',
+        """
         pass
     @dc_WB_NAME.setter
     @abstractmethod
@@ -100,10 +113,7 @@ class BudManDataContextBaseInterface(ABC):
     @property
     @abstractmethod
     def dc_WORKBOOKS(self) -> bdmns.WORKBOOK_LIST:
-        """Return the list of workbooks in the DC.
-        This is a List of tuples, where each tuple contains the workbook name
-        and its absolute path.
-        """
+        """Return the list of workbooks in the DC."""
         pass
     @dc_WORKBOOKS.setter
     @abstractmethod
@@ -114,21 +124,20 @@ class BudManDataContextBaseInterface(ABC):
     @property
     @abstractmethod
     def dc_LOADED_WORKBOOKS(self) -> bdmns.LOADED_WORKBOOK_LIST:
-        """Return the list of loaded workbooks in the DC.
-        This is a List of tuples, where each tuple contains the workbook name
-        and its Workbook object.
-        """
+        """Return the list of workbooks currently loaded in the DC.
+        Loaded means a file is loaded into memory and is available."""
         pass
     @dc_LOADED_WORKBOOKS.setter
     @abstractmethod
     def dc_LOADED_WORKBOOKS(self, value: bdmns.LOADED_WORKBOOK_LIST) -> None:
-        """Set the list of loaded workbooks in the DC."""
+        """Set the list of workbooks currently loaded in the DC.
+        Loaded means a file is loaded into memory and is available."""
         pass
     #endregion Abstract Properties
     # ------------------------------------------------------------------------ +
     #region Abstract Methods
     @abstractmethod
-    def initialize(self) -> None:
+    def dc_initialize(self) -> None:
         """Initialize the data context."""
         pass
 
@@ -158,37 +167,41 @@ class BudManDataContextBaseInterface(ABC):
         pass
 
     @abstractmethod
-    def WORKBOOK_loaded(self, wb_name: str) -> bool:
+    def dc_WORKBOOK_loaded(self, wb_name: str) -> bool:
         """Indicates whether the named workbook is loaded."""
         pass
 
     @abstractmethod
-    def WORKBOOK_load(self, wb_name: str) -> Workbook:
+    def dc_WORKBOOK_load(self, wb_name: str) -> Workbook:
         """Load the specified workbook by name."""
         pass
 
     @abstractmethod
-    def WORKBOOK_save(self, wb_name: str, wb: Workbook) -> None:
+    def dc_WORKBOOK_save(self, wb_name: str, wb: Workbook) -> None:
         """Save the specified workbook by name."""
         pass
 
     @abstractmethod
-    def WORKBOOK_remove(self, wb_name: str) -> None:
+    def dc_WORKBOOK_remove(self, wb_name: str) -> None:
         """Remove the specified workbook by name."""
         pass
 
     @abstractmethod
-    def WORKBOOK_add(self, wb_name: str, wb: Workbook) -> None:
+    def dc_WORKBOOK_add(self, wb_name: str, wb: Workbook) -> None:
         """Add a new workbook to the data context."""
         pass
 
     @abstractmethod
-    def BUDMAN_STORE_load(self, file_path: str) -> None:
-        """Load the BUDMAN_STORE from the specified file path."""
+    def dc_BUDMAN_STORE_load(self, file_path: str) -> None:
+        """Load the BUDMAN_STORE from the specified file path. NotImplementedError.
+        The design presumes that the BUDMAN_STORE is managed by the downstream
+        Model implementation, that the budget_domain_model uses it to 
+        initialize the state of the BDM. This implementation has no BDM.
+        """
         pass
 
     @abstractmethod
-    def BUDMAN_STORE_save(self, file_path: str) -> None:
+    def dc_BUDMAN_STORE_save(self, file_path: str) -> None:
         """Save the BUDMAN_STORE to the specified file path."""
         pass
 
