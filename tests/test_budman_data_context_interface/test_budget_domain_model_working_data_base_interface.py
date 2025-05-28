@@ -9,11 +9,11 @@ from abc import ABC, abstractmethod
 from openpyxl import Workbook
 
 # local modules and packages
-from src.budget_manager_domain_model import design_language_namespace as bdmns
+from src.budman_namespace import design_language_namespace as bdmns
 # from budman_data_context_interface import BudManDataContextBaseInterface
 # from budman_data_context_interface import BudManDataContextClientInterface
-from budman_data_context_interface import BudManDataContextBaseInterface
-from budman_data_context_interface import BDMWorkingDataBaseInterface
+from budman_data_context import BudManDataContextBaseInterface
+from budman_data_context import BDMWorkingData
 
 # local libraries
 import logging, p3_utils as p3u, p3logging as p3l
@@ -34,7 +34,7 @@ class TestBDMWorkingDataBaseInterface():
         """Fixture to set up the BDMWorkingDataBaseInterface instance."""
         try:
             logger.info(self.bdmwd_bi.__doc__)
-            bdmwd_bi_value = BDMWorkingDataBaseInterface()
+            bdmwd_bi_value = BDMWorkingData()
             bdmwd_bi_value.dc_initialize()
         except Exception as e:
             m = f"bdmwd_bi() fixture raised an exception: {p3u.exc_err_msg(e)}"
@@ -46,7 +46,7 @@ class TestBDMWorkingDataBaseInterface():
         """Test the BDMWorkingDataBaseInterface class __init__() and initialize()."""
         try:
             logger.info(self.test_bdm_wd_base_interface__init__and_initialize.__doc__)
-            bdmwd_bi = BDMWorkingDataBaseInterface()
+            bdmwd_bi = BDMWorkingData()
             assert not bdmwd_bi.dc_INITIALIZED, "Expected INITIALIZED to be False for new instance"
             assert bdmwd_bi.dc_FI_KEY is None, "Expected dc_FI_KEY to be None for new instance"
             assert bdmwd_bi.dc_WF_KEY is None, "Expected dc_WF_KEY to be None for new instance"
@@ -67,13 +67,13 @@ class TestBDMWorkingDataBaseInterface():
         try:
             logger.info(self.test_test_bdm_wd_base_interface_dc_override_methods.__doc__)
             try:
-                bdmwd_bi = BDMWorkingDataBaseInterface().dc_initialize()
+                bdmwd_bi = BDMWorkingData().dc_initialize()
             except Exception as e:
                 m = p3u.exc_err_msg(e)
                 logger.error(m)
                 pytest.fail(f"BDMWorkingDataBaseInterface() raised an exception: {m}")
             assert bdmwd_bi is not None, "BudManDataContextBaseInterface() should not be None"
-            assert isinstance(bdmwd_bi, BDMWorkingDataBaseInterface), \
+            assert isinstance(bdmwd_bi, BDMWorkingData), \
                 "Expected BDMWorkingDataBaseInterface to be a subclass of BudManDataContextBaseInterface, got: " + str(type(bdmwd_bi))
             assert bdmwd_bi.dc_INITIALIZED is True, "Expected INITIALIZED to be True after instantiation"
             bdmwd_bi.dc_FI_KEY = "test_fi_key"
@@ -91,7 +91,7 @@ class TestBDMWorkingDataBaseInterface():
         try:
             logger.info(self.test_bdm_wd_base_interface_dc_interface_properties.__doc__)
             assert bdmwd_bi is not None, "BDMWorkingDataBaseInterface should not be None"
-            assert isinstance(bdmwd_bi, BDMWorkingDataBaseInterface), "Expected bdmwd_bi to be a BDMWorkingDataBaseInterface instance, got: " + str(type(bdmwd_bi))
+            assert isinstance(bdmwd_bi, BDMWorkingData), "Expected bdmwd_bi to be a BDMWorkingDataBaseInterface instance, got: " + str(type(bdmwd_bi))
             # assert bdmwd_bi.data_context is not None, "bdmwd_bi.data_context should not be None"
             # assert isinstance(bdmwd_bi.data_context, BDMWorkingDataBaseInterface), "Expected bdmwd_bi.data_context to be a BDMWorkingDataBaseInterface instance, got: " + str(type(bdmwd_bi.data_context))
             # assert bdmwd_bi.data_context.dc_INITIALIZED is True, "Expected bdmwd_bi.data_context.INITIALIZED to be True after instantiation"

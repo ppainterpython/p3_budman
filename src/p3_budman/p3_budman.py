@@ -11,17 +11,22 @@
 import atexit, pathlib, logging, inspect, logging.config  #, logging.handlers
 
 # third-party  packages and module libraries
-from config import settings
 from openpyxl import Workbook
 import p3logging as p3l, p3_utils as p3u
 
 # local packages and module libraries
-import budman_view_model.budman_cli_view_datacontext as p3bm_view_dc
-import budman_view_model.budman_view_model_interface as p3bmvm
-import budman_cli_view.budman_cli_view as p3bmv
-logger = logging.getLogger(settings.app_name)
-logger.propagate = True
+from config import settings
+from budman_namespace import design_language_namespace as ns
+from budman_data_context import BudManDataContext
+from budman_view_model import (BudManViewModel, BudManCLIViewDataContext)
+from budman_cli_view import BudManCLIView
 #endregion Imports
+# ---------------------------------------------------------------------------- +
+#region Globals and Constants
+logger = logging.getLogger(ns.THIS_APP_NAME)
+logger.propagate = True
+# ---------------------------------------------------------------------------- +
+#endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
 #region configure_logging() function
 def configure_logging(logger_name : str = settings.app_name, logtest : bool = False) -> None:
@@ -64,13 +69,13 @@ def budman_app_cli_cmdloop(startup : bool = True) -> None:
     """CLI cmdloop function."""
     try:
         # create and initialize view model
-        bmvm = p3bmvm.BudgetManagerViewModelInterface()
+        bmvm = BudManViewModel()
         bmvm.initialize(load_user_store=True) # Initialize the BudgetModelCommandViewModel
         # create and initialize a data context, for the view model
-        bm_cliview_dc = p3bm_view_dc.BudgetManagerCLIViewDataContext(bmvm)
+        bm_cliview_dc = BudManCLIViewDataContext(bmvm)
         bm_cliview_dc.initialize(cp=bmvm.BMVM_execute_cmd,dc=bmvm.data_context) 
         # create and initialize the view
-        clview = p3bmv.BudgetManagerCLIView(bm_cliview_dc).initialize()
+        clview = BudManCLIView(bm_cliview_dc).initialize()
         # startup the view or not
         clview.cmdloop() if startup else None # Application CLI loop
         _ = "pause"

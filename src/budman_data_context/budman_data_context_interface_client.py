@@ -25,8 +25,8 @@ from abc import ABC, abstractmethod
 from openpyxl import Workbook
 
 # local modules and packages
-from src.budget_manager_domain_model import design_language_namespace as bdmns
-from budman_data_context_interface import BudManDataContextBaseInterface
+from src.budman_namespace import design_language_namespace as bdmns
+from budman_data_context import BudManDataContextBaseInterface
 import p3_utils as p3u
 # from .budget_model_constants import  *
 # from .budget_category_mapping import (

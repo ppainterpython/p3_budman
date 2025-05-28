@@ -1,9 +1,7 @@
 # ---------------------------------------------------------------------------- +
-#region budman_view_model_interface.py module
-""" budman_view_model_interface.py implements the BudgetManagerViewModelInterface
-class, serving as the ViewModel for the Budget Manager application.
-"""
-#endregion budman_view_model_interface.py module
+#region budman_view_model.py module
+""" budman_view_model.py implements the BudgetManagerViewModel class."""
+#endregion budman_view_model.py module
 # ---------------------------------------------------------------------------- +
 #region Imports
 # python standard library modules and packages
@@ -12,33 +10,28 @@ from pathlib import Path
 from typing import List, Type, Generator, Dict, Tuple, Any, Callable
 
 # third-party modules and packages
-from config import settings
 import p3_utils as p3u, pyjson5, p3logging as p3l
 from openpyxl import Workbook, load_workbook
 
 # local modules and packages
+from config import settings
+from budman_namespace import (
+    FI_KEY, WF_KEY, WB_NAME, WB_TYPE,
+    WB_REF, WB_INFO, WB_INFO_LEVEL_INFO, WB_INFO_LEVEL_VERBOSE,
+    WB_INFO_VALID_LEVELS, RELOAD_TARGET, CATEGORY_MAP,
+    ALL_KEY, P2, P4, P6, P8, P10, MODEL_OBJECT
+    )
+from budman_data_context import BudManDataContext
 import budman_model as p3bm
 from budman_model import P2, P4, P6, P8, P10
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
 logger = logging.getLogger(settings[p3bm.APP_NAME])
-FI_KEY = p3bm.FI_KEY
-WF_KEY = p3bm.WF_KEY
-WB_NAME = p3bm.WB_NAME
-WB_TYPE = p3bm.WB_TYPE
-ALL_KEY = p3bm.ALL_KEY
-WB_REF = "wb_ref"
-WB_INFO = "wb_info"
-WB_INFO_LEVEL_INFO = "info"
-WB_INFO_LEVEL_VERBOSE = "verbose"
-WB_INFO_VALID_LEVELS = [WB_INFO_LEVEL_INFO, WB_INFO_LEVEL_VERBOSE]
-RELOAD_TARGET = "reload_target"
-CATEGORY_MAP = "category_map"
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
-class BudgetManagerViewModelInterface():
+class BudManViewModel():
     # ======================================================================== +
     #region BudgetManagerViewModelInterface class
     """A Budget Model View Model to support Commands and Data Context.
@@ -62,12 +55,22 @@ class BudgetManagerViewModelInterface():
         super().__init__()
         self._initialized : bool = False
         self.BUDMAN_STORE_loaded : bool = False
-        self._budget_model : p3bm.BudgetDomainModel = None
-        self._data_context : Dict = {}
+        self._budget_domain_model : p3bm.BudgetDomainModel = None
+        self._data_context : BudManDataContext = None
         self._cmd_map : Dict[str, Callable] = None
     #endregion __init__() constructor method
     # ------------------------------------------------------------------------ +
     #region Properties
+    @property
+    def model(self) -> MODEL_OBJECT:
+        """Return the model object reference."""
+        return self._budget_domain_model
+    @model.setter
+    def model(self, bdm: MODEL_OBJECT) -> None:
+        """Set the model object reference."""
+        if not isinstance(bdm, MODEL_OBJECT):
+            raise TypeError("model must be a BudgetDomainModel instance")
+        self._budget_domain_model = bdm
     @property
     def initialized(self) -> bool:
         """Return True if the ViewModel is initialized."""
@@ -81,13 +84,13 @@ class BudgetManagerViewModelInterface():
     @property
     def budget_model(self) -> p3bm.BudgetDomainModel:
         """Return the BudgetModel instance."""
-        return self._budget_model
+        return self._budget_domain_model
     @budget_model.setter
     def budget_model(self, value: p3bm.BudgetDomainModel) -> None:
         """Set the BudgetModel instance."""
         if not isinstance(value, p3bm.BudgetDomainModel):
             raise ValueError("budget_model must be a BudgetModel instance.")
-        self._budget_model = value
+        self._budget_domain_model = value
     @property
     def data_context(self) -> Dict:
         """Return the data context dictionary."""
@@ -123,7 +126,7 @@ class BudgetManagerViewModelInterface():
     #endregion Properties
     # ------------------------------------------------------------------------ +
     #region initialize() method
-    def initialize(self, load_user_store : bool = False) -> "BudgetManagerViewModelInterface":
+    def initialize(self, load_user_store : bool = False) -> "BudManViewModel":
         """Initialize the command view_model."""
         try:
             st = p3u.start_timer()
@@ -140,9 +143,12 @@ class BudgetManagerViewModelInterface():
                     # Use the builtin default template as a config_object.
                     config_object = p3bm.BudgetModelTemplate.get_budget_model_template()
                 # Now to initialize the budget model.
-                self.budget_model = p3bm.BudgetDomainModel(config_object).bdm_initialize()
+                self.model = p3bm.BudgetDomainModel(config_object).bdm_initialize()
             if not self.budget_model.bdm_initialized: 
                 raise ValueError("BudgetModel is not initialized.")
+            # TODO: create the BudManDataContext 
+            # self.data_context = BudManDataContext(self.model)  # Data Context for the Budget Domain Model
+
             # Initialize the data context. This View Model uses a DC object from
             # the Model which places data in it.
             self.DC = self.budget_model.data_context

@@ -37,7 +37,7 @@ from config import settings
 import p3_utils as p3u, pyjson5, p3logging as p3l
 import cmd2, argparse
 from cmd2 import (Cmd2ArgumentParser, with_argparser)
-from  .budman_cli_parser import BudgetManagerCLIParser, BudManCmd2ArgumentParser
+from  .budman_cli_parser import BudManCLIParser, BudManCmd2ArgumentParser
 
 # local modules and packages
 
@@ -54,7 +54,7 @@ logger = logging.getLogger(settings.app_name)
 # Cmd2ArgumentParser object. If one fails during setup(), the goal is the
 # whole app won't fail, and will display the error message for the
 # particular command parser.
-cli_parser : BudgetManagerCLIParser = BudgetManagerCLIParser()
+cli_parser : BudManCLIParser = BudManCLIParser()
 def init_cmd_parser() -> BudManCmd2ArgumentParser:
     subcmd_parser = cli_parser.init_cmd_parser if cli_parser else None
     return subcmd_parser
@@ -82,7 +82,7 @@ def _log_cli_cmd_execute(self, opts):
 def _log_cli_cmd_complete(self, opts, st = None):
     m = p3u.stop_timer(st) if st else None
     logger.info(f"Complete Command: {str(_filter_opts(opts))} {m}")
-def _show_args_only(cli_view : "BudgetManagerCLIView", opts) -> bool:
+def _show_args_only(cli_view : "BudManCLIView", opts) -> bool:
     oc = vars(opts).copy()
     oc.pop('cmd2_statement')
     oc.pop('cmd2_handler')
@@ -109,7 +109,7 @@ class MockViewModel():
 
 #endregion MockViewModel class
 # ---------------------------------------------------------------------------- +
-class BudgetManagerCLIView(cmd2.Cmd):
+class BudManCLIView(cmd2.Cmd):
     # ======================================================================== +
     #region BudgetManagerCLIView class
     """An MVVM View class for BudgetModel implementing a command line interface.
@@ -140,7 +140,7 @@ class BudgetManagerCLIView(cmd2.Cmd):
         self.terminal_width = 100 # TODO: add to settings.
         cmd2.Cmd.__init__(self, shortcuts=shortcuts)
         # super().__init__()
-        BudgetManagerCLIView.prompt = PO_ON_PROMPT if self.parse_only else PO_OFF_PROMPT
+        BudManCLIView.prompt = PO_ON_PROMPT if self.parse_only else PO_OFF_PROMPT
     #endregion  Constructor
     # ------------------------------------------------------------------------ +
     #region Properties
@@ -184,7 +184,7 @@ class BudgetManagerCLIView(cmd2.Cmd):
         try:
             st = p3u.start_timer()
             if _log_cli_cmd_execute(self, opts): return True, "parse_only"
-            cmd = BudgetManagerCLIView.create_cmd(opts)
+            cmd = BudManCLIView.create_cmd(opts)
             status, result = self.data_context.execute_cmd(cmd)
             if status:
                 # TODO: cleanup output when 
@@ -346,7 +346,7 @@ class BudgetManagerCLIView(cmd2.Cmd):
                 else:
                     self.poutput("Invalid value for parse_only. "
                                  "Use on|off|toggle.")
-                BudgetManagerCLIView.prompt = PO_ON_PROMPT if self.parse_only else PO_OFF_PROMPT
+                BudManCLIView.prompt = PO_ON_PROMPT if self.parse_only else PO_OFF_PROMPT
                 self.poutput(f"parse_only: {self.parse_only}")
             elif opts.val_cmd == "wf_key":
                 _ = opts.wf_ref

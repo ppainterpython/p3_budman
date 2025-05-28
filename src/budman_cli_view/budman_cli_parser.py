@@ -38,7 +38,7 @@ class BudManCmd2ArgumentParser(cmd2.Cmd2ArgumentParser):
         self.formatter_class = lambda prog: argparse.HelpFormatter(prog, width=terminal_width)
         return super().format_help()  # Call parent method
 
-class BudgetManagerCLIParser():
+class BudManCLIParser():
     """A class to parse command line arguments for the BudgetModelCLIView class.
 
     This class is used to parse command line arguments for the BudgetModelCLIView

@@ -13,7 +13,7 @@ import logging, p3_utils as p3u, p3logging as p3l
 
 # local libraries
 import budman_model as p3bm
-import budman_view_model.budman_view_model_interface as p3bmvm
+import budman_view_model.budman_view_model as p3bmvm
 #endregion imports
 # ---------------------------------------------------------------------------- +
 #region Globals
@@ -26,8 +26,8 @@ def test_BUDMAN_STORE_load():
         logger.info(test_BUDMAN_STORE_load.__doc__)
         # Create a BudgetDomainModelIdentity instance and initialize it
         # from the user's BDM_STORE file.
-        bmvm = p3bmvm.BudgetManagerViewModelInterface().initialize(load_user_store=True)
-        assert isinstance(bmvm, p3bmvm.BudgetManagerViewModelInterface), \
+        bmvm = p3bmvm.BudManViewModel().initialize(load_user_store=True)
+        assert isinstance(bmvm, p3bmvm.BudManViewModel), \
             "Expected BudManCommandViewModel, got: " + str(type(bmvm))
         assert bmvm.BUDMAN_STORE_loaded, \
             "BUDMAN_STORE should be loaded"

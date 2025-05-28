@@ -21,15 +21,15 @@ from .budman_data_context_interface_client import (
     BudManDataContextClientInterface,
 )
 # Budget Model Domain Working Data
-from .budget_domain_model_working_data_base_interface import (
-    BDMWorkingDataBaseInterface,
+from .budget_domain_model_working_data import (
+    BDMWorkingData,
 )
 __all__ = [
     "budman_data_context_interface_base",
     "budman_data_context_interface_client",
-    "budget_domain_model_working_data_base_interface",
+    "budget_domain_model_working_data",
     "BudManDataContextBaseInterface",
     "BudManDataContext",
     "BudManDataContextClientInterface",
-    "BDMWorkingDataBaseInterface",
+    "BDMWorkingData",
 ]

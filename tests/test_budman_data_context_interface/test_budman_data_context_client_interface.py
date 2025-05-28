@@ -9,10 +9,10 @@ from abc import ABC, abstractmethod
 from openpyxl import Workbook
 
 # local modules and packages
-from src.budget_manager_domain_model import design_language_namespace as bdmns
-from budman_data_context_interface import BudManDataContextBaseInterface
-from budman_data_context_interface import BudManDataContextClientInterface
-from budman_data_context_interface import BudManDataContext
+from src.budman_namespace import design_language_namespace as bdmns
+from budman_data_context import BudManDataContextBaseInterface
+from budman_data_context import BudManDataContextClientInterface
+from budman_data_context import BudManDataContext
 
 # local libraries
 import logging, p3_utils as p3u, p3logging as p3l

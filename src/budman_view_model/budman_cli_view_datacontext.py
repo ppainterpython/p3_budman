@@ -28,9 +28,9 @@ logger = logging.getLogger(settings[p3bm.APP_NAME])
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
-class BudgetManagerCLIViewDataContext():
+class BudManCLIViewDataContext():
     # ======================================================================== +
-    #region BudgetManagerCLIViewDataContext class
+    #region BudManCLIViewDataContext class
     """A DataContext for the BudgetManagerCLIView.
     This Data Context (DC) is bound to a ViewModel of type 
     BudgetManagerViewModelInterface. The two concerns of the ViewModel are
@@ -116,7 +116,7 @@ class BudgetManagerCLIViewDataContext():
     #endregion Properties
     # ------------------------------------------------------------------------ +
     #region initialize() method
-    def initialize(self, cp : Callable, dc : object) -> "BudgetManagerCLIViewDataContext":
+    def initialize(self, cp : Callable, dc : object) -> "BudManCLIViewDataContext":
         """Initialize the data context."""
         try:
             self.cp = cp
@@ -128,7 +128,7 @@ class BudgetManagerCLIViewDataContext():
             raise
     #endregion initialize() method
     # ------------------------------------------------------------------------ +
-    #endregion BudgetManagerCLIViewDataContext class
+    #endregion BudManCLIViewDataContext class
     # ======================================================================== +
 
     # ======================================================================== +
