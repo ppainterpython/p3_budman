@@ -8,21 +8,22 @@ from pathlib import Path
 
 # third-party libraries
 import inspect, pyjson5 as json5
+import logging, p3_utils as p3u, p3logging as p3l
 
 # local libraries
-import logging, p3_utils as p3u, p3logging as p3l
-import budman_model as p3bm
+from budman_namespace import *
+from budman_model import budget_storage_model_new
 #endregion imports
 # ---------------------------------------------------------------------------- +
 #region Globals
-logger = logging.getLogger(p3bm.THIS_APP_NAME)
+logger = logging.getLogger(THIS_APP_NAME)
 #endregion Globals
 # ---------------------------------------------------------------------------- +
 def test_budget_storage_model_new():
     """Test bsm_budget_storage_model_new() function."""
     try:
         logger.info(test_budget_storage_model_new.__doc__)
-        bdm_url_path_str = p3bm.budget_storage_model_new()
+        bdm_url_path_str = budget_storage_model_new()
         assert bdm_url_path_str is not None, \
             "Budget model store path should not be None"
         assert Path(bdm_url_path_str).exists(), \

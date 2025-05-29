@@ -8,10 +8,11 @@ app_name = "p3_budget_manager"    # used for some defaults in places
 short_app_name = "budman"         # ditto
 
 [budman]
-budget_manager_folder = "~/OneDrive/budget"   # Where data files will go
-budget_manager_store = "p3_budget_manager_ca063e8b.jsonc"  # a BSM file
-budget_manager_store_filetype = ".jsonc"  # a BSM filetype
-budget_manager_default_fi = "boa" 
-budget_manager_default_workflow = "categorization" 
-budget_manager_default_workbook_type = "wf_working" 
+folder = "~/OneDrive/budget"   # Where data files will go
+store_filename = "p3_budget_manager_ca063e8b.jsonc"  # a BSM file
+store_filetype = ".jsonc"  # a BSM filetype
+default_fi = "boa" 
+default_workflow = "categorization" 
+default_workbook_type = "wf_working" 
+
 

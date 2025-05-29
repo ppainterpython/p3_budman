@@ -270,17 +270,17 @@ BUDMAN_SETTINGS = "settings.toml"
 BUDMAN_FOLDER = "budman.budget_manager_folder" 
 BUDMAN_STORE = "budman.budget_manager_store" 
 BUDMAN_STORE_FILETYPE = "budman.budget_manager_store_filetype"
-BUDGET_MANAGER_DEFAULT_FI = "budman.budget_manager_default_fi"
-BUDGET_MANAGER_DEFAULT_WORKFLOW = "budman.budget_manager_default_workflow"
-BUDGET_MANAGER_DEFAULT_WORKBOOK_TYPE = "budman.budget_manager_default_workbook_type"
+BUDMAN_DEFAULT_FI = "budman.budget_manager_default_fi"
+BUDMAN_DEFAULT_WORKFLOW = "budman.budget_manager_default_workflow"
+BUDMAN_DEFAULT_WORKBOOK_TYPE = "budman.budget_manager_default_workbook_type"
 APP_NAME = "app_name"
 SHORT_APP_NAME = "short_app_name"
 
 #
 # Last ditch BudMan application default settings
 #
-BUDGET_MANAGER_DEFAULT_WORKFLOW_VALUE = BDM_WF_CATEGORIZATION
-BUDGET_MANAGER_DEFAULT_WORKBOOK_TYPE_VALUE = WF_WORKING
+BUDMAN_DEFAULT_WORKFLOW_VALUE = BDM_WF_CATEGORIZATION
+BUDMAN_DEFAULT_WORKBOOK_TYPE_VALUE = WF_WORKING
 
 # Miscellaneous Convenience Constants
 P2 = "  "  # 2 space padding

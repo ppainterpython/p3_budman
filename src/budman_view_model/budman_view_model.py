@@ -7,31 +7,32 @@
 # python standard library modules and packages
 import logging, os, getpass, time, copy, importlib
 from pathlib import Path
-from typing import List, Type, Generator, Dict, Tuple, Any, Callable
-
+from typing import List, Type, TYPE_CHECKING, Dict, Tuple, Any, Callable
 # third-party modules and packages
 import p3_utils as p3u, pyjson5, p3logging as p3l
 from openpyxl import Workbook, load_workbook
-
 # local modules and packages
-from config import settings
-from budman_namespace import (
-    FI_KEY, WF_KEY, WB_NAME, WB_TYPE,
-    WB_REF, WB_INFO, WB_INFO_LEVEL_INFO, WB_INFO_LEVEL_VERBOSE,
-    WB_INFO_VALID_LEVELS, RELOAD_TARGET, CATEGORY_MAP,
-    ALL_KEY, P2, P4, P6, P8, P10, MODEL_OBJECT
-    )
+from budman_app import *
+from budman_namespace import *
+from budman_model import (
+    BDMBaseInterface, BDMClientInterface, 
+    BudgetDomainModel, BudgetDomainModelConfig, 
+    bsm_BUDMAN_STORE_load, bsm_BUDMAN_STORE_save,
+    check_budget_category, map_budget_category, category_map_count,
+    budget_category_mapping
+)
 from budman_data_context import BudManDataContext
-import budman_model as p3bm
-from budman_model import P2, P4, P6, P8, P10
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
-logger = logging.getLogger(settings[p3bm.APP_NAME])
+settings = None
+logger = None
+# settings = BudManApp_settings
+# logger = logging.getLogger(settings[APP_NAME])
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
-class BudManViewModel():
+class BudManViewModel(BDMClientInterface):
     # ======================================================================== +
     #region BudgetManagerViewModelInterface class
     """A Budget Model View Model to support Commands and Data Context.
@@ -53,23 +54,26 @@ class BudManViewModel():
     #region __init__() constructor method
     def __init__(self) -> None:
         super().__init__()
+        global logger, settings
+        settings = BudManApp_settings
+        logger = logging.getLogger(settings[APP_NAME])
         self._initialized : bool = False
         self.BUDMAN_STORE_loaded : bool = False
-        self._budget_domain_model : p3bm.BudgetDomainModel = None
+        self._budget_domain_model : BudgetDomainModel = None
         self._data_context : BudManDataContext = None
         self._cmd_map : Dict[str, Callable] = None
     #endregion __init__() constructor method
     # ------------------------------------------------------------------------ +
     #region Properties
     @property
-    def model(self) -> MODEL_OBJECT:
+    def model(self) -> BDMBaseInterface:
         """Return the model object reference."""
         return self._budget_domain_model
     @model.setter
-    def model(self, bdm: MODEL_OBJECT) -> None:
+    def model(self, bdm: BDMBaseInterface) -> None:
         """Set the model object reference."""
-        if not isinstance(bdm, MODEL_OBJECT):
-            raise TypeError("model must be a BudgetDomainModel instance")
+        if not isinstance(bdm, BDMBaseInterface):
+            raise TypeError("model must be a BDMBaseInterface instance")
         self._budget_domain_model = bdm
     @property
     def initialized(self) -> bool:
@@ -82,13 +86,13 @@ class BudManViewModel():
             raise ValueError("initialized must be a boolean value.")
         self._initialized = value
     @property
-    def budget_model(self) -> p3bm.BudgetDomainModel:
+    def budget_model(self) -> BudgetDomainModel:
         """Return the BudgetModel instance."""
         return self._budget_domain_model
     @budget_model.setter
-    def budget_model(self, value: p3bm.BudgetDomainModel) -> None:
+    def budget_model(self, value: BudgetDomainModel) -> None:
         """Set the BudgetModel instance."""
-        if not isinstance(value, p3bm.BudgetDomainModel):
+        if not isinstance(value, BudgetDomainModel):
             raise ValueError("budget_model must be a BudgetModel instance.")
         self._budget_domain_model = value
     @property
@@ -133,25 +137,21 @@ class BudManViewModel():
             logger.info(f"Start: Configure Budget Manager: ...")
             # Check if the budget model is initialized.
             if (self.budget_model is None or 
-                not isinstance(self.budget_model, p3bm.BudgetDomainModel)):
+                not isinstance(self.budget_model, BudgetDomainModel)):
                 # There is no valid budget_model. Load a BDM_STORE file?
                 if load_user_store:
                     # Use BDM_STORE file as a config_object 
-                    config_object = p3bm.bsm_BUDMAN_STORE_load()
+                    config_object = bsm_BUDMAN_STORE_load()
                     self.BUDMAN_STORE_loaded = True
                 else:
                     # Use the builtin default template as a config_object.
-                    config_object = p3bm.BudgetModelTemplate.get_budget_model_template()
+                    config_object = BudgetDomainModelConfig.get_budget_model_config()
                 # Now to initialize the budget model.
-                self.model = p3bm.BudgetDomainModel(config_object).bdm_initialize()
+                self.model = BudgetDomainModel(config_object).bdm_initialize()
             if not self.budget_model.bdm_initialized: 
                 raise ValueError("BudgetModel is not initialized.")
-            # TODO: create the BudManDataContext 
-            # self.data_context = BudManDataContext(self.model)  # Data Context for the Budget Domain Model
-
-            # Initialize the data context. This View Model uses a DC object from
-            # the Model which places data in it.
-            self.DC = self.budget_model.data_context
+            # Create the BudManDataContext 
+            self.data_context = BudManDataContext(self.model)  # Data Context for the Budget Domain Model
             # Initialize the command map.
             self.initialize_cmd_map()  # TODO: move to DataContext class
             self.initialized = True
@@ -487,9 +487,9 @@ class BudManViewModel():
                         logger.error(m)
                         return False, m
                     if value == ALL_KEY:
-                        logger.warning(f"wf_key: '{p3bm.ALL_KEY}' not implemented."
-                                    f" Defaulting to {p3bm.BDM_WF_CATEGORIZATION}.")
-                        cmd[key] = p3bm.BDM_WF_CATEGORIZATION
+                        logger.warning(f"wf_key: '{ALL_KEY}' not implemented."
+                                    f" Defaulting to {BDM_WF_CATEGORIZATION}.")
+                        cmd[key] = BDM_WF_CATEGORIZATION
                     continue
                 elif key == WB_REF:
                     if not self.dc_WB_REF_validate(value):
@@ -640,8 +640,8 @@ class BudManViewModel():
                 logger.error(m)
                 raise RuntimeError(f"{pfx}{m}")
             fi_key = cmd.get("fi_key", None)
-            wf_key = cmd.get("wf_key", p3bm.BDM_WF_CATEGORIZATION)
-            wb_type = cmd.get("wb_type", p3bm.WF_WORKING)
+            wf_key = cmd.get("wf_key", BDM_WF_CATEGORIZATION)
+            wb_type = cmd.get("wb_type", WF_WORKING)
             wb_name = cmd.get("wb_name", None)
             # TODO: Enable defaults for fi_key, wf_key, wb_type, wb_name in
             # settings.toml
@@ -710,8 +710,8 @@ class BudManViewModel():
                 raise RuntimeError(f"{pfx}{m}")
             # Get the command arguments.
             fi_key = cmd.get("fi_key", None)
-            wf_key = cmd.get("wf_key", p3bm.BDM_WF_CATEGORIZATION)
-            wb_type = cmd.get("wb_type", p3bm.WF_INPUT)
+            wf_key = cmd.get("wf_key", BDM_WF_CATEGORIZATION)
+            wb_type = cmd.get("wb_type", WF_INPUT)
             wb_name = cmd.get("wb_name", None)
             # Resolve with current DC values.
             if fi_key != self.dc_FI_KEY:
@@ -773,8 +773,8 @@ class BudManViewModel():
             # Save the BUDMAN_STORE file with the BSM.
             # Construct the abs_path from BUDMAN_STORE info configured in 
             # BUDMAN_SETTINGS.
-            budman_store_value = settings[p3bm.BUDMAN_STORE]
-            budman_folder = settings[p3bm.BUDMAN_FOLDER]
+            budman_store_value = settings[BUDMAN_STORE]
+            budman_folder = settings[BUDMAN_FOLDER]
             budman_folder_abs_path = Path(budman_folder).expanduser().resolve()
             budman_store_abs_path = budman_folder_abs_path / budman_store_value
             # Update some values prior to saving.
@@ -784,7 +784,7 @@ class BudManViewModel():
             # Get a Dict of the BudgetModel to store.
             budget_model_dict = self.budget_model.to_dict()
             # Save the BUDMAN_STORE file.
-            p3bm.bsm_BUDMAN_STORE_save(budget_model_dict, budman_store_abs_path)
+            bsm_BUDMAN_STORE_save(budget_model_dict, budman_store_abs_path)
             logger.info(f"Saved BUDMAN_STORE file: {budman_store_abs_path}")
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             return True, budget_model_dict
@@ -821,12 +821,12 @@ class BudManViewModel():
             logger.info(f"Start: ...")
             # Load the BUDMAN_STORE file with the BSM.
             # Use the BUDMAN_STORE configured in BUDMAN_SETTINGS.
-            budman_store_value = settings[p3bm.BUDMAN_STORE]
-            budman_folder = settings[p3bm.BUDMAN_FOLDER]
+            budman_store_value = settings[BUDMAN_STORE]
+            budman_folder = settings[BUDMAN_FOLDER]
             budman_folder_abs_path = Path(budman_folder).expanduser().resolve()
             budman_store_abs_path = budman_folder_abs_path / budman_store_value
             # Load the BUDMAN_STORE file.
-            budman_store_dict = p3bm.bsm_BUDMAN_STORE_load(budman_store_abs_path)
+            budman_store_dict = bsm_BUDMAN_STORE_load(budman_store_abs_path)
             self.dc_BUDMAN_STORE = budman_store_dict
             self.BUDMAN_STORE_loaded = True
             logger.info(f"Complete: {p3u.stop_timer(st)}")
@@ -871,17 +871,17 @@ class BudManViewModel():
             lwbl = self.dc_LOADED_WORKBOOKS
             lwbl_count = len(lwbl) if lwbl else 0
             result = f"Budget Manager Data Context:\n"
-            result += f"{P2}{p3bm.DC_INITIALIZED}: {self.dc_INITIALIZED}\n"
-            result += f"{P2}{p3bm.FI_KEY}: {self.dc_FI_KEY}\n"
-            result += f"{P2}{p3bm.WF_KEY}: {self.dc_WF_KEY}\n"
-            result += f"{P2}{p3bm.WB_TYPE}: {self.dc_WB_TYPE}\n"
-            result += f"{P2}{p3bm.WB_NAME}: {self.dc_WB_NAME}\n"
-            result += f"{P2}{p3bm.DC_BUDMAN_STORE}: {bs_msg}\n"
-            result += f"{P2}{p3bm.DC_WORKBOOKS}: {wbl_count}\n"
+            result += f"{P2}{DC_INITIALIZED}: {self.dc_INITIALIZED}\n"
+            result += f"{P2}{FI_KEY}: {self.dc_FI_KEY}\n"
+            result += f"{P2}{WF_KEY}: {self.dc_WF_KEY}\n"
+            result += f"{P2}{WB_TYPE}: {self.dc_WB_TYPE}\n"
+            result += f"{P2}{WB_NAME}: {self.dc_WB_NAME}\n"
+            result += f"{P2}{DC_BUDMAN_STORE}: {bs_msg}\n"
+            result += f"{P2}{DC_WORKBOOKS}: {wbl_count}\n"
             if wbl_count > 0:
                 for i, (wb_name, wb_ap) in enumerate(wbl):
                     result += f"{P4}{i} {wb_name} '{wb_ap}'\n"
-            result += f"{P2}{p3bm.DC_LOADED_WORKBOOKS}: {lwbl_count}\n"
+            result += f"{P2}{DC_LOADED_WORKBOOKS}: {lwbl_count}\n"
             if lwbl_count > 0:
                 for i, (wb_name, wb) in enumerate(lwbl):
                     result += f"{P4}{i} {wb_name}\n"
@@ -933,7 +933,7 @@ class BudManViewModel():
                 wb_info = self.dc_WORKBOOKS[wb_refnum] if wb_refnum < wb_count else None
                 l = "Yes" if self.WB_loaded(wb_info[0]) else "No "
                 r += f"{P2}{wb_refnum:>2} {l} {wb_info[0]:<40} '{wb_info[1]}'\n"
-            elif wb_ref == p3bm.ALL_KEY:
+            elif wb_ref == ALL_KEY:
                 for i, (wb_name, wb_ap) in enumerate(self.dc_WORKBOOKS):
                     l = "Yes" if self.WB_loaded(wb_name) else "No "
                     r += f"{P2}{i:>2} {l} {wb_name:<40} '{wb_ap}'\n"
@@ -989,7 +989,7 @@ class BudManViewModel():
                     wb = self.budget_model.bdmwd_WORKBOOK_load(wb_info[0])
                     l = "Yes" if self.WB_loaded(wb_info[0]) else "No "
                     r += f"{P2}{wb_refnum:>2} {l} {wb_info[0]:<40} '{wb_info[1]}'\n"
-            elif wb_ref == p3bm.ALL_KEY:
+            elif wb_ref == ALL_KEY:
                 lwbl = self.budget_model.bdmwd_FI_WORKBOOKS_load(fi_key, wf_key, wb_type)
                 for i, (wb_name, wb_ap) in enumerate(lwbl):
                     l = "Yes" if self.WB_loaded(wb_name) else "No "
@@ -1046,8 +1046,8 @@ class BudManViewModel():
                 wb_info = self.dc_WORKBOOKS[wb_refnum] if wb_refnum < wb_count else None
                 if wb_info is not None:
                     wb_name = wb_info[0]
-            elif wb_ref == p3bm.ALL_KEY:
-                wb_name = p3bm.ALL_KEY
+            elif wb_ref == ALL_KEY:
+                wb_name = ALL_KEY
             # Build a list of LOADED_WORKBOOKS to process.
             lwbl = self.dc_LOADED_WORKBOOKS
             lwbl_count = len(lwbl) if lwbl else 0
@@ -1062,9 +1062,9 @@ class BudManViewModel():
             wb = self.budget_model.bdmwd_WORKBOOK_load(wb_name)
             ws = wb.active
             # Check for budget category column, add it if not present.
-            p3bm.check_budget_category(ws)
+            check_budget_category(ws)
             # Map the 'Original Description' column to the 'Budget Category' column.
-            p3bm.map_budget_category(ws,"Original Description", p3bm.BUDGET_CATEGORY_COL)
+            map_budget_category(ws,"Original Description", BUDGET_CATEGORY_COL)
             self.budget_model.bdmwd_WORKBOOK_save(wb_name, wb)
             r += f"Categorization Workflow applied to '{wb_name}'\n"
             return True, r
@@ -1108,12 +1108,12 @@ class BudManViewModel():
                 raise RuntimeError(f"{pfx}{m}")
             r = f"Budget Manager Workflow: reload '{reload_target}'\n"
             if reload_target == CATEGORY_MAP:
-                cmc = p3bm.category_map_count()
+                cmc = category_map_count()
                 m = f"{P4}Reloading target: '{reload_target}' count = {cmc}"
                 logger.info(m)
                 r += f"{m}\n"
-                importlib.reload(p3bm.budget_category_mapping)
-                cmc = p3bm.category_map_count()
+                importlib.reload(budget_category_mapping)
+                cmc = category_map_count()
                 m = f"{P4}reloaded modules for target: '{reload_target}' count = {cmc}\n"
                 logger.info(m)
                 r += f"{m}\n"
@@ -1230,106 +1230,106 @@ class BudManViewModel():
     def dc_INITIALIZED(self) -> bool:
         """Return the value of the DC_INITIALIZED attribute."""
         dc = self._valid_DC()
-        if p3bm.DC_INITIALIZED not in dc:
-            self.DC[p3bm.DC_INITIALIZED] = False
-        return self.DC[p3bm.DC_INITIALIZED]
+        if DC_INITIALIZED not in dc:
+            self.DC[DC_INITIALIZED] = False
+        return self.DC[DC_INITIALIZED]
     @dc_INITIALIZED.setter
     def dc_INITIALIZED(self, value: bool) -> None:
         """Set the value of the DC_INITIALIZED attribute."""
         dc = self._valid_DC()
-        self.DC[p3bm.DC_INITIALIZED] = value
+        self.DC[DC_INITIALIZED] = value
 
     @property
     def dc_FI_KEY(self) -> str:
         """Return the current financial institution key value in DC."""
         dc = self._valid_DC()
-        if p3bm.FI_KEY not in dc:
-            self.DC[p3bm.FI_KEY] = None
-        return self.DC[p3bm.FI_KEY]
+        if FI_KEY not in dc:
+            self.DC[FI_KEY] = None
+        return self.DC[FI_KEY]
     @dc_FI_KEY.setter
     def dc_FI_KEY(self, value: str) -> None:
         """Set the current financial institution key value in DC."""
         dc = self._valid_DC()
-        self.DC[p3bm.FI_KEY] = value
+        self.DC[FI_KEY] = value
 
     @property
     def dc_WF_KEY(self) -> str:
         """Return the current workflow key value in DC."""
         dc = self._valid_DC()
-        if p3bm.WF_KEY not in dc:
-            self.DC[p3bm.WF_KEY] = None
-        return self.DC[p3bm.WF_KEY]
+        if WF_KEY not in dc:
+            self.DC[WF_KEY] = None
+        return self.DC[WF_KEY]
     @dc_WF_KEY.setter
     def dc_WF_KEY(self, value: str) -> None:
         """Set the current workflow key value in DC."""
         dc = self._valid_DC()
-        self.DC[p3bm.WF_KEY] = value
+        self.DC[WF_KEY] = value
 
     @property
     def dc_WB_TYPE(self) -> str:
         """Return the current workbook type value in DC."""
         dc = self._valid_DC()
-        if p3bm.WB_TYPE not in dc:
-            self.DC[p3bm.WB_TYPE] = None
-        return self.DC[p3bm.WB_TYPE]
+        if WB_TYPE not in dc:
+            self.DC[WB_TYPE] = None
+        return self.DC[WB_TYPE]
     @dc_WB_TYPE.setter
     def dc_WB_TYPE(self, value: str) -> None:
         """Set the current workbook type value in DC."""
         dc = self._valid_DC()
-        self.DC[p3bm.WB_TYPE] = value
+        self.DC[WB_TYPE] = value
 
     @property
     def dc_WB_NAME(self) -> str:
         """Return the current workbook name value in DC."""
         dc = self._valid_DC()
-        if p3bm.WB_NAME not in dc:
-            self.DC[p3bm.WB_NAME] = None
-        return self.DC[p3bm.WB_NAME]
+        if WB_NAME not in dc:
+            self.DC[WB_NAME] = None
+        return self.DC[WB_NAME]
 
     @dc_WB_NAME.setter
     def dc_WB_NAME(self, value: str) -> None:
         """Set the current workbook name value in DC."""
         dc = self._valid_DC()
-        self.DC[p3bm.WB_NAME] = value
+        self.DC[WB_NAME] = value
 
     @property
     def dc_BUDMAN_STORE(self) -> str:
         """Return the current BUDMAN_STORE value in DC."""
         dc = self._valid_DC()
-        if p3bm.DC_BUDMAN_STORE not in dc:
-            self.DC[p3bm.DC_BUDMAN_STORE] = None
-        return self.DC[p3bm.DC_BUDMAN_STORE]
+        if DC_BUDMAN_STORE not in dc:
+            self.DC[DC_BUDMAN_STORE] = None
+        return self.DC[DC_BUDMAN_STORE]
     @dc_BUDMAN_STORE.setter
     def dc_BUDMAN_STORE(self, value: str) -> None:
         """Set the current BUDMAN_STORE value in DC."""
         dc = self._valid_DC()
-        self.DC[p3bm.DC_BUDMAN_STORE] = value
+        self.DC[DC_BUDMAN_STORE] = value
 
     @property 
-    def dc_WORKBOOKS(self) -> p3bm.WORKBOOK_LIST:
+    def dc_WORKBOOKS(self) -> WORKBOOK_LIST:
         """Return the current workbooks value in DC per FI_KEY, WF_KEY, WB_TYPE."""
         dc = self._valid_DC()
-        if p3bm.DC_WORKBOOKS not in dc:
-            self.DC[p3bm.DC_WORKBOOKS] = None
-        return self.DC[p3bm.DC_WORKBOOKS]
+        if DC_WORKBOOKS not in dc:
+            self.DC[DC_WORKBOOKS] = None
+        return self.DC[DC_WORKBOOKS]
     @dc_WORKBOOKS.setter
-    def dc_WORKBOOKS(self, value: p3bm.WORKBOOK_LIST) -> None:
+    def dc_WORKBOOKS(self, value: WORKBOOK_LIST) -> None:
         """Set the current  dc_WORKBOOK value in DC."""
         dc = self._valid_DC()
-        self.DC[p3bm.DC_WORKBOOKS] = value
+        self.DC[DC_WORKBOOKS] = value
 
     @property 
-    def dc_LOADED_WORKBOOKS(self) -> p3bm.LOADED_WORKBOOK_LIST:
+    def dc_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_LIST:
         """Return the current loaded workbooks value in DC."""
         dc = self._valid_DC()
-        if p3bm.DC_LOADED_WORKBOOKS not in dc:
-            self.DC[p3bm.DC_LOADED_WORKBOOKS] = None
-        return self.DC[p3bm.DC_LOADED_WORKBOOKS]
+        if DC_LOADED_WORKBOOKS not in dc:
+            self.DC[DC_LOADED_WORKBOOKS] = None
+        return self.DC[DC_LOADED_WORKBOOKS]
     @dc_LOADED_WORKBOOKS.setter
-    def dc_LOADED_WORKBOOKS(self, value: p3bm.LOADED_WORKBOOK_LIST) -> None:
+    def dc_LOADED_WORKBOOKS(self, value: LOADED_WORKBOOK_LIST) -> None:
         """Set the current loaded workbooks value in DC."""
         dc = self._valid_DC()
-        self.DC[p3bm.DC_LOADED_WORKBOOKS] = value
+        self.DC[DC_LOADED_WORKBOOKS] = value
     # ------------------------------------------------------------------------ +
     #endregion BudMan Data Context Interface (client sdk) Properties
     # ------------------------------------------------------------------------ +

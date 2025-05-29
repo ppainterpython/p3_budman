@@ -11,15 +11,16 @@ from pathlib import Path
 from typing import Dict
 
 # third-party modules and packages
-from config import settings
 import p3_utils as p3u, pyjson5, p3logging as p3l
 import pyjson5 as json5 
 # local modules and packages
-from .budget_model_constants import *
+from budman_app import *
+from budman_namespace import *
 from .budget_domain_model_identity import *
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region    Globals and Constants
+settings  = BudManApp.settings
 logger = logging.getLogger(settings[APP_NAME])
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants

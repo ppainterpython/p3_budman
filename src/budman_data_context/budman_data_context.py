@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------- +
-# test_budman_data_context_interface.py
+#region test_budman_data_context.py
 """ BudManDataContext: A concrete implementation BudManDataContextBaseInterface 
     for the Budget Manager application. 
     
@@ -22,6 +22,7 @@
     Subclasses may override or extend the default DC behavior.
 
 """
+#endregion test_budman_data_context.py
 # ---------------------------------------------------------------------------- +
 #region imports
 # python standard libraries
@@ -30,19 +31,16 @@ from pathlib import Path
 from abc import ABC, abstractmethod
 # third-party modules and packages
 from openpyxl import Workbook
-
-# local modules and packages
-from src.budman_namespace import design_language_namespace as bdmns
-from budman_data_context import BudManDataContextBaseInterface
-import budman_model as p3bm
-from budman_model import P2, P4, P6, P8, P10
-
-# local libraries
 import logging, p3_utils as p3u, p3logging as p3l
+# local modules and packages
+from budman_app import *
+from budman_namespace import *
+from budman_data_context import BudManDataContextBaseInterface
 #endregion imports
 # ---------------------------------------------------------------------------- +
 #region Globals
-logger = logging.getLogger(bdmns.THIS_APP_NAME)
+settings = None
+logger = None
 #endregion Globals
 # ---------------------------------------------------------------------------- +
 class BudManDataContext(BudManDataContextBaseInterface):
@@ -60,14 +58,17 @@ class BudManDataContext(BudManDataContextBaseInterface):
     """
     # ------------------------------------------------------------------------ +
     def __init__(self) -> None:
+        global settings, logger
+        settings = BudManApp_settings
+        logger = logging.getLogger(settings[APP_NAME])
         self._dc_initialized = False 
         self._FI_KEY = None       
         self._WF_KEY = None       
         self._WB_TYPE = None      
         self._WB_NAME = None      
         self._BUDMAN_STORE = None 
-        self._WORKBOOKS : bdmns.WORKBOOK_LIST = None # from BudManDataContextBaseInterface
-        self._LOADED_WORKBOOKS : bdmns.LOADED_WORKBOOK_LIST = None # from BudManDataContextBaseInterface
+        self._WORKBOOKS : WORKBOOK_LIST = None # from BudManDataContextBaseInterface
+        self._LOADED_WORKBOOKS : LOADED_WORKBOOK_LIST = None # from BudManDataContextBaseInterface
 
     #region Abstract Properties
     @property
@@ -138,21 +139,21 @@ class BudManDataContext(BudManDataContextBaseInterface):
         self._BUDMAN_STORE = value
 
     @property
-    def dc_WORKBOOKS(self) -> bdmns.WORKBOOK_LIST:
+    def dc_WORKBOOKS(self) -> WORKBOOK_LIST:
         """Return the list of workbooks in the DC."""
         return self._WORKBOOKS
     @dc_WORKBOOKS.setter
-    def dc_WORKBOOKS(self, value: bdmns.WORKBOOK_LIST) -> None:
+    def dc_WORKBOOKS(self, value: WORKBOOK_LIST) -> None:
         """Set the list of workbooks in the DC."""
         self._WORKBOOKS = value
 
     @property
-    def dc_LOADED_WORKBOOKS(self) -> bdmns.LOADED_WORKBOOK_LIST:
+    def dc_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_LIST:
         """Return the list of workbooks currently loaded in the DC.
         Loaded means a file is loaded into memory and is available."""
         return self._LOADED_WORKBOOKS
     @dc_LOADED_WORKBOOKS.setter
-    def dc_LOADED_WORKBOOKS(self, value: bdmns.LOADED_WORKBOOK_LIST) -> None:
+    def dc_LOADED_WORKBOOKS(self, value: LOADED_WORKBOOK_LIST) -> None:
         """Set the list of workbooks currently loaded in the DC.
         Loaded means a file is loaded into memory and is available."""
         self._LOADED_WORKBOOKS = value

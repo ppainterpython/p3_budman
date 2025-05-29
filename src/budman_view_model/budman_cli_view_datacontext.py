@@ -13,18 +13,17 @@ command line interpreter user interface for the BudgetManager application.
 import logging, os, getpass, time, copy
 from pathlib import Path
 from typing import List, Type, Generator, Dict, Tuple, Any, Callable
-
 # third-party modules and packages
-from config import settings
 import p3_utils as p3u, pyjson5, p3logging as p3l
 from openpyxl import Workbook, load_workbook
-
 # local modules and packages
-import budman_model as p3bm
+from budman_app import *
+from budman_namespace import *
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
-logger = logging.getLogger(settings[p3bm.APP_NAME])
+settings = BudManApp.settings
+logger = logging.getLogger(settings[APP_NAME])
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +

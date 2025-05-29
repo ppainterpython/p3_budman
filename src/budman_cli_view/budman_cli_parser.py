@@ -8,19 +8,18 @@
 
 # python standard library modules and packages
 import logging, shutil, argparse
-
 # third-party modules and packages
-from config import settings
 import p3_utils as p3u, p3logging as p3l
 import cmd2
 from cmd2 import (Cmd2ArgumentParser, with_argparser)
-
 # local modules and packages
-
+from budman_app import *
+from budman_namespace import *
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
-logger = logging.getLogger(settings.app_name)
+settings = None
+logger = None
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
@@ -47,6 +46,9 @@ class BudManCLIParser():
     """
     def __init__(self) -> None:
         """Initialize the BudgetModelCLIParser class."""
+        global settings, logger
+        settings = BudManApp_settings
+        logger = logging.getLogger(settings.app_name)
         self.init_cmd_parser = BudManCmd2ArgumentParser()
         self.show_cmd_parser = BudManCmd2ArgumentParser()
         self.load_cmd_parser = BudManCmd2ArgumentParser()

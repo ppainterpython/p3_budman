@@ -1,11 +1,11 @@
 # ---------------------------------------------------------------------------- +
 #region create_config_template.py module
 """ Provide a means to obtain a reference to 
-BudgetModelTemplate.budget_model_template in the blind, without circular
+BudgetModelTemplate.budget_model_config in the blind, without circular
 references from BudgetModel class. 
 The BudgetModelTemplate class is used a a configuration template, but it
 is a subclass of BudgetModel class. This approach is to have a simple module
-to reference the budget_model_template Dict without circular imports between 
+to reference the budget_model_config Dict without circular imports between 
 BudgetModel class and BudgetModelTemplate class."""
 #endregion budget_model.py module
 # ---------------------------------------------------------------------------- +
@@ -16,15 +16,15 @@ from typing import Dict
 # third-party modules and packages
 
 # local modules and packages
-from .budget_model_template import BudgetModelTemplate
+from .budget_domain_model_config import BudgetDomainModelConfig
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
-def __get_budget_model_template__() -> Dict:
-    """Return BudgetModelTemplate.budget_model_template Dict.
+def __get_budget_model_config__() -> Dict:
+    """Return BudgetModelTemplate.budget_model_config Dict.
     """
-    return BudgetModelTemplate.get_budget_model_template()
+    return BudgetDomainModelConfig.get_budget_model_config()
 # ---------------------------------------------------------------------------- +

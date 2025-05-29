@@ -26,25 +26,23 @@ declarations are contained in that one class, separate from the View code.
 #endregion budmod_cli_view.py module
 # ---------------------------------------------------------------------------- +
 #region Imports
-
 # python standard library modules and packages
 import logging, os, getpass, time, copy
 from pathlib import Path
 from typing import List, Type, Generator, Dict, Tuple, Any
-
 # third-party modules and packages
-from config import settings
 import p3_utils as p3u, pyjson5, p3logging as p3l
 import cmd2, argparse
 from cmd2 import (Cmd2ArgumentParser, with_argparser)
-from  .budman_cli_parser import BudManCLIParser, BudManCmd2ArgumentParser
-
 # local modules and packages
-
+from budman_app import *
+from budman_namespace import *
+from budman_cli_view import BudManCLIParser, BudManCmd2ArgumentParser
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
-logger = logging.getLogger(settings.app_name)
+settings = None
+logger = None
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
@@ -132,6 +130,9 @@ class BudManCLIView(cmd2.Cmd):
     # ------------------------------------------------------------------------ +
     #region  Constructor
     def __init__(self, data_context : object | MockViewModel = None) -> None:
+        global settings, logger
+        settings = BudManApp_settings
+        logger = logging.getLogger(settings.app_name)
         shortcuts = dict(cmd2.DEFAULT_SHORTCUTS)
         shortcuts.update({'wf': 'workflow'})
         self._data_context = MockViewModel() if data_context is None else data_context

@@ -23,21 +23,20 @@
 import logging, time, uuid
 from pathlib import Path
 from typing import List, Dict
-
 # third-party modules and packages
-from config import settings
 import p3_utils as p3u, pyjson5, p3logging as p3l
-
 # local modules and packages
-from .budget_model_constants import *
+from budman_app import *
+from budman_namespace import *
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
-logger = logging.getLogger(THIS_APP_NAME)
+settings = None
+logger = None
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
-class BudgetDomainModelIdentity:
+class BudgetDomainModelIdentity():
     """BudgetDomainModelIdentity class implements the identity of the BudgetDomainModel.
 
     The identity is a unique identifier for the BudgetDomainModel instance.
@@ -48,19 +47,22 @@ class BudgetDomainModelIdentity:
     The uuid portion ensures uniqueness, but the location and name of the file
     is also important and considered as part of the identity.
     """
-    def __init__(self, 
-                 uid : str = None, 
-                 filename : str = settings[APP_NAME],
-                 filetype : str = settings[BUDMAN_STORE_FILETYPE]) -> None:
+    def __init__(self, uid : str, filename : str, filetype : str ) -> None:
         """Initialize the BudgetDomainModelIdentity class.
 
         Args:
             uid : str to use as uniqueness.
         """
+        global settings, logger
+        settings = BudManApp_settings
+        logger = logging.getLogger(settings[APP_NAME])
+        self.settings = BudManApp_settings
         self._uid = uuid.uuid4().hex[:8] if uid is None else uid
-        self._name : str = filename if filename is not None else THIS_APP_NAME
-        filetype_alt = filetype if filetype is not None else BSM_DEFAULT_BUDGET_MODEL_FILE_TYPE
-        self._filename : str = f"{filename}_{self._uid}{filetype_alt}"
+        filename = filename or self.settings[APP_NAME]
+        self._name : str = filename or settings[APP_NAME]
+        filetype = filetype or self.settings[BUDMAN_STORE_FILETYPE]
+        filetype = filetype or BSM_DEFAULT_BUDGET_MODEL_FILE_TYPE
+        self._filename : str = f"{filename}_{self._uid}{filetype}"
         self._bdm_folder : str = BDM_DEFAULT_BUDGET_FOLDER
     # ------------------------------------------------------------------------ +
     #region Properties

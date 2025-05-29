@@ -71,21 +71,20 @@
 # python standard library modules and packages
 import logging, os, getpass, time, copy
 from pathlib import Path
-from typing import List, Type, Generator, Dict, Tuple, Any
-
+from typing import List, Type, Generator, Dict, Tuple, Any, TYPE_CHECKING
 # third-party modules and packages
-from config import settings
 import p3_utils as p3u, pyjson5, p3logging as p3l
 from openpyxl import Workbook, load_workbook
-
 # local modules and packages
-from .budget_model_constants import *
-from .budget_domain_model_identity import BudgetDomainModelIdentity
-# from .budget_storage_model import bsm_BDM_URL_load, bsm_BDM_URL_save
+from budman_app import *
+from budman_namespace import *
+from budman_model import BDMBaseInterface
+from budman_model import BudgetDomainModelIdentity
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
-logger = logging.getLogger(settings[APP_NAME])
+settings = None
+logger = None
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
@@ -120,7 +119,7 @@ class SingletonMeta(type):
         logger.debug(f"Return {dscr(cls._instances[cls])}")
         return cls._instances[cls]
 # ---------------------------------------------------------------------------- +
-class BudgetDomainModel(metaclass=SingletonMeta):
+class BudgetDomainModel(BDMBaseInterface,metaclass=SingletonMeta):
     # ======================================================================== +
     #region BudgetModel class intrinsics
     # ======================================================================== +
@@ -150,11 +149,15 @@ class BudgetDomainModel(metaclass=SingletonMeta):
     #region    BudgetModel class constructor __init__()
     def __init__(self, config_object : object = None) -> None:
         """Constructor for the BudgetModel class."""
+        global settings, logger
+        settings = BudManApp_settings
+        logger = logging.getLogger(settings[APP_NAME])
         # Note: _subclassname set by SingletonMeta after __init__() completes.
         logger.debug("Start: ...")
 
         # Private attributes initialization, basic stuff only.
         # for serialization ease, always persist dates as str type.
+        settings = BudManApp_settings  # type: ignore
         bdm_id = BudgetDomainModelIdentity()
         setattr(self, BDM_ID, bdm_id.uid)  # BudgetDomainModelIdentity
         setattr(self, BDM_CONFIG_OBJECT,config_object)
@@ -224,6 +227,10 @@ class BudgetDomainModel(metaclass=SingletonMeta):
     #endregion BudgetModel internal class methods
     # ------------------------------------------------------------------------ +
     #region    BudgetModel public class properties
+    @property
+    def model_id(self) -> str:
+        """Return the model ID."""
+        return __class__.__name__ + "-" + self.bdm_id
     @property
     def bdm_id(self) -> str:
         """The budget model ID."""
@@ -490,8 +497,8 @@ class BudgetDomainModel(metaclass=SingletonMeta):
                 if bdm_config is None:
                     # Last hope, obtain the BudgetModelTemplate without 
                     # a circular reference, since it is a subclass.
-                    from src.budman_model.get_budget_model_template import __get_budget_model_template__
-                    bdm_config = __get_budget_model_template__()
+                    from budman_model import __get_budget_model_config__
+                    bdm_config = __get_budget_model_config__()
                 self.bdm_config_object = bdm_config
             return self.bdm_config_object
         except Exception as e:
@@ -769,9 +776,9 @@ class BudgetDomainModel(metaclass=SingletonMeta):
                 return self.bdm_working_data
             
             # Gather default values from the application settings.
-            def_fi = settings[BUDGET_MANAGER_DEFAULT_FI]
-            def_wf = settings[BUDGET_MANAGER_DEFAULT_WORKFLOW]
-            def_wbt = settings[BUDGET_MANAGER_DEFAULT_WORKBOOK_TYPE]
+            def_fi = self.settings[BUDMAN_DEFAULT_FI]
+            def_wf = self.settings[BUDMAN_DEFAULT_WORKFLOW]
+            def_wbt = self.settings[BUDMAN_DEFAULT_WORKBOOK_TYPE]
             # Initialize the budget model working data.
             self.bdm_working_data = {}
             self.set_BDM_WORKING_DATA(BDMWD_INITIALIZED, False)
@@ -2261,7 +2268,7 @@ if __name__ == "__main__":
     try:
         # this_app_name = os.path.basename(__file__)
         # Configure logging
-        logger_name = THIS_APP_NAME
+        logger_name = settings[APP_NAME]
         log_config = "budget_model_logging_config.jsonc"
         # Set the log filename for this application.
         # filenames = {"file": "logs/p3ExcelBudget.log"}
@@ -2273,9 +2280,9 @@ if __name__ == "__main__":
         logger = logging.getLogger(logger_name)
         logger.setLevel(logging.DEBUG)
         logger.info("+ ----------------------------------------------------- +")
-        logger.info(f"+ Running {THIS_APP_NAME} ...")
+        logger.info(f"+ Running {settings[APP_NAME]} ...")
         logger.info("+ ----------------------------------------------------- +")
-        logger.debug(f"Start: {THIS_APP_NAME}...")
+        logger.debug(f"Start: {settings[APP_NAME]}...")
 
         bdm = BudgetDomainModel()
         bdm.initialize()
@@ -2291,7 +2298,7 @@ if __name__ == "__main__":
     except Exception as e:
         m = p3u.exc_msg("__main__", e)
         logger.error(m)
-    logger.info(f"Exiting {THIS_APP_NAME}...")
+    logger.info(f"Exiting {settings[APP_NAME]}...")
     exit(1)
 #endregion
 # ---------------------------------------------------------------------------- +

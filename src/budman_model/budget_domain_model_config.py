@@ -1,13 +1,13 @@
 # ---------------------------------------------------------------------------- +
-#region p3_budget_model_template.py module
-""" Provide a functional template class for the budget_model class.
+#region p3_budget_model_config.py module
+""" Provide a functional config class for the budget_model class.
 
     Creates a functional instance from a declared dictionary used to document
     the data structure and configure defaults. It is useful for validation
     of constant names, different default settings, etc.
 
     4/29/2025: Soon, the budget_model configuration and setup will be from a 
-    config file. The template could be used to create a pristine, new config 
+    config file. The config could be used to create a pristine, new config 
     file for a new budget_model instance. But for now, budget_model is a 
     singleton class.
 
@@ -17,34 +17,33 @@
     - Data content starts in cell A1.
     - Row 1 contains column headers. All subsequent rows are data.
 """
-#endregion p3_execl_budget.p3_banking_transactions transaction_files.py module
+#endregion p3_budget_model_config.py module
 # ---------------------------------------------------------------------------- +
 #region Imports
 # python standard library modules and packages
 import logging, time, os, getpass, copy
 from pathlib import Path
 from typing import List
-
 # third-party modules and packages
-from config import settings
-import p3_utils as p3u, pyjson5, p3logging as p3l
 from openpyxl import Workbook, load_workbook
-
+import p3_utils as p3u, pyjson5, p3logging as p3l
 # local modules and packages
-from .budget_model_constants import *
+from budman_app import *
+from budman_namespace import *
 from .budget_domain_model_identity import BudgetDomainModelIdentity
 from .budget_domain_model import BudgetDomainModel # lazy import, avoid circular
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
-logger = logging.getLogger(THIS_APP_NAME)
+settings = None
+logger = None
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
-#region Budget Model Template and config support 
+#region Budget Model config and config support 
 # ---------------------------------------------------------------------------- +
-class BudgetModelTemplate(BudgetDomainModel):
-    """Default BudgetModelTemplate class, contains default, example values.
+class BudgetDomainModelConfig(BudgetDomainModel):
+    """Default BudgetDomainModelConfig class, contains default, example values.
     
     Creates a BudgetModel object pre-populated with default configuration values.
 
@@ -52,9 +51,9 @@ class BudgetModelTemplate(BudgetDomainModel):
     Convenient for developer.
     """
     # ------------------------------------------------------------------------ +
-    #region BudgetModelTemplate Configuration Template
-    # The main difference between the BudgetModel and the BudgetModelTemplate 
-    # is the following budget_model_template dictionary. The BudgetModelTemplate 
+    #region BudgetDomainModelConfig Configuration config
+    # The main difference between the BudgetModel and the BudgetDomainModelConfig 
+    # is the following budget_model_config dictionary. The BudgetDomainModelConfig 
     # covers the file structure where user data is stored as 
     # settings for options and preferences. Keep it simple.
     # There is both an object model used in the application (in memory) and a
@@ -64,7 +63,7 @@ class BudgetModelTemplate(BudgetDomainModel):
     # anticipate more than one bank or financial institution sourcing regular 
     # statements in spreadsheet format. So, the "budget" will cover multiple "banks"
     # information for a given user.
-    budget_model_template = {  
+    budget_model_config = {  
         # BDM object
         BDM_ID: "1a2b3c4d",  # random, but unique BMT Id.
         BDM_INITIALIZED: False,
@@ -165,12 +164,12 @@ class BudgetModelTemplate(BudgetDomainModel):
         BDM_WORKING_DATA: {}
     }
     @classmethod
-    def get_budget_model_template(cls) -> dict:
-        """Get a fresh copy of the budget model template dictionary."""
+    def get_budget_model_config(cls) -> dict:
+        """Get a fresh copy of the budget model config dictionary."""
         try:
             logger.debug("Start:  ...")
-            bmt = cls.budget_model_template
-            fresh_bmt = copy.deepcopy(bmt) # make a fresh copy of the template
+            bmt = cls.budget_model_config
+            fresh_bmt = copy.deepcopy(bmt) # make a fresh copy of the config
             fresh_bmt[BDM_CREATED_DATE] = p3u.now_iso_date_string()
             fresh_bmt[BDM_LAST_MODIFIED_DATE] = p3u.now_iso_date_string()
             fresh_bmt[BDM_LAST_MODIFIED_BY] = getpass.getuser()
@@ -181,49 +180,52 @@ class BudgetModelTemplate(BudgetDomainModel):
             logger.debug(f"Complete:")   
             return fresh_bmt
         except Exception as e:
-            m = p3u.exc_msg(cls.get_budget_model_template, e)
+            m = p3u.exc_msg(cls.get_budget_model_config, e)
             logger.error(m)
             raise
-    #endregion BudgetModelTemplate Configuration Template
+    #endregion BudgetDomainModelConfig Configuration config
     # ------------------------------------------------------------------------ +
-    #region BudgetModelTemplate class constructor __init__()
+    #region BudgetDomainModelConfig class constructor __init__()
     def __init__(self) -> None:
-        """Construct a BudgetModelTemplate object used for configuration.
+        """Construct a BudgetDomainModelConfig object used for configuration.
         
-        The BudgetModelTemplate class is used to populate new 
+        The BudgetDomainModelConfig class is used to populate new 
         BudgetModel objects with default and example values.
         It is for internal use only. There are two means to apply it when
         constructing a new BudgetModel object:
-        1. Instantiate the BudgetModelTemplate, which sets the 
+        1. Instantiate the BudgetDomainModelConfig, which sets the 
            BudgetModel._default_config_object class variable which should be
            used when no config_object parameters is used with BudgetModel().
-        2. Use the BudgetModelTemplate.budget_model_template class variable
+        2. Use the BudgetDomainModelConfig.budget_model_config class variable
            as the config_object parameter when instantiating BudgetModel, as
-           in BudgetModel(config_object = BudgetModelTemplate.budget_model_template)
+           in BudgetModel(config_object = BudgetDomainModelConfig.budget_model_config)
 
         The other common use case is to use the BUDMAN_STORE object as the 
         config_object parameter when instantiating BudgetModel. 
 
-        budget_model_template: dict (class variable)
+        budget_model_config: dict (class variable)
             The dictionary that defines the structure of the budget model and
             gives default and example values.
         """
+        global settings, logger
         st = p3u.start_timer()
         try:
-            # Basic attribute atomic value inits. 
+            settings = BudManApp_settings
+            logger = logging.getLogger(settings[APP_NAME])
+           # Basic attribute atomic value inits. 
             logger.debug("Start:  ...")
-            # Initialize values from the template as configuration values.
-            bmt_dict = BudgetModelTemplate.budget_model_template
+            # Initialize values from the config as configuration values.
+            bmt_dict = BudgetDomainModelConfig.budget_model_config
             # Invoke the base BudgetModel.__init__() to finish instance creation.
             # BudgetModel properties work after super().__init__()
             super().__init__(config_object = bmt_dict)
             # Make self the BudgetModel._default_config_object
             BudgetDomainModel._default_config_object = self
 
-            # Complete the BudgetModelTemplate instance initialization.
+            # Complete the BudgetDomainModelConfig instance initialization.
             bmt_id = BudgetDomainModelIdentity(
                 uid = bmt_dict[BDM_ID],
-                filename = THIS_APP_NAME,
+                filename = settings[APP_NAME],
                 filetype = BSM_DEFAULT_BUDGET_MODEL_FILE_TYPE)
             self.bdm_id = bmt_dict[BDM_ID]                            # property
             self.bdm_initialized = bmt_dict[BDM_INITIALIZED]            # property
@@ -243,12 +245,12 @@ class BudgetModelTemplate(BudgetDomainModel):
             m = p3u.exc_msg(self.__init__, e)
             logger.error(m)
             raise
-    #endregion BudgetModelTemplate class constructor __init__()
+    #endregion BudgetDomainModelConfig class constructor __init__()
     # ------------------------------------------------------------------------ +
     #region log_BMT_info()
     @staticmethod
-    def log_BMT_info(bmt : "BudgetModelTemplate") -> None:
-        """Log the BudgetModelTemplate class information."""
+    def log_BMT_info(bmt : "BudgetDomainModelConfig") -> None:
+        """Log the BudgetDomainModelConfig class information."""
         try:
             logger.debug("Start:  ...")
             logger.debug(f"{P2}BDM_INITIALIZED('{BDM_INITIALIZED}'): "
@@ -300,39 +302,39 @@ class BudgetModelTemplate(BudgetDomainModel):
     #endregion log_BMT_info()
     # ------------------------------------------------------------------------ +
 # ---------------------------------------------------------------------------- +
-#region tryout_budget_model_template() function
-def tryout_budget_model_template() -> None: 
-    """Test the BudgetModelTemplate class."""
+#region tryout_budget_domain_model_config() function
+def tryout_budget_domain_model_config() -> None: 
+    """Test the BudgetDomainModelConfig class."""
     st = p3u.start_timer()
     try:
         logger.debug("Start: ...")
-        bmt = BudgetModelTemplate()
-        bmt.bsm_inititalize() # initialize the budget storage model 
+        bmt = BudgetDomainModelConfig()
+        bmt.bsm_initialize() # initialize the budget storage model 
         
-        # Enumerate the financial institutions in the budget model template
+        # Enumerate the financial institutions in the budget model config
         for fi_key, fi_dict in bmt.bdm_fi_collection.items():
             logger.debug(f"Financial Institution: {fi_dict[FI_FOLDER]}:"
                          f"{fi_dict[FI_TYPE]}:{fi_dict[FI_NAME]}:")
         for wf_key, wf_dict in bmt.bdm_wf_collection.items():
             logger.debug(f"{P2}Workflow('{wf_dict[WF_NAME]}'): "
                             f"{P2}WM_FOLDER_IN: '{wf_dict[WF_INPUT_FOLDER]}' "
-                            f"{P2}WM_WORKBOOS_IN: {wf_dict[WF_INPUT]}")
-        # logger.debug(f"Budget Model Template:     str: '{str(bmt)}'")
-        # logger.debug(f"Budget Model Template:    repr: '{repr(bmt)}'")
-        # logger.debug(f"Budget Model Template: to_dict: '{bmt.to_dict()}'")
+                            f"{P2}WM_WORKBOOKS_IN: {wf_dict[WF_INPUT]}")
+        # logger.debug(f"Budget Model config:     str: '{str(bmt)}'")
+        # logger.debug(f"Budget Model config:    repr: '{repr(bmt)}'")
+        # logger.debug(f"Budget Model config: to_dict: '{bmt.to_dict()}'")
         logger.debug(f"Complete: {p3u.stop_timer(st)}")   
     except Exception as e:
         m = p3u.exc_err_msg(e)
         logger.error(m)
         raise
-#endregion tryout_budget_model_template() function
+#endregion tryout_budget_domain_model_config() function
 # ---------------------------------------------------------------------------- +
 #region Local __main__ stand-alone
 if __name__ == "__main__":
     try:
         # this_app_name = os.path.basename(__file__)
         # Configure logging
-        logger_name = THIS_APP_NAME
+        logger_name = settings[APP_NAME]
         log_config = "budget_model_logging_config.jsonc"
         # Set the log filename for this application.
         # filenames = {"file": "logs/p3ExcelBudget.log"}
@@ -346,11 +348,11 @@ if __name__ == "__main__":
         root_logger = logging.getLogger()
         root_logger.setLevel(logging.DEBUG)
         logger.info("+ ----------------------------------------------------- +")
-        logger.info(f"+ Running {THIS_APP_NAME} ...")
+        logger.info(f"+ Running {settings[APP_NAME]} ...")
         logger.info("+ ----------------------------------------------------- +")
-        logger.debug(f"Start: {THIS_APP_NAME}...")
+        logger.debug(f"Start: {settings[APP_NAME]}...")
 
-        bm = BudgetModelTemplate()
+        bm = BudgetDomainModelConfig()
         bms = str(bm)
         bmr = repr(bm)
         bdm = bm.to_dict()
@@ -363,7 +365,7 @@ if __name__ == "__main__":
     except Exception as e:
         m = p3u.exc_msg("__main__", e)
         logger.error(m)
-    logger.info(f"Exiting {THIS_APP_NAME}...")
+    logger.info(f"Exiting {settings[APP_NAME]}...")
     exit(1)
 #endregion
 # ---------------------------------------------------------------------------- +

@@ -12,7 +12,7 @@ import inspect
 
 # local libraries
 import p3_utils as p3u, p3logging as p3l
-import p3_budman
+import budman_app
 #endregion imports
 # ---------------------------------------------------------------------------- +
 #region Globals

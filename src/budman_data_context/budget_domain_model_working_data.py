@@ -13,36 +13,37 @@ Budget Domain Model.
 #region imports
 # python standard libraries
 from pathlib import Path
+from typing import Any, TYPE_CHECKING
 # third-party modules and packages
 from openpyxl import Workbook
 import logging, p3_utils as p3u, p3logging as p3l
 # local modules and packages
-from budman_namespace import (
-    FI_KEY, WF_KEY, WB_NAME, WB_TYPE,
-    WB_REF, WB_INFO, WB_INFO_LEVEL_INFO, WB_INFO_LEVEL_VERBOSE,
-    WB_INFO_VALID_LEVELS, RELOAD_TARGET, CATEGORY_MAP,
-    ALL_KEY, P2, P4, P6, P8, P10, MODEL_OBJECT, THIS_APP_NAME
-    )
+from budman_app import *
+from budman_namespace import *
 from budman_data_context import BudManDataContext
-import budman_model as p3bm
-from budman_model import P2, P4, P6, P8, P10
+from budman_model import BDMBaseInterface, BDMClientInterface
 #endregion imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
-# MODEL_OBJECT = p3bm.BudgetDomainModel
-logger = logging.getLogger(THIS_APP_NAME)
+MODEL_OBJECT = BDMBaseInterface
+settings = None
+logger = None
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
-class BDMWorkingData(BudManDataContext):
+class BDMWorkingData(BudManDataContext, BDMClientInterface):
     """Abstract base class for the Budget Domain Model Working Data (BDMWD). """
-    def __init__(self, bdm : MODEL_OBJECT = None) -> None:
+    def __init__(self, bdm : Any = None) -> None:
         super().__init__()
+        global settings, logger
+        settings = BudManApp_settings
+        logger = logging.getLogger(settings[APP_NAME])
         self._budget_domain_model : MODEL_OBJECT = bdm
     # ------------------------------------------------------------------------ +
     def dc_FI_KEY_validate(self, fi_key: str) -> bool:
         """Validate the provided FI_KEY."""
         return self.bdmwd_FI_KEY_validate(fi_key)
     # ------------------------------------------------------------------------ +
+    # BDMClientInterface required property.
     @property
     def model(self) -> MODEL_OBJECT:
         """Return the model object reference."""

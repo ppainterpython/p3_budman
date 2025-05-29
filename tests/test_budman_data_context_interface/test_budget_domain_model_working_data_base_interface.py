@@ -4,23 +4,21 @@
 #region imports
 # python standard libraries
 import pytest, os
+from typing import TYPE_CHECKING
 from abc import ABC, abstractmethod
 # third-party modules and packages
 from openpyxl import Workbook
-
+import logging, p3_utils as p3u, p3logging as p3l
 # local modules and packages
-from src.budman_namespace import design_language_namespace as bdmns
-# from budman_data_context_interface import BudManDataContextBaseInterface
-# from budman_data_context_interface import BudManDataContextClientInterface
+# from config import settings
+from budman_app import *
+from budman_namespace import *
 from budman_data_context import BudManDataContextBaseInterface
 from budman_data_context import BDMWorkingData
-
-# local libraries
-import logging, p3_utils as p3u, p3logging as p3l
 #endregion imports
 # ---------------------------------------------------------------------------- +
 #region Globals
-logger = logging.getLogger(bdmns.THIS_APP_NAME)
+logger = logging.getLogger(__name__)
 #endregion Globals
 # ---------------------------------------------------------------------------- +
 class TestBDMWorkingDataBaseInterface():

@@ -5,17 +5,17 @@
 # python standard libraries
 import pytest, os
 from pathlib import Path
-
-# third-party libraries
 import inspect
-
-# local libraries
+# third-party libraries
 import logging, p3_utils as p3u, p3logging as p3l
-import budman_model as p3bm
+# local libraries
+from budman_app import *
+from budman_namespace import *
+from budman_model import BudgetDomainModelIdentity
 #endregion imports
 # ---------------------------------------------------------------------------- +
 #region Globals
-logger = logging.getLogger(p3bm.THIS_APP_NAME)
+logger = logging.getLogger(__name__)
 #endregion Globals
 # ---------------------------------------------------------------------------- +
 def test_budget_domain_model_identity():
@@ -23,8 +23,8 @@ def test_budget_domain_model_identity():
     try:
         logger.info(test_budget_domain_model_identity.__doc__)
         # Create a BudgetDomainModelIdentity instance.
-        bdm = p3bm.BudgetDomainModelIdentity()
-        assert isinstance(bdm, p3bm.BudgetDomainModelIdentity), \
+        bdm = BudgetDomainModelIdentity()
+        assert isinstance(bdm, BudgetDomainModelIdentity), \
             "BudgetDomainModelIdentity should be a BudgetDomainModelIdentity instance"
         assert bdm.uid is not None, \
             "BudgetDomainModelIdentity uid should not be None"

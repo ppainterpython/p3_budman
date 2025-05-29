@@ -1,25 +1,28 @@
 #------------------------------------------------------------------------------+
 # test_main.py
 #------------------------------------------------------------------------------+
-import os, sys
-import logging, pytest
-from config import settings
-
-# sys.path.insert(0,  '../src')
-print("\nCurrent working directory:", os.getcwd())
-print("Resolving path to current file:", os.path.abspath(__file__))
-print("sys.path:", sys.path)
-
-# Ensure the path to p3logging is added to sys.path
-#sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
-import p3logging as p3l
-from p3_budman.p3_budman import *
-
+#region imports
+# python standard libraries
+import pytest, os
+from pathlib import Path
+from abc import ABC, abstractmethod
+# third-party modules and packages
+from openpyxl import Workbook
+import logging, p3_utils as p3u, p3logging as p3l
+# local modules and packages
+from budman_app import *
+from budman_namespace import *
+from budman_data_context import BudManDataContextBaseInterface
+#endregion imports
 #------------------------------------------------------------------------------+
+#region Globals
+logger = logging.getLogger(__name__)
+#endregion Globals
+# ---------------------------------------------------------------------------- +
 def test_main_default(caplog) -> None:
     """Test operation of default logging config."""
     with caplog.at_level(logging.DEBUG):
-        budman_app_start(testmode=True)
+        BudManApp().budman_app_start(testmode=True)
     assert "warning message" in caplog.text, \
         "Expected 'Warning message' in log output"
     assert "debug message" in caplog.text, \
