@@ -10,13 +10,12 @@ import inspect
 import logging, p3_utils as p3u, p3logging as p3l
 # local libraries
 from budman_namespace import *
-from budman_model import (BudgetDomainModel, BudgetDomainModelConfig, 
-                          BDMBaseInterface, BDMClientInterface,
-                          log_BDM_info, log_BSM_info,)
+from budman_model import (BudgetDomainModel, BudgetDomainModelConfig)
+from budman_model.budget_domain_model import (log_BDM_info, log_BSM_info)
 #endregion imports
 # ---------------------------------------------------------------------------- +
 #region Globals
-logger = logging.getLogger(THIS_APP_NAME)
+logger = logging.getLogger(__name__)
 #endregion Globals
 # ---------------------------------------------------------------------------- +
 def test_budget_model_construction_with_no_config_object() -> None:

@@ -28,15 +28,15 @@ from typing import List
 from openpyxl import Workbook, load_workbook
 import p3_utils as p3u, pyjson5, p3logging as p3l
 # local modules and packages
-from budman_app import *
+from budman_app import BudManApp_settings
+from budman_app.budman_app_constants import *
 from budman_namespace import *
-from .budget_domain_model_identity import BudgetDomainModelIdentity
-from .budget_domain_model import BudgetDomainModel # lazy import, avoid circular
+from budman_model.budget_domain_model_identity import BudgetDomainModelIdentity
+from budman_model.budget_domain_model import BudgetDomainModel # lazy import, avoid circular
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
-settings = None
-logger = None
+logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
@@ -67,7 +67,7 @@ class BudgetDomainModelConfig(BudgetDomainModel):
         # BDM object
         BDM_ID: "1a2b3c4d",  # random, but unique BMT Id.
         BDM_INITIALIZED: False,
-        BDM_FOLDER: BDM_DEFAULT_BUDGET_FOLDER,               # bsm_BDM_FOLDER_path()
+        BDM_FOLDER: "~/OneDrive/budget", 
         BDM_URL: None,
         BDM_FI_COLLECTION: { # FI_COLLECTION (dict) {FI_KEY: FI_DATA}
             "boa": # FI_KEY
@@ -207,11 +207,9 @@ class BudgetDomainModelConfig(BudgetDomainModel):
             The dictionary that defines the structure of the budget model and
             gives default and example values.
         """
-        global settings, logger
         st = p3u.start_timer()
         try:
             settings = BudManApp_settings
-            logger = logging.getLogger(settings[APP_NAME])
            # Basic attribute atomic value inits. 
             logger.debug("Start:  ...")
             # Initialize values from the config as configuration values.
@@ -225,11 +223,11 @@ class BudgetDomainModelConfig(BudgetDomainModel):
             # Complete the BudgetDomainModelConfig instance initialization.
             bmt_id = BudgetDomainModelIdentity(
                 uid = bmt_dict[BDM_ID],
-                filename = settings[APP_NAME],
-                filetype = BSM_DEFAULT_BUDGET_MODEL_FILE_TYPE)
+                filename = BudManApp_settings[APP_NAME],
+                filetype = BudManApp_settings[BUDMAN_STORE_FILETYPE])
             self.bdm_id = bmt_dict[BDM_ID]                            # property
             self.bdm_initialized = bmt_dict[BDM_INITIALIZED]            # property
-            self.bdm_folder = BDM_DEFAULT_BUDGET_FOLDER                 # property
+            self.bdm_folder = BudManApp_settings[BUDMAN_FOLDER]                 # property
             self.bm_url = bmt_id.bdm_store_abs_path().as_uri()        # property
             self.bdm_wf_collection = bmt_dict[BDM_WF_COLLECTION].copy() # property
             for fi_key, fi_dict in bmt_dict[BDM_FI_COLLECTION].items():
@@ -332,6 +330,7 @@ def tryout_budget_domain_model_config() -> None:
 #region Local __main__ stand-alone
 if __name__ == "__main__":
     try:
+        settings = BudManApp_settings
         # this_app_name = os.path.basename(__file__)
         # Configure logging
         logger_name = settings[APP_NAME]

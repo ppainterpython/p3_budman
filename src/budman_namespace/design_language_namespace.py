@@ -43,10 +43,6 @@ WF_DATA_OBJECT = DATA_OBJECT  # a DATA_OBJECT for a specific FI,WF
 BDM_WORKING_DATA_OBJECT = Dict[str, Any]
 # ---------------------------------------------------------------------------- +
 # Budget Model Filesystem Path default constants 
-BSM_DEFAULT_BUDGET_MODEL_FILE_NAME = "DEPRECATED: use settings[APP_NAME"
-BSM_DEFAULT_BUDGET_MODEL_FILE_TYPE = "DEPRECATED: use settings[BUDMAN_STORE_FILETYPE]"
-BDM_DEFAULT_BUDGET_FOLDER = "DEPRECATED: use settings[BUDMAN_FOLDER] "
-BDM_DEFAULT_BUDMAN_STORE = "DEPRECATED: use settings[BUDMAN_STORE]"
 PATH = "_path"
 ABS_PATH = "_abs" + PATH
 WORKBOOKS = "_workbooks"

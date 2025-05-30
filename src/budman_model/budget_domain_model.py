@@ -69,6 +69,7 @@
 # ---------------------------------------------------------------------------- +
 #region Imports
 # python standard library modules and packages
+from abc import ABCMeta
 import logging, os, getpass, time, copy
 from pathlib import Path
 from typing import List, Type, Generator, Dict, Tuple, Any, TYPE_CHECKING
@@ -76,15 +77,17 @@ from typing import List, Type, Generator, Dict, Tuple, Any, TYPE_CHECKING
 import p3_utils as p3u, pyjson5, p3logging as p3l
 from openpyxl import Workbook, load_workbook
 # local modules and packages
-from budman_app import *
+from budman_app.budman_app_constants import *
+from budman_app.budman_app import BudManApp_settings
 from budman_namespace import *
-from budman_model import BDMBaseInterface
-from budman_model import BudgetDomainModelIdentity
+from .budget_storage_model import bsm_verify_folder
+from .model_base_interface import BDMBaseInterface
+from .budget_domain_model_identity import BudgetDomainModelIdentity
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
 settings = None
-logger = None
+logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
@@ -97,7 +100,7 @@ def dscr(_inst) -> str:
         return f"<instance '{_cn}':{_id}>"
     except Exception as e:
         return f"{type(e).__name__}()"
-class SingletonMeta(type):
+class SingletonMeta(ABCMeta):
     """Metaclass for implementing the Singleton pattern for subclasses."""
     _instances = {}
 
@@ -149,15 +152,13 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=SingletonMeta):
     #region    BudgetModel class constructor __init__()
     def __init__(self, config_object : object = None) -> None:
         """Constructor for the BudgetModel class."""
-        global settings, logger
+        global settings
         settings = BudManApp_settings
-        logger = logging.getLogger(settings[APP_NAME])
         # Note: _subclassname set by SingletonMeta after __init__() completes.
         logger.debug("Start: ...")
 
         # Private attributes initialization, basic stuff only.
         # for serialization ease, always persist dates as str type.
-        settings = BudManApp_settings  # type: ignore
         bdm_id = BudgetDomainModelIdentity()
         setattr(self, BDM_ID, bdm_id.uid)  # BudgetDomainModelIdentity
         setattr(self, BDM_CONFIG_OBJECT,config_object)
@@ -2071,7 +2072,6 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=SingletonMeta):
     # ------------------------------------------------------------------------ +
     #endregion BDMWD - BDMWD - BudMan DataContext Interface methods.
     # ======================================================================== +
-
 # ---------------------------------------------------------------------------- +
 #region utility functions
 def data_desc(fi_key:str, wf_key:str, wb_type:str) -> str:
@@ -2155,7 +2155,7 @@ def log_BSM_info(bdm : BudgetDomainModel) -> None:
         logger.debug(f"{P2}BDM_FOLDER['{BDM_FOLDER}']: '{bdm.bdm_folder}' {bf_ap_exists}")
         logger.debug(f"{P4}bsm_BDM_FOLDER_path(): '{str(bf_p)}' {bf_p_exists}")
         logger.debug(f"{P4}bsm_BDM_FOLDER_abs_path(): '{str(bf_ap)}' {bf_ap_exists}")
-        bmc_p = bf_p / BSM_DEFAULT_BUDGET_MODEL_FILE_NAME # bmc: BM config file
+        bmc_p = bf_p / BudManApp_settings[BUDMAN_STORE] # bmc: BM config file
         bmc_p_exists = "exists." if bmc_p.exists() else "does not exist!"
         logger.debug(
             f"{P2}BDM_URL['{BDM_URL}]: '{bdm.bdm_url}' "
@@ -2188,80 +2188,6 @@ def log_BSM_info(bdm : BudgetDomainModel) -> None:
         logger.error(m)
         raise
 #endregion log_BSM_info() function
-# ---------------------------------------------------------------------------- +
-#region check_budget_model() -> bool
-def check_budget_model() -> bool:   
-    """Quick check of the budget model schema is valid.
-
-    Returns:
-        bool: True if the budget model schema is valid, raise otherwise.
-    """
-    me = check_budget_model
-    global budget_config, budget_model, budget_config_expected_keys
-    global institution_expected_keys, options_expected_keys
-    try:
-        if (budget_model is None or 
-            not isinstance(budget_model, dict) or
-            len(budget_model) == 0):
-            logger.warning("Budget model is not initialized.")
-            return False
-        # Check if the budget model contains expected keys
-        for key in budget_config_expected_keys:
-            if key not in budget_model:
-                m = f"Budget model missing key: '{key}'"
-                logger.error(m)
-                raise ValueError(m)
-        # Check if the institutions are valid
-        for institution_key in BudgetDomainModel.valid_institutions_keys:
-            if institution_key not in budget_config["institutions"].keys():
-                m = f"Budget model has invalid institution key: '{institution_key}'"
-                logger.error(m)
-                raise ValueError(m)
-            for key in institution_expected_keys:
-                if key not in budget_model["institutions"][institution_key]:
-                    m = f"Budget model institution[{institution_key}] missing key: '{key}'"
-                    logger.error(m)
-                    raise ValueError(m)
-        for key in options_expected_keys:
-            if key not in budget_model["options"]:
-                m = f"Budget model missing options key: '{key}'"
-                logger.error(m)
-                raise ValueError(m)
-        return True
-    except Exception as e:
-        logger.error(p3u.exc_msg(me, e))
-        return False
-#endregion check_budget_model() -> bool
-# ---------------------------------------------------------------------------- +
-#region verify_folder(ap: Path, create:bool=True, raise_errors:bool=True) -> bool
-def bsm_verify_folder(ap: Path, create:bool=True, raise_errors:bool=True) -> bool:
-    """Verify the folder exists, create it if it does not exist.
-
-    Args:
-        ap (Path): The absolute path to the folder to verify.
-        create (bool): Create the folder if it does not exist.
-        raise_errors (bool): Raise errors if True.
-    """
-    try:
-        if not ap.is_absolute():
-            m = f"Path is not absolute: '{str(ap)}'"
-            logger.error(m)
-            raise ValueError(m)
-        if ap.exists() and ap.is_dir():
-            logger.debug(f"Folder exists: '{str(ap)}'")
-            return True
-        if not ap.exists():
-            m = f"Folder does not exist: '{str(ap)}'"
-            logger.error(m)
-            if create:
-                logger.info(f"Creating folder: '{str(ap)}'")
-                ap.mkdir(parents=True, exist_ok=True)
-            else:
-                raise ValueError(m)
-    except Exception as e:
-        logger.error(p3u.exc_err_msg(e))
-        raise
-#endregion verify_folder(ap: Path, create:bool=True, raise_errors:bool=True) -> bool
 # ---------------------------------------------------------------------------- +
 #region Local __main__ stand-alone
 if __name__ == "__main__":

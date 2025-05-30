@@ -13,7 +13,7 @@ Methods are separated into ViewModel-ish methods for the Budget Domain
 and Model-ish methods for the Storage Domain, which is the filesystem.
 
 In the Budget Domain Model, a data pipeline pattern is used, anticipating 
-"raw data" will be introduced from finanancial institutions (FI) and and 
+"raw data" will be introduced from financial institutions (FI) and and 
 proceed through a series of transformations to a "finalized", although
 updatable budget model. Raw data is a "workbook", often an excel file, 
 or a .cvs file.
@@ -72,7 +72,7 @@ from ..budman_model.budget_domain_model import BudgetDomainModel
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
-logger = logging.getLogger(THIS_APP_NAME)
+logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +

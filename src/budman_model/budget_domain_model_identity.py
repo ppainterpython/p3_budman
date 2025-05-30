@@ -31,8 +31,7 @@ from budman_namespace import *
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
-settings = None
-logger = None
+logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
@@ -53,17 +52,13 @@ class BudgetDomainModelIdentity():
         Args:
             uid : str to use as uniqueness.
         """
-        global settings, logger
-        settings = BudManApp_settings
-        logger = logging.getLogger(settings[APP_NAME])
         self.settings = BudManApp_settings
         self._uid = uuid.uuid4().hex[:8] if uid is None else uid
         filename = filename or self.settings[APP_NAME]
-        self._name : str = filename or settings[APP_NAME]
+        self._name : str = filename or self.settings[APP_NAME]
         filetype = filetype or self.settings[BUDMAN_STORE_FILETYPE]
-        filetype = filetype or BSM_DEFAULT_BUDGET_MODEL_FILE_TYPE
         self._filename : str = f"{filename}_{self._uid}{filetype}"
-        self._bdm_folder : str = BDM_DEFAULT_BUDGET_FOLDER
+        self._bdm_folder : str = self.settings[BUDMAN_FOLDER]
     # ------------------------------------------------------------------------ +
     #region Properties
     @property
@@ -142,7 +137,7 @@ class BudgetDomainModelIdentity():
     #endregion Properties
     # ------------------------------------------------------------------------ +
     #region Methods
-    def bdm_store_abs_path(self, bdm_folder : str = BDM_DEFAULT_BUDGET_FOLDER) -> Path:
+    def bdm_store_abs_path(self) -> Path:
         """Return the path to the BudgetDomainModel.
 
         Args:
@@ -152,8 +147,7 @@ class BudgetDomainModelIdentity():
             Path: The path object for the BudgetDomainModel.
         """
         try:
-            bdm_folder = Path(bdm_folder).expanduser().resolve()
-            bdm_ap = bdm_folder / self._filename
+            bdm_ap = self.bdm_folder / self._filename
             return bdm_ap
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))

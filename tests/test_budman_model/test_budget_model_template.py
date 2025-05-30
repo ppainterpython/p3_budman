@@ -11,12 +11,20 @@ import inspect
 
 # local libraries
 import logging, p3_utils as p3u, p3logging as p3l
-import budman_model as p3bt
+from budman_app import BudManApp_settings, configure_settings
+from budman_namespace import *
+from budman_model import BudgetDomainModelConfig
 #endregion imports
 # ---------------------------------------------------------------------------- +
 #region Globals
-logger = logging.getLogger(p3bt.THIS_APP_NAME)
+logger = logging.getLogger(__name__)
 #endregion Globals
+# ---------------------------------------------------------------------------- +
+@pytest.fixture(scope="module", autouse=True)
+def app_settings():
+    """Fixture to set up the application settings for the test module."""
+    configure_settings()
+    return BudManApp_settings
 # ---------------------------------------------------------------------------- +
 def test_budget_model_config_constructor() -> None:
     """Test the BudgetModelTemplate() function."""
@@ -25,10 +33,10 @@ def test_budget_model_config_constructor() -> None:
         # p3l.setup_logging(THIS_APP_NAME,p3l.STDOUT_FILE_LOG_CONFIG_FILE)
         st = p3u.start_timer()
         logger.info(test_budget_model_config_constructor.__doc__)
-        bmt = p3bt.BudgetDomainModelConfig()
+        bmt = BudgetDomainModelConfig()
         
         # Check if the budget model is a dictionary
-        assert isinstance(bmt, p3bt.BudgetDomainModelConfig), \
+        assert isinstance(bmt, BudgetDomainModelConfig), \
             "Budget model should be a BudgetModelTemplate instance"        
         assert bmt._initialized, "Budget model should be initialized"
         assert bmt._bdm_id is not None, "Created date should not be None"
@@ -50,13 +58,12 @@ def test_bsm_initialize() -> None:
     """Test the BudgetModelStorage.bsm_initialize() Method."""
     try:
         # Initialize the logger from a logging configuration file.
-        # p3l.setup_logging(THIS_APP_NAME,p3l.STDOUT_FILE_LOG_CONFIG_FILE)
         st = p3u.start_timer()
         logger.info(test_bsm_initialize.__doc__)
-        bmt = p3bt.BudgetDomainModelConfig()
+        bmt = BudgetDomainModelConfig()
         
         # Check if the budget model is a dictionary
-        assert isinstance(bmt, p3bt.BudgetDomainModelConfig), \
+        assert isinstance(bmt, BudgetDomainModelConfig), \
             "Budget model should be a BudgetModelStorage instance"
         
         assert bmt._initialized, "Budget model should be initialized"
@@ -70,10 +77,10 @@ def test_bsm_BDM_Folder_Path_methods() -> None:
     """Test BM Folder (BF) Path methods."""
     try:
         logger.info(test_bsm_BDM_Folder_Path_methods.__doc__)
-        bmt = p3bt.BudgetDomainModelConfig()
-        assert isinstance(bmt, p3bt.BudgetDomainModelConfig), \
+        bmt = BudgetDomainModelConfig()
+        assert isinstance(bmt, BudgetDomainModelConfig), \
             "Budget model should be a BudgetModelTemplate instance"
-        exptd_s = str(Path(p3bt.BDM_DEFAULT_BUDGET_FOLDER))
+        exptd_s = str(Path(BudManApp_settings.BDM_FOLDER).expanduser())
         assert (_s := bmt.bsm_BDM_FOLDER_path_str()) == exptd_s, \
             f"Expected: {exptd_s}, Got: {_s}"
         exptd_p = Path(_s).expanduser()
@@ -89,15 +96,15 @@ def test_bsm_FI_Path_methods() -> None:
     """Test FI Path methods."""
     try:
         logger.info("Testing BudgetModelStorage constructor.")
-        bmt = p3bt.BudgetDomainModelConfig()
-        assert isinstance(bmt, p3bt.BudgetDomainModelConfig), \
+        bmt = BudgetDomainModelConfig()
+        assert isinstance(bmt, BudgetDomainModelConfig), \
             "Budget model should be a BudgetModelTemplate instance"
         # Test expected values based on the settings in
         # the budget_model_config in the source code. All default 
         # settings are mastered there and budget_model_constants.py.
 
         # Expect valid values to work from default setup.
-        for fi_key in p3bt.VALID_FI_KEYS:
+        for fi_key in VALID_FI_KEYS:
             assert bmt.bdm_FI_KEY_validate(fi_key), \
                 f"Expected: {fi_key} to be a valid FI key."
             assert bmt.bsm_FI_FOLDER_path_str(fi_key) is not None, \
@@ -115,21 +122,21 @@ def test_WF_OBJECT_Path_methods() -> None:
     """Test WF Object Path methods."""
     try:
         logger.info(test_WF_OBJECT_Path_methods.__doc__)
-        bmt = p3bt.BudgetDomainModelConfig()
-        assert isinstance(bmt, p3bt.BudgetDomainModelConfig), \
+        bmt = BudgetDomainModelConfig()
+        assert isinstance(bmt, BudgetDomainModelConfig), \
             "Budget model should be a BudgetModelTemplate instance"
         # Test expected values based on the settings in
         # the budget_model_config in the source code. All default 
         # settings are mastered there and budget_model_constants.py.
 
         # Expect valid values to work from default setup.
-        for fi_key in p3bt.VALID_FI_KEYS:
+        for fi_key in VALID_FI_KEYS:
             assert bmt.bdm_FI_KEY_validate(fi_key), \
                 f"Expected: {fi_key} to be a valid FI key."
-            for wf_key in p3bt.BDM_VALID_WORKFLOWS:
+            for wf_key in BDM_VALID_WORKFLOWS:
                 assert bmt.bdm_WF_KEY_validate(wf_key), \
                     f"Expected: {wf_key} to be a valid WF key."
-                for f_id in p3bt.WF_FOLDER_PATH_ELEMENTS:
+                for f_id in WF_FOLDER_PATH_ELEMENTS:
                     _s = bmt.bsm_WF_FOLDER_path_str(fi_key,wf_key, f_id)
                     logger.debug(f"WF: {wf_key} bsm_{f_id}_path_str(): '{_s}'")
                     if _s is not None:
@@ -148,29 +155,29 @@ def test_BDM_FI_DATA_pseudo_Property_Methods():
     """Test BDM FI Object Pseudo Property Methods."""
     try:
         logger.info(test_BDM_FI_DATA_pseudo_Property_Methods.__doc__)
-        bmt = p3bt.BudgetDomainModelConfig()
-        assert isinstance(bmt, p3bt.BudgetDomainModelConfig), \
+        bmt = BudgetDomainModelConfig()
+        assert isinstance(bmt, BudgetDomainModelConfig), \
             "Budget model should be a BudgetModelTemplate instance"
         # Test expected values based on the settings in
         # the budget_model_config in the source code. All default 
         # settings are mastered there and budget_model_constants.py.
 
         # Expect valid values to work from default setup.
-        for fi_key in p3bt.VALID_FI_KEYS:
+        for fi_key in VALID_FI_KEYS:
             assert bmt.bdm_FI_KEY_validate(fi_key), \
                 f"Expected: {fi_key} to be a valid FI key."
             assert (bdm_fi := bmt.bdm_FI_OBJECT(fi_key)) is not None, \
                 f"Expected: {fi_key} to be a valid FI dict."
-            assert len(bdm_fi) == len(p3bt.FI_OBJECT_VALID_ATTR_KEYS), \
+            assert len(bdm_fi) == len(FI_OBJECT_VALID_ATTR_KEYS), \
                 f"Expected: {fi_key} workbooks_in to be non-None."
             assert isinstance(bdm_fi, dict), \
                 f"Expected: {fi_key} workbooks_in to be valid dict."
             assert bmt.bdm_FI_KEY(fi_key) == fi_key, \
                 f"Expected bdm_FI_KEY('{fi_key}'): '{fi_key}', got '{bdm_fi.bdm_FI_KEY(fi_key)}'."
-            assert bmt.bdm_FI_NAME(fi_key) in p3bt.BDM_FI_NAMES, \
-                f"Expected one of: {p3bt.BDM_FI_NAMES}, got '{bmt.bdm_FI_NAME(fi_key)}'"
-            assert bmt.bdm_FI_TYPE(fi_key) in p3bt.VALID_FI_TYPES, \
-                f"Expected one of: {p3bt.BDM_FI_TYPES}, got '{bmt.bdm_FI_TYPE(fi_key)}'"
+            assert bmt.bdm_FI_NAME(fi_key) in BDM_FI_NAMES, \
+                f"Expected one of: {BDM_FI_NAMES}, got '{bmt.bdm_FI_NAME(fi_key)}'"
+            assert bmt.bdm_FI_TYPE(fi_key) in VALID_FI_TYPES, \
+                f"Expected one of: {VALID_FI_TYPES}, got '{bmt.bdm_FI_TYPE(fi_key)}'"
             assert bmt.bdm_FI_FOLDER(fi_key) is not None , \
                 f"Expected bmt.bdm_FI_FOLDER({fi_key}) to be non-None"
     except Exception as e:
@@ -180,20 +187,20 @@ def test_BDM_WF_Dictionary_Pseudo_Property_Methods():
     """Test BDM WF Dictionary Pseudo Property Methods."""
     try:
         logger.info(test_BDM_WF_Dictionary_Pseudo_Property_Methods.__doc__)
-        bmt = p3bt.BudgetDomainModelConfig()
-        assert isinstance(bmt, p3bt.BudgetDomainModelConfig), \
+        bmt = BudgetDomainModelConfig()
+        assert isinstance(bmt, BudgetDomainModelConfig), \
             "Budget model should be a BudgetModelTemplate instance"
         # Test expected values based on the settings in
         # the budget_model_config in the source code. All default 
         # settings are mastered there and budget_model_constants.py.
 
         # Expect valid values to work from default setup.
-        for wf_key in p3bt.BDM_VALID_WORKFLOWS:
+        for wf_key in BDM_VALID_WORKFLOWS:
             assert bmt.bdm_WF_KEY_validate(wf_key), \
                 f"Expected: {wf_key} to be a valid WF key."
             assert (bdm_WF_OBJECT := bmt.bdm_WF_OBJECT(wf_key)) is not None, \
                 f"Expected: {wf_key} to be a valid WF dict."
-            assert len(bdm_WF_OBJECT) == len(p3bt.WF_OBJECT_VALID_ATTR_KEYS), \
+            assert len(bdm_WF_OBJECT) == len(WF_OBJECT_VALID_ATTR_KEYS), \
                 f"Expected: {wf_key} workbooks_in to be non-None."
             assert isinstance(bdm_WF_OBJECT, dict), \
                 f"Expected: {wf_key} workbooks_in to be valid dict."
@@ -201,11 +208,11 @@ def test_BDM_WF_Dictionary_Pseudo_Property_Methods():
                 f"Expected bdm_WF_KEY('{wf_key}'): '{wf_key}', got '{bdm_WF_OBJECT.bdm_WF_KEY(wf_key)}'."
             assert bmt.bdm_WF_NAME(wf_key) is not None, \
                 f"Expected bmt.bdm_WF_NAME({wf_key}) to be non-None"
-            assert bmt.bdm_WF_NAME(wf_key) in p3bt.BDM_VALID_WORKFLOWS, \
-                f"Expected one of: {p3bt.BDM_VALID_WORKFLOWS}, got '{bmt.bdm_WF_NAME(wf_key)}'"
-            assert isinstance(bmt.bdm_WF_FOLDER(wf_key, p3bt.WF_INPUT_FOLDER), (str, type(None))), \
+            assert bmt.bdm_WF_NAME(wf_key) in BDM_VALID_WORKFLOWS, \
+                f"Expected one of: {BDM_VALID_WORKFLOWS}, got '{bmt.bdm_WF_NAME(wf_key)}'"
+            assert isinstance(bmt.bdm_WF_FOLDER(wf_key, WF_INPUT_FOLDER), (str, type(None))), \
                 f"Expected bmt.bdm_WF_INPUT_FOLDER({wf_key}) to type: None or str"
-            assert isinstance(bmt.bdm_WF_FOLDER(wf_key,p3bt.WF_OUTPUT_FOLDER), (str, type(None))), \
+            assert isinstance(bmt.bdm_WF_FOLDER(wf_key,WF_OUTPUT_FOLDER), (str, type(None))), \
                 f"Expected bmt.bdm_WF_OUTPUT_FOLDER{wf_key}) to type: None or str"
             # assert isinstance(bmt.bdm_WF_OBJECT_workbooks_in(wf_key),(dict, type(None))), \
             #     f"Expected: {wf_key} workbooks_in to be dict or None."

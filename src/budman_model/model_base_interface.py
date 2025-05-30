@@ -13,9 +13,7 @@ bindable model objects in the Budget Domain Model (BDM).
 # ---------------------------------------------------------------------------- +
 #region imports
 # python standard libraries
-from __future__ import annotations  # For forward references in type hints
 from abc import ABC, abstractmethod
-from typing import Any
 # third-party modules and packages
 # local modules and packages
 #endregion imports

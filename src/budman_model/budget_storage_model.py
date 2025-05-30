@@ -20,8 +20,7 @@ from .budget_domain_model_identity import *
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region    Globals and Constants
-settings  = BudManApp.settings
-logger = logging.getLogger(settings[APP_NAME])
+logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
@@ -56,12 +55,13 @@ def bsm_BUDMAN_STORE_load(store_path : Path = None) -> Dict:
 #endregion bsm_BUDMAN_STORE_load() function
 # ---------------------------------------------------------------------------- +
 #region    budget_storage_model_new module
-def budget_storage_model_new(name : str = BSM_DEFAULT_BUDGET_MODEL_FILE_NAME,
-                             folder : str = BDM_DEFAULT_BUDGET_FOLDER,
-                             filetype : str = BSM_DEFAULT_BUDGET_MODEL_FILE_TYPE) -> str:
+def budget_storage_model_new(name : str, folder : str, filetype : str) -> str:
     """Create a new budget storage model file."""
     try:
         st = p3u.start_timer()
+        name = name or BudManApp_settings[APP_NAME]
+        folder = folder or BudManApp_settings[BUDMAN_FOLDER]
+        filetype = filetype or BudManApp_settings[BUDMAN_STORE_FILETYPE]
         logger.debug("Start: ...")
         # Create a new budget storage model file.
         bdm = BudgetDomainModelIdentity(filename=name, filetype=filetype)
@@ -107,13 +107,43 @@ def bsm_BUDMAN_STORE_save(budman_store:Dict, store_path:Path) -> None:
         raise
 #endregion bsm_BUDMAN_STORE_save() function
 # ---------------------------------------------------------------------------- +
+#region verify_folder(ap: Path, create:bool=True, raise_errors:bool=True) -> bool
+def bsm_verify_folder(ap: Path, create:bool=True, raise_errors:bool=True) -> bool:
+    """Verify the folder exists, create it if it does not exist.
+
+    Args:
+        ap (Path): The absolute path to the folder to verify.
+        create (bool): Create the folder if it does not exist.
+        raise_errors (bool): Raise errors if True.
+    """
+    try:
+        if not ap.is_absolute():
+            m = f"Path is not absolute: '{str(ap)}'"
+            logger.error(m)
+            raise ValueError(m)
+        if ap.exists() and ap.is_dir():
+            logger.debug(f"Folder exists: '{str(ap)}'")
+            return True
+        if not ap.exists():
+            m = f"Folder does not exist: '{str(ap)}'"
+            logger.error(m)
+            if create:
+                logger.info(f"Creating folder: '{str(ap)}'")
+                ap.mkdir(parents=True, exist_ok=True)
+            else:
+                raise ValueError(m)
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion verify_folder(ap: Path, create:bool=True, raise_errors:bool=True) -> bool
+# ---------------------------------------------------------------------------- +
 #region    BUDMAN_STORE path methods
 def bsm_BUDMAN_STORE_abs_path() -> Path:
     """Construct the default store path."""
     try:
         # Use the BUDMAN_STORE configured in BUDMAN_SETTINGS.
-        budman_store_value = settings[BUDMAN_STORE]
-        budman_folder = settings[BUDMAN_FOLDER]
+        budman_store_value = BudManApp_settings[BUDMAN_STORE]
+        budman_folder = BudManApp_settings[BUDMAN_FOLDER]
         budman_folder_abs_path = Path(budman_folder).expanduser().resolve()
         budman_store_abs_path = budman_folder_abs_path / budman_store_value
         return budman_store_abs_path
@@ -121,6 +151,18 @@ def bsm_BUDMAN_STORE_abs_path() -> Path:
         logger.error(p3u.exc_err_msg(e))
         raise
 #endregion BUDMAN_STORE path methods
+# ---------------------------------------------------------------------------- +
+def bsm_BDM_URL_abs_path(bm_folder : str) -> Path:
+    """Construct the default store path."""
+    try:
+        bm_folder = bm_folder or BudManApp_settings[BUDMAN_FOLDER]
+        bm_folder_path = Path(bm_folder).expanduser()
+        bm_folder_abs_path = bm_folder_path.resolve()
+        bdm_url_abs_path = bm_folder_abs_path / BudManApp_settings[APP_NAME]
+        return bdm_url_abs_path
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
 # ---------------------------------------------------------------------------- +
 # def bsm_BDM_URL_save(bm : "BudgetModel") -> None:
 #     """Save the BudgetModel store to a .jsonc file."""
@@ -180,15 +222,3 @@ def bsm_BUDMAN_STORE_abs_path() -> Path:
 #     except Exception as e:
 #         logger.error(p3u.exc_err_msg(e))
 #         raise
-# ---------------------------------------------------------------------------- +
-def bsm_BDM_URL_abs_path(bm_folder : str = BDM_DEFAULT_BUDGET_FOLDER) -> Path:
-    """Construct the default store path."""
-    try:
-        bm_folder_path = Path(bm_folder).expanduser()
-        bm_folder_abs_path = bm_folder_path.resolve()
-        bdm_url_abs_path = bm_folder_abs_path / BSM_DEFAULT_BUDGET_MODEL_FILE_NAME
-        return bdm_url_abs_path
-    except Exception as e:
-        logger.error(p3u.exc_err_msg(e))
-        raise
-# ---------------------------------------------------------------------------- +

@@ -17,11 +17,13 @@ from typing import Any, TYPE_CHECKING
 # third-party modules and packages
 from openpyxl import Workbook
 import logging, p3_utils as p3u, p3logging as p3l
-# local modules and packages
+# local modules and packages for necessary classes and functions
 from budman_app import *
 from budman_namespace import *
 from budman_data_context import BudManDataContext
-from budman_model import BDMBaseInterface, BDMClientInterface
+from budman_model.budget_domain_model import BudgetDomainModel
+from budman_model.model_base_interface import BDMBaseInterface
+from budman_model.model_client_interface import BDMClientInterface
 #endregion imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants

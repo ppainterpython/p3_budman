@@ -5,18 +5,15 @@
 # python standard libraries
 import pytest
 from pathlib import Path
-
 # third-party libraries
-import inspect, pyjson5 as json5
 import logging, p3_utils as p3u, p3logging as p3l
 
 # local libraries
-from budman_namespace import *
-from budman_model import budget_storage_model_new
+from budman_model.budget_storage_model import budget_storage_model_new
 #endregion imports
 # ---------------------------------------------------------------------------- +
 #region Globals
-logger = logging.getLogger(THIS_APP_NAME)
+logger = logging.getLogger(__name__)
 #endregion Globals
 # ---------------------------------------------------------------------------- +
 def test_budget_storage_model_new():

@@ -14,19 +14,25 @@ __name__ = "budman_app"
 __description__ = "Budget Manager (BudMan) a p3 application."
 __license__ = "MIT"
 
+from .budman_app_constants import * #(
+#     BUDMAN_SETTINGS,
+#     BUDMAN_FOLDER,
+#     BUDMAN_STORE,
+#     BUDMAN_STORE_FILETYPE,
+#     BUDMAN_DEFAULT_FI,
+#     BUDMAN_DEFAULT_WORKFLOW,
+#     BUDMAN_DEFAULT_WORKBOOK_TYPE,
+#     APP_NAME,
+#     SHORT_APP_NAME
+# )
 from .budman_app import (
     BudManApp,
     BudManApp_settings,
-    BUDMAN_SETTINGS,
-    BUDMAN_FOLDER,
-    BUDMAN_STORE,
-    BUDMAN_STORE_FILETYPE,
-    BUDMAN_DEFAULT_FI,
-    BUDMAN_DEFAULT_WORKFLOW,
-    BUDMAN_DEFAULT_WORKBOOK_TYPE,
-    APP_NAME,
-    SHORT_APP_NAME
+    configure_logging,
+    configure_settings
 )
+
+# target for 'from budman_app import *'
 __all__ = [
     "BudManApp",
     "BudManApp_settings",

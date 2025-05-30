@@ -13,7 +13,6 @@ bindable model objects in the Budget Domain Model (BDM).
 # ---------------------------------------------------------------------------- +
 #region imports
 # python standard libraries
-from __future__ import annotations  # For forward references in type hints
 from abc import ABC, abstractmethod
 from typing import Any, TYPE_CHECKING
 if TYPE_CHECKING:
@@ -33,12 +32,12 @@ class BDMClientInterface(ABC):
     
     @property
     @abstractmethod
-    def model(self) -> BDMBaseInterface:
+    def model(self) -> object:
         """Return model object binding."""
         pass
 
     @model.setter
     @abstractmethod
-    def model(self, mo: BDMBaseInterface) -> None:
+    def model(self, mo: object) -> None:
         """Set the model object binding."""
         pass    

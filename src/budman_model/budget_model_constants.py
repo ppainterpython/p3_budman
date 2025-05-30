@@ -18,9 +18,6 @@ THIS_APP_SHORT_NAME = "budman"
 # BMO - for Budget Model Options
 
 # Budget Model Filesystem Path default constants 
-BSM_DEFAULT_BUDGET_MODEL_FILE_NAME = THIS_APP_NAME
-BSM_DEFAULT_BUDGET_MODEL_FILE_TYPE = ".jsonc"
-BDM_DEFAULT_BUDGET_FOLDER = "~/OneDrive/budget"
 PATH = "_path"
 ABS_PATH = "_abs" + PATH
 WORKBOOKS = "_workbooks"

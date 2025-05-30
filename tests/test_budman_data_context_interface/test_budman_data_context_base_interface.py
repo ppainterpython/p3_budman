@@ -14,7 +14,7 @@ from budman_data_context import BudManDataContextBaseInterface
 #endregion imports
 # ---------------------------------------------------------------------------- +
 #region Globals
-logger = logging.getLogger(bdmns.THIS_APP_NAME)
+logger = logging.getLogger(__name__)
 #endregion Globals
 # ---------------------------------------------------------------------------- +
 class testBudManDC(BudManDataContextBaseInterface):

@@ -19,7 +19,7 @@ import logging, p3_utils as p3u, p3logging as p3l
 #endregion imports
 # ---------------------------------------------------------------------------- +
 #region Globals
-logger = logging.getLogger(bdmns.THIS_APP_NAME)
+logger = logging.getLogger(__name__)
 #endregion Globals
 # ---------------------------------------------------------------------------- +
 def test_budman_data_context_initialize():

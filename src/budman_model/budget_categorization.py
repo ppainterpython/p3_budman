@@ -28,15 +28,13 @@ from openpyxl.worksheet.worksheet import Worksheet
 from openpyxl.cell.cell import Cell
 
 # local modules and packages
-from .budget_model_constants import  *
-from .budget_category_mapping import (
-    map_category, category_map_count)
-from .budget_domain_model import BudgetDomainModel
+from budman_namespace import *
+from budman_model import (BudgetDomainModel, map_category, category_map_count)
 # from data.p3_fi_transactions.budget_model import BudgetModel
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
-logger = logging.getLogger(THIS_APP_NAME)
+logger = logging.getLogger(__name__)
 
 # BOA workbook column name to column index mapping.
 DATE_COL_NAME = "Date"  # Column name for transaction date.
@@ -113,7 +111,6 @@ def check_budget_category(sheet:Worksheet) -> bool:
         sheet (openpyxl.worksheet): The worksheet to map.
     """
     try:
-        me = check_budget_category
         logger.info("Check worksheet for budget category.")
         # Is BUDGET_CATEGORY_COL in the sheet?
         col_names = [cell.value for cell in sheet[1]]
@@ -131,7 +128,7 @@ def check_budget_category(sheet:Worksheet) -> bool:
         logger.info(f"Completed checks for budget category.")
         return True
     except Exception as e:
-        logger.error(p3u.exc_msg(me, e))
+        logger.error(p3u.exc_err_msg(e))
         raise    
 #endregion check_budget_category() function
 # ---------------------------------------------------------------------------- +

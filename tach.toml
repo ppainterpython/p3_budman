@@ -1,0 +1,35 @@
+interfaces = []
+exclude = [
+    "**/*__pycache__",
+    "**/*egg-info",
+    "**/docs",
+    "**/tests",
+    "**/venv",
+]
+source_roots = [
+    ".", "src",
+]
+
+[[modules ]]
+path = "src.budman_view_model"
+depends_on = ["src.budman_model"]
+
+[[modules ]]
+path = "src.budman_namespace"
+depends_on = []
+
+[[modules ]]
+path = "src.budman_cli_view"
+depends_on = []
+
+[[modules ]]
+path = "src.budman_data_context"
+depends_on = ["src.budman_namespace"]
+
+[[modules ]]
+path = "src.budman_model"
+depends_on = []
+
+[[modules ]]
+path = "src.budman_app"
+depends_on = []
