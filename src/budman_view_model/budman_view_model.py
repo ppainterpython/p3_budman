@@ -16,6 +16,7 @@ from openpyxl import Workbook, load_workbook
 from budman_settings import *
 from budman_namespace import *
 from budman_domain_model import *
+from budman_storage_model import *
 from budman_data_context import BudManDataContext
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -142,7 +143,7 @@ class BudManViewModel(BDMClientInterface):
                 # There is no valid budget_model. Load a BDM_STORE file?
                 if load_user_store:
                     # Use BDM_STORE file as a config_object 
-                    config_object = bsm_BDM_STORE_load()
+                    config_object = bsm_BDM_STORE_file_load()
                     self.BDM_STORE_loaded = True
                 else:
                     # Use the builtin default template as a config_object.
@@ -785,7 +786,7 @@ class BudManViewModel(BDMClientInterface):
             # Get a Dict of the BudgetModel to store.
             budget_model_dict = self.budget_model.to_dict()
             # Save the BDM_STORE file.
-            bsm_BDM_STORE_save(budget_model_dict, budman_store_abs_path)
+            bsm_BDM_STORE_file_save(budget_model_dict, budman_store_abs_path)
             logger.info(f"Saved BDM_STORE file: {budman_store_abs_path}")
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             return True, budget_model_dict
@@ -827,7 +828,7 @@ class BudManViewModel(BDMClientInterface):
             budman_folder_abs_path = Path(budman_folder).expanduser().resolve()
             budman_store_abs_path = budman_folder_abs_path / budman_store_value
             # Load the BDM_STORE file.
-            budman_store_dict = bsm_BDM_STORE_load(budman_store_abs_path)
+            budman_store_dict = bsm_BDM_STORE_file_load(budman_store_abs_path)
             self.dc_BDM_STORE = budman_store_dict
             self.BDM_STORE_loaded = True
             logger.info(f"Complete: {p3u.stop_timer(st)}")

@@ -19,7 +19,7 @@
 # python standard library modules and packages
 import logging, uuid, os, getpass, copy
 from pathlib import Path
-from typing import List, Dict
+from typing import List, Dict, Any
 # third-party modules and packages
 from openpyxl import Workbook, load_workbook
 import p3_utils as p3u, pyjson5, p3logging as p3l
@@ -185,7 +185,7 @@ class BDMConfig():
     # ------------------------------------------------------------------------ +
     #region BUDMAN_STORE_load() created BDMConfig from a loaded BDM_STORE url.
     @classmethod
-    def BUDMAN_STORE_load(cls, bdms_url : str) -> dict:
+    def BUDMAN_STORE_url_load(cls, bdms_url : str) -> dict:
         """Configure this BDMConfig object from loading BDM_STORE url."""
         try:
             logger.debug("Start:  ...")
@@ -224,13 +224,15 @@ class BDMConfig():
            # Basic attribute atomic value inits. 
             logger.debug("Start:  ...")
             # Initialize values from the config as configuration values.
-            setattr(self, BDM_ID, bdm_config[BDM_ID])
+            # TODO: need a validate_config() method to validate the config. makes
+            # sure the config has all required keys with valid values.
+            setattr(self, BDM_ID, bdm_config.get(BDM_ID, 'Unknown'))
             setattr(self, BDM_CONFIG_OBJECT, bdm_config)
-            setattr(self, BDM_INITIALIZED, bdm_config[BDM_INITIALIZED])
-            setattr(self, BDM_FILENAME, bdm_config[BDM_FILENAME])
-            setattr(self, BDM_FILETYPE, bdm_config[BDM_FILETYPE])
-            setattr(self, BDM_FOLDER, bdm_config[BDM_FOLDER])  
-            setattr(self, BDM_URL, bdm_config[BDM_URL])  
+            setattr(self, BDM_INITIALIZED, bdm_config.get(BDM_ID,False))
+            setattr(self, BDM_FILENAME, bdm_config.get(BDM_FILENAME, DEFAULT_BDM_FILENAME))
+            setattr(self, BDM_FILETYPE, bdm_config.get(BDM_FILETYPE,DEFAULT_BDM_FILETYPE))
+            setattr(self, BDM_FOLDER, bdm_config.get(BDM_FOLDER, "~/OneDrive/budget"))  
+            setattr(self, BDM_URL, bdm_config.get(BDM_URL, None))  
             setattr(self, BDM_FI_COLLECTION, copy.deepcopy(bdm_config[BDM_FI_COLLECTION]))
             setattr(self, BDM_WF_COLLECTION, copy.deepcopy(bdm_config[BDM_WF_COLLECTION])) 
             setattr(self, BDM_OPTIONS, copy.deepcopy(bdm_config[BDM_OPTIONS]))

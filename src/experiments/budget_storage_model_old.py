@@ -21,6 +21,7 @@ from typing import Dict
 import p3_utils as p3u, pyjson5, p3logging as p3l
 import pyjson5 as json5 
 # local modules and packages
+from budman_namespace import BSM_PERSISTED_PROPERTIES
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region    Globals and Constants
@@ -185,7 +186,7 @@ def bsm_BDM_STORE_new(bdms_url : str = None) -> str:
         # else:
         #     logger.warning(f"Budget storage model file already exists: {bsm_store_abs_path}")
         logger.debug(f"Complete: {p3u.stop_timer(st)}")   
-        return str(bsm_store_abs_path)
+        return None #str(bsm_store_abs_path)
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
