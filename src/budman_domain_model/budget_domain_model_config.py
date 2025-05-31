@@ -55,7 +55,7 @@ class BDMConfig():
     # data is saved to storage, the BDM_STORE. Keep it simple.
 
     # class variable for the budget model config dictionary.
-    budget_model_config = {  
+    bdm_store_config = {  
         # BDM object
         BDM_ID: "BDM_CONFIG",  # identifies the builtin BDM config object.
         BDM_CONFIG_OBJECT: None,
@@ -158,6 +158,22 @@ class BDMConfig():
         BDM_LAST_MODIFIED_BY: None,
         BDM_WORKING_DATA: {}
     }
+    bdm_store_default_values = {
+        BDM_ID: bdm_store_config[BDM_ID],
+        BDM_CONFIG_OBJECT: bdm_store_config[BDM_CONFIG_OBJECT],
+        BDM_INITIALIZED: bdm_store_config[BDM_INITIALIZED],
+        BDM_FILENAME: bdm_store_config[BDM_FILENAME],
+        BDM_FILETYPE: bdm_store_config[BDM_FILETYPE],
+        BDM_FOLDER: bdm_store_config[BDM_FOLDER],
+        BDM_URL: bdm_store_config[BDM_URL], 
+        BDM_FI_COLLECTION: {},
+        BDM_WF_COLLECTION: {},
+        BDM_OPTIONS: copy.deepcopy(bdm_store_config[BDM_OPTIONS]),
+        BDM_CREATED_DATE: bdm_store_config[BDM_CREATED_DATE],
+        BDM_LAST_MODIFIED_DATE: bdm_store_config[BDM_LAST_MODIFIED_DATE],
+        BDM_LAST_MODIFIED_BY: bdm_store_config[BDM_LAST_MODIFIED_BY],
+        BDM_WORKING_DATA: {}
+    }
     #endregion BDMConfig dictionary
     # ------------------------------------------------------------------------ +
     #region get_budget_model_config() classmethod
@@ -166,7 +182,7 @@ class BDMConfig():
         """Get a copy of the budget domain model config dictionary."""
         try:
             logger.debug("Start:  ...")
-            bmt = copy.deepcopy(cls.budget_model_config)
+            bmt = copy.deepcopy(cls.bdm_store_config)
             if not default:
                 # Freshen up some of the values for a new BDM config.
                 bmt[BDM_ID] = uuid.uuid4().hex[:8]
@@ -183,6 +199,25 @@ class BDMConfig():
             raise
     #endregion get_budget_model_config() classmethod
     # ------------------------------------------------------------------------ +
+    #region validate() created BDMConfig from a loaded BDM_STORE url.
+    @classmethod
+    def validate(cls, bdm_config : dict) -> None:
+        """Verify bdm_config dictionary has all required fields.
+
+            Make sure the supplied bdm_config dictionary has all the required
+            fields and values. If not, update the bdm_config with default values.
+        """
+        try:
+            logger.debug("Start:  ...")
+            bdm_config.update({k: v for k, v in BDMConfig.bdm_store_default_values.items() if k not in bdm_config})
+            logger.debug(f"Complete:")   
+            return bdm_config
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise
+    #endregion validate() created BDMConfig from a loaded BDM_STORE url.
+    # ------------------------------------------------------------------------ +
     #region BUDMAN_STORE_load() created BDMConfig from a loaded BDM_STORE url.
     @classmethod
     def BUDMAN_STORE_url_load(cls, bdms_url : str) -> dict:
@@ -190,6 +225,8 @@ class BDMConfig():
         try:
             logger.debug("Start:  ...")
             bdms = bsm_BDM_STORE_url_load(bdms_url)
+            # Validate the loaded BDM_STORE config. Raises error if not happy
+            cls.validate(bdms)
             # Get the instance of BDMConfig configured from bdms
             bdm_config = BDMConfig(bdm_config = bdms)            
             logger.debug(f"Complete:")   
@@ -224,8 +261,6 @@ class BDMConfig():
            # Basic attribute atomic value inits. 
             logger.debug("Start:  ...")
             # Initialize values from the config as configuration values.
-            # TODO: need a validate_config() method to validate the config. makes
-            # sure the config has all required keys with valid values.
             setattr(self, BDM_ID, bdm_config.get(BDM_ID, 'Unknown'))
             setattr(self, BDM_CONFIG_OBJECT, bdm_config)
             setattr(self, BDM_INITIALIZED, bdm_config.get(BDM_ID,False))
