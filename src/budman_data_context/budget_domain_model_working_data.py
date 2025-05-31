@@ -21,24 +21,20 @@ import logging, p3_utils as p3u, p3logging as p3l
 from budman_app import *
 from budman_namespace import *
 from budman_data_context import BudManDataContext
-from budman_model.budget_domain_model import BudgetDomainModel
-from budman_model.model_base_interface import BDMBaseInterface
-from budman_model.model_client_interface import BDMClientInterface
+from budman_domain_model.budget_domain_model import BudgetDomainModel
+from budman_domain_model.model_base_interface import BDMBaseInterface
+from budman_domain_model.model_client_interface import BDMClientInterface
 #endregion imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
 MODEL_OBJECT = BDMBaseInterface
-settings = None
-logger = None
+logger = logging.getLogger(__name__)
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
 class BDMWorkingData(BudManDataContext, BDMClientInterface):
     """Abstract base class for the Budget Domain Model Working Data (BDMWD). """
     def __init__(self, bdm : Any = None) -> None:
         super().__init__()
-        global settings, logger
-        settings = BudManApp_settings
-        logger = logging.getLogger(settings[APP_NAME])
         self._budget_domain_model : MODEL_OBJECT = bdm
     # ------------------------------------------------------------------------ +
     def dc_FI_KEY_validate(self, fi_key: str) -> bool:

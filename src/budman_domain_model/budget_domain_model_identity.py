@@ -20,14 +20,13 @@
 # ---------------------------------------------------------------------------- +
 #region Imports
 # python standard library modules and packages
-import logging, time, uuid
+import logging, uuid
 from pathlib import Path
-from typing import List, Dict
 # third-party modules and packages
-import p3_utils as p3u, pyjson5, p3logging as p3l
+from p3_utils import str_empty, str_notempty, exc_err_msg
 # local modules and packages
-from budman_app import *
-from budman_namespace import *
+# from .budget_domain_model_identity import BudgetDomainModelIdentity
+from budman_namespace import BDM_FILENAME, BDM_FILETYPE, BDM_FOLDER
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -39,26 +38,29 @@ class BudgetDomainModelIdentity():
     """BudgetDomainModelIdentity class implements the identity of the BudgetDomainModel.
 
     The identity is a unique identifier for the BudgetDomainModel instance.
-    It is used to identify the instance in the budget storage model.
+    It is used to identify the instance in the BDM storage model.
 
     In BDM, the identity of a budget domain model is closely linked with the
     file used to store the data content. There may be more than one per user.
     The uuid portion ensures uniqueness, but the location and name of the file
     is also important and considered as part of the identity.
     """
-    def __init__(self, uid : str, filename : str, filetype : str ) -> None:
+    def __init__(self, 
+                 uid : str = None, 
+                 filename : str = None, 
+                 filetype : str = None ) -> None:
         """Initialize the BudgetDomainModelIdentity class.
 
         Args:
             uid : str to use as uniqueness.
         """
-        self.settings = BudManApp_settings
-        self._uid = uuid.uuid4().hex[:8] if uid is None else uid
-        filename = filename or self.settings[APP_NAME]
-        self._name : str = filename or self.settings[APP_NAME]
-        filetype = filetype or self.settings[BUDMAN_STORE_FILETYPE]
-        self._filename : str = f"{filename}_{self._uid}{filetype}"
-        self._bdm_folder : str = self.settings[BUDMAN_FOLDER]
+        # Use the default budget domain model config for default values.
+        bmt = BudgetDomainModelIdentity.get_budget_model_config(default = True)
+        self._uid :str = uid if str_notempty(uid) else uuid.uuid4().hex[:8] 
+        self._filename : str = filename if str_notempty(filename) else bmt[BDM_FILENAME]
+        self._filetype : str = filetype if str_notempty(filetype) else bmt[BDM_FILETYPE]
+        self._full_filename : str = f"{filename}_{self._uid}{filetype}"
+        self._bdm_folder : str = bmt[BDM_FOLDER]
     # ------------------------------------------------------------------------ +
     #region Properties
     @property
@@ -80,24 +82,6 @@ class BudgetDomainModelIdentity():
             raise ValueError(f"uid must be a string: {value}")
         self._uid = value
     @property
-    def name(self) -> str:
-        """Return the name of the BudgetDomainModel.
-
-        Returns:
-            str: The name of the BudgetDomainModel.
-        """
-        return self._name
-    @name.setter
-    def name(self, value : str) -> None:
-        """Set the name of the BudgetDomainModel.
-
-        Args:
-            value (str): The name of the BudgetDomainModel.
-        """
-        if not isinstance(value, str):
-            raise ValueError(f"name must be a string: {value}")
-        self._name = value
-    @property
     def filename(self) -> str:
         """Return the filename of the BudgetDomainModel.
 
@@ -112,8 +96,7 @@ class BudgetDomainModelIdentity():
         Args:
             value (str): The filename of the BudgetDomainModel.
         """
-        if not isinstance(value, str):
-            raise ValueError(f"filename must be a string: {value}")
+        str_empty(value, "filename", raise_error = True)
         self._filename = value
     @property
     def bdm_folder(self) -> str:
@@ -130,8 +113,7 @@ class BudgetDomainModelIdentity():
         Args:
             value (str): The folder of the BudgetDomainModel.
         """
-        if not isinstance(value, str):
-            raise ValueError(f"bdm_folder must be a string: {value}")
+        str_empty(value, "bdm_folder", raise_error = True)
         self._bdm_folder = value
 
     #endregion Properties
@@ -147,10 +129,10 @@ class BudgetDomainModelIdentity():
             Path: The path object for the BudgetDomainModel.
         """
         try:
-            bdm_ap = self.bdm_folder / self._filename
-            return bdm_ap
+            bdm_ap = Path(self.bdm_folder) / self._filename
+            return bdm_ap.expanduser().resolve()
         except Exception as e:
-            logger.error(p3u.exc_err_msg(e))
+            logger.error(exc_err_msg(e))
             raise
 
     def bdm_store_abs_path_resolve(self) -> Path:
@@ -185,15 +167,7 @@ class BudgetDomainModelIdentity():
                 raise ValueError(f"Budget file is not an absolute path: {bdm_ap}")  
             return bdm_ap
         except Exception as e:
-            logger.error(p3u.exc_err_msg(e))
+            logger.error(exc_err_msg(e))
             raise
-
-    def _new_hash():
-        """Generate a new short uuid BudgetDomainModelIdentity uniqueness.
-
-        Returns:
-            str: The new uuid.
-        """
-        return uuid.uuid4().hex[:8]
     #endregion Methods
 # ---------------------------------------------------------------------------- +

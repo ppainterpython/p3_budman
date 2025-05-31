@@ -10,17 +10,17 @@ from pathlib import Path
 from typing import List, Type, TYPE_CHECKING, Dict, Tuple, Any, Callable
 # third-party modules and packages
 import p3_utils as p3u, pyjson5, p3logging as p3l
+from dynaconf import Dynaconf
 from openpyxl import Workbook, load_workbook
 # local modules and packages
-from budman_app import *
+from budman_settings import *
 from budman_namespace import *
-from budman_model import *
+from budman_domain_model import *
 from budman_data_context import BudManDataContext
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
-settings = None
-logger = None
+logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
@@ -44,13 +44,11 @@ class BudManViewModel(BDMClientInterface):
     #endregion Class Variables
     # ------------------------------------------------------------------------ +
     #region __init__() constructor method
-    def __init__(self) -> None:
+    def __init__(self, settings : Dynaconf) -> None:
         super().__init__()
-        global logger, settings
-        settings = BudManApp_settings
-        logger = logging.getLogger(settings[APP_NAME])
+        self_settings = settings
         self._initialized : bool = False
-        self.BUDMAN_STORE_loaded : bool = False
+        self.BDM_STORE_loaded : bool = False
         self._budget_domain_model : BudgetDomainModel = None
         self._data_context : BudManDataContext = None
         self._cmd_map : Dict[str, Callable] = None
@@ -67,6 +65,17 @@ class BudManViewModel(BDMClientInterface):
         if not isinstance(bdm, BDMBaseInterface):
             raise TypeError("model must be a BDMBaseInterface instance")
         self._budget_domain_model = bdm
+
+    @property
+    def settings(self) -> Dynaconf:
+        """Return the application settings."""
+        return self._settings
+    @settings.setter
+    def settings(self, settings: Dynaconf) -> None:
+        """Set the application settings."""
+        if not isinstance(settings, Dynaconf):
+            raise TypeError("settings must be a Dynaconf instance")
+        self._settings = settings
     @property
     def initialized(self) -> bool:
         """Return True if the ViewModel is initialized."""
@@ -133,11 +142,11 @@ class BudManViewModel(BDMClientInterface):
                 # There is no valid budget_model. Load a BDM_STORE file?
                 if load_user_store:
                     # Use BDM_STORE file as a config_object 
-                    config_object = bsm_BUDMAN_STORE_load()
-                    self.BUDMAN_STORE_loaded = True
+                    config_object = bsm_BDM_STORE_load()
+                    self.BDM_STORE_loaded = True
                 else:
                     # Use the builtin default template as a config_object.
-                    config_object = BudgetDomainModelConfig.get_budget_model_config()
+                    config_object = BDMConfig.get_budget_model_config()
                 # Now to initialize the budget model.
                 self.model = BudgetDomainModel(config_object).bdm_initialize()
             if not self.budget_model.bdm_initialized: 
@@ -162,8 +171,8 @@ class BudManViewModel(BDMClientInterface):
             self.cmd_map = {
                 "init_cmd_fin_inst": self.FI_init_cmd,
                 "save_cmd_workbooks": self.FI_LOADED_WORKBOOKS_save_cmd,
-                "load_cmd_BUDMAN_STORE": self.BUDMAN_STORE_load_cmd,
-                "save_cmd_BUDMAN_STORE": self.BUDMAN_STORE_save_cmd,
+                "load_cmd_BDM_STORE": self.BDM_STORE_load_cmd,
+                "save_cmd_BDM_STORE": self.BDM_STORE_save_cmd,
                 "show_cmd_DATA_CONTEXT": self.DATA_CONTEXT_show_cmd,
                 "show_cmd_workbooks": self.WORKBOOKS_show_cmd,
                 "load_cmd_workbooks": self.WORKBOOKS_load_cmd,
@@ -746,27 +755,27 @@ class BudManViewModel(BDMClientInterface):
             raise
     #endregion FI_LOADED_WORKBOOKS_save_cmd() command method
     # ------------------------------------------------------------------------ +
-    #region BUDMAN_STORE_save_cmd() method
-    def BUDMAN_STORE_save_cmd(self, cmd : Dict) -> None:
-        """Save the Budget Manager store (BUDMAN_STORE) file with the BSM.
+    #region BDM_STORE_save_cmd() method
+    def BDM_STORE_save_cmd(self, cmd : Dict) -> None:
+        """Save the Budget Manager store (BDM_STORE) file with the BSM.
 
         Returns:
             Tuple[success : bool, result : Any]: The outcome of the command 
             execution. If success is True, result contains the 
-            BUDMAN_STORE dict after updating DC_BUDMAN_STORE in the DATA_CONTEXT.
+            BDM_STORE dict after updating DC_BDM_STORE in the DATA_CONTEXT.
             If False, a description of the error.
             
         Raises:
-            RuntimeError: If the BUDMAN_STORE file cannot be saved.
+            RuntimeError: If the BDM_STORE file cannot be saved.
         """
         try:
             st = p3u.start_timer()
             logger.info(f"Start: ...")
-            # Save the BUDMAN_STORE file with the BSM.
-            # Construct the abs_path from BUDMAN_STORE info configured in 
+            # Save the BDM_STORE file with the BSM.
+            # Construct the abs_path from BDM_STORE info configured in 
             # BUDMAN_SETTINGS.
-            budman_store_value = settings[BUDMAN_STORE]
-            budman_folder = settings[BUDMAN_FOLDER]
+            budman_store_value = self.settings[BDM_STORE]
+            budman_folder = self.settings[BUDMAN_FOLDER]
             budman_folder_abs_path = Path(budman_folder).expanduser().resolve()
             budman_store_abs_path = budman_folder_abs_path / budman_store_value
             # Update some values prior to saving.
@@ -775,24 +784,24 @@ class BudManViewModel(BDMClientInterface):
             self.budget_model.bdm_last_modified_by = getpass.getuser()
             # Get a Dict of the BudgetModel to store.
             budget_model_dict = self.budget_model.to_dict()
-            # Save the BUDMAN_STORE file.
-            bsm_BUDMAN_STORE_save(budget_model_dict, budman_store_abs_path)
-            logger.info(f"Saved BUDMAN_STORE file: {budman_store_abs_path}")
+            # Save the BDM_STORE file.
+            bsm_BDM_STORE_save(budget_model_dict, budman_store_abs_path)
+            logger.info(f"Saved BDM_STORE file: {budman_store_abs_path}")
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             return True, budget_model_dict
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
-    #endregion BUDMAN_STORE_save_cmd() method
+    #endregion BDM_STORE_save_cmd() method
     # ------------------------------------------------------------------------ +
-    #region BUDMAN_STORE_load_cmd() method
-    def BUDMAN_STORE_load_cmd(self, cmd : Dict) -> Tuple[bool, str]:
-        """Load the Budget Manager store (BUDMAN_STORE) file from the BSM.
+    #region BDM_STORE_load_cmd() method
+    def BDM_STORE_load_cmd(self, cmd : Dict) -> Tuple[bool, str]:
+        """Load the Budget Manager store (BDM_STORE) file from the BSM.
 
         Arguments:
             cmd (Dict): A valid BudMan View Model Command object. For this
-            command, must contain load_cmd = 'BUDMAN_STORE' resulting in
-            a full command key of 'load_cmd_BUDMAN_STORE'.
+            command, must contain load_cmd = 'BDM_STORE' resulting in
+            a full command key of 'load_cmd_BDM_STORE'.
 
         Returns:
             Tuple[success : bool, result : Any]: The outcome of the command 
@@ -811,22 +820,22 @@ class BudManViewModel(BDMClientInterface):
                 logger.error(m)
                 raise RuntimeError(f"{pfx}{m}")
             logger.info(f"Start: ...")
-            # Load the BUDMAN_STORE file with the BSM.
-            # Use the BUDMAN_STORE configured in BUDMAN_SETTINGS.
-            budman_store_value = settings[BUDMAN_STORE]
-            budman_folder = settings[BUDMAN_FOLDER]
+            # Load the BDM_STORE file with the BSM.
+            # Use the BDM_STORE configured in BUDMAN_SETTINGS.
+            budman_store_value = self.settings[BDM_STORE]
+            budman_folder = self.settings[BUDMAN_FOLDER]
             budman_folder_abs_path = Path(budman_folder).expanduser().resolve()
             budman_store_abs_path = budman_folder_abs_path / budman_store_value
-            # Load the BUDMAN_STORE file.
-            budman_store_dict = bsm_BUDMAN_STORE_load(budman_store_abs_path)
-            self.dc_BUDMAN_STORE = budman_store_dict
-            self.BUDMAN_STORE_loaded = True
+            # Load the BDM_STORE file.
+            budman_store_dict = bsm_BDM_STORE_load(budman_store_abs_path)
+            self.dc_BDM_STORE = budman_store_dict
+            self.BDM_STORE_loaded = True
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             return True, budman_store_dict
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
-    #endregion BUDMAN_STORE_load_cmd() method
+    #endregion BDM_STORE_load_cmd() method
     # ------------------------------------------------------------------------ +
     #region DATA_CONTEXT_show_cmd() method
     def DATA_CONTEXT_show_cmd(self, cmd : Dict) -> Tuple[bool, str]:
@@ -855,7 +864,7 @@ class BudManViewModel(BDMClientInterface):
                 raise RuntimeError(f"{pfx}{m}")
             logger.info(f"Start: ...")
             # Return the current content of the DATA_CONTEXT.
-            bs = self.dc_BUDMAN_STORE
+            bs = self.dc_BDM_STORE
             bs_str = p3u.first_n(str(bs))
             bs_msg = p3u.first_n(bs_str)
             wbl = self.dc_WORKBOOKS
@@ -868,7 +877,7 @@ class BudManViewModel(BDMClientInterface):
             result += f"{P2}{WF_KEY}: {self.dc_WF_KEY}\n"
             result += f"{P2}{WB_TYPE}: {self.dc_WB_TYPE}\n"
             result += f"{P2}{WB_NAME}: {self.dc_WB_NAME}\n"
-            result += f"{P2}{DC_BUDMAN_STORE}: {bs_msg}\n"
+            result += f"{P2}{DC_BDM_STORE}: {bs_msg}\n"
             result += f"{P2}{DC_WORKBOOKS}: {wbl_count}\n"
             if wbl_count > 0:
                 for i, (wb_name, wb_ap) in enumerate(wbl):
@@ -1158,7 +1167,7 @@ class BudManViewModel(BDMClientInterface):
     ------------------
 
     In the BudgetManager design language, the primary object concepts are
-    FI - Financial Institution, WF - Workflow, WB - Workbook, and BUDMAN_STORE
+    FI - Financial Institution, WF - Workflow, WB - Workbook, and BDM_STORE
     - Budget Manager Store where user-specific budget data is maintained. 
     The Data Context data is always scoped to the current values of the 'keys' 
     for these primary objects: FI_KEY, WF_KEY, WB_TYPE, and WB_NAME. Changing 
@@ -1285,17 +1294,17 @@ class BudManViewModel(BDMClientInterface):
         self.DC[WB_NAME] = value
 
     @property
-    def dc_BUDMAN_STORE(self) -> str:
-        """Return the current BUDMAN_STORE value in DC."""
+    def dc_BDM_STORE(self) -> str:
+        """Return the current BDM_STORE value in DC."""
         dc = self._valid_DC()
-        if DC_BUDMAN_STORE not in dc:
-            self.DC[DC_BUDMAN_STORE] = None
-        return self.DC[DC_BUDMAN_STORE]
-    @dc_BUDMAN_STORE.setter
-    def dc_BUDMAN_STORE(self, value: str) -> None:
-        """Set the current BUDMAN_STORE value in DC."""
+        if DC_BDM_STORE not in dc:
+            self.DC[DC_BDM_STORE] = None
+        return self.DC[DC_BDM_STORE]
+    @dc_BDM_STORE.setter
+    def dc_BDM_STORE(self, value: str) -> None:
+        """Set the current BDM_STORE value in DC."""
         dc = self._valid_DC()
-        self.DC[DC_BUDMAN_STORE] = value
+        self.DC[DC_BDM_STORE] = value
 
     @property 
     def dc_WORKBOOKS(self) -> WORKBOOK_LIST:

@@ -9,7 +9,7 @@ from pathlib import Path
 import logging, p3_utils as p3u, p3logging as p3l
 
 # local libraries
-from budman_model.budget_storage_model import budget_storage_model_new
+from budman_storage_model.budget_storage_model import budget_storage_model_new
 #endregion imports
 # ---------------------------------------------------------------------------- +
 #region Globals

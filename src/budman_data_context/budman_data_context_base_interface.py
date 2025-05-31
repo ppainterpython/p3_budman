@@ -101,13 +101,13 @@ class BudManDataContextBaseInterface(ABC):
 
     @property
     @abstractmethod
-    def dc_BUDMAN_STORE(self) -> str:
-        """Return the BUDMAN_STORE jsonc definition."""
+    def dc_BDM_STORE(self) -> str:
+        """Return the BDM_STORE jsonc definition."""
         pass
-    @dc_BUDMAN_STORE.setter
+    @dc_BDM_STORE.setter
     @abstractmethod
-    def dc_BUDMAN_STORE(self, value: str) -> None:
-        """Set the BUDMAN_STORE jsonc definition."""
+    def dc_BDM_STORE(self, value: str) -> None:
+        """Set the BDM_STORE jsonc definition."""
         pass
 
     @property
@@ -192,17 +192,17 @@ class BudManDataContextBaseInterface(ABC):
         pass
 
     @abstractmethod
-    def dc_BUDMAN_STORE_load(self, file_path: str) -> None:
-        """Load the BUDMAN_STORE from the specified file path. NotImplementedError.
-        The design presumes that the BUDMAN_STORE is managed by the downstream
+    def dc_BDM_STORE_load(self, file_path: str) -> None:
+        """Load the BDM_STORE from the specified file path. NotImplementedError.
+        The design presumes that the BDM_STORE is managed by the downstream
         Model implementation, that the budget_domain_model uses it to 
         initialize the state of the BDM. This implementation has no BDM.
         """
         pass
 
     @abstractmethod
-    def dc_BUDMAN_STORE_save(self, file_path: str) -> None:
-        """Save the BUDMAN_STORE to the specified file path."""
+    def dc_BDM_STORE_save(self, file_path: str) -> None:
+        """Save the BDM_STORE to the specified file path."""
         pass
 
     #endregion Abstract Methods

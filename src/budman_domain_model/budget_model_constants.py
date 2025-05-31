@@ -197,7 +197,7 @@ BDMWD_LOADED_WORKBOOKS = "bdmwd_loaded_workbooks" # key name
 # Type: LOADED_WORKBOOK_LIST : list of tuples
 # Desc: A list of tuples of wb_name, Workbook objects for workbooks associated
 #       with the current FI_KEY, WF_KEY, and WB_TYPE and are loaded into BDMWD.
-BDMWD_BUDMAN_STORE = "budman_store"
+BDMWD_BDM_STORE = "budman_store"
 # Name: BDMWD_LOADED_WORKBOOKS
 # Type: Dict
 # Desc: Values loaded from Budget Manager configuration file , or "store".
@@ -210,7 +210,7 @@ BDM_WORKING_DATA_VALID_ATTR_KEYS = (
     BDMWD_WB_NAME, 
     BDMWD_WORKBOOKS, 
     BDMWD_LOADED_WORKBOOKS,
-    BDMWD_BUDMAN_STORE)
+    BDMWD_BDM_STORE)
 
 # DATA_CONTEXT "good guy" interface (Dictionary key names)
 DC_INITIALIZED = BDMWD_INITIALIZED
@@ -243,7 +243,7 @@ DC_LOADED_WORKBOOKS = BDMWD_LOADED_WORKBOOKS
 # Type: LOADED_WORKBOOK_LIST
 # Desc: A list of tuples of wb_name, and Workbook objects for workbooks associated
 #       with the current FI_KEY, WF_KEY, and WB_TYPE
-DC_BUDMAN_STORE = BDMWD_BUDMAN_STORE
+DC_BDM_STORE = BDMWD_BDM_STORE
 # Name: DC_LOADED_WORKBOOKS
 # Type: Dict
 # Desc: Values loaded from Budget Manager configuration file , or "store".
@@ -256,7 +256,7 @@ DATA_CONTEXT_VALID_ATTR_KEYS = (
     DC_WB_TYPE,
     DC_LOADED_WORKBOOKS,
     DC_WORKBOOKS,
-    DC_BUDMAN_STORE)
+    DC_BDM_STORE)
 
 BDMWD_OBJECT_VALID_ATTR_KEYS = BDM_WORKING_DATA_VALID_ATTR_KEYS + DATA_CONTEXT_VALID_ATTR_KEYS
 
@@ -265,8 +265,8 @@ BDMWD_OBJECT_VALID_ATTR_KEYS = BDM_WORKING_DATA_VALID_ATTR_KEYS + DATA_CONTEXT_V
 #
 BUDMAN_SETTINGS = "settings.toml"
 BUDMAN_FOLDER = "budman.budget_manager_folder" 
-BUDMAN_STORE = "budman.budget_manager_store" 
-BUDMAN_STORE_FILETYPE = "budman.budget_manager_store_filetype"
+BDM_STORE = "budman.budget_manager_store" 
+BDM_STORE_FILETYPE = "budman.budget_manager_store_filetype"
 BUDMAN_DEFAULT_FI = "budman.budget_manager_default_fi"
 BUDMAN_DEFAULT_WORKFLOW = "budman.budget_manager_default_workflow"
 BUDMAN_DEFAULT_WORKBOOK_TYPE = "budman.budget_manager_default_workbook_type"

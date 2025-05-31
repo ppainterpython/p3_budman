@@ -32,7 +32,7 @@ def test_budman_data_context_initialize():
         assert bdmdc.dc_WF_KEY is None, "Expected dc_WF_KEY to be None for new instance"
         assert bdmdc.dc_WB_TYPE is None, "Expected dc_WB_TYPE to be None for new instance"
         assert bdmdc.dc_WB_NAME is None, "Expected dc_WB_NAME to be None for new instance"
-        assert bdmdc.dc_BUDMAN_STORE is None, "Expected dc_BUDMAN_STORE to be None for new instance"
+        assert bdmdc.dc_BDM_STORE is None, "Expected dc_BDM_STORE to be None for new instance"
         assert bdmdc.dc_WORKBOOKS is None, "Expected dc_WORKBOOKS to be None for new instance"
         assert bdmdc.dc_LOADED_WORKBOOKS is None, "Expected dc_LOADED_WORKBOOKS to be None for new instance"
         bdmdc.dc_initialize()
@@ -116,13 +116,13 @@ def test_budman_data_context_client_interface_properties():
             "Expected dc_client.DC.dc_WB_NAME to be 'test_wb_name', got: " + str(dc_client.DC.dc_WB_NAME)
         assert dc_client.dc_WB_NAME == dc_client.DC.dc_WB_NAME, \
             "Expected dc_client.dc_WB_NAME to be equal to dc_client.DC.dc_WB_NAME"
-        dc_client.dc_BUDMAN_STORE = "test_budman_store"
-        assert dc_client.dc_BUDMAN_STORE == "test_budman_store", \
-            "Expected dc_client.dc_BUDMAN_STORE to be 'test_budman_store', got: " + str(dc_client.dc_BUDMAN_STORE)
-        assert dc_client.DC.dc_BUDMAN_STORE == "test_budman_store", \
-            f"Expected dc_client.DC.dc_BUDMAN_STORE to be 'test_budman_store', got: {str(dc_client.DC.dc_BUDMAN_STORE)}"
-        assert dc_client.dc_BUDMAN_STORE == dc_client.DC.dc_BUDMAN_STORE, \
-            "Expected dc_client.dc_BUDMAN_STORE to be equal to dc_client.DC.dc_BUDMAN_STORE"
+        dc_client.dc_BDM_STORE = "test_budman_store"
+        assert dc_client.dc_BDM_STORE == "test_budman_store", \
+            "Expected dc_client.dc_BDM_STORE to be 'test_budman_store', got: " + str(dc_client.dc_BDM_STORE)
+        assert dc_client.DC.dc_BDM_STORE == "test_budman_store", \
+            f"Expected dc_client.DC.dc_BDM_STORE to be 'test_budman_store', got: {str(dc_client.DC.dc_BDM_STORE)}"
+        assert dc_client.dc_BDM_STORE == dc_client.DC.dc_BDM_STORE, \
+            "Expected dc_client.dc_BDM_STORE to be equal to dc_client.DC.dc_BDM_STORE"
         dc_client.dc_WORKBOOKS = []
         assert dc_client.dc_WORKBOOKS == [], \
             "Expected dc_client.dc_WORKBOOKS to be an empty list, got: " + str(dc_client.dc_WORKBOOKS)

@@ -1,72 +1,67 @@
 # ---------------------------------------------------------------------------- +
-#region p3_budget_model_config.py module
-""" Provide a functional config class for the budget_model class.
+#region budget_domain_model_config.py module
+"""BDM: class BDMConfig: Provides config object functions for the BDM.
 
-    Creates a functional instance from a declared dictionary used to document
-    the data structure and configure defaults. It is useful for validation
-    of constant names, different default settings, etc.
+    This module provides a BudgetDomainModel (BDM) dictionary with the identical 
+    structure used for storing a BDM_STORE object with the 
+    BDM Storage Model (BSM), where user data is persisted.
 
-    4/29/2025: Soon, the budget_model configuration and setup will be from a 
-    config file. The config could be used to create a pristine, new config 
-    file for a new budget_model instance. But for now, budget_model is a 
-    singleton class.
+    When a new BDM_STORE object is created, it must be configured. This class,
+    BDMConfig serves purpose. 
 
-    Assumptions:
-    - The FI transactions are in a folder specified in the budget_config.
-    - Banking transaction files are typical excel spreadsheets. 
-    - Data content starts in cell A1.
-    - Row 1 contains column headers. All subsequent rows are data.
+    BDMConfig can create a new BDM_STORE object with a default configuration.
+    Or, it can load an existing BDM_STORE object to provide as config to 
+    initialize the working BudgetDomainModel instance.
 """
-#endregion p3_budget_model_config.py module
+#endregion budget_domain_model_config.py module
 # ---------------------------------------------------------------------------- +
 #region Imports
 # python standard library modules and packages
-import logging, time, os, getpass, copy
+import logging, uuid, os, getpass, copy
 from pathlib import Path
-from typing import List
+from typing import List, Dict
 # third-party modules and packages
 from openpyxl import Workbook, load_workbook
 import p3_utils as p3u, pyjson5, p3logging as p3l
 # local modules and packages
-from budman_app import BudManApp_settings
-from budman_app.budman_app_constants import *
 from budman_namespace import *
-from budman_model.budget_domain_model_identity import BudgetDomainModelIdentity
-from budman_model.budget_domain_model import BudgetDomainModel # lazy import, avoid circular
+from budman_storage_model import *
+# from budman_domain_model import BudgetDomainModel 
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
 logger = logging.getLogger(__name__)
+DEFAULT_BDM_FILENAME = "bdm_store"
+DEFAULT_BDM_FILETYPE = ".jsonc"
+DEFAULT_BDM_FULL_FILENAME = DEFAULT_BDM_FILENAME + DEFAULT_BDM_FILETYPE
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
 #region Budget Model config and config support 
 # ---------------------------------------------------------------------------- +
-class BudgetDomainModelConfig(BudgetDomainModel):
-    """Default BudgetDomainModelConfig class, contains default, example values.
+class BDMConfig():
+    """Provides a template Budget Domain Model BDM_STORE object.
     
-    Creates a BudgetModel object pre-populated with default configuration values.
-
-    Defines the BudgetModel structure with two example Financial Institutions.
-    Convenient for developer.
+    Creates a BDMConfig dictionary pre-populated with reasonable 
+    default configuration values.
     """
     # ------------------------------------------------------------------------ +
-    #region BudgetDomainModelConfig Configuration config
-    # The main difference between the BudgetModel and the BudgetDomainModelConfig 
-    # is the following budget_model_config dictionary. The BudgetDomainModelConfig 
-    # covers the file structure where user data is stored as 
-    # settings for options and preferences. Keep it simple.
-    # There is both an object model used in the application (in memory) and a
-    # file system structure used to store the data. In addition, the idea is that 
-    # users are placing new FI transactions in an "incoming" folder folder 
-    # for processing through stages to arrive in updating the budget. Long-view is 
-    # anticipate more than one bank or financial institution sourcing regular 
-    # statements in spreadsheet format. So, the "budget" will cover multiple "banks"
-    # information for a given user.
+    #region BDMConfig dictionary
+    # The main difference between the BudgetDomainModel class and the 
+    # BudgetDomainModelConfig class is the following 
+    # budget_model_config dictionary. The BudgetDomainModelConfig class uses 
+    # the same attribute structure and properties, as a dict, as the 
+    # BDM class. Our assumption is that json is the storage format where user 
+    # data is saved to storage, the BDM_STORE. Keep it simple.
+
+    # class variable for the budget model config dictionary.
     budget_model_config = {  
         # BDM object
-        BDM_ID: "1a2b3c4d",  # random, but unique BMT Id.
+        BDM_ID: "BDM_CONFIG",  # identifies the builtin BDM config object.
+        BDM_CONFIG_OBJECT: None,
         BDM_INITIALIZED: False,
+        BDM_FILENAME: "bdm_store",  # the BDM store filename, without extension
+        BDM_FILETYPE: ".jsonc",  # the BDM store filetype, default is jsonc
         BDM_FOLDER: "~/OneDrive/budget", 
         BDM_URL: None,
         BDM_FI_COLLECTION: { # FI_COLLECTION (dict) {FI_KEY: FI_DATA}
@@ -163,91 +158,249 @@ class BudgetDomainModelConfig(BudgetDomainModel):
         BDM_LAST_MODIFIED_BY: None,
         BDM_WORKING_DATA: {}
     }
+    #endregion BDMConfig dictionary
+    # ------------------------------------------------------------------------ +
+    #region get_budget_model_config() classmethod
     @classmethod
-    def get_budget_model_config(cls) -> dict:
-        """Get a fresh copy of the budget model config dictionary."""
+    def get_budget_model_config(cls,default : bool = False) -> dict:
+        """Get a copy of the budget domain model config dictionary."""
         try:
             logger.debug("Start:  ...")
-            bmt = cls.budget_model_config
-            fresh_bmt = copy.deepcopy(bmt) # make a fresh copy of the config
-            fresh_bmt[BDM_CREATED_DATE] = p3u.now_iso_date_string()
-            fresh_bmt[BDM_LAST_MODIFIED_DATE] = p3u.now_iso_date_string()
-            fresh_bmt[BDM_LAST_MODIFIED_BY] = getpass.getuser()
-            # Fresh identity
-            bmt_id = BudgetDomainModelIdentity()
-            fresh_bmt[BDM_ID] = bmt_id.uid
-            fresh_bmt[BDM_URL] = bmt_id.bdm_store_abs_path().as_uri()
+            bmt = copy.deepcopy(cls.budget_model_config)
+            if not default:
+                # Freshen up some of the values for a new BDM config.
+                bmt[BDM_ID] = uuid.uuid4().hex[:8]
+                bmt[BDM_CREATED_DATE] = p3u.now_iso_date_string()
+                bmt[BDM_LAST_MODIFIED_DATE] = p3u.now_iso_date_string()
+                bmt[BDM_LAST_MODIFIED_BY] = getpass.getuser()
+                path_args = (bmt[BDM_FILENAME], bmt[BDM_FILETYPE], bmt[BDM_FOLDER])
+                bmt[BDM_URL] = bsm_BDM_STORE_file_abs_path(*path_args).as_uri()
             logger.debug(f"Complete:")   
-            return fresh_bmt
+            return bmt
         except Exception as e:
             m = p3u.exc_msg(cls.get_budget_model_config, e)
             logger.error(m)
             raise
-    #endregion BudgetDomainModelConfig Configuration config
+    #endregion get_budget_model_config() classmethod
+    # ------------------------------------------------------------------------ +
+    #region BUDMAN_STORE_load() created BDMConfig from a loaded BDM_STORE url.
+    @classmethod
+    def BUDMAN_STORE_load(cls, bdms_url : str) -> dict:
+        """Configure this BDMConfig object from loading BDM_STORE url."""
+        try:
+            logger.debug("Start:  ...")
+            bdms = bsm_BDM_STORE_url_load(bdms_url)
+            # Get the instance of BDMConfig configured from bdms
+            bdm_config = BDMConfig(bdm_config = bdms)            
+            logger.debug(f"Complete:")   
+            return bdm_config
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise
+    #endregion BUDMAN_STORE_load() created BDMConfig from a loaded BDM_STORE url.
     # ------------------------------------------------------------------------ +
     #region BudgetDomainModelConfig class constructor __init__()
-    def __init__(self) -> None:
+    def __init__(self, bdm_config : Dict) -> None:
         """Construct a BudgetDomainModelConfig object used for configuration.
         
-        The BudgetDomainModelConfig class is used to populate new 
-        BudgetModel objects with default and example values.
+        The BudgetDomainModelConfig class can be used to populate new 
+        BudgetDomain Model objects with default and example values.
         It is for internal use only. There are two means to apply it when
-        constructing a new BudgetModel object:
+        constructing a new BudgetDomainModel object:
         1. Instantiate the BudgetDomainModelConfig, which sets the 
-           BudgetModel._default_config_object class variable which should be
-           used when no config_object parameters is used with BudgetModel().
+           BudgetDomainModel._default_config_object class variable which 
+           should be used when no config_object parameter is used with 
+           BudgetDomainModel().
         2. Use the BudgetDomainModelConfig.budget_model_config class variable
-           as the config_object parameter when instantiating BudgetModel, as
-           in BudgetModel(config_object = BudgetDomainModelConfig.budget_model_config)
-
-        The other common use case is to use the BUDMAN_STORE object as the 
-        config_object parameter when instantiating BudgetModel. 
-
-        budget_model_config: dict (class variable)
-            The dictionary that defines the structure of the budget model and
-            gives default and example values.
+           as the config_object parameter when instantiating BudgetDomainModel: 
+           BudgetDomainModel(config_object = BudgetDomainModelConfig.budget_model_config)
+        
+        No outside config or settings are used to keep this stand-alone and
+        uncoupled from other layers of an application using BDM.
         """
         st = p3u.start_timer()
         try:
-            settings = BudManApp_settings
            # Basic attribute atomic value inits. 
             logger.debug("Start:  ...")
             # Initialize values from the config as configuration values.
-            bmt_dict = BudgetDomainModelConfig.budget_model_config
-            # Invoke the base BudgetModel.__init__() to finish instance creation.
-            # BudgetModel properties work after super().__init__()
-            super().__init__(config_object = bmt_dict)
-            # Make self the BudgetModel._default_config_object
-            BudgetDomainModel._default_config_object = self
-
+            setattr(self, BDM_ID, bdm_config[BDM_ID])
+            setattr(self, BDM_CONFIG_OBJECT, bdm_config)
+            setattr(self, BDM_INITIALIZED, bdm_config[BDM_INITIALIZED])
+            setattr(self, BDM_FILENAME, bdm_config[BDM_FILENAME])
+            setattr(self, BDM_FILETYPE, bdm_config[BDM_FILETYPE])
+            setattr(self, BDM_FOLDER, bdm_config[BDM_FOLDER])  
+            setattr(self, BDM_URL, bdm_config[BDM_URL])  
+            setattr(self, BDM_FI_COLLECTION, copy.deepcopy(bdm_config[BDM_FI_COLLECTION]))
+            setattr(self, BDM_WF_COLLECTION, copy.deepcopy(bdm_config[BDM_WF_COLLECTION])) 
+            setattr(self, BDM_OPTIONS, copy.deepcopy(bdm_config[BDM_OPTIONS]))
+            setattr(self, BDM_CREATED_DATE, bdm_config[BDM_CREATED_DATE]) 
+            setattr(self, BDM_LAST_MODIFIED_DATE, bdm_config[BDM_LAST_MODIFIED_DATE])
+            setattr(self, BDM_LAST_MODIFIED_BY, bdm_config[BDM_LAST_MODIFIED_BY])
+            setattr(self, BDM_WORKING_DATA, {})  
             # Complete the BudgetDomainModelConfig instance initialization.
-            bmt_id = BudgetDomainModelIdentity(
-                uid = bmt_dict[BDM_ID],
-                filename = BudManApp_settings[APP_NAME],
-                filetype = BudManApp_settings[BUDMAN_STORE_FILETYPE])
-            self.bdm_id = bmt_dict[BDM_ID]                            # property
-            self.bdm_initialized = bmt_dict[BDM_INITIALIZED]            # property
-            self.bdm_folder = BudManApp_settings[BUDMAN_FOLDER]                 # property
-            self.bm_url = bmt_id.bdm_store_abs_path().as_uri()        # property
-            self.bdm_wf_collection = bmt_dict[BDM_WF_COLLECTION].copy() # property
-            for fi_key, fi_dict in bmt_dict[BDM_FI_COLLECTION].items():
-                self.bdm_fi_collection[fi_key] = fi_dict.copy()        # property
-            self.bdm_options = bmt_dict[BDM_OPTIONS].copy()             # property
-            self.bdm_created_date = p3u.now_iso_date_string()          # property
-            self.bdm_last_modified_date = self.bdm_created_date         # property
-            self.bdm_last_modified_by = getpass.getuser()              # property
-            self.bdm_working_data = bmt_dict[BDM_WORKING_DATA]          # property
             self.bdm_initialized = True
             logger.debug(f"Complete: {p3u.stop_timer(st)}")   
         except Exception as e:
-            m = p3u.exc_msg(self.__init__, e)
+            m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
     #endregion BudgetDomainModelConfig class constructor __init__()
     # ------------------------------------------------------------------------ +
+    #region    BudgetDomainModel (BDM) properties
+    @property
+    def bdm_id(self) -> str:
+        """The budget model ID."""
+        return getattr(self, BDM_ID)
+    @bdm_id.setter
+    def bdm_id(self, value: str) -> None:
+        """Set the budget model ID."""
+        if not isinstance(value, str):
+            raise ValueError(f"bm_id must be a string: {value}")
+        setattr(self, BDM_ID, value)
+
+    @property
+    def bdm_config_object(self) -> object:
+        """The budget model configuration object."""
+        return getattr(self, BDM_CONFIG_OBJECT)
+    @bdm_config_object.setter
+    def bdm_config_object(self, value: object) -> None:
+        """Set the budget model configuration object."""
+        if not isinstance(value, object):
+            raise ValueError(f"bm_config_object must be an object: {value}")
+        setattr(self, BDM_CONFIG_OBJECT, value)
+
+    @property
+    def bdm_initialized(self) -> bool:
+        """The initialized value."""
+        return self._initialized
+    @bdm_initialized.setter
+    def bdm_initialized(self, value )-> None:
+        """Set the initialized value."""
+        self._initialized = value
+
+    @property
+    def bdm_filename(self) -> str:
+        """The bdm_store filename is a string, e.g., 'bdm_store"""
+        return self._bdm_filename
+    @bdm_filename.setter
+    def bdm_filename(self, value: str) -> None:
+        """Set the bdm_store filename."""
+        self._bdm_filename = value
+
+    @property
+    def bdm_filetype(self) -> str:
+        """The bdm_store filetype, e.g., '.jsonc"""
+        return self._bdm_filetype
+    @bdm_filetype.setter
+    def bdm_filetype(self, value: str) -> None:
+        """Set the bdm_store filetype."""
+        self._bdm_filetype = value
+
+    @property
+    def bdm_folder(self) -> str:
+        """The budget folder path is a string, e.g., '~/OneDrive/."""
+        return self._budget_folder
+    @bdm_folder.setter
+    def bdm_folder(self, value: str) -> None:
+        """Set the budget folder path."""
+        self._budget_folder = value
+
+    @property
+    def bdm_url(self) -> str:
+        """The budget manager store file url."""
+        return self._bdm_url
+    @bdm_url.setter
+    def bdm_url(self, value: str) -> None:
+        """Set the budget manager store file url."""
+        self._bdm_url = value
+
+    @property
+    def bdm_fi_collection(self) -> dict:
+        """The financial institutions collection."""
+        return self._financial_institutions
+    @bdm_fi_collection.setter
+    def bdm_fi_collection(self, value: dict) -> None:
+        """Set the financial institutions collection."""
+        self._financial_institutions = value
+
+    @property
+    def bdm_wf_collection(self) -> dict:
+        """The workflow collection."""
+        return self._workflows
+    @bdm_wf_collection.setter
+    def bdm_wf_collection(self, value: dict) -> None:
+        """Set the workflows collection."""
+        self._workflows = value
+
+    @property
+    def bdm_options(self) -> dict:
+        """The budget model options dictionary."""
+        return self._options
+    @bdm_options.setter
+    def bdm_options(self, value: dict) -> None:
+        """Set the budget model options dictionary."""
+        self._options = value
+
+    @property
+    def bdm_created_date(self) -> str:
+        """The created date."""
+        return self._created_date
+    @bdm_created_date.setter
+    def bdm_created_date(self, value: str) -> None:  
+        """Set the created date."""
+        self._created_date = value
+
+    @property
+    def bdm_last_modified_date(self) -> str:
+        """The last modified date."""
+        return self._last_modified_date
+    @bdm_last_modified_date.setter
+    def bdm_last_modified_date(self, value: str) -> None:
+        """Set the last modified date."""
+        self._last_modified_date = value
+
+    @property
+    def bdm_last_modified_by(self) -> str:
+        """The last modified by."""
+        return self._last_modified_by
+    @bdm_last_modified_by.setter
+    def bdm_last_modified_by(self, value: str) -> None:
+        """Set the last modified by."""
+        self._last_modified_by = value
+    
+    @property
+    def bdm_working_data(self) -> dict:
+        """The budget domain model working data."""
+        self._wd = {} if self._wd is None else self._wd
+        return self._wd
+    @bdm_working_data.setter
+    def bdm_working_data(self, value: dict) -> None:
+        """Set the budget domain model working data."""
+        self._wd = {} if self._wd is None else self._wd
+        self._wd = value
+
+    @property
+    def data_context(self) -> DATA_CONTEXT:
+        """The data context for the budget model."""
+        return self.bdm_working_data 
+    @data_context.setter
+    def data_context(self, value: DATA_CONTEXT) -> None:
+        """Set the data context for the budget model."""
+        self.bdm_working_data = value
+
+    # budget_model_working_data is a dictionary to store dynamic, non-property data.
+    def set_BDM_WORKING_DATA(self, key, value) -> None:
+        self.bdm_working_data[key] = value
+
+    def get_BDM_WORKING_DATA(self, key) -> Any:
+        return self.bdm_working_data.get(key, 0)
+
+    #endregion BudgetDomainModel (BDM) compatible properties
+    # ------------------------------------------------------------------------ +
     #region log_BMT_info()
     @staticmethod
-    def log_BMT_info(bmt : "BudgetDomainModelConfig") -> None:
+    def log_BMT_info(bmt : "BDMConfig") -> None:
         """Log the BudgetDomainModelConfig class information."""
         try:
             logger.debug("Start:  ...")
@@ -268,8 +421,8 @@ class BudgetDomainModelConfig(BudgetDomainModel):
             c = len(bmt.bdm_wf_collection)
             logger.debug(
                 f"{P2}BDM_WF_COLLECTION['{BDM_WF_COLLECTION}']({c}): "
-                f"{str(list(bm.bdm_wf_collection.keys()))}")
-            for wf_key, wf_object in bm.bdm_wf_collection.items():
+                f"{str(list(bmt.bdm_wf_collection.keys()))}")
+            for wf_key, wf_object in bmt.bdm_wf_collection.items():
                 logger.debug(f"{P4}Workflow:({wf_key}:{wf_object[WF_NAME]}: ")
                 logger.debug(f"{P6}WF_INPUT: '{bmt.wf_object[WF_INPUT_FOLDER]}'")
                 logger.debug(f"{P6}WF_OUTPUT_FOLDER: '{bmt.wf_object[WF_OUTPUT_FOLDER]}'")
@@ -306,7 +459,7 @@ def tryout_budget_domain_model_config() -> None:
     st = p3u.start_timer()
     try:
         logger.debug("Start: ...")
-        bmt = BudgetDomainModelConfig()
+        bmt = BDMConfig()
         bmt.bsm_initialize() # initialize the budget storage model 
         
         # Enumerate the financial institutions in the budget model config
@@ -326,45 +479,4 @@ def tryout_budget_domain_model_config() -> None:
         logger.error(m)
         raise
 #endregion tryout_budget_domain_model_config() function
-# ---------------------------------------------------------------------------- +
-#region Local __main__ stand-alone
-if __name__ == "__main__":
-    try:
-        settings = BudManApp_settings
-        # this_app_name = os.path.basename(__file__)
-        # Configure logging
-        logger_name = settings[APP_NAME]
-        log_config = "budget_model_logging_config.jsonc"
-        # Set the log filename for this application.
-        # filenames = {"file": "logs/p3ExcelBudget.log"}
-        _ = p3l.setup_logging(
-            logger_name = logger_name,
-            config_file = log_config
-        )
-        p3l.set_log_flag(p3l.LOG_FLAG_PRINT_CONFIG_ERRORS, True)
-        logger = logging.getLogger(logger_name)
-        logger.setLevel(logging.DEBUG)
-        root_logger = logging.getLogger()
-        root_logger.setLevel(logging.DEBUG)
-        logger.info("+ ----------------------------------------------------- +")
-        logger.info(f"+ Running {settings[APP_NAME]} ...")
-        logger.info("+ ----------------------------------------------------- +")
-        logger.debug(f"Start: {settings[APP_NAME]}...")
-
-        bm = BudgetDomainModelConfig()
-        bms = str(bm)
-        bmr = repr(bm)
-        bdm = bm.to_dict()
-
-        logger.debug(f"Budget Model: str() = '{bms}'")
-        logger.debug(f"Budget Model: repr() = '{bmr}'")
-        logger.debug(f"Budget Model: to_dict() = '{bdm}'")
-
-        _ = "pause"
-    except Exception as e:
-        m = p3u.exc_msg("__main__", e)
-        logger.error(m)
-    logger.info(f"Exiting {settings[APP_NAME]}...")
-    exit(1)
-#endregion
 # ---------------------------------------------------------------------------- +

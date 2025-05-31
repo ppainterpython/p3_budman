@@ -12,8 +12,8 @@ import logging, p3_utils as p3u, p3logging as p3l
 # local libraries
 from budman_app import *
 from budman_namespace import *
-from budman_model import BDMBaseInterface
-from budman_model import BudgetDomainModel
+from budman_domain_model import BDMBaseInterface
+from budman_domain_model import BudgetDomainModel
 #endregion imports
 # ---------------------------------------------------------------------------- +
 #region Globals

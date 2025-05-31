@@ -172,15 +172,15 @@ class BudManCLIParser():
     def load_cmd_parser_setup(self) -> None:
         """Setup the command line argument parsers for the load command."""
         try:
-            # Load subcommands: BUDMAN_STORE, workbooks
+            # Load subcommands: BDM_STORE, workbooks
             self.load_cmd_subparsers = self.load_cmd_parser.add_subparsers(
                 dest="load_cmd")
-            # subcommand load BUDMAN_STORE
+            # subcommand load BDM_STORE
             self.load_bm_store_subcmd_parser = self.load_cmd_subparsers.add_parser(
-                "BUDMAN_STORE",
-                aliases=["store", "bms", "BMS", "budget_manager_store","BUDMAN_STORE"], 
+                "BDM_STORE",
+                aliases=["store", "bms", "BMS", "budget_manager_store","BDM_STORE"], 
                 help="Load the Budget Manager Store file.")
-            self.load_bm_store_subcmd_parser.set_defaults(load_cmd="BUDMAN_STORE")
+            self.load_bm_store_subcmd_parser.set_defaults(load_cmd="BDM_STORE")
             # subcommand load workbooks [wb_name] [fi_key]
             self.load_wb_subcmd_parser  = self.load_cmd_subparsers.add_parser(
                 "workbooks",
@@ -207,15 +207,15 @@ class BudManCLIParser():
     def save_cmd_parser_setup(self) -> None:
         """Setup the command line argument parsers for the save command."""
         try:
-            # Save subcommands: BUDMAN_STORE, workbooks
+            # Save subcommands: BDM_STORE, workbooks
             self.save_cmd_subparsers = self.save_cmd_parser.add_subparsers(
                 dest="save_cmd")
-            # subcommand save BUDMAN_STORE
+            # subcommand save BDM_STORE
             self.save_bm_store_subcmd_parser = self.save_cmd_subparsers.add_parser(
-                "BUDMAN_STORE",
-                aliases=["store", "bms", "BMS", "budget_manager_store","BUDMAN_STORE"], 
+                "BDM_STORE",
+                aliases=["store", "bms", "BMS", "budget_manager_store","BDM_STORE"], 
                 help="Save the Budget Manager Store file.")
-            self.save_bm_store_subcmd_parser.set_defaults(save_cmd="BUDMAN_STORE")
+            self.save_bm_store_subcmd_parser.set_defaults(save_cmd="BDM_STORE")
             # subcommand save workbooks [wb_name] [fi_key]
             self.save_wb_subcmd_parser  = self.save_cmd_subparsers.add_parser(
                 "workbooks",

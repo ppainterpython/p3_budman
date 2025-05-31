@@ -50,7 +50,7 @@ class TestBDMWorkingDataBaseInterface():
             assert bdmwd_bi.dc_WF_KEY is None, "Expected dc_WF_KEY to be None for new instance"
             assert bdmwd_bi.dc_WB_TYPE is None, "Expected dc_WB_TYPE to be None for new instance"
             assert bdmwd_bi.dc_WB_NAME is None, "Expected dc_WB_NAME to be None for new instance"
-            assert bdmwd_bi.dc_BUDMAN_STORE is None, "Expected dc_BUDMAN_STORE to be None for new instance"
+            assert bdmwd_bi.dc_BDM_STORE is None, "Expected dc_BDM_STORE to be None for new instance"
             assert bdmwd_bi.dc_WORKBOOKS is None, "Expected dc_WORKBOOKS to be None for new instance"
             assert bdmwd_bi.dc_LOADED_WORKBOOKS is None, "Expected dc_LOADED_WORKBOOKS to be None for new instance"
             bdmwd_bi.dc_initialize()
@@ -101,8 +101,8 @@ class TestBDMWorkingDataBaseInterface():
             assert bdmwd_bi.dc_WB_TYPE == "test_wb_type", "Expected bdmwd_bi.dc_WB_TYPE to be 'test_wb_type', got: " + str(bdmwd_bi.dc_WB_TYPE)
             bdmwd_bi.dc_WB_NAME = "test_wb_name"
             assert bdmwd_bi.dc_WB_NAME == "test_wb_name", "Expected bdmwd_bi.dc_WB_NAME to be 'test_wb_name', got: " + str(bdmwd_bi.dc_WB_NAME)
-            bdmwd_bi.dc_BUDMAN_STORE = "test_budman_store"
-            assert bdmwd_bi.dc_BUDMAN_STORE == "test_budman_store", "Expected bdmwd_bi.dc_BUDMAN_STORE to be 'test_budman_store', got: " + str(bdmwd_bi.dc_BUDMAN_STORE)
+            bdmwd_bi.dc_BDM_STORE = "test_budman_store"
+            assert bdmwd_bi.dc_BDM_STORE == "test_budman_store", "Expected bdmwd_bi.dc_BDM_STORE to be 'test_budman_store', got: " + str(bdmwd_bi.dc_BDM_STORE)
             bdmwd_bi.dc_WORKBOOKS = []
             assert bdmwd_bi.dc_WORKBOOKS == [], "Expected bdmwd_bi.dc_WORKBOOKS to be an empty list, got: " + str(bdmwd_bi.dc_WORKBOOKS)
             bdmwd_bi.dc_LOADED_WORKBOOKS = []

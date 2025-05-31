@@ -16,7 +16,7 @@ from typing import Dict
 # third-party modules and packages
 
 # local modules and packages
-from .budget_domain_model_config import BudgetDomainModelConfig
+from .budget_domain_model_config import BDMConfig
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -26,5 +26,5 @@ from .budget_domain_model_config import BudgetDomainModelConfig
 def __get_budget_model_config__() -> Dict:
     """Return BudgetModelTemplate.budget_model_config Dict.
     """
-    return BudgetDomainModelConfig.get_budget_model_config()
+    return BDMConfig.get_budget_model_config()
 # ---------------------------------------------------------------------------- +

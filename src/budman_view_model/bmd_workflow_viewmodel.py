@@ -67,8 +67,8 @@ import p3_utils as p3u, pyjson5, p3logging as p3l
 from openpyxl import Workbook, load_workbook
 
 # local modules and packages
-from ..budman_model.budget_model_constants import *
-from ..budman_model.budget_domain_model import BudgetDomainModel
+from ..budman_domain_model.budget_model_constants import *
+from ..budman_domain_model.budget_domain_model import BudgetDomainModel
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants

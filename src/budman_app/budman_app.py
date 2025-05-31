@@ -11,9 +11,10 @@
 import atexit, pathlib, logging, inspect, logging.config  #, logging.handlers
 # third-party  packages and module libraries
 from dynaconf import Dynaconf
-import p3logging as p3l, p3_utils as p3u
+import p3logging as p3l
+from p3_utils import exc_err_msg, dscr
 # local packages and module libraries
-from budman_app.budman_app_constants import *
+from budman_settings import *
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -25,14 +26,6 @@ BudManApp_settings : Dynaconf = None  # type: ignore
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
-def dscr(_inst) -> str:
-    try:
-        if _inst is None: return "None"
-        _id = hex(id(_inst))
-        _cn = _inst.__class__.__name__
-        return f"<instance '{_cn}':{_id}>"
-    except Exception as e:
-        return f"{type(e).__name__}()"
 class SingletonAppMeta(type):
     """Metaclass for implementing the Singleton pattern for subclasses."""
     _instances = {}
@@ -59,9 +52,34 @@ class BudManApp(metaclass=SingletonAppMeta):
     """BudManApp: The main application class for the Budget Manager."""
     def __init__(self) -> None:
         """Initialize the BudManApp."""
-        cli_view: object = None  # type: ignore
+        _settings : Dynaconf = BudManSettings()
+        _cli_view: object = None  # type: ignore
         d = dscr(self)
         logger.info(f"{d}.__init__() completed ...")
+    # ------------------------------------------------------------------------ +
+    @property
+    def settings(self) -> Dynaconf:
+        """Return the application settings."""
+        return self._settings
+    @settings.setter
+    def settings(self, settings: Dynaconf) -> None:
+        """Set the application settings."""
+        if not isinstance(settings, Dynaconf):
+            raise TypeError("settings must be a Dynaconf instance")
+        self._settings = settings
+        global BudManApp_settings
+        BudManApp_settings = settings
+
+    @property
+    def cli_view(self) -> object:
+        """Return the CLI view."""
+        return self._cli_view
+    @cli_view.setter
+    def cli_view(self, cli_view: object) -> None:
+        """Set the CLI view."""
+        if not isinstance(cli_view, object):
+            raise TypeError("cli_view must be an object")
+        self._cli_view = cli_view  
     # ------------------------------------------------------------------------ +
     #region budman_app_cli_cmdloop() function
     def budman_app_cli_cmdloop(self, startup : bool = True) -> None:
@@ -73,7 +91,7 @@ class BudManApp(metaclass=SingletonAppMeta):
             self.cli_view.cmdloop() if startup else None # Application CLI loop
             _ = "pause"
         except Exception as e:
-            m = p3u.exc_err_msg(e)
+            m = exc_err_msg(e)
             logger.error(m)
             raise
     #endregion budman_app_cli_cmdloop() function
@@ -99,11 +117,11 @@ class BudManApp(metaclass=SingletonAppMeta):
             atexit.register(self.budman_app_exit_handler)
             return self
         except Exception as e:
-            m = p3u.exc_err_msg(e)
+            m = exc_err_msg(e)
             logger.error(m)
             raise
     #endregion budman_app_setup() function
-    # ------------------------------------------------------------------------- +
+    # ------------------------------------------------------------------------ +
     #region budman_app_start() function
     def budman_app_start(self,testmode:bool=False):
         """start the cli repl loop."""
@@ -111,11 +129,11 @@ class BudManApp(metaclass=SingletonAppMeta):
             startup = not testmode
             self.budman_app_cli_cmdloop(startup=startup) # Application CLI loop
         except Exception as e:
-            m = p3u.exc_err_msg(e)
+            m = exc_err_msg(e)
             logger.error(m)
             raise
     #endregion budman_app_start() function
-    # ------------------------------------------------------------------------- +
+    # ------------------------------------------------------------------------ +
     #region budman_app_exit_handler() function
     def budman_app_exit_handler(self):
         """start the cli repl loop."""
@@ -124,85 +142,55 @@ class BudManApp(metaclass=SingletonAppMeta):
             logger.info(m)
             print(m)
         except Exception as e:
-            m = p3u.exc_err_msg(e)
+            m = exc_err_msg(e)
             logger.error(m)
             raise
     #endregion budman_app_exit_handler() function
-# ---------------------------------------------------------------------------- +
-#region configure_logging() function
-def configure_logging(logger_name : str, logtest : bool = False) -> None:
-    """Setup the application logger."""
-    global BudManApp_settings
-    try:
-        # Configure logging
-        app_name = logger_name or BudManApp_settings[APP_NAME]
-        log_config_file = "budget_model_logging_config.jsonc"
-        _ = p3l.setup_logging(
-            logger_name = logger_name,
-            config_file = log_config_file
-            )
-        p3l.set_log_flag(p3l.LOG_FLAG_PRINT_CONFIG_ERRORS, True)
-        logger = logging.getLogger(app_name)
-        logger.propagate = True
-        logger.setLevel(logging.DEBUG)
-        d = dscr(BudManApp())
-        logger.info("+ -----------------------------------------------------"
-                    "------------ +")
-        logger.info(f"+ {d} running {app_name}...")
-        logger.info("+ -----------------------------------------------------"
-                    "------------ +")
-        if(logtest): 
-            p3l.quick_logging_test(app_name, log_config_file, reload = False)
-    except Exception as e:
-        logger.error(p3u.exc_err_msg(e))
-        raise
-#endregion configure_logging() function
-# ------------------------------------------------------------------------ +
-#region configure_settings() function
-def configure_settings() -> None:
-    """Setup the application settings."""
-    global BudManApp_settings
-    try:
-        # Configure settings
-
-        if not BudManApp_settings:
-            BudManApp_settings = Dynaconf(
-                envvar_prefix="DYNACONF",
-                settings_files=[BUDMAN_SETTINGS, '.secrets.toml'],
-            )
-        d = dscr(BudManApp())
-        print(f"{d} initialized settings: {BudManApp_settings.to_dict()}")
-    except Exception as e:
-        print(p3u.exc_err_msg(e))
-        raise
-#endregion configure_settings() function
-# ------------------------------------------------------------------------ +
-#region Local __main__ stand-alone
-if __name__ == "__main__":
-    try:
-        configure_settings()  # Configure the settings
-        if not BudManApp_settings:
-            raise ValueError("Settings not found or empty.")
-        app_name = BudManApp_settings[APP_NAME] 
-        configure_logging(THIS_APP_NAME, logtest=True)  # Configure the logger
-        app = BudManApp()
-        app.budman_app_setup()  # Create the BudManApp instance
-        app.budman_app_start()  # Create the BudManApp instance
-    except Exception as e:
-        m = p3u.exc_err_msg( e)
-        logger.error(m)
-    d = dscr(app)
-    logger.info(f"{d} exiting {app_name} ...")
-    exit(0)
-#endregion Local __main__ stand-alone
-# ---------------------------------------------------------------------------- +
-#region tryit() function
-def tryit() -> None:
-    """Try something."""
-    try:
-        result = inspect.stack()[1][3]
-        print(f"result: '{result}'")
-    except Exception as e:
-        print(f"Error: tryit(): {str(e)}")
-#endregion tryit() function
-# ---------------------------------------------------------------------------- +
+    # ------------------------------------------------------------------------ +
+    #region run() function
+    def run(self, testmode: bool = False, logtest : bool = False) -> None:
+        """run budman_app."""
+        try:
+            if self.settings is None:
+                raise ValueError("Settings not configured.")
+            if not BudManApp_settings:
+                raise ValueError("Settings not found or empty.")
+            app_name = BudManApp_settings[APP_NAME] 
+            self.configure_logging(app_name, logtest=True)  # Configure the logger
+            self.app.budman_app_setup(testmode)  # Create the BudManApp instance
+            self.app.budman_app_start(testmode)  # Create the BudManApp instance
+        except Exception as e:
+            m = exc_err_msg( e)
+            logger.error(m)
+        d = dscr(self)
+        logger.info(f"{d} exiting {app_name} ...")
+        exit(0)
+    #endregion run() function
+    # ------------------------------------------------------------------------ +
+    #region configure_logging() method
+    def configure_logging(self,logger_name : str, logtest : bool = False) -> None:
+        """Setup the application logger."""
+        global BudManApp_settings
+        try:
+            # Configure logging
+            app_name = logger_name or BudManApp_settings[APP_NAME]
+            log_config_file = "budget_model_logging_config.jsonc"
+            _ = p3l.setup_logging(
+                logger_name = logger_name,
+                config_file = log_config_file
+                )
+            p3l.set_log_flag(p3l.LOG_FLAG_PRINT_CONFIG_ERRORS, True)
+            logger = logging.getLogger(app_name)
+            logger.propagate = True
+            logger.setLevel(logging.DEBUG)
+            d = dscr(BudManApp())
+            logger.info(f"+ {60 * '-'} +")
+            logger.info(f"+ {d} running {app_name}...")
+            logger.info(f"+ {60 * '-'} +")
+            if(logtest): 
+                p3l.quick_logging_test(app_name, log_config_file, reload = False)
+        except Exception as e:
+            logger.error(exc_err_msg(e))
+            raise
+    #endregion configure_logging() function
+    # ------------------------------------------------------------------------ +

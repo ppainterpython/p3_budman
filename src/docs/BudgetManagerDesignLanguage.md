@@ -10,3 +10,8 @@ All people, families, businesses and organizations have a budget, managed or not
 
 Tracking income and expenses over time is critical to the value of a budget. Often, FI's will update account status on a monthly basis, issuing statements, or workbooks in the BudMan narrative. There will be workbooks from each FI, at least for each month, and perhaps separately for each account. Gathering the new input into the budget for user benefit requires processing the workbooks, and hence, a means to manage that processing. BudMan uses __Workflows (WF)__ to handle the processing. A workflow is a series of tasks performed on the workbooks. A task uses input, produces output, and may utilize working copies of data for a time.
 
+### BudMan Model Design
+
+Using MVVM, the desire is to bind the Model at runtime to different implementations. One of the differences between them is where the BudMan Model Store is maintained. In the beginning, the local filesystem is used. But the design couples through at URI specified for the BUDMAN_MODEL_STORE. This value is configurable but the model itself does not know anything about how the configuration is maintained in other layers of an application. When the BudgetDomainModel() is accessed, it will be through the URI. A file://-type URI indicates the local filesystem and the pathname is extracted from the URI.
+
+Keep application settings and configuration out of the BudMan Model design. Do not use outside config/settings objects to initialize the model. The BudgetDomainModelTemplate is used as a default object to create a new BUDMAN_MODEL_STORE object which can then be modified and used to initialize a new BUDMAN_MODEL_STORE before saving it the first time.

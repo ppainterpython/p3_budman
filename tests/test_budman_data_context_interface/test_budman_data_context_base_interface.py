@@ -74,14 +74,14 @@ class testBudManDC(BudManDataContextBaseInterface):
         print(f"Setting dc_WB_NAME to {value}")
         return
     @property
-    def dc_BUDMAN_STORE(self) -> str:
-        """Return the BUDMAN_STORE jsonc definition."""
-        print("Getting dc_BUDMAN_STORE, 'test_budman_store.jsonc'")
+    def dc_BDM_STORE(self) -> str:
+        """Return the BDM_STORE jsonc definition."""
+        print("Getting dc_BDM_STORE, 'test_budman_store.jsonc'")
         return "test_budman_store.jsonc"
-    @dc_BUDMAN_STORE.setter
-    def dc_BUDMAN_STORE(self, value: str) -> None:
-        """Set the BUDMAN_STORE jsonc definition."""
-        print(f"Setting dc_BUDMAN_STORE to {value}")
+    @dc_BDM_STORE.setter
+    def dc_BDM_STORE(self, value: str) -> None:
+        """Set the BDM_STORE jsonc definition."""
+        print(f"Setting dc_BDM_STORE to {value}")
         return
     @property
     def dc_WORKBOOKS(self) -> bdmns.WORKBOOK_LIST:
@@ -159,13 +159,13 @@ class testBudManDC(BudManDataContextBaseInterface):
         """Add a new workbook to the data context."""
         print(f"Adding workbook '{wb_name}'.")
         return None
-    def dc_BUDMAN_STORE_load(self, file_path: str) -> None:
-        """Load the BUDMAN_STORE from the specified file path."""
-        print(f"Loading BUDMAN_STORE from {file_path}.")
+    def dc_BDM_STORE_load(self, file_path: str) -> None:
+        """Load the BDM_STORE from the specified file path."""
+        print(f"Loading BDM_STORE from {file_path}.")
         return None
-    def dc_BUDMAN_STORE_save(self, file_path: str) -> None:
-        """Save the BUDMAN_STORE to the specified file path."""
-        print(f"Saving BUDMAN_STORE to {file_path}.")
+    def dc_BDM_STORE_save(self, file_path: str) -> None:
+        """Save the BDM_STORE to the specified file path."""
+        print(f"Saving BDM_STORE to {file_path}.")
         return None
     #endregion Concrete Methods
 # ---------------------------------------------------------------------------- +
@@ -197,9 +197,9 @@ class TestBudManDataContextBaseInterface():
             assert bdmdc.dc_WF_KEY == "test_wf_key", "Expected dc_WF_KEY to be 'test_wf_key'"
             assert bdmdc.dc_WB_TYPE == "test_wb_type", "Expected dc_WB_TYPE to be 'test_wb_type'"
             assert bdmdc.dc_WB_NAME == "test_wb_name", "Expected dc_WB_NAME to be 'test_wb_name'"
-            assert bdmdc.dc_BUDMAN_STORE == "test_budman_store.jsonc", "Expected dc_BUDMAN_STORE to be 'test_budman_store.jsonc'"
-            bdmdc.dc_BUDMAN_STORE = "new_budman_store.jsonc"
-            assert "Setting dc_BUDMAN_STORE to new_budman_store.jsonc" in capsys.readouterr().out, "Expected 'Setting dc_BUDMAN_STORE to new_budman_store.jsonc' in output, got: " + capsys.readouterr().out
+            assert bdmdc.dc_BDM_STORE == "test_budman_store.jsonc", "Expected dc_BDM_STORE to be 'test_budman_store.jsonc'"
+            bdmdc.dc_BDM_STORE = "new_budman_store.jsonc"
+            assert "Setting dc_BDM_STORE to new_budman_store.jsonc" in capsys.readouterr().out, "Expected 'Setting dc_BDM_STORE to new_budman_store.jsonc' in output, got: " + capsys.readouterr().out
             assert isinstance(bdmdc.dc_WORKBOOKS, list), "Expected dc_WORKBOOKS to be a list"
             assert isinstance(bdmdc.dc_LOADED_WORKBOOKS, list), "Expected dc_LOADED_WORKBOOKS to be a list"
             assert bdmdc.dc_FI_KEY_validate("test_fi_key") is True, "Expected dc_FI_KEY_validate to return True"
@@ -217,10 +217,10 @@ class TestBudManDataContextBaseInterface():
             assert "Removing workbook 'test_wb1'" in capsys.readouterr().out, "Expected 'Removing workbook 'test_wb1'' in output, got: " + capsys.readouterr().out
             bdmdc.dc_WORKBOOK_add("test_wb1", wb)
             assert "Adding workbook 'test_wb1'" in capsys.readouterr().out, "Expected 'Adding workbook 'test_wb1'' in output, got: " + capsys.readouterr().out
-            bdmdc.dc_BUDMAN_STORE_load("test_budman_store.jsonc")
-            assert "Loading BUDMAN_STORE from test_budman_store.jsonc" in capsys.readouterr().out, "Expected 'Loading BUDMAN_STORE from test_budman_store.jsonc' in output, got: " + capsys.readouterr().out
-            bdmdc.dc_BUDMAN_STORE_save("test_budman_store.jsonc")
-            assert "Saving BUDMAN_STORE to test_budman_store.jsonc" in capsys.readouterr().out, "Expected 'Saving BUDMAN_STORE to test_budman_store.jsonc' in output, got: " + capsys.readouterr().out
+            bdmdc.dc_BDM_STORE_load("test_budman_store.jsonc")
+            assert "Loading BDM_STORE from test_budman_store.jsonc" in capsys.readouterr().out, "Expected 'Loading BDM_STORE from test_budman_store.jsonc' in output, got: " + capsys.readouterr().out
+            bdmdc.dc_BDM_STORE_save("test_budman_store.jsonc")
+            assert "Saving BDM_STORE to test_budman_store.jsonc" in capsys.readouterr().out, "Expected 'Saving BDM_STORE to test_budman_store.jsonc' in output, got: " + capsys.readouterr().out
         except Exception as e:
             pytest.fail(f"BudManDataContextBaseInterface() raised an exception: {str(e)}")
     # ------------------------------------------------------------------------ +

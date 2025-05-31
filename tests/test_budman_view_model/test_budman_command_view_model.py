@@ -10,7 +10,7 @@ import logging, p3_utils as p3u, p3logging as p3l
 # local libraries
 from budman_app import BudManApp
 from budman_namespace import *
-from budman_model import BudgetDomainModel
+from budman_domain_model import BudgetDomainModel
 from budman_view_model import BudManViewModel
 #endregion imports
 # ---------------------------------------------------------------------------- +
@@ -18,17 +18,17 @@ from budman_view_model import BudManViewModel
 logger = logging.getLogger(__name__)
 #endregion Globals
 # ---------------------------------------------------------------------------- +
-def test_BUDMAN_STORE_load():
-    """Test the BudManCommandViewModel.BUDMAN_STORE_load() method."""
+def test_BDM_STORE_load():
+    """Test the BudManCommandViewModel.BDM_STORE_load() method."""
     try:
-        logger.info(test_BUDMAN_STORE_load.__doc__)
+        logger.info(test_BDM_STORE_load.__doc__)
         # Create a BudgetDomainModelIdentity instance and initialize it
         # from the user's BDM_STORE file.
         bmvm = BudManViewModel().initialize(load_user_store=True)
         assert isinstance(bmvm, BudManViewModel), \
             "Expected BudManCommandViewModel, got: " + str(type(bmvm))
-        assert bmvm.BUDMAN_STORE_loaded, \
-            "BUDMAN_STORE should be loaded"
+        assert bmvm.BDM_STORE_loaded, \
+            "BDM_STORE should be loaded"
         assert bmvm.budget_model is not None, \
             "bmvm.budget_model should not be None"
         assert isinstance(bmvm.budget_model, BudgetDomainModel), \

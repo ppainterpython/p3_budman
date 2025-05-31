@@ -40,7 +40,7 @@ from budman_data_context import BudManDataContextBaseInterface
 # ---------------------------------------------------------------------------- +
 #region Globals
 settings = None
-logger = None
+logger = logging.getLogger(__name__)
 #endregion Globals
 # ---------------------------------------------------------------------------- +
 class BudManDataContext(BudManDataContextBaseInterface):
@@ -58,15 +58,14 @@ class BudManDataContext(BudManDataContextBaseInterface):
     """
     # ------------------------------------------------------------------------ +
     def __init__(self) -> None:
-        global settings, logger
+        global settings
         settings = BudManApp_settings
-        logger = logging.getLogger(settings[APP_NAME])
         self._dc_initialized = False 
         self._FI_KEY = None       
         self._WF_KEY = None       
         self._WB_TYPE = None      
         self._WB_NAME = None      
-        self._BUDMAN_STORE = None 
+        self._BDM_STORE = None 
         self._WORKBOOKS : WORKBOOK_LIST = None # from BudManDataContextBaseInterface
         self._LOADED_WORKBOOKS : LOADED_WORKBOOK_LIST = None # from BudManDataContextBaseInterface
 
@@ -130,13 +129,13 @@ class BudManDataContext(BudManDataContextBaseInterface):
         self._WB_NAME = value
 
     @property
-    def dc_BUDMAN_STORE(self) -> str:
-        """Return the BUDMAN_STORE jsonc definition."""
-        return self._BUDMAN_STORE
-    @dc_BUDMAN_STORE.setter
-    def dc_BUDMAN_STORE(self, value: str) -> None:
-        """Set the BUDMAN_STORE jsonc definition."""
-        self._BUDMAN_STORE = value
+    def dc_BDM_STORE(self) -> str:
+        """Return the BDM_STORE jsonc definition."""
+        return self._BDM_STORE
+    @dc_BDM_STORE.setter
+    def dc_BDM_STORE(self, value: str) -> None:
+        """Set the BDM_STORE jsonc definition."""
+        self._BDM_STORE = value
 
     @property
     def dc_WORKBOOKS(self) -> WORKBOOK_LIST:
@@ -166,7 +165,7 @@ class BudManDataContext(BudManDataContextBaseInterface):
         self.dc_WF_KEY = None
         self.dc_WB_TYPE = None
         self.dc_WB_NAME = None
-        self.dc_BUDMAN_STORE = []
+        self.dc_BDM_STORE = []
         self.dc_WORKBOOKS = []
         self.dc_LOADED_WORKBOOKS = []
         self.dc_INITIALIZED = True
@@ -255,18 +254,18 @@ class BudManDataContext(BudManDataContextBaseInterface):
         self.dc_LOADED_WORKBOOKS.append((wb_name, wb))
         return None
 
-    def dc_BUDMAN_STORE_load(self, file_path: str) -> None:
-        """Load the BUDMAN_STORE from the specified file path. NotImplementedError.
-        The design presumes that the BUDMAN_STORE is managed by the downstream
+    def dc_BDM_STORE_load(self, file_path: str) -> None:
+        """Load the BDM_STORE from the specified file path. NotImplementedError.
+        The design presumes that the BDM_STORE is managed by the downstream
         Model implementation, that the budget_domain_model uses it to 
         initialize the state of the BDM. This implementation has no BDM.
         """
-        logger.error("BUDMAN_STORE_load method is not implemented in this interface.")
+        logger.error("BDM_STORE_load method is not implemented in this interface.")
         return None
 
-    def dc_BUDMAN_STORE_save(self, file_path: str) -> None:
-        """Save the BUDMAN_STORE to the specified file path."""
-        logger.error("BUDMAN_STORE_save method is not implemented in this interface.")
+    def dc_BDM_STORE_save(self, file_path: str) -> None:
+        """Save the BDM_STORE to the specified file path."""
+        logger.error("BDM_STORE_save method is not implemented in this interface.")
         return None
 
     #endregion Abstract Methods

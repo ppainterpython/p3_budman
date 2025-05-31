@@ -1,16 +1,14 @@
 # ---------------------------------------------------------------------------- +
 #region budget_domain_model.py module
-""" budget_domain_model.py implements the class BudgetModel.
+""" budget_domain_model.py implements the class BudgetDomainModel.
 
-    Following a rough MVVM pattern, the BudgetModel class is acting as 
+    Following a rough MVVM pattern, the BudgetDomainModel class is acting as 
     both the cohesive Model, representing a budget model domain in
     memory as object API. 
 
-    TODO: rename BudgetModel to BudgetDomainModel.
-
-    At present, the BudgetModel class is a singleton class that manages the 
+    At present, the BudgetDomainModel class is a singleton class that manages the 
     mapping of excel "workbooks" stored in the filesystem to the budget model.
-    The BudgetModel class presents properties and methods to the outside world.
+    The BudgetDomainModel class presents properties and methods to the outside world.
     Methods are separated into DomainModel-ish methods for the 
     Budget Domain Model (BDM), which is the in-memory data model,
     and StorageModel-ish methods for the Budget Storage Model (BSM), 
@@ -77,30 +75,18 @@ from typing import List, Type, Generator, Dict, Tuple, Any, TYPE_CHECKING
 import p3_utils as p3u, pyjson5, p3logging as p3l
 from openpyxl import Workbook, load_workbook
 # local modules and packages
-from budman_app.budman_app_constants import *
-from budman_app.budman_app import BudManApp_settings
 from budman_namespace import *
-from .budget_storage_model import bsm_verify_folder
+from budman_storage_model import bsm_verify_folder
 from .model_base_interface import BDMBaseInterface
 from .budget_domain_model_identity import BudgetDomainModelIdentity
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
-settings = None
 logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
-
-def dscr(_inst) -> str:
-    try:
-        if _inst is None: return "None"
-        _id = hex(id(_inst))
-        _cn = _inst.__class__.__name__
-        return f"<instance '{_cn}':{_id}>"
-    except Exception as e:
-        return f"{type(e).__name__}()"
-class SingletonMeta(ABCMeta):
+class BDMSingletonMeta(ABCMeta):
     """Metaclass for implementing the Singleton pattern for subclasses."""
     _instances = {}
 
@@ -118,66 +104,58 @@ class SingletonMeta(ABCMeta):
             cls._instances[cls] = _new_inst
             # Save the cls so code knows what subclass was instantiated.
             _new_inst._subclassname = cls.__name__
-            logger.debug(f"Created first {dscr(_new_inst)}")
-        logger.debug(f"Return {dscr(cls._instances[cls])}")
+            logger.debug(f"Created first {p3u.dscr(_new_inst)}")
+        logger.debug(f"Return {p3u.dscr(cls._instances[cls])}")
         return cls._instances[cls]
 # ---------------------------------------------------------------------------- +
-class BudgetDomainModel(BDMBaseInterface,metaclass=SingletonMeta):
+class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
     # ======================================================================== +
-    #region BudgetModel class intrinsics
+    #region BudgetDomainModel class intrinsics
     # ======================================================================== +
-    """BudgetModel class implementing Singleton pattern.
+    """BudgetDomainModel class implementing Singleton pattern.
     
         A singleton class to manage the budget model for the application.
         This class is used to store and manage the budget data, including
-        the budget folder, institutions, and options. Uses only dict-friendly
-        items.
+        the budget folder, institutions, and options. 
 
-        Properties:
-        -----------
-        - budget_folder_path_str: A pathname to a parent budget folder, 
-            e.g., ~/OneDrive/budget.
-        - budget_folder_abs_path: A Path object representing the absolute path
-            to the budget folder.
-        - institutions: A dictionary to store the financial institutions.
-        - options: A dictionary to store the options for the budget model.
-        - budget_data: A dictionary to store non-persistent the budget data.
+        When instantiated, a config object is provided to the constructor.
+
     """
     # ------------------------------------------------------------------------ +
     #region class variables
-    # A config Template should be a BudgetModel object, or a sub
+    # A config Template should be a BudgetDomainModel object, or a sub
     _default_config_object : object = None #
     #endregion class variables
     # ------------------------------------------------------------------------ +
-    #region    BudgetModel class constructor __init__()
+    #region    BudgetDomainModel class constructor __init__()
     def __init__(self, config_object : object = None) -> None:
-        """Constructor for the BudgetModel class."""
-        global settings
-        settings = BudManApp_settings
+        """Constructor for the BudgetDomainModel class."""
         # Note: _subclassname set by SingletonMeta after __init__() completes.
         logger.debug("Start: ...")
 
         # Private attributes initialization, basic stuff only.
         # for serialization ease, always persist dates as str type.
         bdm_id = BudgetDomainModelIdentity()
-        setattr(self, BDM_ID, bdm_id.uid)  # BudgetDomainModelIdentity
+        setattr(self, BDM_ID, bdm_id.uid)
         setattr(self, BDM_CONFIG_OBJECT,config_object)
         setattr(self, BDM_INITIALIZED, False)
-        setattr(self, BDM_FOLDER, None)  # budget folder path
-        setattr(self, BDM_URL, bdm_id.bdm_store_abs_path().as_uri())  # path for budget model store
-        setattr(self, BDM_FI_COLLECTION, {})  # financial institutions
+        setattr(self, BDM_FILENAME, None)
+        setattr(self, BDM_FILETYPE, None)
+        setattr(self, BDM_FOLDER, None)  
+        setattr(self, BDM_URL, bdm_id.bdm_store_abs_path().as_uri())  
+        setattr(self, BDM_FI_COLLECTION, {})
         setattr(self, BDM_WF_COLLECTION, {}) 
-        setattr(self, BDM_OPTIONS, {})  # budget model options
+        setattr(self, BDM_OPTIONS, {})
         setattr(self, BDM_CREATED_DATE, p3u.now_iso_date_string()) 
         setattr(self, BDM_LAST_MODIFIED_DATE, self._created_date)
         setattr(self, BDM_LAST_MODIFIED_BY, getpass.getuser())
-        setattr(self, BDM_WORKING_DATA, {})  # wd - budget model working data
-        logger.debug("Complete: BudgetModel().__init__() ...")
-    #endregion BudgetModel class constructor __init__()
+        setattr(self, BDM_WORKING_DATA, {})  
+        logger.debug("Complete: BudgetDomainModel().__init__() ...")
+    #endregion BudgetDomainModel class constructor __init__()
     # ------------------------------------------------------------------------ +
-    #region    BudgetModel internal class methods
+    #region    BudgetDomainModel internal class methods
     def to_dict(self):
-        '''Return BudgetModelTemplate dictionary object. Used for serialization.'''
+        '''Return BudgetDomainModelTemplate dictionary object. Used for serialization.'''
         ret = {
             BDM_ID: self.bdm_id,
             BDM_CONFIG_OBJECT: self.bdm_config_object,
@@ -194,7 +172,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=SingletonMeta):
         }
         return ret
     def __repr__(self) -> str:
-        ''' Return a str representation of the BudgetModel object '''
+        ''' Return a str representation of the BudgetDomainModel object '''
         ret = f"{{ "
         ret += f"'{BDM_ID}': {self.bdm_id}, "
         ret += f"'{BDM_CONFIG_OBJECT}': {self.bdm_config_object}, "
@@ -210,7 +188,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=SingletonMeta):
         ret += f"'{BDM_WORKING_DATA}': '{self.bdm_working_data}' }} "
         return ret
     def __str__(self) -> str:
-        ''' Return a str representation of the BudgetModel object '''
+        ''' Return a str representation of the BudgetDomainModel object '''
         ret = f"{self.__class__.__name__}({str(self.bdm_folder)}): "
         ret += f"{BDM_ID} = {self.bdm_id}, "
         ret += f"{BDM_CONFIG_OBJECT} = {str(self.bdm_config_object)}, "
@@ -225,13 +203,9 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=SingletonMeta):
         ret += f"{BDM_LAST_MODIFIED_BY} = '{self.bdm_last_modified_by}', "
         ret += f"{BDM_WORKING_DATA} = {self.bdm_working_data}"
         return ret
-    #endregion BudgetModel internal class methods
+    #endregion BudgetDomainModel internal class methods
     # ------------------------------------------------------------------------ +
-    #region    BudgetModel public class properties
-    @property
-    def model_id(self) -> str:
-        """Return the model ID."""
-        return __class__.__name__ + "-" + self.bdm_id
+    #region    BudgetDomainModel (BDM) properties
     @property
     def bdm_id(self) -> str:
         """The budget model ID."""
@@ -242,6 +216,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=SingletonMeta):
         if not isinstance(value, str):
             raise ValueError(f"bm_id must be a string: {value}")
         setattr(self, BDM_ID, value)
+
     @property
     def bdm_config_object(self) -> object:
         """The budget model configuration object."""
@@ -252,21 +227,38 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=SingletonMeta):
         if not isinstance(value, object):
             raise ValueError(f"bm_config_object must be an object: {value}")
         setattr(self, BDM_CONFIG_OBJECT, value)
+
     @property
     def bdm_initialized(self) -> bool:
         """The initialized value."""
         return self._initialized
-    
     @bdm_initialized.setter
     def bdm_initialized(self, value )-> None:
         """Set the initialized value."""
         self._initialized = value
 
     @property
+    def bdm_filename(self) -> str:
+        """The bdm_store filename is a string, e.g., 'bdm_store"""
+        return self._bdm_filename
+    @bdm_filename.setter
+    def bdm_filename(self, value: str) -> None:
+        """Set the bdm_store filename."""
+        self._bdm_filename = value
+
+    @property
+    def bdm_filetype(self) -> str:
+        """The bdm_store filetype, e.g., '.jsonc"""
+        return self._bdm_filetype
+    @bdm_filetype.setter
+    def bdm_filetype(self, value: str) -> None:
+        """Set the bdm_store filetype."""
+        self._bdm_filetype = value
+
+    @property
     def bdm_folder(self) -> str:
         """The budget folder path is a string, e.g., '~/OneDrive/."""
         return self._budget_folder
-
     @bdm_folder.setter
     def bdm_folder(self, value: str) -> None:
         """Set the budget folder path."""
@@ -276,7 +268,6 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=SingletonMeta):
     def bdm_url(self) -> str:
         """The budget manager store file url."""
         return self._bdm_url
-    
     @bdm_url.setter
     def bdm_url(self, value: str) -> None:
         """Set the budget manager store file url."""
@@ -286,7 +277,6 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=SingletonMeta):
     def bdm_fi_collection(self) -> dict:
         """The financial institutions collection."""
         return self._financial_institutions
-    
     @bdm_fi_collection.setter
     def bdm_fi_collection(self, value: dict) -> None:
         """Set the financial institutions collection."""
@@ -296,7 +286,6 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=SingletonMeta):
     def bdm_wf_collection(self) -> dict:
         """The workflow collection."""
         return self._workflows
-    
     @bdm_wf_collection.setter
     def bdm_wf_collection(self, value: dict) -> None:
         """Set the workflows collection."""
@@ -306,7 +295,6 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=SingletonMeta):
     def bdm_options(self) -> dict:
         """The budget model options dictionary."""
         return self._options
-    
     @bdm_options.setter
     def bdm_options(self, value: dict) -> None:
         """Set the budget model options dictionary."""
@@ -316,7 +304,6 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=SingletonMeta):
     def bdm_created_date(self) -> str:
         """The created date."""
         return self._created_date
-    
     @bdm_created_date.setter
     def bdm_created_date(self, value: str) -> None:  
         """Set the created date."""
@@ -326,7 +313,6 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=SingletonMeta):
     def bdm_last_modified_date(self) -> str:
         """The last modified date."""
         return self._last_modified_date
-    
     @bdm_last_modified_date.setter
     def bdm_last_modified_date(self, value: str) -> None:
         """Set the last modified date."""
@@ -336,7 +322,6 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=SingletonMeta):
     def bdm_last_modified_by(self) -> str:
         """The last modified by."""
         return self._last_modified_by
-    
     @bdm_last_modified_by.setter
     def bdm_last_modified_by(self, value: str) -> None:
         """Set the last modified by."""
@@ -347,7 +332,6 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=SingletonMeta):
         """The budget domain model working data."""
         self._wd = {} if self._wd is None else self._wd
         return self._wd
-    
     @bdm_working_data.setter
     def bdm_working_data(self, value: dict) -> None:
         """Set the budget domain model working data."""
@@ -358,7 +342,6 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=SingletonMeta):
     def data_context(self) -> DATA_CONTEXT:
         """The data context for the budget model."""
         return self.bdm_working_data 
-       
     @data_context.setter
     def data_context(self, value: DATA_CONTEXT) -> None:
         """Set the data context for the budget model."""
@@ -371,9 +354,14 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=SingletonMeta):
     def get_BDM_WORKING_DATA(self, key) -> Any:
         return self.bdm_working_data.get(key, 0)
 
-    #endregion BudgetModel public class properties
+    @property
+    def model_id(self) -> str:
+        """Return the model ID."""
+        return __class__.__name__ + "-" + self.bdm_id
+
+    #endregion BudgetDomainModel (BDM)) properties
     # ------------------------------------------------------------------------ +
-    #endregion BudgetModel class intrinsics
+    #endregion BudgetDomainModel class intrinsics
     # ======================================================================== +
 
     # ======================================================================== +
@@ -385,15 +373,15 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=SingletonMeta):
     purpose of following a budget. As a Domain Model, the implementation is 
     the python data structures used to represent the domain data.
 
-    Class BudgetModel is the base class for the budget model domain. As a 
+    Class BudgetDomainModel is the base class for the budget model domain. As a 
     convention, while designing the structure, I adopted the use of constants
     for names of the various types and fields used for th class properties,
     default values and methods. Also, I adopted a pattern to use the
-    BudgetModelTemplate class, a subclass of BudgetModel, as a means
+    BudgetDomainModelTemplate class, a subclass of BudgetDomainModel, as a means
     for storing the template for a budget model used for configuration and
-    other conveniences. Each BudgetModel created by a user, may have an 
+    other conveniences. Each BudgetDomainModel created by a user, may have an 
     associated Budget Manager (BudMan) store. This is referred to as the 
-    BUDMAN_STORE and can be used as the configuration template.
+    BDM_STORE and can be used as the configuration template.
 
     All BDM data storage is the concern of the BSM. BSM works with Path 
     objects, filenames, folders, relative, absolute path names and actual 
@@ -453,11 +441,11 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=SingletonMeta):
 
     Naming Conventions:
     -------------------
-    - bm_ - BudgetModel class properties, e.g., bm_folder, bm_fi, etc.
+    - bm_ - BudgetDomainModel class properties, e.g., bm_folder, bm_fi, etc.
     - fi_ - Related to financial institution, e.g., fi_key, fi_name, etc.
     - wf_ - Related to workflow, e.g., wf_key, wf_name, etc.
-    - bdm_ - BudgetModel Domain methods, concerning the in memory data model.
-    - bsm_ - BudgetModel Storage Model methods, folders/files stored the filesystem.
+    - bdm_ - BudgetDomainModel Domain methods, concerning the in memory data model.
+    - bsm_ - BudgetDomainModel Storage Model methods, folders/files stored the filesystem.
     - _path_str - is the simplest string for a path name or component of. These
     methods return str values and do not manipulate with Path objects. Some
     folder values in the BDM, for example, are simply the name of a folder, 
@@ -470,7 +458,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=SingletonMeta):
     Abbrevs used in method names: 
         bdm - Budget Model Domain, the domain model of the budget model.
         bms - Budget Storage Model, the filesystem storage model.
-        bm - BudgetModel class instance, parent of the Budget Model data structure.
+        bm - BudgetDomainModel class instance, parent of the Budget Model data structure.
         bf - budget folder - attribute, root folder, used in path objects.
         fi - financial institution dictionary, attribute of bdm.
              fi_key = int_key, short name of FI, e.g., "boa", "chase", etc.
@@ -480,25 +468,26 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=SingletonMeta):
     # ======================================================================== +
     #region    BDM_CONFIG_OBJECT bdm_resolve_config_object(self) -> Dict
     def bdm_resolve_config_object(self) -> Dict:
-        """Resolve the configuration object to initialize BudgetModel.
+        """Resolve the configuration object to initialize BudgetDomainModel.
 
-        Best to provide a config_object to BudgetModel() at instantiation
-        time. If not, the BudgetModelTemplate is used as the default.
+        Best to provide a config_object to BudgetDomainModel() at instantiation
+        time. If not, the BudgetDomainModelTemplate is used as the default.
 
         Returns:
             Dict: The resolved configuration object.
         """
         try:
             if self.bdm_config_object is None:
-                # If bdm_config_object is None, use the BudgetModelTemplate.
+                # If bdm_config_object is None, use the BudgetDomainModelTemplate.
                 logger.debug("bm_config_object property is None, "
-                             f"resolve with builtin BudgetModelTemplate.")
-                # Default is left behind if BudgetModelTemplate() is instantiated.
+                             f"resolve with builtin BudgetDomainModelTemplate.")
+                # default_config_object is set if BudgetDomainModelTemplate() 
+                # is instantiated prior to BudgetDomainModel().
                 bdm_config = BudgetDomainModel._default_config_object  
                 if bdm_config is None:
-                    # Last hope, obtain the BudgetModelTemplate without 
+                    # Last hope, obtain the BudgetDomainModelTemplate without 
                     # a circular reference, since it is a subclass.
-                    from budman_model import __get_budget_model_config__
+                    from budman_domain_model import __get_budget_model_config__
                     bdm_config = __get_budget_model_config__()
                 self.bdm_config_object = bdm_config
             return self.bdm_config_object
@@ -516,7 +505,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=SingletonMeta):
                  ) -> "BudgetDomainModel":
         """Initialize BDM, from a config_object.
 
-        Currently, as a singleton class, BudgetModel is initialized just once.
+        Currently, as a singleton class, BudgetDomainModel is initialized just once.
         So, having a resolved config_object Dict is important, lest not much
         can be initialized. That is the concern of bdm_resolve_config_src().
 
@@ -533,7 +522,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=SingletonMeta):
                 # hmm, _subclassname should be set in SingletonMeta metaclass.
                 logger.debug("No subclass name, setting to None")
                 self._subclassname = None
-            # Initialize from a BudgetModel-based object such as the BMT template.
+            # Initialize from a BudgetDomainModel-based object such as the BMT template.
             bdm_config = self.bdm_resolve_config_object()
             # Apply the configuration to the budget model (self)
             for k,v in bdm_config.items():
@@ -553,11 +542,11 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=SingletonMeta):
     # ------------------------------------------------------------------------ +
     #region    BDM_INITIALIZED bdm_initialize_from_BDM_URL(self)
     def bdm_initialize_from_BDM_URL(self,bsm_init:bool=True) -> None:
-        """Initialize the BudgetModel, dynamically, from BDM_CONFIG values.
+        """Initialize the BudgetDomainModel, dynamically, from BDM_CONFIG values.
 
-        The current session state of the BudgetModel configuration can be stored
+        The current session state of the BudgetDomainModel configuration can be stored
         using the Budget Storage Model based on the URI in the BDM_URL
-        property. Load that and apply the values to the BudgetModel instance.
+        property. Load that and apply the values to the BudgetDomainModel instance.
 
         Returns:
             None: on success, else raises an exception.
@@ -566,7 +555,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=SingletonMeta):
             st = p3u.start_timer()
             logger.debug(f"Start: ...")
             # Initialize from the BDM_URL persisted configuration and data.
-            # Load the BudgetModel Store values as a Dict with persisted
+            # Load the BudgetDomainModel Store values as a Dict with persisted
             # attributes.
             # Apply the configuration to the budget model (self)
             # BSM_PERSISTED_PROPERTIES defines the attributes to be applied.
@@ -777,9 +766,10 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=SingletonMeta):
                 return self.bdm_working_data
             
             # Gather default values from the application settings.
-            def_fi = self.settings[BUDMAN_DEFAULT_FI]
-            def_wf = self.settings[BUDMAN_DEFAULT_WORKFLOW]
-            def_wbt = self.settings[BUDMAN_DEFAULT_WORKBOOK_TYPE]
+            # TODO: Fix this when bdmwd is free
+            def_fi = VALID_FI_KEYS[0]
+            def_wf = BDM_WF_CATEGORIZATION
+            def_wbt = WF_WORKING
             # Initialize the budget model working data.
             self.bdm_working_data = {}
             self.set_BDM_WORKING_DATA(BDMWD_INITIALIZED, False)
@@ -802,7 +792,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=SingletonMeta):
             raise
     #endregion   BDM_WORKING_DATA bdm_BDM_WORKING_DATA_initialize() 
     # ------------------------------------------------------------------------ +
-    #endregion BudgetModel Domain methods
+    #endregion BudgetDomainModel Domain methods
     # ======================================================================== +
 
     # ======================================================================== +
@@ -847,11 +837,11 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=SingletonMeta):
 
     Naming Conventions:
     -------------------
-    - bm_ - BudgetModel class properties, e.g., bm_folder, bm_fi, etc.
+    - bm_ - BudgetDomainModel class properties, e.g., bm_folder, bm_fi, etc.
     - fi_ - Related to financial institution, e.g., fi_key, fi_name, etc.
     - wf_ - Related to workflow, e.g., wf_key, wf_name, etc.
-    - bdm_ - BudgetModel Domain methods, concerning the in memory data model.
-    - bsm_ - BudgetModel Storage Model methods, folders/files stored the filesystem.
+    - bdm_ - BudgetDomainModel methods, concerning the in memory data model.
+    - bsm_ - BudgetDomainModel Storage Model methods, folders/files stored the filesystem.
     - _path_str - is the simplest string for a path name or component of. These
     methods return str values and do not manipulate with Path objects. Some
     folder values in the BDM, for example, are simply the name of a folder, 
@@ -864,7 +854,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=SingletonMeta):
     Abbrevs used in method names: 
         bdm - Budget Model Domain, the domain model of the budget model.
         bms - Budget Storage Model, the filesystem storage model.
-        bm - BudgetModel class instance, parent of the Budget Model data structure.
+        bm - BudgetDomainModel class instance, parent of the Budget Model data structure.
         bf - budget folder - attribute, root folder, used in path objects.
         fi - financial institution dictionary, attribute of bdm.
              fi_key = int_key, short name of FI, e.g., "boa", "chase", etc.
@@ -879,7 +869,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=SingletonMeta):
         """Initialize BSM aspects of the BDM.
         
         Examine elements of self, the BudgetDomainModel class, as initialized
-        so far from configuration (BUDMAN_STORE, or Template). Validate the 
+        so far from configuration (BDM_STORE, or Template). Validate the 
         BDM data dependent on folders and files in the filesystem. Flags control 
         whether to create the filesystem structure if it is not present. Also 
         scan the workflow folders for the presence of workbook excel files and 
@@ -896,7 +886,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=SingletonMeta):
         in the BDM. The BSM should be able to add that workbook to the BDM
         and update the BDM to reflect that. The BSM should also be able to
         remove a workbook from the BDM if it is no longer present in the
-        filesystem. The BUDMAN_STORE should be updated to reflect these changes.
+        filesystem. The BDM_STORE should be updated to reflect these changes.
 
         Args:
             create_missing_folders (bool): Create missing folders if True.
@@ -1080,7 +1070,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=SingletonMeta):
         fi_p_s = str(Path(self.bdm_FI_FOLDER(fi_key))) 
         if fi_p_s is None or len(fi_p_s) == 0:
             m = f"FI_FOLDER value is not set for FI_KEY('{fi_key}'). "
-            m += f"In the BudgetModel configuration, correct FI_FOLDER setting."
+            m += f"In the BudgetDomainModel configuration, correct FI_FOLDER setting."
             logger.error(m)
             raise ValueError(m)   
         return str(Path(bf_p_s) / fi_p_s)
@@ -2155,7 +2145,9 @@ def log_BSM_info(bdm : BudgetDomainModel) -> None:
         logger.debug(f"{P2}BDM_FOLDER['{BDM_FOLDER}']: '{bdm.bdm_folder}' {bf_ap_exists}")
         logger.debug(f"{P4}bsm_BDM_FOLDER_path(): '{str(bf_p)}' {bf_p_exists}")
         logger.debug(f"{P4}bsm_BDM_FOLDER_abs_path(): '{str(bf_ap)}' {bf_ap_exists}")
-        bmc_p = bf_p / BudManApp_settings[BUDMAN_STORE] # bmc: BM config file
+        # TODO: fix the BDM_STORE file name reference
+        bmc_full_filename = f"{bdm.filename}{bdm.bdm_filetype}"
+        bmc_p = bf_p / bmc_full_filename # bmc: BM config file
         bmc_p_exists = "exists." if bmc_p.exists() else "does not exist!"
         logger.debug(
             f"{P2}BDM_URL['{BDM_URL}]: '{bdm.bdm_url}' "
@@ -2188,43 +2180,4 @@ def log_BSM_info(bdm : BudgetDomainModel) -> None:
         logger.error(m)
         raise
 #endregion log_BSM_info() function
-# ---------------------------------------------------------------------------- +
-#region Local __main__ stand-alone
-if __name__ == "__main__":
-    try:
-        # this_app_name = os.path.basename(__file__)
-        # Configure logging
-        logger_name = settings[APP_NAME]
-        log_config = "budget_model_logging_config.jsonc"
-        # Set the log filename for this application.
-        # filenames = {"file": "logs/p3ExcelBudget.log"}
-        _ = p3l.setup_logging(
-            logger_name = logger_name,
-            config_file = log_config
-        )
-        p3l.set_log_flag(p3l.LOG_FLAG_PRINT_CONFIG_ERRORS, True)
-        logger = logging.getLogger(logger_name)
-        logger.setLevel(logging.DEBUG)
-        logger.info("+ ----------------------------------------------------- +")
-        logger.info(f"+ Running {settings[APP_NAME]} ...")
-        logger.info("+ ----------------------------------------------------- +")
-        logger.debug(f"Start: {settings[APP_NAME]}...")
-
-        bdm = BudgetDomainModel()
-        bdm.initialize()
-        bms = str(bdm)
-        bmr = repr(bdm)
-        bdm = bdm.to_dict()
-
-        logger.debug(f"Budget Model: str() = '{bms}'")
-        logger.debug(f"Budget Model: repr() = '{bmr}'")
-        logger.debug(f"Budget Model: to_dict() = '{bdm}'")
-        logger.info(f"Budget Model: {str(bdm)}")
-        _ = "pause"
-    except Exception as e:
-        m = p3u.exc_msg("__main__", e)
-        logger.error(m)
-    logger.info(f"Exiting {settings[APP_NAME]}...")
-    exit(1)
-#endregion
 # ---------------------------------------------------------------------------- +

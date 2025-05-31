@@ -11,20 +11,15 @@ import inspect
 
 # local libraries
 import logging, p3_utils as p3u, p3logging as p3l
-from budman_app import BudManApp_settings, configure_settings
+from budman_settings import *
 from budman_namespace import *
-from budman_model import BudgetDomainModelConfig
+from budman_domain_model import BDMConfig
 #endregion imports
 # ---------------------------------------------------------------------------- +
 #region Globals
 logger = logging.getLogger(__name__)
+BudManApp_settings = BudManSettings()
 #endregion Globals
-# ---------------------------------------------------------------------------- +
-@pytest.fixture(scope="module", autouse=True)
-def app_settings():
-    """Fixture to set up the application settings for the test module."""
-    configure_settings()
-    return BudManApp_settings
 # ---------------------------------------------------------------------------- +
 def test_budget_model_config_constructor() -> None:
     """Test the BudgetModelTemplate() function."""
@@ -33,10 +28,10 @@ def test_budget_model_config_constructor() -> None:
         # p3l.setup_logging(THIS_APP_NAME,p3l.STDOUT_FILE_LOG_CONFIG_FILE)
         st = p3u.start_timer()
         logger.info(test_budget_model_config_constructor.__doc__)
-        bmt = BudgetDomainModelConfig()
+        bmt = BDMConfig()
         
         # Check if the budget model is a dictionary
-        assert isinstance(bmt, BudgetDomainModelConfig), \
+        assert isinstance(bmt, BDMConfig), \
             "Budget model should be a BudgetModelTemplate instance"        
         assert bmt._initialized, "Budget model should be initialized"
         assert bmt._bdm_id is not None, "Created date should not be None"
@@ -60,10 +55,10 @@ def test_bsm_initialize() -> None:
         # Initialize the logger from a logging configuration file.
         st = p3u.start_timer()
         logger.info(test_bsm_initialize.__doc__)
-        bmt = BudgetDomainModelConfig()
+        bmt = BDMConfig()
         
         # Check if the budget model is a dictionary
-        assert isinstance(bmt, BudgetDomainModelConfig), \
+        assert isinstance(bmt, BDMConfig), \
             "Budget model should be a BudgetModelStorage instance"
         
         assert bmt._initialized, "Budget model should be initialized"
@@ -77,8 +72,8 @@ def test_bsm_BDM_Folder_Path_methods() -> None:
     """Test BM Folder (BF) Path methods."""
     try:
         logger.info(test_bsm_BDM_Folder_Path_methods.__doc__)
-        bmt = BudgetDomainModelConfig()
-        assert isinstance(bmt, BudgetDomainModelConfig), \
+        bmt = BDMConfig()
+        assert isinstance(bmt, BDMConfig), \
             "Budget model should be a BudgetModelTemplate instance"
         exptd_s = str(Path(BudManApp_settings.BDM_FOLDER).expanduser())
         assert (_s := bmt.bsm_BDM_FOLDER_path_str()) == exptd_s, \
@@ -96,8 +91,8 @@ def test_bsm_FI_Path_methods() -> None:
     """Test FI Path methods."""
     try:
         logger.info("Testing BudgetModelStorage constructor.")
-        bmt = BudgetDomainModelConfig()
-        assert isinstance(bmt, BudgetDomainModelConfig), \
+        bmt = BDMConfig()
+        assert isinstance(bmt, BDMConfig), \
             "Budget model should be a BudgetModelTemplate instance"
         # Test expected values based on the settings in
         # the budget_model_config in the source code. All default 
@@ -122,8 +117,8 @@ def test_WF_OBJECT_Path_methods() -> None:
     """Test WF Object Path methods."""
     try:
         logger.info(test_WF_OBJECT_Path_methods.__doc__)
-        bmt = BudgetDomainModelConfig()
-        assert isinstance(bmt, BudgetDomainModelConfig), \
+        bmt = BDMConfig()
+        assert isinstance(bmt, BDMConfig), \
             "Budget model should be a BudgetModelTemplate instance"
         # Test expected values based on the settings in
         # the budget_model_config in the source code. All default 
@@ -155,8 +150,8 @@ def test_BDM_FI_DATA_pseudo_Property_Methods():
     """Test BDM FI Object Pseudo Property Methods."""
     try:
         logger.info(test_BDM_FI_DATA_pseudo_Property_Methods.__doc__)
-        bmt = BudgetDomainModelConfig()
-        assert isinstance(bmt, BudgetDomainModelConfig), \
+        bmt = BDMConfig()
+        assert isinstance(bmt, BDMConfig), \
             "Budget model should be a BudgetModelTemplate instance"
         # Test expected values based on the settings in
         # the budget_model_config in the source code. All default 
@@ -187,8 +182,8 @@ def test_BDM_WF_Dictionary_Pseudo_Property_Methods():
     """Test BDM WF Dictionary Pseudo Property Methods."""
     try:
         logger.info(test_BDM_WF_Dictionary_Pseudo_Property_Methods.__doc__)
-        bmt = BudgetDomainModelConfig()
-        assert isinstance(bmt, BudgetDomainModelConfig), \
+        bmt = BDMConfig()
+        assert isinstance(bmt, BDMConfig), \
             "Budget model should be a BudgetModelTemplate instance"
         # Test expected values based on the settings in
         # the budget_model_config in the source code. All default 

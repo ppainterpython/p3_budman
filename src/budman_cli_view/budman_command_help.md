@@ -11,8 +11,8 @@ the command function. Here is the mapping:
 self.cmd_map = {
     "init_cmd_fin_inst": self.FI_init_cmd,
     "save_cmd_workbooks": self.FI_LOADED_WORKBOOKS_save_cmd,
-    "load_cmd_BUDMAN_STORE": self.BUDMAN_STORE_load,
-    "save_cmd_BUDMAN_STORE": self.BUDMAN_STORE_save,
+    "load_cmd_BDM_STORE": self.BDM_STORE_load,
+    "save_cmd_BDM_STORE": self.BDM_STORE_save,
 }
 ```
 

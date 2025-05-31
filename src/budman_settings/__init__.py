@@ -10,18 +10,24 @@ Excel workbooks, specifically for budgeting.
 __version__ = "0.3.0"
 __author__ = "Paul Painter"
 __copyright__ = "2025 Paul Painter"
-__name__ = "budman_app"
-__description__ = "Budget Manager (BudMan) a p3 application."
+__name__ = "budman_settings"
+__description__ = "Budget Manager (BudMan) settings object support."
 __license__ = "MIT"
 
-from .budman_app import (
-    BudManApp,
-    BudManApp_settings,
-)
+from .budman_settings_constants import * 
+from .budman_settings import BudManSettings
 
 # target for 'from budman_app import *'
 __all__ = [
-    "BudManApp",
-    "BudManApp_settings"
+    "BudManSettings",
+    "BUDMAN_SETTINGS",
+    "BUDMAN_FOLDER",
+    "BDM_STORE",
+    "BDM_STORE_FILETYPE",
+    "BUDMAN_DEFAULT_FI",
+    "BUDMAN_DEFAULT_WORKFLOW",
+    "BUDMAN_DEFAULT_WORKBOOK_TYPE",
+    "APP_NAME",
+    "SHORT_APP_NAME"
 ]
 

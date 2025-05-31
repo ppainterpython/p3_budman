@@ -130,13 +130,13 @@ class BudManDataContextClientInterface(BudManDataContextBaseInterface):
         self.DC.dc_WB_NAME = value
 
     @property
-    def dc_BUDMAN_STORE(self) -> str:
-        """Return the BUDMAN_STORE jsonc definition."""
-        return self.DC.dc_BUDMAN_STORE
-    @dc_BUDMAN_STORE.setter
-    def dc_BUDMAN_STORE(self, value: str) -> None:
-        """Set the BUDMAN_STORE jsonc definition."""
-        self.DC.dc_BUDMAN_STORE = value
+    def dc_BDM_STORE(self) -> str:
+        """Return the BDM_STORE jsonc definition."""
+        return self.DC.dc_BDM_STORE
+    @dc_BDM_STORE.setter
+    def dc_BDM_STORE(self, value: str) -> None:
+        """Set the BDM_STORE jsonc definition."""
+        self.DC.dc_BDM_STORE = value
 
     @property
     def dc_WORKBOOKS(self) -> bdmns.WORKBOOK_LIST:
@@ -209,13 +209,13 @@ class BudManDataContextClientInterface(BudManDataContextBaseInterface):
         """Add a new workbook to the data context."""
         return self.DC.dc_WORKBOOK_add(wb_name, wb)
 
-    def dc_BUDMAN_STORE_load(self, file_path: str) -> None:
-        """Load the BUDMAN_STORE from the specified file path."""
-        return self.DC.dc_BUDMAN_STORE_load(file_path)
+    def dc_BDM_STORE_load(self, file_path: str) -> None:
+        """Load the BDM_STORE from the specified file path."""
+        return self.DC.dc_BDM_STORE_load(file_path)
 
-    def dc_BUDMAN_STORE_save(self, file_path: str) -> None:
-        """Save the BUDMAN_STORE to the specified file path."""
-        return self.DC.dc_BUDMAN_STORE_save(file_path)
+    def dc_BDM_STORE_save(self, file_path: str) -> None:
+        """Save the BDM_STORE to the specified file path."""
+        return self.DC.dc_BDM_STORE_save(file_path)
 
     #endregion BudManDataContextClientInterface Methods
     # ------------------------------------------------------------------------ +

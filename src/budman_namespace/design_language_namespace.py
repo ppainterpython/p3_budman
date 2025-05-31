@@ -69,22 +69,26 @@ ALL_KEY = "all"
 # BudgetDomainModel (BDM) (BudgetModel-BM) class Property name Constants
 BDM_ID = "_bdm_id"                             # Type: str
 BDM_CONFIG_OBJECT = "_bdm_config_object"       # Type: DATA_OBJECT
-BDM_INITIALIZED = "_initialized"                # Type: bool
+BDM_INITIALIZED = "_initialized"               # Type: bool
+BDM_FILENAME = "_bdm_filename"                 # Type: str - path element
+BDM_FILETYPE = "_bdm_filetype"                 # Type: str - path element
 BDM_FOLDER = "_budget_folder"                  # Type: str - path element
 BDM_URL = "_bdm_url"                           # Type: str
 BDM_FI_COLLECTION = "_financial_institutions"  # Type: FI_COLLECTION
 BDM_WF_COLLECTION = "_workflows"               # Type: WF_COLLECTION
-BDM_OPTIONS = "_options"                        # Type: BMO_COLLECTION
-BDM_CREATED_DATE = "_created_date"              # Type: str - ISO date string
-BDM_LAST_MODIFIED_DATE = "_last_modified_date"  # Type: str - ISO date string
-BDM_LAST_MODIFIED_BY = "_last_modified_by"      # Type: str - user name
+BDM_OPTIONS = "_options"                       # Type: BMO_COLLECTION
+BDM_CREATED_DATE = "_created_date"             # Type: str - ISO date string
+BDM_LAST_MODIFIED_DATE = "_last_modified_date" # Type: str - ISO date string
+BDM_LAST_MODIFIED_BY = "_last_modified_by"     # Type: str - user name
 BDM_WORKING_DATA = "_wd"                       # Type: BDM_WORKING_DATA
 # Validation list constants
-BDM_VALID_PROPERTIES = (BDM_INITIALIZED, BDM_FOLDER, BDM_URL, 
-                    BDM_FI_COLLECTION, BDM_WF_COLLECTION,  BDM_OPTIONS,
-                    BDM_CREATED_DATE, BDM_LAST_MODIFIED_DATE, 
-                    BDM_LAST_MODIFIED_BY, BDM_WORKING_DATA)
-BSM_PERSISTED_PROPERTIES = (BDM_ID, BDM_FOLDER, 
+BDM_VALID_PROPERTIES = (
+    BDM_ID, BDM_CONFIG_OBJECT, BDM_INITIALIZED, 
+    BDM_FILENAME, BDM_FILETYPE, BDM_FOLDER, 
+    BDM_URL, BDM_FI_COLLECTION, BDM_WF_COLLECTION, BDM_OPTIONS,
+    BDM_CREATED_DATE, BDM_LAST_MODIFIED_DATE, 
+    BDM_LAST_MODIFIED_BY, BDM_WORKING_DATA)
+BSM_PERSISTED_PROPERTIES = (BDM_ID, BDM_FILENAME, BDM_FILETYPE, BDM_FOLDER, 
                             BDM_FI_COLLECTION, BDM_WF_COLLECTION,  
                             BDM_OPTIONS,
                             BDM_CREATED_DATE, BDM_LAST_MODIFIED_DATE, 
@@ -203,7 +207,7 @@ BDMWD_LOADED_WORKBOOKS = "bdmwd_loaded_workbooks" # key name
 # Type: LOADED_WORKBOOK_LIST : list of tuples
 # Desc: A list of tuples of wb_name, Workbook objects for workbooks associated
 #       with the current FI_KEY, WF_KEY, and WB_TYPE and are loaded into BDMWD.
-BDMWD_BUDMAN_STORE = "budman_store"
+BDMWD_BDM_STORE = "budman_store"
 # Name: BDMWD_LOADED_WORKBOOKS
 # Type: Dict
 # Desc: Values loaded from Budget Manager configuration file , or "store".
@@ -216,7 +220,7 @@ BDM_WORKING_DATA_VALID_ATTR_KEYS = (
     BDMWD_WB_NAME, 
     BDMWD_WORKBOOKS, 
     BDMWD_LOADED_WORKBOOKS,
-    BDMWD_BUDMAN_STORE)
+    BDMWD_BDM_STORE)
 # ---------------------------------------------------------------------------- +
 # DATA_CONTEXT "good guy" interface (Dictionary key names)
 DC_INITIALIZED = BDMWD_INITIALIZED
@@ -249,7 +253,7 @@ DC_LOADED_WORKBOOKS = BDMWD_LOADED_WORKBOOKS
 # Type: LOADED_WORKBOOK_LIST
 # Desc: A list of tuples of wb_name, and Workbook objects for workbooks associated
 #       with the current FI_KEY, WF_KEY, and WB_TYPE
-DC_BUDMAN_STORE = BDMWD_BUDMAN_STORE
+DC_BDM_STORE = BDMWD_BDM_STORE
 # Name: DC_LOADED_WORKBOOKS
 # Type: Dict
 # Desc: Values loaded from Budget Manager configuration file , or "store".
@@ -261,7 +265,7 @@ DATA_CONTEXT_VALID_ATTR_KEYS = (
     DC_WB_TYPE,
     DC_LOADED_WORKBOOKS,
     DC_WORKBOOKS,
-    DC_BUDMAN_STORE)
+    DC_BDM_STORE)
 
 BDMWD_OBJECT_VALID_ATTR_KEYS = BDM_WORKING_DATA_VALID_ATTR_KEYS + DATA_CONTEXT_VALID_ATTR_KEYS
 # ---------------------------------------------------------------------------- +

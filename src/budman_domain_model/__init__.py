@@ -21,17 +21,9 @@ from .budget_domain_model import BudgetDomainModel
 from .budget_category_mapping import (
     map_category, category_map, category_map_count
 )
-from .budget_domain_model_config import (
-    BudgetDomainModelConfig
-)
+from .budget_domain_model_config import BDMConfig
 from .budget_categorization import (
     check_budget_category, map_budget_category
-)
-from .budget_storage_model import (
-    bsm_verify_folder,
-    bsm_BUDMAN_STORE_save,
-    bsm_BUDMAN_STORE_load,
-
 )
 
 # symbols for "from budman_model import *"
@@ -41,13 +33,10 @@ __all__ = [
     "BDMBaseInterface",
     "BDMClientInterface",
     "BudgetDomainModelIdentity",
-    "BudgetDomainModelConfig",
+    "BDMConfig",
     "check_budget_category",
     "map_budget_category",
     "map_category",
     "category_map",
-    "category_map_count",
-    "bsm_verify_folder",
-    "bsm_BUDMAN_STORE_save",
-    "bsm_BUDMAN_STORE_load"
+    "category_map_count"
 ]

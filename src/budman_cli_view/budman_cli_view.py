@@ -293,7 +293,7 @@ class BudManCLIView(cmd2.Cmd):
         """Apply a workflow to Budget Manager data.
         
         Workflows are implemented by python code with configuration in the
-        BUDMAN_STORE file. In the DataContext (DC), there is a WF_KEY value
+        BDM_STORE file. In the DataContext (DC), there is a WF_KEY value
         identifying the workflow to use if not specified explicitly in the 
         cmd arguments.
 
