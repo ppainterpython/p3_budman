@@ -141,8 +141,7 @@ def test_BDM_FI_DATA_pseudo_Property_Methods():
         assert isinstance(bdm, BudgetDomainModel), \
             "Budget model should be a BudgetModel instance"
         # Test expected values based on the settings in
-        # the budget_model_config in the source code. All default 
-        # settings are mastered there and budget_model_constants.py.
+        # the budget_model_config in the source code. 
 
         # Expect valid values to work from default setup.
         for fi_key in VALID_FI_KEYS:
@@ -181,8 +180,7 @@ def test_BDM_FI_WF_DATA_OBJECT_pseudo_Property_Methods():
         assert isinstance(bdm, BudgetDomainModel), \
             "Budget model should be a BudgetModel instance"
         # Test expected values based on the settings in
-        # the budget_model_config in the source code. All default 
-        # settings are mastered there and budget_model_constants.py.
+        # the budget_model_config in the source code. 
 
         # Expect valid values to work from default setup.
         for fi_key in VALID_FI_KEYS:

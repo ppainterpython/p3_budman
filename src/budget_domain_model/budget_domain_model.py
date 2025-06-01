@@ -450,37 +450,6 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
         wf - workflow
     """
     # ======================================================================== +
-    #region    BDM_CONFIG_OBJECT bdm_resolve_config_object(self) -> Dict
-    # def bdm_resolve_config_object(self) -> Dict:
-    #     """Resolve the configuration object to initialize BudgetDomainModel.
-
-    #     Best to provide a config_object to BudgetDomainModel() at instantiation
-    #     time. If not, the BudgetDomainModelTemplate is used as the default.
-
-    #     Returns:
-    #         Dict: The resolved configuration object.
-    #     """
-    #     try:
-    #         if self.bdm_config_object is None:
-    #             # If bdm_config_object is None, use the BudgetDomainModelTemplate.
-    #             logger.debug("bm_config_object property is None, "
-    #                          f"resolve with builtin BudgetDomainModelTemplate.")
-    #             # default_config_object is set if BudgetDomainModelTemplate() 
-    #             # is instantiated prior to BudgetDomainModel().
-    #             bdm_config = BudgetDomainModel._default_config_object  
-    #             if bdm_config is None:
-    #                 # Last hope, obtain the BudgetDomainModelTemplate without 
-    #                 # a circular reference, since it is a subclass.
-    #                 from budman_domain_model import __get_budget_model_config__
-    #                 bdm_config = __get_budget_model_config__()
-    #             self.bdm_config_object = bdm_config
-    #         return self.bdm_config_object
-    #     except Exception as e:
-    #         m = p3u.exc_err_msg(e)
-    #         logger.error(m)
-    #         raise
-    #endregion BDM_CONFIG_OBJECT bdm_resolve_config_object(self) -> Dict 
-    # ------------------------------------------------------------------------ +
     #region    BDM_INITIALIZED BDM bdm_initialize(self, bsm_init, ...)
     def bdm_initialize(self, 
                  bsm_init : bool = True,
@@ -1945,13 +1914,14 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
                          f"FI_KEY('{fi_key}') WF_KEY('{wf_key}') "
                          f"WB_TYPE('{wb_type}')")
             bdmwd_lwbs = self.bdmwd_LOADED_WORKBOOKS_get()
-            bdmwd_lwbs_count = len(bdmwd_lwbs) if bdmwd_lwbs is not None else 0
+            prev_count = len(bdmwd_lwbs) if bdmwd_lwbs is not None else 0
             if new_lwbl is None or len(new_lwbl) == 0: return bdmwd_lwbs
             # TODO: How to handle duplicates?
-            for new_wb_name, new_wb in new_lwbl:
-                self.bdmwd_LOADED_WORKBOOKS_add(new_wb_name, new_wb)
-            logger.debug(f"Added {new_count} to "
-                         f"BDMWD_LOADED_WORKBOOKS({bdmwd_lwbs_count}) "
+            bdmwd_lwbs.update(new_lwbl)
+            # for new_wb_name, new_wb in new_lwbl:
+            #     self.bdmwd_LOADED_WORKBOOKS_add(new_wb_name, new_wb)
+            logger.debug(f"Updated BDMWD_LOADED_WORKBOOKS({prev_count}) with "
+                         f"{new_count} loaded workbooks, "
                          f"total = {len(bdmwd_lwbs)}")
             return self.bdmwd_LOADED_WORKBOOKS_get()
         except Exception as e:

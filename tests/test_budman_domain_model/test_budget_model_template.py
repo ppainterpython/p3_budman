@@ -95,8 +95,7 @@ def test_bsm_FI_Path_methods() -> None:
         assert isinstance(bmt, BDMConfig), \
             "Budget model should be a BudgetModelTemplate instance"
         # Test expected values based on the settings in
-        # the budget_model_config in the source code. All default 
-        # settings are mastered there and budget_model_constants.py.
+        # the budget_model_config in the source code. 
 
         # Expect valid values to work from default setup.
         for fi_key in VALID_FI_KEYS:
@@ -121,8 +120,7 @@ def test_WF_OBJECT_Path_methods() -> None:
         assert isinstance(bmt, BDMConfig), \
             "Budget model should be a BudgetModelTemplate instance"
         # Test expected values based on the settings in
-        # the budget_model_config in the source code. All default 
-        # settings are mastered there and budget_model_constants.py.
+        # the budget_model_config in the source code. 
 
         # Expect valid values to work from default setup.
         for fi_key in VALID_FI_KEYS:
@@ -154,8 +152,7 @@ def test_BDM_FI_DATA_pseudo_Property_Methods():
         assert isinstance(bmt, BDMConfig), \
             "Budget model should be a BudgetModelTemplate instance"
         # Test expected values based on the settings in
-        # the budget_model_config in the source code. All default 
-        # settings are mastered there and budget_model_constants.py.
+        # the budget_model_config in the source code. 
 
         # Expect valid values to work from default setup.
         for fi_key in VALID_FI_KEYS:
@@ -186,8 +183,7 @@ def test_BDM_WF_Dictionary_Pseudo_Property_Methods():
         assert isinstance(bmt, BDMConfig), \
             "Budget model should be a BudgetModelTemplate instance"
         # Test expected values based on the settings in
-        # the budget_model_config in the source code. All default 
-        # settings are mastered there and budget_model_constants.py.
+        # the budget_model_config in the source code. 
 
         # Expect valid values to work from default setup.
         for wf_key in BDM_VALID_WORKFLOWS:

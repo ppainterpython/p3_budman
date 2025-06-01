@@ -36,11 +36,9 @@ class BDMWorkingData(BudManDataContext, BDMClientInterface):
         super().__init__()
         self._budget_domain_model : MODEL_OBJECT = bdm
     # ------------------------------------------------------------------------ +
-    def dc_FI_KEY_validate(self, fi_key: str) -> bool:
-        """Validate the provided FI_KEY."""
-        return self.bdmwd_FI_KEY_validate(fi_key)
-    # ------------------------------------------------------------------------ +
-    # BDMClientInterface required property.
+
+    # ======================================================================== +
+    #region    BDMClientInterface concrete property implementation.
     @property
     def model(self) -> MODEL_OBJECT:
         """Return the model object reference."""
@@ -49,10 +47,17 @@ class BDMWorkingData(BudManDataContext, BDMClientInterface):
     def model(self, bdm: MODEL_OBJECT) -> None:
         """Set the model object reference."""
         if not isinstance(bdm, MODEL_OBJECT):
-            raise TypeError("model must be a BudgetDomainModel instance")
+            raise TypeError(f"model must be a {MODEL_OBJECT} instance")
         self._budget_domain_model = bdm
+    #endregion BDMClientInterface concrete property implementation.
     # ======================================================================== +
-    #region    BudManDataContext Method Overrides.
+
+    # ======================================================================== +
+    #region    BudManDataContext(BudManDataContextBaseInterface) Method Overrides.
+    # ------------------------------------------------------------------------ +
+    def dc_FI_KEY_validate(self, fi_key: str) -> bool:
+        """Validate the provided FI_KEY."""
+        return self.bdmwd_FI_KEY_validate(fi_key)
     # ------------------------------------------------------------------------ +
 
     #endregion BudManDataContext Method Overrides.
@@ -63,8 +68,21 @@ class BDMWorkingData(BudManDataContext, BDMClientInterface):
     # ------------------------------------------------------------------------ +
     def bdmwd_FI_KEY_validate(self, fi_key: str) -> bool:
         """Validate the provided FI_KEY."""
+        # First end-to-end DC binding through the BDMClientInterface.
         return self.model.bdm_FI_KEY_validate(fi_key)
-
+    #endregion BDMWorkingDataBaseInterface BDMWD Interface.
+    # ------------------------------------------------------------------------ +
+    #region    BDMWorkingDataBaseInterface BDMWD Interface.
+    # ------------------------------------------------------------------------ +
+    def bdmwd_FI_WORKBOOKS_load(self, 
+                                fi_key: str, 
+                                wf_key : str, 
+                                wb_type : str) -> LOADED_WORKBOOK_LIST:
+        """Load WORKBOOKS for the FI,WF, WBT."""
+        # TODO: Add to dc_LOADED_WORKBOOKS, handle duplicate keys.
+        lwbs = self.model.bdmwd_FI_WORKBOOKS_load(fi_key, wf_key, wb_type)
+        self.dc_LOADED_WORKBOOKS = lwbs
+        return 
     #endregion BDMWorkingDataBaseInterface BDMWD Interface.
     # ======================================================================== +
 

@@ -32,13 +32,14 @@ class BudManViewModel(BDMClientInterface):
     #region BudgetManagerViewModelInterface class
     """A Budget Model View Model to support Commands and Data Context.
     
-    This ViewModel support two primary interfaces: Command processing to the 
-    Model (from upstream Views and other clients) and Data Context properties
-    and methods. The Data Context (DC) is the main medium of exchange of
-    data between the ViewModel and the View. Commands are sent from the 
+    This ViewModel supports two primary interfaces: Command Processing (CP) and 
+    Data Context (DC) properties and methods. CP is the means for a View
+    to take actions against data in the (DC). DC is the main medium of data 
+    access between the ViewModel and the Model. Commands are sent from the 
     View, to be processed by the ViewModel in the context of the DC. Command
-    implementation methods access the APIs of the Model to perform the
-    requested actions.
+    implementation methods access the DC properties and invoke methods on the 
+    Model to perform the requested actions, using a specialized subclass of
+    the BudManDataContextBaseInterface(ABC).
     """
     # ======================================================================== +
     #                                                                          +
@@ -54,7 +55,7 @@ class BudManViewModel(BDMClientInterface):
         self._initialized : bool = False
         self.BDM_STORE_loaded : bool = False
         self._budget_domain_model : BudgetDomainModel = None
-        self._data_context : BudManDataContext = None
+        self._data_context : BDMWorkingData = None
         self._cmd_map : Dict[str, Callable] = None
     #endregion __init__() constructor method
     # ------------------------------------------------------------------------ +
@@ -113,27 +114,46 @@ class BudManViewModel(BDMClientInterface):
         if not isinstance(value, BudgetDomainModel):
             raise ValueError("budget_model must be a BudgetModel instance.")
         self._budget_domain_model = value
+
+    def _valid_DC(self) -> BDMWorkingData:
+        """Init self._data_context if it is None."""
+        try:
+            if (self._data_context is None or 
+                not isinstance(self._data_context, BDMWorkingData)):
+                m = f"data_context property is not a BDMWorkingData instance, " 
+                m += f"it is {type(self._data_context)}."
+                logger.error(m)
+                raise TypeError(m)
+            return self._data_context
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+
     @property
-    def data_context(self) -> Dict:
-        """Return the data context dictionary."""
+    def data_context(self) -> BDMWorkingData:
+        """Return the data context object."""
+        _ = self._valid_DC()  # Ensure _data_context is valid
         return self._data_context
     @data_context.setter
-    def data_context(self, value: Dict) -> None:
-        """Set the data context dictionary."""
-        if not isinstance(value, dict):
-            raise ValueError("data_context must be a dictionary.")
+    def data_context(self, value: BDMWorkingData) -> None:
+        """Set the data context object."""
+        _ = self._valid_DC()  # Ensure _data_context is valid
+        if not isinstance(value, BDMWorkingData):
+            raise ValueError("data_context must be a BDMWorkingData instance.")
         self._data_context = value
     @property
-    def DC(self) -> Dict:
+    def DC(self) -> BDMWorkingData:
         """Return the data context (DC) dictionary.
         This is an alias for the data_context property."""
+        _ = self._valid_DC()  # Ensure _data_context is valid
         return self._data_context
     @DC.setter
-    def DC(self, value: Dict) -> None:
+    def DC(self, value: BDMWorkingData) -> None:
         """Set the data context (DC) dictionary.
         This is an alias for the data_context property."""
-        if not isinstance(value, dict):
-            raise ValueError("data_context must be a dictionary.")
+        _ = self._valid_DC()  # Ensure _data_context is valid
+        if not isinstance(value, BDMWorkingData):
+            raise ValueError("DC property value must be a BDMWorkingData object.")
         self._data_context = value
     @property
     def cmd_map(self) -> Dict[str, Callable]:
@@ -180,7 +200,7 @@ class BudManViewModel(BDMClientInterface):
             if not self.budget_domain_model.bdm_initialized: 
                 raise ValueError("BudgetModel is not initialized.")
             # Create the BDMWorkingData as the data_context for the View Model
-            self.data_context = BDMWorkingData(self.model)  # Data Context for the Budget Domain Model
+            self._data_context = BDMWorkingData(self.model)  # Data Context for the Budget Domain Model
             # Initialize the command map.
             self.initialize_cmd_map()  # TODO: move to DataContext class
             self.initialized = True
@@ -684,20 +704,22 @@ class BudManViewModel(BDMClientInterface):
                 raise NotImplementedError(f"{pfx}fi_key 'all' not implemented.")
             # Check if valid fi_key            
             try:
-                _ = self.budget_domain_model.bdm_FI_KEY_validate(fi_key)
+                _ = self.DC.dc_FI_KEY_validate(fi_key)
+                # _ = self.budget_domain_model.bdm_FI_KEY_validate(fi_key)
             except ValueError as e:
                 m = f"ValueError({str(e)})"
                 logger.error(m)
                 raise RuntimeError(f"{pfx}{m}")
             # Load the workbooks for the FI,WF specified in the DC.
-            lwbl = self.budget_domain_model.bdmwd_FI_WORKBOOKS_load(fi_key, wf_key, wb_type)
+            lwbl = self.DC.bdmwd_FI_WORKBOOKS_load(fi_key, wf_key, wb_type)
             # Set last values of FI_init_cmd in the DC.
             self.dc_FI_KEY = fi_key
             self.dc_WF_KEY = wf_key
             self.dc_WB_TYPE = wb_type
             self.dc_WB_NAME = wb_name
             # Create result
-            lwbl_names = self.FI_get_loaded_workbook_names()
+            lwbl_names = list(self.DC.dc_LOADED_WORKBOOKS().keys())
+            # lwbl_names = self.FI_get_loaded_workbook_names()
             result = f"Loaded {len(lwbl_names)} Workbooks: {str(lwbl_names)}"
             return True, result
         except Exception as e:
@@ -1250,119 +1272,78 @@ class BudManViewModel(BDMClientInterface):
     #region BudMan Data Context Interface (client sdk) Properties                                            +
     #                                                                          +
     # ------------------------------------------------------------------------ +
-    def _valid_DC(self) -> Dict:
-        """Init self._data_context if it is None."""
-        try:
-            self._data_context = self._data_context if self._data_context else {}
-            return self._data_context
-        except Exception as e:
-            logger.error(p3u.exc_err_msg(e))
-            raise
-
     @property
     def dc_INITIALIZED(self) -> bool:
         """Return the value of the DC_INITIALIZED attribute."""
-        dc = self._valid_DC()
-        if DC_INITIALIZED not in dc:
-            self.DC[DC_INITIALIZED] = False
-        return self.DC[DC_INITIALIZED]
+        return self.DC.dc_INITIALIZED
     @dc_INITIALIZED.setter
     def dc_INITIALIZED(self, value: bool) -> None:
         """Set the value of the DC_INITIALIZED attribute."""
-        dc = self._valid_DC()
-        self.DC[DC_INITIALIZED] = value
+        self.DC.dc_INITIALIZED = value
 
     @property
     def dc_FI_KEY(self) -> str:
         """Return the current financial institution key value in DC."""
-        dc = self._valid_DC()
-        if FI_KEY not in dc:
-            self.DC[FI_KEY] = None
-        return self.DC[FI_KEY]
+        return self.DC.dc_FI_KEY
     @dc_FI_KEY.setter
     def dc_FI_KEY(self, value: str) -> None:
         """Set the current financial institution key value in DC."""
-        dc = self._valid_DC()
-        self.DC[FI_KEY] = value
+        self.DC.dc_FI_KEY = value
 
     @property
     def dc_WF_KEY(self) -> str:
         """Return the current workflow key value in DC."""
-        dc = self._valid_DC()
-        if WF_KEY not in dc:
-            self.DC[WF_KEY] = None
-        return self.DC[WF_KEY]
+        return self.DC.dc_WF_KEY
     @dc_WF_KEY.setter
     def dc_WF_KEY(self, value: str) -> None:
         """Set the current workflow key value in DC."""
-        dc = self._valid_DC()
-        self.DC[WF_KEY] = value
+        self.DC.dc_WF_KEY = value
 
     @property
     def dc_WB_TYPE(self) -> str:
         """Return the current workbook type value in DC."""
-        dc = self._valid_DC()
-        if WB_TYPE not in dc:
-            self.DC[WB_TYPE] = None
-        return self.DC[WB_TYPE]
+        return self.DC.dc_WB_TYPE
     @dc_WB_TYPE.setter
     def dc_WB_TYPE(self, value: str) -> None:
         """Set the current workbook type value in DC."""
-        dc = self._valid_DC()
-        self.DC[WB_TYPE] = value
+        self.DC.dc_WB_TYPE = value
 
     @property
     def dc_WB_NAME(self) -> str:
         """Return the current workbook name value in DC."""
-        dc = self._valid_DC()
-        if WB_NAME not in dc:
-            self.DC[WB_NAME] = None
-        return self.DC[WB_NAME]
+        return self.DC.dc_WB_NAME
 
     @dc_WB_NAME.setter
     def dc_WB_NAME(self, value: str) -> None:
         """Set the current workbook name value in DC."""
-        dc = self._valid_DC()
-        self.DC[WB_NAME] = value
+        self.DC.dc_WB_NAME = value
 
     @property
     def dc_BDM_STORE(self) -> str:
         """Return the current BDM_STORE value in DC."""
-        dc = self._valid_DC()
-        if DC_BDM_STORE not in dc:
-            self.DC[DC_BDM_STORE] = None
-        return self.DC[DC_BDM_STORE]
+        return self.DC.dc_BDM_STORE
     @dc_BDM_STORE.setter
     def dc_BDM_STORE(self, value: str) -> None:
         """Set the current BDM_STORE value in DC."""
-        dc = self._valid_DC()
-        self.DC[DC_BDM_STORE] = value
+        self.DC.dc_BDM_STORE = value
 
     @property 
     def dc_WORKBOOKS(self) -> WORKBOOK_LIST:
         """Return the current workbooks value in DC per FI_KEY, WF_KEY, WB_TYPE."""
-        dc = self._valid_DC()
-        if DC_WORKBOOKS not in dc:
-            self.DC[DC_WORKBOOKS] = None
-        return self.DC[DC_WORKBOOKS]
+        return self.DC.dc_WORKBOOKS
     @dc_WORKBOOKS.setter
     def dc_WORKBOOKS(self, value: WORKBOOK_LIST) -> None:
         """Set the current  dc_WORKBOOK value in DC."""
-        dc = self._valid_DC()
-        self.DC[DC_WORKBOOKS] = value
+        self.DC.dc_WORKBOOKS = value
 
     @property 
     def dc_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_LIST:
         """Return the current loaded workbooks value in DC."""
-        dc = self._valid_DC()
-        if DC_LOADED_WORKBOOKS not in dc:
-            self.DC[DC_LOADED_WORKBOOKS] = None
-        return self.DC[DC_LOADED_WORKBOOKS]
+        return self.DC.dc_LOADED_WORKBOOKS
     @dc_LOADED_WORKBOOKS.setter
     def dc_LOADED_WORKBOOKS(self, value: LOADED_WORKBOOK_LIST) -> None:
         """Set the current loaded workbooks value in DC."""
-        dc = self._valid_DC()
-        self.DC[DC_LOADED_WORKBOOKS] = value
+        self.DC.dc_LOADED_WORKBOOKS = value
     # ------------------------------------------------------------------------ +
     #endregion BudMan Data Context Interface (client sdk) Properties
     # ------------------------------------------------------------------------ +
@@ -1376,7 +1357,8 @@ class BudManViewModel(BDMClientInterface):
         """Return True if the fi_key is valid."""
         try:
             # Ask the Budget Domain Model to validate the fi_key.
-            return self.budget_domain_model.bdm_FI_KEY_validate(fi_key)
+            return self.DC.dc_FI_KEY_validate(fi_key)
+            # return self.budget_domain_model.bdm_FI_KEY_validate(fi_key)
         except Exception as e:
             return self.BMVM_cmd_exception(e)
     #endregion dc_FI_KEY_validate() method

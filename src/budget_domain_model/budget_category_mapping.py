@@ -13,8 +13,7 @@ import re, pathlib as Path, logging
 import p3logging as p3l, p3_utils as p3u
 from openpyxl import Workbook, load_workbook
 
-# local modules and packages
-from .budget_model_constants import  *
+# local modules and packages.
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
