@@ -10,10 +10,9 @@ from typing import Type, Any
 import inspect
 import logging, p3_utils as p3u, p3logging as p3l
 # local libraries
-from budman_app import *
 from budman_namespace import *
-from budman_domain_model import BDMBaseInterface
-from budman_domain_model import BudgetDomainModel
+from budget_domain_model import BDMBaseInterface
+from budget_domain_model import BudgetDomainModel
 #endregion imports
 # ---------------------------------------------------------------------------- +
 #region Globals

@@ -169,7 +169,7 @@ def bsm_BDM_STORE_new(bdms_url : str = None) -> str:
     """Create a new budget storage model file."""
     try:
         st = p3u.start_timer()
-        # bmt = BudgetDomainModelConfig(default=True)
+        # bmt = BDMConfig(default=True)
         # filename = name or bmt.bdm_filename
         # folder = folder or bmt.bdm_folder
         # filetype = filetype or bmt.bdm_filetype

@@ -76,7 +76,7 @@ import p3_utils as p3u, pyjson5, p3logging as p3l
 from openpyxl import Workbook, load_workbook
 # local modules and packages
 from budman_namespace import *
-from budman_storage_model import bsm_verify_folder
+from budget_storage_model import bsm_verify_folder
 from .model_base_interface import BDMBaseInterface
 from .budget_domain_model_identity import BudgetDomainModelIdentity
 #endregion Imports
@@ -85,28 +85,6 @@ from .budget_domain_model_identity import BudgetDomainModelIdentity
 logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
-# ---------------------------------------------------------------------------- +
-class BDMSingletonMeta(ABCMeta):
-    """Metaclass for implementing the Singleton pattern for subclasses."""
-    _instances = {}
-
-    # As a metaclass, __call__() runs when an instance is created as an
-    # override to the normal __new__ method which is called by the type() 
-    # metaclass for all python classes. So, call super() to use the normal
-    # class behavior in addition to what SingletonMeta is doing.
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            # Runs only for the first instance of the cls (class).
-            # Invokes cls.__new__(), then cls.__init__(), which constructs 
-            # a new cls instance. By default, the type() metaclass does this.
-            _new_inst = super().__call__(*args, **kwargs)
-            # Apply the singleton pattern, one instance per class.
-            cls._instances[cls] = _new_inst
-            # Save the cls so code knows what subclass was instantiated.
-            _new_inst._subclassname = cls.__name__
-            logger.debug(f"Created first {p3u.dscr(_new_inst)}")
-        logger.debug(f"Return {p3u.dscr(cls._instances[cls])}")
-        return cls._instances[cls]
 # ---------------------------------------------------------------------------- +
 class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
     # ======================================================================== +
@@ -128,21 +106,27 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
     #endregion class variables
     # ------------------------------------------------------------------------ +
     #region    BudgetDomainModel class constructor __init__()
-    def __init__(self, config_object : object = None) -> None:
+    def __init__(self, bdm_config : Dict = None) -> None:
         """Constructor for the BudgetDomainModel class."""
         # Note: _subclassname set by SingletonMeta after __init__() completes.
         logger.debug("Start: ...")
-
-        # Private attributes initialization, basic stuff only.
-        # for serialization ease, always persist dates as str type.
-        bdm_id = BudgetDomainModelIdentity()
-        setattr(self, BDM_ID, bdm_id.uid)
-        setattr(self, BDM_CONFIG_OBJECT,config_object)
+        # Keep the constructor simple, just set initial values to create the 
+        # attributes in the object with one critical exception.
+        # A valid bdm_config dictionary created by one of the methods on the
+        # BDMConfig class is required here. Here is is just added to the
+        # BDM_CONFIG_OBJECT property. The real work happens in bdm_initialize().
+        if bdm_config is None:
+            m = "bdm_config is None, must be a valid configuration dictionary "
+            m += "created by one of the BDMConfig methods prior to BudgetDomainModel()." 
+            logger.error(m)
+            raise ValueError(m)
+        setattr(self, BDM_ID, None)
+        setattr(self, BDM_CONFIG_OBJECT, bdm_config) # CRITICAL to later initialization.
         setattr(self, BDM_INITIALIZED, False)
         setattr(self, BDM_FILENAME, None)
         setattr(self, BDM_FILETYPE, None)
         setattr(self, BDM_FOLDER, None)  
-        setattr(self, BDM_URL, bdm_id.bdm_store_abs_path().as_uri())  
+        setattr(self, BDM_URL, None)  
         setattr(self, BDM_FI_COLLECTION, {})
         setattr(self, BDM_WF_COLLECTION, {}) 
         setattr(self, BDM_OPTIONS, {})
@@ -467,34 +451,34 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
     """
     # ======================================================================== +
     #region    BDM_CONFIG_OBJECT bdm_resolve_config_object(self) -> Dict
-    def bdm_resolve_config_object(self) -> Dict:
-        """Resolve the configuration object to initialize BudgetDomainModel.
+    # def bdm_resolve_config_object(self) -> Dict:
+    #     """Resolve the configuration object to initialize BudgetDomainModel.
 
-        Best to provide a config_object to BudgetDomainModel() at instantiation
-        time. If not, the BudgetDomainModelTemplate is used as the default.
+    #     Best to provide a config_object to BudgetDomainModel() at instantiation
+    #     time. If not, the BudgetDomainModelTemplate is used as the default.
 
-        Returns:
-            Dict: The resolved configuration object.
-        """
-        try:
-            if self.bdm_config_object is None:
-                # If bdm_config_object is None, use the BudgetDomainModelTemplate.
-                logger.debug("bm_config_object property is None, "
-                             f"resolve with builtin BudgetDomainModelTemplate.")
-                # default_config_object is set if BudgetDomainModelTemplate() 
-                # is instantiated prior to BudgetDomainModel().
-                bdm_config = BudgetDomainModel._default_config_object  
-                if bdm_config is None:
-                    # Last hope, obtain the BudgetDomainModelTemplate without 
-                    # a circular reference, since it is a subclass.
-                    from budman_domain_model import __get_budget_model_config__
-                    bdm_config = __get_budget_model_config__()
-                self.bdm_config_object = bdm_config
-            return self.bdm_config_object
-        except Exception as e:
-            m = p3u.exc_err_msg(e)
-            logger.error(m)
-            raise
+    #     Returns:
+    #         Dict: The resolved configuration object.
+    #     """
+    #     try:
+    #         if self.bdm_config_object is None:
+    #             # If bdm_config_object is None, use the BudgetDomainModelTemplate.
+    #             logger.debug("bm_config_object property is None, "
+    #                          f"resolve with builtin BudgetDomainModelTemplate.")
+    #             # default_config_object is set if BudgetDomainModelTemplate() 
+    #             # is instantiated prior to BudgetDomainModel().
+    #             bdm_config = BudgetDomainModel._default_config_object  
+    #             if bdm_config is None:
+    #                 # Last hope, obtain the BudgetDomainModelTemplate without 
+    #                 # a circular reference, since it is a subclass.
+    #                 from budman_domain_model import __get_budget_model_config__
+    #                 bdm_config = __get_budget_model_config__()
+    #             self.bdm_config_object = bdm_config
+    #         return self.bdm_config_object
+    #     except Exception as e:
+    #         m = p3u.exc_err_msg(e)
+    #         logger.error(m)
+    #         raise
     #endregion BDM_CONFIG_OBJECT bdm_resolve_config_object(self) -> Dict 
     # ------------------------------------------------------------------------ +
     #region    BDM_INITIALIZED BDM bdm_initialize(self, bsm_init, ...)
@@ -516,18 +500,33 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
         """
         st = p3u.start_timer()
         logger.debug(f"Start: ...")
-        bdm_config : Dict = None
         try:
-            if not hasattr(self, "_subclassname"):
-                # hmm, _subclassname should be set in SingletonMeta metaclass.
-                logger.debug("No subclass name, setting to None")
-                self._subclassname = None
-            # Initialize from a BudgetDomainModel-based object such as the BMT template.
-            bdm_config = self.bdm_resolve_config_object()
+            # A valid bdm_config_object dictionary created by one of the methods on the
+            # BDMConfig class is required here. Here is is just added to the
+            # BDM_CONFIG_OBJECT property. The real work happens in bdm_initialize().
+            if self.bdm_config_object is None:
+                m = "bdm_config_object property is None, must be a valid configuration dictionary "
+                m += "created by one of the BDMConfig methods prior to BudgetDomainModel().bdm_initialize()." 
+                logger.error(m)
+                raise ValueError(m)
             # Apply the configuration to the budget model (self)
-            for k,v in bdm_config.items():
-                if k in BSM_PERSISTED_PROPERTIES and hasattr(self, k):
-                    setattr(self, k, v)
+            # No defaults here, the bdm_config_object must have all keys and values.
+            bdm_config = self.bdm_config_object
+            setattr(self, BDM_ID, bdm_config.get(BDM_ID))
+            setattr(self, BDM_CONFIG_OBJECT, bdm_config)
+            setattr(self, BDM_INITIALIZED, bdm_config.get(BDM_INITIALIZED))
+            setattr(self, BDM_FILENAME, bdm_config.get(BDM_FILENAME))
+            setattr(self, BDM_FILETYPE, bdm_config.get(BDM_FILETYPE))
+            setattr(self, BDM_FOLDER, bdm_config.get(BDM_FOLDER))  
+            setattr(self, BDM_URL, bdm_config.get(BDM_URL))  
+            setattr(self, BDM_FI_COLLECTION, copy.deepcopy(bdm_config[BDM_FI_COLLECTION]))
+            setattr(self, BDM_WF_COLLECTION, copy.deepcopy(bdm_config[BDM_WF_COLLECTION])) 
+            setattr(self, BDM_OPTIONS, copy.deepcopy(bdm_config[BDM_OPTIONS]))
+            setattr(self, BDM_CREATED_DATE, bdm_config[BDM_CREATED_DATE]) 
+            setattr(self, BDM_LAST_MODIFIED_DATE, bdm_config[BDM_LAST_MODIFIED_DATE])
+            setattr(self, BDM_LAST_MODIFIED_BY, bdm_config[BDM_LAST_MODIFIED_BY])
+            setattr(self, BDM_WORKING_DATA, {})  
+
             if bsm_init:
                 self.bsm_initialize(create_missing_folders, raise_errors)
             self.bdm_working_data = self.bdm_BDM_WORKING_DATA_initialize()

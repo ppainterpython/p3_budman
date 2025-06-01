@@ -10,14 +10,14 @@ Excel workbooks, specifically for budgeting.
 __version__ = "0.3.0"
 __author__ = "Paul Painter"
 __copyright__ = "2025 Paul Painter"
-__name__ = "budman_model"
+__name__ = "budman_domain_model"
 __description__ = "Budget Manager (BudMan) Model implementation."
 __license__ = "MIT"
 
-from .budget_domain_model_identity import BudgetDomainModelIdentity
+# from .budget_domain_model_identity import BudgetDomainModelIdentity
+from .budget_domain_model import BudgetDomainModel
 from .model_base_interface import BDMBaseInterface
 from .model_client_interface import BDMClientInterface
-from .budget_domain_model import BudgetDomainModel
 from .budget_category_mapping import (
     map_category, category_map, category_map_count
 )

@@ -35,14 +35,12 @@ import p3_utils as p3u, pyjson5, p3logging as p3l
 import cmd2, argparse
 from cmd2 import (Cmd2ArgumentParser, with_argparser)
 # local modules and packages
-from budman_app import *
 from budman_namespace import *
 from budman_cli_view import BudManCLIParser, BudManCmd2ArgumentParser
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
-settings = None
-logger = None
+logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
@@ -130,9 +128,6 @@ class BudManCLIView(cmd2.Cmd):
     # ------------------------------------------------------------------------ +
     #region  Constructor
     def __init__(self, data_context : object | MockViewModel = None) -> None:
-        global settings, logger
-        settings = BudManApp_settings
-        logger = logging.getLogger(settings.app_name)
         shortcuts = dict(cmd2.DEFAULT_SHORTCUTS)
         shortcuts.update({'wf': 'workflow'})
         self._data_context = MockViewModel() if data_context is None else data_context

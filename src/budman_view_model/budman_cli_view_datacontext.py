@@ -16,7 +16,6 @@ from typing import List, Type, Generator, Dict, Tuple, Any, Callable
 # third-party modules and packages
 import p3_utils as p3u, pyjson5, p3logging as p3l
 # local modules and packages
-from budman_app import *
 from budman_namespace import *
 #endregion Imports
 # ---------------------------------------------------------------------------- +

@@ -8,7 +8,6 @@ from pathlib import Path
 # third-party libraries
 import logging, p3_utils as p3u, p3logging as p3l
 # local libraries
-from budman_app import BudManApp
 from budman_namespace import *
 from budman_view_model import BudManCLIViewDataContext, BudManViewModel
 #endregion imports

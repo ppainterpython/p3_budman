@@ -9,7 +9,7 @@ short_app_name = "budman"         # ditto
 
 [budman]
 folder = "~/OneDrive/budget"   # Where data files will go
-store_filename = "p3_budget_manager_ca063e8b.jsonc"  # a BSM file
+store_filename = "p3_budget_manager_ca063e8b"  # a BSM file
 store_filetype = ".jsonc"  # a BSM filetype
 default_fi = "boa" 
 default_workflow = "categorization" 

@@ -26,5 +26,5 @@ from .budget_domain_model_config import BDMConfig
 def __get_budget_model_config__() -> Dict:
     """Return BudgetModelTemplate.budget_model_config Dict.
     """
-    return BDMConfig.get_budget_model_config()
+    return BDMConfig.BDM_CONFIG_default()
 # ---------------------------------------------------------------------------- +

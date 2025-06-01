@@ -9,8 +9,8 @@ from typing import Dict
 import p3_utils as p3u, p3logging as p3l
 # local modules and packages
 # from budman_namespace import *
-from budman_storage_model import *
-from budman_domain_model.budget_domain_model_config import BDMConfig
+from budget_storage_model import *
+from budget_domain_model.budget_domain_model_config import BDMConfig
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -49,7 +49,7 @@ if __name__ == "__main__":
     try:
         configure_logging(__name__, logtest=True)
         # bdms_json = bsm_BDM_STORE_url_load(bdms_url)
-        bdmc = BDMConfig.BUDMAN_STORE_url_load(bdms_url)
+        bdmc = BDMConfig.BDM_STORE_url_load(bdms_url)
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
     # bdm = bdms.bsm_BDM_STORE_url_load(bdms_url)

@@ -10,8 +10,8 @@ import inspect
 import logging, p3_utils as p3u, p3logging as p3l
 # local libraries
 from budman_namespace import *
-from budman_domain_model import (BudgetDomainModel, BDMConfig)
-from budman_domain_model.budget_domain_model import (log_BDM_info, log_BSM_info)
+from budget_domain_model import (BudgetDomainModel, BDMConfig)
+from budget_domain_model.budget_domain_model import (log_BDM_info, log_BSM_info)
 #endregion imports
 # ---------------------------------------------------------------------------- +
 #region Globals
@@ -60,7 +60,7 @@ def test_budget_model_construction_with_BMT_as_config_object() -> None:
     try:
         logger.info(test_budget_model_construction_with_BMT_as_config_object.__doc__)
         # Expecting an empty core BudgetModel instance.
-        bdm = BudgetDomainModel(BDMConfig.get_budget_model_config())
+        bdm = BudgetDomainModel(BDMConfig.BDM_CONFIG_default())
         
         # With no config_object provided to BudgetModel.__init__(), 
         # this instance should be mostly empty.
@@ -97,7 +97,7 @@ def test_budget_model_initialize_with_template() -> None:
     """Test BudgetModel() constructor with with template."""
     try:
         logger.info(test_budget_model_initialize_with_template.__doc__)
-        bdm = BudgetDomainModel(BDMConfig.get_budget_model_config())
+        bdm = BudgetDomainModel(BDMConfig.BDM_CONFIG_default())
         # Initialize the budget model with the template as config_object.
         bdm.bdm_initialize()
         
@@ -134,7 +134,7 @@ def test_budget_model_initialize_with_template() -> None:
 def test_BDM_FI_DATA_pseudo_Property_Methods():
     """Test BDM FI Object Pseudo Property Methods."""
     try:
-        from budman_domain_model import __get_budget_model_config__
+        from budget_domain_model import __get_budget_model_config__
         logger.info(test_BDM_FI_DATA_pseudo_Property_Methods.__doc__)
         bdm = BudgetDomainModel()
         bdm.bdm_initialize(bsm_init=True)

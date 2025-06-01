@@ -33,13 +33,11 @@ from abc import ABC, abstractmethod
 from openpyxl import Workbook
 import logging, p3_utils as p3u, p3logging as p3l
 # local modules and packages
-from budman_app import *
 from budman_namespace import *
 from budman_data_context import BudManDataContextBaseInterface
 #endregion imports
 # ---------------------------------------------------------------------------- +
 #region Globals
-settings = None
 logger = logging.getLogger(__name__)
 #endregion Globals
 # ---------------------------------------------------------------------------- +
@@ -58,8 +56,6 @@ class BudManDataContext(BudManDataContextBaseInterface):
     """
     # ------------------------------------------------------------------------ +
     def __init__(self) -> None:
-        global settings
-        settings = BudManApp_settings
         self._dc_initialized = False 
         self._FI_KEY = None       
         self._WF_KEY = None       

@@ -25,7 +25,7 @@ from openpyxl import Workbook, load_workbook
 import p3_utils as p3u, pyjson5, p3logging as p3l
 # local modules and packages
 from budman_namespace import *
-from budman_storage_model import *
+from budget_storage_model import *
 # from budman_domain_model import BudgetDomainModel 
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -39,7 +39,7 @@ DEFAULT_BDM_FULL_FILENAME = DEFAULT_BDM_FILENAME + DEFAULT_BDM_FILETYPE
 # ---------------------------------------------------------------------------- +
 #region Budget Model config and config support 
 # ---------------------------------------------------------------------------- +
-class BDMConfig():
+class BDMConfig(metaclass=BDMSingletonMeta):
     """Provides a template Budget Domain Model BDM_STORE object.
     
     Creates a BDMConfig dictionary pre-populated with reasonable 
@@ -48,8 +48,8 @@ class BDMConfig():
     # ------------------------------------------------------------------------ +
     #region BDMConfig dictionary
     # The main difference between the BudgetDomainModel class and the 
-    # BudgetDomainModelConfig class is the following 
-    # budget_model_config dictionary. The BudgetDomainModelConfig class uses 
+    # BDMConfig class is the following 
+    # budget_model_config dictionary. The BDMConfig class uses 
     # the same attribute structure and properties, as a dict, as the 
     # BDM class. Our assumption is that json is the storage format where user 
     # data is saved to storage, the BDM_STORE. Keep it simple.
@@ -178,7 +178,7 @@ class BDMConfig():
     # ------------------------------------------------------------------------ +
     #region get_budget_model_config() classmethod
     @classmethod
-    def get_budget_model_config(cls,default : bool = False) -> dict:
+    def BDM_CONFIG_default(cls, default : bool = False) -> BDM_CONFIG:
         """Get a copy of the budget domain model config dictionary."""
         try:
             logger.debug("Start:  ...")
@@ -194,14 +194,14 @@ class BDMConfig():
             logger.debug(f"Complete:")   
             return bmt
         except Exception as e:
-            m = p3u.exc_msg(cls.get_budget_model_config, e)
+            m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
     #endregion get_budget_model_config() classmethod
     # ------------------------------------------------------------------------ +
     #region validate() created BDMConfig from a loaded BDM_STORE url.
     @classmethod
-    def validate(cls, bdm_config : dict) -> None:
+    def BDM_CONFIG_validate(cls, bdm_config : dict) -> None:
         """Verify bdm_config dictionary has all required fields.
 
             Make sure the supplied bdm_config dictionary has all the required
@@ -218,40 +218,40 @@ class BDMConfig():
             raise
     #endregion validate() created BDMConfig from a loaded BDM_STORE url.
     # ------------------------------------------------------------------------ +
-    #region BUDMAN_STORE_load() created BDMConfig from a loaded BDM_STORE url.
+    #region BDM_STORE_url_load() create BDM_CONFIG from a loaded BDM_STORE url.
     @classmethod
-    def BUDMAN_STORE_url_load(cls, bdms_url : str) -> dict:
+    def BDM_STORE_url_load(cls, bdm_url : str) -> BDM_CONFIG:
         """Configure this BDMConfig object from loading BDM_STORE url."""
         try:
             logger.debug("Start:  ...")
-            bdms = bsm_BDM_STORE_url_load(bdms_url)
+            bdm_store = bsm_BDM_STORE_url_load(bdm_url)
             # Validate the loaded BDM_STORE config. Raises error if not happy
-            cls.validate(bdms)
+            cls.BDM_CONFIG_validate(bdm_store)
             # Get the instance of BDMConfig configured from bdms
-            bdm_config = BDMConfig(bdm_config = bdms)            
+            bdm_config = BDMConfig(bdm_config = bdm_store)            
             logger.debug(f"Complete:")   
             return bdm_config
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
-    #endregion BUDMAN_STORE_load() created BDMConfig from a loaded BDM_STORE url.
+    #endregion BDM_STORE_url_load() created BDM_CONFIG from a loaded BDM_STORE url.
     # ------------------------------------------------------------------------ +
-    #region BudgetDomainModelConfig class constructor __init__()
+    #region BDMConfig class constructor __init__()
     def __init__(self, bdm_config : Dict) -> None:
-        """Construct a BudgetDomainModelConfig object used for configuration.
+        """Construct a BDMConfig object used for configuration.
         
-        The BudgetDomainModelConfig class can be used to populate new 
-        BudgetDomain Model objects with default and example values.
+        The BDMConfig class can be used to populate new 
+        BudgetDomainModel objects with default and example values.
         It is for internal use only. There are two means to apply it when
         constructing a new BudgetDomainModel object:
-        1. Instantiate the BudgetDomainModelConfig, which sets the 
+        1. Instantiate the BDMConfig, which sets the 
            BudgetDomainModel._default_config_object class variable which 
            should be used when no config_object parameter is used with 
            BudgetDomainModel().
-        2. Use the BudgetDomainModelConfig.budget_model_config class variable
+        2. Use the BDMConfig.budget_model_config class variable
            as the config_object parameter when instantiating BudgetDomainModel: 
-           BudgetDomainModel(config_object = BudgetDomainModelConfig.budget_model_config)
+           BudgetDomainModel(config_object = BDMConfig.budget_model_config)
         
         No outside config or settings are used to keep this stand-alone and
         uncoupled from other layers of an application using BDM.
@@ -263,7 +263,7 @@ class BDMConfig():
             # Initialize values from the config as configuration values.
             setattr(self, BDM_ID, bdm_config.get(BDM_ID, 'Unknown'))
             setattr(self, BDM_CONFIG_OBJECT, bdm_config)
-            setattr(self, BDM_INITIALIZED, bdm_config.get(BDM_ID,False))
+            setattr(self, BDM_INITIALIZED, bdm_config.get(BDM_INITIALIZED,False))
             setattr(self, BDM_FILENAME, bdm_config.get(BDM_FILENAME, DEFAULT_BDM_FILENAME))
             setattr(self, BDM_FILETYPE, bdm_config.get(BDM_FILETYPE,DEFAULT_BDM_FILETYPE))
             setattr(self, BDM_FOLDER, bdm_config.get(BDM_FOLDER, "~/OneDrive/budget"))  
@@ -275,14 +275,14 @@ class BDMConfig():
             setattr(self, BDM_LAST_MODIFIED_DATE, bdm_config[BDM_LAST_MODIFIED_DATE])
             setattr(self, BDM_LAST_MODIFIED_BY, bdm_config[BDM_LAST_MODIFIED_BY])
             setattr(self, BDM_WORKING_DATA, {})  
-            # Complete the BudgetDomainModelConfig instance initialization.
+            # Complete the BDMConfig instance initialization.
             self.bdm_initialized = True
             logger.debug(f"Complete: {p3u.stop_timer(st)}")   
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
-    #endregion BudgetDomainModelConfig class constructor __init__()
+    #endregion BDMConfig class constructor __init__()
     # ------------------------------------------------------------------------ +
     #region    BudgetDomainModel (BDM) properties
     @property
@@ -438,7 +438,7 @@ class BDMConfig():
     #region log_BMT_info()
     @staticmethod
     def log_BMT_info(bmt : "BDMConfig") -> None:
-        """Log the BudgetDomainModelConfig class information."""
+        """Log the BDMConfig class information."""
         try:
             logger.debug("Start:  ...")
             logger.debug(f"{P2}BDM_INITIALIZED('{BDM_INITIALIZED}'): "
@@ -492,7 +492,7 @@ class BDMConfig():
 # ---------------------------------------------------------------------------- +
 #region tryout_budget_domain_model_config() function
 def tryout_budget_domain_model_config() -> None: 
-    """Test the BudgetDomainModelConfig class."""
+    """Test the BDMConfig class."""
     st = p3u.start_timer()
     try:
         logger.debug("Start: ...")

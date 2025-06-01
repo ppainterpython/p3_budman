@@ -15,9 +15,11 @@ from openpyxl import Workbook, load_workbook
 # local modules and packages
 from budman_settings import *
 from budman_namespace import *
-from budman_domain_model import *
-from budman_storage_model import *
-from budman_data_context import BudManDataContext
+from budget_domain_model import (
+    BDMBaseInterface, BDMClientInterface, BudgetDomainModel, check_budget_category,
+    map_budget_category, category_map_count, budget_category_mapping, BDMConfig)
+from budget_storage_model import *
+from budman_data_context import BDMWorkingData
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -45,9 +47,10 @@ class BudManViewModel(BDMClientInterface):
     #endregion Class Variables
     # ------------------------------------------------------------------------ +
     #region __init__() constructor method
-    def __init__(self, settings : Dynaconf) -> None:
+    def __init__(self, bdms_url : str = None, settings : Dynaconf = None) -> None:
         super().__init__()
-        self_settings = settings
+        self._bdms_url : str = bdms_url
+        self._settings = settings
         self._initialized : bool = False
         self.BDM_STORE_loaded : bool = False
         self._budget_domain_model : BudgetDomainModel = None
@@ -66,6 +69,19 @@ class BudManViewModel(BDMClientInterface):
         if not isinstance(bdm, BDMBaseInterface):
             raise TypeError("model must be a BDMBaseInterface instance")
         self._budget_domain_model = bdm
+
+    @property
+    def bdms_url(self) -> str:
+        """Return the BDM_STORE URL."""
+        return self._bdms_url
+    @bdms_url.setter
+    def bdms_url(self, url: str) -> None:
+        """Set the BDM_STORE URL."""
+        if not isinstance(url, str):
+            raise TypeError("bdms_url must be a string")
+        if not url.startswith("file://") and not url.startswith("http://"):
+            raise ValueError("bdms_url must be a valid file or http URL")
+        self._bdms_url = url
 
     @property
     def settings(self) -> Dynaconf:
@@ -88,11 +104,11 @@ class BudManViewModel(BDMClientInterface):
             raise ValueError("initialized must be a boolean value.")
         self._initialized = value
     @property
-    def budget_model(self) -> BudgetDomainModel:
+    def budget_domain_model(self) -> BudgetDomainModel:
         """Return the BudgetModel instance."""
         return self._budget_domain_model
-    @budget_model.setter
-    def budget_model(self, value: BudgetDomainModel) -> None:
+    @budget_domain_model.setter
+    def budget_domain_model(self, value: BudgetDomainModel) -> None:
         """Set the BudgetModel instance."""
         if not isinstance(value, BudgetDomainModel):
             raise ValueError("budget_model must be a BudgetModel instance.")
@@ -136,24 +152,35 @@ class BudManViewModel(BDMClientInterface):
         """Initialize the command view_model."""
         try:
             st = p3u.start_timer()
-            logger.info(f"Start: Configure Budget Manager: ...")
-            # Check if the budget model is initialized.
-            if (self.budget_model is None or 
-                not isinstance(self.budget_model, BudgetDomainModel)):
+            logger.info(f"Start: Configure Budget Manager View Model: ...")
+            # Check if the budget domain model is initialized.
+            if (self.budget_domain_model is None or 
+                not isinstance(self.budget_domain_model, BudgetDomainModel)):
                 # There is no valid budget_model. Load a BDM_STORE file?
                 if load_user_store:
-                    # Use BDM_STORE file as a config_object 
-                    config_object = bsm_BDM_STORE_file_load()
+                    # if a bdms_url is provided, load the BDM_STORE file.
+                    if p3u.str_empty(self.bdms_url):
+                        m = "No BDM_STORE URL provided, cannot load."
+                        logger.error(m)
+                        raise ValueError(m)                    
+                    bdmc = BDMConfig.BDM_STORE_url_load(self.bdms_url)
+                    if bdmc is None:
+                        m = f"Failed to load BDM_STORE from URL: {self.bdms_url}"
+                        logger.error(m)
+                        raise ValueError(m)
+                    config_object = bdmc.bdm_config_object
+                    # Use the loaded BDM_STORE file as a config_object 
+                    # config_object = bsm_BDM_STORE_file_load()
                     self.BDM_STORE_loaded = True
                 else:
                     # Use the builtin default template as a config_object.
-                    config_object = BDMConfig.get_budget_model_config()
+                    config_object = BDMConfig.BDM_CONFIG_default()
                 # Now to initialize the budget model.
                 self.model = BudgetDomainModel(config_object).bdm_initialize()
-            if not self.budget_model.bdm_initialized: 
+            if not self.budget_domain_model.bdm_initialized: 
                 raise ValueError("BudgetModel is not initialized.")
-            # Create the BudManDataContext 
-            self.data_context = BudManDataContext(self.model)  # Data Context for the Budget Domain Model
+            # Create the BDMWorkingData as the data_context for the View Model
+            self.data_context = BDMWorkingData(self.model)  # Data Context for the Budget Domain Model
             # Initialize the command map.
             self.initialize_cmd_map()  # TODO: move to DataContext class
             self.initialized = True
@@ -657,13 +684,13 @@ class BudManViewModel(BDMClientInterface):
                 raise NotImplementedError(f"{pfx}fi_key 'all' not implemented.")
             # Check if valid fi_key            
             try:
-                _ = self.budget_model.bdm_FI_KEY_validate(fi_key)
+                _ = self.budget_domain_model.bdm_FI_KEY_validate(fi_key)
             except ValueError as e:
                 m = f"ValueError({str(e)})"
                 logger.error(m)
                 raise RuntimeError(f"{pfx}{m}")
             # Load the workbooks for the FI,WF specified in the DC.
-            lwbl = self.budget_model.bdmwd_FI_WORKBOOKS_load(fi_key, wf_key, wb_type)
+            lwbl = self.budget_domain_model.bdmwd_FI_WORKBOOKS_load(fi_key, wf_key, wb_type)
             # Set last values of FI_init_cmd in the DC.
             self.dc_FI_KEY = fi_key
             self.dc_WF_KEY = wf_key
@@ -737,7 +764,7 @@ class BudManViewModel(BDMClientInterface):
             logger.info(f"Start: {str(cmd)}")
             # Check if valid fi_key            
             try:
-                _ = self.budget_model.bdm_FI_KEY_validate(fi_key)
+                _ = self.budget_domain_model.bdm_FI_KEY_validate(fi_key)
             except ValueError as e:
                 m = f"ValueError({str(e)})"
                 logger.error(m)
@@ -746,7 +773,7 @@ class BudManViewModel(BDMClientInterface):
             lwbl = self.dc_LOADED_WORKBOOKS
             # For each loaded workbook, save it to its the path .
             for wb_name, wb in lwbl:
-                self.budget_model.bsm_FI_WF_WORKBOOK_save(wb, wb_name,
+                self.budget_domain_model.bsm_FI_WF_WORKBOOK_save(wb, wb_name,
                                                           fi_key, wf_key, wb_type)
             # Save the workbooks for the specified FI, WF, and WB-type.
             logger.info(f"Complete Command: 'Save' {p3u.stop_timer(st)}")   
@@ -775,16 +802,18 @@ class BudManViewModel(BDMClientInterface):
             # Save the BDM_STORE file with the BSM.
             # Construct the abs_path from BDM_STORE info configured in 
             # BUDMAN_SETTINGS.
-            budman_store_value = self.settings[BDM_STORE]
+            budman_store_filename_value = self.settings[BDM_STORE_FILENAME]
+            budman_store_filetype_value = self.settings[BDM_STORE_FILETYPE]
+            budman_store_full_filename = f"{budman_store_filename_value}.{budman_store_filetype_value}"
             budman_folder = self.settings[BUDMAN_FOLDER]
             budman_folder_abs_path = Path(budman_folder).expanduser().resolve()
-            budman_store_abs_path = budman_folder_abs_path / budman_store_value
+            budman_store_abs_path = budman_folder_abs_path / budman_store_full_filename
             # Update some values prior to saving.
-            self.budget_model.bdm_url = budman_store_abs_path.as_uri()
-            self.budget_model.bdm_last_modified_date = p3u.now_iso_date_string()
-            self.budget_model.bdm_last_modified_by = getpass.getuser()
+            self.budget_domain_model.bdm_url = budman_store_abs_path.as_uri()
+            self.budget_domain_model.bdm_last_modified_date = p3u.now_iso_date_string()
+            self.budget_domain_model.bdm_last_modified_by = getpass.getuser()
             # Get a Dict of the BudgetModel to store.
-            budget_model_dict = self.budget_model.to_dict()
+            budget_model_dict = self.budget_domain_model.to_dict()
             # Save the BDM_STORE file.
             bsm_BDM_STORE_file_save(budget_model_dict, budman_store_abs_path)
             logger.info(f"Saved BDM_STORE file: {budman_store_abs_path}")
@@ -823,10 +852,12 @@ class BudManViewModel(BDMClientInterface):
             logger.info(f"Start: ...")
             # Load the BDM_STORE file with the BSM.
             # Use the BDM_STORE configured in BUDMAN_SETTINGS.
-            budman_store_value = self.settings[BDM_STORE]
+            budman_store_filename_value = self.settings[BDM_STORE_FILENAME]
+            budman_store_filetype_value = self.settings[BDM_STORE_FILETYPE]
+            budman_store_full_filename = f"{budman_store_filename_value}.{budman_store_filetype_value}"
             budman_folder = self.settings[BUDMAN_FOLDER]
             budman_folder_abs_path = Path(budman_folder).expanduser().resolve()
-            budman_store_abs_path = budman_folder_abs_path / budman_store_value
+            budman_store_abs_path = budman_folder_abs_path / budman_store_full_filename
             # Load the BDM_STORE file.
             budman_store_dict = bsm_BDM_STORE_file_load(budman_store_abs_path)
             self.dc_BDM_STORE = budman_store_dict
@@ -988,11 +1019,11 @@ class BudManViewModel(BDMClientInterface):
                 wb_refnum = int(wb_ref)
                 wb_info = self.dc_WORKBOOKS[wb_refnum] if wb_refnum < wb_count else None
                 if wb_info is not None:
-                    wb = self.budget_model.bdmwd_WORKBOOK_load(wb_info[0])
+                    wb = self.budget_domain_model.bdmwd_WORKBOOK_load(wb_info[0])
                     l = "Yes" if self.WB_loaded(wb_info[0]) else "No "
                     r += f"{P2}{wb_refnum:>2} {l} {wb_info[0]:<40} '{wb_info[1]}'\n"
             elif wb_ref == ALL_KEY:
-                lwbl = self.budget_model.bdmwd_FI_WORKBOOKS_load(fi_key, wf_key, wb_type)
+                lwbl = self.budget_domain_model.bdmwd_FI_WORKBOOKS_load(fi_key, wf_key, wb_type)
                 for i, (wb_name, wb_ap) in enumerate(lwbl):
                     l = "Yes" if self.WB_loaded(wb_name) else "No "
                     r += f"{P2}{i:>2} {l} {wb_name:<40} '{wb_ap}'\n"
@@ -1061,13 +1092,13 @@ class BudManViewModel(BDMClientInterface):
                 m = f"wb_name '{wb_name}' not found in LOADED_WORKBOOKS."
                 logger.error(m)
                 return False, m
-            wb = self.budget_model.bdmwd_WORKBOOK_load(wb_name)
+            wb = self.budget_domain_model.bdmwd_WORKBOOK_load(wb_name)
             ws = wb.active
             # Check for budget category column, add it if not present.
             check_budget_category(ws)
             # Map the 'Original Description' column to the 'Budget Category' column.
             map_budget_category(ws,"Original Description", BUDGET_CATEGORY_COL)
-            self.budget_model.bdmwd_WORKBOOK_save(wb_name, wb)
+            self.budget_domain_model.bdmwd_WORKBOOK_save(wb_name, wb)
             r += f"Categorization Workflow applied to '{wb_name}'\n"
             return True, r
         except Exception as e:
@@ -1345,7 +1376,7 @@ class BudManViewModel(BDMClientInterface):
         """Return True if the fi_key is valid."""
         try:
             # Ask the Budget Domain Model to validate the fi_key.
-            return self.budget_model.bdm_FI_KEY_validate(fi_key)
+            return self.budget_domain_model.bdm_FI_KEY_validate(fi_key)
         except Exception as e:
             return self.BMVM_cmd_exception(e)
     #endregion dc_FI_KEY_validate() method
@@ -1355,7 +1386,7 @@ class BudManViewModel(BDMClientInterface):
         """Return True if the wf_key is valid."""
         try:
             # Ask the Budget Domain Model to validate the wf_key.
-            return self.budget_model.bdm_WF_KEY_validate(wf_key)
+            return self.budget_domain_model.bdm_WF_KEY_validate(wf_key)
         except Exception as e:
             return self.BMVM_cmd_exception(e)
     #endregion dc_WF_KEY_validate() method
@@ -1365,7 +1396,7 @@ class BudManViewModel(BDMClientInterface):
         """Return True if the wb_ref is valid."""
         try:
             # Bind through the DC (data_context) object
-            return self.budget_model.dc_WB_REF_validate(wb_ref)
+            return self.budget_domain_model.dc_WB_REF_validate(wb_ref)
         except Exception as e:
             return self.BMVM_cmd_exception(e)
     #endregion dc_WB_REF_validate() method
@@ -1393,7 +1424,7 @@ class BudManViewModel(BDMClientInterface):
         """Retrieve the current WORKBOOK_LIST for the DC fi_key,wf_key,wb_type."""
         try:
             # Reference the BDMWD_LOADED_WORKBOOKS.
-            return self.budget_model.bdmwd_LOADED_WORKBOOKS_get()
+            return self.budget_domain_model.bdmwd_LOADED_WORKBOOKS_get()
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
@@ -1404,7 +1435,7 @@ class BudManViewModel(BDMClientInterface):
         """Return count of all loaded workbooks from Data Context."""
         try:
             # Reference the BDMWD_LOADED_WORKBOOKS.
-            return self.budget_model.bdmwd_LOADED_WORKBOOKS_count()
+            return self.budget_domain_model.bdmwd_LOADED_WORKBOOKS_count()
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
@@ -1415,7 +1446,7 @@ class BudManViewModel(BDMClientInterface):
         """Return names of all loaded workbooks from Data Context."""
         try:
             # Reference the BDMWD_LOADED_WORKBOOKS.
-            return self.budget_model.bdmwd_LOADED_WORKBOOKS_get()
+            return self.budget_domain_model.bdmwd_LOADED_WORKBOOKS_get()
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
@@ -1426,7 +1457,7 @@ class BudManViewModel(BDMClientInterface):
         """Return names of all loaded workbooks from Data Context."""
         try:
             # Reference the BDMWD_LOADED_WORKBOOKS.
-            bdmwd_wb_list = self.budget_model.bdmwd_LOADED_WORKBOOKS_get()
+            bdmwd_wb_list = self.budget_domain_model.bdmwd_LOADED_WORKBOOKS_get()
             wb_name_list = []
             for wb_name, _ in bdmwd_wb_list:
                 wb_name_list.append(wb_name)
@@ -1441,7 +1472,7 @@ class BudManViewModel(BDMClientInterface):
         """Reference loaded loaded workbooks by index, return Workbook object."""
         try:
             # Reference the BDMWD_LOADED_WORKBOOKS.
-            bdmwd_wb_list = self.budget_model.bdmwd_LOADED_WORKBOOKS_get()
+            bdmwd_wb_list = self.budget_domain_model.bdmwd_LOADED_WORKBOOKS_get()
             if i < len(bdmwd_wb_list):
                 wb_name, wb = bdmwd_wb_list[i]
                 return wb
@@ -1456,7 +1487,7 @@ class BudManViewModel(BDMClientInterface):
         """Reference loaded loaded workbooks by name, return Workbook object."""
         try:
             # Reference the BDMWD_LOADED_WORKBOOKS.
-            bdmwd_wb_list = self.budget_model.bdmwd_LOADED_WORKBOOKS_get()
+            bdmwd_wb_list = self.budget_domain_model.bdmwd_LOADED_WORKBOOKS_get()
             for wb_name, wb in bdmwd_wb_list:
                 if wb_name == name:
                     return wb

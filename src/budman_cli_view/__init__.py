@@ -10,7 +10,7 @@ __license__ = "MIT"
 
 # Budget Model Domain Working Data
 from .budman_cli_parser import (
-    BudManCLIParser
+    BudManCLIParser, BudManCmd2ArgumentParser
 )
 from .budman_cli_view import (
     BudManCLIView

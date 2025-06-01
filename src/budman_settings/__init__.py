@@ -22,7 +22,7 @@ __all__ = [
     "BudManSettings",
     "BUDMAN_SETTINGS",
     "BUDMAN_FOLDER",
-    "BDM_STORE",
+    "BDM_STORE_FILENAME",
     "BDM_STORE_FILETYPE",
     "BUDMAN_DEFAULT_FI",
     "BUDMAN_DEFAULT_WORKFLOW",

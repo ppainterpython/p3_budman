@@ -9,14 +9,20 @@ __description__ = "Budget Manager Domain Model Namespace."
 __license__ = "MIT"
 
 # Data Context abstract interface
+from .bdm_singleton_meta import BDMSingletonMeta
 from .design_language_namespace import *
+
 __all__ = [
+    # Metaclass for Singleton Pattern
+    "BDMSingletonMeta",
     # Type Alias Constants
     "WORKBOOK_LIST",
     "WORKBOOK_ITEM",
     "LOADED_WORKBOOK_LIST",
     "BDM_WORKING_DATA_OBJECT",
     "DATA_CONTEXT",
+    "BDM_STORE",
+    "BDM_CONFIG",
     # "MODEL_OBJECT",
     "DATA_OBJECT",
     "BMO_COLLECTION",

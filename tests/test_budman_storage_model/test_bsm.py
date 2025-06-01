@@ -10,7 +10,7 @@ from typing import Type, Any
 import inspect
 import logging, p3_utils as p3u, p3logging as p3l
 # local libraries
-from budman_storage_model import *
+from budget_storage_model import *
 #endregion imports
 # ---------------------------------------------------------------------------- +
 #region Globals

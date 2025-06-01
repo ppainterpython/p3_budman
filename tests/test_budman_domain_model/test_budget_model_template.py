@@ -13,7 +13,7 @@ import inspect
 import logging, p3_utils as p3u, p3logging as p3l
 from budman_settings import *
 from budman_namespace import *
-from budman_domain_model import BDMConfig
+from budget_domain_model import BDMConfig
 #endregion imports
 # ---------------------------------------------------------------------------- +
 #region Globals

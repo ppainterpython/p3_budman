@@ -8,9 +8,8 @@ from pathlib import Path
 # third-party libraries
 import logging, p3_utils as p3u, p3logging as p3l
 # local libraries
-from budman_app import BudManApp
 from budman_namespace import *
-from budman_domain_model import BudgetDomainModel
+from budget_domain_model import BudgetDomainModel
 from budman_view_model import BudManViewModel
 #endregion imports
 # ---------------------------------------------------------------------------- +
@@ -29,9 +28,9 @@ def test_BDM_STORE_load():
             "Expected BudManCommandViewModel, got: " + str(type(bmvm))
         assert bmvm.BDM_STORE_loaded, \
             "BDM_STORE should be loaded"
-        assert bmvm.budget_model is not None, \
+        assert bmvm.budget_domain_model is not None, \
             "bmvm.budget_model should not be None"
-        assert isinstance(bmvm.budget_model, BudgetDomainModel), \
-            "Expected bmvm.budget_model to be a BudgetModel instance, got: " + str(type(bmvm.budget_model))        
+        assert isinstance(bmvm.budget_domain_model, BudgetDomainModel), \
+            "Expected bmvm.budget_model to be a BudgetModel instance, got: " + str(type(bmvm.budget_domain_model))        
     except Exception as e:
         pytest.fail(f"BudgetManagerViewModelInterface raised an exception: {str(e)}")

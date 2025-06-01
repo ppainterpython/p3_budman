@@ -15,13 +15,11 @@ __description__ = "Budget Manager (BudMan) a p3 application."
 __license__ = "MIT"
 
 from .budman_app import (
-    BudManApp,
-    BudManApp_settings,
+    BudManApp
 )
 
 # target for 'from budman_app import *'
 __all__ = [
-    "BudManApp",
-    "BudManApp_settings"
+    "BudManApp"
 ]
 
