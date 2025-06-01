@@ -163,7 +163,7 @@ class BudManDataContext(BudManDataContextBaseInterface):
         self.dc_WB_NAME = None
         self.dc_BDM_STORE = []
         self.dc_WORKBOOKS = []
-        self.dc_LOADED_WORKBOOKS = []
+        self.dc_LOADED_WORKBOOKS = dict()
         self.dc_INITIALIZED = True
         return self
 
@@ -193,15 +193,10 @@ class BudManDataContext(BudManDataContextBaseInterface):
         # Reference the DC.LOADED_WORKBOOKS property.
         if (not self.dc_INITIALIZED or 
                 self.dc_LOADED_WORKBOOKS is None or 
-                not isinstance(self.dc_LOADED_WORKBOOKS, list)):
+                not isinstance(self.dc_LOADED_WORKBOOKS, dict)):
             return False
         lwbl = self.dc_LOADED_WORKBOOKS
-        if len(lwbl) == 0:
-            return False
-        for l_wb_name, _ in lwbl:
-            if l_wb_name == wb_name:
-                return True
-        return False
+        return True if wb_name in lwbl else False
 
     def dc_WORKBOOK_load(self, wb_name: str) -> Workbook:
         """Load the specified workbook by name."""
@@ -247,7 +242,7 @@ class BudManDataContext(BudManDataContextBaseInterface):
 
     def dc_WORKBOOK_add(self, wb_name: str, wb: Workbook) -> None:
         """Add a new workbook to the data context."""
-        self.dc_LOADED_WORKBOOKS.append((wb_name, wb))
+        self.dc_LOADED_WORKBOOKS[wb_name] = wb
         return None
 
     def dc_BDM_STORE_load(self, file_path: str) -> None:

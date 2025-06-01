@@ -746,7 +746,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
             self.set_BDM_WORKING_DATA(BDMWD_WB_TYPE, def_wbt)
             self.set_BDM_WORKING_DATA(BDMWD_WB_NAME, None)
             self.set_BDM_WORKING_DATA(BDMWD_WORKBOOKS, list())
-            self.set_BDM_WORKING_DATA(BDMWD_LOADED_WORKBOOKS, list())
+            self.set_BDM_WORKING_DATA(BDMWD_LOADED_WORKBOOKS, dict())
             # Now resolve the bdwd content to current BDM state.
             self.bdmwd_WORKBOOKS_resolve(initializing=True)
             # self.bdmwd_LOADED_WORKBOOKS_resolve()
@@ -1252,24 +1252,23 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
             and the absolute path to the workbook file.
         
         Returns:
-            LOADED_WORKBOOK_LIST: a new list of tuples containing the file name
-            and the loaded workbook object.
+            LOADED_WORKBOOK_LIST: new Dict[filename,Workbook] loaded workbooks.
 
         Raises: exceptions from any errors.
         """
         try:
             st = p3u.start_timer()
-            returned_wb_list = []
             if wbl is None:
                 logger.warning("No workbooks to load, wbl arg was None.")
-                return returned_wb_list
+                return None
             logger.debug(f"Loading {len(wbl)} workbooks.")
+            returned_wbs = {}
             for wb_name, wb_path in wbl:
                 wb = load_workbook(filename=wb_path)
-                returned_wb_list.append((wb_name, wb))
-            logger.debug(f"Complete: Loaded {len(returned_wb_list)} workbooks. "
+                returned_wbs[wb_name] = wb
+            logger.debug(f"Complete: Loaded {len(returned_wbs)} workbooks. "
                          f"{p3u.stop_timer(st)}")
-            return returned_wb_list
+            return returned_wbs
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
@@ -1809,7 +1808,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
         """Get the BDMWD_LOADED_WORKBOOKS from the BDM_WORKING_DATA.
 
         Returns:
-            List(Tuple(wb_name: Workbook object))
+            LOADED_WORKBOOK_LIST(Dict[wb_name: Workbook object])
         """
         try:
             self.bdmwd_INITIALIZED()
@@ -1844,13 +1843,9 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
             p3u.is_str_or_none("wb_name",wb_name, raise_TypeError = True)
             p3u.is_obj_of_type("wb", wb, Workbook, raise_TypeError=True)
             lwbs_list = self.bdmwd_LOADED_WORKBOOKS_get()
-            if self.bdwb_LOADED_WORKBOOKS_member(wb_name):
-                # If the workbook is already loaded, do not add it again.
-                m = f"Wb: '{wb_name}' already member of BDMWD_LOADED_WORKBOOKS."
-                logger.debug(m)
-                return None
-            lwbs_list.append((wb_name, wb))
-            logger.debug(f"Added ('{wb_name}', '{str(wb)}') "
+            lwbs_list[wb_name] = wb  # Use dict-like access for easy updates.
+            m = "Updated" if self.bdwb_LOADED_WORKBOOKS_member(wb_name) else "Added"
+            logger.debug(f"{m} ('{wb_name}', '{str(wb)}') "
                          f"to BDMWD_LOADED_WORKBOOKS.")
             return None
         except Exception as e:
@@ -1862,14 +1857,9 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
         """Return True if wb_name is a member of DC.LOADED_WORKBOOKS list."""
         try:
             _ = p3u.is_str_or_none("wb_name", wb_name, raise_TypeError=True)
-            # Reference the DC.LOADED_WORKBOOKS property.
+            # Reference the DC.LOADED_WORKBOOKS property. Dict(wb_name: Workbook).
             lwbl = self.bdmwd_LOADED_WORKBOOKS_get()
-            if len(lwbl) == 0:
-                return False
-            for l_wb_name, _ in lwbl:
-                if l_wb_name == wb_name:
-                    return True
-            return False
+            return True if wb_name in lwbl else False
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
@@ -1890,36 +1880,31 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
             wb_type (str): The workbook type.
 
         Returns:
-            LOADED_WORKBOOK_LIST: A list of tuples containing the 
-            workbook name and the loaded workbook object. Newly loaded
-            workbooks are appended to the BDMWD_LOADED_WORKBOOKS list.
+            LOADED_WORKBOOK_LIST: Dict[str,Workbook] containing the 
+            workbook name and the loaded workbook object.
         """
         try:
             self.bdmwd_INITIALIZED()
             # Get the WORKBOOK_LIST for fi_key, wf_key and wb_type from the BDM.
-            returned_wb_list = []
             wbl = self.bdm_FI_WF_WORKBOOK_LIST(fi_key, wf_key, wb_type)
             if wbl is None or len(wbl) == 0:
                 logger.debug(f"No workbooks to load for FI_KEY('{fi_key}') "
                              f"WF_KEY('{wf_key}')")
-                return returned_wb_list
+                return None
             # Use the BSM to load the workbooks for fi_key, wf_key and wb_type.
             logger.debug(f"Loading {len(wbl)} workbooks for "
                          f"FI_KEY('{fi_key}') WF_KEY('{wf_key}') "
                          f"WB_TYPE('{wb_type}')")
-            new_lwbl : LOADED_WORKBOOK_LIST = []
             new_lwbl = self.bsm_WORKBOOKS_LIST_load(wbl)
             new_count = len(new_lwbl) if new_lwbl is not None else 0
             logger.debug(f"Loaded {new_count} workbooks for "
                          f"FI_KEY('{fi_key}') WF_KEY('{wf_key}') "
                          f"WB_TYPE('{wb_type}')")
+            # Update the BDMWD_LOADED_WORKBOOKS with the new loaded workbooks.
             bdmwd_lwbs = self.bdmwd_LOADED_WORKBOOKS_get()
             prev_count = len(bdmwd_lwbs) if bdmwd_lwbs is not None else 0
-            if new_lwbl is None or len(new_lwbl) == 0: return bdmwd_lwbs
-            # TODO: How to handle duplicates?
+            if new_count == 0: return bdmwd_lwbs
             bdmwd_lwbs.update(new_lwbl)
-            # for new_wb_name, new_wb in new_lwbl:
-            #     self.bdmwd_LOADED_WORKBOOKS_add(new_wb_name, new_wb)
             logger.debug(f"Updated BDMWD_LOADED_WORKBOOKS({prev_count}) with "
                          f"{new_count} loaded workbooks, "
                          f"total = {len(bdmwd_lwbs)}")

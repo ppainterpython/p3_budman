@@ -20,7 +20,7 @@ from openpyxl import Workbook
 # It is a list of WORKBOOK_ITEM tuples: (workbook_name, workbook_abs_path)
 WORKBOOK_LIST = List[Tuple[str, str]] 
 WORKBOOK_ITEM = Tuple[str, str]
-LOADED_WORKBOOK_LIST = List[Tuple[str, Workbook]]
+LOADED_WORKBOOK_LIST = Dict[str, Workbook]
 DATA_CONTEXT = Dict[str, Any]
 BDM_STORE = Dict[str, Any]
 BDM_CONFIG = Dict[str, Any]

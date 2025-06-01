@@ -10,7 +10,15 @@ All people, families, businesses and organizations have a budget, managed or not
 
 Tracking income and expenses over time is critical to the value of a budget. Often, FI's will update account status on a monthly basis, issuing statements, or workbooks in the BudMan narrative. There will be workbooks from each FI, at least for each month, and perhaps separately for each account. Gathering the new input into the budget for user benefit requires processing the workbooks, and hence, a means to manage that processing. BudMan uses __Workflows (WF)__ to handle the processing. A workflow is a series of tasks performed on the workbooks. A task uses input, produces output, and may utilize working copies of data for a time.
 
-### Model Design
+### MVVM Command Pattern Technical Design
+
+Our MVVM design includes a sub-pattern for Command Processing (CP) as well as a Data Context (DC). Early on, I learned the .NET MVVM framework and that has no doubt influenced my thinking as I design one in python. Because I can, I decided to include the CP and DC in an uber-DC pattern.
+
+View -> ViewDataContext(bindings for CP, DC) -> ViewModel(bindings for CP, DC) -> uber-DC -> Model
+
+The ViewModel CP methods to execute individual cmds should use the DC_interface plus a model-specific interface to simplify the model_interface for use in the context of the DC_interface. Cmds take action on data, hence, the DC has to involve mapping cmd actions in the ViewModel to an abstraction that will ultimately access the Model and do real work on real data.
+
+### Model Technical Design
 
 Using MVVM, the Model is concerned with data and storage. Our design here factors the Model into two component concepts, one for data referred to as the __Budget Domain Model__ (BDM), and one for storage, the __Budget Storage Model__ (BSM). The BDM is a domain model concerning with the data and behavior (code) associated with it. A package named `budget_domain_model` defines classes and modules with the major class for the BDM named __BudgetDomainModel__. At present, the BSM resides in the package `budget_storage_model`.
 

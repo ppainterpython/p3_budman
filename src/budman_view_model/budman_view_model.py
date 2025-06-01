@@ -5,7 +5,7 @@
 # ---------------------------------------------------------------------------- +
 #region Imports
 # python standard library modules and packages
-import logging, os, getpass, time, copy, importlib
+import logging, sys, getpass, time, copy, importlib
 from pathlib import Path
 from typing import List, Type, TYPE_CHECKING, Dict, Tuple, Any, Callable
 # third-party modules and packages
@@ -137,7 +137,6 @@ class BudManViewModel(BDMClientInterface):
     @data_context.setter
     def data_context(self, value: BDMWorkingData) -> None:
         """Set the data context object."""
-        _ = self._valid_DC()  # Ensure _data_context is valid
         if not isinstance(value, BDMWorkingData):
             raise ValueError("data_context must be a BDMWorkingData instance.")
         self._data_context = value
@@ -151,7 +150,6 @@ class BudManViewModel(BDMClientInterface):
     def DC(self, value: BDMWorkingData) -> None:
         """Set the data context (DC) dictionary.
         This is an alias for the data_context property."""
-        _ = self._valid_DC()  # Ensure _data_context is valid
         if not isinstance(value, BDMWorkingData):
             raise ValueError("DC property value must be a BDMWorkingData object.")
         self._data_context = value
@@ -200,7 +198,10 @@ class BudManViewModel(BDMClientInterface):
             if not self.budget_domain_model.bdm_initialized: 
                 raise ValueError("BudgetModel is not initialized.")
             # Create the BDMWorkingData as the data_context for the View Model
-            self._data_context = BDMWorkingData(self.model)  # Data Context for the Budget Domain Model
+            # Use the 
+            self.data_context = BDMWorkingData(self.model)
+            # Initialize the BDMWorkingData data context.
+            self.data_context.initialize()
             # Initialize the command map.
             self.initialize_cmd_map()  # TODO: move to DataContext class
             self.initialized = True
@@ -718,7 +719,7 @@ class BudManViewModel(BDMClientInterface):
             self.dc_WB_TYPE = wb_type
             self.dc_WB_NAME = wb_name
             # Create result
-            lwbl_names = list(self.DC.dc_LOADED_WORKBOOKS().keys())
+            lwbl_names = list(self.DC.dc_LOADED_WORKBOOKS.keys())
             # lwbl_names = self.FI_get_loaded_workbook_names()
             result = f"Loaded {len(lwbl_names)} Workbooks: {str(lwbl_names)}"
             return True, result
@@ -935,11 +936,12 @@ class BudManViewModel(BDMClientInterface):
             result += f"{P2}{DC_WORKBOOKS}: {wbl_count}\n"
             if wbl_count > 0:
                 for i, (wb_name, wb_ap) in enumerate(wbl):
-                    result += f"{P4}{i} {wb_name} '{wb_ap}'\n"
+                    result += f"{P4}wb_ref: {i:2} wb_name: {wb_name:<35} abs_path: '{wb_ap}'\n"
             result += f"{P2}{DC_LOADED_WORKBOOKS}: {lwbl_count}\n"
             if lwbl_count > 0:
-                for i, (wb_name, wb) in enumerate(lwbl):
-                    result += f"{P4}{i} {wb_name}\n"
+                for i, (wb_name, wb) in enumerate(lwbl.items()):
+                    wb_ref = self.DC.dc_WORKBOOK_index(wb_name)
+                    result += f"{P4}wb_ref: {wb_ref:2} {wb_name}\n"
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             return True, result
         except Exception as e:
@@ -1042,12 +1044,12 @@ class BudManViewModel(BDMClientInterface):
                 wb_info = self.dc_WORKBOOKS[wb_refnum] if wb_refnum < wb_count else None
                 if wb_info is not None:
                     wb = self.budget_domain_model.bdmwd_WORKBOOK_load(wb_info[0])
-                    l = "Yes" if self.WB_loaded(wb_info[0]) else "No "
+                    l = "Yes" if self.DC.dc_WORKBOOK_loaded(wb_info[0]) else "No "
                     r += f"{P2}{wb_refnum:>2} {l} {wb_info[0]:<40} '{wb_info[1]}'\n"
             elif wb_ref == ALL_KEY:
                 lwbl = self.budget_domain_model.bdmwd_FI_WORKBOOKS_load(fi_key, wf_key, wb_type)
                 for i, (wb_name, wb_ap) in enumerate(lwbl):
-                    l = "Yes" if self.WB_loaded(wb_name) else "No "
+                    l = "Yes" if self.DC.dc_WORKBOOK_loaded(wb_name) else "No "
                     r += f"{P2}{i:>2} {l} {wb_name:<40} '{wb_ap}'\n"
             return True, r
         except Exception as e:
@@ -1102,7 +1104,7 @@ class BudManViewModel(BDMClientInterface):
                 if wb_info is not None:
                     wb_name = wb_info[0]
             elif wb_ref == ALL_KEY:
-                wb_name = ALL_KEY
+                wb_name = ALL_KEY # not implemented yet
             # Build a list of LOADED_WORKBOOKS to process.
             lwbl = self.dc_LOADED_WORKBOOKS
             lwbl_count = len(lwbl) if lwbl else 0
@@ -1110,11 +1112,12 @@ class BudManViewModel(BDMClientInterface):
                 m = f"No LOADED_WORKBOOKS found, no action taken."
                 logger.error(m)
                 return False, m
-            if not self.WB_loaded(wb_name):
+            if not self.DC.dc_WORKBOOK_loaded(wb_name):
                 m = f"wb_name '{wb_name}' not found in LOADED_WORKBOOKS."
                 logger.error(m)
                 return False, m
-            wb = self.budget_domain_model.bdmwd_WORKBOOK_load(wb_name)
+            # wb = self.budget_domain_model.bdmwd_WORKBOOK_load(wb_name)
+            wb = lwbl[wb_name]
             ws = wb.active
             # Check for budget category column, add it if not present.
             check_budget_category(ws)
@@ -1386,19 +1389,7 @@ class BudManViewModel(BDMClientInterface):
     #region WB_loaded(wb_name) method
     def WB_loaded(self, wb_name:str) -> bool: 
         """Return True if wb_name is in the DC.LOADED_WORKBOOKS list."""
-        try:
-            _ = p3u.is_str_or_none("wb_name", wb_name, raise_TypeError=True)
-            # Reference the DC.LOADED_WORKBOOKS property.
-            lwbl = self.dc_LOADED_WORKBOOKS
-            if len(lwbl) == 0:
-                return False
-            for l_wb_name, _ in lwbl:
-                if l_wb_name == wb_name:
-                    return True
-            return False
-        except Exception as e:
-            logger.error(p3u.exc_err_msg(e))
-            raise
+        raise NotImplementedError("deprecated, use dc_WORKBOOK_loaded()")
     #endregion WB_loaded(wb_name) method
     # ------------------------------------------------------------------------ +
     #region FI_get_loaded_workbooks() method
