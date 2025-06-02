@@ -156,7 +156,12 @@ class BDMConfig(metaclass=BDMSingletonMeta):
         BDM_CREATED_DATE: None,
         BDM_LAST_MODIFIED_DATE: None,
         BDM_LAST_MODIFIED_BY: None,
-        BDM_WORKING_DATA: {}
+        BDM_WORKING_DATA: {},
+        BDM_DATA_CONTEXT: {
+            DC_FI_KEY: "boa",  # Financial Institution Key
+            DC_WF_KEY: BDM_WF_CATEGORIZATION,  # Workflow Key
+            DC_WB_TYPE: WF_WORKING_FOLDER  # Workbook Type
+        }
     }
     bdm_store_default_values = {
         BDM_ID: bdm_store_config[BDM_ID],

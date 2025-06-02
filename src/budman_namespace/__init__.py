@@ -71,6 +71,7 @@ __all__ = [
     "BDM_LAST_MODIFIED_DATE",
     "BDM_LAST_MODIFIED_BY",
     "BDM_WORKING_DATA",
+    "BDM_DATA_CONTEXT",
     "BDM_VALID_PROPERTIES",
     "BSM_PERSISTED_PROPERTIES",
     # Well-known column names for banking transactions workbooks.

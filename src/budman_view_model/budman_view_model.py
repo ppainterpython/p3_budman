@@ -172,6 +172,26 @@ class BudManViewModel(BDMClientInterface):
             st = p3u.start_timer()
             logger.info(f"Start: Configure Budget Manager View Model: ...")
             # Check if the budget domain model is initialized.
+            bdm = self.initialize_bdm(load_user_store=load_user_store)
+            # Create/initialize a BDMWorkingData data_context 
+            self.data_context = BDMWorkingData(self.model).initialize()
+            # Initialize the command map.
+            self.initialize_cmd_map()  # TODO: move to DataContext class
+            self.initialized = True
+            logger.info(f"Complete: {p3u.stop_timer(st)}")
+            return self
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion initialize() method
+    # ------------------------------------------------------------------------ +
+    #region initialize_bdm() method
+    def initialize_bdm(self, load_user_store : bool = False) -> "BudManViewModel":
+        """Initialize the view_model's budget_domain_model."""
+        try:
+            st = p3u.start_timer()
+            logger.info(f"Start: ...")
+            # Check if the budget domain model exists.
             if (self.budget_domain_model is None or 
                 not isinstance(self.budget_domain_model, BudgetDomainModel)):
                 # There is no valid budget_model. Load a BDM_STORE file?
@@ -197,20 +217,12 @@ class BudManViewModel(BDMClientInterface):
                 self.model = BudgetDomainModel(config_object).bdm_initialize()
             if not self.budget_domain_model.bdm_initialized: 
                 raise ValueError("BudgetModel is not initialized.")
-            # Create the BDMWorkingData as the data_context for the View Model
-            # Use the 
-            self.data_context = BDMWorkingData(self.model)
-            # Initialize the BDMWorkingData data context.
-            self.data_context.initialize()
-            # Initialize the command map.
-            self.initialize_cmd_map()  # TODO: move to DataContext class
-            self.initialized = True
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             return self
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
-    #endregion initialize() method
+    #endregion initialize_bdm() method
     # ------------------------------------------------------------------------ +
     #region initialize_cmd_map() method
     def initialize_cmd_map(self) -> None:
