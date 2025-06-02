@@ -53,21 +53,24 @@ class BDMWorkingData(BudManDataContext, BDMClientInterface):
             BDMWorkingData: The initialized BDMWorkingData instance.
         """
         try:
-            # First, update the DC with BDM_CONFIG from model.bdm_config_object.
-            bdm_config = getattr(self.model,BDM_CONFIG_OBJECT, None)
-            if bdm_config is None:
-                m = "The model does not have a bdm_config_object."
+            # First, update the DC with BDM_STORE from model.bdm_store_object.
+            bdm_store = getattr(self.model,BDM_STORE_OBJECT, None)
+            if bdm_store is None:
+                m = "The model does not have a bdm_store_object."
                 logger.error(m)
                 raise ValueError(m)
-            # assume if the model has the bdm_config_object, it is a valid 
-            # BDM_CONFIG dictionary.
-            self.dc_BDM_STORE = bdm_config
+            # assume if the model has the bdm_store_object, it is a valid 
+            # BDM_STORE dictionary.
+            self.dc_BDM_STORE = bdm_store
             # Second, update the DC with appropriate values from BDMClientInterface.
-            # self.dc_FI_KEY = self.model.bdm_FI_KEY
-            # self.dc_WF_KEY = self.model.bdm_WF_KEY
+            bdm_store_dc = bdm_store.get(BDM_DATA_CONTEXT, {})
+            self.dc_FI_KEY = bdm_store_dc.get(DC_FI_KEY, None)
+            self.dc_WF_KEY = bdm_store_dc.get(DC_WF_KEY, None)
+            self.dc_WB_TYPE = bdm_store_dc.get(DC_WB_TYPE, None)
             self.dc_WORKBOOKS = self.bdmwd_WORKBOOKS()
             self.dc_LOADED_WORKBOOKS = self.bdmwd_LOADED_WORKBOOKS()
             self.dc_INITIALIZED = True
+            return self
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise

@@ -106,7 +106,7 @@ def test_budget_model_initialize_with_template() -> None:
             "Budget model should be a BudgetModel instance"        
         assert bdm.bdm_initialized, "Budget model should be initialized"
         assert bdm.bdm_id is not None, "bdm.bdm_id should be set, not be None"
-        assert bdm.bdm_config_object is not None, \
+        assert bdm.bdm_store_object is not None, \
             "bdm.bdm_config_object should be set, not be None"
         assert bdm.bdm_folder is not None, "bdm.bdm_folder should be set"
         assert bdm.bdm_url is not None, \

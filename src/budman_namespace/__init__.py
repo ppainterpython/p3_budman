@@ -58,6 +58,7 @@ __all__ = [
     "ALL_KEY",
     #Budget Domain Model Class Property Name constants
     "BDM_ID",
+    "BDM_STORE_OBJECT",
     "BDM_CONFIG_OBJECT",
     "BDM_INITIALIZED",
     "BDM_FOLDER",
@@ -74,6 +75,7 @@ __all__ = [
     "BDM_DATA_CONTEXT",
     "BDM_VALID_PROPERTIES",
     "BSM_PERSISTED_PROPERTIES",
+    "BSM_VALID_BDM_STORE_FILETYPES",
     # Well-known column names for banking transactions workbooks.
     "BUDGET_CATEGORY_COL",
     # BDM_OPTIONS Budget Model Options (BMO)Constants

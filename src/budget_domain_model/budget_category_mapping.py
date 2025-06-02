@@ -66,6 +66,7 @@ category_map = {
     r'(?i)\bTHE\sGRASS\sOUTLET': 'Housing.Lawn Care',
     r'(?i)\bJack\sBrown\sCleaners': 'Housing.Dry Cleaning',
     # Auto
+    r'(?i)\bMINI\s*OF\s*AUSTIN\b': 'Auto.Maintenance.Mini',
     r'(?i)\bDISCOUNT-TIRE-CO\b': 'Auto.Tires',
     r"(?i)\bO'REILLY\b": "Auto.Maintenance.O'Reilly",
     r'(?i)\bCHEVRON\b': 'Auto.Gasoline.Chevron',
@@ -84,6 +85,7 @@ category_map = {
     # Insurance
     r'(?i)\bPRINCIPAL-CCA\b': 'Insurance.Principal Life Insurance',
     r'(?i)\bHP\s*\bDES:INS\sPREM\b': 'Insurance.Cobra Medical',
+    r'(?i)\bSWHP\s*\bDES:HEALTH\s*INS\s': 'Insurance.Cobra Medical',
     r'(?i)\bState\s\bFARM\b': 'Insurance.State Farm',
     r'(?i)\bTexas\s*Law\b': 'Insurance.Texas Law',
     # Medical
@@ -97,6 +99,8 @@ category_map = {
     r'(?i)\bWWW\.CAREMARK\.COM\b': 'Medical.Pharmacy.CVS',
     r'(?i)\bCVS.*PHARMACY\b': 'Medical.Pharmacy.CVS',
     r'(?i)\bMINUTECLINIC\b': 'Medical.Pharmacy.CVS Minute Clinic',
+    r'(?i)\bNORTHWEST\s*HILLS\s*EYE\b': 'Medical.Eye Doctor',
+    r'(?i)\bLONE\s*STAR\s*ONCOLOGY\b': 'Medical.Oncology Doctor',
     # Health and Fitness, Coaching
     r'(?i)\bID:23ANDME\sINC\b': 'Health and Fitness.23andMe',
     r'(?i)\bFINLEYS\sAVERY\sRANCH\b': 'Health and Fitness.Haircut Paul',
@@ -105,7 +109,10 @@ category_map = {
     r'(?i)\bQuest\s*Diagnostic\s': 'Health and Fitness.Lab Work',
     r'(?i)\bLABORATORY\s*CORPORATION\s': 'Health and Fitness.Lab Work',
     r'(?i)\bNEW\s*TECH\s*TENNIS': 'Health and Fitness.Tennis',
+    r'(?i)\bPLAYITAGAINSPORTS.*': 'Health and Fitness.Tennis',
+    r'(?i)\bSPINFIRE.*': 'Health and Fitness.Tennis',
     # Streaming and Subscriptions
+    r'(?i)\bSLING\.COM\b': 'Subscription.SlingTV',
     r'(?i)\bID:ANCESTO*RYCOM\b': 'Subscription.Ancestry-com',
     r'(?i).*TEAMVIEWER.*': 'Subscription.TeamViewer',
     r'(?i)\bSXM\*SIRIUSXM\.COM/ACCT\b': 'Subscription.SiriusXM',
@@ -123,6 +130,7 @@ category_map = {
     r'(?i)\bwikimedia\b': 'Subscription.WikiPedia',
     r'(?i)\bPAYPAL\b.*ID:CLEVERBRIDG': 'Subscription.Software',
     r'(?i)\bCHECKCARD\b.*APPLE\sCOM\sBILL': 'Subscription.Apple',
+    r'(?i)\bKindle\b.*Svcs.*': 'Subscription.Kindle',
     # Restaurants, Door Dash, Eating Out, Snacks
     r'(?i)\bID:STARBUCKS\b': 'Restaurants.Starbucks',
     r'(?i)\bSAVERS\b': 'Restaurants.Savers',
@@ -143,7 +151,9 @@ category_map = {
     r"(?i)\bTONY\sC'S\sCOAL\sFIRED\b": "Restaurants.Tony C's Coal Fired",
     r'(?i)\bTST\*SANTIAGOS\s*TEX\s*MEX\b': 'Restaurants.Santiagos Tex Mex',
     r'(?i)\bPOTBELLY\s': 'Restaurants.PotBelly',
+    r'(?i)\bTST\*RUDYS\s*COUNTRY\s*STORE': "Restaurants.Rudy's Country Store",
     # Shopping - Amazon, Apple, etc.
+    r'(?i)\bMARDEL\b': 'Shopping.Mardel',
     r'(?i)\bID:RUNNINGWARE\b': 'Shopping.Clothing.Running Warehouse',
     r'(?i)\bID:UNDERWATER\sUNDE\b': 'Shopping.Apple',
     r'(?i)\bID:LAGOSEC\sINC\b': 'Unknown.Lagosec',
@@ -169,10 +179,12 @@ category_map = {
     r'(?i)\bPAYPAL\s*(STORE)*\b': 'Shopping.Walgreens',
     r'(?i)\bPAYPAL\s': 'Shopping.PayPal',
     r'(?i)\bSMART\sSTOP': 'Shopping.Misc',
+    r'(?i)\bSPEEDY\sSTOP': 'Shopping.Misc',
     # Pets
     r'(?i)\bPETSUITES\sGREAT\sOAKS\b': 'Pets.Boarding',
     r'(?i)\bGREAT\sOAKS\sANIMAL\b': 'Pets.Veterinary',
     r'(?i)\bID:CHEWY\sINC\b': 'Pets.Dog Food',
+    r'(?i)\bMUD\s*PUPPIES\b': 'Pets.Grooming',
     # Professional and Historical Organizations
     r'(?i)\bID:INSTITUTEEL\b': 'Professional.IEEE',
     # Work-related Expenses
@@ -209,6 +221,8 @@ category_map = {
     r'(?i)\bINTEREST:\s': 'Banking.Merrill',
     r'(?i)\bReinvestment\s*Program\s*': 'Banking.Merrill',
     r'(?i)\bDIVIDEND:\s': 'Banking.Merrill',
+    r'(?i)\bSALE:\s': 'Banking.Merrill',
+    r'(?i)\bRETURN\s*OF\s*CAPITAL:\s': 'Banking.Merrill',
     r'(?i)\bBANK\sINTEREST:\sML\sBANK\s': 'Banking.Merrill',
     r'(?i)\bPURCHASE:\s': 'Banking.Merrill',
     r'(?i)\bREINVESTMENT\s*SHARE\(S\):': 'Banking.Merrill',

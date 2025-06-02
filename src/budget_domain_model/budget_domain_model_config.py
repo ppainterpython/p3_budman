@@ -2,16 +2,22 @@
 #region budget_domain_model_config.py module
 """BDM: class BDMConfig: Provides config object functions for the BDM.
 
-    This module provides a BudgetDomainModel (BDM) dictionary with the identical 
-    structure used for storing a BDM_STORE object with the 
-    BDM Storage Model (BSM), where user data is persisted.
+    Thi BDMCOnfig class provides a BudgetDomainModel Storage (BDM_STORE) 
+    dictionary used to configure a new instance of the BudgetDomainModel (BDM)
+    class. A BDM_STORE dictionary is used for BDM data storage by json
+    encoding. BDMConfig delivers a BDM_CONFIG dictionary, which is identical in 
+    structure to a BDM_STORE dictionary. This is just to highlight the usage
+    context being limited to BudgetDomainModel initialization.
 
-    When a new BDM_STORE object is created, it must be configured. This class,
-    BDMConfig serves purpose. 
-
-    BDMConfig can create a new BDM_STORE object with a default configuration.
-    Or, it can load an existing BDM_STORE object to provide as config to 
-    initialize the working BudgetDomainModel instance.
+    A BDM_CONFIG object is used to configure a new instance
+    of a BudgetDomainModel (BDM) object. When a BDM_STORE file is retrieved 
+    from storage by its URL, it is a BDM_STORE object. When starting up, 
+    the most common function is to load a BDM_STORE file from storage, and use 
+    it as the BDM_CONFIG object to initialize the BudgetDomainModel instance. 
+    But, the BDMConfig class supports other methods of creating a BDM_CONFIG 
+    dictionary used to initialize a BudgetDomainModel instance. The key point 
+    is that however the BDM_CONFIG dictionary is created, it becomes the 
+    BDM_STORE property value for the BudgetDomainModel instance. 
 """
 #endregion budget_domain_model_config.py module
 # ---------------------------------------------------------------------------- +
@@ -58,7 +64,7 @@ class BDMConfig(metaclass=BDMSingletonMeta):
     bdm_store_config = {  
         # BDM object
         BDM_ID: "BDM_CONFIG",  # identifies the builtin BDM config object.
-        BDM_CONFIG_OBJECT: None,
+        BDM_STORE_OBJECT: None,
         BDM_INITIALIZED: False,
         BDM_FILENAME: "bdm_store",  # the BDM store filename, without extension
         BDM_FILETYPE: ".jsonc",  # the BDM store filetype, default is jsonc
@@ -165,7 +171,7 @@ class BDMConfig(metaclass=BDMSingletonMeta):
     }
     bdm_store_default_values = {
         BDM_ID: bdm_store_config[BDM_ID],
-        BDM_CONFIG_OBJECT: bdm_store_config[BDM_CONFIG_OBJECT],
+        BDM_STORE_OBJECT: bdm_store_config[BDM_STORE_OBJECT],
         BDM_INITIALIZED: bdm_store_config[BDM_INITIALIZED],
         BDM_FILENAME: bdm_store_config[BDM_FILENAME],
         BDM_FILETYPE: bdm_store_config[BDM_FILETYPE],
@@ -177,14 +183,15 @@ class BDMConfig(metaclass=BDMSingletonMeta):
         BDM_CREATED_DATE: bdm_store_config[BDM_CREATED_DATE],
         BDM_LAST_MODIFIED_DATE: bdm_store_config[BDM_LAST_MODIFIED_DATE],
         BDM_LAST_MODIFIED_BY: bdm_store_config[BDM_LAST_MODIFIED_BY],
-        BDM_WORKING_DATA: {}
+        BDM_WORKING_DATA: {},
+        BDM_DATA_CONTEXT: bdm_store_config[BDM_DATA_CONTEXT]
     }
     #endregion BDMConfig dictionary
     # ------------------------------------------------------------------------ +
     #region get_budget_model_config() classmethod
     @classmethod
     def BDM_CONFIG_default(cls, default : bool = False) -> BDM_CONFIG:
-        """Get a copy of the budget domain model config dictionary."""
+        """Get a pristine version of a BDM_CONFIG dictionary."""
         try:
             logger.debug("Start:  ...")
             bmt = copy.deepcopy(cls.bdm_store_config)
@@ -207,10 +214,10 @@ class BDMConfig(metaclass=BDMSingletonMeta):
     #region validate() created BDMConfig from a loaded BDM_STORE url.
     @classmethod
     def BDM_CONFIG_validate(cls, bdm_config : dict) -> None:
-        """Verify bdm_config dictionary has all required fields.
+        """Verify a BDM_CONFIG or BDM_STORE dictionary has all required fields.
 
-            Make sure the supplied bdm_config dictionary has all the required
-            fields and values. If not, update the bdm_config with default values.
+            Make sure the supplied dictionary has all the required
+            fields and values. If not, update it with default values.
         """
         try:
             logger.debug("Start:  ...")
@@ -226,7 +233,7 @@ class BDMConfig(metaclass=BDMSingletonMeta):
     #region BDM_STORE_url_load() create BDM_CONFIG from a loaded BDM_STORE url.
     @classmethod
     def BDM_STORE_url_load(cls, bdm_url : str) -> BDM_CONFIG:
-        """Configure this BDMConfig object from loading BDM_STORE url."""
+        """Configure this BDMConfig object from loading a BDM_STORE url."""
         try:
             logger.debug("Start:  ...")
             bdm_store = bsm_BDM_STORE_url_load(bdm_url)
@@ -246,18 +253,17 @@ class BDMConfig(metaclass=BDMSingletonMeta):
     def __init__(self, bdm_config : Dict) -> None:
         """Construct a BDMConfig object used for configuration.
         
-        The BDMConfig class can be used to populate new 
-        BudgetDomainModel objects with default and example values.
+        The BDMConfig class provides a BDM_CONFIG object useful to initialize
+        new BudgetDomainModel instances.
         It is for internal use only. There are two means to apply it when
-        constructing a new BudgetDomainModel object:
-        1. Instantiate the BDMConfig, which sets the 
-           BudgetDomainModel._default_config_object class variable which 
-           should be used when no config_object parameter is used with 
-           BudgetDomainModel().
-        2. Use the BDMConfig.budget_model_config class variable
-           as the config_object parameter when instantiating BudgetDomainModel: 
-           BudgetDomainModel(config_object = BDMConfig.budget_model_config)
+        constructing a new BudgetDomainModel object: 1. Load a BDM_STORE file 
+        from storage, or 2. Marshall up a pristine BDM_CONFIG object with
+        initial default values.
         
+        BDMConfig has a property BDM_CONFIG which has the dictionary used for 
+        initialization. BudgetDomainModel has a property BDM_STORE which is the
+        dictionary used to initialize it at construction time.
+
         No outside config or settings are used to keep this stand-alone and
         uncoupled from other layers of an application using BDM.
         """

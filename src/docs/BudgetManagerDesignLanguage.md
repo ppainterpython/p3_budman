@@ -10,6 +10,10 @@ All people, families, businesses and organizations have a budget, managed or not
 
 Tracking income and expenses over time is critical to the value of a budget. Often, FI's will update account status on a monthly basis, issuing statements, or workbooks in the BudMan narrative. There will be workbooks from each FI, at least for each month, and perhaps separately for each account. Gathering the new input into the budget for user benefit requires processing the workbooks, and hence, a means to manage that processing. BudMan uses __Workflows (WF)__ to handle the processing. A workflow is a series of tasks performed on the workbooks. A task uses input, produces output, and may utilize working copies of data for a time.
 
+## Design for the MVVM Pattern
+
+Managing a budget with an application is the goal. I chose to make it a command line application to handle excel __Workbooks__, doing the tedious stuff and let the user use Excel for the actual user experience regarding the numbers. Hence, the __View__ in our design is a simple command line interface (__CLI__). But, the __View Model__, __Data Context__, and __Model__ designs do not have knowledge of that.
+
 ### MVVM Command Pattern Technical Design
 
 Our MVVM design includes a sub-pattern for Command Processing (CP) as well as a Data Context (DC). Early on, I learned the .NET MVVM framework and that has no doubt influenced my thinking as I design one in python. Because I can, I decided to include the CP and DC in an uber-DC pattern.
@@ -29,3 +33,17 @@ In the beginning, the local filesystem is used. But the design couples through a
 When dealing with data and storage in a Model, there is always functionality devoted to loading and storing existing data objects as well as creation of new data objects, how to specify default values, etc. With this design, a __BDM_STORE__ object begins with a creation function. A __BDM_CONFIG__ object is used to specify initial values used when instantiating a new object. Great effort has been devoted to maintain the same _schema_ for both __BDM_STORE__ and __BDM_CONFIG__ object data content. In the `budget_domain_model` package, the `BDMConfig` class has the job to provide __BDM_CONFIG__ objects used to instantiate `BudgetDomainModel` instances from __BDM_CONFIG__ objects. Two scenarios are provided. First, the `BDMConfig` class can load a __BDM_STORE__ object from a __BDM_URL__ and provide it as a __BDM_CONFIG__ object. Second, the `BDMConfig` class can provide a pristine __BDM_CONFIG__ object based on internal default values. Applications can further modify the __BDM_CONFIG__ object in other ways prior to providing it to instantiate a `BudgetDomainModel` class instance.
 
 Keep application settings and configuration out of the Model design. Do not use outside config/settings objects to initialize the model. The BDMConfig is used as a default object to create a new __BDM_STORE__ object which can then be modified and used to initialize a new BUDMAN_MODEL_STORE before saving it the first time.
+
+### Budget Storage Model
+
+__BDM_STORE__ and __BDM_CONFIG__ are dictionaries in memory and json files in storage. The BSM treats them accordingly. Storage is referenced by __URL__. BSM does no validation beyond json encode and decode. Exceptions are raised for error conditions.
+
+__WORKBOOKS__ are files which are also moved to and from storage. Only the local filesystem is supported as a storage service. __WORKBOOKS__ are referenced by their absolute path string (__abs_path__).
+
+BSM maps a __folder__ path, a __filename__ and a __filetype__ into an __abs_path__ for filesystem operations. The combined __filename__ appended to __filetype__ is referred to as the __full_filename__.
+
+### View Model
+
+The __View Model__ is created first, as the application starts. It is the responsibility of the __View Model__ to create the other components. It has access to the application settings, but the __Data Context__ and __Model__ have no dependency on those.
+
+In the __View Model__ initialization, it loads the __BDM_STORE__ and applies the appropriate state assignments to the __Data Context__ to prime it for the application.

@@ -253,7 +253,8 @@ def map_budget_category(sheet:Worksheet,src,dst) -> None:
             transaction = WORKSHEET_row_data(row) 
             trans_str = transaction.data_str()
             del transaction  # Clean up the transaction object.
-            logger.debug(f"{row_idx:04}:{trans_str}" )
+            if dst_value == 'Other':
+                logger.debug(f"{row_idx:04}:{trans_str}" )
         logger.info(f"Completed budget category mapping for '{num_rows}' rows.")
         return None
     except Exception as e:

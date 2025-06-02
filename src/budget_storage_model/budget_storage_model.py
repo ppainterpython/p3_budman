@@ -2,12 +2,19 @@
 #region    budget_storage_model.py module\
 """ Implements data storage for Budget Domain Model.
 
-    Keep it simple, use a JSONC file to store the budget domain model. Use a
-    URL to reference it from other layers of application. Initially, the
-    file scheme is supported for local files, but later it may be extended
-    to support remote files or other storage mechanisms.
+    Keep it simple, use a JSONC file to load/save the budget domain model 
+    from/to storage. The BDM_STORE object is a dictionary in memory and a
+    json file in storage. Use a URL to reference it from other layers of 
+    application. Initially, the file scheme is supported for local files, 
+    but later it may be extended to support other storage services.
+
+    BSM only depends on the dict to json mapping, not detailed content structure
+    is used beyond that for validation.
 
     No dependencies to other application layers.
+
+    # TODO: switch verbs to put/get from save/load, consistent with URL usage.
+    # TODO: move back to std lib json module, jsonc
 """
 #endregion budget_storage_model.py module
 # ---------------------------------------------------------------------------- +
@@ -22,7 +29,8 @@ from typing import Dict
 import p3_utils as p3u, pyjson5, p3logging as p3l
 import pyjson5 as json5 
 # local modules and packages
-from budman_namespace import BSM_PERSISTED_PROPERTIES
+from budman_namespace import (
+    BSM_PERSISTED_PROPERTIES, BDM_STORE, BSM_VALID_BDM_STORE_FILETYPES)
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region    Globals and Constants
@@ -31,11 +39,11 @@ logger = logging.getLogger(__name__)
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
 #region    bsm_BDM_STORE_url_load() function
-def bsm_BDM_STORE_url_load(bdms_url : str = None) -> Dict:
-    """BSM: Load a BDM_STORE object as json from a URL.
+def bsm_BDM_STORE_url_load(bdms_url : str = None) -> BDM_STORE:
+    """BSM: Load a BDM_STORE object from a URL.
     
     Entry point for a BDM_STORE file load operation. Parse the URL and decide
-    how to load the BDM_STORE object based on the URL scheme. Parse the
+    how to load the BDM_STORE object based on the URL scheme. Decode the
     json content and return it as a dictionary.
 
     Args:
@@ -45,42 +53,38 @@ def bsm_BDM_STORE_url_load(bdms_url : str = None) -> Dict:
         # bdms_url must be a non-empty string.
         p3u.is_non_empty_str("bdms_url", bdms_url, raise_error=True)
         # bdms_url must be a valid URL.
-        try:
-            parsed_url = urlparse(bdms_url)
-        except Exception as e:
-            logger.error(p3u.exc_err_msg(e))
-            raise ValueError(f"store_url is not a valid URL: {bdms_url}")
+        parsed_url = urlparse(bdms_url)
         if not parsed_url.scheme:
-            raise ValueError(f"store_url has no scheme: {bdms_url}")
+            raise ValueError(f"Invalid URL has no scheme: {bdms_url}")
+        if not parsed_url.path:
+            raise ValueError(f"Invalid URL has no path: {bdms_url}")
         if parsed_url.scheme not in ["file", "http", "https"]:
             raise ValueError(f"store_url scheme is not supported: {parsed_url.scheme}")
         # If the scheme is file, load the BDM_STORE from a file.
         if parsed_url.scheme == "file":
             # Decode the URL and convert it to a Path object.
             bdms_path = Path.from_uri(bdms_url)
-            logger.info(f"Loading BDM_STORE from path:'{bdms_path}' url:'{bdms_url}'")
+            logger.info(f"Loading BDM_STORE from path: '{bdms_path}' URL: '{bdms_url}'")
             return bsm_BDM_STORE_file_load(bdms_path)
-        raise ValueError(f"Unsupported store_url scheme: {parsed_url.scheme}")
-    except json5.Json5DecoderException as e:
-        logger.error(p3u.exc_err_msg(e))
-        raise
+        raise ValueError(f"Unsupported URL scheme: {parsed_url.scheme}")
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
 #endregion bsm_BDM_STORE_url_load() function
 # ---------------------------------------------------------------------------- +
 #region    bsm_BDM_STORE_url_save() function
-def bsm_BDM_STORE_url_save(budman_store:Dict, bdms_url : str = None) -> Dict:
-    """BSM: Save the BDM_STORE object to jsonc data at the url.
+def bsm_BDM_STORE_url_save(bdm_store:BDM_STORE, bdms_url : str = None) -> Dict:
+    """BSM: Save the BDM_STORE object to storage at the url.
     
-    Convert the dictionary to json and save it to the url.
+    Store the BDM_STORE dictionary with a storage service based on the url.
 
     Args:
-        bdms_url (str): The URL to the BDM_STORE object to load.
+        bdms_url (str): The URL to the BDM_STORE object to store.
     """
     try:
-        # budman_store must be a dictionary.
-        p3u.is_obj_of_type("budman_store", budman_store, Dict, raise_error=True)
+        st = p3u.start_timer()
+        # bdm_store must be a dictionary.
+        p3u.is_obj_of_type("bdm_store", bdm_store, Dict, raise_error=True)
         # store_url must be a non-empty string.
         p3u.is_non_empty_str("store_url", bdms_url, raise_error=True)
         # store_url must be a valid URL.
@@ -88,66 +92,72 @@ def bsm_BDM_STORE_url_save(budman_store:Dict, bdms_url : str = None) -> Dict:
             parsed_url = urlparse(bdms_url)
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
-            raise ValueError(f"store_url is not a valid URL: {bdms_url}")
+            raise ValueError(f"Invalid URL: {bdms_url}")
         if not parsed_url.scheme:
             raise ValueError(f"store_url has no scheme: {bdms_url}")
         if parsed_url.scheme not in ["file", "http", "https"]:
             raise ValueError(f"store_url scheme is not supported: {parsed_url.scheme}")
         # If the scheme is file, load the BDM_STORE from a file.
         if parsed_url.scheme == "file":
-            # Decode the URL and convert it to a Path object.
+            # Decode the URL into a Path object.
             bdms_path = Path.from_uri(bdms_url)
-            logger.info(f"Loading BDM_STORE from path:'{bdms_path}' url:'{bdms_url}'")
+            logger.info(f"Loading BDM_STORE from path:'{bdms_path}' "
+                        f"url:'{bdms_url}'")
             return bsm_BDM_STORE_file_save(bdms_path)
         raise ValueError(f"Unsupported store_url scheme: {parsed_url.scheme}")
-    except json5.Json5DecoderException as e:
-        logger.error(p3u.exc_err_msg(e))
-        raise
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
 #endregion bsm_BDM_STORE_url_save() function
 # ---------------------------------------------------------------------------- +
 #region    bsm_BDM_STORE_file_load() function
-def bsm_BDM_STORE_file_load(bdms_path : Path = None) -> Dict:
+def bsm_BDM_STORE_file_load(bdms_path : Path = None) -> BDM_STORE:
     """Load a BDM_STORE file from the given Path value."""
     try:
         if bdms_path is None or not isinstance(bdms_path, Path):
             raise ValueError("bdms_path is None or not a Path object.")
-        logger.info("loading BDM_STORE from a file.")
+        logger.info(f"Loading BDM_STORE from  file: '{bdms_path}'")
         if not bdms_path.exists():
-            raise FileNotFoundError(f"BDM_URL path does not exist: {bdms_path}")
+            m = f"file does not exist: {bdms_path}"
+            logger.error(m)
+            raise FileNotFoundError(m)
         if not bdms_path.is_file():
-            raise ValueError(f"BDM_URL path is not a file: {bdms_path}")
-        if not bdms_path.suffix == ".jsonc":
-            raise ValueError(f"BDM_URL path is not a .jsonc file: {bdms_path}")
+            m = f"bdms_path is not a file: '{bdms_path}'"
+            logger.error(m)
+            raise ValueError(m)
+        if not bdms_path.suffix in BSM_VALID_BDM_STORE_FILETYPES:
+            m = f"bdms_path filetype is not supported: {bdms_path.suffix}"
+            logger.error(m)
+            raise ValueError(m)
+        if bdms_path.stat().st_size == 0:
+            m = f"file is empty: {bdms_path}"
+            logger.error(m)
+            raise ValueError(m)
         with open(bdms_path, "r") as f:
-            jsonc_content = json5.decode(f.read())
-        if (jsonc_content is None or 
-            not isinstance(jsonc_content, dict) or 
-            len(jsonc_content) == 0):
-            raise ValueError(f"BDM_URL content is None, not a Dict or empty.")
-        logger.info(f"loaded BDM_URL content from file: {bdms_path}")
-        return jsonc_content
+            bdms_json : str = f.read()
+            bdms_json_size = len(bdms_json)
+            bdm_store_content = json5.decode(bdms_json)
+        logger.info(f"Loaded '{bdms_json_size}' chars of json content from file: '{bdms_path}'")
+        return bdm_store_content
     except json5.Json5DecoderException as e:
         logger.error(p3u.exc_err_msg(e))
         raise
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
-#endregion bsm_BDM_STORE_load() function
+#endregion bsm_BDM_STORE_file_load() function
 # ---------------------------------------------------------------------------- +
 #region    bsm_BDM_STORE_file_save() function
-def bsm_BDM_STORE_file_save(budman_store:Dict, bdms_path:Path) -> None:
+def bsm_BDM_STORE_file_save(bdm_store:BDM_STORE, bdms_path:Path) -> None:
     """Save the Budget Manager Store to a .jsonc file."""
     try:
-        # budman_store must be a dictionary.
-        p3u.is_obj_of_type("budman_store", budman_store, Dict, raise_error=True)
+        # bdm_store must be a dictionary.
+        p3u.is_obj_of_type("bdm_store", bdm_store, Dict, raise_error=True)
         # store_path must be a non-empty string.
         p3u.is_non_empty_str("bdms_path", bdms_path, raise_error=True)
         logger.info("Saving Budget Manager Store to file: '{bdms_path}'")
         # Only persist the properties in BDM_PERSISTED_PROPERTIES.
-        filtered_bsm = {k: v for k, v in budman_store.items() if k in BSM_PERSISTED_PROPERTIES}
+        filtered_bsm = {k: v for k, v in bdm_store.items() if k in BSM_PERSISTED_PROPERTIES}
         jsonc_content = json5.encode(filtered_bsm)
         with open(bdms_path, "w") as f:
             f.write(jsonc_content)

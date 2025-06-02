@@ -114,14 +114,14 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
         # attributes in the object with one critical exception.
         # A valid bdm_config dictionary created by one of the methods on the
         # BDMConfig class is required here. Here is is just added to the
-        # BDM_CONFIG_OBJECT property. The real work happens in bdm_initialize().
+        # BDM_STORE_OBJECT property. The real work happens in bdm_initialize().
         if bdm_config is None:
-            m = "bdm_config is None, must be a valid configuration dictionary "
+            m = "bdm_config parameter is None, must be a valid configuration dictionary "
             m += "created by one of the BDMConfig methods prior to BudgetDomainModel()." 
             logger.error(m)
             raise ValueError(m)
         setattr(self, BDM_ID, None)
-        setattr(self, BDM_CONFIG_OBJECT, bdm_config) # CRITICAL to later initialization.
+        setattr(self, BDM_STORE_OBJECT, bdm_config) # CRITICAL to later initialization.
         setattr(self, BDM_INITIALIZED, False)
         setattr(self, BDM_FILENAME, None)
         setattr(self, BDM_FILETYPE, None)
@@ -142,7 +142,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
         '''Return BudgetDomainModelTemplate dictionary object. Used for serialization.'''
         ret = {
             BDM_ID: self.bdm_id,
-            BDM_CONFIG_OBJECT: self.bdm_config_object,
+            BDM_STORE_OBJECT: self.bdm_store_object,
             BDM_INITIALIZED: self.bdm_initialized,
             BDM_FOLDER: self.bdm_folder,
             BDM_FI_COLLECTION: self.bdm_fi_collection,
@@ -159,7 +159,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
         ''' Return a str representation of the BudgetDomainModel object '''
         ret = f"{{ "
         ret += f"'{BDM_ID}': {self.bdm_id}, "
-        ret += f"'{BDM_CONFIG_OBJECT}': {self.bdm_config_object}, "
+        ret += f"'{BDM_STORE_OBJECT}': {self.bdm_store_object}, "
         ret += f"'{BDM_INITIALIZED}': {self.bdm_initialized}, "
         ret += f"'{BDM_FOLDER}': '{self.bdm_folder}', "
         ret += f"'{BDM_FI_COLLECTION}': '{self.bdm_fi_collection}', "
@@ -175,7 +175,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
         ''' Return a str representation of the BudgetDomainModel object '''
         ret = f"{self.__class__.__name__}({str(self.bdm_folder)}): "
         ret += f"{BDM_ID} = {self.bdm_id}, "
-        ret += f"{BDM_CONFIG_OBJECT} = {str(self.bdm_config_object)}, "
+        ret += f"{BDM_STORE_OBJECT} = {str(self.bdm_store_object)}, "
         ret += f"{BDM_INITIALIZED} = {str(self.bdm_initialized)}, "
         ret += f"{BDM_FOLDER} = '{str(self.bdm_folder)}', "
         ret += f"{BDM_FI_COLLECTION} = [{', '.join([repr(fi_key) for fi_key in self.bdm_fi_collection.keys()])}], "
@@ -202,15 +202,15 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
         setattr(self, BDM_ID, value)
 
     @property
-    def bdm_config_object(self) -> object:
+    def bdm_store_object(self) -> object:
         """The budget model configuration object."""
-        return getattr(self, BDM_CONFIG_OBJECT)
-    @bdm_config_object.setter
-    def bdm_config_object(self, value: object) -> None:
+        return getattr(self, BDM_STORE_OBJECT)
+    @bdm_store_object.setter
+    def bdm_store_object(self, value: object) -> None:
         """Set the budget model configuration object."""
         if not isinstance(value, object):
             raise ValueError(f"bm_config_object must be an object: {value}")
-        setattr(self, BDM_CONFIG_OBJECT, value)
+        setattr(self, BDM_STORE_OBJECT, value)
 
     @property
     def bdm_initialized(self) -> bool:
@@ -349,7 +349,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
     # ======================================================================== +
 
     # ======================================================================== +
-    #region    Budget model Domain Model (BDM) object methods
+    #region    BDM - Budget Domain Model methods
     """ Budget Model Domain Model (BDM) Documentation.
 
     Budget model Domain Model (BDM) is the conceptual model used to track and 
@@ -472,17 +472,17 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
         try:
             # A valid bdm_config_object dictionary created by one of the methods on the
             # BDMConfig class is required here. Here is is just added to the
-            # BDM_CONFIG_OBJECT property. The real work happens in bdm_initialize().
-            if self.bdm_config_object is None:
+            # BDM_STORE_OBJECT property. The real work happens in bdm_initialize().
+            if self.bdm_store_object is None:
                 m = "bdm_config_object property is None, must be a valid configuration dictionary "
                 m += "created by one of the BDMConfig methods prior to BudgetDomainModel().bdm_initialize()." 
                 logger.error(m)
                 raise ValueError(m)
             # Apply the configuration to the budget model (self)
             # No defaults here, the bdm_config_object must have all keys and values.
-            bdm_config = self.bdm_config_object
+            bdm_config = self.bdm_store_object
             setattr(self, BDM_ID, bdm_config.get(BDM_ID))
-            setattr(self, BDM_CONFIG_OBJECT, bdm_config)
+            setattr(self, BDM_STORE_OBJECT, bdm_config)
             setattr(self, BDM_INITIALIZED, bdm_config.get(BDM_INITIALIZED))
             setattr(self, BDM_FILENAME, bdm_config.get(BDM_FILENAME))
             setattr(self, BDM_FILETYPE, bdm_config.get(BDM_FILETYPE))
@@ -527,7 +527,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
             # attributes.
             # Apply the configuration to the budget model (self)
             # BSM_PERSISTED_PROPERTIES defines the attributes to be applied.
-            self.__dict__.update(copy.deepcopy(self.bdm_config_object))
+            self.__dict__.update(copy.deepcopy(self.bdm_store_object))
             bdm_config : Dict = None #bsm_BDM_URL_load(self)
             for attr in BSM_PERSISTED_PROPERTIES:
                 if attr in bdm_config and hasattr(self, attr):
@@ -760,11 +760,11 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
             raise
     #endregion   BDM_WORKING_DATA bdm_BDM_WORKING_DATA_initialize() 
     # ------------------------------------------------------------------------ +
-    #endregion BudgetDomainModel Domain methods
+    #endregion BDM - Budget Domain Model methods
     # ======================================================================== +
 
     # ======================================================================== +
-    #region    BudgetDomainModel Storage Model (BSM) methods
+    #region    BSM - Budget Storage Model methods
     """ Budget model Storage Model (BSM) Documentation.
 
     All BDM data is stored in the filesystem by the BSM. BSM works with Path 
@@ -1439,7 +1439,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
             raise    
     #endregion bsm_save_workbook() function
     # ------------------------------------------------------------------------ +
-    #endregion BudgetDomainModel Storage Model methods
+    #endregion BSM - Budget Storage Model methods
     # ======================================================================== +
 
     # ======================================================================== +

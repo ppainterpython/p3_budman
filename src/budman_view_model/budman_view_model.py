@@ -206,15 +206,15 @@ class BudManViewModel(BDMClientInterface):
                         m = f"Failed to load BDM_STORE from URL: {self.bdms_url}"
                         logger.error(m)
                         raise ValueError(m)
-                    config_object = bdmc.bdm_config_object
+                    bdm_config = bdmc.bdm_config_object
                     # Use the loaded BDM_STORE file as a config_object 
                     # config_object = bsm_BDM_STORE_file_load()
                     self.BDM_STORE_loaded = True
                 else:
                     # Use the builtin default template as a config_object.
-                    config_object = BDMConfig.BDM_CONFIG_default()
+                    bdm_config = BDMConfig.BDM_CONFIG_default()
                 # Now to initialize the budget model.
-                self.model = BudgetDomainModel(config_object).bdm_initialize()
+                self.model = BudgetDomainModel(bdm_config).bdm_initialize()
             if not self.budget_domain_model.bdm_initialized: 
                 raise ValueError("BudgetModel is not initialized.")
             logger.info(f"Complete: {p3u.stop_timer(st)}")

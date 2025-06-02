@@ -1,0 +1,74 @@
+{
+    "_bdm_id": "ca063e8b",
+    "_budget_folder": "~/OneDrive/budget",
+    "_data_context": {
+        "fi_key": "boa",
+        "wf_key": "categorization",
+        "wb_type": "wf_working"
+    },
+    "_financial_institutions": {
+        "boa": {
+            "fi_key": "boa",
+            "fi_name": "Bank of America",
+            "fi_type": "bank",
+            "fi_folder": "boa",
+            "fi_data_collection": {
+                "categorization": {
+
+This is not valid json
+
+and should cause an exception
+    "_workflows": {
+        "intake": {
+            "wf_key": "intake",
+            "wf_name": "intake",
+            "wf_input_folder": null,
+            "wf_prefix_in": null,
+            "wf_working_folder": "data/new",
+            "wf_output_folder": "data/new",
+            "wf_prefix_out": null,
+            "wf_type_map": {
+                "wf_output": "wf_output_folder",
+                "wf_working": "wf_working_folder",
+                "wf_input": "wf_input_folder"
+            }
+        },
+        "categorization": {
+            "wf_key": "categorization",
+            "wf_name": "categorization",
+            "wf_input_folder": "data/new",
+            "wf_working_folder": "data/categorized",
+            "wf_output_folder": "data/categorized",
+            "wf_prefix_in": null,
+            "wf_prefix_out": "categorized_",
+            "wf_type_map": {
+                "wf_output": "wf_output_folder",
+                "wf_working": "wf_working_folder",
+                "wf_input": "wf_input_folder"
+            }
+        },
+        "finalization": {
+            "wf_key": "finalization",
+            "wf_name": "finalization",
+            "wf_input_folder": "data/categorized",
+            "wf_working_folder": "data/finalized",
+            "wf_output_folder": "data/finalized",
+            "wf_prefix_in": "categorized_",
+            "wf_prefix_out": "finalized_",
+            "wf_type_map": {
+                "wf_output": "wf_output_folder",
+                "wf_working": "wf_working_folder",
+                "wf_input": "wf_input_folder"
+            }
+        }
+    },
+    "_options": {
+        "log_config": "budget_model_logging_config.jsonc",
+        "log_level": "DEBUG",
+        "log_file": "logs/p3BudgetModel.log",
+        "json_log_file_name": "logs/p3BudgetModel.jsonl"
+    },
+    "_created_date": "2025-05-12T19:41:45.852107",
+    "_last_modified_date": "2025-05-26T00:38:52.001760",
+    "_last_modified_by": "ppain"
+}

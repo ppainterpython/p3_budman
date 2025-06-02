@@ -68,9 +68,9 @@ ALL_KEY = "all"
 #
 # Budget Domain Model Constants
 #
-# BudgetDomainModel (BDM) (BudgetModel-BM) class Property name Constants
+# BudgetDomainModel (BDM) class Property name Constants
 BDM_ID = "_bdm_id"                             # Type: str
-BDM_CONFIG_OBJECT = "_bdm_config_object"       # Type: DATA_OBJECT
+BDM_STORE_OBJECT = "_bdm_store_object"         # Type: BDM_STORE
 BDM_INITIALIZED = "_initialized"               # Type: bool
 BDM_FILENAME = "_bdm_filename"                 # Type: str - path element
 BDM_FILETYPE = "_bdm_filetype"                 # Type: str - path element
@@ -84,9 +84,12 @@ BDM_LAST_MODIFIED_DATE = "_last_modified_date" # Type: str - ISO date string
 BDM_LAST_MODIFIED_BY = "_last_modified_by"     # Type: str - user name
 BDM_WORKING_DATA = "_wd"                       # Type: BDM_WORKING_DATA
 BDM_DATA_CONTEXT = "_data_context"             # Type: DATA_CONTEXT
+# BDMConfig class Property name Constants (same as BudgetDomainModel)
+# but with BDM_CONFIG_OBJECT instead of BDM_STORE_OBJECT.
+BDM_CONFIG_OBJECT = "_bdm_config_object"       # Type: BDM_CONFIG
 # Validation list constants
 BDM_VALID_PROPERTIES = (
-    BDM_ID, BDM_CONFIG_OBJECT, BDM_INITIALIZED, 
+    BDM_ID, BDM_STORE_OBJECT, BDM_CONFIG_OBJECT, BDM_INITIALIZED, 
     BDM_FILENAME, BDM_FILETYPE, BDM_FOLDER, 
     BDM_URL, BDM_FI_COLLECTION, BDM_WF_COLLECTION, BDM_OPTIONS,
     BDM_CREATED_DATE, BDM_LAST_MODIFIED_DATE, 
@@ -96,6 +99,8 @@ BSM_PERSISTED_PROPERTIES = (
     BDM_FI_COLLECTION, BDM_WF_COLLECTION,  
     BDM_OPTIONS, BDM_CREATED_DATE, BDM_LAST_MODIFIED_DATE, BDM_LAST_MODIFIED_BY,
     BDM_DATA_CONTEXT)
+# ---------------------------------------------------------------------------- +
+BSM_VALID_BDM_STORE_FILETYPES = (".json", ".jsonc")
 # Well-known column names for banking transactions workbooks.
 BUDGET_CATEGORY_COL = "Budget Category"
 # ---------------------------------------------------------------------------- +

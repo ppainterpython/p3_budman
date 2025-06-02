@@ -61,7 +61,7 @@ class BudManDataContext(BudManDataContextBaseInterface):
         self._WF_KEY = None       
         self._WB_TYPE = None      
         self._WB_NAME = None      
-        self._BDM_STORE = None 
+        self._BDM_STORE : BDM_STORE = None 
         self._WORKBOOKS : WORKBOOK_LIST = None # from BudManDataContextBaseInterface
         self._LOADED_WORKBOOKS : LOADED_WORKBOOK_LIST = None # from BudManDataContextBaseInterface
 
@@ -161,7 +161,7 @@ class BudManDataContext(BudManDataContextBaseInterface):
         self.dc_WF_KEY = None
         self.dc_WB_TYPE = None
         self.dc_WB_NAME = None
-        self.dc_BDM_STORE = []
+        self.dc_BDM_STORE = dict()
         self.dc_WORKBOOKS = []
         self.dc_LOADED_WORKBOOKS = dict()
         self.dc_INITIALIZED = True
