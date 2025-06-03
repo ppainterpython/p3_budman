@@ -241,6 +241,7 @@ def map_budget_category(sheet:Worksheet,src,dst) -> None:
         logger.info(f"Mapping '{src}'({src_col_index}) to "
                     f"'{dst}'({dst_col_index})")
         num_rows = sheet.max_row # or set a smaller limit
+        other_count = 0
         for row in sheet.iter_rows(min_row=2):
             # row is a type 'tuple' of Cell objects.
             row_idx = row[0].row  # Get the row index.
@@ -254,8 +255,10 @@ def map_budget_category(sheet:Worksheet,src,dst) -> None:
             trans_str = transaction.data_str()
             del transaction  # Clean up the transaction object.
             if dst_value == 'Other':
+                other_count += 1
                 logger.debug(f"{row_idx:04}:{trans_str}" )
-        logger.info(f"Completed budget category mapping for '{num_rows}' rows.")
+        logger.info(f"Completed budget category mapping for '{num_rows}' rows. "
+                    f"Other count: '{other_count}'.")
         return None
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
