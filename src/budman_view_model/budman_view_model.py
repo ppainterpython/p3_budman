@@ -16,7 +16,8 @@ from openpyxl import Workbook, load_workbook
 from budman_settings import *
 from budman_namespace import *
 from budget_domain_model import (
-    BDMBaseInterface, BDMClientInterface, BudgetDomainModel, check_budget_category,
+    BDMBaseInterface, BDMClientInterface, BudgetDomainModel, 
+    check_budget_category, check_sheet_columns,
     map_budget_category, category_map_count, budget_category_mapping, BDMConfig)
 from budget_storage_model import *
 from budman_data_context import BDMWorkingData
@@ -1132,7 +1133,8 @@ class BudManViewModel(BDMClientInterface):
             wb = lwbl[wb_name]
             ws = wb.active
             # Check for budget category column, add it if not present.
-            check_budget_category(ws)
+            # check_budget_category(ws)
+            check_sheet_columns(ws)
             # Map the 'Original Description' column to the 'Budget Category' column.
             map_budget_category(ws,"Original Description", BUDGET_CATEGORY_COL)
             self.budget_domain_model.bdmwd_WORKBOOK_save(wb_name, wb)

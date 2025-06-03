@@ -1,8 +1,6 @@
 # ---------------------------------------------------------------------------- +
 #region category_mapping.py module
-""" Functions enabling mapping of FI transactions to budget categories.
-
-"""
+""" Functions enabling mapping of FI transactions to budget categories."""
 #endregion p3_execl_budget.p3_banking_transactions budget_transactions.py module
 # ---------------------------------------------------------------------------- +
 #region Imports
@@ -11,7 +9,6 @@ import re, pathlib as Path, logging
 
 # third-party modules and packages
 import p3logging as p3l, p3_utils as p3u
-from openpyxl import Workbook, load_workbook
 
 # local modules and packages.
 #endregion Imports
@@ -19,6 +16,19 @@ from openpyxl import Workbook, load_workbook
 #region Globals and Constants
 logger = logging.getLogger(__name__)
 #endregion Globals and Constants
+# ---------------------------------------------------------------------------- +
+#region Account Map
+# Map values to column ['Account Code'] by re pattern-matching to 
+# column ['Account Name'].
+# account_map = {
+#     r'(?i).*WATERSTONE.*': 'Charity.GCR',
+# }
+# df['Account Name'] = df['Account Name'].str.replace(
+#     r'^[^-]+-\s*[^-]+-\s*(.+)$',  # Regular expression
+#     r'\1',                        # Replace w/ group 1, 1st capturing group (the third part)
+#     regex=True                    # Enable regex mode
+# )
+#endregion Account Map
 # ---------------------------------------------------------------------------- +
 #region Category Map
 # Map values to column ['Category'] by re pattern-matching to 
@@ -393,7 +403,7 @@ category_map = {
 #region Merrill Lynch transactions
     r'(?i)\bINTEREST:\s': 'Banking.Merrill',
     r'(?i)\bReinvestment\s*Program\s*': 'Banking.Merrill',
-    r'(?i)\bDIVIDEND:\s': 'Banking.Merrill',
+    r'(?i).*DIVIDEND:\s.*': 'Banking.Merrill',
     r'(?i)\bSALE:\s': 'Banking.Merrill',
     r'(?i)\bRETURN\s*OF\s*CAPITAL:\s': 'Banking.Merrill',
     r'(?i)\bBANK\sINTEREST:\sML\sBANK\s': 'Banking.Merrill',

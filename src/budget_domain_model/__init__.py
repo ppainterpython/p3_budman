@@ -23,7 +23,7 @@ from .budget_category_mapping import (
 )
 from .budget_domain_model_config import BDMConfig
 from .budget_categorization import (
-    check_budget_category, map_budget_category
+    check_budget_category, check_sheet_columns, map_budget_category
 )
 
 # symbols for "from budman_model import *"
@@ -35,6 +35,7 @@ __all__ = [
     "BudgetDomainModelIdentity",
     "BDMConfig",
     "check_budget_category",
+    "check_sheet_columns",
     "map_budget_category",
     "map_category",
     "category_map",

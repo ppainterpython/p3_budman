@@ -36,19 +36,49 @@ from budget_domain_model import (BudgetDomainModel, map_category, category_map_c
 #region Globals and Constants
 logger = logging.getLogger(__name__)
 
-# BOA workbook column name to column index mapping.
-DATE_COL_NAME = "Date"  # Column name for transaction date.
-DATE_COL_INDEX = 1      # Column index for transaction date.
-DESCRIPTION_COL_NAME = "Original Description"  # Column name for transaction description.
-DESCRIPTION_COL_INDEX = 2  # Column index for transaction description.
+# BOA workbooks arrive with these columns. "ignore" moves the index to 1-based.
+# so BOA_WB_COLUMNS.index(name) returns column number. BOA_WB_COLUMNS[0] is ignored. 
+BOA_WB_COLUMNS = ["ignore", "Status", "Date", "Original Description",
+                  "Split Type", "Category", "Currency", "Amount", 
+                  "User Description", "Memo", "Classification", "Account Name",
+                  "Simple Description"]
+
+# BudMan users these columns.
+DATE_COL_NAME = "Date" 
+DATE_COL_INDEX = 1
+ORIGINAL_DESCRIPTION_COL_NAME = "Original Description"
+ORIGINAL_DESCRIPTION_COL_INDEX = 2  
 CURRENCY_COL_NAME = "Currency"
-CURRENCY_COL_INDEX = 4  # Column name for transaction amount.
-AMOUNT_COL_NAME = "Amount"  # Column name for transaction amount.
-AMOUNT_COL_INDEX = 6  # Column index for transaction amount.
-ACCOUNT_NAME_COL_NAME = "Account Name"  # Column name for account name.
-ACCOUNT_NAME_COL_INDEX = 10  # Column index for account name.
-BUDGET_CATEGORY_COL = "Budget Category"  # Column name for budget category.
-BUDGET_CATEGORY_COL_INDEX = 12  # Column index for budget category.
+CURRENCY_COL_INDEX = 4  
+AMOUNT_COL_NAME = "Amount" 
+AMOUNT_COL_INDEX = 6  
+ACCOUNT_NAME_COL_NAME = "Account Name"  
+ACCOUNT_NAME_COL_INDEX = 10  
+ACCOUNT_CODE_COL_NAME = "Account Code" # Added by BudMan.
+BUDGET_CATEGORY_COL_NAME = "Budget Category"  # Added by BudMan.
+BUDGET_CATEGORY_COL_INDEX = 12  
+LEVEL_1_COL_NAME = "Level1" # Added by BudMan.
+LEVEL_2_COL_NAME = "Level2" # Added by BudMan.
+LEVEL_3_COL_NAME = "Level3" # Added by BudMan.
+
+BOA_WB_COL_DIMENSIONS = {
+    DATE_COL_NAME: 12,
+    ORIGINAL_DESCRIPTION_COL_NAME: 95,
+    CURRENCY_COL_NAME: 9,
+    AMOUNT_COL_NAME: 14,
+    ACCOUNT_NAME_COL_NAME: 68,
+    BUDGET_CATEGORY_COL_NAME: 40,
+    LEVEL_1_COL_NAME: 20,
+    LEVEL_2_COL_NAME: 20,
+    LEVEL_3_COL_NAME: 20
+}
+
+BUDMAN_REQUIRED_COLUMNS = [ "ignore item 0",
+    DATE_COL_NAME, ORIGINAL_DESCRIPTION_COL_NAME, CURRENCY_COL_NAME,
+    AMOUNT_COL_NAME, ACCOUNT_CODE_COL_NAME, BUDGET_CATEGORY_COL_NAME,
+    LEVEL_1_COL_NAME, LEVEL_2_COL_NAME, LEVEL_3_COL_NAME
+]
+
 
 
 #endregion Globals and Constants
@@ -60,12 +90,14 @@ class TransactionData:
     date: datetime.date = None  # Transaction date - ISO 8601 format.
     description: str = None  # Transaction description.
     currency: str = None  # Transaction currency.
+    account: str = None  # Account code.
     amount: float = 0.0  # Transaction amount.
     category: str = None  # Transaction budget category.
 
     def data_str(self) -> str:
         """Return a string representation of the transaction data."""
         ret =  f"{self.tid:12}|{self.date.strftime("%m/%d/%Y")}|"
+        ret += f"{self.account:26}|" 
         ret += f"{self.amount:>+12.2f}|" 
         ret += f"({len(self.description):03}){self.description:102}|->" 
         ret += f"|({len(self.category):03})|{self.category:40}|"
@@ -101,31 +133,102 @@ def generate_hash_key(text: str, length:int=12) -> str:
         raise
 #endregion generate_hash_key(text:str) -> str
 # ---------------------------------------------------------------------------- +
+#region check_sheet_columns() function
+def check_sheet_columns(sheet: Worksheet, add_columns: bool = True) -> bool:
+    """Check that the sheet is ready to process transactions.
+    
+    BudMan uses these columns to process transactions in a sheet:
+    1. 'Date' - the date of the transaction. It is a datetime.date object.
+    2. 'Original Description' - the description of the transaction. It is a str.
+    3. 'Amount' - the amount of the transaction. It is a float.
+    4. 'Account Code' - the short-name of the account for the transaction. It is a str.
+    5. 'Budget Category' - the budget category for the transaction. It is a str.
+    6. 'Level1' - the first level of the budget category. It is a str.
+    7. 'Level2' - the second level of the budget category. It is a str.
+    8. 'Level3' - the third level of the budget category. It is a str.
+
+    Args:
+        sheet (openpyxl.worksheet): The worksheet to check.
+        add_columns (bool): Whether to add missing columns or not.
+
+    Returns:
+        bool: True if all required columns are present, False otherwise.
+    """
+    try:
+        logger.info("Check worksheet for required columns.")
+        # Index the header row 1, it has the column names
+        col_names = [cell.value for cell in sheet[1]]
+        # col_names.insert(0, "ignore")  # Add an 'ignore' column at index 0.
+        logger.debug(f"Column names in sheet('{sheet.title}'): {col_names[1:]}")
+        
+        # Check if all required columns are present
+        missing_columns = [col for col in BUDMAN_REQUIRED_COLUMNS[1:] if col not in col_names[1:]]
+        
+        if not missing_columns:
+            logger.info("All required columns are present.")
+            return True
+        
+        if add_columns:
+            # Add missing columns to the sheet to the right.
+            for col_name in missing_columns:
+                i = sheet.max_column + 1 # insert before column after last column
+                sheet.insert_cols(i)
+                sheet.cell(row=1, column=i).value = col_name
+                # Set column width based on predefined dimensions
+                width = BOA_WB_COL_DIMENSIONS.get(col_name, 20)
+                sheet.column_dimensions[sheet.cell(row=1, column=i).column_letter].width = width
+                logger.info(f"Adding column '{col_name}' at index = {i}, "
+                            f"column_letter = '{sheet.cell(row =1, column=i).column_letter}'")
+            logger.info(f"Added missing columns: {', '.join(missing_columns)}")
+        else:
+            logger.error(f"Missing required columns: {', '.join(missing_columns)}")
+            return False
+        logger.info("Completed checks for required columns.")
+        return True
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion check_sheet_columns() function
+# ---------------------------------------------------------------------------- +
 #region check_budget_category() function
-def check_budget_category(sheet:Worksheet) -> bool:
+def check_budget_category(sheet:Worksheet,add_columns : bool = True) -> bool:
     """Check that the sheet is ready to process budget category.
     
+    BudMan uses 4 columns to categorize transactions in a sheet:
+    1. 'Budget Category' - the budget category for the transaction. It is a str
+        with up to 3 dotted levels of budget categories, e.g. "Housing.Improvements.Flooring".
+    2. 'Level1' - the first level of the budget category, e.g. "Housing".
+    3. 'Level2' - the second level of the budget category, e.g. "Improvements".
+    4. 'Level3' - the third level of the budget category, e.g. "Flooring".
     A column 'Budget Category' is added to the sheet if it does not exist.
+    3 columns are added to the sheet if they do not exist: 'Level1', 'Level2', 
+    'Level3', adjacent to the 'Budget Category' column.
 
     Args:
         sheet (openpyxl.worksheet): The worksheet to map.
     """
     try:
-        logger.info("Check worksheet for budget category.")
-        # Is BUDGET_CATEGORY_COL in the sheet?
-        col_names = [cell.value for cell in sheet[1]]
-        if BUDGET_CATEGORY_COL in col_names:
-            logger.info(f"Column '{BUDGET_CATEGORY_COL}' already exists in sheet.")
-            return True 
-        # Add the column to the sheet.
-        i = sheet.max_column + 1
-        sheet.insert_cols(i)
-        sheet.cell(row=1, column=i).value = BUDGET_CATEGORY_COL
-        # Set the column width to 20.
-        sheet.column_dimensions[sheet.cell(row=1, column=i).column_letter].width = 20
-        logger.info(f"Adding column '{BUDGET_CATEGORY_COL}' at index = {i}, "
-                    f"column_letter = '{sheet.cell(row=1, column=i).column_letter}'")
-        logger.info(f"Completed checks for budget category.")
+        logger.info("Check worksheet for budget category columns.")
+        # Index row 1 as the header row, it has the column names
+        col_names = {}
+        for cnum, cell in enumerate(sheet[1], start=1):
+            col_names[cell.value] = cnum
+        logger.debug(f"Column names in sheet('{sheet.title}'): {list(col_names.keys())}")
+        # Is BUDGET_CATEGORY_COL_NAME in the sheet?
+        if BUDGET_CATEGORY_COL_NAME in col_names:
+            logger.info(f"Column '{BUDGET_CATEGORY_COL_NAME}' already exists in sheet.")
+        elif add_columns:
+            # Add the BUDGET_CATEGORY_COL_NAME, LEVEL_1_COL, LEVEL_2_COL, and 
+            # LEVEL_3_COL columns to the sheet.
+            i = sheet.max_column + 1
+            sheet.insert_cols(i)
+            sheet.cell(row=1, column=i).value = BUDGET_CATEGORY_COL_NAME
+            col_names[BUDGET_CATEGORY_COL_NAME] = i  # Update the col_names dict.
+            # Set the column width to 20.
+            sheet.column_dimensions[sheet.cell(row=1, column=i).column_letter].width = 20
+            logger.info(f"Adding column '{BUDGET_CATEGORY_COL_NAME}' at index = {i}, "
+                        f"column_letter = '{sheet.cell(row=1, column=i).column_letter}'")
+            logger.info(f"Completed checks for budget category.")
         return True
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
@@ -156,53 +259,110 @@ def WORKSHEET_data(ws:Worksheet, just_values:bool=False) -> list[TransactionData
 #endregion WORKSHEET_data(ws:Worksheet) -> List[TransactionData]
 # ---------------------------------------------------------------------------- +
 #region WORKSHEET_row_data(row:list) -> TransactionData
-def WORKSHEET_row_data(row:tuple) -> TransactionData:
+def WORKSHEET_row_data(row:tuple,hdr:list) -> TransactionData:
     """Extract transaction data from a worksheet row.
 
     Args:
         row (list): Array of cell values.
+        hdr (list): The header list used to index values from the row.
 
     Returns:
         list[TransactionData]: A list of TransactionData objects.
     """
     try:
-        if not isinstance(row, tuple):
-            raise TypeError(f"Expected 'row' arg to be a tuple, got {type(row)}")
+        p3u.is_not_obj_of_type("row", row, tuple, raise_TypeError=True)
+        p3u.is_not_obj_of_type("hdr", hdr, list, raise_TypeError=True)
+        # TODO: Verify and obtain the necessary index values from the header.
+        # If the hdr is incorrect, we are screwed
+        date_i = hdr.index(DATE_COL_NAME) if DATE_COL_NAME in hdr else -1
+        desc_i = hdr.index(ORIGINAL_DESCRIPTION_COL_NAME) if ORIGINAL_DESCRIPTION_COL_NAME in hdr else -1
+        currency_i = hdr.index(CURRENCY_COL_NAME) if CURRENCY_COL_NAME in hdr else -1
+        amount_i = hdr.index(AMOUNT_COL_NAME) if AMOUNT_COL_NAME in hdr else -1
+        account_i = hdr.index(ACCOUNT_NAME_COL_NAME) if ACCOUNT_NAME_COL_NAME in hdr else -1
+        acct_code_i = hdr.index(ACCOUNT_CODE_COL_NAME) if ACCOUNT_CODE_COL_NAME in hdr else -1
+        budget_cat_i = hdr.index(BUDGET_CATEGORY_COL_NAME) if BUDGET_CATEGORY_COL_NAME in hdr else -1
+        if -1 in (date_i, desc_i, currency_i, amount_i, account_i, 
+                  acct_code_i,budget_cat_i):
+            raise ValueError(f"Missing required columns in header: {hdr}. "
+                             f"Expected columns: {BUDMAN_REQUIRED_COLUMNS[1:]}")
         if isinstance(row[0], Cell):
-            t_date_str = p3u.iso_date_only_string(row[DATE_COL_INDEX].value)  # Date is in the second column.
-            t_desc = row[DESCRIPTION_COL_INDEX].value  # Description is in the third column.
-            t_currency = row[CURRENCY_COL_INDEX].value  # Currency is in the fifth column.
-            t_amt_str = str(row[AMOUNT_COL_INDEX].value) 
+            # This is Tuple of Cell objects.
+            t_date_str = p3u.iso_date_only_string(row[date_i].value)  # Date is in the second column.
+            t_desc = row[desc_i].value  # Description is in the third column.
+            t_currency = row[currency_i].value  # Currency is in the fifth column.
+            t_amt_str = str(row[amount_i].value)
+            t_acct_str = row[account_i].value 
         else:
-            t_date_str = p3u.iso_date_only_string(row[DATE_COL_INDEX])  # Date is in the second column.
-            t_desc = row[DESCRIPTION_COL_INDEX]  # Description is in the third column.
-            t_currency = row[CURRENCY_COL_INDEX]  # Currency is in the fifth column.
-            t_amt_str = str(row[AMOUNT_COL_INDEX]) 
-        t_all_str = t_date_str + t_desc + t_currency + t_amt_str
+            # This is Tuple of Cell values-only.
+            t_date_str = p3u.iso_date_only_string(row[date_i])  # Date is in the second column.
+            t_desc = row[desc_i]  # Description is in the third column.
+            t_currency = row[currency_i]  # Currency is in the fifth column.
+            t_amt_str = str(row[amount_i]) 
+            t_acct_str = row[account_i] 
+        t_all_str = t_date_str + t_desc + t_currency + t_amt_str + t_acct_str
+        t_acct_code = t_acct_str.split('-')[-1].strip()  # Get the last part of the account name.
         t_id = generate_hash_key(t_all_str)  # Generate a unique ID for the transaction.
         if isinstance(row[0], Cell):
+            # Update the mapped acct_code in the cell.
+            row[acct_code_i].value = t_acct_code  # Account code is in the 'Account Code' column.
             transaction = TransactionData(
                 tid=t_id,
-                date=row[DATE_COL_INDEX].value,
-                description=row[DESCRIPTION_COL_INDEX].value,
-                currency=row[CURRENCY_COL_INDEX].value,
-                amount=row[AMOUNT_COL_INDEX].value,
-                category=row[BUDGET_CATEGORY_COL_INDEX].value  # Category will be set later.
+                date=row[date_i].value,
+                description=row[desc_i].value,
+                currency=row[currency_i].value,
+                amount=row[amount_i].value,
+                account=t_acct_code,  #row[account_i].value,
+                category=row[budget_cat_i].value  # Category will be set later.
             )
         else:
             transaction = TransactionData(
                 tid=t_id,
-                date=p3u.iso_date_only_string(row[DATE_COL_INDEX]),
-                description=row[DESCRIPTION_COL_INDEX],
-                currency=row[CURRENCY_COL_INDEX],
-                amount=float(row[AMOUNT_COL_INDEX]),
-                category=row[BUDGET_CATEGORY_COL_INDEX]  # Category will be set later.
+                date=p3u.iso_date_only_string(row[date_i]),
+                description=row[desc_i],
+                currency=row[currency_i],
+                amount=float(row[amount_i]),
+                account=t_acct_code,  #row[account_i],
+                category=row[budget_cat_i]  # Category will be set later.
             )
         return transaction
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
 #endregion WORKSHEET_row_data(row:list) -> TransactionData
+# ---------------------------------------------------------------------------- +
+#region split_budget_category() -> tuple function
+def split_budget_category(budget_category: str) -> tuple[str, str, str]:
+    """Split a budget category string into three levels.
+    
+    The budget category is expected to be in the format "Level1.Level2.Level3".
+    If the budget category does not have all three levels, the missing levels 
+    will be set to an empty string.
+
+    Args:
+        budget_category (str): The budget category string to split.
+
+    Returns:
+        tuple[str, str, str]: A tuple containing Level1, Level2, and Level3.
+    """
+    try:
+        if not isinstance(budget_category, str):
+            raise TypeError(f"Expected 'budget_category' to be a str, got {type(budget_category)}")
+        l1 = l2 = l3 = ""
+        c = budget_category.count('.')
+        if c >= 2:
+            # Split the budget category by '.' and ensure we have 3 parts.
+            l1, l2, l3 = budget_category.split('.',3)
+        elif c == 1:
+            # Split the budget category by '.' and ensure we have 2 parts.
+            l1, l2 = budget_category.split('.',2)
+        else:
+            # If no '.' is present, treat the whole string as Level1.
+            l1 = budget_category
+        return l1, l2, l3
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion split_budget_category() function
 # ---------------------------------------------------------------------------- +
 #region map_budget_category() function
 def map_budget_category(sheet:Worksheet,src,dst) -> None:
@@ -226,17 +386,29 @@ def map_budget_category(sheet:Worksheet,src,dst) -> None:
         logger.info(f"Applying '{rules_count}' budget category mappings "
                     f"to {sheet.max_row-1} rows in sheet: '{sheet.title}' ")
         # transactions = WORKSHEET_data(sheet)
+        # A row is a tuple of the Cell objects in the row. Tuples are 0-based
+        # header_row is a list, also 0-based. So, using the index(name) will 
+        # give the cell from a row tuple matching the column name in header_row.
         header_row = [cell.value for cell in sheet[1]] 
+        # header_row.insert(0, "ignore item 0")  # Add an 'ignore' column at index 0.
+
         if src in header_row:
-            src_col_index = header_row.index(src) + 1
+            src_col_index = header_row.index(src)
         else:
             logger.error(f"Source column '{src}' not found in header row.")
             return
         if dst in header_row:
-            dst_col_index = header_row.index(dst) + 1
+            dst_col_index = header_row.index(dst)
         else:
             logger.error(f"Destination column '{dst}' not found in header row.")
             return
+        
+        # TODO: need to refactor this to do replacements by col_name or somethin.
+        # This is sprecific to the Budget Category mapping, which now is to be
+        # split into 3 levels: Level1, Level2, Level3.
+        l1_i = header_row.index(LEVEL_1_COL_NAME) if LEVEL_1_COL_NAME in header_row else -1
+        l2_i = header_row.index(LEVEL_2_COL_NAME) if LEVEL_2_COL_NAME in header_row else -1
+        l3_i = header_row.index(LEVEL_3_COL_NAME) if LEVEL_3_COL_NAME in header_row else -1
 
         logger.info(f"Mapping '{src}'({src_col_index}) to "
                     f"'{dst}'({dst_col_index})")
@@ -245,13 +417,17 @@ def map_budget_category(sheet:Worksheet,src,dst) -> None:
         for row in sheet.iter_rows(min_row=2):
             # row is a type 'tuple' of Cell objects.
             row_idx = row[0].row  # Get the row index.
-            src_cell = row[DESCRIPTION_COL_INDEX]
-            dst_cell = row[BUDGET_CATEGORY_COL_INDEX]
-            src_value = row[DESCRIPTION_COL_INDEX].value 
-            dst_value = map_category(src_value)  
-            row[BUDGET_CATEGORY_COL_INDEX].value = dst_value 
+            src_cell = row[src_col_index]
+            dst_cell = row[dst_col_index]
+            src_value = row[src_col_index].value 
+            dst_value = map_category(src_value)
+            row[dst_col_index].value = dst_value 
             dst_cell.value = dst_value 
-            transaction = WORKSHEET_row_data(row) 
+            l1, l2, l3 = split_budget_category(dst_value)
+            row[l1_i].value = l1 if l1_i != -1 else None
+            row[l2_i].value = l2 if l2_i != -1 else None
+            row[l3_i].value = l3 if l3_i != -1 else None
+            transaction = WORKSHEET_row_data(row,header_row) 
             trans_str = transaction.data_str()
             del transaction  # Clean up the transaction object.
             if dst_value == 'Other':
@@ -315,7 +491,7 @@ def execute_worklow_categorization(bm : BudgetDomainModel, fi_key: str, wf_key:s
                 # Check for budget category column, add it if not present.
                 check_budget_category(sheet)
                 # Map the 'Original Description' column to the 'Budget Category' column.
-                map_budget_category(sheet, "Original Description", BUDGET_CATEGORY_COL)
+                map_budget_category(sheet, "Original Description", BUDGET_CATEGORY_COL_NAME)
             except Exception as e:
                 logger.error(f"{cp}    Error processing workbook: {wb_name}: {e}")
                 continue
