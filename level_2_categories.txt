@@ -1,0 +1,256 @@
+Budget Category List(level 2) 2025-06-04 11:54:47 AM
+
+Budget
+├── Auto
+│   ├── Body Shop
+│   ├── Carwash
+│   ├── Gasoline
+│   ├── Loan
+│   ├── Maintenance
+│   ├── Tires
+│   └── Tolls
+├── Banking
+│   ├── ATM
+│   ├── Adjustment
+│   ├── Apple Cash
+│   ├── Checks to Categorize
+│   ├── Crypto
+│   ├── Foreign Transaction Fee
+│   ├── Fraud Dispute
+│   ├── Interest
+│   ├── Late Fee
+│   ├── Merrill
+│   ├── Mobile Deposit
+│   ├── Payment
+│   ├── Preferred Rewards
+│   ├── TNB Financial
+│   ├── Transaction
+│   ├── Transaction Fee
+│   └── Transfer
+├── Charity
+│   ├── Campus Crusade
+│   ├── DayStar
+│   ├── Focus on the Family
+│   ├── GCR
+│   ├── Pioneers
+│   ├── St Jude
+│   ├── Tunnel to Towers
+│   └── World Vision
+├── Credit Cards
+│   ├── Band of America
+│   ├── Bank of America
+│   ├── Chase
+│   └── Synchrony Bank
+├── Crypto
+│   └── Gitkraken
+├── Dental
+│   └── Lann
+├── Donation
+│   ├── GoFundMe
+│   └── Republican Party
+├── Entertainment
+│   ├── Concerts
+│   ├── Misc
+│   ├── Streaming
+│   ├── Theater
+│   └── Typhoon Texas
+├── Finance
+│   └── Experian
+├── Groceries
+│   ├── CostCo
+│   ├── Dollar General
+│   ├── H-E-B
+│   ├── H-E-B Pharmacy
+│   ├── Liquor
+│   ├── QT
+│   └── Sam's Club
+├── Health and Wellbeing
+│   ├── 23andMe
+│   ├── Athleta
+│   ├── Coach Cathy
+│   ├── Equipment
+│   ├── Haircut Paul
+│   ├── Massage
+│   ├── Nicola McKerlie
+│   ├── Running
+│   ├── Supplements
+│   ├── Swimming
+│   └── Tennis
+├── Hobby
+│   ├── Artwork
+│   └── Photography
+├── Housing
+│   ├── Dry Cleaning
+│   ├── Lawn Care
+│   ├── Maintenance
+│   ├── Misc
+│   ├── Pest Control
+│   ├── Security
+│   └── Storage Unit
+├── Housing:Castle Pines
+│   ├── HOA
+│   ├── Internet
+│   ├── Maintenance
+│   ├── Mortgage
+│   ├── Ring Security Service
+│   ├── Telecom
+│   └── Utilities
+├── Housing:Grape Cove
+│   ├── Culligan
+│   ├── Improvements
+│   ├── Lawn Care
+│   ├── Maintenance
+│   ├── Telecom
+│   └── Utilities
+├── Income
+│   ├── Bank Reward
+│   ├── Consulting
+│   ├── HP Inc
+│   ├── Inheritance
+│   ├── Interest
+│   └── TWC
+├── Insurance
+│   ├── Cobra Medical
+│   ├── Principal Life Insurance
+│   ├── State Farm
+│   └── Texas Law
+├── Investment
+│   ├── Fidelity
+│   ├── Foris USA
+│   └── Transfer
+├── Medical
+│   ├── Adelman
+│   ├── Audiology
+│   ├── BSW Health
+│   ├── Bio-T
+│   ├── Chiropractor
+│   ├── Dermatology
+│   ├── Eye Doctor
+│   ├── Lab Work
+│   ├── Labs
+│   ├── Misc
+│   ├── Oncology Doctor
+│   ├── Pharmacy
+│   ├── Physical Therapy
+│   ├── Radiology
+│   ├── Reimbursement
+│   ├── Rheumatology
+│   └── TheraBody
+├── Pets
+│   ├── Boarding
+│   ├── Dog Food
+│   ├── Grooming
+│   ├── Misc
+│   └── Veterinary
+├── Professional
+│   └── IEEE
+├── Restaurants
+│   ├── 183 Phil's
+│   ├── Casa Ole
+│   ├── Chick-Fil-A
+│   ├── Chipotle
+│   ├── Dairy Queen
+│   ├── Door Dash
+│   ├── Favor
+│   ├── Hat Creek Burgers
+│   ├── Hopdoddy
+│   ├── Jasons Deli
+│   ├── Jimmy Johns
+│   ├── La Margarita
+│   ├── Mama Betty's
+│   ├── McDonald's
+│   ├── Might Fine Burgers
+│   ├── Misc
+│   ├── Mod Pizza
+│   ├── Monument Cafe
+│   ├── Olive Garden
+│   ├── Panera Bread
+│   ├── Pinthouse Pizza
+│   ├── PotBelly
+│   ├── Round Rock Donuts
+│   ├── Rudy's Country Store
+│   ├── Santiagos Tex Mex
+│   ├── Savers
+│   ├── Shipleys Donuts
+│   ├── Smokey Mo's BBQ
+│   ├── Starbucks
+│   ├── Surf and Turf
+│   ├── Taco Bell
+│   ├── The League Kitchen
+│   ├── Tony C's Coal Fired
+│   └── Whataburger
+├── Shopping
+│   ├── 7-Eleven
+│   ├── Amazon
+│   ├── Amazon Digital
+│   ├── Amazon Marketplace
+│   ├── Amazon Prime
+│   ├── Amazon Retail
+│   ├── Apple
+│   ├── At Home
+│   ├── Barnes & Noble
+│   ├── Bass Pro
+│   ├── Circle K
+│   ├── Clothing
+│   ├── ConvenienceStore
+│   ├── Costco
+│   ├── Etsy
+│   ├── FastSpring
+│   ├── Firearms
+│   ├── James Avery
+│   ├── Jewelry
+│   ├── Michaels
+│   ├── Microsoft
+│   ├── Misc
+│   ├── PayPal
+│   ├── SaddleBack Leather
+│   ├── Shipping
+│   └── Walgreens
+├── Subscription
+│   ├── Application
+│   ├── Content
+│   ├── Patreon
+│   ├── Software
+│   ├── Storage
+│   ├── TeamViewer
+│   └── Zoom
+├── Taxes
+│   ├── Federal
+│   └── Williamson County
+├── Telecom
+│   ├── Cellular
+│   └── Verizon
+├── Theater
+│   └── Cinemark
+├── Travel
+│   ├── Alaska Airlines
+│   ├── Clear
+│   ├── ColoradoTripJanuary2025
+│   ├── Expedia
+│   ├── Food
+│   ├── Luggage
+│   ├── NewYorkMarch2024
+│   ├── Parking
+│   ├── Transportation
+│   ├── Trip Insurance
+│   └── United Airlines
+├── Unknown
+│   ├── ATGPay
+│   ├── BIR JV LLP
+│   ├── DIGISTORE
+│   ├── Lagosec
+│   ├── P334C0CC1F
+│   ├── P3501FEAFA
+│   ├── PADDLE-COM
+│   ├── PayPal
+│   ├── Pxxxxx2100
+│   └── Wise Inc
+├── Work-related
+│   ├── ECU Recruiting
+│   ├── Linked In
+│   ├── OTTER-AI
+│   ├── Software
+│   ├── Training
+│   └── VisualMind
+└── vape
+

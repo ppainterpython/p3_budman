@@ -1,0 +1,35 @@
+Budget Category List(level 1) 2025-06-04 11:54:12 AM
+
+Budget
+├── Auto
+├── Banking
+├── Charity
+├── Credit Cards
+├── Crypto
+├── Dental
+├── Donation
+├── Entertainment
+├── Finance
+├── Groceries
+├── Health and Wellbeing
+├── Hobby
+├── Housing
+├── Housing:Castle Pines
+├── Housing:Grape Cove
+├── Income
+├── Insurance
+├── Investment
+├── Medical
+├── Pets
+├── Professional
+├── Restaurants
+├── Shopping
+├── Subscription
+├── Taxes
+├── Telecom
+├── Theater
+├── Travel
+├── Unknown
+├── Work-related
+└── vape
+

@@ -1,0 +1,399 @@
+Budget Category List(level 3) 2025-06-04 11:54:52 AM
+
+Budget
+├── Auto
+│   ├── Body Shop
+│   │   └── Caliber Collision
+│   ├── Carwash
+│   │   └── Go Carwash
+│   ├── Gasoline
+│   │   ├── CEFCO
+│   │   ├── Chevron
+│   │   └── Shell Service
+│   ├── Loan
+│   │   └── Mini Cooper
+│   ├── Maintenance
+│   │   ├── Brakes Plus
+│   │   ├── Honda Ridgeline
+│   │   ├── Mini Cooper
+│   │   └── O'Reilly
+│   ├── Tires
+│   └── Tolls
+│       ├── DoxoPlus
+│       ├── Express Tolls
+│       ├── HCTRA
+│       ├── NTTA
+│       ├── RMA
+│       └── TxTag
+├── Banking
+│   ├── ATM
+│   ├── Adjustment
+│   ├── Apple Cash
+│   ├── Checks to Categorize
+│   ├── Crypto
+│   ├── Foreign Transaction Fee
+│   ├── Fraud Dispute
+│   ├── Interest
+│   ├── Late Fee
+│   ├── Merrill
+│   │   └── Advisory Fee
+│   ├── Mobile Deposit
+│   ├── Payment
+│   │   └── From Savings 0196
+│   ├── Preferred Rewards
+│   ├── TNB Financial
+│   ├── Transaction
+│   ├── Transaction Fee
+│   └── Transfer
+│       ├── From Savings 0196
+│       ├── Justin Painter
+│       ├── Robin Painter
+│       └── To Checking
+├── Charity
+│   ├── Campus Crusade
+│   ├── DayStar
+│   ├── Focus on the Family
+│   ├── GCR
+│   ├── Pioneers
+│   ├── St Jude
+│   ├── Tunnel to Towers
+│   └── World Vision
+├── Credit Cards
+│   ├── Band of America
+│   ├── Bank of America
+│   ├── Chase
+│   └── Synchrony Bank
+├── Crypto
+│   └── Gitkraken
+├── Dental
+│   └── Lann
+├── Donation
+│   ├── GoFundMe
+│   │   └── John Wick
+│   └── Republican Party
+├── Entertainment
+│   ├── Concerts
+│   │   ├── Barry Manilow
+│   │   ├── The Eagles
+│   │   └── The Eagles Live at the Sphere
+│   ├── Misc
+│   │   └── Indigo Play
+│   ├── Streaming
+│   │   ├── Amazon Prime Video
+│   │   ├── Audible
+│   │   ├── DirectTV Stream
+│   │   ├── Disney Plus
+│   │   ├── Google Play Books
+│   │   ├── Hulu
+│   │   ├── Kindle
+│   │   ├── MUBI TV
+│   │   ├── Netflix
+│   │   ├── SiriusXM
+│   │   ├── SlingTV
+│   │   ├── Spotify
+│   │   ├── Sundance Now
+│   │   ├── Thirteen
+│   │   └── YouTube Premium
+│   ├── Theater
+│   │   └── Austin Ballet
+│   └── Typhoon Texas
+├── Finance
+│   └── Experian
+├── Groceries
+│   ├── CostCo
+│   ├── Dollar General
+│   ├── H-E-B
+│   ├── H-E-B Pharmacy
+│   ├── Liquor
+│   ├── QT
+│   └── Sam's Club
+├── Health and Wellbeing
+│   ├── 23andMe
+│   ├── Athleta
+│   ├── Coach Cathy
+│   ├── Equipment
+│   │   └── Fleet Feet
+│   ├── Haircut Paul
+│   ├── Massage
+│   ├── Nicola McKerlie
+│   ├── Running
+│   │   └── Peloton
+│   ├── Supplements
+│   │   └── V Shred
+│   ├── Swimming
+│   │   ├── Equipment
+│   │   └── Underwater Audio
+│   └── Tennis
+│       └── Equipment
+├── Hobby
+│   ├── Artwork
+│   │   └── Jerrys Artarama
+│   └── Photography
+│       └── Precision Camera
+├── Housing
+│   ├── Dry Cleaning
+│   ├── Lawn Care
+│   │   ├── Freddie
+│   │   └── TruGreen
+│   ├── Maintenance
+│   ├── Misc
+│   │   └── Frame It Easy
+│   ├── Pest Control
+│   ├── Security
+│   │   └── Ring
+│   └── Storage Unit
+├── Housing:Castle Pines
+│   ├── HOA
+│   ├── Internet
+│   │   └── Google Fiber
+│   ├── Maintenance
+│   │   └── HVAC
+│   ├── Mortgage
+│   ├── Ring Security Service
+│   ├── Telecom
+│   │   └── Google Fiber
+│   └── Utilities
+│       ├── City of Austin
+│       └── Electric
+├── Housing:Grape Cove
+│   ├── Culligan
+│   ├── Improvements
+│   │   └── Soleil Floors
+│   ├── Lawn Care
+│   │   └── Jonathan
+│   ├── Maintenance
+│   │   ├── Cleaning
+│   │   └── HVAC
+│   ├── Telecom
+│   │   └── ATT U-Verse
+│   └── Utilities
+│       ├── Electric
+│       ├── MUD
+│       └── Natural Gas
+├── Income
+│   ├── Bank Reward
+│   ├── Consulting
+│   │   └── GL Group
+│   ├── HP Inc
+│   ├── Inheritance
+│   │   └── John Painter
+│   ├── Interest
+│   └── TWC
+├── Insurance
+│   ├── Cobra Medical
+│   ├── Principal Life Insurance
+│   ├── State Farm
+│   └── Texas Law
+├── Investment
+│   ├── Fidelity
+│   ├── Foris USA
+│   └── Transfer
+│       ├── ToInvestments
+│       └── ToSavings
+├── Medical
+│   ├── Adelman
+│   ├── Audiology
+│   ├── BSW Health
+│   ├── Bio-T
+│   ├── Chiropractor
+│   ├── Dermatology
+│   ├── Eye Doctor
+│   │   ├── Northwest Hills Eye Care
+│   │   └── Texan Eye
+│   ├── Lab Work
+│   ├── Labs
+│   ├── Misc
+│   │   └── BodySpec
+│   ├── Oncology Doctor
+│   ├── Pharmacy
+│   │   ├── CVS
+│   │   └── CVS Minute Clinic
+│   ├── Physical Therapy
+│   ├── Radiology
+│   │   ├── Austin Radiological
+│   │   └── Touchstone Imaging
+│   ├── Reimbursement
+│   ├── Rheumatology
+│   │   └── Olga
+│   └── TheraBody
+├── Pets
+│   ├── Boarding
+│   ├── Dog Food
+│   ├── Grooming
+│   ├── Misc
+│   │   └── PetSmart
+│   └── Veterinary
+├── Professional
+│   └── IEEE
+├── Restaurants
+│   ├── 183 Phil's
+│   ├── Casa Ole
+│   ├── Chick-Fil-A
+│   ├── Chipotle
+│   ├── Dairy Queen
+│   ├── Door Dash
+│   ├── Favor
+│   │   ├── Amys Ice Cream
+│   │   ├── Hoodys
+│   │   ├── McDonalds
+│   │   ├── Panda Express
+│   │   ├── Slapbox Pizza
+│   │   ├── Smokey Mo's
+│   │   ├── Taco Deli
+│   │   └── Tropical Smoothie
+│   ├── Hat Creek Burgers
+│   ├── Hopdoddy
+│   ├── Jasons Deli
+│   ├── Jimmy Johns
+│   ├── La Margarita
+│   ├── Mama Betty's
+│   ├── McDonald's
+│   ├── Might Fine Burgers
+│   ├── Misc
+│   │   ├── Canteen Austin
+│   │   ├── Hospital
+│   │   └── Tomlinson's Feed
+│   ├── Mod Pizza
+│   ├── Monument Cafe
+│   ├── Olive Garden
+│   ├── Panera Bread
+│   ├── Pinthouse Pizza
+│   ├── PotBelly
+│   ├── Round Rock Donuts
+│   ├── Rudy's Country Store
+│   ├── Santiagos Tex Mex
+│   ├── Savers
+│   ├── Shipleys Donuts
+│   ├── Smokey Mo's BBQ
+│   ├── Starbucks
+│   ├── Surf and Turf
+│   ├── Taco Bell
+│   ├── The League Kitchen
+│   ├── Tony C's Coal Fired
+│   └── Whataburger
+├── Shopping
+│   ├── 7-Eleven
+│   ├── Amazon
+│   ├── Amazon Digital
+│   ├── Amazon Marketplace
+│   ├── Amazon Prime
+│   ├── Amazon Retail
+│   ├── Apple
+│   ├── At Home
+│   ├── Barnes & Noble
+│   ├── Bass Pro
+│   ├── Circle K
+│   ├── Clothing
+│   │   ├── Crocs
+│   │   ├── Duckfeet USA
+│   │   ├── Duluth Trading Company
+│   │   ├── Kohls
+│   │   └── Running Warehouse
+│   ├── ConvenienceStore
+│   │   └── Shell Oil
+│   ├── Costco
+│   ├── Etsy
+│   ├── FastSpring
+│   ├── Firearms
+│   │   └── Palmetto State Armory
+│   ├── James Avery
+│   ├── Jewelry
+│   │   └── Cedar Park Jewelry
+│   ├── Michaels
+│   ├── Microsoft
+│   ├── Misc
+│   │   ├── Best Buy
+│   │   ├── Charles Paynes Book
+│   │   ├── GWCTX
+│   │   ├── Groningen
+│   │   ├── Mardel
+│   │   ├── Moment
+│   │   ├── OfferingTree
+│   │   ├── Ondo
+│   │   ├── REI
+│   │   ├── RMCF
+│   │   ├── Sand Cloud Towels
+│   │   ├── SandMarc
+│   │   ├── ShiftCam
+│   │   ├── Six Million Voices
+│   │   ├── SmarteCarte
+│   │   ├── Southern Leisure
+│   │   ├── Sunbusters Window Tint
+│   │   ├── Terra Toys
+│   │   └── Whole Earth Provision
+│   ├── PayPal
+│   ├── SaddleBack Leather
+│   ├── Shipping
+│   │   ├── FedEx
+│   │   └── RightSpace
+│   └── Walgreens
+├── Subscription
+│   ├── Application
+│   │   ├── Angies List
+│   │   ├── Dreamstime
+│   │   ├── GitHub
+│   │   ├── Legal Nature
+│   │   └── Road ID
+│   ├── Content
+│   │   ├── Ancestry-com
+│   │   ├── Medium
+│   │   ├── OpenAI
+│   │   └── WikiPedia
+│   ├── Patreon
+│   ├── Software
+│   │   ├── Adobe
+│   │   ├── MConverter
+│   │   ├── Photo Eraser
+│   │   └── Stardock
+│   ├── Storage
+│   │   ├── Apple
+│   │   └── DropBox
+│   ├── TeamViewer
+│   └── Zoom
+├── Taxes
+│   ├── Federal
+│   └── Williamson County
+├── Telecom
+│   ├── Cellular
+│   └── Verizon
+├── Theater
+│   └── Cinemark
+├── Travel
+│   ├── Alaska Airlines
+│   ├── Clear
+│   ├── ColoradoTripJanuary2025
+│   ├── Expedia
+│   ├── Food
+│   │   ├── Austin Airport
+│   │   └── United Club
+│   ├── Luggage
+│   │   └── Wandrd
+│   ├── NewYorkMarch2024
+│   ├── Parking
+│   ├── Transportation
+│   │   └── Lyft
+│   ├── Trip Insurance
+│   └── United Airlines
+├── Unknown
+│   ├── ATGPay
+│   ├── BIR JV LLP
+│   ├── DIGISTORE
+│   ├── Lagosec
+│   ├── P334C0CC1F
+│   ├── P3501FEAFA
+│   ├── PADDLE-COM
+│   ├── PayPal
+│   ├── Pxxxxx2100
+│   └── Wise Inc
+├── Work-related
+│   ├── ECU Recruiting
+│   ├── Linked In
+│   ├── OTTER-AI
+│   ├── Software
+│   │   └── JetBrains
+│   ├── Training
+│   │   ├── SAP
+│   │   └── Varsity Tutors
+│   └── VisualMind
+└── vape
+

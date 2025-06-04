@@ -12,7 +12,8 @@
 # ---------------------------------------------------------------------------- +
 #region Imports
 # python standard library modules and packages
-import re, pathlib as Path, logging
+import re, pathlib as Path, sys, io, logging
+from datetime import datetime as dt
 
 # third-party modules and packages
 import p3logging as p3l, p3_utils as p3u
@@ -46,37 +47,39 @@ category_map = {
     r'(?i)\bWINRED\*\s*': 'Donation.Republican Party',
 #endregion Donations
 #region Housing, Utilities etc.
-    r'(?i)\.*OMNT\s*SENT.*CASH\s*APP*JONATHAN.*': 'Grape Cove.Lawncare.Jonathan',
-    r'(?i)\.*IT\'CLEANING\s*TIME!.*': 'Grape Cove.Maintenance.Cleaning',
-    r'(?i)\.*SOLEIL\s*FLOORS.*': 'Grape Cove.Improvements.Soleil Floors',
-    r'(?i)\.*WILLIAMSON\s*COUNT.*': 'Property Tax.Williamson County',
-    r'(?i)\bReliant\sEnergy\b': 'Grape Cove.Utilities.Electric',
-    r'(?i)\bPedernales_Elec\b': 'Castle Pines.Utilities.Electric',
-    r'(?i)\bONE\sGAS\b': 'Grape Cove.Utilities.Natural Gas',
-    r'(?i)\bATMOS\sENERGY\b': 'Grape Cove.Utilities.Natural Gas',
-    r'(?i)\bService\sExperts\b': 'Grape Cove.Maintenance.HVAC',
-    r'(?i)\bBrushy\sCreek\sMUD\b': 'Grape Cove.Utilities.MUD',
-    r'(?i)\bAT\&T\sU-Verse\b': 'Grape Cove.Telecom.ATT U-Verse',
-    r'(?i)\bGoogle\sFIBER\b': 'Castle Pines.Telecom.Google Fiber',
-    r'(?i)\bGoogle\s*\*FIBER\b': 'Castle Pines.Telecom.Google Fiber',
-    r'(?i)\bCity\sof\sAustin\b': 'Castle Pines.Utilities.City of Austin',
-    r'(?i)\bGOOGLE\s\*FIBER\b': 'Castle Pines.Internet.Google Fiber',
-    r'(?i)\bavery\W*.*?\branch\W*.*?\bHOA\W*.*?\bdues\b': 'Castle Pines.HOA',
-    r'(?i)\bFREDERICK\sPEVA\b': 'Housing.Lawn Care',
-    r'(?i)\bTRUGREEN\b': 'Housing.TruGreen',
-    r'(?i)\bTRANSFER\s*PAUL\s*B\s*PAINTER\s*LAURA:john\s*hogge\b': 'Housing.Mortgage',
-    r'(?i)\bTRANSFER\s*PAUL\s*B\s*PAINTER:john\s*hogge\b': 'Housing.Mortgage',
+    # Grape Cove
+    r'(?i)\.*OMNT\s*SENT.*CASH\s*APP*JONATHAN.*': 'Housing:Grape Cove.Lawn Care.Jonathan',
+    r'(?i)\.*IT\'CLEANING\s*TIME!.*': 'Housing:Grape Cove.Maintenance.Cleaning',
+    r'(?i)\.*SOLEIL\s*FLOORS.*': 'Housing:Grape Cove.Improvements.Soleil Floors',
+    r'(?i)\bReliant\sEnergy\b': 'Housing:Grape Cove.Utilities.Electric',
+    r'(?i)\bONE\sGAS\b': 'Housing:Grape Cove.Utilities.Natural Gas',
+    r'(?i)\bATMOS\sENERGY\b': 'Housing:Grape Cove.Utilities.Natural Gas',
+    r'(?i)\bService\sExperts\b': 'Housing:Grape Cove.Maintenance.HVAC',
+    r'(?i)\bBrushy\sCreek\sMUD\b': 'Housing:Grape Cove.Utilities.MUD',
+    r'(?i)\bAT\&T\sU-Verse\b': 'Housing:Grape Cove.Telecom.ATT U-Verse',
+    r'(?i)\bCULLIGAN\b': 'Housing:Grape Cove.Culligan',
+    r'(?i)\bCULLINGAN\b': 'Housing:Grape Cove.Culligan',
+    # Castle Pines
+    r'(?i)\bTRANSFER\s*PAUL\s*B\s*PAINTER\s*LAURA:john\s*hogge\b': 'Housing:Castle Pines.Mortgage',
+    r'(?i)\bTRANSFER\s*PAUL\s*B\s*PAINTER:john\s*hogge\b': 'Housing:Castle Pines.Mortgage',
+    r'(?i)\bPedernales_Elec\b': 'Housing:Castle Pines.Utilities.Electric',
+    r'(?i)\bGoogle\sFIBER\b': 'Housing:Castle Pines.Telecom.Google Fiber',
+    r'(?i)\bGoogle\s*\*FIBER\b': 'Housing:Castle Pines.Telecom.Google Fiber',
+    r'(?i)\bCity\sof\sAustin\b': 'Housing:Castle Pines.Utilities.City of Austin',
+    r'(?i)\bGOOGLE\s\*FIBER\b': 'Housing:Castle Pines.Internet.Google Fiber',
+    r'(?i)\bavery\W*.*?\branch\W*.*?\bHOA\W*.*?\bdues\b': 'Housing:Castle Pines.HOA',
+    # Housing General
+    r'(?i)\bFREDERICK\sPEVA\b': 'Housing.Lawn Care.Freddie',
+    r'(?i)\bTRUGREEN\b': 'Housing.Lawn Care.TruGreen',
     r'(?i)\bTHE\sHOME\sDEPOT\b': 'Housing.Maintenance',
     r"(?i)\bLOWE's\b": 'Housing.Maintenance',
     r'(?i)\bCASHWAY\sBLDG\sMATERIALS\b': 'Housing.Maintenance',
-    r'(?i)\bCULLIGAN\b': 'Grape Cove.Culligan',
-    r'(?i)\bCULLINGAN\b': 'Grape Cove.Culligan',
     r'(?i)\bRIGHTSPACE\sSTORAGE\b': 'Housing.Storage Unit',
     r'(?i)\bATT\b': 'Telecom.Cellular',
     r'(?i)\bVZ\sWIRELESS\sVE': 'Telecom.Verizon',
     r'(?i)\bFSP\*ABC\sHOME\s&\sCOMMERCIAL': 'Housing.Pest Control',
-    r'(?i)\bRING\sBASIC\sPLAN\b': 'Castle Pines.Ring Security Service',
-    r'(?i)\bSTRAND\sBROTHERS\sSERVICE\b': 'Castle Pines.Maintenance.HVAC',
+    r'(?i)\bRING\sBASIC\sPLAN\b': 'Housing:Castle Pines.Ring Security Service',
+    r'(?i)\bSTRAND\sBROTHERS\sSERVICE\b': 'Housing:Castle Pines.Maintenance.HVAC',
     r'(?i)\bWHITTLESEY\sLANDSCAPE-11\s': 'Housing.Lawn Care',
     r'(?i)\bTHE\sGRASS\sOUTLET': 'Housing.Lawn Care',
     r'(?i)\bJack\sBrown\sCleaners': 'Housing.Dry Cleaning',
@@ -382,6 +385,7 @@ category_map = {
     r'(?i)\bPreferred\s*Rewards.*\b': 'Banking.Preferred Rewards',
     r'(?i)\bWILLIAMSON\s*COUNT\s*DES:EPAYMENT\b': 'Taxes.Williamson County',  
     r'(?i)\bPMT\*WILCO\sTAX\b': 'Taxes.Williamson County',
+    r'(?i)\.*WILLIAMSON\s*COUNT.*': 'Taxes.Williamson County',
     r'(?i)\bLATE\sFEE\sFOR\sPAYMENT\sDUE\b': 'Banking.Late Fee',
     r'(?i)\bINTEREST\sCHARGED\sON\sPURCHASES\b': 'Banking.Interest',
     r'(?i)\bFRAUD\sDISPUTE\b': 'Banking.Fraud Dispute',
@@ -522,8 +526,10 @@ def dot(n1:str=None, n2:str=None, n3:str=None) -> str:
 def extract_category_tree(level:int=2):
     """Extract the category tree from the category_map."""
     try:
+        now = dt.now()
+        now_str = now.strftime("%Y-%m-%d %I:%M:%S %p")
         tree = Tree()
-        bct = tree.create_node("Budget Categories", "root")  # Root node
+        bct = tree.create_node("Budget", "root")  # Root node
         filter_list = ["Darkside"]        
         for _, category in category_map.items():
             l1, l2, l3 = split_budget_category(category)
@@ -550,13 +556,18 @@ def extract_category_tree(level:int=2):
                 l3_node = tree.get_node(c)
             else:
                 l3_node = tree.create_node(l3, c, parent=l2_node)
-            
+        buffer = io.StringIO()
+        sys.stdout = buffer  # Redirect stdout to capture tree output
+        print(f"Budget Category List(level {level}) {now_str}\n")
         tree.show()
-        return bct
+        sys.stdout = sys.__stdout__  # Reset stdout
+        output = buffer.getvalue()
+        return output
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
 #endregion extract_category_tree()# ---------------------------------------------------------------------------- +
+# ---------------------------------------------------------------------------- +
 #region split_budget_category() -> tuple function
 def split_budget_category(budget_category: str) -> tuple[str, str, str]:
     """Split a budget category string into three levels.

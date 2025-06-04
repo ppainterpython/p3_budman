@@ -47,7 +47,13 @@ if __name__ == "__main__":
     # bdms_url = "file:///C:/Users/ppain/OneDrive/budget/p3_budget_manager_ca063e8b.jsonc"
     try:
         configure_logging(__name__, logtest=False)
-        _ = extract_category_tree()
+        root_logger = logging.getLogger()
+        for handler in root_logger.handlers:
+            print(f"Handler: {type(handler).__name__}('{handler.name}'), Level: {logging.getLevelName(handler.level)}")
+            if handler.name == 'stdout':
+                handler.setLevel(logging.CRITICAL)
+        output = extract_category_tree()
+
     except Exception as e:
         m = p3u.exc_err_msg(e)
         logger.error(m)
