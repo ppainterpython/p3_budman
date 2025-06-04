@@ -403,8 +403,8 @@ def map_budget_category(sheet:Worksheet,src,dst) -> None:
             logger.error(f"Destination column '{dst}' not found in header row.")
             return
         
-        # TODO: need to refactor this to do replacements by col_name or somethin.
-        # This is sprecific to the Budget Category mapping, which now is to be
+        # TODO: need to refactor this to do replacements by col_name or something.
+        # This is specific to the Budget Category mapping, which now is to be
         # split into 3 levels: Level1, Level2, Level3.
         l1_i = header_row.index(LEVEL_1_COL_NAME) if LEVEL_1_COL_NAME in header_row else -1
         l2_i = header_row.index(LEVEL_2_COL_NAME) if LEVEL_2_COL_NAME in header_row else -1

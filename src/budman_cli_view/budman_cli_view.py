@@ -107,7 +107,7 @@ class MockViewModel():
 # ---------------------------------------------------------------------------- +
 class BudManCLIView(cmd2.Cmd):
     # ======================================================================== +
-    #region BudgetManagerCLIView class
+    #region BudManCLIView class intrinsics
     """An MVVM View class for BudgetModel implementing a command line interface.
     
     Operates under MVVM pattern, strictly. Instantiated with a blind view_model.
@@ -165,7 +165,7 @@ class BudManCLIView(cmd2.Cmd):
             raise
     #endregion initialize() method
     # ------------------------------------------------------------------------ +
-    #endregion BudgetModelCLI class
+    #endregion BudManCLIView class  intrinsics
     # ======================================================================== +
 
     # ======================================================================== +

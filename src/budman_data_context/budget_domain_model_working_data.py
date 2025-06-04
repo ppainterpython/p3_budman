@@ -93,7 +93,7 @@ class BDMWorkingData(BudManDataContext, BDMClientInterface):
     # ======================================================================== +
 
     # ======================================================================== +
-    #region    BudManDataContext Property/Method Overrides.
+    #region    BudManDataContext (Interface) Property/Method Overrides.
     # ------------------------------------------------------------------------ +
     @property
     def dc_WORKBOOKS(self) -> WORKBOOK_LIST:
@@ -116,30 +116,36 @@ class BDMWorkingData(BudManDataContext, BDMClientInterface):
         Loaded means a file is loaded into memory and is available."""
         logger.warning("Setting dc_LOADED_WORKBOOKS directly is not supported.")
 
-    def dc_WORKBOOK_index(self, wb_name: str = None) -> int:
-        """Return the index of a workbook based on wb_name.
+    def dc_FI_KEY_validate(self, fi_key: str) -> bool:
+        """Model-aware: Validate the provided FI_KEY.
         
-        Args:
-            wb_name (str): The name of the workbook to find.
-        Returns:
-            int: The index of the workbook in the WORKBOOK_LIST, or -1 if not found.
+        Model-aware method to validate the provided fi_key.
+        """
+        # First end-to-end DC binding through the BDMClientInterface.
+        return self.model.bdm_FI_KEY_validate(fi_key)
+
+    def dc_WF_KEY_validate(self, wf_key: str) -> bool:
+        """Model-aware: Validate the provided WF_KEY.
+        
+        Model-aware method to validate the provided wf_key.
+        """
+        return self.model.bdm_WF_KEY_validate(wf_key)
+    
+    def dc_WB_REF_validate(self, wb_ref : str) -> bool: 
+        """Model-aware: Return True if the wb_ref is valid.
+        
+        Model-aware method to validate the provided workbook reference (wb_ref).
         """
         try:
-            wbl = self.dc_WORKBOOKS
-            for i, (wb_name_in_list, _) in enumerate(wbl):
-                if wb_name_in_list == wb_name:
-                    return i
-            return -1
+            # Bind through the DC (data_context) object
+            return self.model.bdmwd_WB_REF_validate(wb_ref)
         except Exception as e:
-            logger.error(p3u.exc_err_msg(e))
-            raise
+            return self.BMVM_cmd_exception(e)
 
-    def dc_FI_KEY_validate(self, fi_key: str) -> bool:
-        """Validate the provided FI_KEY."""
-        return self.bdmwd_FI_KEY_validate(fi_key)
+
     # ------------------------------------------------------------------------ +
 
-    #endregion BudManDataContext Method Overrides.
+    #endregion BudManDataContext (Interface) Property/Method Overrides.
     # ======================================================================== +
 
     # ======================================================================== +
@@ -158,10 +164,13 @@ class BDMWorkingData(BudManDataContext, BDMClientInterface):
     # ------------------------------------------------------------------------ +
     #region    BDMWorkingDataBaseInterface BDMWD (fi,wf,wb)-aware Interface.
     # ------------------------------------------------------------------------ +
-    def bdmwd_FI_KEY_validate(self, fi_key: str) -> bool:
-        """Validate the provided FI_KEY."""
-        # First end-to-end DC binding through the BDMClientInterface.
-        return self.model.bdm_FI_KEY_validate(fi_key)
+    # def bdmwd_FI_KEY_validate(self, fi_key: str) -> bool:
+    #     """Validate the provided FI_KEY."""
+    #     # First end-to-end DC binding through the BDMClientInterface.
+    #     return self.model.bdm_FI_KEY_validate(fi_key)
+    def bdmwd_WF_KEY_validate(self, wf_key: str) -> bool:
+        """Validate the provided WF_KEY."""
+        return self.model.bdm_WF_KEY_validate(wf_key)
     def bdmwd_FI_WORKBOOKS_load(self, 
                                 fi_key: str, 
                                 wf_key : str, 

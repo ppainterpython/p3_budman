@@ -289,9 +289,27 @@ class BudManCLIParser():
     def workflow_cmd_parser_setup(self) -> None:
         """Apply workflows to data in Budget Manager."""
         try:
-            # Workflow subcommands: categorization, reload
+            # Workflow subcommands: categorization, reload, check
             self.workflow_cmd_subparsers = self.workflow_cmd_parser.add_subparsers(
                 dest="workflow_cmd")
+            # workflow check subcommand
+            self.workflow_check_subcmd_parser = self.workflow_cmd_subparsers.add_parser(
+                "check",
+                aliases=["ch"], 
+                help="Check some aspect of the workflow data or processing.")
+            self.workflow_check_subcmd_parser.set_defaults(
+                workflow_cmd="check")
+            # workflow check subcommand: wb_ref
+            self.workflow_check_subcmd_parser.add_argument(
+                "wb_ref", nargs="?",
+                action="store", 
+                default='all',
+                help="Workbook reference, name or number of a loaded workbook.")
+            # -r reload argument for the workflow command
+            self.workflow_check_subcmd_parser.add_argument(
+                "-r", nargs="?", dest="reload", 
+                default= "all",
+                help="FI key value.") 
             # Workflow subcommand: reload
             self.workflow_reload_subcmd_parser = self.workflow_cmd_subparsers.add_parser(
                 "reload",
@@ -317,10 +335,10 @@ class BudManCLIParser():
                 default='all',
                 help="Workbook reference, name or number of a loaded workbook.")
             # -r reload argument for the workflow command
-            self.workflow_cmd_parser.add_argument(
-                "-r", nargs="?", dest="reload", 
-                default= "all",
-                help="FI key value.") 
+            # self.workflow_cmd_parser.add_argument(
+            #     "-r", nargs="?", dest="reload", 
+            #     default= "all",
+            #     help="FI key value.") 
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise

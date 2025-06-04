@@ -245,6 +245,24 @@ class BudManDataContext(BudManDataContextBaseInterface):
         self.dc_LOADED_WORKBOOKS[wb_name] = wb
         return None
 
+    def dc_WORKBOOK_index(self, wb_name: str = None) -> int:
+        """Return the index of a workbook based on wb_name.
+        
+        Args:
+            wb_name (str): The name of the workbook to find.
+        Returns:
+            int: The index of the workbook in the WORKBOOK_LIST, or -1 if not found.
+        """
+        try:
+            wbl = self.dc_WORKBOOKS
+            for i, (wb_name_in_list, _) in enumerate(wbl):
+                if wb_name_in_list == wb_name:
+                    return i
+            return -1
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+
     def dc_BDM_STORE_load(self, file_path: str) -> None:
         """Load the BDM_STORE from the specified file path. NotImplementedError.
         The design presumes that the BDM_STORE is managed by the downstream

@@ -646,6 +646,8 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
             logger.error(m)
             raise ValueError(m)
         return len(wf_wbl)
+    # TODO: add bsm_WB_REF_validate() method to validate the
+    #       WORKBOOK_LIST wb_ref values, e.g., Path objects, str, etc.
     #endregion BDM FI_WF_OBJECT DATA_OBJECT pseudo-Object properties
     # ------------------------------------------------------------------------ +
     #region    BDM WF_OBJECT pseudo-Object properties
@@ -2000,22 +2002,6 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
     #endregion BDMWD - Budget Domain Model Working Data methods
     # ======================================================================== +
 
-    # ======================================================================== +
-    #region    BDMWD - BudMan DataContext Interface methods.
-    # ------------------------------------------------------------------------ +
-    #region dc_WB_REF_validate() method
-    def dc_WB_REF_validate(self, wb_ref : str) -> bool: 
-        """Return True if the wb_ref is valid."""
-        try:
-            # Budget Domain Model Working Data (BDMWD) validates wb_ref.
-            return self.bdmwd_WB_REF_validate(wb_ref)
-        except Exception as e:
-            logger.error(p3u.exc_err_msg(e))
-            raise
-    #endregion dc_WB_REF_validate() method
-    # ------------------------------------------------------------------------ +
-    #endregion BDMWD - BDMWD - BudMan DataContext Interface methods.
-    # ======================================================================== +
 # ---------------------------------------------------------------------------- +
 #region utility functions
 def data_desc(fi_key:str, wf_key:str, wb_type:str) -> str:

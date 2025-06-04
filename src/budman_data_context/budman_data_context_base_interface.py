@@ -21,10 +21,13 @@
 #region Imports
 # python standard library modules and packages
 from abc import ABC, abstractmethod
+from typing import Dict, List, Any
 # third-party modules and packages
 from openpyxl import Workbook
 # local modules and packages
-from src.budman_namespace import design_language_namespace as bdmns
+from src.budman_namespace import (
+    DATA_CONTEXT, WORKBOOK_LIST, LOADED_WORKBOOK_LIST,
+    BDM_STORE)
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 class BudManDataContextBaseInterface(ABC):
@@ -112,24 +115,24 @@ class BudManDataContextBaseInterface(ABC):
 
     @property
     @abstractmethod
-    def dc_WORKBOOKS(self) -> bdmns.WORKBOOK_LIST:
+    def dc_WORKBOOKS(self) -> WORKBOOK_LIST:
         """Return the list of workbooks in the DC."""
         pass
     @dc_WORKBOOKS.setter
     @abstractmethod
-    def dc_WORKBOOKS(self, value: bdmns.WORKBOOK_LIST) -> None:
+    def dc_WORKBOOKS(self, value: WORKBOOK_LIST) -> None:
         """Set the list of workbooks in the DC."""
         pass
 
     @property
     @abstractmethod
-    def dc_LOADED_WORKBOOKS(self) -> bdmns.LOADED_WORKBOOK_LIST:
+    def dc_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_LIST:
         """Return the list of workbooks currently loaded in the DC.
         Loaded means a file is loaded into memory and is available."""
         pass
     @dc_LOADED_WORKBOOKS.setter
     @abstractmethod
-    def dc_LOADED_WORKBOOKS(self, value: bdmns.LOADED_WORKBOOK_LIST) -> None:
+    def dc_LOADED_WORKBOOKS(self, value: LOADED_WORKBOOK_LIST) -> None:
         """Set the list of workbooks currently loaded in the DC.
         Loaded means a file is loaded into memory and is available."""
         pass
@@ -137,7 +140,7 @@ class BudManDataContextBaseInterface(ABC):
     # ------------------------------------------------------------------------ +
     #region Abstract Methods
     @abstractmethod
-    def dc_initialize(self) -> None:
+    def dc_initialize(self) -> DATA_CONTEXT:
         """Initialize the data context."""
         pass
 
@@ -192,7 +195,18 @@ class BudManDataContextBaseInterface(ABC):
         pass
 
     @abstractmethod
-    def dc_BDM_STORE_load(self, file_path: str) -> None:
+    def dc_WORKBOOK_index(self, wb_name: str = None) -> int:
+        """Return the index of a workbook based on wb_name.
+        
+        Args:
+            wb_name (str): The name of the workbook to find.
+        Returns:
+            int: The index of the workbook in the WORKBOOK_LIST, or -1 if not found.
+        """
+        pass
+
+    @abstractmethod
+    def dc_BDM_STORE_load(self, file_path: str) -> BDM_STORE:
         """Load the BDM_STORE from the specified file path. NotImplementedError.
         The design presumes that the BDM_STORE is managed by the downstream
         Model implementation, that the budget_domain_model uses it to 
@@ -201,7 +215,7 @@ class BudManDataContextBaseInterface(ABC):
         pass
 
     @abstractmethod
-    def dc_BDM_STORE_save(self, file_path: str) -> None:
+    def dc_BDM_STORE_save(self, bdm_store: BDM_STORE, file_path: str) -> None:
         """Save the BDM_STORE to the specified file path."""
         pass
 

@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 class BudManViewModel(BDMClientInterface):
     # ======================================================================== +
-    #region BudgetManagerViewModelInterface class
+    #region BudManViewModel class intrinsics
     """A Budget Model View Model to support Commands and Data Context.
     
     This ViewModel supports two primary interfaces: Command Processing (CP) and 
@@ -240,20 +240,21 @@ class BudManViewModel(BDMClientInterface):
                 "load_cmd_workbooks": self.WORKBOOKS_load_cmd,
                 "workflow_cmd_categorization": self.WORKFLOW_categorization_cmd,
                 "workflow_cmd_reload": self.WORKFLOW_reload_cmd,
+                "workflow_cmd_check": self.WORKFLOW_check_cmd
             }
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
     #endregion initialize_cmd_map() method
     # ------------------------------------------------------------------------ +
-    #endregion BudgetManagerViewModelInterface class
+    #endregion BudManViewModel class intrinsics
     # ======================================================================== +
 
     # ======================================================================== +
-    #region BudgetManagerViewModelInterface implementation                     +
-    """BudgetModelViewModelInterface provides two interfaces:
+    #region BudManViewModel implementation                     +
+    """BudManViewModel provides two interfaces:
        1. BudgetManagerViewModelCommandInterface.
-       2. BudgetManagerDataContextInterface.
+       2. BudManDataContextInterface.
     
     BudgetManagerViewModelCommandInterface
     --------------------------------------
@@ -667,7 +668,7 @@ class BudManViewModel(BDMClientInterface):
     # ------------------------------------------------------------------------ +
     #                                                                          +
     # ------------------------------------------------------------------------ +
-    #region Command Binding Implementations
+    #region Command Implementations
     #                                                                          +
     # ------------------------------------------------------------------------ +
     #region FI_init_command() command method
@@ -1145,6 +1146,85 @@ class BudManViewModel(BDMClientInterface):
             raise
     #endregion WORKFLOW_categorization_cmd() method
     # ------------------------------------------------------------------------ +
+    #region WORKFLOW_check() method
+    def WORKFLOW_check_cmd(self, cmd : Dict) -> Tuple[bool, str]:
+        """Apply workflow to one or more WORKBOOKS in the DC.
+
+        A WORKFLOW_categorization_cmd command will use the wb_ref value in the cmd. 
+        Value is a number or a wb_name.
+
+        Arguments:
+            cmd (Dict): A valid BudMan View Model Command object. For this
+            command, must contain workflow_cmd = 'categorization' resulting in
+            a full command key of 'workflow_cmd_categorization'.
+
+        Returns:
+            Tuple[success : bool, result : Any]: The outcome of the command 
+            execution. If success is True, result contains result of the 
+            command, if False, a description of the error.
+            
+        Raises:
+            RuntimeError: A description of the
+            root error is contained in the exception message.
+        """
+        try:
+            pfx = f"{self.__class__.__name__}.{self.FI_init_cmd.__name__}: "
+            if p3u.is_not_obj_of_type("cmd",cmd,dict,pfx):
+                m = f"Invalid cmd object, no action taken."
+                logger.error(m)
+                raise RuntimeError(f"{pfx}{m}")
+            logger.info(f"Start: ...")
+            wb_ref = cmd.get(WB_REF, None)
+            if wb_ref is None:
+                m = f"wb_ref is None, no action taken."
+                logger.error(m)
+                raise RuntimeError(f"{pfx}{m}")
+            fi_key = self.dc_FI_KEY
+            wf_key = self.dc_WF_KEY
+            wb_type = self.dc_WB_TYPE
+            wb_name = self.dc_WB_NAME
+            wb_count = len(self.dc_WORKBOOKS)
+            wb_index = -1
+            all_wbs : bool = False
+            wf_wbl = []
+            r = f"Budget Manager Categorization Workflow:\n"
+            # TODO: need function to resovle wb_ref to (all:bool, wb_index:int)
+            if wb_ref.isdigit():
+                wb_index = int(wb_ref)
+                wb_info = self.dc_WORKBOOKS[wb_index] if wb_index < wb_count else None
+                if wb_info is not None:
+                    wb_name = wb_info[0]
+            elif wb_ref == ALL_KEY:
+                wb_name = ALL_KEY 
+                # all_wbs =  True # not implemented yet
+            # Build a list of LOADED_WORKBOOKS to process.
+            lwbl = self.dc_LOADED_WORKBOOKS
+            lwbl_count = len(lwbl) if lwbl else 0
+            if lwbl_count == 0:
+                m = f"No LOADED_WORKBOOKS found, no action taken."
+                logger.error(m)
+                return False, m
+            if not self.DC.dc_WORKBOOK_loaded(wb_name):
+                m = f"wb_name '{wb_name}' not found in LOADED_WORKBOOKS."
+                logger.error(m)
+                return False, m
+            # wb = self.budget_domain_model.bdmwd_WORKBOOK_load(wb_name)
+            wb = lwbl[wb_name]
+            ws = wb.active
+            # check wb for standardized column names, order and worksheet name.
+            # Check for budget category column, add it if not present.
+            # check_budget_category(ws)
+            # check_sheet_columns(ws)
+            # Map the 'Original Description' column to the 'Budget Category' column.
+            # map_budget_category(ws,"Original Description", BUDGET_CATEGORY_COL)
+            # self.budget_domain_model.bdmwd_WORKBOOK_save(wb_name, wb)
+            r += f"Checked workbook: Workbook({wb_ref}) '{wb_name}'\n"
+            return True, r
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion WORKFLOW_check_cmd() method
+    # ------------------------------------------------------------------------ +
     #region WORKFLOW_reload_cmd() method
     def WORKFLOW_reload_cmd(self, cmd : Dict) -> Tuple[bool, str]:
         """Reload code modules to support dev.
@@ -1196,14 +1276,14 @@ class BudManViewModel(BDMClientInterface):
     #endregion WORKFLOW_reload_cmd() method
     # ------------------------------------------------------------------------ +
     #                                                                          +
-    #endregion Command Binding Implementations
+    #endregion Command Implementations
     # ------------------------------------------------------------------------ +
     #                                                                          +
     #endregion BudgetManagerViewModelCommandInterface implementation           +
     # ======================================================================== +
     #                                                                          +
     # ======================================================================== +
-    #region BudgetManagerDataContextInterface implementation          +
+    #region BudManDataContext client implementation                            +
     """BDM view_model Data Context Interface Documentation.
 
     Data Context (DC) Interface Overview
@@ -1373,7 +1453,7 @@ class BudManViewModel(BDMClientInterface):
     def dc_FI_KEY_validate(self, fi_key : str) -> int: 
         """Return True if the fi_key is valid."""
         try:
-            # Ask the Budget Domain Model to validate the fi_key.
+            # Bind through the DC (data_context) object.
             return self.DC.dc_FI_KEY_validate(fi_key)
             # return self.budget_domain_model.bdm_FI_KEY_validate(fi_key)
         except Exception as e:
@@ -1384,8 +1464,8 @@ class BudManViewModel(BDMClientInterface):
     def dc_WF_KEY_validate(self, wf_key : str) -> bool: 
         """Return True if the wf_key is valid."""
         try:
-            # Ask the Budget Domain Model to validate the wf_key.
-            return self.budget_domain_model.bdm_WF_KEY_validate(wf_key)
+            # Bind through the DC (data_context) object.
+            return self.DC.dc_WF_KEY_validate(wf_key)
         except Exception as e:
             return self.BMVM_cmd_exception(e)
     #endregion dc_WF_KEY_validate() method
@@ -1395,7 +1475,7 @@ class BudManViewModel(BDMClientInterface):
         """Return True if the wb_ref is valid."""
         try:
             # Bind through the DC (data_context) object
-            return self.budget_domain_model.dc_WB_REF_validate(wb_ref)
+            return self.DC.dc_WB_REF_validate(wb_ref)
         except Exception as e:
             return self.BMVM_cmd_exception(e)
     #endregion dc_WB_REF_validate() method
@@ -1487,8 +1567,8 @@ class BudManViewModel(BDMClientInterface):
     #endregion Data Context Methods
     # ------------------------------------------------------------------------ +
     #                                                                          +
-    #endregion BudgetManagerDataContextInterface implementation       +
+    #endregion BudMANDataContext client implementation                         +
     # ======================================================================== +
     #                                                                          +
-    #endregion BudgetManagerViewModelInterface implementation
+    #endregion BudManViewModel implementation
     # ======================================================================== +

@@ -1,8 +1,0 @@
-Starting: PYTHONPATH = ['C:\\Users\\ppain\\repos\\python\\p3_budman', 'C:\\Program Files\\Python313\\python313.zip', 'C:\\Program Files\\Python313\\DLLs', 'C:\\Program Files\\Python313\\Lib', 'C:\\Program Files\\Python313', 'C:\\Users\\ppain\\venvs\\p3', 'C:\\Users\\ppain\\venvs\\p3\\Lib\\site-packages', 'C:\\Users\\ppain\\repos\\python\\p3_budman\\src', 'C:\\Users\\ppain\\repos\\python\\p3_utils\\src', 'C:\\Users\\ppain\\repos\\python\\p3logging\\src', 'C:\\Users\\ppain\\venvs\\p3\\Lib\\site-packages\\win32', 'C:\\Users\\ppain\\venvs\\p3\\Lib\\site-packages\\win32\\lib', 'C:\\Users\\ppain\\venvs\\p3\\Lib\\site-packages\\Pythonwin', './src']
-2025-06-04T14:48:54.101+00:00:I:[021896:054060]: show_categories.configure_logging() + ------------------------------------------------------------ +
-2025-06-04T14:48:54.101+00:00:I:[021896:054060]: show_categories.configure_logging() + running show_categories.py(__main__) ...
-2025-06-04T14:48:54.101+00:00:I:[021896:054060]: show_categories.configure_logging() + ------------------------------------------------------------ +
-2025-06-04T14:48:54.103+00:00:E:[021896:054060]: budget_category_mapping.extract_category_tree() UnicodeEncodeError('charmap' codec can't encode characters in position 19-21: character maps to <undefined>) at encode() in cp1252.py:19
-2025-06-04T14:48:54.104+00:00:E:[021896:054060]: show_categories.<module>() UnicodeEncodeError('charmap' codec can't encode characters in position 19-21: character maps to <undefined>) at encode() in cp1252.py:19
-Complete.
-2025-06-04T14:48:54.104+00:00:I:[021896:054060]: show_categories.<module>() Complete.
