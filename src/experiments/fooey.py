@@ -9,8 +9,7 @@ from typing import Dict
 import p3_utils as p3u, p3logging as p3l
 # local modules and packages
 # from budman_namespace import *
-from budget_storage_model import *
-from budget_domain_model.budget_domain_model_config import BDMConfig
+from budget_domain_model.budget_category_mapping import extract_category_tree
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -45,13 +44,13 @@ def configure_logging(logger_name : str = __name__, logtest : bool = False) -> N
 # ------------------------------------------------------------------------ +
 # ---------------------------------------------------------------------------- +
 if __name__ == "__main__":
-    bdms_url = "file:///C:/Users/ppain/OneDrive/budget/p3_budget_manager_ca063e8b.jsonc"
+    # bdms_url = "file:///C:/Users/ppain/OneDrive/budget/p3_budget_manager_ca063e8b.jsonc"
     try:
-        configure_logging(__name__, logtest=True)
-        # bdms_json = bsm_BDM_STORE_url_load(bdms_url)
-        bdmc = BDMConfig.BDM_STORE_url_load(bdms_url)
+        configure_logging(__name__, logtest=False)
+        _ = extract_category_tree()
     except Exception as e:
-        logger.error(p3u.exc_err_msg(e))
+        m = p3u.exc_err_msg(e)
+        logger.error(m)
     # bdm = bdms.bsm_BDM_STORE_url_load(bdms_url)
     logger.info(f"Complete.")
 

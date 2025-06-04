@@ -1,6 +1,13 @@
 # ---------------------------------------------------------------------------- +
 #region category_mapping.py module
-""" Functions enabling mapping of FI transactions to budget categories."""
+""" Regular Expression techniques to map financial transactions to categories.
+
+    When a workbook is downloaded from a financial institution, the transactions
+    typically have a column with a description of the transaction. Herein, a 
+    set of regular expressions can be defined to apply to the description and 
+    map it to a hierarchical category structure.
+
+"""
 #endregion p3_execl_budget.p3_banking_transactions budget_transactions.py module
 # ---------------------------------------------------------------------------- +
 #region Imports
@@ -9,6 +16,7 @@ import re, pathlib as Path, logging
 
 # third-party modules and packages
 import p3logging as p3l, p3_utils as p3u
+from treelib import Tree
 
 # local modules and packages.
 #endregion Imports
@@ -16,19 +24,6 @@ import p3logging as p3l, p3_utils as p3u
 #region Globals and Constants
 logger = logging.getLogger(__name__)
 #endregion Globals and Constants
-# ---------------------------------------------------------------------------- +
-#region Account Map
-# Map values to column ['Account Code'] by re pattern-matching to 
-# column ['Account Name'].
-# account_map = {
-#     r'(?i).*WATERSTONE.*': 'Charity.GCR',
-# }
-# df['Account Name'] = df['Account Name'].str.replace(
-#     r'^[^-]+-\s*[^-]+-\s*(.+)$',  # Regular expression
-#     r'\1',                        # Replace w/ group 1, 1st capturing group (the third part)
-#     regex=True                    # Enable regex mode
-# )
-#endregion Account Map
 # ---------------------------------------------------------------------------- +
 #region Category Map
 # Map values to column ['Category'] by re pattern-matching to 
@@ -43,7 +38,7 @@ category_map = {
     r'(?i)\bTUNNELTOTOWERS\b': 'Charity.Tunnel to Towers',
     r'(?i)\bFOCUS\sON\sTHE\sFAMILY\b': 'Charity.Focus on the Family',
     r'(?i)\bPioneers\sBlueChe\b': 'Charity.Pioneers',
-    r'(?i)\bST\sJUDE\b': 'Charity.St. Jude',
+    r'(?i)\bST\sJUDE\b': 'Charity.St Jude',
     r'(?i)\bWorld\s*Vision\s*Inc\b': 'Charity.World Vision',
     r'(?i)\bDAYSTAR\s*TELEVISION': 'Charity.DayStar',
     r'(?i)\bI*D*:*GOFUNDME\sJOHN\sW.*': 'Donation.GoFundMe.John Wick',
@@ -496,7 +491,7 @@ category_map = {
 def category_map_count():
     return len(category_map)
 #endregion category_map_count() function
-
+# ---------------------------------------------------------------------------- +
 #region map_category() function
 def map_category(src_str):
     """Map a transaction description to a budget category."""
@@ -515,3 +510,84 @@ def map_category(src_str):
         logger.error(p3u.exc_msg(map_category, e))
         raise
 #endregion map_category() function
+# ---------------------------------------------------------------------------- +
+#region extract_category_tree()
+def dot(n1:str=None, n2:str=None, n3:str=None) -> str:
+    """Format provided nodes with a dot in between."""
+    if not n1: return None
+    c = f"{n1}.{n2}" if n2 else n1
+    if not n2: return c
+    return f"{n1}.{n2}.{n3}" if n3 else c  
+
+def extract_category_tree(level:int=2):
+    """Extract the category tree from the category_map."""
+    try:
+        tree = Tree()
+        bct = tree.create_node("Budget Categories", "root")  # Root node
+        filter_list = ["Darkside"]        
+        for _, category in category_map.items():
+            l1, l2, l3 = split_budget_category(category)
+            if l1 in filter_list:
+                continue
+            if tree.contains(l1): 
+                # If Level 1 already exists, find it
+                l1_node = tree.get_node(l1)
+            else:
+                l1_node = tree.create_node(l1, l1, parent="root")
+            if not l2 or level < 2:
+                continue
+            c = dot(l1, l2)
+            if tree.contains(c):
+                # If Level 2 already exists, find it
+                l2_node = tree.get_node(c)
+            else:
+                l2_node = tree.create_node(l2, c, parent=l1_node)
+            if not l3 or level < 3:
+                continue
+            c = dot(l1, l2, l3)
+            if tree.contains(c):
+                # If Level 3 already exists, find it
+                l3_node = tree.get_node(c)
+            else:
+                l3_node = tree.create_node(l3, c, parent=l2_node)
+            
+        tree.show()
+        return bct
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion extract_category_tree()# ---------------------------------------------------------------------------- +
+#region split_budget_category() -> tuple function
+def split_budget_category(budget_category: str) -> tuple[str, str, str]:
+    """Split a budget category string into three levels.
+    
+    The budget category is expected to be in the format "Level1.Level2.Level3".
+    If the budget category does not have all three levels, the missing levels 
+    will be set to an empty string.
+
+    Args:
+        budget_category (str): The budget category string to split.
+
+    Returns:
+        tuple[str, str, str]: A tuple containing Level1, Level2, and Level3.
+    """
+    try:
+        if not isinstance(budget_category, str):
+            raise TypeError(f"Expected 'budget_category' to be a str, got {type(budget_category)}")
+        l1 = l2 = l3 = ""
+        c = budget_category.count('.')
+        if c >= 2:
+            # Split the budget category by '.' and ensure we have 3 parts.
+            l1, l2, l3 = budget_category.split('.',3)
+        elif c == 1:
+            # Split the budget category by '.' and ensure we have 2 parts.
+            l1, l2 = budget_category.split('.',2)
+        else:
+            # If no '.' is present, treat the whole string as Level1.
+            l1 = budget_category
+        return l1, l2, l3
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion split_budget_category() function
+# ---------------------------------------------------------------------------- +
