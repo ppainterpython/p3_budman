@@ -505,6 +505,7 @@ class BudManViewModel(BDMClientInterface):
             full_cmd_key = result
             func = self.cmd_map.get(full_cmd_key)
             function_name = func.__name__
+            # TODO: validate-only stops here
             logger.info(f"Executing command: {function_name}({str(cmd)})")
             status, result = self.cmd_map.get(full_cmd_key)(cmd)
             logger.info(f"Complete Command: [{p3u.stop_timer(st)}] {(status, str(result))}")
@@ -1188,7 +1189,7 @@ class BudManViewModel(BDMClientInterface):
             all_wbs : bool = False
             wf_wbl = []
             r = f"Budget Manager Categorization Workflow:\n"
-            # TODO: need function to resovle wb_ref to (all:bool, wb_index:int)
+            # TODO: need function to resolve wb_ref to (all:bool, wb_index:int)
             if wb_ref.isdigit():
                 wb_index = int(wb_ref)
                 wb_info = self.dc_WORKBOOKS[wb_index] if wb_index < wb_count else None
@@ -1197,12 +1198,12 @@ class BudManViewModel(BDMClientInterface):
             elif wb_ref == ALL_KEY:
                 wb_name = ALL_KEY 
                 # all_wbs =  True # not implemented yet
-            # Build a list of LOADED_WORKBOOKS to process.
+            # TODO: what_if arg stops here. Build a list of LOADED_WORKBOOKS to process.
             lwbl = self.dc_LOADED_WORKBOOKS
             lwbl_count = len(lwbl) if lwbl else 0
             if lwbl_count == 0:
                 m = f"No LOADED_WORKBOOKS found, no action taken."
-                logger.error(m)
+                logger.warning(m)
                 return False, m
             if not self.DC.dc_WORKBOOK_loaded(wb_name):
                 m = f"wb_name '{wb_name}' not found in LOADED_WORKBOOKS."

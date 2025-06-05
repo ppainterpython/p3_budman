@@ -10,7 +10,7 @@ from src.budman_app.budman_app import BudManApp
 logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 #region configure_logging() method
-def configure_logging(logger_name : str, logtest : bool = False) -> None:
+def configure_logging(logger_name : str, logtest : bool = True) -> None:
     """Setup the application logger."""
     try:
         # Configure logging

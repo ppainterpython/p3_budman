@@ -8,6 +8,7 @@
 
 # python standard library modules and packages
 import logging, shutil, argparse
+from typing import List
 # third-party modules and packages
 import p3_utils as p3u, p3logging as p3l
 import cmd2
@@ -44,12 +45,18 @@ class BudManCLIParser():
     """
     def __init__(self) -> None:
         """Initialize the BudgetModelCLIParser class."""
-        self.init_cmd_parser = BudManCmd2ArgumentParser()
-        self.show_cmd_parser = BudManCmd2ArgumentParser()
-        self.load_cmd_parser = BudManCmd2ArgumentParser()
-        self.save_cmd_parser = BudManCmd2ArgumentParser()
-        self.val_cmd_parser = BudManCmd2ArgumentParser()
-        self.workflow_cmd_parser = BudManCmd2ArgumentParser()
+        # self.init_cmd_parser = BudManCmd2ArgumentParser()
+        # self.show_cmd_parser = BudManCmd2ArgumentParser()
+        # self.load_cmd_parser = BudManCmd2ArgumentParser()
+        # self.save_cmd_parser = BudManCmd2ArgumentParser()
+        # self.val_cmd_parser = BudManCmd2ArgumentParser()
+        # self.workflow_cmd_parser = BudManCmd2ArgumentParser()
+        self.init_cmd_parser = cmd2.Cmd2ArgumentParser()
+        self.show_cmd_parser = cmd2.Cmd2ArgumentParser()
+        self.load_cmd_parser = cmd2.Cmd2ArgumentParser()
+        self.save_cmd_parser = cmd2.Cmd2ArgumentParser()
+        self.val_cmd_parser = cmd2.Cmd2ArgumentParser()
+        self.workflow_cmd_parser = cmd2.Cmd2ArgumentParser()
         self.init_cmd_parser_setup()
         self.show_cmd_parser_setup()
         self.load_cmd_parser_setup()
@@ -289,58 +296,101 @@ class BudManCLIParser():
     def workflow_cmd_parser_setup(self) -> None:
         """Apply workflows to data in Budget Manager."""
         try:
-            # Workflow subcommands: categorization, reload, check
-            self.workflow_cmd_subparsers = self.workflow_cmd_parser.add_subparsers(
+            parser = self.workflow_cmd_parser
+            # Add common arguments to the workflow command parser
+            common_args = self.add_common_args(parser)
+            # Add subparsers for workflow command parser
+            self.workflow_cmd_subparsers = parser.add_subparsers(
                 dest="workflow_cmd")
+            subparsers = self.workflow_cmd_subparsers
+            # Workflow subcommands: categorization, reload, check
             # workflow check subcommand
-            self.workflow_check_subcmd_parser = self.workflow_cmd_subparsers.add_parser(
+            check_subcmd_parser = subparsers.add_parser(
                 "check",
                 aliases=["ch"], 
                 help="Check some aspect of the workflow data or processing.")
-            self.workflow_check_subcmd_parser.set_defaults(
+            check_subcmd_parser.set_defaults(
                 workflow_cmd="check")
-            # workflow check subcommand: wb_ref
-            self.workflow_check_subcmd_parser.add_argument(
+            check_subcmd_parser.add_argument(
                 "wb_ref", nargs="?",
                 action="store", 
                 default='all',
                 help="Workbook reference, name or number of a loaded workbook.")
-            # -r reload argument for the workflow command
-            self.workflow_check_subcmd_parser.add_argument(
-                "-r", nargs="?", dest="reload", 
-                default= "all",
-                help="FI key value.") 
+            check_subcmd_parser.add_argument(
+                "-f", dest="fix", action="store_true",
+                help="switch to fix issues found by check cmd.") 
             # Workflow subcommand: reload
-            self.workflow_reload_subcmd_parser = self.workflow_cmd_subparsers.add_parser(
+            reload_subcmd_parser = subparsers.add_parser(
                 "reload",
                 aliases=["r"], 
                 help="Reload modules.")
-            self.workflow_reload_subcmd_parser.set_defaults(
+            reload_subcmd_parser.set_defaults(
                 workflow_cmd="reload")
-            self.workflow_reload_subcmd_parser.add_argument(
+            reload_subcmd_parser.add_argument(
                 "reload_target", nargs="?",
                 action="store", 
                 default='category_map',
                 help="Name of module to reload, or 'all' re-loadable.")
             # workflow categorization subcommand
-            self.workflow_categorization_subcmd_parser = self.workflow_cmd_subparsers.add_parser(
+            categorization_subcmd_parser = self.workflow_cmd_subparsers.add_parser(
                 "categorization",
                 aliases=["cat", "CAT", "c"], 
                 help="Apply Categorization workflow.")
-            self.workflow_categorization_subcmd_parser.set_defaults(
+            categorization_subcmd_parser.set_defaults(
                 workflow_cmd="categorization")
-            self.workflow_categorization_subcmd_parser.add_argument(
+            categorization_subcmd_parser.add_argument(
                 "wb_ref", nargs="?",
                 action="store", 
                 default='all',
                 help="Workbook reference, name or number of a loaded workbook.")
-            # -r reload argument for the workflow command
-            # self.workflow_cmd_parser.add_argument(
-            #     "-r", nargs="?", dest="reload", 
-            #     default= "all",
-            #     help="FI key value.") 
+
+            # Instead of propagating, just add common args directly to each subparser:
+            for subparser in [check_subcmd_parser, reload_subcmd_parser, categorization_subcmd_parser]:
+                self.add_common_args(subparser)
+
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise
-
+    def add_common_args(self, parser: cmd2.Cmd2ArgumentParser) -> object:
+        """Add common arguments to the provided parser."""
+        try:
+            common_args = parser.add_argument_group(
+                "Common Arguments", 
+                "Arguments common to all commands.")
+            # Add common arguments to the parser
+            common_args.add_argument(
+                "--parse-only","-po",  
+                action="store_true", 
+                help="Command is only parsed with results returned.")
+            common_args.add_argument(
+                "--validate-only", "-vo", 
+                action="store_true", 
+                help="Command args are only validated with results returned, but no cmd execution.")
+            common_args.add_argument(
+                "-wi", "--what-if", 
+                action="store_true", 
+                help="Return details about what the command would do, but don't to any action.")
+            return common_args
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise
+    def propagate_common_args(self, 
+                              parser: cmd2.Cmd2ArgumentParser,
+                              subparsers: List[cmd2.Cmd2ArgumentParser],
+                              common_args: object) -> None:
+        """Propagate common arguments to all subparsers."""
+        try:
+            # Propagate the common arguments to all subparsers
+            # It took 4 iterations with Copilot to get this right. On the
+            # 4th iteration, I determined its last recommendation was incorrect
+            # and I figured it out.
+            for subparser in subparsers:
+                for action in common_args._group_actions:
+                    # kwargs = {key: getattr(action, key) for key in ["help", "default", "type", "choices", "action"] 
+                    #           if hasattr(action, key) and isinstance(getattr(action, key), (str, int, bool))}
+                    kwargs = {key: getattr(action, key) for key in ["help", "default", "type", "choices", "action"] if hasattr(action, key)}
+                    subparser.add_argument(*action.option_strings, **kwargs)
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise
     # ------------------------------------------------------------------------ +
