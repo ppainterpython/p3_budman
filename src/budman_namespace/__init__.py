@@ -25,10 +25,9 @@ __all__ = [
     "BDM_CONFIG",
     # "MODEL_OBJECT",
     "DATA_OBJECT",
-    "BMO_COLLECTION",
+    "BDMO_OBJECT",
     "DATA_COLLECTION",
     "DATA_LIST",
-    "BMO_COLLECTION",
     "FI_OBJECT",
     "FI_COLLECTION",
     "FI_DATA_OBJECT",
@@ -79,11 +78,11 @@ __all__ = [
     # Well-known column names for banking transactions workbooks.
     "BUDGET_CATEGORY_COL",
     # BDM_OPTIONS Budget Model Options (BMO)Constants
-    "BMO_LOG_CONFIG",
-    "BMO_LOG_LEVEL",
-    "BMO_LOG_FILE",
-    "BMO_JSON_LOG_FILE",
-    "BMO_EXPECTED_KEYS",
+    "BDMO_LOG_CONFIG",
+    "BDMO_LOG_LEVEL",
+    "BDMO_LOG_FILE",
+    "BDMO_JSON_LOG_FILE",
+    "BDMO_EXPECTED_KEYS",
     # FI_OBJECT financial institution pseudo-Object (Dictionary key names)
     "FI_KEY",
     "FI_NAME",

@@ -325,18 +325,11 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
     @property
     def data_context(self) -> DATA_CONTEXT:
         """The data context for the budget model."""
-        return self.bdm_working_data 
+        return self._data_context 
     @data_context.setter
     def data_context(self, value: DATA_CONTEXT) -> None:
         """Set the data context for the budget model."""
-        self.bdm_working_data = value
-
-    # budget_model_working_data is a dictionary to store dynamic, non-property data.
-    def set_BDM_WORKING_DATA(self, key, value) -> None:
-        self.bdm_working_data[key] = value
-
-    def get_BDM_WORKING_DATA(self, key) -> Any:
-        return self.bdm_working_data.get(key, 0)
+        self._data_context = value
 
     @property
     def model_id(self) -> str:
@@ -1463,7 +1456,15 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
     methods to access the BDM_WORKING_DATA property.
     """
     # --------------------------------------------------------------------- +
-    #region BDM_WORKING_DATA properties
+    #region    BDMWD getter/setter methods.
+    def set_BDM_WORKING_DATA(self, key, value) -> None:
+        self.bdm_working_data[key] = value
+
+    def get_BDM_WORKING_DATA(self, key) -> Any:
+        return self.bdm_working_data.get(key, 0)
+    #endregion    BDMWD getter/setter methods.
+    # --------------------------------------------------------------------- +
+    #region    BDMWD properties
     def _valid_BDMWD(self) -> BDM_WORKING_DATA_OBJECT:
         """Init self.bdm_working_data if it None."""
         try:
@@ -1551,7 +1552,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
         _ = self._valid_BDMWD()
         self.bdm_working_data[BDMWD_LOADED_WORKBOOKS] = value
 
-    #endregion BDM_WORKING_DATA properties 
+    #endregion BDMWD properties 
     # --------------------------------------------------------------------- +
     #region bdmwd_WORKBOOKS() methods
     def bdmwd_WORKBOOKS_count(self) -> int:

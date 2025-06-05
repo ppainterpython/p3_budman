@@ -154,10 +154,10 @@ class BDMConfig(metaclass=BDMSingletonMeta):
             }
         },
         BDM_OPTIONS: {
-            BMO_LOG_CONFIG: "budget_model_logging_config.jsonc",
-            BMO_LOG_LEVEL: "DEBUG",
-            BMO_LOG_FILE: "logs/p3BudgetModel.log",
-            BMO_JSON_LOG_FILE: "logs/p3BudgetModel.jsonl"
+            BDMO_LOG_CONFIG: "budget_model_logging_config.jsonc",
+            BDMO_LOG_LEVEL: "DEBUG",
+            BDMO_LOG_FILE: "logs/p3BudgetModel.log",
+            BDMO_JSON_LOG_FILE: "logs/p3BudgetModel.jsonl"
         },
         BDM_CREATED_DATE: None,
         BDM_LAST_MODIFIED_DATE: None,
@@ -171,7 +171,7 @@ class BDMConfig(metaclass=BDMSingletonMeta):
     }
     bdm_store_default_values = {
         BDM_ID: bdm_store_config[BDM_ID],
-        BDM_STORE_OBJECT: bdm_store_config[BDM_STORE_OBJECT],
+        BDM_STORE_OBJECT: bdm_store_config[BDM_CONFIG_OBJECT],
         BDM_INITIALIZED: bdm_store_config[BDM_INITIALIZED],
         BDM_FILENAME: bdm_store_config[BDM_FILENAME],
         BDM_FILETYPE: bdm_store_config[BDM_FILETYPE],

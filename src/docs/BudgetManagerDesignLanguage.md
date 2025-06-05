@@ -14,6 +14,20 @@ Tracking income and expenses over time is critical to the value of a budget. Oft
 
 Managing a budget with an application is the goal. I chose to make it a command line application to handle excel __Workbooks__, doing the tedious stuff and let the user use Excel for the actual user experience regarding the numbers. Hence, the __View__ in our design is a simple command line interface (__CLI__). But, the __View Model__, __Data Context__, and __Model__ designs do not have knowledge of that.
 
+## Technical Design Overview
+
+Having written a story, the narrative embodied in the design language of an application, it remains to create a technical design to implement the narrative. Several key factors are considered for the design. First, the concept of managing to a budget presents severl domains of interest. As I am a fan of domain-driven design, the Budget Domain Model design is a critical influencer. Another influence is applying the MVVM design pattern for software applications.
+
+### Budget Domain Model (BDM)
+
+Notes: Information (data) is separated by Financial Institution (FI) and Workflow (WF). Application users are familiar with the storage model of PCs, that of folders and files, so we can leverage that vernacular and later map it to the storage sub-domain, or Budget Storage Model (BSM).
+
+In the BDM, data is mapped to files as storage units. Files are organized into folders, a container of files. A folder contains both other folders and files. In our initial focus, files are more often excel workbooks, referred to as workbooks for brevity (although it is conceivable that .csv files will have a role as well, since many FIs provide download data in csv files.)
+
+Workflows process files with tasks in a sequence. A general view is a task knows what folder will contain the files it must work with. Files are loosely considered to be used as input, working, or output data. Hence, a folder is designated as input, working, or output as a container type. In the BDM, files are kept in collections, each with a unique filename and filetype the union of which is referred to as the full filename (e.g., filename='March2025', filetype='.xlsx', full filename='March2025.xlsx'). Workflows may configure prefixes aligned to workflow input, working or output state.
+
+In our design language, files are Data Files (DF) and WorkBooks (WB) with another type designation of DF_TYPE or WB_TYPE (synonyms). This type maps to the input, working, output state concept. A __DATA_COLLECTION__ is a set of lists of files/workbooks (__WORKBOOK_LIST__ or __FILE_LIST__).
+
 ### MVVM Command Pattern Technical Design
 
 Our MVVM design includes a sub-pattern for Command Processing (CP) as well as a Data Context (DC). Early on, I learned the .NET MVVM framework and that has no doubt influenced my thinking as I design one in python. Because I can, I decided to include the CP and DC in an uber-DC pattern.

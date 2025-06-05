@@ -26,10 +26,9 @@ BDM_STORE = Dict[str, Any]
 BDM_CONFIG = Dict[str, Any]
 # MODEL_OBJECT : Type[object] = object()
 DATA_OBJECT = Dict[str, Any] 
-BMO_COLLECTION = DATA_OBJECT
 DATA_COLLECTION = Dict[str, DATA_OBJECT] 
 DATA_LIST = List[Tuple[str, DATA_OBJECT]] 
-BMO_COLLECTION = DATA_COLLECTION
+BDMO_OBJECT = DATA_OBJECT
 FI_OBJECT = DATA_OBJECT  # Financial Institution object
 FI_COLLECTION = Dict[str, FI_OBJECT]
 FI_DATA_OBJECT = DATA_OBJECT
@@ -78,7 +77,7 @@ BDM_FOLDER = "_budget_folder"                  # Type: str - path element
 BDM_URL = "_bdm_url"                           # Type: str
 BDM_FI_COLLECTION = "_financial_institutions"  # Type: FI_COLLECTION
 BDM_WF_COLLECTION = "_workflows"               # Type: WF_COLLECTION
-BDM_OPTIONS = "_options"                       # Type: BMO_COLLECTION
+BDM_OPTIONS = "_options"                       # Type: BDMO_OBJECT
 BDM_CREATED_DATE = "_created_date"             # Type: str - ISO date string
 BDM_LAST_MODIFIED_DATE = "_last_modified_date" # Type: str - ISO date string
 BDM_LAST_MODIFIED_BY = "_last_modified_by"     # Type: str - user name
@@ -105,14 +104,14 @@ BSM_VALID_BDM_STORE_FILETYPES = (".json", ".jsonc")
 BUDGET_CATEGORY_COL = "Budget Category"
 # ---------------------------------------------------------------------------- +
 #
-# BDM_OPTIONS Budget Model Options (BMO)Constants
-#
-BMO_LOG_CONFIG = "log_config"
-BMO_LOG_LEVEL = "log_level"
-BMO_LOG_FILE = "log_file"
-BMO_JSON_LOG_FILE = "json_log_file_name"
-BMO_EXPECTED_KEYS = (BMO_LOG_CONFIG, BMO_LOG_LEVEL, BMO_LOG_FILE,
-                    BMO_JSON_LOG_FILE)
+# BDMO_OBJECT Budget Domain Model Options pseudo-Object (Dictionary key names)
+# TODO: Refactor this into BudManApplicationSettings, not Model Scope, no BDM_STORE
+BDMO_LOG_CONFIG = "log_config"
+BDMO_LOG_LEVEL = "log_level"
+BDMO_LOG_FILE = "log_file"
+BDMO_JSON_LOG_FILE = "json_log_file_name"
+BDMO_EXPECTED_KEYS = (BDMO_LOG_CONFIG, BDMO_LOG_LEVEL, BDMO_LOG_FILE,
+                    BDMO_JSON_LOG_FILE)
 # ---------------------------------------------------------------------------- +
 # FI_OBJECT financial institution pseudo-Object (Dictionary key names)
 FI_KEY = FI_KEY 
