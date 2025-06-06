@@ -125,6 +125,15 @@ class BudManDataContextClientInterface(BudManDataContextBaseInterface):
         self.DC.dc_WB_NAME = value
 
     @property
+    def dc_WB_REF(self) -> str:
+        """Return the current WB_REF workbook reference value."""
+        return self.DC.dc_WB_REF
+    @dc_WB_REF.setter
+    def dc_WB_REF(self, value: str) -> None:
+        """Set the WB_REF workbook reference value."""
+        self.DC.dc_WB_REF = value
+
+    @property
     def dc_BDM_STORE(self) -> str:
         """Return the BDM_STORE jsonc definition."""
         return self.DC.dc_BDM_STORE

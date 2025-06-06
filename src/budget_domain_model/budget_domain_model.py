@@ -1799,6 +1799,40 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
+
+    def bdmwd_WB_REF_resolve(self, wb_ref:str|int) -> Tuple[bool,int]:
+        """Resolve a workbook reference True, -1 or False,wb_index.
+
+        Args:
+            wb_ref (str|int): The wb_ref to validate and resolve. 
+
+        Returns:
+            Tuple[bool, int]: 
+                (True, -1) if wb_ref is BDM_ALL. 
+                (False, wb_index) wb_ref is a valid index value.
+                (False, -1) if wb_ref is invalid value.
+        
+        Raises:
+            TypeError: if wb_ref is not a str or int.
+        """
+        _ = self.bdmwd_INITIALIZED()
+        try:
+            if not self.bdmwd_WB_REF_validate(wb_ref):
+                m = f"Invalid wb_ref: '{wb_ref}'"
+                logger.error(m)
+                return False, -1
+            if isinstance(wb_ref, str):
+                if wb_ref == ALL_KEY:
+                    return True, -1
+                if wb_ref.isdigit():
+                    # If the wb_ref is a digit, treat it as an index.
+                    wb_ref_index = int(wb_ref)
+                    return False, wb_ref_index
+            return False, -1
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise
     #endregion bdmwd_WORKBOOKS() methods
     # ------------------------------------------------------------------------ +
     #region bdmwd_LOADED_WORKBOOKS() methods

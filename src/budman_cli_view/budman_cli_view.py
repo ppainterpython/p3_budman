@@ -1,17 +1,16 @@
 # ---------------------------------------------------------------------------- +
-#region budmod_cli_view.py module
-""" budmod_cli_view.py cli-style view for BudgetModel (budmod).
+#region budman_cli_view.py module
+""" budman_cli_view.py cli-style view for Budget Manager.
 
-A simple command line interface for the BudgetModel application. Using the cmd2
-package which embeds the argparse package. Cmd2 handles the command structure and
-argparse handles the argument lists for each command. The BudgetManagerCLIView
-class is a subclass of cmd2.Cmd and implements the command line interface for the
-user.
+A simple command line interface for the Budget Manager (BudMan) application. 
+Using the cmd2 package which embeds the argparse package. Cmd2 handles the 
+command structure and argparse handles the argument lists for each command. 
+The BudManCLIView class is a subclass of cmd2.Cmd and implements the 
+command line interface for the user.
 
-This is an MVVM View class for the BudgetModel. It uses a DataContext object to
-interact with the BudgetModel. The DataContext object is a View Model and 
-provides a defined interface supporting Commands and other DC-related methods
-needed to let a user View interact.
+This is an MVVM View object for BudMan. It binds to a an object providing
+the ViewModelCommandProcessor interface. The command_processor object provides 
+a defined interface supporting Command execution.
 
 CLI Argument Parsing
 --------------------
@@ -23,7 +22,7 @@ considered an inner class of the BudgetManagerCLIView class. But the argument
 declarations are contained in that one class, separate from the View code.
 
 """
-#endregion budmod_cli_view.py module
+#endregion budman_cli_view.py module
 # ---------------------------------------------------------------------------- +
 #region Imports
 # python standard library modules and packages
@@ -36,7 +35,7 @@ import cmd2, argparse
 from cmd2 import (Cmd2ArgumentParser, with_argparser)
 # local modules and packages
 from budman_namespace import *
-from budman_cli_view import BudManCLIParser, BudManCmd2ArgumentParser
+from budman_cli_view import BudManCLIParser
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -44,25 +43,25 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
-#region Module Variables and Functions
+#region Configure the CLI parser
 # Setup the command line argument parsers. This is required due to the
 # cmd2.with_argparser decorator, which requires a callable to return a 
 # Cmd2ArgumentParser object. If one fails during setup(), the goal is the
 # whole app won't fail, and will display the error message for the
 # particular command parser.
 cli_parser : BudManCLIParser = BudManCLIParser()
-def init_cmd_parser() -> BudManCmd2ArgumentParser:
+def init_cmd_parser() -> cmd2.Cmd2ArgumentParser:
     subcmd_parser = cli_parser.init_cmd_parser if cli_parser else None
     return subcmd_parser
-def show_cmd_parser() -> BudManCmd2ArgumentParser:
+def show_cmd_parser() -> cmd2.Cmd2ArgumentParser:
     return cli_parser.show_cmd_parser if cli_parser else None
-def load_cmd_parser() -> BudManCmd2ArgumentParser:
+def load_cmd_parser() -> cmd2.Cmd2ArgumentParser:
     return cli_parser.load_cmd_parser if cli_parser else None
-def save_cmd_parser() -> BudManCmd2ArgumentParser:
+def save_cmd_parser() -> cmd2.Cmd2ArgumentParser:
     return cli_parser.save_cmd_parser if cli_parser else None
-def val_cmd_parser() -> BudManCmd2ArgumentParser:
+def val_cmd_parser() -> cmd2.Cmd2ArgumentParser:
     return cli_parser.val_cmd_parser if cli_parser else None
-def workflow_cmd_parser() -> BudManCmd2ArgumentParser:
+def workflow_cmd_parser() -> cmd2.Cmd2ArgumentParser:
     return cli_parser.workflow_cmd_parser if cli_parser else None
 
 def _filter_opts(opts) -> Dict[str, Any]:
@@ -88,7 +87,7 @@ def _show_args_only(cli_view : "BudManCLIView", opts) -> bool:
 BMCLI_SYSTEM_EXIT_WARNING = "Not exiting due to SystemExit"
 PO_OFF_PROMPT = "p3budman> "
 PO_ON_PROMPT = "po-p3budman> "
-#endregion Module Variables and Functions 
+#endregion Configure the CLI parser 
 # ---------------------------------------------------------------------------- +
 #region MockViewModel class
 class MockViewModel():
@@ -108,12 +107,13 @@ class MockViewModel():
 class BudManCLIView(cmd2.Cmd):
     # ======================================================================== +
     #region BudManCLIView class intrinsics
-    """An MVVM View class for BudgetModel implementing a command line interface.
+    """An MVVM View class for BudMan implementing a command line interface.
     
-    Operates under MVVM pattern, strictly. Instantiated with a blind view_model.
+    Operates under MVVM pattern, strictly. Instantiated with a blind 
+    command_processor object providing the ViewModelCommandProcessor interface.
     Using cmd2 package which embeds the argparse package. Cmd2 handles the
     command structure and argparse handles the argument lists for each command.
-    TODO: Use ABC for view_model interface.
+    TODO: Use ABC for ViewModelCommandProcessor interface.
     """
     # ------------------------------------------------------------------------ +
     #region Class variables
@@ -126,36 +126,19 @@ class BudManCLIView(cmd2.Cmd):
         return _filter_opts(opts)
     #endregion Class variables
     # ------------------------------------------------------------------------ +
-    #region  Constructor
-    def __init__(self, data_context : object | MockViewModel = None) -> None:
+    #region  BudManCLIView CLass Methods
+    def __init__(self, command_processor : object | MockViewModel = None) -> None:
         shortcuts = dict(cmd2.DEFAULT_SHORTCUTS)
         shortcuts.update({'wf': 'workflow'})
-        self._data_context = MockViewModel() if data_context is None else data_context
+        self._command_processor = MockViewModel() if command_processor is None else command_processor
         self.initialized = False
         self.parse_only = False
         self.terminal_width = 100 # TODO: add to settings.
         cmd2.Cmd.__init__(self, shortcuts=shortcuts)
         # super().__init__()
         BudManCLIView.prompt = PO_ON_PROMPT if self.parse_only else PO_OFF_PROMPT
-    #endregion  Constructor
-    # ------------------------------------------------------------------------ +
-    #region Properties
-    @property
-    def data_context(self) -> object:
-        """Get the data_context property."""
-        return self._data_context
-    
-    @data_context.setter
-    def data_context(self, value: object) -> None:
-        """Set the data_context property."""
-        if not isinstance(value, (MockViewModel, object)):
-            raise ValueError("data_context must be a MockViewModel or object.")
-        self._data_context = value
-    #endregion Properties
-    # ------------------------------------------------------------------------ +
-    #region initialize() method
     def initialize(self) -> None:
-        """Initialize the BudgetManagerCLIView class."""
+        """Initialize the BudManCLIView class."""
         try:
             # self.cli_parser.view_cmd = self
             self.initialized = True
@@ -163,25 +146,40 @@ class BudManCLIView(cmd2.Cmd):
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise
-    #endregion initialize() method
-    # ------------------------------------------------------------------------ +
+    #endregion  BudManCLIView Methods
     #endregion BudManCLIView class  intrinsics
     # ======================================================================== +
 
     # ======================================================================== +
-    #region CLIViewModel Cmd2 Interface methods
+    #region ViewModelCommandProcessor interface implementation
     # ======================================================================== +
     #                                                                          +
     # ------------------------------------------------------------------------ +
-    #region execute_cmd method.
-    def execute_cmd(self, opts : argparse.Namespace) -> Dict[str, Any]:
-        """Send a cmd through the data_context using 
-        BudgetManagerCommandInterface implementation."""
+    #region ViewModelCommandProcessor Interface Properties
+    @property
+    def command_processor(self) -> object:
+        """Get the command_processor property."""
+        return self._command_processor
+    
+    @command_processor.setter
+    def command_processor(self, value: object) -> None:
+        """Set the command_processor property."""
+        if not isinstance(value, (MockViewModel, object)):
+            raise ValueError("command_processor must be a MockViewModel or object.")
+        self._command_processor = value
+    #endregion ViewModelCommandProcessor Interface Properties
+    # ------------------------------------------------------------------------ +
+
+    # ------------------------------------------------------------------------ +
+    #region ViewModelCommandProcessor Interface methods
+    def cp_execute_cmd(self, opts : argparse.Namespace) -> Dict[str, Any]:
+        """Send a cmd through the command_processor using 
+        ViewModelCommandProcessor implementation."""
         try:
             st = p3u.start_timer()
             if _log_cli_cmd_execute(self, opts): return True, "parse_only"
             cmd = BudManCLIView.create_cmd(opts)
-            status, result = self.data_context.execute_cmd(cmd)
+            status, result = self.command_processor.execute_cmd(cmd)
             if status:
                 # TODO: cleanup output when 
                 self.poutput(f"Result: {str(result)}")
@@ -194,14 +192,19 @@ class BudManCLIView(cmd2.Cmd):
             self.pwarning(BMCLI_SYSTEM_EXIT_WARNING)
         except Exception as e:
             self.pexcept(e)
-    #endregion execute_cmd method.
+    #endregion ViewModelCommandProcessor Interface methods
     # ------------------------------------------------------------------------ +
+
+    # ------------------------------------------------------------------------ +
+    #region ViewModelCommandProcessor Interface Command Execution Methods
+    # ------------------------------------------------------------------------ +
+    #
     #region init command - initialize aspects of the BudgetModel application.
-    @with_argparser(init_cmd_parser())
+    @with_argparser(init_cmd_parser()) # This decorator links cmd2 with argparse.
     def do_init(self, opts):
         """Init the data context in the Budget Manager application."""
         try:
-            status, result = self.execute_cmd(opts)
+            status, result = self.cp_execute_cmd(opts)
         except Exception as e:
             self.pexcept(e)
     #endregion init command - initialize aspects of the BudgetModel application.
@@ -217,7 +220,7 @@ class BudManCLIView(cmd2.Cmd):
             object for the command processor.
         """
         try:
-            status, result = self.execute_cmd(opts)
+            status, result = self.cp_execute_cmd(opts)
         except Exception as e:
             self.pexcept(e)
     #endregion Show command
@@ -233,7 +236,7 @@ class BudManCLIView(cmd2.Cmd):
             object for the command processor.
         """
         try:
-            status, result = self.execute_cmd(opts)
+            status, result = self.cp_execute_cmd(opts)
         except Exception as e:
             self.pexcept(e)
     #endregion Load command - load workbooks
@@ -249,7 +252,7 @@ class BudManCLIView(cmd2.Cmd):
             object for the command processor.
         """
         try:
-            status, result = self.execute_cmd(opts)
+            status, result = self.cp_execute_cmd(opts)
         except Exception as e:
             self.pexcept(e)
     #endregion Save command - save workbooks
@@ -273,7 +276,7 @@ class BudManCLIView(cmd2.Cmd):
         """
         try:
             _ = _log_cli_cmd_execute(self, opts)
-            self.val_command(opts)
+            self.val_subcommand(opts)
             _log_cli_cmd_complete(self, opts)
         except SystemExit:
             # Handle the case where argparse exits the program
@@ -282,53 +285,8 @@ class BudManCLIView(cmd2.Cmd):
             self.pexcept(e)
     #endregion Val command
     # ------------------------------------------------------------------------ +
-    #region Val command - workbooks, status, etc.
-    @with_argparser(workflow_cmd_parser())
-    def do_workflow(self, opts):
-        """Apply a workflow to Budget Manager data.
-        
-        Workflows are implemented by python code with configuration in the
-        BDM_STORE file. In the DataContext (DC), there is a WF_KEY value
-        identifying the workflow to use if not specified explicitly in the 
-        cmd arguments.
-
-        Arguments:
-            opts (argparse.Namespace): The command line options after parsing
-            the arguments with argparse. The opts dict becomes the command
-            object for the command processor.
-
-        """
-        try:
-            status, result = self.execute_cmd(opts)
-        except Exception as e:
-            self.pexcept(e)
-    #endregion Val command
-    # ------------------------------------------------------------------------ +
-    #region exit and quit commands
-    def do_exit(self, args):
-        """Exit the Budget Manager CLI."""
-        # if _log_cli_cmd_execute(self, args): return
-        self.poutput("Exiting Budget Manager CLI.")
-        # _log_cli_cmd_complete(self, args)
-        return True 
-    def do_quit(self, args):
-        """Quit the BudgetModel CLI."""
-        # if _log_cli_cmd_execute(self, args): return
-        self.poutput("Quitting BudgetModel CLI.")
-        # _log_cli_cmd_complete(self, args)
-        return True 
-    #endregion exit and quit commands
-    # ------------------------------------------------------------------------ +    
-    #endregion CLIViewModel Cmd methods
-    # ======================================================================== +
-
-    # ======================================================================== +
-    #region Command and Subcommand Execution methods
-    # ======================================================================== +
-    #                                                                          +
-    # ------------------------------------------------------------------------ +
-    #region val_command() method
-    def val_command(self, opts) -> None:
+    #region val_subcommand() method
+    def val_subcommand(self, opts) -> None:
         """Examine or set values in Budget Manager."""
         try:
             _ = _show_args_only(self, opts)
@@ -355,9 +313,49 @@ class BudManCLIView(cmd2.Cmd):
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
-    #endregion val_command() method
+    #endregion val_subcommand() method
     # ------------------------------------------------------------------------ +
-    #endregion Command and Subcommand Execution methods
+    #region workflow command
+    @with_argparser(workflow_cmd_parser())
+    def do_workflow(self, opts):
+        """Apply a workflow to Budget Manager data.
+        
+        Workflows are implemented by python code with configuration in the
+        BDM_STORE file. In the DataContext (DC), there is a WF_KEY value
+        identifying the workflow to use if not specified explicitly in the 
+        cmd arguments.
+
+        Arguments:
+            opts (argparse.Namespace): The command line options after parsing
+            the arguments with argparse. The opts dict becomes the command
+            object for the command processor.
+
+        """
+        try:
+            status, result = self.cp_execute_cmd(opts)
+        except Exception as e:
+            self.pexcept(e)
+    #endregion workflow command
+    # ------------------------------------------------------------------------ +
+    #region exit and quit commands
+    def do_exit(self, args):
+        """Exit the Budget Manager CLI."""
+        # if _log_cli_cmd_execute(self, args): return
+        self.poutput("Exiting Budget Manager CLI.")
+        # _log_cli_cmd_complete(self, args)
+        return True 
+    def do_quit(self, args):
+        """Quit the BudgetModel CLI."""
+        # if _log_cli_cmd_execute(self, args): return
+        self.poutput("Quitting BudgetModel CLI.")
+        # _log_cli_cmd_complete(self, args)
+        return True 
+    #endregion exit and quit commands
+    # ------------------------------------------------------------------------ +    
+    #endregion ViewModelCommandProcessor Command Execution Methods
+    # ------------------------------------------------------------------------ +
+    #
+    #endregion ViewModelCommandProcessor interface implementation
     # ======================================================================== +
 
 # ---------------------------------------------------------------------------- +

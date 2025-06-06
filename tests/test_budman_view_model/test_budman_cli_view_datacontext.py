@@ -95,7 +95,7 @@ def test_BudgetManagerCLIViewDataContext_initialize():
         assert bmv_dc.cp is None, \
             "cp property should be None"
         # Now initialize the DataContext
-        bmv_dc.initialize(cp=bmvm.BMVM_execute_cmd, dc=bmvm.data_context)
+        bmv_dc.initialize(cp=bmvm.cp_execute_cmd, dc=bmvm.data_context)
         assert bmv_dc.initialized, \
             "Should be initialized now"
         assert bmv_dc.view_model is not None, \
@@ -128,7 +128,7 @@ def test_BudgetManagerCLIViewDataContext_execute_cmd():
         assert not bmv_dc.initialized, \
             "Should not be initialized yet"
         # Now initialize the DataContext
-        bmv_dc.initialize(cp=bmvm.BMVM_execute_cmd, dc=bmvm.data_context)
+        bmv_dc.initialize(cp=bmvm.cp_execute_cmd, dc=bmvm.data_context)
         assert bmv_dc.initialized, \
             "Should be initialized now"
         assert bmv_dc.view_model is not None, \

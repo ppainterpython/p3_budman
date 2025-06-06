@@ -2,9 +2,9 @@
 #region budman_cli_view_datacontext.py module
 """ budman_cli_view_datacontext.py implements BudgetManagerCLIViewDataContext class.
 
-BudgetManagerCLIViewDataContext serves as a Data Context for the 
-BudgetManagerCLIView class, which links to the ViewModel. The CLIView is a
-command line interpreter user interface for the BudgetManager application.
+BudManCLIViewDataContext serves as a ViewModelCommandProcessor provider 
+implementation for the BudManCLIView class. The CLIView is a
+command line interpreter user interface for the BudMan application.
 """
 #endregion bdm_view_model.py module
 # ---------------------------------------------------------------------------- +

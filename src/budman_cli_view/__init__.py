@@ -9,12 +9,8 @@ __description__ = "Budget Manager View Model."
 __license__ = "MIT"
 
 # Budget Model Domain Working Data
-from .budman_cli_parser import (
-    BudManCLIParser, BudManCmd2ArgumentParser
-)
-from .budman_cli_view import (
-    BudManCLIView
-)
+from .budman_cli_parser import ( BudManCLIParser )
+from .budman_cli_view import ( BudManCLIView )
 __all__ = [
     "BudManCLIParser",
     "BudManCLIView"

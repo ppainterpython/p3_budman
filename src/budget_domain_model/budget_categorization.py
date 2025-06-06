@@ -29,37 +29,79 @@ from openpyxl.cell.cell import Cell
 
 # local modules and packages
 from budman_namespace import *
-from budget_domain_model import (BudgetDomainModel, map_category, category_map_count)
+from budget_domain_model import (BudgetDomainModel, map_category, 
+                                 category_map_count)
 # from data.p3_fi_transactions.budget_model import BudgetModel
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
 logger = logging.getLogger(__name__)
 
-# BOA workbooks arrive with these columns. "ignore" moves the index to 1-based.
-# so BOA_WB_COLUMNS.index(name) returns column number. BOA_WB_COLUMNS[0] is ignored. 
-BOA_WB_COLUMNS = ["ignore", "Status", "Date", "Original Description",
-                  "Split Type", "Category", "Currency", "Amount", 
-                  "User Description", "Memo", "Classification", "Account Name",
-                  "Simple Description"]
+# Note: Python lists are 0-based. With openpyxl, data is often returned in a
+# list. In excel, worksheet columns are 1-based. So, we need to adjust the indices.
+# A list of cells from a worksheet row is 0-based, with cell(0) being the value
+# from column 1, or column 'A'.
 
-# BudMan users these columns.
-DATE_COL_NAME = "Date" 
-DATE_COL_INDEX = 1
-ORIGINAL_DESCRIPTION_COL_NAME = "Original Description"
-ORIGINAL_DESCRIPTION_COL_INDEX = 2  
-CURRENCY_COL_NAME = "Currency"
-CURRENCY_COL_INDEX = 4  
-AMOUNT_COL_NAME = "Amount" 
-AMOUNT_COL_INDEX = 6  
-ACCOUNT_NAME_COL_NAME = "Account Name"  
-ACCOUNT_NAME_COL_INDEX = 10  
-ACCOUNT_CODE_COL_NAME = "Account Code" # Added by BudMan.
+# BOA workbooks arrive with these columns, beginning with "Status". 
+BOA_WB_COLUMNS = [
+    "Status", 
+    "Date", 
+    "Original Description",
+    "Split Type", 
+    "Category", 
+    "Currency", 
+    "Amount", 
+    "User Description", 
+    "Memo", 
+    "Classification", 
+    "Account Name",
+    "Simple Description"
+    ]
+
+# BudMan insert 5 additional columns prior to processing transactions. These
+# columns are filled by BudMan workflows, such as categorization.
 BUDGET_CATEGORY_COL_NAME = "Budget Category"  # Added by BudMan.
-BUDGET_CATEGORY_COL_INDEX = 12  
+ACCOUNT_CODE_COL_NAME = "Account Code" # Added by BudMan.
 LEVEL_1_COL_NAME = "Level1" # Added by BudMan.
 LEVEL_2_COL_NAME = "Level2" # Added by BudMan.
 LEVEL_3_COL_NAME = "Level3" # Added by BudMan.
+
+
+# A BudMan workbook will then have the following columns.
+# BudMan users these columns.
+DATE_COL_NAME = "Date" 
+ORIGINAL_DESCRIPTION_COL_NAME = "Original Description"
+CURRENCY_COL_NAME = "Currency"
+AMOUNT_COL_NAME = "Amount" 
+ACCOUNT_NAME_COL_NAME = "Account Name"  
+
+BUDMAN_WB_COLUMNS = [
+    "Status", 
+    DATE_COL_NAME, 
+    ORIGINAL_DESCRIPTION_COL_NAME,
+    "Split Type", 
+    "Category", 
+    CURRENCY_COL_NAME, 
+    AMOUNT_COL_NAME, 
+    "User Description", 
+    "Memo", 
+    "Classification", 
+    ACCOUNT_NAME_COL_NAME,
+    "Simple Description",
+    BUDGET_CATEGORY_COL_NAME,
+    ACCOUNT_CODE_COL_NAME,
+    LEVEL_1_COL_NAME,
+    LEVEL_2_COL_NAME,
+    LEVEL_3_COL_NAME
+    ]
+
+# Column indices for a list of cells from a row in the BOA workbook.
+DATE_COL_INDEX = 1
+ORIGINAL_DESCRIPTION_COL_INDEX = 2  
+CURRENCY_COL_INDEX = 4  
+AMOUNT_COL_INDEX = 6  
+ACCOUNT_NAME_COL_INDEX = 10  
+BUDGET_CATEGORY_COL_INDEX = 12  
 
 BOA_WB_COL_DIMENSIONS = {
     DATE_COL_NAME: 12,
@@ -72,14 +114,13 @@ BOA_WB_COL_DIMENSIONS = {
     LEVEL_2_COL_NAME: 20,
     LEVEL_3_COL_NAME: 20
 }
+BUDMAN_SHEET_NAME = "TransactionData"
 
-BUDMAN_REQUIRED_COLUMNS = [ "ignore item 0",
+BUDMAN_REQUIRED_COLUMNS = [
     DATE_COL_NAME, ORIGINAL_DESCRIPTION_COL_NAME, CURRENCY_COL_NAME,
     AMOUNT_COL_NAME, ACCOUNT_CODE_COL_NAME, BUDGET_CATEGORY_COL_NAME,
     LEVEL_1_COL_NAME, LEVEL_2_COL_NAME, LEVEL_3_COL_NAME
 ]
-
-
 
 #endregion Globals and Constants
 #region dataclasses
@@ -158,11 +199,10 @@ def check_sheet_columns(sheet: Worksheet, add_columns: bool = True) -> bool:
         logger.info("Check worksheet for required columns.")
         # Index the header row 1, it has the column names
         col_names = [cell.value for cell in sheet[1]]
-        # col_names.insert(0, "ignore")  # Add an 'ignore' column at index 0.
-        logger.debug(f"Column names in sheet('{sheet.title}'): {col_names[1:]}")
+        logger.debug(f"Column names in sheet('{sheet.title}'): {col_names}")
         
         # Check if all required columns are present
-        missing_columns = [col for col in BUDMAN_REQUIRED_COLUMNS[1:] if col not in col_names[1:]]
+        missing_columns = [col for col in BUDMAN_REQUIRED_COLUMNS if col not in col_names]
         
         if not missing_columns:
             logger.info("All required columns are present.")
@@ -189,6 +229,64 @@ def check_sheet_columns(sheet: Worksheet, add_columns: bool = True) -> bool:
         logger.error(p3u.exc_err_msg(e))
         raise
 #endregion check_sheet_columns() function
+# ---------------------------------------------------------------------------- +
+#region check_sheet_schema() function
+def check_sheet_schema(wb: Workbook, correct: bool = False) -> bool:
+    """Check that the sheet is ready to process transactions.
+    
+    Steps to check the active sheet of an excel workbook for BudMan processing:
+    1. SHould be just 1 worksheet, the active worksheet.
+    2. Title must be 'TransactionData'. BOA_SHEET_NAME
+    3. Column names must match spelling an order from BOA_WB_COLUMNS.
+    Args:
+        wb (openpyxl.workbook): The workbook to check.
+        correct (bool): Whether to correct the sheet schema or not.
+
+    Returns:
+        bool: True if all required columns are present, False otherwise.
+    """
+    try:
+        logger.info("Check worksheet for schema structure.")
+        # Check the active worksheet.
+        ws = wb.active  # Get the active worksheet.
+        good_schema = True  # Assume the schema is good.
+        rule1 = rule2 = rule3 = good_schema
+        # 1. Check if there is only one worksheet.
+        sheet_names = wb.sheetnames 
+        sheet_count = len(sheet_names)
+        budman_sheet_index = -1
+        if sheet_count > 1:
+            logger.error(f"Workbook has {sheet_count} sheets, expected 1. "
+                         f"Sheet names: {', '.join(sheet_names)}")
+            good_schema = rule1 = False
+        # 2. Check if the sheet title is BUDMAN_SHEET_NAME.
+        if BUDMAN_SHEET_NAME not in sheet_names:
+            logger.error(f"Workbook does not have a sheet named '{BUDMAN_SHEET_NAME}'. "
+                         f"Sheet names: {', '.join(sheet_names)}")
+            good_schema = rule2 = False
+        else:
+            # Get the index of the BudMan sheet.
+            budman_sheet_index = sheet_names.index(BUDMAN_SHEET_NAME)
+            ws = wb[sheet_names[budman_sheet_index]] 
+        # 3. Check the column names are correct spelling and order.
+        col_names = [cell.value for cell in ws[1]]
+        # Check if all required columns are present
+        missing_columns = [col for col in BUDMAN_REQUIRED_COLUMNS if col not in col_names]
+        if len(missing_columns) > 0:
+            logger.error(f"Missing required columns: {', '.join(missing_columns)}")
+            good_schema = rule3 = False
+        # If just one sheet with wrong title, rename it to BUDMAN_SHEET_NAME.
+        if rule1 and rule3 and not rule2:
+            logger.error(f"BudMan sheet '{BUDMAN_SHEET_NAME}' not found in workbook.")
+            previous_title = ws.title  # Save the previous title.
+            ws.title = BUDMAN_SHEET_NAME  # Rename the active sheet.
+            logger.info(f"Renamed active sheet from '{previous_title}' to '{BUDMAN_SHEET_NAME}'.")
+            good_schema = True
+        return good_schema
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion check_sheet_schema() function
 # ---------------------------------------------------------------------------- +
 #region check_budget_category() function
 def check_budget_category(sheet:Worksheet,add_columns : bool = True) -> bool:

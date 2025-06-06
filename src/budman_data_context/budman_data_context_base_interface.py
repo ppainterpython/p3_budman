@@ -104,6 +104,22 @@ class BudManDataContextBaseInterface(ABC):
 
     @property
     @abstractmethod
+    def dc_WB_REF(self) -> str:
+        """Return the current WB_REF workbook reference.
+        
+        Current means the wb_ref for the last operation on a named or referenced
+        workbook. The other data in the DC is updated in a similar fashion.
+        After an operation on 'all' workbooks, the dc_WB_REF is set to 'all'.
+        """
+        pass
+    @dc_WB_REF.setter
+    @abstractmethod
+    def dc_WB_REF(self, value: str) -> None:
+        """Set the WB_REF workbook reference."""
+        pass
+
+    @property
+    @abstractmethod
     def dc_BDM_STORE(self) -> str:
         """Return the BDM_STORE jsonc definition."""
         pass

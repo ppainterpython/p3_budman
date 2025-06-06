@@ -22,20 +22,6 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
-class BudManCmd2ArgumentParser(cmd2.Cmd2ArgumentParser):
-    def __init__(self, *args, **kwargs):
-        """Initialize the BudManCmd2ArgumentParser class."""
-        terminal_width = shutil.get_terminal_size().columns
-        kwargs["formatter_class"] = lambda prog: argparse.HelpFormatter(
-            prog, max_help_position=terminal_width - 2,
-            width=terminal_width - 2)
-        super().__init__(*args, **kwargs)
-    def format_help(self):
-        """Dynamically adjust width before printing help text."""
-        terminal_width = shutil.get_terminal_size().columns  # Get current terminal width
-        self.formatter_class = lambda prog: argparse.HelpFormatter(prog, width=terminal_width)
-        return super().format_help()  # Call parent method
-
 class BudManCLIParser():
     """A class to parse command line arguments for the BudgetModelCLIView class.
 
@@ -45,12 +31,6 @@ class BudManCLIParser():
     """
     def __init__(self) -> None:
         """Initialize the BudgetModelCLIParser class."""
-        # self.init_cmd_parser = BudManCmd2ArgumentParser()
-        # self.show_cmd_parser = BudManCmd2ArgumentParser()
-        # self.load_cmd_parser = BudManCmd2ArgumentParser()
-        # self.save_cmd_parser = BudManCmd2ArgumentParser()
-        # self.val_cmd_parser = BudManCmd2ArgumentParser()
-        # self.workflow_cmd_parser = BudManCmd2ArgumentParser()
         self.init_cmd_parser = cmd2.Cmd2ArgumentParser()
         self.show_cmd_parser = cmd2.Cmd2ArgumentParser()
         self.load_cmd_parser = cmd2.Cmd2ArgumentParser()

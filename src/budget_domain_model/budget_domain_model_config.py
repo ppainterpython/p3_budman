@@ -171,7 +171,7 @@ class BDMConfig(metaclass=BDMSingletonMeta):
     }
     bdm_store_default_values = {
         BDM_ID: bdm_store_config[BDM_ID],
-        BDM_STORE_OBJECT: bdm_store_config[BDM_CONFIG_OBJECT],
+        BDM_STORE_OBJECT: bdm_store_config[BDM_STORE_OBJECT],
         BDM_INITIALIZED: bdm_store_config[BDM_INITIALIZED],
         BDM_FILENAME: bdm_store_config[BDM_FILENAME],
         BDM_FILETYPE: bdm_store_config[BDM_FILETYPE],

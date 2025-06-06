@@ -1,6 +1,186 @@
 # ---------------------------------------------------------------------------- +
 #region budman_view_model.py module
-""" budman_view_model.py implements the BudgetManagerViewModel class."""
+""" budman_view_model.py implements the BudManViewModel class.
+
+    In MVVM, the ViewModel is the interface between the View and the Model. As
+    such, it must provide the inherent View Model behavior, a Command Pattern,
+    and a Data Context Pattern for the View. Also, it requires the services
+    from one or more Model objects, in this case, the Budget Domain Model.
+
+    Provided Interfaces:
+    --------------------
+       1. ViewModel - the behavior of a View Model in MVVM.
+       2. ViewModelCommandProcessor - the Command Pattern.
+       3. ViewModelDataContext - the Data Context Pattern.
+
+    Required Interfaces:
+    --------------------
+        1. BDMClient - the Budget Domain Model provider.
+
+    ViewModelCommandProcessor
+    -------------------------
+
+    - Provides Command Processing for the command pattern, used by Views and
+      other upstream clients to submit commands to the ViewModel. The command
+    - Provides the Command Binding Implementations. The cmd_map property 
+      holds a map from the supported command_keys to the methods that
+      implement them. This map binds the commands to the code that implements
+      each Command.
+
+    ViewModelDataContext
+    --------------------
+
+    - Provides Data Context access to the ViewModel. This interface is
+      functional, not requiring the upstream caller to know much about the
+      data apart from attribute names. It uses dict objects to represent
+      objects.
+
+    In View Model form, these methods provide an Interface for executing
+    Commands as a design pattern. Commands take actions for a command 
+    initiated by an upstream View, or other client caller. Of course, 
+    the upstream caller is mapping their specific domain of focus to the View Model
+    interface. In general, there are a Command methods and other "Data Context"
+    methods in a subsequent section.
+
+    Throughout the BudgetModel (budman) application, a design language is
+    used as a convention for naming within the code-base. 
+
+    Convention: <Domain_Model_Object_Name>_<action_verb>()
+                <Domain_Model_Object_Name>_<action_verb>_<dc_item>()
+                dc_item: a reference to data in the Data Context
+
+    Budget Domain Model Design Language (namespace) 
+    -----------------------------------------------
+
+    Budget Domain Concepts
+    ---------------------
+        
+    - Budget - a means of tracking financial transactions over time.
+
+    - Budget Model (BM) - a functional model of budget processes. It is composed
+    of worklows that process transactions from financial institutions, income 
+    and expenses. Transactions are categorized by scanning input data and
+    producing output data.
+
+    - Budget Domain (BD) and Budget Domain Model (BDM) - the conceptual model 
+    of the budget top-level concept.
+
+    Budget Domain Objects
+    ---------------------
+
+    Objects are considered things, pieces of data that commands do something to.
+    An app will execute commands to take action on an object. Object names are 
+    nouns of the design language.
+
+    - Workbook - typically an excel workbook, stored in a file on the user's
+    file system. It contains data in worksheets, and is often received from a 
+    bank or brokerage firm
+
+    - Financial Institution (FI) - a bank or brokerage firm that provides
+    financial services to the user. The FI is the source of transactions for the
+    budget model.
+
+    - Loaded Workbook - a workbook that has been loaded into the budget model
+    for processing. It is a workbook that has been opened by the app and is in 
+    the current session context, available to have commands executed on it.
+
+    - Workflow (WF) - a sequence of steps to process data. A Budget Model workflow 
+    has a purpose, and applies to workbooks. As workflows are executed,
+    the workbooks are processed and the data is transformed. Workflows have 
+    folders in the filesystem where workbooks are accessed. In general, a 
+    workflow has both an input and output folder. The input folder is where the
+    workbooks are loaded from, and the output folder is where the processed, or 
+    changed workbooks are saved.
+
+    - Commands - a command is an action to be taken on an object. Commands are
+    typically implemented as methods in the code. A command is named, has a
+    source and a target, and in MVVM packages, a binding to configure how
+    Views bind to the commands of a ViewModel.
+
+    For the sake of the BudgetModel design language, the command source is 
+    some class serving as a View. The command target is a workbook (WB), 
+    a loaded workbook, a financial institution (FI), or a workflow (WF). The
+    command method name will include a noun (probably abbreviated) from the
+    design language for objects and one of the a verb for the action: init, load, 
+    save, show, delete, add, etc., suffixed by '_cmd'. Additional method 
+    naming conventions are described below.
+
+    MVVM Design Pattern
+    -------------------
+
+    MVVM - Model View ViewModel - a design pattern applied throughout for 
+    separation of concerns in the Budget Domain.
+
+    View (v) - code implementing access to a View Model, either by a 
+    user-facing experience (UX) or an API interface.
+
+    View Model (vm) - code implementing the domain interface to the Model. 
+    View Models separate the concerns of the Model from those anticipated
+    by the View.
+
+    Model (m) - code implementing the domain model data. The Model is caboose
+    in terms of the application data models, persistence, etc.
+    
+    These View Model commands have a verb, an noun (object reference), 
+    and supporting parameter arguments. The verb is the action to be taken,
+    the noun is the object to be acted upon, and the parameters are the
+    supporting data for the action. The command methods are typically
+    implemented as a single method. A naming convention reveals the verb and
+    noun. The method name is a concatenation of the verb and noun, with an  
+    underscore between them.
+
+    Character case convention:
+    - Class names are in CamelCase.
+    - Method names are in prefix_snake_Camel_UPPER_lower_case.
+    - Constants are in UPPER_SNAKE_CASE.
+    - Seeing UPPER case in a mixed name implies the UPPER case part is also
+    a constant defined in the module or class and used to represent a single
+    value or a list of values both in the design language and the code.
+
+    Method Naming convention: <scope>_<noun>_<verb>()
+    where scope is the domain or sub-domain of the method (function), verb is the action to be taken, 
+    and noun is the object to be acted upon. The noun is broken into two parts:
+
+    <noun>: <object>[_<property>]
+    <object>: <class_name> | <class_abbrev> | <pseudo_class_abbrev>
+    <class_abbrev>: "bdm" | "bmc" |"bdmwd" | "bdm_vm"
+    "bdm" - Budget Domain Model (BudgetDomainModel class, budget_domain_model pkg)
+    "bmc" - Budget Domain Model Config (BDMConfig class, budget_domain_model pkg)
+    "bsm" - Budget Storage Model (budget_storage_model package)
+
+    bdm_vm - scope is the concern of the Budget Domain Model View Model
+    bdmwd - scope is the concern of the Budget Domain Model Working Data
+
+    The term "Design Language" is abbreviated as "DL" or "dl" in the code. All
+    constants are defined in a design_language.py module for the intended scope. 
+    A package will have a design_language.py module for the package. If deemed
+    helpful, a specific module will have a module_name_dl.py module for the
+    design language for that module. Names mean something, and acronyms are used
+    prolifically in code, as are fully descriptive names. 
+
+    Maintaining consistency with the design language is critical for good
+    design and keeping cohesion continuous. Here, python constants are used
+    heavily to represent the design language. Think of constants as "tags" 
+    from the design language word cloud. Searching the code-base for a constant
+    will reveal the design language and the code that implements it. The best
+    API design with high cohesion and low coupling reflect a consistent design
+    language, and ruthless refactoring to keep it consistent and documented.
+
+    Also, adopting the practice of documenting the design language in the code
+    is proving to be beneficial for GPT coding assistance. In this case, 
+    GitHub Copilot is mind-blowingly adept at applying the design language in
+    all parts of a large application, not just the neighboring code. Thank
+    God for code-folding though.
+
+    Command Methods: To be a clean ViewModel, command methods are provided to
+    enable the View to call the command methods in a consistent and 
+    loosely-coupled manner. The command methods are typically implemented as a
+    single method. A naming convention reveals the verb and noun. In the MVVM
+    pattern, a DataContext is used to bind the ViewModel to the View. For 
+    the view, Commands are methods on the DataContext, without actually knowing
+    the type of the DataContext. Since python is dynamically typed, we just
+    use it to dispatch the command to the appropriate method.
+"""
 #endregion budman_view_model.py module
 # ---------------------------------------------------------------------------- +
 #region Imports
@@ -18,7 +198,9 @@ from budman_namespace import *
 from budget_domain_model import (
     BDMBaseInterface, BDMClientInterface, BudgetDomainModel, 
     check_budget_category, check_sheet_columns,
-    map_budget_category, category_map_count, budget_category_mapping, BDMConfig)
+    map_budget_category, category_map_count, 
+    budget_category_mapping, BDMConfig,
+    check_sheet_schema)
 from budget_storage_model import *
 from budman_data_context import BDMWorkingData
 #endregion Imports
@@ -28,25 +210,28 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
-class BudManViewModel(BDMClientInterface):
+class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interfaces
     # ======================================================================== +
     #region BudManViewModel class intrinsics
-    """A Budget Model View Model to support Commands and Data Context.
+    """A Budget Manager View Model providing CommandProcessing & Data Context.
     
-    This ViewModel supports two primary interfaces: Command Processing (CP) and 
-    Data Context (DC) properties and methods. CP is the means for a View
-    to take actions against data in the (DC). DC is the main medium of data 
-    access between the ViewModel and the Model. Commands are sent from the 
-    View, to be processed by the ViewModel in the context of the DC. Command
-    implementation methods access the DC properties and invoke methods on the 
-    Model to perform the requested actions, using a specialized subclass of
-    the BudManDataContextBaseInterface(ABC).
+    This ViewModel provides 3 primary design pattern implementations:
+        1. ViewModel - the behavior of a View Model in MVVM.
+        2. Command Processing (CP) and
+        3. Data Context (DC)
+         
+    Each pattern is backed by defined interfaces for properties and methods. 
+    CP is the means for a View to take actions performing commands against data 
+    in the DC. From an MVVM pattern perspective, DC is the only medium of data 
+    exchange between the View and the ViewModel using properties, methods and
+    eventing. Commands are sent from the View, to be processed by the ViewModel 
+    in the "context" of the data state in the DC. Command implementation methods 
+    access the DC properties and invoke methods on the View Model DC interface 
+    to perform the requested actions. A View Model may publish events as well, 
+    which a View may subscribe to.
     """
     # ======================================================================== +
     #                                                                          +
-    # ------------------------------------------------------------------------ +
-    #region Class Variables
-    #endregion Class Variables
     # ------------------------------------------------------------------------ +
     #region __init__() constructor method
     def __init__(self, bdms_url : str = None, settings : Dynaconf = None) -> None:
@@ -251,181 +436,20 @@ class BudManViewModel(BDMClientInterface):
     # ======================================================================== +
 
     # ======================================================================== +
-    #region BudManViewModel implementation                     +
-    """BudManViewModel provides two interfaces:
-       1. BudgetManagerViewModelCommandInterface.
-       2. BudManDataContextInterface.
-    
-    BudgetManagerViewModelCommandInterface
-    --------------------------------------
+    #region BudManViewModel - Budget Manager View Model implementation         +
+    """BudManViewModel provides 3 services for clients:
 
-    - Provides Command Processing for the command pattern, used by Views and
-      other upstream clients to submit commands to the ViewModel. The command
-    - Provides the Command Binding Implementations. The cmd_map property 
-      holds a map from the supported command_keys to the methods that
-      implement them. This map binds the commands to the code that implements
-      each Command.
+       1. ViewModel - the behavior of a View Model in MVVM.
+       2. ViewModelCommandProcessor - the Command Pattern.
+       3. ViewModelDataContext - the Data Context Pattern.
 
-    BudgetManagerDataContextInterface
-    ------------------------------------------
-
-    - Provides Data Context access to the ViewModel. This interface is
-      functional, not requiring the upstream caller to know much about the
-      data apart from attribute names. It uses dict objects to represent
-      objects.
-
-    In View Model form, these methods provide an Interface for executing
-    Commands as a design pattern. Commands take actions for a command 
-    initiated by an upstream View, or other client caller. Of course, 
-    the upstream caller is mapping their specific domain of focus to the View Model
-    interface. In general, there are a Command methods and other "Data Context"
-    methods in a subsequent section.
-
-    Throughout the BudgetModel (budman) application, a design language is
-    used as a convention for naming within the code-base. 
-
-    Convention: <Domain_Model_Object_Name>_<action_verb>()
-                <Domain_Model_Object_Name>_<action_verb>_<dc_item>()
-                dc_item: a reference to data in the Data Context
-
-    Budget Model Domain Design Language 
-    -----------------------------------
-
-    Budget Domain Concepts
-    ---------------------
-        
-    - Budget - a means of tracking financial transactions over time.
-
-    - Budget Model (BM) - a functional model of budget processes. It is composed
-    of worklows that process transactions from financial institutions, income 
-    and expenses. Transactions are categorized by scanning input data and
-    producing output data.
-
-    - Budget Domain (BD) and Budget Domain Model (BDM) - the conceptual model 
-    of the budget top-level concept.
-
-    Budget Domain Objects
-    ---------------------
-
-    Objects are considered things, pieces of data that commands do something to.
-    An app will execute commands to take action on an object. Object names are 
-    nouns of the design language.
-
-    - Workbook - typically an excel workbook, stored in a file on the user's
-    file system. It contains data in worksheets, and is often received from a 
-    bank or brokerage firm
-
-    - Financial Institution (FI) - a bank or brokerage firm that provides
-    financial services to the user. The FI is the source of transactions for the
-    budget model.
-
-    - Loaded Workbook - a workbook that has been loaded into the budget model
-    for processing. It is a workbook that has been opened by the app and is in 
-    the current session context, available to have commands executed on it.
-
-    - Workflow (WF) - a sequence of steps to process data. A Budget Model workflow 
-    has a purpose, and applies to workbooks. As workflows are executed,
-    the workbooks are processed and the data is transformed. Workflows have 
-    folders in the filesystem where workbooks are accessed. In general, a 
-    workflow has both an input and output folder. The input folder is where the
-    workbooks are loaded from, and the output folder is where the processed, or 
-    changed workbooks are saved.
-
-    - Commands - a command is an action to be taken on an object. Commands are
-    typically implemented as methods in the code. A command is named, has a
-    source and a target, and in MVVM packages, a binding to configure how
-    Views bind to the commands of a ViewModel.
-
-    For the sake of the BudgetModel design language, the command source is 
-    some class serving as a View. The command target is a workbook (WB), 
-    a loaded workbook, a financial institution (FI), or a workflow (WF). The
-    command method name will include a noun (probably abbreviated) from the
-    design language for objects and one of the a verb for the action: init, load, 
-    save, show, delete, add, etc., suffixed by '_cmd'. Additional method 
-    naming conventions are described below.
-
-    MVVM Design Pattern
-    -------------------
-
-    MVVM - Model View ViewModel - a design pattern applied throughout for 
-    separation of concerns in the Budget Domain.
-
-    View (v) - code implementing access to a View Model, either by a 
-    user-facing experience (UX) or an API interface.
-
-    View Model (vm) - code implementing the domain interface to the Model. 
-    View Models separate the concerns of the Model from those anticipated
-    by the View.
-
-    Model (m) - code implementing the domain model data. The Model is caboose
-    in terms of the application data models, persistence, etc.
-    
-    These View Model commands have a verb, an noun (object reference), 
-    and supporting parameter arguments. The verb is the action to be taken,
-    the noun is the object to be acted upon, and the parameters are the
-    supporting data for the action. The command methods are typically
-    implemented as a single method. A naming convention reveals the verb and
-    noun. The method name is a concatenation of the verb and noun, with an  
-    underscore between them.
-
-    Character case convention:
-    - Class names are in CamelCase.
-    - Method names are in prefix_snake_Camel_UPPER_lower_case.
-    - Constants are in UPPER_SNAKE_CASE.
-    - Seeing UPPER case in a mixed name implies the UPPER case part is also
-    a constant defined in the module or class and used to represent a single
-    value or a list of values both in the design language and the code.
-
-    Method Naming convention: <scope>_<noun>_<verb>()
-    where scope is the domain or sub-domain of the method (function), verb is the action to be taken, 
-    and noun is the object to be acted upon. The noun is broken into two parts:
-
-    <noun>: <object>[_<property>]
-    <object>: <class_name> | <class_abbrev> | <pseudo_class_abbrev>
-    <class_abbrev>: "bm" | "bmt" | "bdm" | "bdwd" | "bdvm"
-    "bm" - BudgetModel class name
-    "bmt" - BudgetModelTemplate class name
-    "bdm" - Budget Domain Model
-    "bsm" - Budget Storage Model
-
-    bdm_vm - scope is the concern of the Budget Domain Model View Model
-    BDMWD - scope is the concern of the Budget Domain Working Data
-
-    The term "Design Language" is abbreviated as "DL" or "dl" in the code. All
-    constants are defined in a design_language.py module for the intended scope. 
-    A package will have a design_language.py module for the package. If deemed
-    helpful, a specific module will have a module_name_dl.py module for the
-    design language for that module. Names mean something, and acronyms are used
-    prolifically in code, as are fully descriptive names. 
-
-    Maintaining consistency with the design language is critical for good
-    design and keeping cohesion continuous. Here, python constants are used
-    heavily to represent the design language. Think of constants as "tags" 
-    from the design language word cloud. Searching the code-base for a constant
-    will reveal the design language and the code that implements it. The best
-    API design with high cohesion and low coupling reflect a consistent design
-    language, and ruthless refactoring to keep it consistent and documented.
-
-    Also, adopting the practice of documenting the design language in the code
-    is proving to be beneficial for GPT coding assistance. In this case, 
-    GitHub Copilot is mind-blowingly adept at applying the design language in
-    all parts of a large application, not just the neighboring code. Thank
-    God for code-folding though.
-
-    Command Methods: To be a clean ViewModel, command methods are provided to
-    enable the View to call the command methods in a consistent and 
-    loosely-coupled manner. The command methods are typically implemented as a
-    single method. A naming convention reveals the verb and noun. In the MVVM
-    pattern, a DataContext is used to bind the ViewModel to the View. For 
-    the view, Commands are methods on the DataContext, without actually knowing
-    the type of the DataContext. Since python is dynamically typed, we just
-    use it to dispatch the command to the appropriate method.
+    See the module notes at the top of this file.
     """
     # ======================================================================== +
     #                                                                          +
     # ======================================================================== +
-    #region BudgetManagerViewModelCommandInterface implementation              +
-    """ BudgetManagerViewModelCommandInterface Design Notes
+    #region ViewModelCommandProcessor implementing the Command Pattern        +
+    """ ViewModelCommandProcessor Design Notes (future ABC)
 
     A Command Pattern supports a means to represent a command as an object,
     in out case, a dictionary. The command is a request to perform an action
@@ -461,13 +485,13 @@ class BudManViewModel(BDMClientInterface):
     """
     #                                                                          +
     # ------------------------------------------------------------------------ +
-    #region Command Processing methods
+    #region ViewModelCommandProcessor interface methods
     # ------------------------------------------------------------------------ +
-    #region BMVM_execute_cmd() Command Processing method
-    def BMVM_execute_cmd(self, 
+    #region cp_execute_cmd() Command Processing method
+    def cp_execute_cmd(self, 
                          cmd : Dict = None,
                          raise_errors : bool = False) -> Tuple[bool, Any]:
-        """Execute a command for the Budget Model View Model.
+        """Execute a command for the View Model.
 
         This method executes a command for the Budget Model View Model. 
         Commands and common argument values are validated. This method is the
@@ -491,6 +515,7 @@ class BudManViewModel(BDMClientInterface):
         try:
             st = p3u.start_timer()
             logger.info(f"Start Command: {cmd}")
+            validate_only: bool = cmd.get("validate_only", False)
             if not self.initialized:
                 m = f"{self.__class__.__name__} is not initialized."
                 logger.error(m)
@@ -500,12 +525,15 @@ class BudManViewModel(BDMClientInterface):
                 m = f"Invalid cmd object, no action taken."
                 logger.error(m)
                 return False, m
-            success, result = self.BMVM_validate_cmd(cmd)
+            success, result = self.cp_validate_cmd(cmd)
             if not success: return success, result
             full_cmd_key = result
             func = self.cmd_map.get(full_cmd_key)
             function_name = func.__name__
-            # TODO: validate-only stops here
+            if validate_only:
+                result = f"vo-command: {function_name}({str(cmd)})"
+                logger.info(result)
+                return True, result
             logger.info(f"Executing command: {function_name}({str(cmd)})")
             status, result = self.cmd_map.get(full_cmd_key)(cmd)
             logger.info(f"Complete Command: [{p3u.stop_timer(st)}] {(status, str(result))}")
@@ -516,9 +544,9 @@ class BudManViewModel(BDMClientInterface):
             if raise_errors:
                 raise RuntimeError(m)
             return False, m
-    #endregion BMVM_execute_cmd() Command Processing method
-    #region BMVM_validate_cmd() Command Processing method
-    def BMVM_validate_cmd(self, cmd : Dict = None) -> Tuple[bool, str]:
+    #endregion cp_execute_cmd() Command Processing method
+    #region cp_validate_cmd() Command Processing method
+    def cp_validate_cmd(self, cmd : Dict = None) -> Tuple[bool, str]:
         """Validate the cmd for the Budget Manager View Model.
 
         Extract a valid, known cmd_key to succeed.
@@ -533,7 +561,7 @@ class BudManViewModel(BDMClientInterface):
         """
         try:
             # Validate full cmd key from the cmd, or error out.
-            success, result, cmd_key = self.BMVM_full_cmd_key(cmd)
+            success, result, cmd_key = self.cp_full_cmd_key(cmd)
             if not success: return False, result
             full_cmd_key = result
             # Validate the cmd arguments.
@@ -574,9 +602,9 @@ class BudManViewModel(BDMClientInterface):
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
-    #endregion BMVM_validate_cmd() Command Processing method
-    #region BMVM_cmd_key() Command Processing method
-    def BMVM_cmd_key(self, cmd : Dict = None) -> Tuple[bool, str]:
+    #endregion cp_validate_cmd() Command Processing method
+    #region cp_cmd_key() Command Processing method
+    def cp_cmd_key(self, cmd : Dict = None) -> Tuple[bool, str]:
         """Validate a cmd_key is present in the cmd, return it.
                 
         returns:
@@ -589,7 +617,6 @@ class BudManViewModel(BDMClientInterface):
                 m = f"{self.__class__.__name__} is not initialized."
                 logger.error(m)
                 return False, m
-            pfx = f"{self.__class__.__name__}.{self.BMVM_execute_cmd.__name__}: "
             if cmd is None or not isinstance(cmd, dict) or len(cmd) == 0:
                 m = f"cmd argument is None, no action taken."
                 logger.error(m)
@@ -605,9 +632,9 @@ class BudManViewModel(BDMClientInterface):
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
-    #endregion BMVM_cmd_key() Command Processing method
-    #region BMVM_full_cmd_key() Command Processing method
-    def BMVM_full_cmd_key(self, cmd : Dict = None) -> Tuple[bool, str]:
+    #endregion cp_cmd_key() Command Processing method
+    #region cp_full_cmd_key() Command Processing method
+    def cp_full_cmd_key(self, cmd : Dict = None) -> Tuple[bool, str]:
         """Validate a full cmd key with subcommand if included.
         
         returns:
@@ -618,7 +645,7 @@ class BudManViewModel(BDMClientInterface):
         """
         try:
             # Extract a cmd key from the cmd, or error out.
-            success, result = self.BMVM_cmd_key(cmd)
+            success, result = self.cp_cmd_key(cmd)
             if not success: return False, result, None
             cmd_key = result
             # Acquire sub-command key if present.
@@ -634,7 +661,7 @@ class BudManViewModel(BDMClientInterface):
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
-    #endregion BMVM_full_cmd_key() Command Processing method
+    #endregion cp_full_cmd_key() Command Processing method
     #region BMVM_cmd_exception() Command Processing method
     def BMVM_cmd_WB_INFO_LEVEL_validate(self, info_level) -> bool:
         """Return True if info_level is a valid value."""
@@ -669,7 +696,7 @@ class BudManViewModel(BDMClientInterface):
     # ------------------------------------------------------------------------ +
     #                                                                          +
     # ------------------------------------------------------------------------ +
-    #region Command Implementations
+    #region Command Execution Methods
     #                                                                          +
     # ------------------------------------------------------------------------ +
     #region FI_init_command() command method
@@ -936,18 +963,18 @@ class BudManViewModel(BDMClientInterface):
             # Return the current content of the DATA_CONTEXT.
             bs = self.dc_BDM_STORE
             bs_str = p3u.first_n(str(bs))
-            bs_msg = p3u.first_n(bs_str)
             wbl = self.dc_WORKBOOKS
             wbl_count = len(wbl) if wbl else 0
             lwbl = self.dc_LOADED_WORKBOOKS
             lwbl_count = len(lwbl) if lwbl else 0
             result = f"Budget Manager Data Context:\n"
             result += f"{P2}{DC_INITIALIZED}: {self.dc_INITIALIZED}\n"
+            result += f"{P2}{WB_NAME}: {self.dc_WB_NAME}\n"
+            result += f"{P2}{WB_REF}: {self.dc_WB_REF}\n"
             result += f"{P2}{FI_KEY}: {self.dc_FI_KEY}\n"
             result += f"{P2}{WF_KEY}: {self.dc_WF_KEY}\n"
             result += f"{P2}{WB_TYPE}: {self.dc_WB_TYPE}\n"
-            result += f"{P2}{WB_NAME}: {self.dc_WB_NAME}\n"
-            result += f"{P2}{DC_BDM_STORE}: {bs_msg}\n"
+            result += f"{P2}{DC_BDM_STORE}: {bs_str}\n"
             result += f"{P2}{DC_WORKBOOKS}: {wbl_count}\n"
             if wbl_count > 0:
                 for i, (wb_name, wb_ap) in enumerate(wbl):
@@ -1054,18 +1081,22 @@ class BudManViewModel(BDMClientInterface):
             wb_type = self.dc_WB_TYPE
             wb_count = len(self.dc_WORKBOOKS)
             r = f"Budget Manager Workbooks({wb_count}):\n"
-            if wb_ref.isdigit():
-                wb_refnum = int(wb_ref)
-                wb_info = self.dc_WORKBOOKS[wb_refnum] if wb_refnum < wb_count else None
-                if wb_info is not None:
-                    wb = self.budget_domain_model.bdmwd_WORKBOOK_load(wb_info[0])
-                    l = "Yes" if self.DC.dc_WORKBOOK_loaded(wb_info[0]) else "No "
-                    r += f"{P2}{wb_refnum:>2} {l} {wb_info[0]:<40} '{wb_info[1]}'\n"
-            elif wb_ref == ALL_KEY:
-                lwbl = self.budget_domain_model.bdmwd_FI_WORKBOOKS_load(fi_key, wf_key, wb_type)
+            all_wbs, wb_index = self.model.bdmwd_WB_REF_resolve(wb_ref)
+
+            if all_wbs:
+                lwbl = self.model.bdmwd_FI_WORKBOOKS_load(fi_key, wf_key, wb_type)
                 for i, (wb_name, wb_ap) in enumerate(lwbl):
                     l = "Yes" if self.DC.dc_WORKBOOK_loaded(wb_name) else "No "
                     r += f"{P2}{i:>2} {l} {wb_name:<40} '{wb_ap}'\n"
+                    self.DC._WB_NAME = None  # Reset the wb_name in the DC.
+            elif wb_index >= 0:
+                wb_info = self.dc_WORKBOOKS[wb_index] if wb_index < wb_count else None
+                if wb_info is not None:
+                    wb_name = wb_info[0]
+                    wb = self.model.bdmwd_WORKBOOK_load(wb_name)
+                    l = "Yes" if self.DC.dc_WORKBOOK_loaded(wb_name) else "No "
+                    r += f"{P2}{wb_index:>2} {l} {wb_name:<40} '{wb_name}'\n"
+                    self.DC._WB_NAME = wb_name  # Set the wb_name in the DC.
             return True, r
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
@@ -1180,45 +1211,29 @@ class BudManViewModel(BDMClientInterface):
                 m = f"wb_ref is None, no action taken."
                 logger.error(m)
                 raise RuntimeError(f"{pfx}{m}")
-            fi_key = self.dc_FI_KEY
-            wf_key = self.dc_WF_KEY
-            wb_type = self.dc_WB_TYPE
             wb_name = self.dc_WB_NAME
-            wb_count = len(self.dc_WORKBOOKS)
-            wb_index = -1
             all_wbs : bool = False
-            wf_wbl = []
             r = f"Budget Manager Categorization Workflow:\n"
-            # TODO: need function to resolve wb_ref to (all:bool, wb_index:int)
-            if wb_ref.isdigit():
-                wb_index = int(wb_ref)
-                wb_info = self.dc_WORKBOOKS[wb_index] if wb_index < wb_count else None
-                if wb_info is not None:
-                    wb_name = wb_info[0]
-            elif wb_ref == ALL_KEY:
-                wb_name = ALL_KEY 
-                # all_wbs =  True # not implemented yet
+            all_wbs, wb_index = self.model.bdmwd_WB_REF_resolve(wb_ref)
             # TODO: what_if arg stops here. Build a list of LOADED_WORKBOOKS to process.
+            # Check cmd needs loaded workbooks to check
             lwbl = self.dc_LOADED_WORKBOOKS
             lwbl_count = len(lwbl) if lwbl else 0
             if lwbl_count == 0:
-                m = f"No LOADED_WORKBOOKS found, no action taken."
+                m = f"No LOADED_WORKBOOKS found, check_cmd requires loaded workbook."
                 logger.warning(m)
                 return False, m
             if not self.DC.dc_WORKBOOK_loaded(wb_name):
                 m = f"wb_name '{wb_name}' not found in LOADED_WORKBOOKS."
                 logger.error(m)
                 return False, m
+            if all_wbs:
+                return False, f"Checking all loaded workbooks is not implemented yet."
+
             # wb = self.budget_domain_model.bdmwd_WORKBOOK_load(wb_name)
             wb = lwbl[wb_name]
-            ws = wb.active
-            # check wb for standardized column names, order and worksheet name.
-            # Check for budget category column, add it if not present.
-            # check_budget_category(ws)
-            # check_sheet_columns(ws)
-            # Map the 'Original Description' column to the 'Budget Category' column.
-            # map_budget_category(ws,"Original Description", BUDGET_CATEGORY_COL)
-            # self.budget_domain_model.bdmwd_WORKBOOK_save(wb_name, wb)
+            check_sheet_schema(wb)
+            self.budget_domain_model.bdmwd_WORKBOOK_save(wb_name, wb)
             r += f"Checked workbook: Workbook({wb_ref}) '{wb_name}'\n"
             return True, r
         except Exception as e:
@@ -1277,14 +1292,14 @@ class BudManViewModel(BDMClientInterface):
     #endregion WORKFLOW_reload_cmd() method
     # ------------------------------------------------------------------------ +
     #                                                                          +
-    #endregion Command Implementations
+    #endregion Command Execution Methods
     # ------------------------------------------------------------------------ +
     #                                                                          +
-    #endregion BudgetManagerViewModelCommandInterface implementation           +
+    #endregion ViewModelCommandProcessor implementing the Command Pattern     +
     # ======================================================================== +
     #                                                                          +
     # ======================================================================== +
-    #region BudManDataContext client implementation                            +
+    #region ViewModelData_Context client implementation                            +
     """BDM view_model Data Context Interface Documentation.
 
     Data Context (DC) Interface Overview
@@ -1415,6 +1430,16 @@ class BudManViewModel(BDMClientInterface):
     def dc_WB_NAME(self, value: str) -> None:
         """Set the current workbook name value in DC."""
         self.DC.dc_WB_NAME = value
+
+    @property
+    def dc_WB_REF(self) -> str:
+        """Return the current workbook ref value in DC."""
+        return self.DC.dc_WB_REF
+
+    @dc_WB_REF.setter
+    def dc_WB_REF(self, value: str) -> None:
+        """Set the current workbook ref value in DC."""
+        self.DC.dc_WB_REF = value
 
     @property
     def dc_BDM_STORE(self) -> str:
@@ -1568,8 +1593,8 @@ class BudManViewModel(BDMClientInterface):
     #endregion Data Context Methods
     # ------------------------------------------------------------------------ +
     #                                                                          +
-    #endregion BudMANDataContext client implementation                         +
+    #endregion ViewModelData_Context client implementation                         +
     # ======================================================================== +
     #                                                                          +
-    #endregion BudManViewModel implementation
+    #endregion BudManViewModel - BudMan View Model implementation
     # ======================================================================== +

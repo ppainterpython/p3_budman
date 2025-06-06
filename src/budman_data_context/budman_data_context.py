@@ -56,15 +56,21 @@ class BudManDataContext(BudManDataContextBaseInterface):
     """
     # ------------------------------------------------------------------------ +
     def __init__(self) -> None:
+        self._BDM_STORE : BDM_STORE = None 
         self._dc_initialized = False 
+        self.bdm_FILEName = None 
+        self.FILETYPE = None
+        self.bdm_FILEName
+
+
         self._FI_KEY = None       
         self._WF_KEY = None       
         self._WB_TYPE = None      
-        self._WB_NAME = None      
-        self._BDM_STORE : BDM_STORE = None 
+        self._WB_NAME = None     
+        self._WB_REF = None
         self._WORKBOOKS : WORKBOOK_LIST = None # from BudManDataContextBaseInterface
         self._LOADED_WORKBOOKS : LOADED_WORKBOOK_LIST = None # from BudManDataContextBaseInterface
-
+        self._DataContext = DATA_CONTEXT  # type: DATA_CONTEXT
     #region Abstract Properties
     @property
     def dc_INITIALIZED(self) -> bool:
@@ -123,6 +129,20 @@ class BudManDataContext(BudManDataContextBaseInterface):
     def dc_WB_NAME(self, value: str) -> None:
         """Set the WB_NAME workbook name."""
         self._WB_NAME = value
+
+    @property
+    def dc_WB_REF(self) -> str:
+        """Return the current WB_REF workbook reference.
+        
+        Current means the wb_ref for the last operation on a named or referenced
+        workbook. The other data in the DC is updated in a similar fashion.
+        After an operation on 'all' workbooks, the dc_WB_REF is set to 'all'.
+        """
+        return self._WB_REF
+    @dc_WB_REF.setter
+    def dc_WB_REF(self, value: str) -> None:
+        """Set the WB_REF workbook reference."""
+        self._WB_REF = value
 
     @property
     def dc_BDM_STORE(self) -> str:

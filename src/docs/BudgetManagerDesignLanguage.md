@@ -16,7 +16,7 @@ Managing a budget with an application is the goal. I chose to make it a command 
 
 ## Technical Design Overview
 
-Having written a story, the narrative embodied in the design language of an application, it remains to create a technical design to implement the narrative. Several key factors are considered for the design. First, the concept of managing to a budget presents severl domains of interest. As I am a fan of domain-driven design, the Budget Domain Model design is a critical influencer. Another influence is applying the MVVM design pattern for software applications.
+Having written a story, the narrative embodied in the design language of an application, it remains to create a technical design to implement the narrative. Several key factors are considered for the design. First, the concept of managing to a budget presents several domains of interest. As I am a fan of domain-driven design, the Budget Domain Model design is a critical influencer. Another influence is applying the MVVM design pattern for software applications.
 
 ### Budget Domain Model (BDM)
 

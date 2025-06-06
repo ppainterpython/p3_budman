@@ -104,7 +104,7 @@ class BudManApp(metaclass=BDMSingletonMeta):
             bmvm.initialize(load_user_store=True) # Initialize the BudgetModelCommandViewModel
             # create and initialize a data context, for the view model
             bm_cliview_dc = BudManCLIViewDataContext(bmvm)
-            bm_cliview_dc.initialize(cp=bmvm.BMVM_execute_cmd,dc=bmvm.data_context) 
+            bm_cliview_dc.initialize(cp=bmvm.cp_execute_cmd,dc=bmvm.data_context) 
             # create and initialize the view
             self.cli_view = BudManCLIView(bm_cliview_dc).initialize()
             # Register exit handler
