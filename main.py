@@ -1,4 +1,14 @@
-# main.py (at project root)
+# ---------------------------------------------------------------------------- +
+#region main.py (at project root) DudMan main entry point.
+"""Budget Manager (BudMan) - a p3 application.
+
+Author: Paul Painter
+Copyright (c) 2025 Paul Painter
+"""
+#endregion main.py (at project root) DudMan main entry point.
+# ---------------------------------------------------------------------------- +
+#region Imports
+# python standard library modules and packages
 import sys, logging
 from pathlib import Path
 from dynaconf import Dynaconf
@@ -6,8 +16,12 @@ import p3logging as p3l
 from p3_utils import exc_err_msg, dscr
 from budman_settings import *
 from src.budman_app.budman_app import BudManApp
+#endregion Imports
 # ---------------------------------------------------------------------------- +
+#region Globals and Constants
 logger = logging.getLogger(__name__)
+# ---------------------------------------------------------------------------- +
+#endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
 #region configure_logging() method
 def configure_logging(logger_name : str, logtest : bool = True) -> None:
@@ -33,7 +47,22 @@ def configure_logging(logger_name : str, logtest : bool = True) -> None:
         logger.error(exc_err_msg(e))
         raise
 #endregion configure_logging() function
-# ------------------------------------------------------------------------ +
+# ---------------------------------------------------------------------------- +
+#region backlog - main todo list
+"""Main todo list for the Budget Manager application.
+
+    TODO: BDM methods needed:
+        - get WB_TYPE from WB_NAME, same for FI_KEY and WF_KEY
+    TODO: handle the same WB_NAME being in several wf folders.
+    TODO: don't openpyxl load workbooks currently open in Excel.
+    TODO: Consider making BudManDataContext have a binding for Model and 
+    ViewModel objects. As a concrete implementation, it provides model and 
+    view_model properties. Consider some of the dc_methods conditionally
+    forwarding calls onto the model or view_model properties, if the methods
+    are available on those objects.
+"""
+#endregion backlog - main todo list
+# ---------------------------------------------------------------------------- +
 def main(bdms_url : str = None):
     """Main entry point for the Budget Manager application.
     Args:

@@ -80,7 +80,7 @@ class BudManApp(metaclass=BDMSingletonMeta):
     def budman_app_exit_handler(self):
         """start the cli repl loop."""
         try:
-            m = f"Exiting {BudManApp.settings[APP_NAME]}..."
+            m = f"Exiting {self.settings[APP_NAME]}..."
             logger.info(m)
             print(m)
         except Exception as e:

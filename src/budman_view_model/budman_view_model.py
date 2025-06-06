@@ -699,7 +699,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
     #region Command Execution Methods
     #                                                                          +
     # ------------------------------------------------------------------------ +
-    #region FI_init_command() command method
+    #region FI_init_command() command > init FI boa
     def FI_init_cmd(self, cmd : Dict = None) -> Tuple[bool, str]: 
         """Execute FI_init command for one fi_key or 'all'.
         
@@ -726,7 +726,9 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             root error is contained in the exception message.
         """
         try:
+            # TODO: prefix of the command, like "init FI boa" 
             pfx = f"{self.__class__.__name__}.{self.FI_init_cmd.__name__}: "
+            result = "no result"
             if p3u.is_not_obj_of_type("cmd",cmd,dict,pfx):
                 m = f"Invalid cmd object, no action taken."
                 logger.error(m)
@@ -766,11 +768,12 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             result = f"Loaded {len(lwbl_names)} Workbooks: {str(lwbl_names)}"
             return True, result
         except Exception as e:
-            logger.error(p3u.exc_err_msg(e))
-            raise RuntimeError(m) from e
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            return False, m
     #endregion FI_init_command() command method
     # ------------------------------------------------------------------------ +
-    #region FI_LOADED_WORKBOOKS_save_cmd() command method
+    #region FI_LOADED_WORKBOOKS_save_cmd() command > save wb 3
     def FI_LOADED_WORKBOOKS_save_cmd(self, cmd : Dict = None) -> None: 
         """Execute FI_save command for one fi_key or 'all'.
         
@@ -848,7 +851,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             raise
     #endregion FI_LOADED_WORKBOOKS_save_cmd() command method
     # ------------------------------------------------------------------------ +
-    #region BDM_STORE_save_cmd() method
+    #region BDM_STORE_save_cmd() command > save bms
     def BDM_STORE_save_cmd(self, cmd : Dict) -> None:
         """Save the Budget Manager store (BDM_STORE) file with the BSM.
 
@@ -889,7 +892,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             raise
     #endregion BDM_STORE_save_cmd() method
     # ------------------------------------------------------------------------ +
-    #region BDM_STORE_load_cmd() method
+    #region BDM_STORE_load_cmd() command > load bms 
     def BDM_STORE_load_cmd(self, cmd : Dict) -> Tuple[bool, str]:
         """Load the Budget Manager store (BDM_STORE) file from the BSM.
 
@@ -934,7 +937,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             raise
     #endregion BDM_STORE_load_cmd() method
     # ------------------------------------------------------------------------ +
-    #region DATA_CONTEXT_show_cmd() method
+    #region DATA_CONTEXT_show_cmd() command > show dc
     def DATA_CONTEXT_show_cmd(self, cmd : Dict) -> Tuple[bool, str]:
         """Show information in the Budget Manager Data Context.
 
@@ -991,7 +994,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             raise
     #endregion DATA_CONTEXT_show_cmd() method
     # ------------------------------------------------------------------------ +
-    #region WORKBOOKS_show_cmd() method
+    #region WORKBOOKS_show_cmd() command > show wb 2
     def WORKBOOKS_show_cmd(self, cmd : Dict) -> Tuple[bool, str]:
         """Show information about WORKBOOKS in the DC.
 
@@ -1043,7 +1046,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             return False, m
     #endregion DATA_CONTEXT_show_cmd() method
     # ------------------------------------------------------------------------ +
-    #region WORKBOOKS_load_cmd() method
+    #region WORKBOOKS_load_cmd() command > load wb 0
     def WORKBOOKS_load_cmd(self, cmd : Dict) -> Tuple[bool, str]:
         """Load one or more WORKBOOKS in the DC.
 
@@ -1103,7 +1106,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             raise
     #endregion WORKBOOKS_load_cmd() method
     # ------------------------------------------------------------------------ +
-    #region WORKFLOW_categorization_cmd() method
+    #region WORKFLOW_categorization_cmd() command > wf cat 2
     def WORKFLOW_categorization_cmd(self, cmd : Dict) -> Tuple[bool, str]:
         """Apply workflow to one or more WORKBOOKS in the DC.
 
@@ -1178,7 +1181,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             raise
     #endregion WORKFLOW_categorization_cmd() method
     # ------------------------------------------------------------------------ +
-    #region WORKFLOW_check() method
+    #region WORKFLOW_check() command > wf check 2 
     def WORKFLOW_check_cmd(self, cmd : Dict) -> Tuple[bool, str]:
         """Apply workflow to one or more WORKBOOKS in the DC.
 
@@ -1241,7 +1244,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             raise
     #endregion WORKFLOW_check_cmd() method
     # ------------------------------------------------------------------------ +
-    #region WORKFLOW_reload_cmd() method
+    #region WORKFLOW_reload_cmd() command > wf check 3
     def WORKFLOW_reload_cmd(self, cmd : Dict) -> Tuple[bool, str]:
         """Reload code modules to support dev.
 

@@ -56,18 +56,14 @@ class BudManDataContext(BudManDataContextBaseInterface):
     """
     # ------------------------------------------------------------------------ +
     def __init__(self) -> None:
-        self._BDM_STORE : BDM_STORE = None 
         self._dc_initialized = False 
-        self.bdm_FILEName = None 
-        self.FILETYPE = None
-        self.bdm_FILEName
-
-
+        self._dc_BDM_STORE = None
         self._FI_KEY = None       
         self._WF_KEY = None       
         self._WB_TYPE = None      
         self._WB_NAME = None     
         self._WB_REF = None
+        self._BDM_STORE : BDM_STORE = None 
         self._WORKBOOKS : WORKBOOK_LIST = None # from BudManDataContextBaseInterface
         self._LOADED_WORKBOOKS : LOADED_WORKBOOK_LIST = None # from BudManDataContextBaseInterface
         self._DataContext = DATA_CONTEXT  # type: DATA_CONTEXT

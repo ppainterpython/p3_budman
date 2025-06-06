@@ -16,18 +16,21 @@ from openpyxl import Workbook
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 # Type Alias Constants
+# Base Types - not model-aware
+DATA_OBJECT = Dict[str, Any] 
+DATA_TUPLE = Tuple[str, DATA_OBJECT]  # A tuple of (key, value) for data objects
+DATA_COLLECTION = Dict[str, DATA_OBJECT] 
+DATA_LIST = List[DATA_OBJECT] 
+DATA_TUPLE_LIST = List[DATA_TUPLE] 
 # WORKBOOK_LIST - the list of workbooks for a specific folder. 
 # It is a list of WORKBOOK_ITEM tuples: (workbook_name, workbook_abs_path)
-WORKBOOK_LIST = List[Tuple[str, str]] 
-WORKBOOK_ITEM = Tuple[str, str]
+WORKBOOK_LIST = DATA_TUPLE_LIST 
+WORKBOOK_ITEM = DATA_TUPLE
 LOADED_WORKBOOK_LIST = Dict[str, Workbook]
 DATA_CONTEXT = Dict[str, Any]
 BDM_STORE = Dict[str, Any]
 BDM_CONFIG = Dict[str, Any]
 # MODEL_OBJECT : Type[object] = object()
-DATA_OBJECT = Dict[str, Any] 
-DATA_COLLECTION = Dict[str, DATA_OBJECT] 
-DATA_LIST = List[Tuple[str, DATA_OBJECT]] 
 BDMO_OBJECT = DATA_OBJECT
 FI_OBJECT = DATA_OBJECT  # Financial Institution object
 FI_COLLECTION = Dict[str, FI_OBJECT]
