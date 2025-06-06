@@ -60,6 +60,7 @@ def configure_logging(logger_name : str, logtest : bool = True) -> None:
     view_model properties. Consider some of the dc_methods conditionally
     forwarding calls onto the model or view_model properties, if the methods
     are available on those objects.
+    TODO: cp_validate_cmd() update new cmd args, some are unchecked
 """
 #endregion backlog - main todo list
 # ---------------------------------------------------------------------------- +

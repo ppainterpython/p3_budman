@@ -65,7 +65,7 @@ class BudManDataContext(BudManDataContextBaseInterface):
         self._WB_REF = None
         self._BDM_STORE : BDM_STORE = None 
         self._WORKBOOKS : WORKBOOK_LIST = None # from BudManDataContextBaseInterface
-        self._LOADED_WORKBOOKS : LOADED_WORKBOOK_LIST = None # from BudManDataContextBaseInterface
+        self._LOADED_WORKBOOKS : LOADED_WORKBOOK_COLLECTION = None # from BudManDataContextBaseInterface
         self._DataContext = DATA_CONTEXT  # type: DATA_CONTEXT
     #region Abstract Properties
     @property
@@ -159,12 +159,12 @@ class BudManDataContext(BudManDataContextBaseInterface):
         self._WORKBOOKS = value
 
     @property
-    def dc_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_LIST:
+    def dc_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_COLLECTION:
         """Return the list of workbooks currently loaded in the DC.
         Loaded means a file is loaded into memory and is available."""
         return self._LOADED_WORKBOOKS
     @dc_LOADED_WORKBOOKS.setter
-    def dc_LOADED_WORKBOOKS(self, value: LOADED_WORKBOOK_LIST) -> None:
+    def dc_LOADED_WORKBOOKS(self, value: LOADED_WORKBOOK_COLLECTION) -> None:
         """Set the list of workbooks currently loaded in the DC.
         Loaded means a file is loaded into memory and is available."""
         self._LOADED_WORKBOOKS = value

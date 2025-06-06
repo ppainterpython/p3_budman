@@ -26,7 +26,7 @@ DATA_TUPLE_LIST = List[DATA_TUPLE]
 # It is a list of WORKBOOK_ITEM tuples: (workbook_name, workbook_abs_path)
 WORKBOOK_LIST = DATA_TUPLE_LIST 
 WORKBOOK_ITEM = DATA_TUPLE
-LOADED_WORKBOOK_LIST = Dict[str, Workbook]
+LOADED_WORKBOOK_COLLECTION = Dict[str, Workbook]
 DATA_CONTEXT = Dict[str, Any]
 BDM_STORE = Dict[str, Any]
 BDM_CONFIG = Dict[str, Any]
@@ -214,7 +214,7 @@ BDMWD_WORKBOOKS = "bdmwd_workbooks" # key name
 #       with the current FI_KEY, WF_KEY, and WB_TYPE.
 BDMWD_LOADED_WORKBOOKS = "bdmwd_loaded_workbooks" # key name
 # Name: BDMWD_LOADED_WORKBOOKS
-# Type: LOADED_WORKBOOK_LIST : list of tuples
+# Type: LOADED_WORKBOOK_COLLECTION : list of tuples
 # Desc: A list of tuples of wb_name, Workbook objects for workbooks associated
 #       with the current FI_KEY, WF_KEY, and WB_TYPE and are loaded into BDMWD.
 BDMWD_BDM_STORE = "budman_store"
@@ -260,7 +260,7 @@ DC_WORKBOOKS = BDMWD_WORKBOOKS
 #       with the current FI_KEY, WF_KEY, and WB_TYPE
 DC_LOADED_WORKBOOKS = BDMWD_LOADED_WORKBOOKS
 # Name: DC_LOADED_WORKBOOKS
-# Type: LOADED_WORKBOOK_LIST
+# Type: LOADED_WORKBOOK_COLLECTION
 # Desc: A list of tuples of wb_name, and Workbook objects for workbooks associated
 #       with the current FI_KEY, WF_KEY, and WB_TYPE
 DC_BDM_STORE = BDMWD_BDM_STORE

@@ -18,7 +18,7 @@ __all__ = [
     # Type Alias Constants
     "WORKBOOK_LIST",
     "WORKBOOK_ITEM",
-    "LOADED_WORKBOOK_LIST",
+    "LOADED_WORKBOOK_COLLECTION",
     "DATA_CONTEXT",
     "BDM_WORKING_DATA_OBJECT",
     "BDM_STORE",

@@ -155,14 +155,14 @@ class BudManDataContextClientInterface(BudManDataContextBaseInterface):
         self.DC.dc_WORKBOOKS = value
 
     @property
-    def dc_LOADED_WORKBOOKS(self) -> bdmns.LOADED_WORKBOOK_LIST:
+    def dc_LOADED_WORKBOOKS(self) -> bdmns.LOADED_WORKBOOK_COLLECTION:
         """Return the list of loaded workbooks in the DC.
         This is a List of tuples, where each tuple contains the workbook name
         and its Workbook object.
         """
         return self.DC.dc_LOADED_WORKBOOKS
     @dc_LOADED_WORKBOOKS.setter
-    def dc_LOADED_WORKBOOKS(self, value: bdmns.LOADED_WORKBOOK_LIST) -> None:
+    def dc_LOADED_WORKBOOKS(self, value: bdmns.LOADED_WORKBOOK_COLLECTION) -> None:
         """Set the list of loaded workbooks in the DC."""
         self.DC.dc_LOADED_WORKBOOKS = value
     #endregion BudManDataContextClientInterface Properties

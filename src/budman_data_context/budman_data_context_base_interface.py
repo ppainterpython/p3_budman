@@ -26,7 +26,7 @@ from typing import Dict, List, Any
 from openpyxl import Workbook
 # local modules and packages
 from src.budman_namespace import (
-    DATA_CONTEXT, WORKBOOK_LIST, LOADED_WORKBOOK_LIST,
+    DATA_CONTEXT, WORKBOOK_LIST, LOADED_WORKBOOK_COLLECTION,
     BDM_STORE)
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -142,13 +142,13 @@ class BudManDataContextBaseInterface(ABC):
 
     @property
     @abstractmethod
-    def dc_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_LIST:
+    def dc_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_COLLECTION:
         """Return the list of workbooks currently loaded in the DC.
         Loaded means a file is loaded into memory and is available."""
         pass
     @dc_LOADED_WORKBOOKS.setter
     @abstractmethod
-    def dc_LOADED_WORKBOOKS(self, value: LOADED_WORKBOOK_LIST) -> None:
+    def dc_LOADED_WORKBOOKS(self, value: LOADED_WORKBOOK_COLLECTION) -> None:
         """Set the list of workbooks currently loaded in the DC.
         Loaded means a file is loaded into memory and is available."""
         pass
