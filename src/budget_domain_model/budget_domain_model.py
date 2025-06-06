@@ -1235,8 +1235,8 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
     # ------------------------------------------------------------------------ +   
     #region bsm_WORKBOOKS_LIST_load Methods
     def bsm_WORKBOOKS_LIST_load(self,
-                        wbl : WORKBOOK_LIST = None) -> LOADED_WORKBOOK_LIST: 
-        """Load WORKBOOK_LIST returning a LOADED_WORKBOOK_LIST
+                        wbl : WORKBOOK_LIST = None) -> LOADED_WORKBOOK_COLLECTION: 
+        """Load WORKBOOK_LIST returning a LOADED_WORKBOOK_COLLECTION
         
         A WORKBOOK_LIST has tuples of wb_name and wb_abs_path. Iterate the
         list and load each one. This is BSM-scope only, loads from the 
@@ -1247,7 +1247,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
             and the absolute path to the workbook file.
         
         Returns:
-            LOADED_WORKBOOK_LIST: new Dict[filename,Workbook] loaded workbooks.
+            LOADED_WORKBOOK_COLLECTION: new Dict[filename,Workbook] loaded workbooks.
 
         Raises: exceptions from any errors.
         """
@@ -1270,17 +1270,17 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
             raise
 
     def bsm_LOADED_WORKBOOKS_save(self,
-                                  lwbl : LOADED_WORKBOOK_LIST,
+                                  lwbl : LOADED_WORKBOOK_COLLECTION,
                                   wbl : WORKBOOK_LIST) -> None: 
-        """Save LOADED_WORKBOOK_LIST to the filesystem.
+        """Save LOADED_WORKBOOK_COLLECTION to the filesystem.
         
-        A LOADED_WORKBOOK_LIST has tuples of wb_name and a loaded Workbook
+        A LOADED_WORKBOOK_COLLECTION has tuples of wb_name and a loaded Workbook
         object. Iterate the list, obtain the abs_path_str for each wb_name from 
         the provided WORKBOOK_LIST, and save the workbook. This is BSM-scope 
         only, saves to the filesystem, no side effects to the BDM or BDMWD.
 
         Args:
-            lwbl (LOADED_WORKBOOK_LIST): A list of tuples containing the 
+            lwbl (LOADED_WORKBOOK_COLLECTION): A list of tuples containing the 
             workbook name and associated loaded Workbook object.
         
         Returns:
@@ -1540,14 +1540,14 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
         self.bdm_working_data[BDMWD_WORKBOOKS] = value
 
     @property 
-    def bdmwd_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_LIST:
+    def bdmwd_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_COLLECTION:
         """Return the current BDMWD_LOADED_WORKBOOKS value in BDMWD."""
         bdwd = self._valid_BDMWD()
         if BDMWD_LOADED_WORKBOOKS not in bdwd:
             self.bdm_working_data[BDMWD_LOADED_WORKBOOKS] = None
         return self.bdm_working_data[BDMWD_LOADED_WORKBOOKS]
     @bdmwd_LOADED_WORKBOOKS.setter
-    def bdmwd_LOADED_WORKBOOKS(self, value: LOADED_WORKBOOK_LIST) -> None:
+    def bdmwd_LOADED_WORKBOOKS(self, value: LOADED_WORKBOOK_COLLECTION) -> None:
         """Set the current  BDMWD_LOADED_WORKBOOKS value in BDMWD."""
         _ = self._valid_BDMWD()
         self.bdm_working_data[BDMWD_LOADED_WORKBOOKS] = value
@@ -1560,7 +1560,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
         self.bdmwd_INITIALIZED()
         return len(self.bdmwd_WORKBOOKS_get())
 
-    def bdmwd_WORKBOOKS_get(self) -> LOADED_WORKBOOK_LIST | None:
+    def bdmwd_WORKBOOKS_get(self) -> LOADED_WORKBOOK_COLLECTION | None:
         """Get the BDMWD_WORKBOOKS value from the BDM_WORKING_DATA.
 
         Returns:
@@ -1841,11 +1841,11 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
         self.bdmwd_INITIALIZED()
         return len(self.bdmwd_LOADED_WORKBOOKS_get())
 
-    def bdmwd_LOADED_WORKBOOKS_get(self) -> LOADED_WORKBOOK_LIST | None:
+    def bdmwd_LOADED_WORKBOOKS_get(self) -> LOADED_WORKBOOK_COLLECTION | None:
         """Get the BDMWD_LOADED_WORKBOOKS from the BDM_WORKING_DATA.
 
         Returns:
-            LOADED_WORKBOOK_LIST(Dict[wb_name: Workbook object])
+            LOADED_WORKBOOK_COLLECTION(Dict[wb_name: Workbook object])
         """
         try:
             self.bdmwd_INITIALIZED()
@@ -1905,7 +1905,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
     # ------------------------------------------------------------------------ +
     #region bdmwd_FI methods
     def bdmwd_FI_WORKBOOKS_load(self, fi_key : str, wf_key : str, wb_type : str
-                                                    ) -> LOADED_WORKBOOK_LIST:
+                                                    ) -> LOADED_WORKBOOK_COLLECTION:
         """Load wbs for fi_key,wf_key,wb_type, merge to BDMWD_LOADED_WORKBOOKS.
 
         For a given fi_key, wf_key and wb_type, load the workbooks from the
@@ -1917,7 +1917,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
             wb_type (str): The workbook type.
 
         Returns:
-            LOADED_WORKBOOK_LIST: Dict[str,Workbook] containing the 
+            LOADED_WORKBOOK_COLLECTION: Dict[str,Workbook] containing the 
             workbook name and the loaded workbook object.
         """
         try:

@@ -105,13 +105,13 @@ class BDMWorkingData(BudManDataContext, BDMClientInterface):
         logger.warning("Setting dc_WORKBOOKS directly is not supported.")
 
     @property
-    def dc_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_LIST:
+    def dc_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_COLLECTION:
         """Return the list of workbooks currently loaded in the DC.
         Loaded means a file is loaded into memory and is available. Pull
         from the BDMWD."""
         return self.bdmwd_LOADED_WORKBOOKS()
     @dc_LOADED_WORKBOOKS.setter
-    def dc_LOADED_WORKBOOKS(self, value: LOADED_WORKBOOK_LIST) -> None:
+    def dc_LOADED_WORKBOOKS(self, value: LOADED_WORKBOOK_COLLECTION) -> None:
         """Set the list of workbooks currently loaded in the DC.
         Loaded means a file is loaded into memory and is available."""
         logger.warning("Setting dc_LOADED_WORKBOOKS directly is not supported.")
@@ -155,8 +155,8 @@ class BDMWorkingData(BudManDataContext, BDMClientInterface):
         """Return the WORKBOOK_LIST from the BDMWD."""
         # Ask the model for the bdmwd_WORKBOOKS.
         return self.model.bdmwd_WORKBOOKS_get()
-    def bdmwd_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_LIST:
-        """Return the LOADED_WORKBOOK_LIST from the BDMWD."""
+    def bdmwd_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_COLLECTION:
+        """Return the LOADED_WORKBOOK_COLLECTION from the BDMWD."""
         # Ask the model for the bdmwd_LOADED_WORKBOOKS.
         return self.model.bdmwd_LOADED_WORKBOOKS_get()
 
@@ -174,7 +174,7 @@ class BDMWorkingData(BudManDataContext, BDMClientInterface):
     def bdmwd_FI_WORKBOOKS_load(self, 
                                 fi_key: str, 
                                 wf_key : str, 
-                                wb_type : str) -> LOADED_WORKBOOK_LIST:
+                                wb_type : str) -> LOADED_WORKBOOK_COLLECTION:
         """Load WORKBOOKS for the FI,WF, WBT."""
         lwbs = self.model.bdmwd_FI_WORKBOOKS_load(fi_key, wf_key, wb_type)
         self.dc_LOADED_WORKBOOKS = lwbs

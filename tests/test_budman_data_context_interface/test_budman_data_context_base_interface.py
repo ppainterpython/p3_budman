@@ -97,7 +97,7 @@ class testBudManDC(BudManDataContextBaseInterface):
         print(f"Setting dc_WORKBOOKS to {value}")
         return
     @property
-    def dc_LOADED_WORKBOOKS(self) -> bdmns.LOADED_WORKBOOK_LIST:
+    def dc_LOADED_WORKBOOKS(self) -> bdmns.LOADED_WORKBOOK_COLLECTION:
         """Return the list of loaded workbooks in the DC.
         This is a List of tuples, where each tuple contains the workbook name
         and its Workbook object.
@@ -105,7 +105,7 @@ class testBudManDC(BudManDataContextBaseInterface):
         print("Getting dc_LOADED_WORKBOOKS, [('test_wb1', <Workbook>), ('test_wb2', <Workbook>)]")
         return [('test_wb1', Workbook()), ('test_wb2', Workbook())]
     @dc_LOADED_WORKBOOKS.setter
-    def dc_LOADED_WORKBOOKS(self, value: bdmns.LOADED_WORKBOOK_LIST) -> None:
+    def dc_LOADED_WORKBOOKS(self, value: bdmns.LOADED_WORKBOOK_COLLECTION) -> None:
         """Set the list of loaded workbooks in the DC."""
         print(f"Setting dc_LOADED_WORKBOOKS to {value}")
         return

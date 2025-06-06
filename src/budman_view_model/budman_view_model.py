@@ -662,7 +662,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             logger.error(p3u.exc_err_msg(e))
             raise
     #endregion cp_full_cmd_key() Command Processing method
-    #region BMVM_cmd_exception() Command Processing method
+    #region BMVM_cmd_WB_INFO_LEVEL_validate() Command Processing method
     def BMVM_cmd_WB_INFO_LEVEL_validate(self, info_level) -> bool:
         """Return True if info_level is a valid value."""
         try:
@@ -671,7 +671,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
-    #endregion BMVM_cmd_exception() Command Processing method
+    #endregion BMVM_cmd_WB_INFO_LEVEL_validate() Command Processing method
     #region BMVM_cmd_exception() Command Processing method
     def BMVM_cmd_exception(self, e : Exception=None) -> Tuple[bool, str]:
         """Handle cmd exceptions.
@@ -837,7 +837,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
                 m = f"ValueError({str(e)})"
                 logger.error(m)
                 raise RuntimeError(f"{pfx}{m}")
-            # Get the LOADED_WORKBOOK_LIST from the BDM_WORKING_DATA.
+            # Get the LOADED_WORKBOOK_COLLECTION from the BDM_WORKING_DATA.
             lwbl = self.dc_LOADED_WORKBOOKS
             # For each loaded workbook, save it to its the path .
             for wb_name, wb in lwbl:
@@ -1463,11 +1463,11 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
         self.DC.dc_WORKBOOKS = value
 
     @property 
-    def dc_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_LIST:
+    def dc_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_COLLECTION:
         """Return the current loaded workbooks value in DC."""
         return self.DC.dc_LOADED_WORKBOOKS
     @dc_LOADED_WORKBOOKS.setter
-    def dc_LOADED_WORKBOOKS(self, value: LOADED_WORKBOOK_LIST) -> None:
+    def dc_LOADED_WORKBOOKS(self, value: LOADED_WORKBOOK_COLLECTION) -> None:
         """Set the current loaded workbooks value in DC."""
         self.DC.dc_LOADED_WORKBOOKS = value
     # ------------------------------------------------------------------------ +
