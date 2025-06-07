@@ -14,7 +14,6 @@ import p3_utils as p3u, p3logging as p3l
 import cmd2
 from cmd2 import (Cmd2ArgumentParser, with_argparser)
 # local modules and packages
-from budman_namespace import *
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants

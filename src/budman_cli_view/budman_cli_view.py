@@ -116,7 +116,7 @@ class BudManCLIView(cmd2.Cmd):
     TODO: Use ABC for ViewModelCommandProcessor interface.
     """
     # ------------------------------------------------------------------------ +
-    #region Class variables
+    #region Class variables and methods
     prompt = "budman> "
     intro = "\nWelcome to the Budget Manager CLI. Type help or ? to list commands.\n"
     # Class Methods
@@ -124,19 +124,22 @@ class BudManCLIView(cmd2.Cmd):
     def create_cmd(cls, opts : argparse.Namespace) -> Dict[str, Any]:
         """Create a command dictionary from the options."""
         return _filter_opts(opts)
-    #endregion Class variables
+    #endregion Class variables and methods
     # ------------------------------------------------------------------------ +
-    #region  BudManCLIView CLass Methods
+    #region    __init__() method
     def __init__(self, command_processor : object | MockViewModel = None) -> None:
         shortcuts = dict(cmd2.DEFAULT_SHORTCUTS)
         shortcuts.update({'wf': 'workflow'})
         self._command_processor = MockViewModel() if command_processor is None else command_processor
-        self.initialized = False
         self.parse_only = False
         self.terminal_width = 100 # TODO: add to settings.
         cmd2.Cmd.__init__(self, shortcuts=shortcuts)
         # super().__init__()
         BudManCLIView.prompt = PO_ON_PROMPT if self.parse_only else PO_OFF_PROMPT
+        self.initialized = True
+    #endregion __init__() method
+    # ------------------------------------------------------------------------ +
+    #region    BudManCLIView Methods
     def initialize(self) -> None:
         """Initialize the BudManCLIView class."""
         try:
@@ -146,7 +149,7 @@ class BudManCLIView(cmd2.Cmd):
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise
-    #endregion  BudManCLIView Methods
+    #endregion BudManCLIView Methods
     #endregion BudManCLIView class  intrinsics
     # ======================================================================== +
 
@@ -167,19 +170,30 @@ class BudManCLIView(cmd2.Cmd):
         if not isinstance(value, (MockViewModel, object)):
             raise ValueError("command_processor must be a MockViewModel or object.")
         self._command_processor = value
+    @property
+    def CP(self) -> object:
+        """Alias for the command_processor property."""
+        return self._command_processor
+    
+    @CP.setter
+    def CP(self, value: object) -> None:
+        """Alias for the command_processor property."""
+        if not isinstance(value, (MockViewModel, object)):
+            raise ValueError("command_processor must be a MockViewModel or object.")
+        self._command_processor = value
     #endregion ViewModelCommandProcessor Interface Properties
     # ------------------------------------------------------------------------ +
 
     # ------------------------------------------------------------------------ +
-    #region ViewModelCommandProcessor Interface methods
-    def cp_execute_cmd(self, opts : argparse.Namespace) -> Dict[str, Any]:
+    #region ViewModelCommandProcessor Interface Methods
+    def cp_execute_cmd(self, opts : argparse.Namespace) -> Tuple[str, Any]:
         """Send a cmd through the command_processor using 
         ViewModelCommandProcessor implementation."""
         try:
             st = p3u.start_timer()
             if _log_cli_cmd_execute(self, opts): return True, "parse_only"
             cmd = BudManCLIView.create_cmd(opts)
-            status, result = self.command_processor.execute_cmd(cmd)
+            status, result = self.CP.execute_cmd(cmd)
             if status:
                 # TODO: cleanup output when 
                 self.poutput(f"Result: {str(result)}")
