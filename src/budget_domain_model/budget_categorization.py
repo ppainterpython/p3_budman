@@ -282,6 +282,16 @@ def check_sheet_schema(wb: Workbook, correct: bool = False) -> bool:
             ws.title = BUDMAN_SHEET_NAME  # Rename the active sheet.
             logger.info(f"Renamed active sheet from '{previous_title}' to '{BUDMAN_SHEET_NAME}'.")
             good_schema = True
+        # If more than one sheet, active sheet with wrong title, but is has 
+        # the correct columns, rename the active sheet to BUDMAN_SHEET_NAME.
+        if not rule1 and rule3 and not rule2:
+            logger.error(f"Active sheet '{BUDMAN_SHEET_NAME}' has wrong name "
+                         f"but has the correct columns. " 
+                         f"Renaming it to '{BUDMAN_SHEET_NAME}'.")
+            previous_title = ws.title  # Save the previous title.
+            ws.title = BUDMAN_SHEET_NAME  # Rename the active sheet.
+            logger.info(f"Renamed active sheet from '{previous_title}' to '{BUDMAN_SHEET_NAME}'.")
+            good_schema = True
         return good_schema
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))

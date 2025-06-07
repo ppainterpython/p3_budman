@@ -7,11 +7,11 @@
 #region Imports
 
 # python standard library modules and packages
-import logging, shutil, argparse
+import logging, shutil
 from typing import List
 # third-party modules and packages
 import p3_utils as p3u, p3logging as p3l
-import cmd2
+import cmd2, argparse
 from cmd2 import (Cmd2ArgumentParser, with_argparser)
 # local modules and packages
 #endregion Imports
