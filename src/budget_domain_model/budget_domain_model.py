@@ -76,7 +76,8 @@ import p3_utils as p3u, pyjson5, p3logging as p3l
 from openpyxl import Workbook, load_workbook
 # local modules and packages
 from budman_namespace import *
-from budget_storage_model import bsm_verify_folder
+from budget_storage_model import (bsm_verify_folder, bsm_get_workbook_names)
+                                  
 from .model_base_interface import BDMBaseInterface
 from .budget_domain_model_identity import BudgetDomainModelIdentity
 #endregion Imports
@@ -1218,8 +1219,10 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
                 # WORKBOOKS are found in WF_FOLDERS, scan them all.
                 # Resolve all folders in this workflow for fi_key, wf_key.
                 wb_list = []
+                # absolute path to the folder for this workflow and fi_key.
                 wf_f_ap = self.bsm_WF_FOLDER_abs_path(fi_key, wf_key, f_id)
-                wb_files = list(wf_f_ap.glob("*.xlsx"))
+                # TODO: refactor the tuple-list concept
+                wb_files = bsm_get_workbook_names(wf_f_ap)
                 for wb_p in wb_files:
                     wb_name = wb_p.name
                     wb_item = (wb_name, str(wb_p))

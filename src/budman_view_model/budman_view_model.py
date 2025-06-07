@@ -963,13 +963,22 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
                 logger.error(m)
                 raise RuntimeError(f"{pfx}{m}")
             logger.info(f"Start: ...")
-            # Return the current content of the DATA_CONTEXT.
+            # Gather the current content of the DATA_CONTEXT.
             bs = self.dc_BDM_STORE
             bs_str = p3u.first_n(str(bs))
             wbl = self.dc_WORKBOOKS
             wbl_count = len(wbl) if wbl else 0
             lwbl = self.dc_LOADED_WORKBOOKS
             lwbl_count = len(lwbl) if lwbl else 0
+            # Update the current list of workbooks open in Excel
+            excel_wb_list = self.DC.dc_EXCEL_WORKBOOKS
+            success, result = p3u.open_excel_workbooks()
+            if success:
+                # result is a WB_INFO_COLLECTION, create a list of wb_names
+                excel_wb_list = list(result.keys())
+                self.DC.dc_EXCEL_WORKBOOKS = excel_wb_list
+
+            # Prepare the output result
             result = f"Budget Manager Data Context:\n"
             result += f"{P2}{DC_INITIALIZED}: {self.dc_INITIALIZED}\n"
             result += f"{P2}{WB_NAME}: {self.dc_WB_NAME}\n"
@@ -980,8 +989,10 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             result += f"{P2}{DC_BDM_STORE}: {bs_str}\n"
             result += f"{P2}{DC_WORKBOOKS}: {wbl_count}\n"
             if wbl_count > 0:
+                result += f"{P4}wb_ref wb_name{29 * ' '}excel abs_path\n"
                 for i, (wb_name, wb_ap) in enumerate(wbl):
-                    result += f"{P4}wb_ref: {i:2} wb_name: {wb_name:<35} abs_path: '{wb_ap}'\n"
+                    ewb : bool = 'Y' if wb_name in excel_wb_list else 'N'
+                    result += f"{P4}  {i:2}   {wb_name:<35}   {ewb}   '{wb_ap}'\n"
             result += f"{P2}{DC_LOADED_WORKBOOKS}: {lwbl_count}\n"
             if lwbl_count > 0:
                 for i, (wb_name, wb) in enumerate(lwbl.items()):
@@ -1470,6 +1481,15 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
     def dc_LOADED_WORKBOOKS(self, value: LOADED_WORKBOOK_COLLECTION) -> None:
         """Set the current loaded workbooks value in DC."""
         self.DC.dc_LOADED_WORKBOOKS = value
+
+    @property 
+    def dc_EXCEL_WORKBOOKS(self) -> DATA_COLLECTION:
+        """Return the current collection of workbooks open in excel."""
+        return self.DC.dc_EXCEL_WORKBOOKS
+    @dc_EXCEL_WORKBOOKS.setter
+    def dc_EXCEL_WORKBOOKS(self, value: DATA_COLLECTION) -> None:
+        """Set the current collection of workbooks open in excel."""
+        self.DC.dc_EXCEL_WORKBOOKS = value
     # ------------------------------------------------------------------------ +
     #endregion BudMan Data Context Interface (client sdk) Properties
     # ------------------------------------------------------------------------ +

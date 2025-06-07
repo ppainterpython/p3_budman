@@ -49,7 +49,12 @@ if __name__ == "__main__":
         st = p3u.start_timer()
         wb_name = 'categorized_May2025_ALL.xlsx'
         excel = win32.GetActiveObject("Excel.Application")
-        wb_names = [wb.Name for wb in excel.Workbooks]
+        ewbs = excel.Workbooks
+        for wb in ewbs:
+            # wb.Name, wb.Author, wb.FullName is abs_path, wb.Path is to Folder, 
+            # wb.wb_name is the full file name.
+            print(f"Workbook: {wb.Name}, Author: {wb.Author}, FullName: {wb.FullName}, Path: {wb.Path}")
+        wb_names = [wb.Name for wb in ewbs]
         if wb_name in wb_names:
             print(f"Workbook '{wb_name}' is already open in Excel.")
         print(f"Open Excel Workbooks: {wb_names}")

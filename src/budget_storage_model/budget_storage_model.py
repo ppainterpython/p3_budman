@@ -23,7 +23,7 @@
 import logging, os, time
 from pathlib import Path
 from urllib.parse import urlparse, unquote
-from typing import Dict
+from typing import Dict, List
 
 # third-party modules and packages
 import p3_utils as p3u, pyjson5, p3logging as p3l
@@ -203,7 +203,7 @@ def bsm_BDM_STORE_new(bdms_url : str = None) -> str:
         raise
 #endregion bsm_BDM_STORE_new module
 # ---------------------------------------------------------------------------- +
-#region verify_folder(ap: Path, create:bool=True, raise_errors:bool=True) -> bool
+#region    bsm_verify_folder(ap: Path, create:bool=True, raise_errors:bool=True) -> bool
 def bsm_verify_folder(ap: Path, create:bool=True, raise_errors:bool=True) -> bool:
     """Verify the folder exists, create it if it does not exist.
 
@@ -231,7 +231,7 @@ def bsm_verify_folder(ap: Path, create:bool=True, raise_errors:bool=True) -> boo
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
-#endregion verify_folder(ap: Path, create:bool=True, raise_errors:bool=True) -> bool
+#endregion bsm_verify_folder(ap: Path, create:bool=True, raise_errors:bool=True) -> bool
 # ---------------------------------------------------------------------------- +
 #region    bsm_BDM_STORE_file_abs_path()
 def bsm_BDM_STORE_file_abs_path(filename : str, filetype : str, folder : str  ) -> Path:
@@ -245,4 +245,36 @@ def bsm_BDM_STORE_file_abs_path(filename : str, filetype : str, folder : str  ) 
         logger.error(p3u.exc_err_msg(e))
         raise
 #endregion bsm_BDM_STORE_file_abs_path()
+# ---------------------------------------------------------------------------- +
+#region    bsm_get_workbook_names()
+def bsm_get_workbook_names(wb_folder : Path) -> List[Path]:
+    """Return list of workbook Paths from wb_folder path."""
+    try:
+        p3u.is_obj_of_type("wb_folder", wb_folder, Path, raise_TypeError=True)
+        # Get a list of Path objects for all .xlsx files in the folder.
+        wb_paths = list(wb_folder.glob("*.xlsx"))
+        if not wb_paths:
+            logger.warning(f"No workbook files found in folder: {wb_folder}")
+            return []
+        filtered_wb_paths = bsm_filter_workbook_names(wb_paths)
+        return filtered_wb_paths
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion bsm_get_workbook_names()
+# ---------------------------------------------------------------------------- +
+#region    bsm_filter_workbook_names()
+def bsm_filter_workbook_names(wb_paths : List[Path]) -> List[Path]:
+    """Filter out paths for invalid workbooks."""
+    try:
+        p3u.is_obj_of_type("wb_name_list", wb_paths, list, raise_TypeError=True)
+        if len(wb_paths) == 0:
+            return []
+        ret_list : List[Path] = []
+        ret_list = [f for f in wb_paths if not f.name.startswith("~$")]
+        return ret_list
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion bsm_filter_workbook_names()
 # ---------------------------------------------------------------------------- +

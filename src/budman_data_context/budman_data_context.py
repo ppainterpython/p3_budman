@@ -33,7 +33,9 @@ from abc import ABC, abstractmethod
 from openpyxl import Workbook
 import logging, p3_utils as p3u, p3logging as p3l
 # local modules and packages
-from budman_namespace import *
+from src.budman_namespace import (
+    DATA_CONTEXT, WORKBOOK_LIST, LOADED_WORKBOOK_COLLECTION,
+    BDM_STORE, DATA_COLLECTION)
 from budman_data_context import BudManDataContextBaseInterface
 #endregion imports
 # ---------------------------------------------------------------------------- +
@@ -64,9 +66,10 @@ class BudManDataContext(BudManDataContextBaseInterface):
         self._WB_NAME = None     
         self._WB_REF = None
         self._BDM_STORE : BDM_STORE = None 
-        self._WORKBOOKS : WORKBOOK_LIST = None # from BudManDataContextBaseInterface
-        self._LOADED_WORKBOOKS : LOADED_WORKBOOK_COLLECTION = None # from BudManDataContextBaseInterface
-        self._DataContext = DATA_CONTEXT  # type: DATA_CONTEXT
+        self._WORKBOOKS : WORKBOOK_LIST = None 
+        self._LOADED_WORKBOOKS : LOADED_WORKBOOK_COLLECTION = None
+        self._EXCEL_WORKBOOKS : DATA_COLLECTION = None
+        self._DataContext = DATA_CONTEXT 
     #region Abstract Properties
     @property
     def dc_INITIALIZED(self) -> bool:
@@ -168,6 +171,15 @@ class BudManDataContext(BudManDataContextBaseInterface):
         """Set the list of workbooks currently loaded in the DC.
         Loaded means a file is loaded into memory and is available."""
         self._LOADED_WORKBOOKS = value
+
+    @property
+    def dc_EXCEL_WORKBOOKS(self) -> DATA_COLLECTION:
+        """Return the collection of workbooks currently open in Excel."""
+        return self._EXCEL_WORKBOOKS
+    @dc_EXCEL_WORKBOOKS.setter
+    def dc_EXCEL_WORKBOOKS(self, value: DATA_COLLECTION) -> None:
+        """Set the collection of workbooks currently open in Excel."""
+        self._EXCEL_WORKBOOKS = value
     #endregion Abstract Properties
     # ------------------------------------------------------------------------ +
     #region Abstract Methods
@@ -180,6 +192,7 @@ class BudManDataContext(BudManDataContextBaseInterface):
         self.dc_BDM_STORE = dict()
         self.dc_WORKBOOKS = []
         self.dc_LOADED_WORKBOOKS = dict()
+        self.dc_EXCEL_WORKBOOKS = DATA_COLLECTION
         self.dc_INITIALIZED = True
         return self
 

@@ -27,7 +27,7 @@ from openpyxl import Workbook
 # local modules and packages
 from src.budman_namespace import (
     DATA_CONTEXT, WORKBOOK_LIST, LOADED_WORKBOOK_COLLECTION,
-    BDM_STORE)
+    BDM_STORE, DATA_COLLECTION)
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 class BudManDataContextBaseInterface(ABC):
@@ -151,6 +151,17 @@ class BudManDataContextBaseInterface(ABC):
     def dc_LOADED_WORKBOOKS(self, value: LOADED_WORKBOOK_COLLECTION) -> None:
         """Set the list of workbooks currently loaded in the DC.
         Loaded means a file is loaded into memory and is available."""
+        pass
+
+    @property
+    @abstractmethod
+    def dc_EXCEL_WORKBOOKS(self) -> DATA_COLLECTION:
+        """Return the collection of workbooks currently open in Excel."""
+        pass
+    @dc_EXCEL_WORKBOOKS.setter
+    @abstractmethod
+    def dc_EXCEL_WORKBOOKS(self, value: LOADED_WORKBOOK_COLLECTION) -> None:
+        """Set the collection of workbooks currently open in Excel."""
         pass
     #endregion Abstract Properties
     # ------------------------------------------------------------------------ +

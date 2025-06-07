@@ -51,6 +51,12 @@ def configure_logging(logger_name : str, logtest : bool = True) -> None:
 #region backlog - main todo list
 """Main todo list for the Budget Manager application.
 
+    TODO: refactor WORKBOOKS and LOADED_WORKBOOKS in a single DATA_COLLECTION
+    with objects storing the WB_INFO such as loaded, in excel, abs_path, wb_name
+    etc.
+    TODO: Convert the WORKBOOK_LIST to DATA_COLLECTION from DATA_TUPLE_LIST. And
+    refine the FI_WF, WF_DATA_OBJECT, FI_DATA naming to just DATA_OBJECT. 
+    DATA_OBJECTs are association with an fi_key, wf_key, and wb_type.
     TODO: BDM methods needed:
         - get WB_TYPE from WB_NAME, same for FI_KEY and WF_KEY
     TODO: handle the same WB_NAME being in several wf folders.

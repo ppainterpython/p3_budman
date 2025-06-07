@@ -1,12 +1,14 @@
 <!-- markdownlint-disable MD033 -->
 
-# PyExcelBudget
+# p3_budman - Budget Manager Application
+
+__Budget Manager__ is an application to help track a budget using excel workbook data downloaded from Financial Institutions. This is a Paul Painter Python (p3) project. The shortname is `p3_budman`.
 
 ## Introduction
 
 This project began with the goal of learning about `pandas`, `Jupyter` in `VS Code` and the `python interactive mode`. At the same time, I was working on [pppActivityTracker](https://github.com/ppainterpython/pppActivityTracker.git) project. There I learned much about `Python logging` and and building a gui with `tkinter`.
 
-**Goal:** the goal of `PyExcelBudget` is to analyze excel and csv files downloaded from the bank and use `pandas` to perform data analysis on the transactions producing budget visualizations and insights (to find out where all the money has gone.)
+**Goal:** the goal of `p3_budman` is to analyze excel and csv files downloaded from the bank and use `pandas` to perform data analysis on the transactions producing budget visualizations and insights (to find out where all the money has gone.)
    > **Note**
    > Begun in the winter of 2025, this was my first exerience with python, in VS Code and the current version of GitHub Copilot. I tried to spend a lot of time with GHC, to really understand what it can help with, and what it screws up.
 

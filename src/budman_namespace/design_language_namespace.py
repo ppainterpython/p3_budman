@@ -26,25 +26,25 @@ DATA_TUPLE_LIST = List[DATA_TUPLE]
 # It is a list of WORKBOOK_ITEM tuples: (workbook_name, workbook_abs_path)
 WORKBOOK_LIST = DATA_TUPLE_LIST 
 WORKBOOK_ITEM = DATA_TUPLE
-LOADED_WORKBOOK_COLLECTION = Dict[str, Workbook]
-DATA_CONTEXT = Dict[str, Any]
-BDM_STORE = Dict[str, Any]
-BDM_CONFIG = Dict[str, Any]
+LOADED_WORKBOOK_COLLECTION = DATA_COLLECTION
+DATA_CONTEXT = DATA_OBJECT
+BDM_STORE = DATA_OBJECT
+BDM_CONFIG = DATA_OBJECT
 # MODEL_OBJECT : Type[object] = object()
 BDMO_OBJECT = DATA_OBJECT
 FI_OBJECT = DATA_OBJECT  # Financial Institution object
-FI_COLLECTION = Dict[str, FI_OBJECT]
+FI_COLLECTION = DATA_COLLECTION
 FI_DATA_OBJECT = DATA_OBJECT
 FI_DATA_COLLECTION = DATA_COLLECTION
 WF_OBJECT = DATA_OBJECT  # Workflow object
-WF_COLLECTION = Dict[str, WF_OBJECT] 
+WF_COLLECTION = DATA_COLLECTION 
 # WF_DATA_COLLECTION workflow data collection (Dictionary key names)
 # A dict for each FI, to hold the data for each workflow.
 # { wf_key: WF_DATA_OBJECT, ... }
 WF_DATA_COLLECTION = DATA_COLLECTION
 # A dict for worklow to hold data for a specific FI
 WF_DATA_OBJECT = DATA_OBJECT  # a DATA_OBJECT for a specific FI,WF
-BDM_WORKING_DATA_OBJECT = Dict[str, Any]
+BDM_WORKING_DATA_OBJECT = DATA_COLLECTION
 # ---------------------------------------------------------------------------- +
 # Budget Model Filesystem Path default constants 
 PATH = "_path"
