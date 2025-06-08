@@ -1742,7 +1742,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
             raise
 
     def bdmwd_WORKBOOK_abs_path_str(self, wb_name:str) -> str:
-        """Get the absolute path of a workbook in the BDMWD_WORKBOOKS.
+        """BDMWD-aware: Get the absolute path of a workbook in the BDMWD_WORKBOOKS.
 
         Args:
             wb_name (str): The name of the workbook to get the absolute path for.

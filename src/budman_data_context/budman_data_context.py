@@ -57,6 +57,7 @@ class BudManDataContext(BudManDataContextBaseInterface):
     super() to access the base class properties and methods appropriately.
     """
     # ------------------------------------------------------------------------ +
+    #region __init__()
     def __init__(self) -> None:
         self._dc_initialized = False 
         self._dc_BDM_STORE = None
@@ -70,6 +71,8 @@ class BudManDataContext(BudManDataContextBaseInterface):
         self._LOADED_WORKBOOKS : LOADED_WORKBOOK_COLLECTION = None
         self._EXCEL_WORKBOOKS : DATA_COLLECTION = None
         self._DataContext = DATA_CONTEXT 
+    #endregion __init__()
+    # ------------------------------------------------------------------------ +
     #region Concrete Properties
     @property
     def dc_INITIALIZED(self) -> bool:

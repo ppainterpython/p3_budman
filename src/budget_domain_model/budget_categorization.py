@@ -43,10 +43,11 @@ logger = logging.getLogger(__name__)
 # from column 1, or column 'A'.
 
 # BOA workbooks arrive with these columns, beginning with "Status". 
+BOA_ORIGINAL_DESCRIPTION_COL_NAME = "Original Description"
 BOA_WB_COLUMNS = [
     "Status", 
     "Date", 
-    "Original Description",
+    BOA_ORIGINAL_DESCRIPTION_COL_NAME,
     "Split Type", 
     "Category", 
     "Currency", 
@@ -70,7 +71,7 @@ LEVEL_3_COL_NAME = "Level3" # Added by BudMan.
 # A BudMan workbook will then have the following columns.
 # BudMan users these columns.
 DATE_COL_NAME = "Date" 
-ORIGINAL_DESCRIPTION_COL_NAME = "Original Description"
+ORIGINAL_DESCRIPTION_COL_NAME = BOA_ORIGINAL_DESCRIPTION_COL_NAME
 CURRENCY_COL_NAME = "Currency"
 AMOUNT_COL_NAME = "Amount" 
 ACCOUNT_NAME_COL_NAME = "Account Name"  

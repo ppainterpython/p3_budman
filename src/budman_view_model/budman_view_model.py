@@ -200,7 +200,7 @@ from budget_domain_model import (
     check_budget_category, check_sheet_columns,
     map_budget_category, category_map_count, 
     budget_category_mapping, BDMConfig,
-    check_sheet_schema)
+    check_sheet_schema, ORIGINAL_DESCRIPTION_COL_NAME)
 from budget_storage_model import *
 from budman_data_context import BDMWorkingData
 #endregion Imports
@@ -236,7 +236,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
     #region __init__() constructor method
     def __init__(self, bdms_url : str = None, settings : Dynaconf = None) -> None:
         super().__init__()
-        self._bdms_url : str = bdms_url
+        self._bdm_store_url : str = bdms_url
         self._settings = settings
         self._initialized : bool = False
         self.BDM_STORE_loaded : bool = False
@@ -260,7 +260,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
     @property
     def bdms_url(self) -> str:
         """Return the BDM_STORE URL."""
-        return self._bdms_url
+        return self._bdm_store_url
     @bdms_url.setter
     def bdms_url(self, url: str) -> None:
         """Set the BDM_STORE URL."""
@@ -268,7 +268,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             raise TypeError("bdms_url must be a string")
         if not url.startswith("file://") and not url.startswith("http://"):
             raise ValueError("bdms_url must be a valid file or http URL")
-        self._bdms_url = url
+        self._bdm_store_url = url
 
     @property
     def settings(self) -> Dynaconf:
@@ -999,7 +999,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
                 # Iterate the LOADED_WORKBOOKS_COLLECTION (a DATA_COLLECTION)
                 for wb_name in list(lwbl.keys()):
                     wb_index = self.DC.dc_WORKBOOK_index(wb_name)
-                    r += f"{P2}wb_index: {wb_index:>2} wb_name: '{wb_name:<40}'\n"
+                    result += f"{P4}wb_index: {wb_index:>2} wb_name: '{wb_name:<40}'\n"
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             return True, result
         except Exception as e:
@@ -1061,7 +1061,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
     # ------------------------------------------------------------------------ +
     #region WORKBOOKS_load_cmd() command > load wb 0
     def WORKBOOKS_load_cmd(self, cmd : Dict) -> Tuple[bool, str]:
-        """Load one or more WORKBOOKS in the DC.
+        """Model-aware: Load one or more WORKBOOKS in the DC.
 
         A load_cmd_workbooks command will use the wb_ref value in the cmd. 
         Value is a number or a wb_name.
@@ -1103,6 +1103,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
                 m = f"wb_ref '{wb_ref}' is not valid."
                 logger.error(m)
                 return False, m
+            # Now either all_wbs or a specific workbook is to be loaded.
             if all_wbs:
                 lwbl = self.model.bdmwd_FI_WORKBOOKS_load(fi_key, wf_key, wb_type)
                 self.DC.dc_WB_REF = ALL_KEY # Set the wb_ref in the DC.
@@ -1110,10 +1111,10 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
                 for wb_name in list(lwbl.keys()):
                     wb_index = self.DC.dc_WORKBOOK_index(wb_name)
                     r += f"{P2}wb_index: {wb_index:>2} wb_name: '{wb_name:<40}'\n"
-            elif wb_index >= 0:
+            else:
                 _ = self.model.bdmwd_WORKBOOK_load(wb_name)
-                r += f"{P2}wb_index: {i:>2} wb_name: '{wb_name:<40}'\n"
-                self.DC.dc_WB_REF = str(i)  # Set the wb_ref in the DC.
+                r += f"{P2}wb_index: {wb_index:>2} wb_name: '{wb_name:<40}'\n"
+                self.DC.dc_WB_REF = str(wb_index)  # Set the wb_ref in the DC.
                 self.DC._WB_NAME = wb_name  # Set the wb_name in the DC.
             return True, r
         except Exception as e:
@@ -1150,6 +1151,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
                 logger.error(m)
                 return False, m
             wb_ref = cmd.get(WB_REF, None) # from the cmd args
+            wb_type = cmd.get(WB_TYPE, WF_WORKING) or self.dc_WB_TYPE # from the cmd args
             if wb_ref is None and self.dc_WB_REF is None:
                     m = f"wb_ref is None, no action taken."
                     logger.error(m)
@@ -1171,27 +1173,29 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             # Now either all_wbs or a specific workbook is to be processed.
             # This applies to loaded workbooks only.
             # wb_count = len(self.dc_WORKBOOKS)
-            wf_wb_list = []
-            r = f"Budget Manager Categorization Workflow:\n"
+            wf_wb_list :LOADED_WORKBOOK_COLLECTION = None
+            r : str = f"Budget Manager Categorization Workflow \n"
             if all_wbs:
                 # If all_wbs, process all loaded workbooks.
-                for wb_name, wb in lwbl.items():
-                    wf_wb_list.append(wb)
+                wf_wb_list = lwbl
             else:
                 # Obtain the wb for wb_index, and save the wb_name
                 wb = self.dc_LOADED_WORKBOOKS[wb_name] 
-                wf_wb_list.append(wb)
+                wf_wb_list.append[wb_name] = wb
 
-            for wb in wf_wb_list:
-                wb = lwbl[wb_name]
+            for wb_name, wb in wf_wb_list.items():
                 ws = wb.active
                 # Check for budget category column, add it if not present.
                 # check_budget_category(ws)
                 check_sheet_columns(ws)
                 # Map the 'Original Description' column to the 'Budget Category' column.
-                map_budget_category(ws,"Original Description", BUDGET_CATEGORY_COL)
-                self.budget_domain_model.bdmwd_WORKBOOK_save(wb_name, wb)
-                r += f"Categorization Workflow applied to '{wb_name}'\n"
+                map_budget_category(ws,ORIGINAL_DESCRIPTION_COL_NAME, BUDGET_CATEGORY_COL)
+                # TODO: Fix the _save dependence on the DC fi_key, wf_key, wb_type.
+                # move tot he BDMWorkingData class.
+                self.model.bdmwd_WORKBOOK_save(wb_name, wb)
+                wb_index = self.DC.dc_WORKBOOK_index(wb_name)
+                r += f"{P2}Task: map_budget_category applied to " 
+                r += f"wb_index: {wb_index:>2} wb_name: '{wb_name:<40}', wb saved. \n"
             return True, r
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))

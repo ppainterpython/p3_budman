@@ -31,7 +31,26 @@ logger = logging.getLogger(__name__)
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
 class BDMWorkingData(BudManDataContext, BDMClientInterface):
-    """Abstract base class for the Budget Domain Model Working Data (BDMWD). """
+    """DC and Model-Aware: BDMWD -Budget Domain Model Working Data. 
+    
+        BDMWorkingData sits between the ViewModel and the Model. Its role is
+        to serve as the Data Context provider to the ViewModel, so it provides
+        the BudManDataContext interface. Some of the concrete properties and
+        methods from BudManDataContext are overridden to specialize the access
+        to the Model.
+
+        Assess to the Model is through binding to model property required by
+        the BDMClientInterface. With that, BDMWorkingData can access the the 
+        whole Model.
+
+        A ViewModel considers the BDMWD properties and methods as an extension
+        of the DataContext (DC) object binding. A client such as the ViewModel
+        is intended to use the BudManDataContext Interface on the DC. The hope
+        is that these properties and methods will satisfy most needs. However,
+        if the need arises, the ViewModel can access the BDMWD Interface
+        also provided. But the design encourages that to happen in the concrete
+        overrides provided in BDMWD DC functions.
+    """
     # ======================================================================== +
     #region    BDMWorkingData class intrinsics
     # ------------------------------------------------------------------------ +
@@ -77,18 +96,6 @@ class BDMWorkingData(BudManDataContext, BDMClientInterface):
         # 
     #endregion __init__() method initializes the BDMWorkingData instance.
     # ------------------------------------------------------------------------ +
-    #region    BDMClientInterface concrete property implementation.
-    @property
-    def model(self) -> MODEL_OBJECT:
-        """Return the model object reference."""
-        return self._budget_domain_model
-    @model.setter
-    def model(self, bdm: MODEL_OBJECT) -> None:
-        """Set the model object reference."""
-        if not isinstance(bdm, MODEL_OBJECT):
-            raise TypeError(f"model must be a {MODEL_OBJECT} instance")
-        self._budget_domain_model = bdm
-    #endregion BDMClientInterface concrete property implementation.
     #endregion    BDMWorkingData class intrinsics
     # ======================================================================== +
 
@@ -146,41 +153,36 @@ class BDMWorkingData(BudManDataContext, BDMClientInterface):
         except Exception as e:
             return self.BMVM_cmd_exception(e)
 
-
     # ------------------------------------------------------------------------ +
 
     #endregion BudManDataContext (Interface) Property/Method Overrides.
     # ======================================================================== +
 
     # ======================================================================== +
-    #region    BDMWorkingDataBaseInterface BDMWD DC-aware Interface.
+    #region    BDMClientInterface concrete implementation.
     # ------------------------------------------------------------------------ +
-    def bdmwd_WORKBOOKS(self) -> WORKBOOK_LIST:
-        """Model-Aware: Return the WORKBOOK_LIST from the BDMWD."""
-        # Ask the model for the bdmwd_WORKBOOKS.
-        return self.model.bdmwd_WORKBOOKS_get()
-    def bdmwd_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_COLLECTION:
-        """Model-Aware: Return the LOADED_WORKBOOK_COLLECTION from the BDMWD."""
-        # Ask the model for the bdmwd_LOADED_WORKBOOKS.
-        return self.model.bdmwd_LOADED_WORKBOOKS_get()
+    #region    BDMClientInterface Interface Properties
+    @property
+    def model(self) -> MODEL_OBJECT:
+        """Return the model object reference."""
+        return self._budget_domain_model
+    @model.setter
+    def model(self, bdm: MODEL_OBJECT) -> None:
+        """Set the model object reference."""
+        if not isinstance(bdm, MODEL_OBJECT):
+            raise TypeError(f"model must be a {MODEL_OBJECT} instance")
+        self._budget_domain_model = bdm
+    #endregion BDMClientInterface Interface Properties
+    # ------------------------------------------------------------------------ +
+    #endregion BDMClientInterface concrete implementation.
+    # ======================================================================== +
 
-#endregion BDMWorkingDataBaseInterface BDMWD Interface.
+    # ======================================================================== +
+    #region    BDMWD Interface concrete implementation.
     # ------------------------------------------------------------------------ +
-    #region    BDMWorkingDataBaseInterface BDMWD (fi,wf,wb)-aware Interface.
-    # ------------------------------------------------------------------------ +
-    def bdmwd_WF_KEY_validate(self, wf_key: str) -> bool:
-        """Model-Aware: Validate the provided WF_KEY."""
-        return self.model.bdm_WF_KEY_validate(wf_key)
-    def bdmwd_FI_WORKBOOKS_load(self, 
-                                fi_key: str, 
-                                wf_key : str, 
-                                wb_type : str) -> LOADED_WORKBOOK_COLLECTION:
-        """Load WORKBOOKS for the FI,WF,WB."""
-        lwbs = self.model.bdmwd_FI_WORKBOOKS_load(fi_key, wf_key, wb_type)
-        self.dc_LOADED_WORKBOOKS = lwbs
-        return 
+    #region    BDMWorkingDataBaseInterface BDMWD DC-aware Interface.
     def bdmwd_WB_REF_resolve(self, wb_ref:str|int) -> Tuple[bool,int]:
-        """BDMWD-Only: Resolve a wb_ref to valid wb_index, wb_name, or ALL_KEY.
+        """DC-BDMWD-Only: Resolve a wb_ref to valid wb_index, wb_name, or ALL_KEY.
 
         Args:
             wb_ref (str|int): The wb_ref to validate and resolve. Expecting
@@ -215,7 +217,32 @@ class BDMWorkingData(BudManDataContext, BDMClientInterface):
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
-    #endregion BDMWorkingDataBaseInterface BDMWD Interface.
+    #endregion BDMWorkingDataBaseInterface BDMWD DC-aware Interface.
+    # ------------------------------------------------------------------------ +
+    #region    BDMWorkingData Interface BDMWD Model-aware(fi,wf,wb) Interface.
+    # ------------------------------------------------------------------------ +
+    def bdmwd_WORKBOOKS(self) -> WORKBOOK_LIST:
+        """Model-Aware: Return the WORKBOOK_LIST from the BDMWD."""
+        # Ask the model for the bdmwd_WORKBOOKS.
+        return self.model.bdmwd_WORKBOOKS_get()
+    def bdmwd_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_COLLECTION:
+        """Model-Aware: Return the LOADED_WORKBOOK_COLLECTION from the BDMWD."""
+        # Ask the model for the bdmwd_LOADED_WORKBOOKS.
+        return self.model.bdmwd_LOADED_WORKBOOKS_get()
+    def bdmwd_WF_KEY_validate(self, wf_key: str) -> bool:
+        """Model-Aware: Validate the provided WF_KEY."""
+        return self.model.bdm_WF_KEY_validate(wf_key)
+    def bdmwd_FI_WORKBOOKS_load(self, 
+                                fi_key: str, 
+                                wf_key : str, 
+                                wb_type : str) -> LOADED_WORKBOOK_COLLECTION:
+        """Load WORKBOOKS for the FI,WF,WB."""
+        lwbs = self.model.bdmwd_FI_WORKBOOKS_load(fi_key, wf_key, wb_type)
+        self.dc_LOADED_WORKBOOKS = lwbs
+        return 
+    #endregion BDMWorkingData Interface BDMWD Interface.
+    # ------------------------------------------------------------------------ +
+    #endregion BDMWD Interface concrete implementation.
     # ======================================================================== +
 
 
