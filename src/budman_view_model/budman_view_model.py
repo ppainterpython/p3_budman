@@ -990,14 +990,16 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             result += f"{P2}{DC_WORKBOOKS}: {wbl_count}\n"
             if wbl_count > 0:
                 result += f"{P4}wb_ref wb_name{29 * ' '}excel abs_path\n"
+                # Enumerate the WORKBOOK_LIST (a DATA_TUPLE_LIST)
                 for i, (wb_name, wb_ap) in enumerate(wbl):
                     ewb : bool = 'Y' if wb_name in excel_wb_list else 'N'
                     result += f"{P4}  {i:2}   {wb_name:<35}   {ewb}   '{wb_ap}'\n"
             result += f"{P2}{DC_LOADED_WORKBOOKS}: {lwbl_count}\n"
             if lwbl_count > 0:
-                for i, (wb_name, wb) in enumerate(lwbl.items()):
-                    wb_ref = self.DC.dc_WORKBOOK_index(wb_name)
-                    result += f"{P4}wb_ref: {wb_ref:2} {wb_name}\n"
+                # Iterate the LOADED_WORKBOOKS_COLLECTION (a DATA_COLLECTION)
+                for wb_name in list(lwbl.keys()):
+                    wb_index = self.DC.dc_WORKBOOK_index(wb_name)
+                    r += f"{P2}wb_index: {wb_index:>2} wb_name: '{wb_name:<40}'\n"
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             return True, result
         except Exception as e:
@@ -1094,23 +1096,25 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             wf_key = self.dc_WF_KEY
             wb_type = self.dc_WB_TYPE
             wb_count = len(self.dc_WORKBOOKS)
-            r = f"Budget Manager Workbooks({wb_count}):\n"
-            all_wbs, wb_index = self.model.bdmwd_WB_REF_resolve(wb_ref)
-
+            r = f"Budget Manager Loaded Workbooks({wb_count}):\n"
+            all_wbs, wb_index, wb_name = self.DC.bdmwd_WB_REF_resolve(wb_ref)
+            # Check for an invalid wb_ref value.
+            if not all_wbs and wb_index == -1 and wb_name is None:
+                m = f"wb_ref '{wb_ref}' is not valid."
+                logger.error(m)
+                return False, m
             if all_wbs:
                 lwbl = self.model.bdmwd_FI_WORKBOOKS_load(fi_key, wf_key, wb_type)
-                for i, (wb_name, wb_ap) in enumerate(lwbl):
-                    l = "Yes" if self.DC.dc_WORKBOOK_loaded(wb_name) else "No "
-                    r += f"{P2}{i:>2} {l} {wb_name:<40} '{wb_ap}'\n"
-                    self.DC._WB_NAME = None  # Reset the wb_name in the DC.
+                self.DC.dc_WB_REF = ALL_KEY # Set the wb_ref in the DC.
+                self.DC.dc_WB_NAME = None   # Set the wb_name in the DC.
+                for wb_name in list(lwbl.keys()):
+                    wb_index = self.DC.dc_WORKBOOK_index(wb_name)
+                    r += f"{P2}wb_index: {wb_index:>2} wb_name: '{wb_name:<40}'\n"
             elif wb_index >= 0:
-                wb_info = self.dc_WORKBOOKS[wb_index] if wb_index < wb_count else None
-                if wb_info is not None:
-                    wb_name = wb_info[0]
-                    wb = self.model.bdmwd_WORKBOOK_load(wb_name)
-                    l = "Yes" if self.DC.dc_WORKBOOK_loaded(wb_name) else "No "
-                    r += f"{P2}{wb_index:>2} {l} {wb_name:<40} '{wb_name}'\n"
-                    self.DC._WB_NAME = wb_name  # Set the wb_name in the DC.
+                _ = self.model.bdmwd_WORKBOOK_load(wb_name)
+                r += f"{P2}wb_index: {i:>2} wb_name: '{wb_name:<40}'\n"
+                self.DC.dc_WB_REF = str(i)  # Set the wb_ref in the DC.
+                self.DC._WB_NAME = wb_name  # Set the wb_name in the DC.
             return True, r
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
@@ -1140,52 +1144,54 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
         """
         try:
             pfx = f"{self.__class__.__name__}.{self.FI_init_cmd.__name__}: "
+            logger.info(f"Start: ...")
             if p3u.is_not_obj_of_type("cmd",cmd,dict,pfx):
                 m = f"Invalid cmd object, no action taken."
                 logger.error(m)
-                raise RuntimeError(f"{pfx}{m}")
-            logger.info(f"Start: ...")
-            wb_ref = cmd.get(WB_REF, None)
-            if wb_ref is None:
-                m = f"wb_ref is None, no action taken."
-                logger.error(m)
-                raise RuntimeError(f"{pfx}{m}")
-            fi_key = self.dc_FI_KEY
-            wf_key = self.dc_WF_KEY
-            wb_type = self.dc_WB_TYPE
-            wb_name = self.dc_WB_NAME
-            wb_count = len(self.dc_WORKBOOKS)
-            wb_refnum = -1
-            wf_wbl = []
-            r = f"Budget Manager Categorization Workflow:\n"
-            if wb_ref.isdigit():
-                wb_refnum = int(wb_ref)
-                wb_info = self.dc_WORKBOOKS[wb_refnum] if wb_refnum < wb_count else None
-                if wb_info is not None:
-                    wb_name = wb_info[0]
-            elif wb_ref == ALL_KEY:
-                wb_name = ALL_KEY # not implemented yet
-            # Build a list of LOADED_WORKBOOKS to process.
+                return False, m
+            wb_ref = cmd.get(WB_REF, None) # from the cmd args
+            if wb_ref is None and self.dc_WB_REF is None:
+                    m = f"wb_ref is None, no action taken."
+                    logger.error(m)
+                    return False, m
+            # Verify LOADED_WORKBOOKS to process.
+            wb_ref = wb_ref or self.dc_WB_REF
             lwbl = self.dc_LOADED_WORKBOOKS
             lwbl_count = len(lwbl) if lwbl else 0
             if lwbl_count == 0:
                 m = f"No LOADED_WORKBOOKS found, no action taken."
                 logger.error(m)
                 return False, m
-            if not self.DC.dc_WORKBOOK_loaded(wb_name):
-                m = f"wb_name '{wb_name}' not found in LOADED_WORKBOOKS."
+            all_wbs, wb_index, wb_name = self.DC.bdmwd_WB_REF_resolve(wb_ref)
+            # Check for an invalid wb_ref value.
+            if not all_wbs and wb_index == -1 and wb_name is None:
+                m = f"wb_ref '{wb_ref}' is not valid."
                 logger.error(m)
                 return False, m
-            # wb = self.budget_domain_model.bdmwd_WORKBOOK_load(wb_name)
-            wb = lwbl[wb_name]
-            ws = wb.active
-            # Check for budget category column, add it if not present.
-            # check_budget_category(ws)
-            check_sheet_columns(ws)
-            # Map the 'Original Description' column to the 'Budget Category' column.
-            map_budget_category(ws,"Original Description", BUDGET_CATEGORY_COL)
-            self.budget_domain_model.bdmwd_WORKBOOK_save(wb_name, wb)
-            r += f"Categorization Workflow applied to '{wb_name}'\n"
+            # Now either all_wbs or a specific workbook is to be processed.
+            # This applies to loaded workbooks only.
+            # wb_count = len(self.dc_WORKBOOKS)
+            wf_wb_list = []
+            r = f"Budget Manager Categorization Workflow:\n"
+            if all_wbs:
+                # If all_wbs, process all loaded workbooks.
+                for wb_name, wb in lwbl.items():
+                    wf_wb_list.append(wb)
+            else:
+                # Obtain the wb for wb_index, and save the wb_name
+                wb = self.dc_LOADED_WORKBOOKS[wb_name] 
+                wf_wb_list.append(wb)
+
+            for wb in wf_wb_list:
+                wb = lwbl[wb_name]
+                ws = wb.active
+                # Check for budget category column, add it if not present.
+                # check_budget_category(ws)
+                check_sheet_columns(ws)
+                # Map the 'Original Description' column to the 'Budget Category' column.
+                map_budget_category(ws,"Original Description", BUDGET_CATEGORY_COL)
+                self.budget_domain_model.bdmwd_WORKBOOK_save(wb_name, wb)
+                r += f"Categorization Workflow applied to '{wb_name}'\n"
             return True, r
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
@@ -1228,7 +1234,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             wb_name = self.dc_WB_NAME
             all_wbs : bool = False
             r = f"Budget Manager Categorization Workflow:\n"
-            all_wbs, wb_index = self.model.bdmwd_WB_REF_resolve(wb_ref)
+            all_wbs, wb_index = self.bdmwd_WB_REF_resolve(wb_ref)
             # TODO: what_if arg stops here. Build a list of LOADED_WORKBOOKS to process.
             # Check cmd needs loaded workbooks to check
             lwbl = self.dc_LOADED_WORKBOOKS

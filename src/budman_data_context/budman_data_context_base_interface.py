@@ -202,6 +202,22 @@ class BudManDataContextBaseInterface(ABC):
         pass
 
     @abstractmethod
+    def dc_WORKBOOK_name(self, wb_index: int) -> str:
+        """Return the wb_name associated with the give wb_index."""
+        pass 
+       
+    @abstractmethod
+    def dc_WORKBOOK_index(self, wb_name: str = None) -> int:
+        """Return the index of a workbook based on wb_name.
+        
+        Args:
+            wb_name (str): The name of the workbook to find.
+        Returns:
+            int: The index of the workbook in the WORKBOOK_LIST, or -1 if not found.
+        """
+        pass
+
+    @abstractmethod
     def dc_WORKBOOK_load(self, wb_name: str) -> Workbook:
         """Load the specified workbook by name."""
         pass
@@ -219,17 +235,6 @@ class BudManDataContextBaseInterface(ABC):
     @abstractmethod
     def dc_WORKBOOK_add(self, wb_name: str, wb: Workbook) -> None:
         """Add a new workbook to the data context."""
-        pass
-
-    @abstractmethod
-    def dc_WORKBOOK_index(self, wb_name: str = None) -> int:
-        """Return the index of a workbook based on wb_name.
-        
-        Args:
-            wb_name (str): The name of the workbook to find.
-        Returns:
-            int: The index of the workbook in the WORKBOOK_LIST, or -1 if not found.
-        """
         pass
 
     @abstractmethod

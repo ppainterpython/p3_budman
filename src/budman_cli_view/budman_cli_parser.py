@@ -321,7 +321,7 @@ class BudManCLIParser():
                 "wb_ref", nargs="?",
                 action="store", 
                 default='all',
-                help="Workbook reference, name or number of a loaded workbook.")
+                help="Workbook reference as either the name or number of a loaded workbook.")
 
             # Instead of propagating, just add common args directly to each subparser:
             for subparser in [check_subcmd_parser, reload_subcmd_parser, categorization_subcmd_parser]:
