@@ -1181,7 +1181,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             else:
                 # Obtain the wb for wb_index, and save the wb_name
                 wb = self.dc_LOADED_WORKBOOKS[wb_name] 
-                wf_wb_list.append[wb_name] = wb
+                wf_wb_list = {wb_name: wb}
 
             for wb_name, wb in wf_wb_list.items():
                 ws = wb.active

@@ -42,40 +42,48 @@ logger = logging.getLogger(__name__)
 # A list of cells from a worksheet row is 0-based, with cell(0) being the value
 # from column 1, or column 'A'.
 
-# BOA workbooks arrive with these columns, beginning with "Status". 
+# Symbols for BOA .csv files.
 BOA_ORIGINAL_DESCRIPTION_COL_NAME = "Original Description"
+BOA_DATE_COL_NAME = "Date"
+BOA_CURRENCY_COL_NAME = "Currency"
+BOA_AMOUNT_COL_NAME = "Amount"
+BOA_ACCOUNT_NAME_COL_NAME = "Account Name"
+
+# BOA csv files originals contain these columns, beginning with "Status".
 BOA_WB_COLUMNS = [
     "Status", 
-    "Date", 
+    BOA_DATE_COL_NAME, 
     BOA_ORIGINAL_DESCRIPTION_COL_NAME,
     "Split Type", 
     "Category", 
-    "Currency", 
-    "Amount", 
+    BOA_CURRENCY_COL_NAME, 
+    BOA_AMOUNT_COL_NAME, 
     "User Description", 
     "Memo", 
     "Classification", 
-    "Account Name",
+    BOA_ACCOUNT_NAME_COL_NAME,
     "Simple Description"
     ]
 
-# BudMan insert 5 additional columns prior to processing transactions. These
+# BudMan adds additional columns prior to processing transactions. These
 # columns are filled by BudMan workflows, such as categorization.
-BUDGET_CATEGORY_COL_NAME = "Budget Category"  # Added by BudMan.
-ACCOUNT_CODE_COL_NAME = "Account Code" # Added by BudMan.
-LEVEL_1_COL_NAME = "Level1" # Added by BudMan.
-LEVEL_2_COL_NAME = "Level2" # Added by BudMan.
-LEVEL_3_COL_NAME = "Level3" # Added by BudMan.
+BUDGET_CATEGORY_COL_NAME = "Budget Category"  
+ACCOUNT_CODE_COL_NAME = "Account Code" 
+LEVEL_1_COL_NAME = "Level1" 
+LEVEL_2_COL_NAME = "Level2" 
+LEVEL_3_COL_NAME = "Level3" 
+DEBIT_CREDIT_COL_NAME = "DebitOrCredit"  
+YEAR_MONTH_COL_NAME = "YearMonth"  
 
-
-# A BudMan workbook will then have the following columns.
-# BudMan users these columns.
-DATE_COL_NAME = "Date" 
+# BudMan utilizes the following columns from the BOA side:
+DATE_COL_NAME = BOA_DATE_COL_NAME 
 ORIGINAL_DESCRIPTION_COL_NAME = BOA_ORIGINAL_DESCRIPTION_COL_NAME
-CURRENCY_COL_NAME = "Currency"
-AMOUNT_COL_NAME = "Amount" 
-ACCOUNT_NAME_COL_NAME = "Account Name"  
+CURRENCY_COL_NAME = BOA_CURRENCY_COL_NAME
+AMOUNT_COL_NAME = BOA_AMOUNT_COL_NAME 
+ACCOUNT_NAME_COL_NAME = BOA_ACCOUNT_NAME_COL_NAME  
 
+# BudMan processes the original .csv file from BOA to product an excel
+# workbook will then have the following columns:
 BUDMAN_WB_COLUMNS = [
     "Status", 
     DATE_COL_NAME, 
@@ -93,7 +101,9 @@ BUDMAN_WB_COLUMNS = [
     ACCOUNT_CODE_COL_NAME,
     LEVEL_1_COL_NAME,
     LEVEL_2_COL_NAME,
-    LEVEL_3_COL_NAME
+    LEVEL_3_COL_NAME,
+    DEBIT_CREDIT_COL_NAME,
+    YEAR_MONTH_COL_NAME
     ]
 
 # Column indices for a list of cells from a row in the BOA workbook.
@@ -113,34 +123,53 @@ BOA_WB_COL_DIMENSIONS = {
     BUDGET_CATEGORY_COL_NAME: 40,
     LEVEL_1_COL_NAME: 20,
     LEVEL_2_COL_NAME: 20,
-    LEVEL_3_COL_NAME: 20
+    LEVEL_3_COL_NAME: 20,
+    DEBIT_CREDIT_COL_NAME: 10,
+    YEAR_MONTH_COL_NAME: 20
 }
 BUDMAN_SHEET_NAME = "TransactionData"
 
 BUDMAN_REQUIRED_COLUMNS = [
-    DATE_COL_NAME, ORIGINAL_DESCRIPTION_COL_NAME, CURRENCY_COL_NAME,
-    AMOUNT_COL_NAME, ACCOUNT_CODE_COL_NAME, BUDGET_CATEGORY_COL_NAME,
-    LEVEL_1_COL_NAME, LEVEL_2_COL_NAME, LEVEL_3_COL_NAME
+    DATE_COL_NAME, 
+    ORIGINAL_DESCRIPTION_COL_NAME, 
+    CURRENCY_COL_NAME,
+    AMOUNT_COL_NAME, 
+    ACCOUNT_CODE_COL_NAME, 
+    BUDGET_CATEGORY_COL_NAME,
+    LEVEL_1_COL_NAME, 
+    LEVEL_2_COL_NAME, 
+    LEVEL_3_COL_NAME,
+    DEBIT_CREDIT_COL_NAME,
+    YEAR_MONTH_COL_NAME
 ]
 
 #endregion Globals and Constants
 #region dataclasses
+TRANS_PARAMETERS = ["tid", "date", "description", "currency",
+                    "account_code", "amount", "category",
+                    "level1", "level2", "level3", 
+                    "debit_credit", "year_month"]
 @dataclass
 class TransactionData:
     """Data class to hold transaction data."""
     tid: str = None   # Transaction ID.
-    date: datetime.date = None  # Transaction date - ISO 8601 format.
-    description: str = None  # Transaction description.
-    currency: str = None  # Transaction currency.
-    account: str = None  # Account code.
-    amount: float = 0.0  # Transaction amount.
-    category: str = None  # Transaction budget category.
+    date: datetime.date = None
+    description: str = None
+    currency: str = None
+    account_code: str = None
+    amount: float = 0.0
+    category: str = None
+    level1: str = None
+    level2: str = None
+    level3: str = None
+    debit_credit: str = None  # 'D' for debit, 'C' for credit.
+    year_month: str = None  # Formant 'YYYY-MM-mmm' e.g., 2025-01-Jan
 
     def data_str(self) -> str:
         """Return a string representation of the transaction data."""
         ret =  f"{self.tid:12}|{self.date.strftime("%m/%d/%Y")}|"
-        ret += f"{self.account:26}|" 
-        ret += f"{self.amount:>+12.2f}|" 
+        ret += f"{self.year_month:11}|{self.account_code:26}|" 
+        ret += f"{self.amount:>+12.2f}|{self.debit_credit:1}|" 
         ret += f"({len(self.description):03}){self.description:102}|->" 
         ret += f"|({len(self.category):03})|{self.category:40}|"
         return ret
@@ -180,14 +209,17 @@ def check_sheet_columns(sheet: Worksheet, add_columns: bool = True) -> bool:
     """Check that the sheet is ready to process transactions.
     
     BudMan uses these columns to process transactions in a sheet:
-    1. 'Date' - the date of the transaction. It is a datetime.date object.
-    2. 'Original Description' - the description of the transaction. It is a str.
-    3. 'Amount' - the amount of the transaction. It is a float.
-    4. 'Account Code' - the short-name of the account for the transaction. It is a str.
-    5. 'Budget Category' - the budget category for the transaction. It is a str.
-    6. 'Level1' - the first level of the budget category. It is a str.
-    7. 'Level2' - the second level of the budget category. It is a str.
-    8. 'Level3' - the third level of the budget category. It is a str.
+    DATE_COL_NAME - date of the transaction.
+    ORIGINAL_DESCRIPTION_COL_NAME - the description of the transaction.
+    CURRENCY_COL_NAME - the unit of currency, USD, EUR, etc.
+    AMOUNT_COL_NAME - the amount of the transaction, as a float.
+    ACCOUNT_CODE_COL_NAME - the short-name of the account for the transaction. 
+    BUDGET_CATEGORY_COL_NAME - the budget category for the transaction.
+    LEVEL_1_COL_NAME - the first level of the budget category.
+    LEVEL_2_COL_NAME - the second level of the budget category.
+    LEVEL_3_COL_NAME - the third level of the budget category.
+    DEBIT_CREDIT_COL_NAME - 'D' for debit, 'C' for credit.
+    YEAR_MONTH_COL_NAME - trans date in format 'YYYY-MM-mmm', e.g. '2025-01-Jan'.
 
     Args:
         sheet (openpyxl.worksheet): The worksheet to check.
@@ -206,7 +238,7 @@ def check_sheet_columns(sheet: Worksheet, add_columns: bool = True) -> bool:
         missing_columns = [col for col in BUDMAN_REQUIRED_COLUMNS if col not in col_names]
         
         if not missing_columns:
-            logger.info("All required columns are present.")
+            logger.info(f"Required columns are present:('{sheet.title}')")
             return True
         
         if add_columns:
@@ -218,11 +250,11 @@ def check_sheet_columns(sheet: Worksheet, add_columns: bool = True) -> bool:
                 # Set column width based on predefined dimensions
                 width = BOA_WB_COL_DIMENSIONS.get(col_name, 20)
                 sheet.column_dimensions[sheet.cell(row=1, column=i).column_letter].width = width
-                logger.info(f"Adding column '{col_name}' at index = {i}, "
+                logger.debug(f"Column '{col_name}' added at index = {i}, "
                             f"column_letter = '{sheet.cell(row =1, column=i).column_letter}'")
             logger.info(f"Added missing columns: {', '.join(missing_columns)}")
         else:
-            logger.error(f"Missing required columns: {', '.join(missing_columns)}")
+            logger.error(f"Sheet('{sheet.title}') missing required columns: {', '.join(missing_columns)}")
             return False
         logger.info("Completed checks for required columns.")
         return True
@@ -358,8 +390,9 @@ def WORKSHEET_data(ws:Worksheet, just_values:bool=False) -> list[TransactionData
         if not isinstance(ws, Worksheet):
             raise TypeError(f"Expected 'ws' arg to be a Worksheet, got {type(ws)}")
         transactions = []
+        headers = [cell.value for cell in ws[1]]  # Get the header row values.
         for row in ws.iter_rows(min_row=2, values_only=just_values):
-            transaction = WORKSHEET_row_data(row)  # Extract transaction data from the row.
+            transaction = WORKSHEET_row_data(row,headers)  # Extract transaction data from the row.
             transactions.append(transaction)
         return transactions
     except Exception as e:
@@ -368,71 +401,59 @@ def WORKSHEET_data(ws:Worksheet, just_values:bool=False) -> list[TransactionData
 #endregion WORKSHEET_data(ws:Worksheet) -> List[TransactionData]
 # ---------------------------------------------------------------------------- +
 #region WORKSHEET_row_data(row:list) -> TransactionData
-def WORKSHEET_row_data(row:tuple,hdr:list) -> TransactionData:
+def WORKSHEET_row_data(row:tuple,hdr:list=BUDMAN_WB_COLUMNS) -> TransactionData:
     """Extract transaction data from a worksheet row.
 
     Args:
-        row (list): Array of cell values.
-        hdr (list): The header list used to index values from the row.
+        row (list): List of either cells or just the cell values.
+        hdr (list): A list of header column names used to index values from the row.
 
     Returns:
         list[TransactionData]: A list of TransactionData objects.
     """
     try:
+        # Validation
         p3u.is_not_obj_of_type("row", row, tuple, raise_TypeError=True)
         p3u.is_not_obj_of_type("hdr", hdr, list, raise_TypeError=True)
-        # TODO: Verify and obtain the necessary index values from the header.
-        # If the hdr is incorrect, we are screwed
-        date_i = hdr.index(DATE_COL_NAME) if DATE_COL_NAME in hdr else -1
-        desc_i = hdr.index(ORIGINAL_DESCRIPTION_COL_NAME) if ORIGINAL_DESCRIPTION_COL_NAME in hdr else -1
-        currency_i = hdr.index(CURRENCY_COL_NAME) if CURRENCY_COL_NAME in hdr else -1
-        amount_i = hdr.index(AMOUNT_COL_NAME) if AMOUNT_COL_NAME in hdr else -1
-        account_i = hdr.index(ACCOUNT_NAME_COL_NAME) if ACCOUNT_NAME_COL_NAME in hdr else -1
-        acct_code_i = hdr.index(ACCOUNT_CODE_COL_NAME) if ACCOUNT_CODE_COL_NAME in hdr else -1
-        budget_cat_i = hdr.index(BUDGET_CATEGORY_COL_NAME) if BUDGET_CATEGORY_COL_NAME in hdr else -1
-        if -1 in (date_i, desc_i, currency_i, amount_i, account_i, 
-                  acct_code_i,budget_cat_i):
-            raise ValueError(f"Missing required columns in header: {hdr}. "
-                             f"Expected columns: {BUDMAN_REQUIRED_COLUMNS[1:]}")
+        if len(row) == 0 or len(hdr) == 0 or len(row) != len(hdr):
+            raise ValueError("Row and Hdr must be equal, non-zero length.")
+        # Check if all required columns are present in the hdr.
+        missing_columns = [col for col in BUDMAN_REQUIRED_COLUMNS if col not in hdr]
+        if missing_columns:
+            raise ValueError(f"Hdr is missing required columns: {missing_columns}")
+        # First, determine if row contains Cells or value-only cell.value's and
+        # extract the values accordingly.
         if isinstance(row[0], Cell):
-            # This is Tuple of Cell objects.
-            t_date_str = p3u.iso_date_only_string(row[date_i].value)  # Date is in the second column.
-            t_desc = row[desc_i].value  # Description is in the third column.
-            t_currency = row[currency_i].value  # Currency is in the fifth column.
-            t_amt_str = str(row[amount_i].value)
-            t_acct_str = row[account_i].value 
+            # This is a Tuple of Cell objects.
+            row_values = [cell.value for cell in row]
         else:
-            # This is Tuple of Cell values-only.
-            t_date_str = p3u.iso_date_only_string(row[date_i])  # Date is in the second column.
-            t_desc = row[desc_i]  # Description is in the third column.
-            t_currency = row[currency_i]  # Currency is in the fifth column.
-            t_amt_str = str(row[amount_i]) 
-            t_acct_str = row[account_i] 
+            row_values = row 
+        # Second, verify the hdr contains the required columns.
+        row_dict = dict(zip(hdr, row_values))  # Create a dict from the header and row values.
+
+        # Extract some of the values as strings to generate a hash from
+        t_date_str = p3u.iso_date_only_string(row_dict[DATE_COL_NAME])
+        t_desc = row_dict[ORIGINAL_DESCRIPTION_COL_NAME]
+        t_currency = row_dict[CURRENCY_COL_NAME]
+        t_amt_str = str(row_dict[AMOUNT_COL_NAME])
+        t_acct_str = row_dict[ACCOUNT_NAME_COL_NAME]
         t_all_str = t_date_str + t_desc + t_currency + t_amt_str + t_acct_str
-        t_acct_code = t_acct_str.split('-')[-1].strip()  # Get the last part of the account name.
-        t_id = generate_hash_key(t_all_str)  # Generate a unique ID for the transaction.
-        if isinstance(row[0], Cell):
-            # Update the mapped acct_code in the cell.
-            row[acct_code_i].value = t_acct_code  # Account code is in the 'Account Code' column.
-            transaction = TransactionData(
-                tid=t_id,
-                date=row[date_i].value,
-                description=row[desc_i].value,
-                currency=row[currency_i].value,
-                amount=row[amount_i].value,
-                account=t_acct_code,  #row[account_i].value,
-                category=row[budget_cat_i].value  # Category will be set later.
-            )
-        else:
-            transaction = TransactionData(
-                tid=t_id,
-                date=p3u.iso_date_only_string(row[date_i]),
-                description=row[desc_i],
-                currency=row[currency_i],
-                amount=float(row[amount_i]),
-                account=t_acct_code,  #row[account_i],
-                category=row[budget_cat_i]  # Category will be set later.
-            )
+        t_id = generate_hash_key(t_all_str) 
+
+        transaction = TransactionData(
+            tid=t_id,
+            date=row_dict[DATE_COL_NAME],
+            description=row_dict[ORIGINAL_DESCRIPTION_COL_NAME],
+            currency=row_dict[CURRENCY_COL_NAME],
+            amount=row_dict[AMOUNT_COL_NAME],
+            account_code=row_dict[ACCOUNT_CODE_COL_NAME],
+            category=row_dict[BUDGET_CATEGORY_COL_NAME],
+            level1=row_dict[LEVEL_1_COL_NAME],
+            level2=row_dict[LEVEL_2_COL_NAME],
+            level3=row_dict[LEVEL_3_COL_NAME],
+            debit_credit=row_dict[DEBIT_CREDIT_COL_NAME],
+            year_month=row_dict[YEAR_MONTH_COL_NAME]
+        )
         return transaction
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
@@ -474,6 +495,42 @@ def split_budget_category(budget_category: str) -> tuple[str, str, str]:
 #endregion split_budget_category() function
 # ---------------------------------------------------------------------------- +
 #region map_budget_category() function
+def col_i(col_name:str, hdr:list) -> int:
+    """Get the 0-based index of a column name in a header row.
+    
+    Args:
+        col_name (str): The name of the column to find.
+        hdr (list): The header list of column names from row(1) to search in.
+
+    Returns:
+        int: The index of the column name in the header row, or -1 if not found.
+    """
+    try:
+        if not isinstance(col_name, str):
+            raise TypeError(f"Expected 'col_name' to be a str, got {type(col_name)}")
+        if not isinstance(hdr, list):
+            raise TypeError(f"Expected 'hdr' to be a list, got {type(hdr)}")
+        return hdr.index(col_name) if col_name in hdr else -1
+    except ValueError:
+        return -1
+def year_month_str(date:object) -> str:
+    """Convert a date object to a year-month string in the format 'YYYY-MM-mmm'.
+    
+    Args:
+        date (object): A date object or a string that can be converted to a date.
+
+    Returns:
+        str: The year-month string in the format 'YYYY-MM-mmm'.
+    """
+    try:
+        if isinstance(date, str):
+            date = datetime.datetime.strptime(date, "%Y-%m-%d").date()
+        elif not isinstance(date, datetime.date):
+            raise TypeError(f"Expected 'date' to be a date object or a str, got {type(date)}")
+        return date.strftime("%Y-%m-%b")
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
 def map_budget_category(sheet:Worksheet,src,dst) -> None:
     """Map a src column to budget category putting result in dst column.
     
@@ -489,25 +546,29 @@ def map_budget_category(sheet:Worksheet,src,dst) -> None:
         dst (str): The destination column to map to. 
     """
     try:
+        # Validate the input parameters.
         _ = p3u.is_str_or_none("src", src, raise_TypeError=True)
         _ = p3u.is_str_or_none("dst", dst, raise_TypeError=True)
+        if not check_sheet_columns(sheet, add_columns=False):
+            logger.error(f"Sheet '{sheet.title}' cannot be mapped due to "
+                         f"missing required columns.")
+            return
         rules_count = category_map_count()
         logger.info(f"Applying '{rules_count}' budget category mappings "
                     f"to {sheet.max_row-1} rows in sheet: '{sheet.title}' ")
         # transactions = WORKSHEET_data(sheet)
         # A row is a tuple of the Cell objects in the row. Tuples are 0-based
-        # header_row is a list, also 0-based. So, using the index(name) will 
-        # give the cell from a row tuple matching the column name in header_row.
-        header_row = [cell.value for cell in sheet[1]] 
-        # header_row.insert(0, "ignore item 0")  # Add an 'ignore' column at index 0.
+        # hdr is a list, also 0-based. So, using the index(name) will 
+        # give the cell from a row tuple matching the column name in hdr.
+        hdr = [cell.value for cell in sheet[1]] 
 
-        if src in header_row:
-            src_col_index = header_row.index(src)
+        if src in hdr:
+            src_col_index = hdr.index(src)
         else:
             logger.error(f"Source column '{src}' not found in header row.")
             return
-        if dst in header_row:
-            dst_col_index = header_row.index(dst)
+        if dst in hdr:
+            dst_col_index = hdr.index(dst)
         else:
             logger.error(f"Destination column '{dst}' not found in header row.")
             return
@@ -515,28 +576,46 @@ def map_budget_category(sheet:Worksheet,src,dst) -> None:
         # TODO: need to refactor this to do replacements by col_name or something.
         # This is specific to the Budget Category mapping, which now is to be
         # split into 3 levels: Level1, Level2, Level3.
-        l1_i = header_row.index(LEVEL_1_COL_NAME) if LEVEL_1_COL_NAME in header_row else -1
-        l2_i = header_row.index(LEVEL_2_COL_NAME) if LEVEL_2_COL_NAME in header_row else -1
-        l3_i = header_row.index(LEVEL_3_COL_NAME) if LEVEL_3_COL_NAME in header_row else -1
+
+        # These are values to set in the rows.
+        date_i = col_i(DATE_COL_NAME,hdr)
+        l1_i = col_i(LEVEL_1_COL_NAME,hdr)
+        l2_i = col_i(LEVEL_2_COL_NAME,hdr)
+        l3_i = col_i(LEVEL_3_COL_NAME,hdr)
+        amt_i = col_i(AMOUNT_COL_NAME,hdr)
+        dORc_i = col_i(DEBIT_CREDIT_COL_NAME,hdr)
+        year_month_i = col_i(YEAR_MONTH_COL_NAME,hdr)
+        acct_name_i = col_i(ACCOUNT_NAME_COL_NAME,hdr)
+        acct_code_i = col_i(ACCOUNT_CODE_COL_NAME,hdr)
+        acct_cell : Cell = sheet.cell(row=1, column=acct_name_i + 1)
 
         logger.info(f"Mapping '{src}'({src_col_index}) to "
                     f"'{dst}'({dst_col_index})")
         num_rows = sheet.max_row # or set a smaller limit
         other_count = 0
         for row in sheet.iter_rows(min_row=2):
-            # row is a type 'tuple' of Cell objects.
-            row_idx = row[0].row  # Get the row index.
-            src_cell = row[src_col_index]
+            # row is a 'tuple' of Cell objects, 0-based index
+            row_idx = row[0].row  # Get the row index, the row number, 1-based.
+            # Do the mapping from src to dst.
             dst_cell = row[dst_col_index]
             src_value = row[src_col_index].value 
             dst_value = map_category(src_value)
-            row[dst_col_index].value = dst_value 
             dst_cell.value = dst_value 
+            # row[dst_col_index].value = dst_value 
+            # Set the additional values for BudMan in the row
+            date_val = row[date_i].value
+            year_month = year_month_str(date_val) if date_val else None
+            row[year_month_i].value = year_month
             l1, l2, l3 = split_budget_category(dst_value)
             row[l1_i].value = l1 if l1_i != -1 else None
             row[l2_i].value = l2 if l2_i != -1 else None
             row[l3_i].value = l3 if l3_i != -1 else None
-            transaction = WORKSHEET_row_data(row,header_row) 
+            row[dORc_i].value = 'C' if row[amt_i].value > 0 else 'D'
+            acct_value = row[acct_name_i].value
+            t_acct_code = acct_value.split('-')[-1].strip()
+            row[acct_code_i].value = t_acct_code if acct_code_i != -1 else None
+
+            transaction = WORKSHEET_row_data(row,hdr) 
             trans_str = transaction.data_str()
             del transaction  # Clean up the transaction object.
             if dst_value == 'Other':

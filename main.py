@@ -62,7 +62,6 @@ def configure_logging(logger_name : str, logtest : bool = True) -> None:
     TODO: BDM methods needed:
         - get WB_TYPE from WB_NAME, same for FI_KEY and WF_KEY
     TODO: handle the same WB_NAME being in several wf folders.
-    TODO: don't openpyxl load workbooks currently open in Excel.
     TODO: Consider making BudManDataContext have a binding for Model and 
     ViewModel objects. As a concrete implementation, it provides model and 
     view_model properties. Consider some of the dc_methods conditionally
