@@ -28,6 +28,7 @@ WORKBOOK_LIST = DATA_TUPLE_LIST
 WORKBOOK_ITEM = DATA_TUPLE
 WORKBOOK_DATA_COLLECTION = DATA_TUPLE_LIST
 LOADED_WORKBOOK_COLLECTION = DATA_COLLECTION
+LOADED_WORKBOOK_ITEM = DATA_OBJECT
 DATA_CONTEXT = DATA_OBJECT
 BDM_STORE = DATA_OBJECT
 BDM_CONFIG = DATA_OBJECT
@@ -148,11 +149,11 @@ WF_OUTPUT_FOLDER = "wf_output_folder" # also used as key in FI_DATA_COLLECTION.
 WF_PREFIX_IN = "wf_prefix_in"
 WF_PREFIX_WORKING = "wf_prefix_working"
 WF_PREFIX_OUT = "wf_prefix_out"
-WF_TYPE_MAP = "wf_type_map" # map of workbook names to paths
+WB_TYPE_FOLDER_MAP = "wb_type_folder_map" # map of workbook names to paths
 # Additional WF_OBJECT-related constants
 WF_OBJECT_VALID_ATTR_KEYS = (WF_KEY, WF_NAME, 
                         WF_INPUT_FOLDER, WF_WORKING_FOLDER, WF_OUTPUT_FOLDER,
-                        WF_PREFIX_IN, WF_PREFIX_OUT, WF_TYPE_MAP)
+                        WF_PREFIX_IN, WF_PREFIX_OUT, WB_TYPE_FOLDER_MAP)
 WF_FOLDER_PATH_ELEMENTS = (WF_INPUT_FOLDER, WF_WORKING_FOLDER, WF_OUTPUT_FOLDER)
 # ---------------------------------------------------------------------------- +
 # Some data values are used in conjunction with Path objects,
@@ -163,26 +164,19 @@ WF_FOLDER_PATH_ELEMENTS = (WF_INPUT_FOLDER, WF_WORKING_FOLDER, WF_OUTPUT_FOLDER)
 BDM_VALID_PATH_ELEMENTS = (BDM_FOLDER, BDM_URL, FI_FOLDER, 
                            WF_INPUT_FOLDER, WF_WORKING_FOLDER, WF_OUTPUT_FOLDER)
 # ---------------------------------------------------------------------------- +
-# WF_DATA_OBJECT is a subclass of DATA_OBJECT (Dict) used to manage
-# Workflow-related (WF_) data (DATA_OBJECT) associated with a specific (FI_WF).
+# WORKBOOK_DATA_COLLECTION is a subclass of DATA_OBJECT (Dict) used to manage
+# Workflow-related (WF_) data associated with a specific FI).
 # The primary data object now is the WORKBOOK (an excel workbook). There are
 # stored by the BSM in files in folders in the filesystem, so there are Path 
 # strings associated. In the BDM, a WORKBOOK has a unique name, and a type.
-# Workbook types (WB_TYPE) indicate use of a workbook as either input
-# or output for a specific workflow. 
-# The type is 'WF_INPUT' or 'WF_OUTPUT' with respect to the WorkFlow. 
-WF_INPUT = "wf_input" 
-WF_WORKING = "wf_working" 
-WF_OUTPUT ="wf_output" 
-WF_WORKBOOK_TYPES = (WF_INPUT, WF_WORKING, WF_OUTPUT)
-WF_DATA_OBJECT_VALID_ATTR_KEYS = (WF_INPUT, WF_WORKING, WF_OUTPUT)
-
+# Workbook types (WB_TYPE) indicate use of a workbook as either input data,
+# working data, or output data.
 # Workbook and folder Types
-WB_INPUT = "wb_input"
-WB_WORKING = "wb_working"
-WB_OUTPUT ="wb_output"
+WB_INPUT = "wb_input" 
+WB_WORKING = "wb_working" 
+WB_OUTPUT ="wb_output" 
 WB_WORKBOOK_TYPES = (WB_INPUT, WB_WORKING, WB_OUTPUT)
-WB_DATA_OBJECT_VALID_ATTR_KEYS = (WF_INPUT, WF_WORKING, WF_OUTPUT)
+WB_DATA_OBJECT_VALID_ATTR_KEYS = (WB_INPUT, WB_WORKING, WB_OUTPUT)
 # ---------------------------------------------------------------------------- +
 # The BDM_WORKING_DATA (BDMWD_OBJECT) is designed to be a simple abstraction
 # of the BudgetModel useful to View Models, Views, and other types of 
@@ -292,7 +286,7 @@ BDMWD_OBJECT_VALID_ATTR_KEYS = BDM_WORKING_DATA_VALID_ATTR_KEYS + DATA_CONTEXT_V
 # Last ditch BudMan application default settings
 #
 BUDMAN_DEFAULT_WORKFLOW_VALUE = BDM_WF_CATEGORIZATION
-BUDMAN_DEFAULT_WORKBOOK_TYPE_VALUE = WF_WORKING
+BUDMAN_DEFAULT_WORKBOOK_TYPE_VALUE = WB_WORKING
 # ---------------------------------------------------------------------------- +
 # Miscellaneous Convenience Constants
 P2 = "  "  # 2 space padding

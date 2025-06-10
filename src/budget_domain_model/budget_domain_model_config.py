@@ -79,17 +79,17 @@ class BDMConfig(metaclass=BDMSingletonMeta):
                 FI_FOLDER: "boa",
                 FI_DATA_COLLECTION: { # WORKBOOK_DATA_COLLECTION dict(wf_key: WORKBOOK_LIST)
                      BDM_WF_CATEGORIZATION: {  # WOBKBOOK_LIST list(wb)
-                        WF_INPUT: [ # input data objects
+                        WB_INPUT: [ # input data objects
                             ( "input_prefix_wb_name_1", "wb_url_1" ),
                             ( "input_prefix_wb_name_2", "wb_url_2" ),
                             ( "input_prefix_wb_name_3", "wb_url_3" )
                         ], 
-                        WF_WORKING: [ # working data objects, input and output
+                        WB_WORKING: [ # working data objects, input and output
                             ( "wb_name_1", "wb_url_1" ),
                             ( "wb_name_2", "wb_url_2" ),
                             ( "wb_name_3", "wb_url_3" )
                         ], 
-                        WF_OUTPUT: [
+                        WB_OUTPUT: [
                             ( "output_prefix_wb_name_1", "wb_url_4" ),
                             ( "output_prefix_wb_name_2", "wb_url_5" ),
                             ( "output_prefix_wb_name_3", "wb_url_6" )
@@ -107,49 +107,49 @@ class BDMConfig(metaclass=BDMSingletonMeta):
             },
         },
         BDM_WF_COLLECTION: {
-            BDM_WF_INTAKE: {                    # bdm_fi_wf(fi_key, workflow)
+            BDM_WF_INTAKE: { 
                 # WF Object - TODO: add WF_KEY, verify unique
                 WF_KEY: BDM_WF_INTAKE,
                 WF_NAME: BDM_WF_INTAKE,
                 WF_INPUT_FOLDER: None,
                 WF_WORKING_FOLDER: "data/new",
                 WF_OUTPUT_FOLDER: "data/categorized",
-                WF_TYPE_MAP:  {
-                    WF_OUTPUT: WF_OUTPUT_FOLDER,
-                    WF_WORKING: WF_WORKING_FOLDER,
-                    WF_INPUT: WF_INPUT_FOLDER
+                WB_TYPE_FOLDER_MAP:  {
+                    WB_OUTPUT: WF_OUTPUT_FOLDER,
+                    WB_WORKING: WF_WORKING_FOLDER,
+                    WB_INPUT: WF_INPUT_FOLDER
                 },
                 WF_PREFIX_IN: None,
                 WF_PREFIX_WORKING: None,
                 WF_PREFIX_OUT: "categorized_"
             },
-            BDM_WF_CATEGORIZATION: {            # bdm_fi_wf(fi_key, workflow)
+            BDM_WF_CATEGORIZATION: {     
                 # WF Object
                 WF_KEY: BDM_WF_CATEGORIZATION,
                 WF_NAME: BDM_WF_CATEGORIZATION,
-                WF_INPUT_FOLDER: "data/new", # bsm_WF_INPUT(fi_key, workflow)
+                WF_INPUT_FOLDER: "data/new", 
                 WF_WORKING_FOLDER: "data/categorized",
                 WF_OUTPUT_FOLDER: "data/finalized",
-                WF_TYPE_MAP:  {
-                    WF_OUTPUT: WF_OUTPUT_FOLDER,
-                    WF_WORKING: WF_WORKING_FOLDER,
-                    WF_INPUT: WF_INPUT_FOLDER
+                WB_TYPE_FOLDER_MAP:  {
+                    WB_OUTPUT: WF_OUTPUT_FOLDER,
+                    WB_WORKING: WF_WORKING_FOLDER,
+                    WB_INPUT: WF_INPUT_FOLDER
                 },
                 WF_PREFIX_IN: None,
                 WF_PREFIX_WORKING: "categorized_",
                 WF_PREFIX_OUT: "finalized_"
             },
-            BDM_WF_FINALIZATION: {              # bdm_fi_wf(fi_key, workflow)
+            BDM_WF_FINALIZATION: {   
                 # WF Object
                 WF_KEY: BDM_WF_FINALIZATION,
                 WF_NAME: BDM_WF_FINALIZATION,
-                WF_INPUT_FOLDER: "data/categorized",   # bsm_WF_INPUT(fi_key, workflow)
+                WF_INPUT_FOLDER: "data/categorized",   
                 WF_WORKING_FOLDER: "data/finalized",
                 WF_OUTPUT_FOLDER: "data/finalized",
-                WF_TYPE_MAP:  {
-                    WF_OUTPUT: WF_OUTPUT_FOLDER,
-                    WF_WORKING: WF_WORKING_FOLDER,
-                    WF_INPUT: WF_INPUT_FOLDER
+                WB_TYPE_FOLDER_MAP:  {
+                    WB_OUTPUT: WF_OUTPUT_FOLDER,
+                    WB_WORKING: WF_WORKING_FOLDER,
+                    WB_INPUT: WF_INPUT_FOLDER
                 },
                 WF_PREFIX_IN: "categorized_",
                 WF_PREFIX_WORKING: "final_prep_",
@@ -475,11 +475,12 @@ class BDMConfig(metaclass=BDMSingletonMeta):
                 f"{str(list(bmt.bdm_wf_collection.keys()))}")
             for wf_key, wf_object in bmt.bdm_wf_collection.items():
                 logger.debug(f"{P4}Workflow:({wf_key}:{wf_object[WF_NAME]}: ")
-                logger.debug(f"{P6}WF_INPUT: '{bmt.wf_object[WF_INPUT_FOLDER]}'")
+                logger.debug(f"{P6}WF_INPUT_FOLDER: '{bmt.wf_object[WF_INPUT_FOLDER]}'")
+                logger.debug(f"{P6}WF_WORKING_FOLDER: '{bmt.wf_object[WF_WORKING_FOLDER]}'")
                 logger.debug(f"{P6}WF_OUTPUT_FOLDER: '{bmt.wf_object[WF_OUTPUT_FOLDER]}'")
                 logger.debug(f"{P6}WF_PREFIX_IN: '{bmt.wf_object[WF_PREFIX_IN]}' "
                             f"WF_PREFIX_OUT: '{bmt.wf_object[WF_PREFIX_OUT]}'")
-                logger.debug(f"{P6}WF_TYPE_MAP: {str(bmt.wf_object[WF_TYPE_MAP])}")
+                logger.debug(f"{P6}WB_TYPE_FOLDER_MAP: {str(bmt.wf_object[WB_TYPE_FOLDER_MAP])}")
             # Enumerate Budget Model Options
             bmo_c = len(bmt.bdm_options)
             logger.debug(f"{P2}BDM_OPTION('{BDM_OPTIONS}')({bmo_c})")
@@ -520,7 +521,7 @@ def tryout_budget_domain_model_config() -> None:
         for wf_key, wf_dict in bmt.bdm_wf_collection.items():
             logger.debug(f"{P2}Workflow('{wf_dict[WF_NAME]}'): "
                             f"{P2}WM_FOLDER_IN: '{wf_dict[WF_INPUT_FOLDER]}' "
-                            f"{P2}WM_WORKBOOKS_IN: {wf_dict[WF_INPUT]}")
+                            f"{P2}WM_WORKBOOKS_IN: {wf_dict[WB_INPUT]}")
         # logger.debug(f"Budget Model config:     str: '{str(bmt)}'")
         # logger.debug(f"Budget Model config:    repr: '{repr(bmt)}'")
         # logger.debug(f"Budget Model config: to_dict: '{bmt.to_dict()}'")

@@ -379,14 +379,14 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
     always in the context of a specific FI through the fi_key. WF_INPUT_FOLDER is
     a Path with various str reprs.
 
-    WF_INPUT - is a WB_TYPE, indicating used for input to a workflow. 
+    WB_INPUT - is a WB_TYPE, indicating used for input to a workflow. 
     Likely, workbooks of this type are referenced in the collection of 
     workbooks currently in the WF_INPUT_FOLDER folder.
 
     WF_WORKING_FOLDER - refers to the folder for a specific workflow. It is
     a Path with various str reprs.
 
-    WF_WORKING - is a WB_TYPE, indicating used to work on (input and output) 
+    WB_WORKING - is a WB_TYPE, indicating used to work on (input and output) 
     data for a workflow. Likely, workbooks of this type are referenced in the 
     collection of workbooks currently in the WF_WORKING_FOLDER folder. It is
     typical that working data is opened for read and write.
@@ -394,7 +394,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
     WF_OUTPUT_FOLDER - refers to the output folder for a specific workflow. It is
     a Path with various str reprs.
 
-    WF_OUTPUT - is a WB_TYPE, indicating used for output from a workflow. 
+    WB_OUTPUT - is a WB_TYPE, indicating used for output from a workflow. 
     Likely, workbooks of this type are referenced in the collection of 
     workbooks currently in the WF_OUTPUT_FOLDER folder. A common pattern is
     for a workflow to just copy workbooks to an output folder.
@@ -402,7 +402,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
     From the configuration data, the values of BDM_FOLDER, FI_FOLDER and
     WF_FOLDER are used to construct folder and file names for the file system
     and the BSM. The BDM methods do not use Path objects. The overlap seen in 
-    the WF_INPUT and WF_OUTPUT for a purpose. The workbooks are
+    the WB_INPUT and WB_OUTPUT for a purpose. The workbooks are
     common in the two layers.
      
     The following naming conventions apply to the purpose of the BDM and BSM 
@@ -600,7 +600,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
             m = f"Invalid workflow key '{wf_key}'."
             logger.error(m)
             raise ValueError(m)
-        if wb_type not in WF_WORKBOOK_TYPES:
+        if wb_type not in WB_WORKBOOK_TYPES:
             m = f"Invalid workbook type '{wb_type}' for workflow '{wf_key}'."
             logger.error(m)
             raise ValueError(m)
@@ -678,11 +678,11 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
         """Return the WF_PREFIX_OUT value for wf_key."""
         return self.bdm_WF_OBJECT(wf_key)[WF_PREFIX_OUT]    
     
-    def bdm_WF_TYPE_MAP(self, wf_key:str, wb_type:str=None) -> str|dict:
-        """Return the WF_TYPE_MAP or specific mapped value for wb_type."""
+    def bdm_WB_TYPE_FOLDER_MAP(self, wf_key:str, wb_type:str=None) -> str|dict:
+        """Return the WB_TYPE_FOLDER_MAP or specific mapped value for wb_type."""
         if wb_type is None:
-            return self.bdm_WF_OBJECT(wf_key)[WF_TYPE_MAP]
-        return self.bdm_WF_OBJECT(wf_key)[WF_TYPE_MAP][wb_type]
+            return self.bdm_WF_OBJECT(wf_key)[WB_TYPE_FOLDER_MAP]
+        return self.bdm_WF_OBJECT(wf_key)[WB_TYPE_FOLDER_MAP][wb_type]
 
     def bdm_WF_KEY_validate(self, wf_key:str) -> bool:
         """Validate the workflow key."""
@@ -725,7 +725,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
             # TODO: Fix this when bdmwd is free
             def_fi = VALID_FI_KEYS[0]
             def_wf = BDM_WF_CATEGORIZATION
-            def_wbt = WF_WORKING
+            def_wbt = WB_WORKING
             # Initialize the budget model working data.
             self.bdm_working_data = {}
             self.set_BDM_WORKING_DATA(BDMWD_INITIALIZED, False)
@@ -737,7 +737,6 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
             self.set_BDM_WORKING_DATA(BDMWD_LOADED_WORKBOOKS, dict())
             # Now resolve the bdwd content to current BDM state.
             self.bdmwd_WORKBOOKS_resolve(initializing=True)
-            # self.bdmwd_LOADED_WORKBOOKS_resolve()
             # BDMWD initialization is now complete.
             self.set_BDM_WORKING_DATA(BDMWD_INITIALIZED, True)
             logger.debug("Complete: BDM_WORKING_DATA initialized.")
@@ -776,13 +775,13 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
     always in the context of a specific FI through the fi_key. WF_INPUT_FOLDER is
     a Path with various str reprs.
 
-    WF_INPUT - refers to the collection of workbooks currently in the 
+    WB_INPUT - refers to the type of workbooks currently in the 
     WF_INPUT_FOLDER folder.
 
     WF_OUTPUT_FOLDER - refers to the output folder for a specific workflow. It is
     a Path with various str reprs.
 
-    WF_OUTPUT - refers to the collection of workbooks currently in 
+    WB_OUTPUT - refers to the type of workbooks currently in 
     the WF_OUTPUT_FOLDER folder.
 
     The configuration data and stored budget model data contains str values 
@@ -1133,10 +1132,9 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
     DATA_OBJECTs in the future. These methods are BSM-related.
 
     With the BSM, the wf_do properties relating to the storage model are 
-    WF_INPUT_FOLDER, WF_INPUT, WF_OUTPUT_FOLDER and WF_OUTPUT. These 
-    concern actual access to data in the filesystem. The BDM methods are used to
-    access the data in the BDM.
-
+    WF_INPUT_FOLDER, WB_INPUT, WF_WORKING_FOLDER, WB_WORKING, WF_OUTPUT_FOLDER 
+    and WB_OUTPUT. These concern actual access to data in the filesystem. 
+    
     One key overlap, is bsm_WF_INPUT and bsm_WF_OUTPUT. These are 
     the same methods in both the BDM and BSM. Each are dictionaries with tuples
     of each workbook in the corresponding WF_INPUT_FOLDER and WF_OUTPUT_FOLDER folders.
@@ -1155,12 +1153,12 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
             # Resolve all keys in the WF_DATA_OBJECT.
             did_workbooks = False
             for wf_do_key, wf_do_value in wf_do.items():
-                if wf_do_key not in WF_DATA_OBJECT_VALID_ATTR_KEYS:
+                if wf_do_key not in WB_DATA_OBJECT_VALID_ATTR_KEYS:
                     m = f"Invalid WF_DATA_OBJECT key '{wf_do_key}' "
                     m += f"for FI_KEY('{fi_key}') and WF_KEY('{wf_key}')"
                     logger.error(m)
                     raise ValueError(m)
-                if wf_do_key in WF_WORKBOOK_TYPES:
+                if wf_do_key in WB_WORKBOOK_TYPES:
                     if not did_workbooks:
                         # Resolve all the WORKBOOK_LIST for WF_FOLDERs, just once.
                         self.bsm_WF_DATA_OBJECT_WORKBOOKS_resolve(wf_do, fi_key, wf_key)
@@ -1181,8 +1179,9 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
         Workbooks are contained in folders in the filesystem. The folder_id 
         determines the absolute path to the folder, as per the following 
         mapping:
-        - WF_INPUT -> WF_INPUT_FOLDER - input folder for the workflow.
-        - WF_OUTPUT -> WF_OUTPUT_FOLDER - output folder for the workflow.
+        - WB_INPUT -> WF_INPUT_FOLDER - input folder for the workflow.
+        - WB_WORKING -> WF_WORKING_FOLDER - working folder for the workflow.
+        - WB_OUTPUT -> WF_OUTPUT_FOLDER - output folder for the workflow.
 
         Args:
             wf_do (WF_DATA_OBJECT): The workflow data object to resolve.
@@ -1197,13 +1196,13 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
             for wf_do_key in wf_do.keys():
                 # Only handle WF_WORKBOOK scope for the workflow.
                 # A wf_do may have other keys, but we only care about the workbooks.
-                if wf_do_key not in WF_WORKBOOK_TYPES:
+                if wf_do_key not in WB_WORKBOOK_TYPES:
                     logger.debug(f"  Skipping WF_DATA_OBJECT key: '{wf_do_key}'")
                     continue
-                # Only interested in the WF_WORKBOOK_TYPES keys. Each of them
+                # Only interested in the WB_WORKBOOK_TYPES keys. Each of them
                 # is configured to one WF_FOLDER_PATH_ELEMENT. Get the
                 # appropriate folder_id for the WF_WORKBOOK_TYPE.
-                f_id = self.bdm_WF_TYPE_MAP(wf_key, wf_do_key)
+                f_id = self.bdm_WB_TYPE_FOLDER_MAP(wf_key, wf_do_key)
                 if f_id is None:
                     logger.debug(f"  FI('{fi_key}') WF('{wf_key}') "
                                 f"WF_DO['{wf_do_key}'] is None")
@@ -1334,7 +1333,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
         the filesystem.
         """
         try:
-            f_id = self.bdm_WF_TYPE_MAP(wf_key, wb_type)
+            f_id = self.bdm_WB_TYPE_FOLDER_MAP(wf_key, wb_type)
             if f_id is None:
                 m = f"Invalid folder_id '{f_id}' for FI_KEY('{fi_key}') "
                 m += f"and WF_KEY('{wf_key}')"
@@ -2042,11 +2041,12 @@ def log_BDM_info(bdm : BudgetDomainModel) -> None:
             f"{str(list(bdm.bdm_wf_collection.keys()))}")
         for wf_key in bdm.bdm_wf_collection.keys():
             logger.debug(f"{P4}Workflow:({bdm.bdm_WF_KEY(wf_key)}:{bdm.bdm_WF_NAME(wf_key)}: ")
-            logger.debug(f"{P6}WF_INPUT: '{bdm.bdm_WF_FOLDER(wf_key,WF_INPUT_FOLDER)}'")
+            logger.debug(f"{P6}WF_INPUT_FOLDER: '{bdm.bdm_WF_FOLDER(wf_key,WF_INPUT_FOLDER)}'")
+            logger.debug(f"{P6}WF_WORKING_FOLDER: '{bdm.bdm_WF_FOLDER(wf_key,WF_WORKING_FOLDER)}'")
             logger.debug(f"{P6}WF_OUTPUT_FOLDER: '{bdm.bdm_WF_FOLDER(wf_key,WF_OUTPUT_FOLDER)}'")
             logger.debug(f"{P6}WF_PREFIX_IN: '{bdm.bdm_WF_PREFIX_IN(wf_key)}' "
                          f"WF_PREFIX_OUT: '{bdm.bdm_WF_PREFIX_OUT(wf_key)}'")
-            logger.debug(f"{P6}WF_TYPE_MAP: {str(bdm.bdm_WF_TYPE_MAP(wf_key))}")
+            logger.debug(f"{P6}WB_TYPE_FOLDER_MAP: {str(bdm.bdm_WB_TYPE_FOLDER_MAP(wf_key))}")
         # Enumerate Budget Model Options
         bmoc = len(bdm.bdm_options)
         logger.debug(f"{P2}BDM_OPTION['{BDM_OPTIONS}']({bmoc})")
@@ -2111,7 +2111,7 @@ def log_BSM_info(bdm : BudgetDomainModel) -> None:
             logger.debug(f"{P4}Workflow:({bdm.bdm_WF_KEY(wf_key)}:{bdm.bdm_WF_NAME(wf_key)}: ")
             logger.debug(f"{P6}WF_INPUT_FOLDER: '{bdm.bdm_WF_FOLDER(wf_key,WF_INPUT_FOLDER)}'")
             logger.debug(f"{P6}WF_OUTPUT_FOLDER: '{bdm.bdm_WF_FOLDER(wf_key,WF_OUTPUT_FOLDER)}'")
-            logger.debug(f"{P6}WF_TYPE_MAP: {str(bdm.bdm_WF_TYPE_MAP(wf_key))}")
+            logger.debug(f"{P6}WB_TYPE_FOLDER_MAP: {str(bdm.bdm_WB_TYPE_FOLDER_MAP(wf_key))}")
     except Exception as e:
         m = p3u.exc_err_msg(e)
         logger.error(m)

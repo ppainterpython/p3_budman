@@ -735,7 +735,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
                 raise RuntimeError(f"{pfx}{m}")
             fi_key = cmd.get("fi_key", None)
             wf_key = cmd.get("wf_key", BDM_WF_CATEGORIZATION)
-            wb_type = cmd.get("wb_type", WF_WORKING)
+            wb_type = cmd.get("wb_type", WB_WORKING)
             wb_name = cmd.get("wb_name", None)
             # TODO: Enable defaults for fi_key, wf_key, wb_type, wb_name in
             # settings.toml
@@ -808,7 +808,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             # Get the command arguments.
             fi_key = cmd.get("fi_key", None)
             wf_key = cmd.get("wf_key", BDM_WF_CATEGORIZATION)
-            wb_type = cmd.get("wb_type", WF_INPUT)
+            wb_type = cmd.get("wb_type", WB_INPUT)
             wb_name = cmd.get("wb_name", None)
             # Resolve with current DC values.
             if fi_key != self.dc_FI_KEY:
@@ -1151,7 +1151,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
                 logger.error(m)
                 return False, m
             wb_ref = cmd.get(WB_REF, None) # from the cmd args
-            wb_type = cmd.get(WB_TYPE, WF_WORKING) or self.dc_WB_TYPE # from the cmd args
+            wb_type = cmd.get(WB_TYPE, WB_WORKING) or self.dc_WB_TYPE # from the cmd args
             if wb_ref is None and self.dc_WB_REF is None:
                     m = f"wb_ref is None, no action taken."
                     logger.error(m)

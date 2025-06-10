@@ -203,12 +203,12 @@ def test_BDM_FI_WF_DATA_OBJECT_pseudo_Property_Methods():
                     assert isinstance(wf_do, dict), \
                         f"Expected bdm.bdm_FI_DATA({fi_key}, {wf_key}) to be a WF_OBJECT"
                     for wf_do_key in wf_do.keys():
-                        assert wf_do_key in WF_DATA_OBJECT_VALID_ATTR_KEYS, \
+                        assert wf_do_key in WB_DATA_OBJECT_VALID_ATTR_KEYS, \
                             f"Expected: {wf_do_key} to be a valid WF_OBJECT key."
-                        if wf_do_key == WF_INPUT:
+                        if wf_do_key == WB_INPUT:
                             assert bdm.bdm_WF_TYPE_MAP(wf_key,wf_do_key) == WF_INPUT_FOLDER, \
                                 f"Expected: key: '{wf_do_key}' to be '{WF_INPUT_FOLDER}'."
-                        elif wf_do_key == WF_OUTPUT:
+                        elif wf_do_key == WB_OUTPUT:
                             assert bdm.bdm_WF_TYPE_MAP(wf_key,wf_do_key) == WF_OUTPUT_FOLDER, \
                                 f"Expected: key: '{wf_do_key}' to be '{WF_OUTPUT_FOLDER}'."
     except Exception as e:
