@@ -26,6 +26,7 @@ DATA_TUPLE_LIST = List[DATA_TUPLE]
 # It is a list of WORKBOOK_ITEM tuples: (workbook_name, workbook_abs_path)
 WORKBOOK_LIST = DATA_TUPLE_LIST 
 WORKBOOK_ITEM = DATA_TUPLE
+WORKBOOK_DATA_COLLECTION = DATA_TUPLE_LIST
 LOADED_WORKBOOK_COLLECTION = DATA_COLLECTION
 DATA_CONTEXT = DATA_OBJECT
 BDM_STORE = DATA_OBJECT
@@ -44,7 +45,7 @@ WF_COLLECTION = DATA_COLLECTION
 WF_DATA_COLLECTION = DATA_COLLECTION
 # A dict for worklow to hold data for a specific FI
 WF_DATA_OBJECT = DATA_OBJECT  # a DATA_OBJECT for a specific FI,WF
-BDM_WORKING_DATA_OBJECT = DATA_COLLECTION
+BDM_WORKING_DATA_OBJECT = DATA_OBJECT
 # ---------------------------------------------------------------------------- +
 # Budget Model Filesystem Path default constants 
 PATH = "_path"
@@ -145,6 +146,7 @@ WF_INPUT_FOLDER = "wf_input_folder" # also used as key in FI_DATA_COLLECTION.
 WF_WORKING_FOLDER = "wf_working_folder" # also used as key in FI_DATA_COLLECTION.
 WF_OUTPUT_FOLDER = "wf_output_folder" # also used as key in FI_DATA_COLLECTION.
 WF_PREFIX_IN = "wf_prefix_in"
+WF_PREFIX_WORKING = "wf_prefix_working"
 WF_PREFIX_OUT = "wf_prefix_out"
 WF_TYPE_MAP = "wf_type_map" # map of workbook names to paths
 # Additional WF_OBJECT-related constants
@@ -174,6 +176,13 @@ WF_WORKING = "wf_working"
 WF_OUTPUT ="wf_output" 
 WF_WORKBOOK_TYPES = (WF_INPUT, WF_WORKING, WF_OUTPUT)
 WF_DATA_OBJECT_VALID_ATTR_KEYS = (WF_INPUT, WF_WORKING, WF_OUTPUT)
+
+# Workbook and folder Types
+WB_INPUT = "wb_input"
+WB_WORKING = "wb_working"
+WB_OUTPUT ="wb_output"
+WB_WORKBOOK_TYPES = (WB_INPUT, WB_WORKING, WB_OUTPUT)
+WB_DATA_OBJECT_VALID_ATTR_KEYS = (WF_INPUT, WF_WORKING, WF_OUTPUT)
 # ---------------------------------------------------------------------------- +
 # The BDM_WORKING_DATA (BDMWD_OBJECT) is designed to be a simple abstraction
 # of the BudgetModel useful to View Models, Views, and other types of 

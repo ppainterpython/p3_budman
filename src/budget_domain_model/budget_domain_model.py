@@ -192,6 +192,15 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
     # ------------------------------------------------------------------------ +
     #region    BudgetDomainModel (BDM) properties
     @property
+    def bdm_initialized(self) -> bool:
+        """The initialized value."""
+        return self._initialized
+    @bdm_initialized.setter
+    def bdm_initialized(self, value )-> None:
+        """Set the initialized value."""
+        self._initialized = value
+
+    @property
     def bdm_id(self) -> str:
         """The budget model ID."""
         return getattr(self, BDM_ID)
@@ -212,15 +221,6 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
         if not isinstance(value, object):
             raise ValueError(f"bm_config_object must be an object: {value}")
         setattr(self, BDM_STORE_OBJECT, value)
-
-    @property
-    def bdm_initialized(self) -> bool:
-        """The initialized value."""
-        return self._initialized
-    @bdm_initialized.setter
-    def bdm_initialized(self, value )-> None:
-        """Set the initialized value."""
-        self._initialized = value
 
     @property
     def bdm_filename(self) -> str:
@@ -259,31 +259,42 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
         self._bdm_url = value
 
     @property
-    def bdm_fi_collection(self) -> dict:
+    def bdm_fi_collection(self) -> FI_COLLECTION:
         """The financial institutions collection."""
         return self._financial_institutions
     @bdm_fi_collection.setter
-    def bdm_fi_collection(self, value: dict) -> None:
+    def bdm_fi_collection(self, value: FI_COLLECTION) -> None:
         """Set the financial institutions collection."""
         self._financial_institutions = value
 
     @property
-    def bdm_wf_collection(self) -> dict:
+    def bdm_wf_collection(self) -> WF_COLLECTION:
         """The workflow collection."""
         return self._workflows
     @bdm_wf_collection.setter
-    def bdm_wf_collection(self, value: dict) -> None:
+    def bdm_wf_collection(self, value: WF_COLLECTION) -> None:
         """Set the workflows collection."""
         self._workflows = value
 
     @property
-    def bdm_options(self) -> dict:
+    def bdm_options(self) -> BDMO_OBJECT:
         """The budget model options dictionary."""
         return self._options
     @bdm_options.setter
-    def bdm_options(self, value: dict) -> None:
+    def bdm_options(self, value: BDMO_OBJECT) -> None:
         """Set the budget model options dictionary."""
         self._options = value
+
+    @property
+    def bdm_working_data(self) -> BDM_WORKING_DATA_OBJECT:
+        """The budget domain model working data."""
+        self._wd = {} if self._wd is None else self._wd
+        return self._wd
+    @bdm_working_data.setter
+    def bdm_working_data(self, value: BDM_WORKING_DATA_OBJECT) -> None:
+        """Set the budget domain model working data."""
+        self._wd = {} if self._wd is None else self._wd
+        self._wd = value
 
     @property
     def bdm_created_date(self) -> str:
@@ -312,26 +323,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
         """Set the last modified by."""
         self._last_modified_by = value
     
-    @property
-    def bdm_working_data(self) -> dict:
-        """The budget domain model working data."""
-        self._wd = {} if self._wd is None else self._wd
-        return self._wd
-    @bdm_working_data.setter
-    def bdm_working_data(self, value: dict) -> None:
-        """Set the budget domain model working data."""
-        self._wd = {} if self._wd is None else self._wd
-        self._wd = value
-
-    @property
-    def data_context(self) -> DATA_CONTEXT:
-        """The data context for the budget model."""
-        return self._data_context 
-    @data_context.setter
-    def data_context(self, value: DATA_CONTEXT) -> None:
-        """Set the data context for the budget model."""
-        self._data_context = value
-
+    #BDMBaseInterface properties
     @property
     def model_id(self) -> str:
         """Return the model ID."""

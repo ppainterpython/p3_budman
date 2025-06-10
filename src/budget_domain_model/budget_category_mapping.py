@@ -27,9 +27,13 @@ logger = logging.getLogger(__name__)
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
 #region Category Map
-# Map values to column ['Category'] by re pattern-matching to 
-# column ['Original Description'].
+# category_map : dict[pattern: str, category:str] = {}
+# The category_map key is an re:search pattern, that when it matches, the value
+# is returned. The pattern is applied to description text and returns a 
+# budget category string value.
 # This list of patterns will be quite long. 
+# In the pattern, (?i) is used to make the pattern case-insensitive. To match
+# case, remove that flag.
 # TODO: How to use data to train an LLM or ML model to do this?
 category_map = {
 #region Donations
@@ -150,12 +154,12 @@ category_map = {
     r'(?i).*UNDERWATER\s*AUDIO.*': 'Health and Wellbeing.Swimming.Underwater Audio',
     r'(?i)\bPRECISION\s*CAMERA.*': 'Hobby.Photography.Precision Camera',
     r'(?i)\bID:23ANDME\s*INC\b': 'Health and Wellbeing.23andMe',
-    r'(?i)\bFINLEYS\sAVERY\sRANCH\b': 'Health and Wellbeing.Haircut Paul',
-    r'(?i)\bCATHY\s\bDUNFORD\b': 'Health and Wellbeing.Coach Cathy',
-    r'(?i)\bSNICOLA\s\bMCKERLIE\b': 'Health and Wellbeing.Nicola McKerlie',
-    r'(?i)\bNEW\s*TECH\s*TENNIS': 'Health and Wellbeing.Tennis',
-    r'(?i)\bPLAYITAGAINSPORTS.*': 'Health and Wellbeing.Tennis',
-    r'(?i)\bSPINFIRE.*': 'Health and Wellbeing.Tennis',
+    r'(?i)\bFINLEYS\sAVERY\sRANCH\b': 'Health and Wellbeing.Hair Care.Finleys Barbershop Avery Ranch',
+    r'(?i)\bCATHY\s\bDUNFORD\b': 'Health and Wellbeing.Life Coach.Cathy Dunford',
+    r'(?i)\bSNICOLA\s\bMCKERLIE\b': 'Health and Wellbeing.Personal Trainer.Nicola McKerlie',
+    r'(?i)\bNEW\s*TECH\s*TENNIS': 'Health and Wellbeing.Tennis.Equipment',
+    r'(?i)\bPLAYITAGAINSPORTS.*': 'Health and Wellbeing.Tennis.Equipment',
+    r'(?i)\bSPINFIRE.*': 'Health and Wellbeing.Tennis.Equipment',
     r'(?i)\bTHE\s*TENNIS\s*SHO.*': 'Health and Wellbeing.Tennis.Equipment',
     r'(?i).*ATHLETA.*': 'Health and Wellbeing.Athleta',
     r'(?i)\bJERRY\'S\s*ARTARAMA.*': 'Hobby.Artwork.Jerrys Artarama',
@@ -315,7 +319,7 @@ category_map = {
     r'(?i).*CPAYNESBOOK': 'Shopping.Misc.Charles Paynes Book',
     r'(?i).*DULUTH\s*TRADING': 'Shopping.Clothing.Duluth Trading Company',
     r'(?i)\bREI\.COM.*': 'Shopping.Misc.REI',
-    r'(?i)\bREI*': 'Shopping.Misc.REI',
+    r'(?i)\bREI.*': 'Shopping.Misc.REI',
     r'(?i).*POST\s*OFFICE\s*AT\s*RIGHTSPA.*': 'Shopping.Shipping.RightSpace',
     r'(?i)\bCrocs.*': 'Shopping.Clothing.Crocs',
     r'(?i).*WHOLE\s*EARTH\s*PROVISION*': 'Shopping.Misc.Whole Earth Provision',
@@ -382,11 +386,7 @@ category_map = {
     r'(?i)\bPMNT\s*SENT.*CASH\s*APP.*ROBIN\s*PAINTER.*': 'Banking.Transfer.Robin Painter',
     r'(?i)\bOnline\s*Banking\s*Transfer.*Painter,\s*ROBIN.*': 'Banking.Transfer.Robin Painter',
     r'(?i)\bOnline\s*Banking\s*Transfer.*Painter,\s*JUSTIN.*': 'Banking.Transfer.Justin Painter',
-    r'(?i)\bCheck\s*x*\d*\b': 'Banking.Checks to Categorize',
     r'(?i)\bPreferred\s*Rewards.*\b': 'Banking.Preferred Rewards',
-    r'(?i)\bWILLIAMSON\s*COUNT\s*DES:EPAYMENT\b': 'Taxes.Williamson County',  
-    r'(?i)\bPMT\*WILCO\sTAX\b': 'Taxes.Williamson County',
-    r'(?i)\.*WILLIAMSON\s*COUNT.*': 'Taxes.Williamson County',
     r'(?i)\bLATE\sFEE\sFOR\sPAYMENT\sDUE\b': 'Banking.Late Fee',
     r'(?i)\bINTEREST\sCHARGED\sON\sPURCHASES\b': 'Banking.Interest',
     r'(?i)\bFRAUD\sDISPUTE\b': 'Banking.Fraud Dispute',
@@ -396,8 +396,13 @@ category_map = {
     r'(?i)\bBKOFAMERICA\sATM.*\bWITHDRWL\b': 'Banking.ATM',
     r'(?i)\bBKOFAMERICA\sMOBILE.*\bDEPOSIT\b': 'Banking.Mobile Deposit',
     r'(?i)\bMobile\s*transfer\s*to\s*CHK.*': 'Banking.Transfer.To Checking',
+    # Taxes
     r'(?i)\bIRS\s': 'Taxes.Federal',
     r'(?i)\bINTUIT\s': 'Taxes.Federal',
+    r'(?i)\bWILLIAMSON\s*COUNT\s*DES:EPAYMENT\b': 'Taxes.Williamson County',  
+    r'(?i)\bPMT\*WILCO\sTAX\b': 'Taxes.Williamson County',
+    r'(?i)\.*WILLIAMSON\s*COUNT.*': 'Taxes.Williamson County',
+
 #endregion Banking, Finance and Taxes 
 #region Mortgage
     r'(?i)\bTRANSFER\s*PAUL\s*B\s*PAINTER\s*LAURA:john\s*hogge\b': 'Mortgage.Hogge',
@@ -489,11 +494,35 @@ category_map = {
     r'(?i)\bAPPLE\s*STORE.*08\/29.*': 'Temp.Blackmail.Apple Gift Card',
     r'(?i)\bSNIFFIES.*': 'Temp.Chat Site',
     r'(?i)\bZelle\s*payment\s*to.*Thomas\s*Wikstrom.*': 'Temp.Chat Fraud',
-    r'(?i).*BeenVerified.*': 'Temp.Fraud Search',
-    r'(?i).*SOCIALCATFISH.*': 'Temp.Fraud Search',
+    r'(?i).*BeenVerified.*': 'Temp.Fraud Search.BeenVerified-com',
+    r'(?i).*REVERSEPHONE.*': 'Temp.Fraud Search.ReversePhone-com',
+    r'(?i).*SOCIALCATFISH.*': 'Temp.Fraud Search.SocialCatfish-com',
 #endregion Unknowns, one-offs (applied last)
+#region Checks categorized manually by number - run last
+    r'(?i)\bCheck\s*x*\d*\b': 'Banking.Checks to Categorize'
 }
 #endregion Category Map
+#region check_register_map
+# Map a CheckRegister .csv 'Pay-To' field to a Budget Category
+# Append 'Check: nnnnn' to level3
+# Process a workbook to match 'Checks to Categorize, map in check_register_map,
+# replace the desciption with the key value appended with ' - Check: nnnnn' and
+# set the Budget_Category.
+check_register_map = {
+    'Unknown': 'Banking.Checks to Categorize',
+    'Nicole Smith': 'Health and Wellbeing.Hair Care.Nicole Smith',
+    'Landmark Roofing and Construction': 's',
+    'Tejas Chapter DRT': '',
+    'Maria Oyestas': 'Unknown',
+    'Passport Services': 'Travel.Passport Services.Check 2883',
+    'APQT': 'Medical.Physical Therapy.APQT',
+    'Detergent Maria Oyestas': '',
+    'Colonel George Moffett Chapter DAR': 'Professional and Historical Organizations.DAR.Colonel George Moffett Chapter',
+    'Hannah Painter': 'Misc.Reimbursement.Hannah Painter',
+    'Lawn Sprinkler': 'Housing.Lawn Care.Sprinkler Maintenance',
+    'HVAC Grape Cove Unknown': 'Housing.HVAC.Unknown',
+}
+#endregion check_register_map
 # ---------------------------------------------------------------------------- +
 #region category_map_count() function
 def category_map_count():
@@ -535,7 +564,7 @@ def extract_category_tree(level:int=2):
         tree = Tree()
         bct = tree.create_node("Budget", "root")  # Root node
         filter_list = ["Darkside"]        
-        for _, category in category_map.items():
+        for _, category in zip(category_map.items(), check_register_map.items()):
             l1, l2, l3 = split_budget_category(category)
             if l1 in filter_list:
                 continue

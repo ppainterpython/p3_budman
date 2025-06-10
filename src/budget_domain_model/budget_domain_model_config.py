@@ -77,22 +77,22 @@ class BDMConfig(metaclass=BDMSingletonMeta):
                 FI_NAME: "Bank of America",
                 FI_TYPE: "bank",
                 FI_FOLDER: "boa",
-                FI_DATA_COLLECTION: { # WF_DATA_COLLECTION (dict) {wf_key: WF_WORKBOOK_DATA}
-                     BDM_WF_CATEGORIZATION: {  # WF_WOBKBOOK_DATA dict {key: [(),() ...]} 
+                FI_DATA_COLLECTION: { # WORKBOOK_DATA_COLLECTION dict(wf_key: WORKBOOK_LIST)
+                     BDM_WF_CATEGORIZATION: {  # WOBKBOOK_LIST list(wb)
                         WF_INPUT: [ # input data objects
-                            ( "input_prefix_wb_name_1", "wb_abs_path_1" ),
-                            ( "input_prefix_wb_name_2", "wb_abs_path_2" ),
-                            ( "input_prefix_wb_name_3", "wb_abs_path_3" )
+                            ( "input_prefix_wb_name_1", "wb_url_1" ),
+                            ( "input_prefix_wb_name_2", "wb_url_2" ),
+                            ( "input_prefix_wb_name_3", "wb_url_3" )
                         ], 
                         WF_WORKING: [ # working data objects, input and output
-                            ( "wb_name_1", "wb_abs_path_1" ),
-                            ( "wb_name_2", "wb_abs_path_2" ),
-                            ( "wb_name_3", "wb_abs_path_3" )
+                            ( "wb_name_1", "wb_url_1" ),
+                            ( "wb_name_2", "wb_url_2" ),
+                            ( "wb_name_3", "wb_url_3" )
                         ], 
                         WF_OUTPUT: [
-                            ( "output_prefix_wb_name_1", "wb_abs_path_4" ),
-                            ( "output_prefix_wb_name_2", "wb_abs_path_5" ),
-                            ( "output_prefix_wb_name_3", "wb_abs_path_6" )
+                            ( "output_prefix_wb_name_1", "wb_url_4" ),
+                            ( "output_prefix_wb_name_2", "wb_url_5" ),
+                            ( "output_prefix_wb_name_3", "wb_url_6" )
                         ]
                         }
                     },
@@ -111,16 +111,17 @@ class BDMConfig(metaclass=BDMSingletonMeta):
                 # WF Object - TODO: add WF_KEY, verify unique
                 WF_KEY: BDM_WF_INTAKE,
                 WF_NAME: BDM_WF_INTAKE,
-                WF_INPUT_FOLDER: None,         # bsm_WF_INPUT(fi_key, workflow)
-                WF_PREFIX_IN: None,
+                WF_INPUT_FOLDER: None,
                 WF_WORKING_FOLDER: "data/new",
-                WF_OUTPUT_FOLDER: "data/new",
-                WF_PREFIX_OUT: None,
+                WF_OUTPUT_FOLDER: "data/categorized",
                 WF_TYPE_MAP:  {
                     WF_OUTPUT: WF_OUTPUT_FOLDER,
                     WF_WORKING: WF_WORKING_FOLDER,
                     WF_INPUT: WF_INPUT_FOLDER
-                }
+                },
+                WF_PREFIX_IN: None,
+                WF_PREFIX_WORKING: None,
+                WF_PREFIX_OUT: "categorized_"
             },
             BDM_WF_CATEGORIZATION: {            # bdm_fi_wf(fi_key, workflow)
                 # WF Object
@@ -128,14 +129,15 @@ class BDMConfig(metaclass=BDMSingletonMeta):
                 WF_NAME: BDM_WF_CATEGORIZATION,
                 WF_INPUT_FOLDER: "data/new", # bsm_WF_INPUT(fi_key, workflow)
                 WF_WORKING_FOLDER: "data/categorized",
-                WF_OUTPUT_FOLDER: "data/categorized",
-                WF_PREFIX_IN: None,
-                WF_PREFIX_OUT: "categorized_",
+                WF_OUTPUT_FOLDER: "data/finalized",
                 WF_TYPE_MAP:  {
                     WF_OUTPUT: WF_OUTPUT_FOLDER,
                     WF_WORKING: WF_WORKING_FOLDER,
                     WF_INPUT: WF_INPUT_FOLDER
-                }
+                },
+                WF_PREFIX_IN: None,
+                WF_PREFIX_WORKING: "categorized_",
+                WF_PREFIX_OUT: "finalized_"
             },
             BDM_WF_FINALIZATION: {              # bdm_fi_wf(fi_key, workflow)
                 # WF Object
@@ -144,13 +146,14 @@ class BDMConfig(metaclass=BDMSingletonMeta):
                 WF_INPUT_FOLDER: "data/categorized",   # bsm_WF_INPUT(fi_key, workflow)
                 WF_WORKING_FOLDER: "data/finalized",
                 WF_OUTPUT_FOLDER: "data/finalized",
-                WF_PREFIX_IN: "categorized_",
-                WF_PREFIX_OUT: "finalized_",
                 WF_TYPE_MAP:  {
                     WF_OUTPUT: WF_OUTPUT_FOLDER,
                     WF_WORKING: WF_WORKING_FOLDER,
                     WF_INPUT: WF_INPUT_FOLDER
-                }
+                },
+                WF_PREFIX_IN: "categorized_",
+                WF_PREFIX_WORKING: "final_prep_",
+                WF_PREFIX_OUT: "finalized_"
             }
         },
         BDM_OPTIONS: {

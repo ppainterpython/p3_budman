@@ -61,3 +61,30 @@ BSM maps a __folder__ path, a __filename__ and a __filetype__ into an __abs_path
 The __View Model__ is created first, as the application starts. It is the responsibility of the __View Model__ to create the other components. It has access to the application settings, but the __Data Context__ and __Model__ have no dependency on those.
 
 In the __View Model__ initialization, it loads the __BDM_STORE__ and applies the appropriate state assignments to the __Data Context__ to prime it for the application.
+
+### Workflow Processing Technical Design
+
+We started with mapping the Budget_Category field by using regex patterns to match the Original Description field of a workbook to a Budget Category. Later, we added the Level1, Level2, Level3 fields to split the budget category on '.' and populate 3 columns in the workbook, added by BudMan. That was done in the `map_budget_category` task function. Even later, that task function was modified further to support other new column values. These additional columns are for convenience back in excel pivot tables.
+
+Now, the design needs expansion and refactoring. Here are some notes:
+
+```python
+
+    # A workflow is composed of workflow task functions.
+    # The Budget Category workflow has the following tasks:
+    #   - Perform transformations on workbooks.
+    #   - Move workbooks from one wf folder to another.
+    #   - Apply transformation in-place to "working" files in one folder.
+    #   - budget_category_process_workbook(): runs a series of 
+    #     common tasks on a workbook. It can be run anytime and the
+    #     tasks will do their work additively.
+    #   - map_budget_category() - applies the category_map patterns to a 
+    #     specified column and returns a Budget #     Category.
+    #   - map_check_register() reads a CheckRegister .csv file 
+    #     and applies the category to the indicated 'check' transactions, 
+    #     replacing the Original Description field.
+    #   - set_account_code() - applies the transform to the 
+    #     Account Name field and stores in the Account Code field.
+    #   - Set DebitOrCredit
+    # A worklow and its tasks run under a wf_key and a wb_type.
+```

@@ -106,6 +106,7 @@ __all__ = [
     "WF_WORKING_FOLDER",
     "WF_OUTPUT_FOLDER",
     "WF_PREFIX_IN",
+    "WF_PREFIX_WORKING",
     "WF_PREFIX_OUT",
     "WF_TYPE_MAP",
     "WF_OBJECT_VALID_ATTR_KEYS",
