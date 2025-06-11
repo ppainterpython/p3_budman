@@ -10,7 +10,7 @@ from pathlib import Path
 # third-party modules and packages
 import p3_utils as p3u, p3logging as p3l
 # local modules and packages
-from src.budget_domain_model.budget_category_mapping import extract_category_tree
+from budman_workflows.budget_category_mapping import extract_category_tree
 #endregion Imports
 sys.path.append("./src")
 # ---------------------------------------------------------------------------- +

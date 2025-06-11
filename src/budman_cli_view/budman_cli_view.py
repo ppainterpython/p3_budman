@@ -49,20 +49,21 @@ logger = logging.getLogger(__name__)
 # Cmd2ArgumentParser object. If one fails during setup(), the goal is the
 # whole app won't fail, and will display the error message for the
 # particular command parser.
-cli_parser : BudManCLIParser = BudManCLIParser()
+# TODO: how to get the app_name from settings prior to BudManCLIView instantiation?
+cli_parser : BudManCLIParser = BudManCLIParser("p3_budget_manager")
 def init_cmd_parser() -> cmd2.Cmd2ArgumentParser:
-    subcmd_parser = cli_parser.init_cmd_parser if cli_parser else None
+    subcmd_parser = cli_parser.init_cmd if cli_parser else None
     return subcmd_parser
 def show_cmd_parser() -> cmd2.Cmd2ArgumentParser:
-    return cli_parser.show_cmd_parser if cli_parser else None
+    return cli_parser.show_cmd if cli_parser else None
 def load_cmd_parser() -> cmd2.Cmd2ArgumentParser:
-    return cli_parser.load_cmd_parser if cli_parser else None
+    return cli_parser.load_cmd if cli_parser else None
 def save_cmd_parser() -> cmd2.Cmd2ArgumentParser:
-    return cli_parser.save_cmd_parser if cli_parser else None
+    return cli_parser.save_cmd if cli_parser else None
 def val_cmd_parser() -> cmd2.Cmd2ArgumentParser:
-    return cli_parser.val_cmd_parser if cli_parser else None
+    return cli_parser.val_cmd if cli_parser else None
 def workflow_cmd_parser() -> cmd2.Cmd2ArgumentParser:
-    return cli_parser.workflow_cmd_parser if cli_parser else None
+    return cli_parser.workflow_cmd if cli_parser else None
 
 def _filter_opts(opts) -> Dict[str, Any]:
     if opts is None: return {}
@@ -127,9 +128,12 @@ class BudManCLIView(cmd2.Cmd):
     #endregion Class variables and methods
     # ------------------------------------------------------------------------ +
     #region    __init__() method
-    def __init__(self, command_processor : object | MockViewModel = None) -> None:
+    def __init__(self, 
+                 command_processor : object | MockViewModel = None,
+                 app_name : str = "budman_cli") -> None:
         shortcuts = dict(cmd2.DEFAULT_SHORTCUTS)
         shortcuts.update({'wf': 'workflow'})
+        self.app_name = app_name
         self._command_processor = MockViewModel() if command_processor is None else command_processor
         self.parse_only = False
         self.terminal_width = 100 # TODO: add to settings.

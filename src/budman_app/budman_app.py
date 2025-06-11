@@ -35,6 +35,7 @@ class BudManApp(metaclass=BDMSingletonMeta):
         """Initialize the BudManApp."""
         self._settings : Dynaconf = app_settings
         self._cli_view: object = None  # type: ignore
+        self._app_name: str = None
         d = dscr(self)
         logger.info(f"{d}.__init__() completed ...")
     # ------------------------------------------------------------------------ +
@@ -48,6 +49,19 @@ class BudManApp(metaclass=BDMSingletonMeta):
         if not isinstance(settings, Dynaconf):
             raise TypeError("settings must be a Dynaconf instance")
         self._settings = settings
+
+    @property
+    def app_name(self) -> str:
+        """Return the application name."""
+        if self._app_name is None:
+            self._app_name = self.settings.get(APP_NAME, "BudManApp")
+        return self._app_name
+    @app_name.setter
+    def app_name(self, app_name: str) -> None:
+        """Set the application name."""
+        if not isinstance(app_name, str):
+            raise TypeError("app_name must be a string")
+        self._app_name = app_name
 
     @property
     def cli_view(self) -> object:
@@ -142,9 +156,10 @@ class BudManApp(metaclass=BDMSingletonMeta):
             logtest (bool): If True, run a logging test.
         """
         try:
-            logger.debug(f"Started: bdms_url = '{bdms_url}'...")
             if self.settings is None:
                 raise ValueError("Settings not configured.")
+            self.app_name = self.settings.get(APP_NAME, "BudManApp")
+            logger.info(f"Started: {self.app_name} bdms_url = '{bdms_url}'...")
             self.budman_app_setup(bdms_url, testmode)  # Create the BudManApp instance
             self.budman_app_start(testmode)  # Create the BudManApp instance
             logger.debug(f"Complete:")

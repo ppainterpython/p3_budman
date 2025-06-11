@@ -10,14 +10,14 @@ import win32com.client as win32
 import p3_utils as p3u, p3logging as p3l
 # local modules and packages
 # from budman_namespace import *
-from budget_domain_model.budget_category_mapping import extract_category_tree
+from budget_storage_model.csv_data_collection import csv_DATA_COLLECTION_get_url
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
 logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
-# ------------------------------------------------------------------------ +
+# ---------------------------------------------------------------------------- +
 #region configure_logging() method
 def configure_logging(logger_name : str = __name__, logtest : bool = False) -> None:
     """Setup the application logger."""
@@ -42,32 +42,46 @@ def configure_logging(logger_name : str = __name__, logtest : bool = False) -> N
         logger.error(p3u.exc_err_msg(e))
         raise
 #endregion configure_logging() function
-# ------------------------------------------------------------------------ +
+# ---------------------------------------------------------------------------- +
+cvs_url = "file:///C:/Users/ppain/OneDrive/budget/boa/data/new/CheckRegister_ToDate20250609.csv"
 if __name__ == "__main__":
     try:
-        # configure_logging(__name__, logtest=False)
-        st = p3u.start_timer()
-        wb_name = 'categorized_May2025_ALL.xlsx'
-        excel = win32.GetActiveObject("Excel.Application")
-        ewbs = excel.Workbooks
-        for wb in ewbs:
-            # wb.Name, wb.Author, wb.FullName is abs_path, wb.Path is to Folder, 
-            # wb.wb_name is the full file name.
-            print(f"Workbook: {wb.Name}, Author: {wb.Author}, FullName: {wb.FullName}, Path: {wb.Path}")
-        wb_names = [wb.Name for wb in ewbs]
-        if wb_name in wb_names:
-            print(f"Workbook '{wb_name}' is already open in Excel.")
-        print(f"Open Excel Workbooks: {wb_names}")
-        print(f"Complete: {p3u.stop_timer(st)}")
+        configure_logging(__name__, logtest=False)
+        data_col = csv_DATA_COLLECTION_get_url(cvs_url)
+        print(f"Data Collection URL: {cvs_url}")
     except Exception as e:
         m = p3u.exc_err_msg(e)
         print(m)
         print("No open Excel workbooks detected.")
     # bdm = bdms.bsm_BDM_STORE_url_load(bdms_url)
     print(f"Complete.")
-
 exit(0)
+# ---------------------------------------------------------------------------- +
 #region attic
+# if __name__ == "__main__":
+#     try:
+#         # configure_logging(__name__, logtest=False)
+#         st = p3u.start_timer()
+#         wb_name = 'categorized_May2025_ALL.xlsx'
+#         excel = win32.GetActiveObject("Excel.Application")
+#         ewbs = excel.Workbooks
+#         for wb in ewbs:
+#             # wb.Name, wb.Author, wb.FullName is abs_path, wb.Path is to Folder, 
+#             # wb.wb_name is the full file name.
+#             print(f"Workbook: {wb.Name}, Author: {wb.Author}, FullName: {wb.FullName}, Path: {wb.Path}")
+#         wb_names = [wb.Name for wb in ewbs]
+#         if wb_name in wb_names:
+#             print(f"Workbook '{wb_name}' is already open in Excel.")
+#         print(f"Open Excel Workbooks: {wb_names}")
+#         print(f"Complete: {p3u.stop_timer(st)}")
+#     except Exception as e:
+#         m = p3u.exc_err_msg(e)
+#         print(m)
+#         print("No open Excel workbooks detected.")
+#     # bdm = bdms.bsm_BDM_STORE_url_load(bdms_url)
+#     print(f"Complete.")
+# exit(0)
+# ---------------------------------------------------------------------------- +
 # if __name__ == "__main__":
 #     # bdms_url = "file:///C:/Users/ppain/OneDrive/budget/p3_budget_manager_ca063e8b.jsonc"
 #     try:

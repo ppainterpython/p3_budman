@@ -195,14 +195,18 @@ from openpyxl import Workbook, load_workbook
 # local modules and packages
 from budman_settings import *
 from budman_namespace import *
+from budman_workflows import (
+    ORIGINAL_DESCRIPTION_COL_NAME,
+    check_budget_category, check_sheet_columns,
+    map_budget_category, category_map_count, check_sheet_schema
+    )
 from budget_domain_model import (
     BDMBaseInterface, BDMClientInterface, BudgetDomainModel, 
-    check_budget_category, check_sheet_columns,
-    map_budget_category, category_map_count, 
-    budget_category_mapping, BDMConfig,
-    check_sheet_schema, ORIGINAL_DESCRIPTION_COL_NAME)
+    BDMConfig
+    )
 from budget_storage_model import *
 from budman_data_context import BDMWorkingData
+from budman_workflows import budget_category_mapping
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -245,7 +249,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
         self._cmd_map : Dict[str, Callable] = None
     #endregion __init__() constructor method
     # ------------------------------------------------------------------------ +
-    #region Properties
+    #region BudManViewModel Class Properties
     @property
     def model(self) -> BDMBaseInterface:
         """Return the model object reference."""
@@ -515,7 +519,6 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
         try:
             st = p3u.start_timer()
             logger.info(f"Start Command: {cmd}")
-            validate_only: bool = cmd.get("validate_only", False)
             if not self.initialized:
                 m = f"{self.__class__.__name__} is not initialized."
                 logger.error(m)
@@ -525,7 +528,8 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
                 m = f"Invalid cmd object, no action taken."
                 logger.error(m)
                 return False, m
-            success, result = self.cp_validate_cmd(cmd)
+            validate_only: bool = cmd.get("validate_only", False)
+            success, result = self.cp_validate_cmd(cmd,validate_only)
             if not success: return success, result
             full_cmd_key = result
             func = self.cmd_map.get(full_cmd_key)
@@ -546,34 +550,50 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             return False, m
     #endregion cp_execute_cmd() Command Processing method
     #region cp_validate_cmd() Command Processing method
-    def cp_validate_cmd(self, cmd : Dict = None) -> Tuple[bool, str]:
-        """Validate the cmd for the Budget Manager View Model.
+    def cp_validate_cmd(self, cmd : Dict = None,
+                        validate_all : bool = False) -> Tuple[bool, str]:
+        """Validate the cmd object for cmd_key and parameters.
 
         Extract a valid, known cmd_key to succeed.
         Consider values to common arguments which can be validated against
         the data context.
 
+        Arguments:
+            cmd (Dict): A candidate Command object to validate.
+            validate_all (bool): If True, validate all parts of the cmd, 
+                before returning a result. If False, return on first discovery
+                of an error.
+
         returns:
             Tuple[bool, str]: A tuple containing a boolean indicating if the
                 cmd and arguments are valid.
-                True returns the full cmd_key value as a str.
+                True returns the full cmd_key value as result.
                 False, the message will contain an error message.
         """
         try:
-            # Validate full cmd key from the cmd, or error out.
+            all_msgs : str = None
+            # Extract the cmd_key and  full_cmd_key from the cmd, or error out.
             success, result, cmd_key = self.cp_full_cmd_key(cmd)
-            if not success: return False, result
-            full_cmd_key = result
+            if not success and not validate_all:
+                return False, result
+            elif not success and validate_all:
+                # accumulate msgs, validate all cmd args
+                m = f"Error: cmd_key: {str(cmd_key)} full_cmd_key: not found in cmd: {str(cmd)}"
+                all_msgs = m
+            else:
+                full_cmd_key = result
             # Validate the cmd arguments.
             for key, value in cmd.items():
-                if key == cmd_key: continue
+                if key == cmd_key: 
+                    continue
                 elif key == FI_KEY:
                     if not self.dc_FI_KEY_validate(value):
                         m = f"Invalid fi_key value: '{value}'."
                         logger.error(m)
-                        return False, m
+                        return False, m 
                     continue
-                elif key == WB_NAME: continue
+                elif key == WB_NAME: 
+                    continue
                 elif key == WF_KEY:
                     if not self.dc_WF_KEY_validate(value):
                         m = f"Invalid wf_key value: '{value}'."
@@ -605,7 +625,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
     #endregion cp_validate_cmd() Command Processing method
     #region cp_cmd_key() Command Processing method
     def cp_cmd_key(self, cmd : Dict = None) -> Tuple[bool, str]:
-        """Validate a cmd_key is present in the cmd, return it.
+        """Extract a cmd_key is present in the cmd, return it.
                 
         returns:
             Tuple[success: bool, result: str: 
@@ -634,8 +654,8 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             raise
     #endregion cp_cmd_key() Command Processing method
     #region cp_full_cmd_key() Command Processing method
-    def cp_full_cmd_key(self, cmd : Dict = None) -> Tuple[bool, str]:
-        """Validate a full cmd key with subcommand if included.
+    def cp_full_cmd_key(self, cmd : Dict = None) -> Tuple[bool, str, str]:
+        """Extract a full cmd key with subcommand if included.
         
         returns:
             Tuple[success: bool, result: str, cmd_key: str|None]: 
@@ -644,6 +664,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
                 False: result = an error message.
         """
         try:
+            validate_only: bool = cmd.get("validate_only", False)
             # Extract a cmd key from the cmd, or error out.
             success, result = self.cp_cmd_key(cmd)
             if not success: return False, result, None
@@ -654,7 +675,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             full_cmd_key = cmd_key + '_' + sub_cmd if p3u.str_notempty(sub_cmd) else cmd_key
             # Validate the full_cmd_key against the command map.
             if full_cmd_key not in self.cmd_map:
-                m = f"Command key '{full_cmd_key}' not found in command map."
+                m = f"Command key '{full_cmd_key}' not found in the command map."
                 logger.error(m)
                 return False, m, None
             return True, full_cmd_key, cmd_key
@@ -1156,6 +1177,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
                     m = f"wb_ref is None, no action taken."
                     logger.error(m)
                     return False, m
+            check_register = cmd.get('check_register', False)
             # Verify LOADED_WORKBOOKS to process.
             wb_ref = wb_ref or self.dc_WB_REF
             lwbl = self.dc_LOADED_WORKBOOKS

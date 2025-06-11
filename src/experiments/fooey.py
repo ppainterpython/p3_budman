@@ -9,7 +9,7 @@ from typing import Dict
 import p3_utils as p3u, p3logging as p3l
 # local modules and packages
 # from budman_namespace import *
-from budget_domain_model.budget_category_mapping import extract_category_tree
+from budman_workflows.budget_category_mapping import extract_category_tree
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants

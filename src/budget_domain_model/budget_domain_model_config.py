@@ -191,7 +191,7 @@ class BDMConfig(metaclass=BDMSingletonMeta):
     }
     #endregion BDMConfig dictionary
     # ------------------------------------------------------------------------ +
-    #region get_budget_model_config() classmethod
+    #region BDM_CONFIG_default() classmethod
     @classmethod
     def BDM_CONFIG_default(cls, default : bool = False) -> BDM_CONFIG:
         """Get a pristine version of a BDM_CONFIG dictionary."""
@@ -212,7 +212,7 @@ class BDMConfig(metaclass=BDMSingletonMeta):
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
-    #endregion get_budget_model_config() classmethod
+    #endregion BDM_CONFIG_default() classmethod
     # ------------------------------------------------------------------------ +
     #region validate() created BDMConfig from a loaded BDM_STORE url.
     @classmethod
@@ -311,13 +311,13 @@ class BDMConfig(metaclass=BDMSingletonMeta):
         setattr(self, BDM_ID, value)
 
     @property
-    def bdm_config_object(self) -> object:
+    def bdm_config_object(self) -> BDM_CONFIG:
         """The budget model configuration object."""
         return getattr(self, BDM_CONFIG_OBJECT)
     @bdm_config_object.setter
-    def bdm_config_object(self, value: object) -> None:
+    def bdm_config_object(self, value: BDM_CONFIG) -> None:
         """Set the budget model configuration object."""
-        if not isinstance(value, object):
+        if not isinstance(value, dict):
             raise ValueError(f"bm_config_object must be an object: {value}")
         setattr(self, BDM_CONFIG_OBJECT, value)
 
@@ -385,11 +385,11 @@ class BDMConfig(metaclass=BDMSingletonMeta):
         self._workflows = value
 
     @property
-    def bdm_options(self) -> dict:
+    def bdm_options(self) -> BDMO_OBJECT:
         """The budget model options dictionary."""
         return self._options
     @bdm_options.setter
-    def bdm_options(self, value: dict) -> None:
+    def bdm_options(self, value: BDMO_OBJECT) -> None:
         """Set the budget model options dictionary."""
         self._options = value
 
@@ -421,12 +421,12 @@ class BDMConfig(metaclass=BDMSingletonMeta):
         self._last_modified_by = value
     
     @property
-    def bdm_working_data(self) -> dict:
+    def bdm_working_data(self) -> BDM_WORKING_DATA_OBJECT:
         """The budget domain model working data."""
         self._wd = {} if self._wd is None else self._wd
         return self._wd
     @bdm_working_data.setter
-    def bdm_working_data(self, value: dict) -> None:
+    def bdm_working_data(self, value: BDM_WORKING_DATA_OBJECT) -> None:
         """Set the budget domain model working data."""
         self._wd = {} if self._wd is None else self._wd
         self._wd = value
@@ -451,7 +451,7 @@ class BDMConfig(metaclass=BDMSingletonMeta):
     # ------------------------------------------------------------------------ +
     #region log_BMT_info()
     @staticmethod
-    def log_BMT_info(bmt : "BDMConfig") -> None:
+    def log_BDM_CONFIG_info(bmt : "BDMConfig") -> None:
         """Log the BDMConfig class information."""
         try:
             logger.debug("Start:  ...")
@@ -504,31 +504,4 @@ class BDMConfig(metaclass=BDMSingletonMeta):
 
     #endregion log_BMT_info()
     # ------------------------------------------------------------------------ +
-# ---------------------------------------------------------------------------- +
-#region tryout_budget_domain_model_config() function
-def tryout_budget_domain_model_config() -> None: 
-    """Test the BDMConfig class."""
-    st = p3u.start_timer()
-    try:
-        logger.debug("Start: ...")
-        bmt = BDMConfig()
-        bmt.bsm_initialize() # initialize the budget storage model 
-        
-        # Enumerate the financial institutions in the budget model config
-        for fi_key, fi_dict in bmt.bdm_fi_collection.items():
-            logger.debug(f"Financial Institution: {fi_dict[FI_FOLDER]}:"
-                         f"{fi_dict[FI_TYPE]}:{fi_dict[FI_NAME]}:")
-        for wf_key, wf_dict in bmt.bdm_wf_collection.items():
-            logger.debug(f"{P2}Workflow('{wf_dict[WF_NAME]}'): "
-                            f"{P2}WM_FOLDER_IN: '{wf_dict[WF_INPUT_FOLDER]}' "
-                            f"{P2}WM_WORKBOOKS_IN: {wf_dict[WB_INPUT]}")
-        # logger.debug(f"Budget Model config:     str: '{str(bmt)}'")
-        # logger.debug(f"Budget Model config:    repr: '{repr(bmt)}'")
-        # logger.debug(f"Budget Model config: to_dict: '{bmt.to_dict()}'")
-        logger.debug(f"Complete: {p3u.stop_timer(st)}")   
-    except Exception as e:
-        m = p3u.exc_err_msg(e)
-        logger.error(m)
-        raise
-#endregion tryout_budget_domain_model_config() function
 # ---------------------------------------------------------------------------- +

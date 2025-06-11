@@ -29,8 +29,8 @@ from openpyxl.cell.cell import Cell
 
 # local modules and packages
 from budman_namespace import *
-from budget_domain_model import (BudgetDomainModel, map_category, 
-                                 category_map_count)
+from .budget_category_mapping import (map_category, category_map_count)
+from budget_domain_model import (BudgetDomainModel)
 # from data.p3_fi_transactions.budget_model import BudgetModel
 #endregion Imports
 # ---------------------------------------------------------------------------- +

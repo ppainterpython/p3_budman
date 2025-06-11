@@ -82,9 +82,8 @@ def bsm_BDM_STORE_url_save(bdm_store:BDM_STORE, bdms_url : str = None) -> Dict:
         bdms_url (str): The URL to the BDM_STORE object to store.
     """
     try:
-        st = p3u.start_timer()
         # bdm_store must be a dictionary.
-        p3u.is_obj_of_type("bdm_store", bdm_store, Dict, raise_error=True)
+        p3u.is_obj_of_type("bdm_store", bdm_store, Dict, raise_TypeError=True)
         # store_url must be a non-empty string.
         p3u.is_non_empty_str("store_url", bdms_url, raise_error=True)
         # store_url must be a valid URL.

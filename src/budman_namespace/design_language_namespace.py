@@ -48,6 +48,10 @@ WF_DATA_COLLECTION = DATA_COLLECTION
 WF_DATA_OBJECT = DATA_OBJECT  # a DATA_OBJECT for a specific FI,WF
 BDM_WORKING_DATA_OBJECT = DATA_OBJECT
 # ---------------------------------------------------------------------------- +
+# Valid data store file types for the Budget Storage Model (BSM).
+BSM_VALID_BDM_STORE_FILETYPES = (".json", ".jsonc")
+BSM_DATA_COLLECTION_CSV_STORE_FILETYPES = (".csv",".txt")
+# ---------------------------------------------------------------------------- +
 # Budget Model Filesystem Path default constants 
 PATH = "_path"
 ABS_PATH = "_abs" + PATH
