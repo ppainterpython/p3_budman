@@ -221,7 +221,7 @@ class BudManDataContext(BudManDataContextBaseInterface):
 
     def dc_WORKBOOK_loaded(self, wb_name: str) -> bool:
         """DC-Only: Indicates whether the named workbook is loaded."""
-        _ = p3u.is_str_or_none("wb_name", wb_name, raise_TypeError=True)
+        _ = p3u.is_str_or_none("wb_name", wb_name, raise_error=True)
         # Reference the DC.LOADED_WORKBOOKS property.
         if (not self.dc_INITIALIZED or 
                 self.dc_LOADED_WORKBOOKS is None or 

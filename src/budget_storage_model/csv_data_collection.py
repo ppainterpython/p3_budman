@@ -110,11 +110,11 @@ def verify_url_file_path(url: str,test:bool=True) -> Path:
         raise
 #endregion verify_url_file_path(url: str) function
 # ---------------------------------------------------------------------------- +
-#region    verify_url_file_path(url: str) function 
+#region    verify_file_path_for_load(url: str) function 
 def verify_file_path_for_load(file_path: Path) -> None:
     """Verify that the file path is valid and ready to load or raise error."""
     try:
-        p3u.is_obj_of_type("file_path", file_path, Path, raise_TypeError=True)
+        p3u.is_obj_of_type("file_path", file_path, Path, raise_error=True)
         if not file_path.exists():
             raise FileNotFoundError(f"File does not exist: {file_path}")
         if not file_path.exists():
@@ -136,5 +136,5 @@ def verify_file_path_for_load(file_path: Path) -> None:
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
-#endregion verify_url_file_path(url: str) function
+#endregion verify_file_path_for_load(url: str) function
 # ---------------------------------------------------------------------------- +

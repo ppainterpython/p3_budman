@@ -23,6 +23,10 @@ from budman_data_context import BudManDataContext
 from budget_domain_model.budget_domain_model import BudgetDomainModel
 from budget_domain_model.model_base_interface import BDMBaseInterface
 from budget_domain_model.model_client_interface import BDMClientInterface
+from budget_storage_model.csv_data_collection import (
+    csv_DATA_COLLECTION_get_url, verify_url_file_path
+)
+
 #endregion imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -146,7 +150,7 @@ class BDMWorkingData(BudManDataContext, BDMClientInterface):
         try:
             # Bind through the DC (data_context) object
             wb_all, wb_index, wb_name = self.bdmwd_WB_REF_resolve(wb_ref)
-            if wb_all or (wb_index >= 0 and wb_name is not None):
+            if wb_all or wb_index >= 0 or wb_name is not None:
                 # If wb_all is True, or we have a valid index and name.
                 return True
             return False
@@ -192,6 +196,7 @@ class BDMWorkingData(BudManDataContext, BDMClientInterface):
             Tuple[wb_all:bool, wb_index:int, wb_name:str]: 
                 (True, -1, ALL_KEY) if wb_ref is ALL_KEY. 
                 (False, wb_index, wb_name) for a valid index, adds wb_name match.
+                (False, -1, wb_name) no valid index, found a wb_name.
                 (False, -1, None) if wb_ref is invalid index or name value.
         
         Raises:
@@ -201,7 +206,7 @@ class BDMWorkingData(BudManDataContext, BDMClientInterface):
             if isinstance(wb_ref, str):
                 if wb_ref == ALL_KEY:
                     return True, -1, ALL_KEY
-                if wb_ref.isdigit():
+                if wb_ref.isdigit() or isinstance(wb_ref, int):
                     # If the wb_ref is a digit, treat it as an index.
                     wb_index = int(wb_ref)
                     if wb_index < 0 or wb_index >= len(self.dc_WORKBOOKS):
@@ -212,7 +217,14 @@ class BDMWorkingData(BudManDataContext, BDMClientInterface):
                     if wb_name is None:
                         return False, -1, None
                     return False, wb_index, wb_name
-            return False, -1
+                else :
+                    # Could be a wb_name or a wb_url
+                    wb_url_path = verify_url_file_path(wb_ref, test=False)
+                    wb_name = wb_ref.strip() # TODO: flesh this out
+                    if wb_url_path is not None :
+                        wb_name = wb_url_path.name # TODO: flesh this out
+                    return False, -1, wb_name
+            return False, -1, None
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
@@ -225,6 +237,24 @@ class BDMWorkingData(BudManDataContext, BDMClientInterface):
         """Model-Aware: Return the WORKBOOK_LIST from the BDMWD."""
         # Ask the model for the bdmwd_WORKBOOKS.
         return self.model.bdmwd_WORKBOOKS_get()
+    def bdmwd_WORKBOOKS_add(self, wb_name:str, wb_abs_path_str:str) -> None:
+        """Model-Aware: Add an entry to BDMWD_WORKBOOKS in the BDM_WORKING_DATA.
+
+        Args:
+            wb_name (str): The name of the workbook to add.
+            wb_abs_path_str (str): The absolute path of the workbook to add.    
+
+        Returns:
+            None: on success.
+        Raises:
+            ValueError: if the BDM_WORKING_DATA is not set.
+            TypeError: if wb_name is not a str.
+            TypeError: if wb_abs_path_str is not a str.
+            ValueError: if wb_name is None or an empty str.
+            ValueError: if wb_abs_path_str is None or empty string.
+        """
+        # Use the model binding.
+        return self.model.bdmwd_WORKBOOKS_add(wb_name, wb_abs_path_str)
     def bdmwd_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_COLLECTION:
         """Model-Aware: Return the LOADED_WORKBOOK_COLLECTION from the BDMWD."""
         # Ask the model for the bdmwd_LOADED_WORKBOOKS.

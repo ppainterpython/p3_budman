@@ -218,9 +218,9 @@ class BudManCLIView(cmd2.Cmd):
     # ------------------------------------------------------------------------ +
     #
     #region init command - initialize aspects of the BudgetModel application.
-    @with_argparser(init_cmd_parser()) # This decorator links cmd2 with argparse.
+    @cmd2.with_argparser(init_cmd_parser()) # This decorator links cmd2 with argparse.
     def do_init(self, opts):
-        """Init the data context in the Budget Manager application."""
+        """Initialize aspects of the Data Context for the Budget Manager application."""
         try:
             status, result = self.cp_execute_cmd(opts)
         except Exception as e:
@@ -228,9 +228,9 @@ class BudManCLIView(cmd2.Cmd):
     #endregion init command - initialize aspects of the BudgetModel application.
     # ------------------------------------------------------------------------ +
     #region Show command - workbooks, status, etc.
-    @with_argparser(show_cmd_parser())
+    @cmd2.with_argparser(show_cmd_parser())
     def do_show(self, opts):
-        """Show information in the Budget Manager application.
+        """Show information from the Budget Manager application.
         
         Arguments:
             opts (argparse.Namespace): The command line options after parsing
@@ -244,9 +244,9 @@ class BudManCLIView(cmd2.Cmd):
     #endregion Show command
     # ------------------------------------------------------------------------ +
     #region Load command - load workbooks
-    @with_argparser(load_cmd_parser())
+    @cmd2.with_argparser(load_cmd_parser())
     def do_load(self, opts):
-        """Load data in the Budget Manager application.
+        """Load specified data objects in the Budget Manager application.
         
         Arguments:
             opts (argparse.Namespace): The command line options after parsing
@@ -260,9 +260,9 @@ class BudManCLIView(cmd2.Cmd):
     #endregion Load command - load workbooks
     # ------------------------------------------------------------------------ +
     #region Save command - save workbooks
-    @with_argparser(save_cmd_parser())
+    @cmd2.with_argparser(save_cmd_parser())
     def do_save(self, opts):
-        """Save data in the Budget Manager application.
+        """Save specified data objects in the Budget Manager application.
         
         Arguments:
             opts (argparse.Namespace): The command line options after parsing
@@ -276,9 +276,9 @@ class BudManCLIView(cmd2.Cmd):
     #endregion Save command - save workbooks
     # ------------------------------------------------------------------------ +    
     #region Val command - workbooks, status, etc.
-    @with_argparser(val_cmd_parser())
+    @cmd2.with_argparser(val_cmd_parser())
     def do_val(self, opts):
-        """Val command to examine and set values in Budget Manager application.
+        """Val command to get and set values in Budget Manager application.
         
         The val cmd does various actions depending on the subcommand and options
         provided. The subcommands are:

@@ -413,8 +413,8 @@ def WORKSHEET_row_data(row:tuple,hdr:list=BUDMAN_WB_COLUMNS) -> TransactionData:
     """
     try:
         # Validation
-        p3u.is_not_obj_of_type("row", row, tuple, raise_TypeError=True)
-        p3u.is_not_obj_of_type("hdr", hdr, list, raise_TypeError=True)
+        p3u.is_not_obj_of_type("row", row, tuple, raise_error=True)
+        p3u.is_not_obj_of_type("hdr", hdr, list, raise_error=True)
         if len(row) == 0 or len(hdr) == 0 or len(row) != len(hdr):
             raise ValueError("Row and Hdr must be equal, non-zero length.")
         # Check if all required columns are present in the hdr.
@@ -494,7 +494,7 @@ def split_budget_category(budget_category: str) -> tuple[str, str, str]:
         raise
 #endregion split_budget_category() function
 # ---------------------------------------------------------------------------- +
-#region map_budget_category() function
+#region col_i() function
 def col_i(col_name:str, hdr:list) -> int:
     """Get the 0-based index of a column name in a header row.
     
@@ -513,6 +513,9 @@ def col_i(col_name:str, hdr:list) -> int:
         return hdr.index(col_name) if col_name in hdr else -1
     except ValueError:
         return -1
+#endregion col_i() function
+# ---------------------------------------------------------------------------- +
+#region year_month_str() function
 def year_month_str(date:object) -> str:
     """Convert a date object to a year-month string in the format 'YYYY-MM-mmm'.
     
@@ -531,6 +534,9 @@ def year_month_str(date:object) -> str:
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
+#endregion year_month_str() function
+# ---------------------------------------------------------------------------- +
+#region map_budget_category() function
 def map_budget_category(sheet:Worksheet,src,dst) -> None:
     """Map a src column to budget category putting result in dst column.
     
@@ -547,8 +553,8 @@ def map_budget_category(sheet:Worksheet,src,dst) -> None:
     """
     try:
         # Validate the input parameters.
-        _ = p3u.is_str_or_none("src", src, raise_TypeError=True)
-        _ = p3u.is_str_or_none("dst", dst, raise_TypeError=True)
+        _ = p3u.is_str_or_none("src", src, raise_error=True)
+        _ = p3u.is_str_or_none("dst", dst, raise_error=True)
         if not check_sheet_columns(sheet, add_columns=False):
             logger.error(f"Sheet '{sheet.title}' cannot be mapped due to "
                          f"missing required columns.")
@@ -628,6 +634,102 @@ def map_budget_category(sheet:Worksheet,src,dst) -> None:
         logger.error(p3u.exc_err_msg(e))
         raise    
 #endregion map_budget_category() function
+# ---------------------------------------------------------------------------- +
+#region apply_check_register() function
+def apply_check_register(sheet:Worksheet,check_reg:dict) -> None:
+    """Apply the check transactions to the worksheet.
+    
+    The sheet has banking transaction data in rows and columns. 
+    The check_reg has a collection of checks. Scan and match the checks
+    with the content in the worksheet. If found, modify the transactions.
+
+    Args:
+        sheet (openpyxl.worksheet): The worksheet to process.
+        check_reg (dict): A dictionary of check transactions to apply.
+    """
+    try:
+        # Validate the input parameters.
+        if not check_sheet_columns(sheet, add_columns=False):
+            logger.error(f"Sheet '{sheet.title}' cannot be mapped due to "
+                         f"missing required columns.")
+            return
+        logger.info(f"Applying checks from check register to sheet: '{sheet.title}' ")
+        # transactions = WORKSHEET_data(sheet)
+        # A row is a tuple of the Cell objects in the row. Tuples are 0-based
+        # hdr is a list, also 0-based. So, using the index(name) will 
+        # give the cell from a row tuple matching the column name in hdr.
+        hdr = [cell.value for cell in sheet[1]] 
+
+        # For each check, with the check number and the Budget Category
+        # 'Banking.Checks to Categorize', find the row in the worksheet to modify.
+        target_cat = 'Banking.Checks to Categorize'
+
+        if src in hdr:
+            src_col_index = hdr.index(src)
+        else:
+            logger.error(f"Source column '{src}' not found in header row.")
+            return
+        if dst in hdr:
+            dst_col_index = hdr.index(dst)
+        else:
+            logger.error(f"Destination column '{dst}' not found in header row.")
+            return
+        
+        # TODO: need to refactor this to do replacements by col_name or something.
+        # This is specific to the Budget Category mapping, which now is to be
+        # split into 3 levels: Level1, Level2, Level3.
+
+        # These are values to set in the rows.
+        date_i = col_i(DATE_COL_NAME,hdr)
+        l1_i = col_i(LEVEL_1_COL_NAME,hdr)
+        l2_i = col_i(LEVEL_2_COL_NAME,hdr)
+        l3_i = col_i(LEVEL_3_COL_NAME,hdr)
+        amt_i = col_i(AMOUNT_COL_NAME,hdr)
+        dORc_i = col_i(DEBIT_CREDIT_COL_NAME,hdr)
+        year_month_i = col_i(YEAR_MONTH_COL_NAME,hdr)
+        acct_name_i = col_i(ACCOUNT_NAME_COL_NAME,hdr)
+        acct_code_i = col_i(ACCOUNT_CODE_COL_NAME,hdr)
+        acct_cell : Cell = sheet.cell(row=1, column=acct_name_i + 1)
+
+        logger.info(f"Mapping '{src}'({src_col_index}) to "
+                    f"'{dst}'({dst_col_index})")
+        num_rows = sheet.max_row # or set a smaller limit
+        other_count = 0
+        for row in sheet.iter_rows(min_row=2):
+            # row is a 'tuple' of Cell objects, 0-based index
+            row_idx = row[0].row  # Get the row index, the row number, 1-based.
+            # Do the mapping from src to dst.
+            dst_cell = row[dst_col_index]
+            src_value = row[src_col_index].value 
+            dst_value = map_category(src_value)
+            dst_cell.value = dst_value 
+            # row[dst_col_index].value = dst_value 
+            # Set the additional values for BudMan in the row
+            date_val = row[date_i].value
+            year_month = year_month_str(date_val) if date_val else None
+            row[year_month_i].value = year_month
+            l1, l2, l3 = split_budget_category(dst_value)
+            row[l1_i].value = l1 if l1_i != -1 else None
+            row[l2_i].value = l2 if l2_i != -1 else None
+            row[l3_i].value = l3 if l3_i != -1 else None
+            row[dORc_i].value = 'C' if row[amt_i].value > 0 else 'D'
+            acct_value = row[acct_name_i].value
+            t_acct_code = acct_value.split('-')[-1].strip()
+            row[acct_code_i].value = t_acct_code if acct_code_i != -1 else None
+
+            transaction = WORKSHEET_row_data(row,hdr) 
+            trans_str = transaction.data_str()
+            del transaction  # Clean up the transaction object.
+            if dst_value == 'Other':
+                other_count += 1
+                logger.debug(f"{row_idx:04}:{trans_str}" )
+        logger.info(f"Completed budget category mapping for '{num_rows}' rows. "
+                    f"Other count: '{other_count}'.")
+        return None
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise    
+#endregion apply_check_register() function
 # ---------------------------------------------------------------------------- +
 #region def execute_worklow_categorization(bm : BudgetModel, fi_key: str) -> None:
 def execute_worklow_categorization(bm : BudgetDomainModel, fi_key: str, wf_key:str) -> None:

@@ -79,7 +79,7 @@ def bsm_BDM_STORE_url_save(budman_store:Dict, bdms_url : str = None) -> Dict:
     """
     try:
         # budman_store must be a dictionary.
-        p3u.is_obj_of_type("budman_store", budman_store, Dict, raise_error=True)
+        p3u.is_obj_of_type("budman_store", budman_store, dict, raise_error=True)
         # store_url must be a non-empty string.
         p3u.is_non_empty_str("store_url", bdms_url, raise_error=True)
         # store_url must be a valid URL.
@@ -141,7 +141,7 @@ def bsm_BDM_STORE_file_save(budman_store:Dict, bdms_path:Path) -> None:
     """Save the Budget Manager Store to a .jsonc file."""
     try:
         # budman_store must be a dictionary.
-        p3u.is_obj_of_type("budman_store", budman_store, Dict, raise_error=True)
+        p3u.is_obj_of_type("budman_store", budman_store, dict, raise_error=True)
         # store_path must be a non-empty string.
         p3u.is_non_empty_str("bdms_path", bdms_path, raise_error=True)
         logger.info("Saving Budget Manager Store to file: '{bdms_path}'")

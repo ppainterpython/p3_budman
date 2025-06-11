@@ -1591,7 +1591,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
         try:
             self.bdmwd_INITIALIZED()
             p3u.is_str_or_none("wb_name", wb_name, raise_error = True)
-            p3u.is_str_or_none("wb_abs_path_str",wb_abs_path_str,raise_TypeError=True)
+            p3u.is_str_or_none("wb_abs_path_str",wb_abs_path_str,raise_error=True)
             if self.bdwb_WORKBOOKS_member(wb_name):
                 # If the workbook is already a member, do not add it again.
                 m = f"Wb: '{wb_name}' already member of BDMWD_WORKBOOKS."
@@ -1610,7 +1610,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
     def bdwb_WORKBOOKS_member(self, wb_name:str) -> bool: 
         """Return True if wb_name is a member of DC.WORKBOOKS list."""
         try:
-            _ = p3u.is_str_or_none("wb_name", wb_name, raise_TypeError=True)
+            _ = p3u.is_str_or_none("wb_name", wb_name, raise_error=True)
             # Reference the DC.WORKBOOKS property.
             wbl = self.bdmwd_WORKBOOKS_get()
             if len(wbl) == 0:
@@ -1672,7 +1672,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
         """
         _ = self.bdmwd_INITIALIZED()
         try:
-            _ = p3u.is_str_or_none("wb_name", wb_name, raise_TypeError=True)
+            _ = p3u.is_str_or_none("wb_name", wb_name, raise_error=True)
             fi_key = self.bdmwd_FI_KEY
             wf_key = self.bdmwd_WF_KEY
             wb_type = self.bdmwd_WB_TYPE
@@ -1710,7 +1710,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
         """
         _ = self.bdmwd_INITIALIZED()
         try:
-            _ = p3u.is_str_or_none("wb_name", wb_name, raise_TypeError=True)
+            _ = p3u.is_str_or_none("wb_name", wb_name, raise_error=True)
             fi_key = self.bdmwd_FI_KEY
             wf_key = self.bdmwd_WF_KEY
             wb_type = self.bdmwd_WB_TYPE
@@ -1745,7 +1745,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
         """
         _ = self.bdmwd_INITIALIZED()
         try:
-            _ = p3u.is_str_or_none("wb_name", wb_name, raise_TypeError=True)
+            _ = p3u.is_str_or_none("wb_name", wb_name, raise_error=True)
             wbl = self.bdmwd_WORKBOOKS_get()
             wb_ap = [val for key, val in wbl if key == wb_name][0]
             if wb_ap is None:
@@ -1837,8 +1837,8 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
         """
         try:
             self.bdmwd_INITIALIZED()
-            p3u.is_str_or_none("wb_name",wb_name, raise_TypeError = True)
-            p3u.is_obj_of_type("wb", wb, Workbook, raise_TypeError=True)
+            p3u.is_str_or_none("wb_name",wb_name, raise_error = True)
+            p3u.is_obj_of_type("wb", wb, Workbook, raise_error=True)
             lwbs_list = self.bdmwd_LOADED_WORKBOOKS_get()
             lwbs_list[wb_name] = wb  # Use dict-like access for easy updates.
             m = "Updated" if self.bdwb_LOADED_WORKBOOKS_member(wb_name) else "Added"
@@ -1853,7 +1853,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
     def bdwb_LOADED_WORKBOOKS_member(self, wb_name:str) -> bool: 
         """Return True if wb_name is a member of DC.LOADED_WORKBOOKS list."""
         try:
-            _ = p3u.is_str_or_none("wb_name", wb_name, raise_TypeError=True)
+            _ = p3u.is_str_or_none("wb_name", wb_name, raise_error=True)
             # Reference the DC.LOADED_WORKBOOKS property. Dict(wb_name: Workbook).
             lwbl = self.bdmwd_LOADED_WORKBOOKS_get()
             return True if wb_name in lwbl else False

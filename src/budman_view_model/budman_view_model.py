@@ -205,11 +205,30 @@ from budget_domain_model import (
     BDMConfig
     )
 from budget_storage_model import *
+from budget_storage_model.csv_data_collection import (
+    csv_DATA_COLLECTION_get_url, verify_url_file_path
+)
 from budman_data_context import BDMWorkingData
 from budman_workflows import budget_category_mapping
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
+# BudMan Command Processor Argument Name Constants
+# argparse converts hyphens '-' to underscores '_', so we use underscores
+CMD_ARG_CMD_KEY_SUFFIX = "_cmd"
+CMD_ARG_PARSE_ONLY = "parse_only"
+CMD_ARG_VALIDATE_ONLY = "validate_only"
+CMD_ARG_WHAT_IF = "what_if"
+CMD_ARG_FI_KEY = "fi_key"
+CMD_ARG_WF_KEY = "wf_key"
+CMD_ARG_WB_NAME = "wb_name"
+CMD_ARG_WB_REF = "wb_ref"
+CMD_ARG_WB_INFO = "wb_info"
+CMD_ARG_CHECK_REGISTER = "check_register"
+BUDMAN_VALID_CMD_ARGS = (CMD_ARG_PARSE_ONLY, CMD_ARG_VALIDATE_ONLY,
+                        CMD_ARG_WHAT_IF, CMD_ARG_FI_KEY, CMD_ARG_WF_KEY,
+                        CMD_ARG_WB_NAME, CMD_ARG_WB_REF,CMD_ARG_WB_INFO,
+                        CMD_ARG_CHECK_REGISTER)
 logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
@@ -427,6 +446,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
                 "show_cmd_DATA_CONTEXT": self.DATA_CONTEXT_show_cmd,
                 "show_cmd_workbooks": self.WORKBOOKS_show_cmd,
                 "load_cmd_workbooks": self.WORKBOOKS_load_cmd,
+                "load_cmd_check_register": self.CHECK_REGISTER_load_cmd,
                 "workflow_cmd_categorization": self.WORKFLOW_categorization_cmd,
                 "workflow_cmd_reload": self.WORKFLOW_reload_cmd,
                 "workflow_cmd_check": self.WORKFLOW_check_cmd
@@ -494,7 +514,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
     #region cp_execute_cmd() Command Processing method
     def cp_execute_cmd(self, 
                          cmd : Dict = None,
-                         raise_errors : bool = False) -> Tuple[bool, Any]:
+                         raise_error : bool = False) -> Tuple[bool, Any]:
         """Execute a command for the View Model.
 
         This method executes a command for the Budget Model View Model. 
@@ -516,21 +536,14 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             If raise-errors is True, RuntimeError: A description of the
             root error is contained in the exception message.
         """
+        pfx = f"{self.__class__.__name__}.{self.cp_execute_cmd.__name__}: "
         try:
             st = p3u.start_timer()
             logger.info(f"Start Command: {cmd}")
-            if not self.initialized:
-                m = f"{self.__class__.__name__} is not initialized."
-                logger.error(m)
-                return False, m
-            pfx = f"{self.__class__.__name__}.{self.FI_init_cmd.__name__}: "
-            if p3u.is_not_obj_of_type("cmd",cmd,dict,pfx):
-                m = f"Invalid cmd object, no action taken."
-                logger.error(m)
-                return False, m
-            validate_only: bool = cmd.get("validate_only", False)
-            success, result = self.cp_validate_cmd(cmd,validate_only)
+            success, result = self.cp_validate_cmd(cmd)
             if not success: return success, result
+            # if cp_validate_cmd() is good, continue.
+            validate_only: bool = self.cp_cmd_arg_get(cmd,CMD_ARG_VALIDATE_ONLY)
             full_cmd_key = result
             func = self.cmd_map.get(full_cmd_key)
             function_name = func.__name__
@@ -545,7 +558,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
-            if raise_errors:
+            if raise_error:
                 raise RuntimeError(m)
             return False, m
     #endregion cp_execute_cmd() Command Processing method
@@ -570,79 +583,155 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
                 True returns the full cmd_key value as result.
                 False, the message will contain an error message.
         """
+        my_prefix = f"{self.__class__.__name__}.{self.cp_validate_cmd_object.__name__}: "
         try:
-            all_msgs : str = None
-            # Extract the cmd_key and  full_cmd_key from the cmd, or error out.
-            success, result, cmd_key = self.cp_full_cmd_key(cmd)
-            if not success and not validate_all:
-                return False, result
-            elif not success and validate_all:
-                # accumulate msgs, validate all cmd args
-                m = f"Error: cmd_key: {str(cmd_key)} full_cmd_key: not found in cmd: {str(cmd)}"
-                all_msgs = m
-            else:
-                full_cmd_key = result
+            self.cp_validate_cmd_object(cmd, my_prefix, raise_error = True)
+            # After cp_validate_cmd_object() returns, we know cmd has content
+            # to examine and validate.
+            validate_all: bool = self.cp_cmd_arg_get(cmd,CMD_ARG_VALIDATE_ONLY)
+            # If validate_all, the don't return a result until all cmd args 
+            # are validated.
+            all_results : str = None
+            if validate_all:
+                all_results = f"Command validation info: \n{P2}cmd: {str(cmd)}\n"
+            # Extract the cmd_key and full_cmd_key from the cmd, or error out.
+            success, full_cmd_key, cmd_key = self.cp_full_cmd_key(cmd)
+            if not success:
+                result = f"Error: cmd_key: '{str(cmd_key)}' "
+                result += f"full_cmd_key: '{str(full_cmd_key)}' not in cmd_map."
+                if not validate_all:
+                    logger.warning(result)
+                    return False, result
+                else:
+                    # accumulate msgs, validate all cmd args
+                    all_results += f"{P2}{result}\n"
+                    success = False
             # Validate the cmd arguments.
             for key, value in cmd.items():
-                if key == cmd_key: 
+                if key == full_cmd_key: 
                     continue
-                elif key == FI_KEY:
+                elif key == CMD_ARG_FI_KEY:
                     if not self.dc_FI_KEY_validate(value):
-                        m = f"Invalid fi_key value: '{value}'."
-                        logger.error(m)
-                        return False, m 
+                        result = f"Invalid fi_key value: '{value}'."
+                        success = False 
+                        logger.error(result)
+                        all_results += f"{P2}{result}\n"
                     continue
-                elif key == WB_NAME: 
+                elif key == CMD_ARG_WB_NAME: 
                     continue
-                elif key == WF_KEY:
+                elif key == CMD_ARG_WF_KEY:
                     if not self.dc_WF_KEY_validate(value):
-                        m = f"Invalid wf_key value: '{value}'."
-                        logger.error(m)
-                        return False, m
+                        result = f"Invalid wf_key value: '{value}'."
+                        success = False 
+                        logger.error(result)
+                        all_results += f"{P2}{result}\n"
                     if value == ALL_KEY:
                         logger.warning(f"wf_key: '{ALL_KEY}' not implemented."
                                     f" Defaulting to {BDM_WF_CATEGORIZATION}.")
                         cmd[key] = BDM_WF_CATEGORIZATION
                     continue
-                elif key == WB_REF:
+                elif key == CMD_ARG_WB_REF:
                     if not self.dc_WB_REF_validate(value):
-                        m = f"Invalid wb_ref level: '{value}'."
-                        logger.error(m)
-                        return False, m
-                elif key == WB_INFO:
+                        result = f"Invalid wb_ref level: '{value}'."
+                        success = False 
+                        logger.error(result)
+                        all_results += f"{P2}{result}\n"
+                elif key == CMD_ARG_WB_INFO:
                     if not self.BMVM_cmd_WB_INFO_LEVEL_validate(value):
-                        m = f"Invalid wb_info level: '{value}'."
-                        logger.error(m)
-                        return False, m
+                        result = f"Invalid wb_info level: '{value}'."
+                        success = False 
+                        logger.error(result)
+                        all_results += f"{P2}{result}\n"
+                elif key == CMD_ARG_PARSE_ONLY: 
+                    po = cmd.get(CMD_ARG_PARSE_ONLY, False)
+                    continue
+                elif key == CMD_ARG_VALIDATE_ONLY: 
+                    vo = cmd.get(CMD_ARG_VALIDATE_ONLY, False)
+                    continue
+                elif key == CMD_ARG_WHAT_IF: 
+                    what_if = cmd.get(CMD_ARG_WHAT_IF, False)
+                    continue
                 else:
                     m = f"Unchecked argument key: '{key}': '{value}'."
                     logger.debug(m)
-            logger.debug(f"Full command key: '{full_cmd_key}' cmd: {str(cmd)}")
-            return True, full_cmd_key
+                # If not validate_all and success is False, return. Else, 
+                # continue validating all cmd args.
+                if not validate_all and not success:
+                    # Without validate_all, if error, return, else continue
+                    return success, result
+            # Argument check is complete
+            if success:
+                logger.info(f"Command validated - full_cmd_key: '{full_cmd_key}' cmd: {str(cmd)}")
+                return success, full_cmd_key # The happy path return 
+            if validate_all:
+                return success, all_results
+            return success, result
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
     #endregion cp_validate_cmd() Command Processing method
+    #region cp_validate_cmd_object() Command Processing method
+    def cp_validate_cmd_object(self, 
+                               cmd : Dict = None,
+                               prefix: str = None,
+                               raise_error:bool=False) -> bool:
+        """Validate Command Processor is initialized and the cmd object is valid.
+
+        Test self.initialized property, must be True to proceed.
+
+        Verify the cmd object is a dictionary and not None.
+
+        Arguments:
+            cmd (Dict): A candidate Command object to validate.
+            raise_error (bool): If True, raise any errors encountered. 
+
+        returns:
+            bool: True if Command Processor is initialized, and cmd object is 
+            a dictionary, False otherwise.
+
+        Raise:
+            RuntimeError: If raise_error is True, a RunTimeError is raised 
+            with an error message.
+        """
+        my_prefix = f"{self.__class__.__name__}.{self.cp_validate_cmd_object.__name__}: "
+        pfx = prefix if prefix else my_prefix
+        try:
+            if not self.initialized:
+                m = f"{pfx} Command Processor is not initialized."
+                logger.error(m)
+                if raise_error:
+                    raise RuntimeError(m)
+                return False
+            if p3u.is_not_obj_of_type("cmd",cmd,dict,pfx):
+                cmd_type = type(cmd).__name__
+                m = f"{pfx}Invalid cmd object type: '{cmd_type}', no action taken."
+                logger.error(m)
+                if raise_error:
+                    raise RuntimeError(m)
+                return False
+            return True
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion cp_validate_cmd_object() Command Processing method
     #region cp_cmd_key() Command Processing method
     def cp_cmd_key(self, cmd : Dict = None) -> Tuple[bool, str]:
         """Extract a cmd_key is present in the cmd, return it.
+
+        A cmd_key is a key in the cmd dictionary that ends with 
+        CMD_ARG_CMD_KEY_SUFFIX, which is typically set to "_cmd". If an 
+        arg key matches this suffix, it is considered a command key.
+        If no cmd_key is found, an error message is returned.
                 
         returns:
             Tuple[success: bool, result: str: 
-                success = True: result = valid full_cmd_key value, cmd_key value.
-                success = False: result = an error message.
+                success = True: result = cmd_key value that was detected.
+                success = False: result = an error message. No cmd_key detected.
         """
         try:
-            if not self.initialized:
-                m = f"{self.__class__.__name__} is not initialized."
-                logger.error(m)
-                return False, m
-            if cmd is None or not isinstance(cmd, dict) or len(cmd) == 0:
-                m = f"cmd argument is None, no action taken."
-                logger.error(m)
-                return False, m
             # Check if the cmd contains a valid cmd_key.
-            cmd_key = next((key for key in cmd.keys() if "_cmd" in key), None)
+            cmd_key = next((key for key in cmd.keys() 
+                            if CMD_ARG_CMD_KEY_SUFFIX in key), None)
             if p3u.str_empty(cmd_key):
                 m = f"No command key found in: {str(cmd)}"
                 logger.error(m)
@@ -656,15 +745,29 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
     #region cp_full_cmd_key() Command Processing method
     def cp_full_cmd_key(self, cmd : Dict = None) -> Tuple[bool, str, str]:
         """Extract a full cmd key with subcommand if included.
+
+        First, check for a cmd_key arg key. If it exists, the subcmd will be
+        its value. A full_cmd_key is constructed by combining the cmd_key and
+        the sub_cmd value inserting an underscore '_' om between. If no subcmd
+        is found, but a cmd_key is, return the cmd_key as the full_cmd_key.
         
         returns:
-            Tuple[success: bool, result: str, cmd_key: str|None]: 
-                A tuple containing a boolean indicating success or failure. 
-                True: result = valid full_cmd_key value, cmd_key value.
-                False: result = an error message.
+            Tuple[success: bool, full_cmd_key: str, cmd_key: str|None]: 
+                A tuple of 3 values indicating success or failure. 
+                success = True: 
+                    The full_cmd_key exists in the cmd_map.
+                    full_cmd_key, cmd_key values returned.
+                    If full_cmd_key is None, no subcmd was detected.
+                success = False: 
+                    No match in cmd_map for full_cmd_key.
+                    full_cmd_key, cmd_key values returned.
+                    If full_cmd_key or cmd_key are None, no values were detected.
+                    If success is False, cmd_key is not Null, and full_cmd_key
+                    is None, then a cmd_key was detected, but is not in the
+                    cmd_map.
+               
         """
         try:
-            validate_only: bool = cmd.get("validate_only", False)
             # Extract a cmd key from the cmd, or error out.
             success, result = self.cp_cmd_key(cmd)
             if not success: return False, result, None
@@ -672,17 +775,64 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             # Acquire sub-command key if present.
             sub_cmd = cmd[cmd_key]
             # Construct full_cmd_key from cmd_key and sub_cmd (may be None).
+            # if sub_cmd in None, use cmd_key as full_cmd_key.
             full_cmd_key = cmd_key + '_' + sub_cmd if p3u.str_notempty(sub_cmd) else cmd_key
             # Validate the full_cmd_key against the command map.
             if full_cmd_key not in self.cmd_map:
                 m = f"Command key '{full_cmd_key}' not found in the command map."
                 logger.error(m)
-                return False, m, None
-            return True, full_cmd_key, cmd_key
+                success = False
+            return success, full_cmd_key, cmd_key
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
     #endregion cp_full_cmd_key() Command Processing method
+    #region cp_cmd_arg_get() Command Processing method
+    def cp_cmd_arg_get(self, cmd: Dict,
+                       arg_name: str, default_value: Any = None) -> Any:
+        """Get a command argument value from the cmd dictionary."""                  
+        if not isinstance(cmd, dict):
+            raise TypeError("cmd must be a dictionary.")    
+        if not isinstance(arg_name, str):
+            raise TypeError("arg_name must be a string.")
+        if arg_name not in cmd:
+            if default_value is not None:
+                return default_value
+            raise KeyError(f"Command argument '{arg_name}' not found in cmd.")
+        if arg_name not in BUDMAN_VALID_CMD_ARGS:
+            raise ValueError(f"Command argument '{arg_name}' is not a valid "
+                             f"BudMan command argument. Valid arguments are: "
+                             f"{BUDMAN_VALID_CMD_ARGS}")
+        value = cmd.get(arg_name, default_value)
+        if value is None:
+            if default_value is not None:
+                return default_value
+            raise ValueError(f"Command argument '{arg_name}' cannot be None.")
+        if not isinstance(value, (str, int, float, bool)):
+            raise TypeError(f"Command argument '{arg_name}' must be a string, "
+                            f"int, float, or bool, not {type(value)}.")
+        return value
+    #endregion cp_cmd_arg_get() Command Processing method
+    #region cp_cmd_arg_set() Command Processing method
+    def cp_cmd_arg_set(self, cmd: Dict,
+                       arg_name: str, value: Any) -> None:
+        """Set a command argument value in the cmd dictionary."""
+        if not isinstance(cmd, dict):
+            raise TypeError("cmd must be a dictionary.")
+        if not isinstance(arg_name, str):
+            raise TypeError("arg_name must be a string.")
+        if arg_name not in BUDMAN_VALID_CMD_ARGS:
+            raise ValueError(f"Command argument '{arg_name}' is not a valid "
+                             f"BudMan command argument. Valid arguments are: "
+                             f"{BUDMAN_VALID_CMD_ARGS}")
+        if value is None:
+            raise ValueError(f"Command argument '{arg_name}' cannot be None.")
+        if not isinstance(value, (str, int, float, bool)):
+            raise TypeError(f"Command argument '{arg_name}' must be a string, "
+                            f"int, float, or bool, not {type(value)}.")
+        # Set the value in the cmd dictionary.
+        cmd[arg_name] = value
+    #endregion cp_cmd_arg_set() Command Processing method
     #region BMVM_cmd_WB_INFO_LEVEL_validate() Command Processing method
     def BMVM_cmd_WB_INFO_LEVEL_validate(self, info_level) -> bool:
         """Return True if info_level is a valid value."""
@@ -720,7 +870,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
     #region Command Execution Methods
     #                                                                          +
     # ------------------------------------------------------------------------ +
-    #region FI_init_command() command > init FI boa
+    #region FI_init_cmd() command > init FI boa
     def FI_init_cmd(self, cmd : Dict = None) -> Tuple[bool, str]: 
         """Execute FI_init command for one fi_key or 'all'.
         
@@ -792,7 +942,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             m = p3u.exc_err_msg(e)
             logger.error(m)
             return False, m
-    #endregion FI_init_command() command method
+    #endregion FI_init_cmd() command method
     # ------------------------------------------------------------------------ +
     #region FI_LOADED_WORKBOOKS_save_cmd() command > save wb 3
     def FI_LOADED_WORKBOOKS_save_cmd(self, cmd : Dict = None) -> None: 
@@ -1142,6 +1292,80 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             logger.error(p3u.exc_err_msg(e))
             raise
     #endregion WORKBOOKS_load_cmd() method
+    # ------------------------------------------------------------------------ +
+    #region CHECK_REGISTER_load_cmd() command > load wb 0
+    def CHECK_REGISTER_load_cmd(self, cmd : Dict) -> Tuple[bool, str]:
+        """Model-aware: Load one or more CHECK_REGISTER .csv files in the DC.
+
+        A load_cmd_check_register command will use the wb_uri value in the cmd. 
+        Value is a number or a wb_name.
+
+        Arguments:
+            cmd (Dict): A valid BudMan View Model Command object. For this
+            command, must contain load_cmd = 'check_register' resulting in
+            a full command key of 'load_cmd_check_register'.
+
+        Returns:
+            Tuple[success : bool, result : Any]: The outcome of the command 
+            execution. If success is True, result contains result of the 
+            command, if False, a description of the error.
+            
+        Raises:
+            RuntimeError: A description of the
+            root error is contained in the exception message.
+        """
+        try:
+            pfx = f"{self.__class__.__name__}.{self.FI_init_cmd.__name__}: "
+            if p3u.is_not_obj_of_type("cmd",cmd,dict,pfx):
+                m = f"Invalid cmd object, no action taken."
+                logger.error(m)
+                raise RuntimeError(f"{pfx}{m}")
+            logger.info(f"Start: ...")
+            wb_ref = self.cp_cmd_arg_get(cmd, CMD_ARG_WB_REF, None)
+            fi_key = self.dc_FI_KEY
+            wf_key = self.dc_WF_KEY
+            wb_type = BDM_WF_INTAKE  #self.dc_WB_TYPE
+            wb_count = len(self.dc_WORKBOOKS)
+            r = f"Budget Manager Loaded Check Register ({wb_count}):\n"
+            # A check register workbook is a .csv file.
+            all_wbs, wb_index, wb_name = self.DC.bdmwd_WB_REF_resolve(wb_ref)
+            # Check for an invalid wb_ref value.
+            # if not all_wbs and wb_index == -1 and wb_name is None:
+            #     m = f"wb_ref '{wb_ref}' is not valid."
+            #     logger.error(m)
+            #     return False, m
+            # Now either all_wbs or a specific workbook is to be loaded.
+            # For now just try to load it from the wb_ref
+            if all_wbs:
+                lwbl = self.model.bdmwd_FI_WORKBOOKS_load(fi_key, wf_key, wb_type)
+                self.DC.dc_WB_REF = ALL_KEY # Set the wb_ref in the DC.
+                self.DC.dc_WB_NAME = None   # Set the wb_name in the DC.
+                for wb_name in list(lwbl.keys()):
+                    wb_index = self.DC.dc_WORKBOOK_index(wb_name)
+                    r += f"{P2}wb_index: {wb_index:>2} wb_name: '{wb_name:<40}'\n"
+            else:
+                cr_data = csv_DATA_COLLECTION_get_url(wb_ref)
+                if cr_data is None:
+                    m = f"Check Register data from '{wb_ref}' is None."
+                    logger.error(m)
+                    return False, m
+                cr_data_path = verify_url_file_path(wb_ref)
+                if cr_data_path is None:
+                    m = f"Check Register data path from '{wb_ref}' is None."
+                    logger.error(m)
+                    return False, m
+                wb_name = cr_data_path.name
+                wb_abs_path = cr_data_path.absolute()
+                # Add it to the WORKBOOKS list.
+                self.DC.bdmwd_WORKBOOKS_add(wb_name, wb_abs_path)
+                r += f"{P2}wb_index: {wb_index:>2} wb_name: '{wb_name:<40}'\n"
+                self.DC.dc_WB_REF = str(wb_index)  # Set the wb_ref in the DC.
+                self.DC._WB_NAME = wb_name  # Set the wb_name in the DC.
+            return True, r
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion CHECK_REGISTER_load_cmd() method
     # ------------------------------------------------------------------------ +
     #region WORKFLOW_categorization_cmd() command > wf cat 2
     def WORKFLOW_categorization_cmd(self, cmd : Dict) -> Tuple[bool, str]:

@@ -83,7 +83,7 @@ def bsm_BDM_STORE_url_save(bdm_store:BDM_STORE, bdms_url : str = None) -> Dict:
     """
     try:
         # bdm_store must be a dictionary.
-        p3u.is_obj_of_type("bdm_store", bdm_store, Dict, raise_TypeError=True)
+        p3u.is_obj_of_type("bdm_store", bdm_store, dict, raise_error=True)
         # store_url must be a non-empty string.
         p3u.is_non_empty_str("store_url", bdms_url, raise_error=True)
         # store_url must be a valid URL.
@@ -151,9 +151,9 @@ def bsm_BDM_STORE_file_save(bdm_store:BDM_STORE, bdms_path:Path) -> None:
     """Save the Budget Manager Store to a .jsonc file."""
     try:
         # bdm_store must be a dictionary.
-        p3u.is_obj_of_type("bdm_store", bdm_store, Dict, raise_error=True)
+        p3u.is_obj_of_type("bdm_store", bdm_store, dict, raise_error=True)
         # store_path must be a non-empty string.
-        p3u.is_non_empty_str("bdms_path", bdms_path, raise_error=True)
+        p3u.is_obj_of_type("bdms_path", bdms_path, Path, raise_error=True)
         logger.info("Saving Budget Manager Store to file: '{bdms_path}'")
         # Only persist the properties in BDM_PERSISTED_PROPERTIES.
         filtered_bsm = {k: v for k, v in bdm_store.items() if k in BSM_PERSISTED_PROPERTIES}
@@ -249,7 +249,7 @@ def bsm_BDM_STORE_file_abs_path(filename : str, filetype : str, folder : str  ) 
 def bsm_get_workbook_names(wb_folder : Path) -> List[Path]:
     """Return list of workbook Paths from wb_folder path."""
     try:
-        p3u.is_obj_of_type("wb_folder", wb_folder, Path, raise_TypeError=True)
+        p3u.is_obj_of_type("wb_folder", wb_folder, Path, raise_error=True)
         # Get a list of Path objects for all .xlsx files in the folder.
         wb_paths = list(wb_folder.glob("*.xlsx"))
         if not wb_paths:
@@ -266,7 +266,7 @@ def bsm_get_workbook_names(wb_folder : Path) -> List[Path]:
 def bsm_filter_workbook_names(wb_paths : List[Path]) -> List[Path]:
     """Filter out paths for invalid workbooks."""
     try:
-        p3u.is_obj_of_type("wb_name_list", wb_paths, list, raise_TypeError=True)
+        p3u.is_obj_of_type("wb_name_list", wb_paths, list, raise_error=True)
         if len(wb_paths) == 0:
             return []
         ret_list : List[Path] = []
