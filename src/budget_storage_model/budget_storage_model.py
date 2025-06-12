@@ -135,7 +135,7 @@ def bsm_BDM_STORE_file_load(bdms_path : Path = None) -> BDM_STORE:
         with open(bdms_path, "r") as f:
             bdms_json : str = f.read()
             bdms_json_size = len(bdms_json)
-            bdm_store_content = json5.decode(bdms_json)
+            bdm_store_content = json5.decode(bdms_json,10)
         logger.info(f"Loaded '{bdms_json_size}' chars of json content from file: '{bdms_path}'")
         return bdm_store_content
     except json5.Json5DecoderException as e:

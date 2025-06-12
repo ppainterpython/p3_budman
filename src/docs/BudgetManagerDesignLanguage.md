@@ -62,6 +62,10 @@ The __View Model__ is created first, as the application starts. It is the respon
 
 In the __View Model__ initialization, it loads the __BDM_STORE__ and applies the appropriate state assignments to the __Data Context__ to prime it for the application.
 
+### Data Context Technical Design
+
+The concept of __Workbook__ is expanding. Need to change __WB_TYPE__ to __WF_PURPOSE__, to model the intended use by a __Workflow__ of a __Workbook__ and the __Folder__ containing it both in the __BDM__ and __BSM__. So __WB_TYPE__ is redefined to cover excel workbooks and csv workbooks of differing types. We have the most common case of a workbook in excel holding financial transaction data, typically downloaded from an institution. But these begin life as .csv files and become .xlsx files, one aspect of the type. The other is that now we have the __Check Register__ workbook, which is a csv file.
+
 ### Workflow Processing Technical Design
 
 We started with mapping the Budget_Category field by using regex patterns to match the Original Description field of a workbook to a Budget Category. Later, we added the Level1, Level2, Level3 fields to split the budget category on '.' and populate 3 columns in the workbook, added by BudMan. That was done in the `map_budget_category` task function. Even later, that task function was modified further to support other new column values. These additional columns are for convenience back in excel pivot tables.

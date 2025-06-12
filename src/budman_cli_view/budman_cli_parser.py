@@ -22,22 +22,22 @@ logger = logging.getLogger(__name__)
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
 
-parent_parser = cmd2.Cmd2ArgumentParser(add_help=False)
-parent_parser.add_argument(
-    "-po", "--parse-only", 
-    action="store_true",
-    help="Command is only parsed with results returned."
-    )
-parent_parser.add_argument(
-    "-vo", "--validate-only", 
-    action="store_true", 
-    help="All command args are validated with results returned, but no command execution."
-    )
-parent_parser.add_argument(
-    "-wi", "--what-if",  
-    action="store_true", 
-    help="Return details what a valid command would do, but does not execute."
-    )
+# parent_parser = cmd2.Cmd2ArgumentParser(add_help=False)
+# parent_parser.add_argument(
+#     "-po", "--parse-only", 
+#     action="store_true",
+#     help="Command is only parsed with results returned."
+#     )
+# parent_parser.add_argument(
+#     "-vo", "--validate-only", 
+#     action="store_true", 
+#     help="All command args are validated with results returned, but no command execution."
+#     )
+# parent_parser.add_argument(
+#     "-wi", "--what-if",  
+#     action="store_true", 
+#     help="Return details what a valid command would do, but does not execute."
+#     )
 # parent_parser.print_help()
 # parent_parser.parse_args(['-vo', '-po'])
 # parent_parser.parse_args(['-wi'])
@@ -53,11 +53,11 @@ class BudManCLIParser():
     def __init__(self,app_name : str = "not-set") -> None:
         """Initialize the BudManCLIParser class."""
         self.app_name = app_name
-        self.init_cmd = cmd2.Cmd2ArgumentParser(parents=[parent_parser])
-        self.show_cmd = cmd2.Cmd2ArgumentParser(parents=[parent_parser])
-        self.load_cmd = cmd2.Cmd2ArgumentParser(parents=[parent_parser])
-        self.save_cmd = cmd2.Cmd2ArgumentParser(parents=[parent_parser])
-        self.val_cmd = cmd2.Cmd2ArgumentParser(parents=[parent_parser])
+        self.init_cmd = cmd2.Cmd2ArgumentParser()
+        self.show_cmd = cmd2.Cmd2ArgumentParser()
+        self.load_cmd = cmd2.Cmd2ArgumentParser()
+        self.save_cmd = cmd2.Cmd2ArgumentParser()
+        self.val_cmd = cmd2.Cmd2ArgumentParser()
         self.workflow_cmd = cmd2.Cmd2ArgumentParser()
         self.init_cmd_parser_setup(app_name)
         self.show_cmd_parser_setup()
@@ -65,6 +65,12 @@ class BudManCLIParser():
         self.save_cmd_parser_setup()
         self.val_cmd_parser_setup()
         self.workflow_cmd_parser_setup()
+        # self.init_cmd = cmd2.Cmd2ArgumentParser(parents=[parent_parser])
+        # self.show_cmd = cmd2.Cmd2ArgumentParser(parents=[parent_parser])
+        # self.load_cmd = cmd2.Cmd2ArgumentParser(parents=[parent_parser])
+        # self.save_cmd = cmd2.Cmd2ArgumentParser(parents=[parent_parser])
+        # self.val_cmd = cmd2.Cmd2ArgumentParser(parents=[parent_parser])
+        # self.workflow_cmd = cmd2.Cmd2ArgumentParser(parents=[parent_parser])
 
     def init_cmd_parser_setup(self,app_name : str = "not-set") -> None:
         """Setup 'init' cmd argument parsers."""
@@ -226,16 +232,17 @@ class BudManCLIParser():
         """Setup the command line argument parsers for the save command."""
         try:
             # Save subcommands: BDM_STORE, workbooks
-            self.save_cmd_subparsers = self.save_cmd.add_subparsers(
+            parser = self.save_cmd
+            subparsers = parser.add_subparsers(
                 dest="save_cmd")
             # subcommand save BDM_STORE
-            self.save_bm_store_subcmd_parser = self.save_cmd_subparsers.add_parser(
+            self.save_bm_store_subcmd_parser = subparsers.add_parser(
                 "BDM_STORE",
                 aliases=["store", "bms", "BMS", "budget_manager_store","BDM_STORE"], 
                 help="Save the Budget Manager Store file.")
             self.save_bm_store_subcmd_parser.set_defaults(save_cmd="BDM_STORE")
             # subcommand save workbooks [wb_name] [fi_key]
-            self.save_wb_subcmd_parser  = self.save_cmd_subparsers.add_parser(
+            self.save_wb_subcmd_parser  = subparsers.add_parser(
                 "workbooks",
                 aliases=["wb", "WB"], 
                 help="Save workbook information.")
@@ -314,52 +321,93 @@ class BudManCLIParser():
         try:
             parser = self.workflow_cmd
             # Add subparsers for workflow command parser
-            subparsers = parser.add_subparsers(dest="workflow_cmd")
-            # Workflow subcommands: categorization, reload, check
-            # workflow check subcommand
-            check_subcmd_parser = subparsers.add_parser(
+            subparsers = parser.add_subparsers(
+                dest="workflow_cmd", title="Workflow Commands",
+                description="Available workflow commands: map-category, apply, reload, check.")
+            # Workflow tasks: map-category, apply, reload, check
+            # task 'check' subcommand
+            check_parser = subparsers.add_parser(
                 "check",
                 aliases=["ch"], 
                 help="Check some aspect of the workflow data or processing.")
-            check_subcmd_parser.set_defaults(
-                workflow_cmd="check")
-            check_subcmd_parser.add_argument(
+            check_parser.set_defaults(workflow_cmd="check")
+            check_parser.add_argument(
                 "wb_ref", nargs="?",
                 action="store", 
                 default='all',
                 help="Workbook reference, name or number of a loaded workbook.")
-            check_subcmd_parser.add_argument(
+            check_parser.add_argument(
                 "-f", dest="fix", action="store_true",
                 help="switch to fix issues found by check cmd.") 
+
+            # workflow 'apply' subcommand
+            apply_parser = subparsers.add_parser(
+                "apply",
+                aliases=["a"], 
+                help="Task: Apply some operation to workbooks.")
+            apply_parser.set_defaults(workflow_cmd="apply")
+            apply_parser.add_argument(
+                "-cr", "--check_register", nargs="?",
+                action="store", 
+                default='all',
+                help="Apply 1 or all check_registers to the workbooks.")
+            
             # Workflow subcommand: reload
-            reload_subcmd_parser = subparsers.add_parser(
+            reload_parser = subparsers.add_parser(
                 "reload",
                 aliases=["r"], 
                 help="Reload modules.")
-            reload_subcmd_parser.set_defaults(
-                workflow_cmd="reload")
-            reload_subcmd_parser.add_argument(
+            reload_parser.set_defaults(workflow_cmd="reload")
+            reload_parser.add_argument(
                 "reload_target", nargs="?",
                 action="store", 
                 default='category_map',
                 help="Name of module to reload, or 'all' re-loadable.")
             # workflow categorization subcommand
-            categorization_subcmd_parser = subparsers.add_parser(
+            categorization_parser = subparsers.add_parser(
                 "categorization",
                 aliases=["cat", "CAT", "c"], 
                 help="Apply Categorization workflow.")
-            categorization_subcmd_parser.set_defaults(
-                workflow_cmd="categorization")
-            categorization_subcmd_parser.add_argument(
+            categorization_parser.set_defaults(workflow_cmd="categorization")
+            categorization_parser.add_argument(
                 "wb_ref", nargs="?",
                 action="store", 
                 default='all',
                 help="Workbook reference as either the name or number of a loaded workbook.")
-            categorization_subcmd_parser.add_argument(
+            categorization_parser.add_argument(
                 "--check-register","-cr",  
                 action="store_true", 
                 help="Command is only parsed with results returned.")
+
+            # Instead of propagating, just add common args directly to each subparser:
+            for subparser in [apply_parser, check_parser, reload_parser, categorization_parser]:
+                self.add_common_args(subparser)
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise
+
+    def add_common_args(self, parser: cmd2.Cmd2ArgumentParser) -> object:
+        """Add common arguments to the provided parser."""
+        try:
+            common_args = parser.add_argument_group(
+                title="Common Arguments", 
+                description="Arguments common to all commands.")
+            # Add common arguments to the parser
+            common_args.add_argument(
+                "--parse-only","-po",  
+                action="store_true", 
+                help="Command is only parsed with results returned.")
+            common_args.add_argument(
+                "--validate-only", "-vo", 
+                action="store_true", 
+                help="Command args are only validated with results returned, but no cmd execution.")
+            common_args.add_argument(
+                "-wi", "--what-if", 
+                action="store_true", 
+                help="Return details about what the command would do, but don't to any action.")
+            return common_args
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise
+
     # ------------------------------------------------------------------------ +

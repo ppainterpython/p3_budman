@@ -66,7 +66,7 @@ class BDMWorkingData(BudManDataContext, BDMClientInterface):
     # ------------------------------------------------------------------------ +
     #region initialize() method initializes the BDMWorkingData instance.
     def initialize(self) -> "BDMWorkingData":
-        """Initialize the BDMWorkingData instance after construction.
+        """Model-Aware: Initialize the BDMWorkingData instance after construction.
         
         Apply any necessary initializations to the BDMWorkingData instance. 
         First, update the DC with BDM_CONFIG from model.bdm_config_object.
@@ -76,22 +76,24 @@ class BDMWorkingData(BudManDataContext, BDMClientInterface):
             BDMWorkingData: The initialized BDMWorkingData instance.
         """
         try:
-            # First, update the DC with BDM_STORE from model.bdm_store_object.
+            # Perform BudManDataContext.dc_initialize() to set up the DC.
+            super().dc_initialize()
+            # Update the DC with BDM_STORE from model.bdm_store_object.
             bdm_store = getattr(self.model,BDM_STORE_OBJECT, None)
             if bdm_store is None:
                 m = "The model does not have a bdm_store_object."
                 logger.error(m)
                 raise ValueError(m)
-            # assume if the model has the bdm_store_object, it is a valid 
-            # BDM_STORE dictionary.
+            # The model should have a valid bdm_store_object, freshly loaded.
             self.dc_BDM_STORE = bdm_store
-            # Second, update the DC with appropriate values from BDMClientInterface.
+            # Next, update DC content persisted in BDM_STORE.BDM_DATA_CONTEXT.
             bdm_store_dc = bdm_store.get(BDM_DATA_CONTEXT, {})
             self.dc_FI_KEY = bdm_store_dc.get(DC_FI_KEY, None)
             self.dc_WF_KEY = bdm_store_dc.get(DC_WF_KEY, None)
             self.dc_WB_TYPE = bdm_store_dc.get(DC_WB_TYPE, None)
             self.dc_WORKBOOKS = self.bdmwd_WORKBOOKS()
             self.dc_LOADED_WORKBOOKS = self.bdmwd_LOADED_WORKBOOKS()
+            self.dc_CHECK_REGISTERS = bdm_store_dc.get(DC_CHECK_REGISTERS, {})
             self.dc_INITIALIZED = True
             return self
         except Exception as e:
@@ -105,15 +107,16 @@ class BDMWorkingData(BudManDataContext, BDMClientInterface):
 
     # ======================================================================== +
     #region    BudManDataContext (Interface) Property/Method Overrides.
+    #          Overrides are used when the DC must be Model-Aware
     # ------------------------------------------------------------------------ +
-    @property
-    def dc_WORKBOOKS(self) -> WORKBOOK_LIST:
-        """Return the list of workbooks in the DC, pull from the BDMWD."""
-        return self.bdmwd_WORKBOOKS()
-    @dc_WORKBOOKS.setter
-    def dc_WORKBOOKS(self, value: WORKBOOK_LIST) -> None:
-        """Set the list of workbooks in the DC."""
-        logger.warning("Setting dc_WORKBOOKS directly is not supported.")
+    # @property
+    # def dc_WORKBOOKS(self) -> WORKBOOK_LIST:
+    #     """Return the list of workbooks in the DC, pull from the BDMWD."""
+    #     return self.bdmwd_WORKBOOKS()
+    # @dc_WORKBOOKS.setter
+    # def dc_WORKBOOKS(self, value: WORKBOOK_LIST) -> None:
+    #     """Set the list of workbooks in the DC."""
+    #     logger.warning("Setting dc_WORKBOOKS directly is not supported.")
 
     # @property
     # def dc_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_COLLECTION:
@@ -142,20 +145,20 @@ class BDMWorkingData(BudManDataContext, BDMClientInterface):
         """
         return self.model.bdm_WF_KEY_validate(wf_key)
     
-    def dc_WB_REF_validate(self, wb_ref : str) -> bool: 
-        """BDMWD-aware: Return True if the wb_ref is valid.
+    # def dc_WB_REF_validate(self, wb_ref : str) -> bool: 
+    #     """BDMWD-aware: Return True if the wb_ref is valid.
         
-        Uses the BDMWD interface to validate the workbook reference (wb_ref).
-        """
-        try:
-            # Bind through the DC (data_context) object
-            wb_all, wb_index, wb_name = self.bdmwd_WB_REF_resolve(wb_ref)
-            if wb_all or wb_index >= 0 or wb_name is not None:
-                # If wb_all is True, or we have a valid index and name.
-                return True
-            return False
-        except Exception as e:
-            return self.BMVM_cmd_exception(e)
+    #     Uses the BDMWD interface to validate the workbook reference (wb_ref).
+    #     """
+    #     try:
+    #         # Bind through the DC (data_context) object
+    #         wb_all, wb_index, wb_name = self.bdmwd_WB_REF_resolve(wb_ref)
+    #         if wb_all or wb_index >= 0 or wb_name is not None:
+    #             # If wb_all is True, or we have a valid index and name.
+    #             return True
+    #         return False
+    #     except Exception as e:
+    #         return self.BMVM_cmd_exception(e)
 
     # ------------------------------------------------------------------------ +
 
@@ -185,50 +188,50 @@ class BDMWorkingData(BudManDataContext, BDMClientInterface):
     #region    BDMWD Interface concrete implementation.
     # ------------------------------------------------------------------------ +
     #region    BDMWorkingDataBaseInterface BDMWD DC-aware Interface.
-    def bdmwd_WB_REF_resolve(self, wb_ref:str|int) -> Tuple[bool,int]:
-        """DC-BDMWD-Only: Resolve a wb_ref to valid wb_index, wb_name, or ALL_KEY.
+    # def bdmwd_WB_REF_resolve(self, wb_ref:str|int) -> Tuple[bool,int]:
+    #     """DC-BDMWD-Only: Resolve a wb_ref to valid wb_index, wb_name, or ALL_KEY.
 
-        Args:
-            wb_ref (str|int): The wb_ref to validate and resolve. Expecting
-            a str with a digit, a wb_name, or the ALL_KEY constant.
+    #     Args:
+    #         wb_ref (str|int): The wb_ref to validate and resolve. Expecting
+    #         a str with a digit, a wb_name, or the ALL_KEY constant.
 
-        Returns:
-            Tuple[wb_all:bool, wb_index:int, wb_name:str]: 
-                (True, -1, ALL_KEY) if wb_ref is ALL_KEY. 
-                (False, wb_index, wb_name) for a valid index, adds wb_name match.
-                (False, -1, wb_name) no valid index, found a wb_name.
-                (False, -1, None) if wb_ref is invalid index or name value.
+    #     Returns:
+    #         Tuple[wb_all:bool, wb_index:int, wb_name:str]: 
+    #             (True, -1, ALL_KEY) if wb_ref is ALL_KEY. 
+    #             (False, wb_index, wb_name) for a valid index, adds wb_name match.
+    #             (False, -1, wb_name) no valid index, found a wb_name.
+    #             (False, -1, None) if wb_ref is invalid index or name value.
         
-        Raises:
-            TypeError: if wb_ref is not a str or int.
-        """
-        try:
-            if isinstance(wb_ref, str):
-                if wb_ref == ALL_KEY:
-                    return True, -1, ALL_KEY
-                if wb_ref.isdigit() or isinstance(wb_ref, int):
-                    # If the wb_ref is a digit, treat it as an index.
-                    wb_index = int(wb_ref)
-                    if wb_index < 0 or wb_index >= len(self.dc_WORKBOOKS):
-                        m = f"Invalid wb_index: {wb_index} for wb_ref: '{wb_ref}'"
-                        logger.error(m)
-                        return False, -1, None
-                    wb_name = self.dc_WORKBOOK_name(wb_index)
-                    if wb_name is None:
-                        return False, -1, None
-                    return False, wb_index, wb_name
-                else :
-                    # Could be a wb_name or a wb_url
-                    wb_url_path = verify_url_file_path(wb_ref, test=False)
-                    wb_name = wb_ref.strip() # TODO: flesh this out
-                    if wb_url_path is not None :
-                        wb_name = wb_url_path.name # TODO: flesh this out
-                    return False, -1, wb_name
-            return False, -1, None
-        except Exception as e:
-            m = p3u.exc_err_msg(e)
-            logger.error(m)
-            raise
+    #     Raises:
+    #         TypeError: if wb_ref is not a str or int.
+    #     """
+    #     try:
+    #         if isinstance(wb_ref, str):
+    #             if wb_ref == ALL_KEY:
+    #                 return True, -1, ALL_KEY
+    #             if wb_ref.isdigit() or isinstance(wb_ref, int):
+    #                 # If the wb_ref is a digit, treat it as an index.
+    #                 wb_index = int(wb_ref)
+    #                 if wb_index < 0 or wb_index >= len(self.dc_WORKBOOKS):
+    #                     m = f"Invalid wb_index: {wb_index} for wb_ref: '{wb_ref}'"
+    #                     logger.error(m)
+    #                     return False, -1, None
+    #                 wb_name = self.dc_WORKBOOK_name(wb_index)
+    #                 if wb_name is None:
+    #                     return False, -1, None
+    #                 return False, wb_index, wb_name
+    #             else :
+    #                 # Could be a wb_name or a wb_url
+    #                 wb_url_path = verify_url_file_path(wb_ref, test=False)
+    #                 wb_name = wb_ref.strip() # TODO: flesh this out
+    #                 if wb_url_path is not None :
+    #                     wb_name = wb_url_path.name # TODO: flesh this out
+    #                 return False, -1, wb_name
+    #         return False, -1, None
+    #     except Exception as e:
+    #         m = p3u.exc_err_msg(e)
+    #         logger.error(m)
+    #         raise
     # ------------------------------------------------------------------------ +
     # #region bdmwd_LOADED_WORKBOOKS() methods
     def bdmwd_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_COLLECTION:
@@ -331,7 +334,7 @@ class BDMWorkingData(BudManDataContext, BDMClientInterface):
                                 fi_key: str, 
                                 wf_key : str, 
                                 wb_type : str) -> LOADED_WORKBOOK_COLLECTION:
-        """Load WORKBOOKS for the FI,WF,WB."""
+        """Model-Aware: Load WORKBOOKS for the FI,WF,WB."""
         lwbs = self.model.bdmwd_FI_WORKBOOKS_load(fi_key, wf_key, wb_type)
         self.dc_LOADED_WORKBOOKS = lwbs
         return 

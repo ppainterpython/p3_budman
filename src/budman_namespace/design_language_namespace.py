@@ -274,6 +274,11 @@ DC_BDM_STORE = BDMWD_BDM_STORE
 # Name: DC_LOADED_WORKBOOKS
 # Type: Dict
 # Desc: Values loaded from Budget Manager configuration file , or "store".
+DC_CHECK_REGISTERS = "dc_check_registers"
+DC_LOADED_CHECK_REGISTERS = "dc_loaded_check_registers"
+# Name: DC_LOADED_WORKBOOKS
+# Type: Dict
+# Desc: Values loaded from Budget Manager configuration file , or "store".
 DATA_CONTEXT_VALID_ATTR_KEYS = (
     DC_INITIALIZED,
     DC_FI_KEY,
@@ -282,7 +287,9 @@ DATA_CONTEXT_VALID_ATTR_KEYS = (
     DC_WB_TYPE,
     DC_LOADED_WORKBOOKS,
     DC_WORKBOOKS,
-    DC_BDM_STORE)
+    DC_BDM_STORE,
+    DC_CHECK_REGISTERS,
+    DC_LOADED_CHECK_REGISTERS)
 
 BDMWD_OBJECT_VALID_ATTR_KEYS = BDM_WORKING_DATA_VALID_ATTR_KEYS + DATA_CONTEXT_VALID_ATTR_KEYS
 # ---------------------------------------------------------------------------- +

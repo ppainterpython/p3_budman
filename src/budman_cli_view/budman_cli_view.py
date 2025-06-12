@@ -199,7 +199,6 @@ class BudManCLIView(cmd2.Cmd):
             cmd = BudManCLIView.create_cmd(opts)
             status, result = self.CP.execute_cmd(cmd)
             if status:
-                # TODO: cleanup output when 
                 self.poutput(f"Result: {str(result)}")
             else:
                 self.poutput(f"Error: {str(result)}")

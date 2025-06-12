@@ -216,20 +216,21 @@ from budman_workflows import budget_category_mapping
 #region Globals and Constants
 # BudMan Command Processor Argument Name Constants
 # argparse converts hyphens '-' to underscores '_', so we use underscores
-CMD_ARG_CMD_KEY_SUFFIX = "_cmd"
-CMD_ARG_PARSE_ONLY = "parse_only"
-CMD_ARG_VALIDATE_ONLY = "validate_only"
-CMD_ARG_WHAT_IF = "what_if"
-CMD_ARG_FI_KEY = "fi_key"
-CMD_ARG_WF_KEY = "wf_key"
-CMD_ARG_WB_NAME = "wb_name"
-CMD_ARG_WB_REF = "wb_ref"
-CMD_ARG_WB_INFO = "wb_info"
-CMD_ARG_CHECK_REGISTER = "check_register"
-BUDMAN_VALID_CMD_ARGS = (CMD_ARG_PARSE_ONLY, CMD_ARG_VALIDATE_ONLY,
-                        CMD_ARG_WHAT_IF, CMD_ARG_FI_KEY, CMD_ARG_WF_KEY,
-                        CMD_ARG_WB_NAME, CMD_ARG_WB_REF,CMD_ARG_WB_INFO,
-                        CMD_ARG_CHECK_REGISTER)
+CMD_KEY_SUFFIX = "_cmd"
+CMD_PARSE_ONLY = "parse_only"
+CMD_VALIDATE_ONLY = "validate_only"
+CMD_WHAT_IF = "what_if"
+CMD_FI_KEY = "fi_key"
+CMD_WF_KEY = "wf_key"
+CMD_WB_TYPE = "wb_type"
+CMD_WB_NAME = "wb_name"
+CMD_WB_REF = "wb_ref"
+CMD_WB_INFO = "wb_info"
+CMD_CHECK_REGISTER = "check_register"
+BUDMAN_VALID_CMD_ARGS = (CMD_PARSE_ONLY, CMD_VALIDATE_ONLY,
+                        CMD_WHAT_IF, CMD_FI_KEY, CMD_WF_KEY,
+                        CMD_WB_TYPE, CMD_WB_NAME, CMD_WB_REF,CMD_WB_INFO,
+                        CMD_CHECK_REGISTER)
 logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
@@ -450,6 +451,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
                 "load_cmd_check_register": self.CHECK_REGISTER_load_cmd,
                 "workflow_cmd_categorization": self.WORKFLOW_categorization_cmd,
                 "workflow_cmd_reload": self.WORKFLOW_reload_cmd,
+                "workflow_cmd_apply": self.WORKFLOW_apply_cmd,
                 "workflow_cmd_check": self.WORKFLOW_check_cmd
             }
         except Exception as e:
@@ -544,7 +546,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             success, result = self.cp_validate_cmd(cmd)
             if not success: return success, result
             # if cp_validate_cmd() is good, continue.
-            validate_only: bool = self.cp_cmd_arg_get(cmd,CMD_ARG_VALIDATE_ONLY)
+            validate_only: bool = self.cp_cmd_arg_get(cmd,CMD_VALIDATE_ONLY)
             full_cmd_key = result
             func = self.cmd_map.get(full_cmd_key)
             function_name = func.__name__
@@ -589,7 +591,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             self.cp_validate_cmd_object(cmd, my_prefix, raise_error = True)
             # After cp_validate_cmd_object() returns, we know cmd has content
             # to examine and validate.
-            validate_all: bool = self.cp_cmd_arg_get(cmd,CMD_ARG_VALIDATE_ONLY)
+            validate_all: bool = self.cp_cmd_arg_get(cmd,CMD_VALIDATE_ONLY)
             # If validate_all, the don't return a result until all cmd args 
             # are validated.
             all_results : str = None
@@ -609,18 +611,18 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
                     success = False
             # Validate the cmd arguments.
             for key, value in cmd.items():
-                if key == full_cmd_key: 
+                if key == cmd_key: 
                     continue
-                elif key == CMD_ARG_FI_KEY:
+                elif key == CMD_FI_KEY:
                     if not self.dc_FI_KEY_validate(value):
                         result = f"Invalid fi_key value: '{value}'."
                         success = False 
                         logger.error(result)
                         all_results += f"{P2}{result}\n"
                     continue
-                elif key == CMD_ARG_WB_NAME: 
+                elif key == CMD_WB_NAME: 
                     continue
-                elif key == CMD_ARG_WF_KEY:
+                elif key == CMD_WF_KEY:
                     if not self.dc_WF_KEY_validate(value):
                         result = f"Invalid wf_key value: '{value}'."
                         success = False 
@@ -631,26 +633,28 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
                                     f" Defaulting to {BDM_WF_CATEGORIZATION}.")
                         cmd[key] = BDM_WF_CATEGORIZATION
                     continue
-                elif key == CMD_ARG_WB_REF:
+                elif key == CMD_WB_REF:
                     if not self.dc_WB_REF_validate(value):
                         result = f"Invalid wb_ref level: '{value}'."
                         success = False 
                         logger.error(result)
                         all_results += f"{P2}{result}\n"
-                elif key == CMD_ARG_WB_INFO:
+                elif key == CMD_WB_INFO:
                     if not self.BMVM_cmd_WB_INFO_LEVEL_validate(value):
                         result = f"Invalid wb_info level: '{value}'."
                         success = False 
                         logger.error(result)
                         all_results += f"{P2}{result}\n"
-                elif key == CMD_ARG_PARSE_ONLY: 
-                    po = cmd.get(CMD_ARG_PARSE_ONLY, False)
+                elif key == CMD_PARSE_ONLY: 
+                    po = cmd.get(CMD_PARSE_ONLY, False)
                     continue
-                elif key == CMD_ARG_VALIDATE_ONLY: 
-                    vo = cmd.get(CMD_ARG_VALIDATE_ONLY, False)
+                elif key == CMD_VALIDATE_ONLY: 
+                    vo = cmd.get(CMD_VALIDATE_ONLY, False)
                     continue
-                elif key == CMD_ARG_WHAT_IF: 
-                    what_if = cmd.get(CMD_ARG_WHAT_IF, False)
+                elif key == CMD_WHAT_IF: 
+                    what_if = cmd.get(CMD_WHAT_IF, False)
+                    continue
+                elif key == CMD_CHECK_REGISTER:
                     continue
                 else:
                     m = f"Unchecked argument key: '{key}': '{value}'."
@@ -732,7 +736,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
         try:
             # Check if the cmd contains a valid cmd_key.
             cmd_key = next((key for key in cmd.keys() 
-                            if CMD_ARG_CMD_KEY_SUFFIX in key), None)
+                            if CMD_KEY_SUFFIX in key), None)
             if p3u.str_empty(cmd_key):
                 m = f"No command key found in: {str(cmd)}"
                 logger.error(m)
@@ -1149,6 +1153,8 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
                 # result is a WB_INFO_COLLECTION, create a list of wb_names
                 excel_wb_list = list(result.keys())
                 self.DC.dc_EXCEL_WORKBOOKS = excel_wb_list
+            crl = self.DC.dc_CHECK_REGISTERS
+            crl_count = len(crl) if crl else 0
 
             # Prepare the output result
             result = f"Budget Manager Data Context:\n"
@@ -1171,6 +1177,12 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
                 # Iterate the LOADED_WORKBOOKS_COLLECTION (a DATA_COLLECTION)
                 for wb_name in list(lwbl.keys()):
                     wb_index = self.DC.dc_WORKBOOK_index(wb_name)
+                    result += f"{P4}wb_index: {wb_index:>2} wb_name: '{wb_name:<40}'\n"
+            result += f"{P2}{DC_CHECK_REGISTERS}: {crl_count}\n"
+            if crl_count > 0:
+                # Iterate the LOADED_WORKBOOKS_COLLECTION (a DATA_COLLECTION)
+                for wb_name in list(crl.keys()):
+                    wb_index = self.DC.dc_CHECK_REGISTER_index(wb_name)
                     result += f"{P4}wb_index: {wb_index:>2} wb_name: '{wb_name:<40}'\n"
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             return True, result
@@ -1218,11 +1230,11 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             if wb_ref.isdigit():
                 wb_refnum = int(wb_ref)
                 wb_info = self.dc_WORKBOOKS[wb_refnum] if wb_refnum < wb_count else None
-                l = "Yes" if self.WB_loaded(wb_info[0]) else "No "
+                l = "Yes" if self.dc_WORKBOOK_loaded(wb_info[0]) else "No "
                 r += f"{P2}{wb_refnum:>2} {l} {wb_info[0]:<40} '{wb_info[1]}'\n"
             elif wb_ref == ALL_KEY:
                 for i, (wb_name, wb_ap) in enumerate(self.dc_WORKBOOKS):
-                    l = "Yes" if self.WB_loaded(wb_name) else "No "
+                    l = "Yes" if self.dc_WORKBOOK_loaded(wb_name) else "No "
                     r += f"{P2}{i:>2} {l} {wb_name:<40} '{wb_ap}'\n"
             return True, r
         except Exception as e:
@@ -1259,17 +1271,17 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
                 logger.error(m)
                 raise RuntimeError(f"{pfx}{m}")
             logger.info(f"Start: ...")
-            wb_ref = cmd.get(WB_REF, None)
+            wb_ref = self.cp_cmd_arg_get(cmd, WB_REF, self.dc_WB_REF)
             if wb_ref is None:
                 m = f"wb_ref is None, no action taken."
                 logger.error(m)
                 raise RuntimeError(f"{pfx}{m}")
-            fi_key = self.dc_FI_KEY
-            wf_key = self.dc_WF_KEY
-            wb_type = self.dc_WB_TYPE
+            fi_key = self.cp_cmd_arg_get(cmd, FI_KEY, self.dc_FI_KEY)
+            wf_key = self.cp_cmd_arg_get(cmd, WF_KEY, self.dc_WF_KEY)
+            wb_type = self.cp_cmd_arg_get(cmd, WB_TYPE, self.dc_WB_TYPE)
             wb_count = len(self.dc_WORKBOOKS)
             r = f"Budget Manager Loaded Workbooks({wb_count}):\n"
-            all_wbs, wb_index, wb_name = self.DC.bdmwd_WB_REF_resolve(wb_ref)
+            all_wbs, wb_index, wb_name = self.DC.dc_WB_REF_resolve(wb_ref)
             # Check for an invalid wb_ref value.
             if not all_wbs and wb_index == -1 and wb_name is None:
                 m = f"wb_ref '{wb_ref}' is not valid."
@@ -1287,7 +1299,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
                 _ = self.model.bdmwd_WORKBOOK_load(wb_name)
                 r += f"{P2}wb_index: {wb_index:>2} wb_name: '{wb_name:<40}'\n"
                 self.DC.dc_WB_REF = str(wb_index)  # Set the wb_ref in the DC.
-                self.DC._WB_NAME = wb_name  # Set the wb_name in the DC.
+                self.DC._dc_WB_NAME = wb_name  # Set the wb_name in the DC.
             return True, r
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
@@ -1298,7 +1310,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
     def CHECK_REGISTER_load_cmd(self, cmd : Dict) -> Tuple[bool, str]:
         """Model-aware: Load one or more CHECK_REGISTER .csv files in the DC.
 
-        A load_cmd_check_register command will use the wb_uri value in the cmd. 
+        A load_cmd_check_register command will use the wb_ref value in the cmd. 
         Value is a number or a wb_name.
 
         Arguments:
@@ -1316,54 +1328,36 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             root error is contained in the exception message.
         """
         try:
-            pfx = f"{self.__class__.__name__}.{self.FI_init_cmd.__name__}: "
-            if p3u.is_not_obj_of_type("cmd",cmd,dict,pfx):
-                m = f"Invalid cmd object, no action taken."
-                logger.error(m)
-                raise RuntimeError(f"{pfx}{m}")
             logger.info(f"Start: ...")
-            wb_ref = self.cp_cmd_arg_get(cmd, CMD_ARG_WB_REF, None)
-            fi_key = self.dc_FI_KEY
-            wf_key = self.dc_WF_KEY
+            wb_ref = self.cp_cmd_arg_get(cmd, CMD_WB_REF, self.dc_WB_REF)
+            fi_key = self.cp_cmd_arg_get(cmd, CMD_FI_KEY, self.dc_FI_KEY)
+            wf_key = self.cp_cmd_arg_get(cmd, CMD_WF_KEY, self.dc_WF_KEY)
             wb_type = BDM_WF_INTAKE  #self.dc_WB_TYPE
-            wb_count = len(self.dc_WORKBOOKS)
+            wb_count = len(self.dc_CHECK_REGISTERS)
             r = f"Budget Manager Loaded Check Register ({wb_count}):\n"
             # A check register workbook is a .csv file.
-            all_wbs, wb_index, wb_name = self.DC.bdmwd_WB_REF_resolve(wb_ref)
-            # Check for an invalid wb_ref value.
-            # if not all_wbs and wb_index == -1 and wb_name is None:
-            #     m = f"wb_ref '{wb_ref}' is not valid."
-            #     logger.error(m)
-            #     return False, m
-            # Now either all_wbs or a specific workbook is to be loaded.
-            # For now just try to load it from the wb_ref
+            all_wbs, wb_index, wb_name = self.DC.dc_WB_REF_resolve(wb_ref)
             if all_wbs:
-                lwbl = self.model.bdmwd_FI_WORKBOOKS_load(fi_key, wf_key, wb_type)
+                lwbl = self.DC.bdmwd_FI_WORKBOOKS_load(fi_key, wf_key, wb_type)
                 self.DC.dc_WB_REF = ALL_KEY # Set the wb_ref in the DC.
                 self.DC.dc_WB_NAME = None   # Set the wb_name in the DC.
                 for wb_name in list(lwbl.keys()):
                     wb_index = self.DC.dc_WORKBOOK_index(wb_name)
                     r += f"{P2}wb_index: {wb_index:>2} wb_name: '{wb_name:<40}'\n"
             else:
-                cr_data = csv_DATA_COLLECTION_get_url(wb_ref)
+                cr_data = self.dc_CHECK_REGISTER_load(wb_name, wb_ref)
                 if cr_data is None:
-                    m = f"Check Register data from '{wb_ref}' is None."
+                    m = f"Failed to load Check Register data from '{wb_ref}'."
                     logger.error(m)
                     return False, m
-                cr_data_path = verify_url_file_path(wb_ref)
-                if cr_data_path is None:
-                    m = f"Check Register data path from '{wb_ref}' is None."
-                    logger.error(m)
-                    return False, m
-                wb_name = cr_data_path.name
-                wb_abs_path = cr_data_path.absolute()
                 # Add it to the WORKBOOKS list.
-                self.DC.bdmwd_WORKBOOKS_add(wb_name, wb_abs_path)
+                if not self.dc_WORKBOOKS_member(wb_name):
+                    self.dc_WORKBOOKS.append((wb_name, wb_ref))
                 # Add to LOADED_WORKBOOKS_COLLECTION.
-                self.DC.dc_LOADED_WORKBOOKS[wb_name] = wb_abs_path
+                self.DC.dc_LOADED_WORKBOOKS[wb_name] = cr_data
                 r += f"{P2}wb_index: {wb_index:>2} wb_name: '{wb_name:<40}'\n"
                 self.DC.dc_WB_REF = str(wb_index)  # Set the wb_ref in the DC.
-                self.DC._WB_NAME = wb_name  # Set the wb_name in the DC.
+                self.DC._dc_WB_NAME = wb_name  # Set the wb_name in the DC.
             return True, r
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
@@ -1404,7 +1398,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
                     m = f"wb_ref is None, no action taken."
                     logger.error(m)
                     return False, m
-            check_register = self.cp_cmd_arg_get(cmd, CMD_ARG_CHECK_REGISTER, None)
+            check_register = self.cp_cmd_arg_get(cmd, CMD_CHECK_REGISTER, None)
             # Verify LOADED_WORKBOOKS to process.
             wb_ref = wb_ref or self.dc_WB_REF
             lwbl = self.dc_LOADED_WORKBOOKS
@@ -1413,7 +1407,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
                 m = f"No LOADED_WORKBOOKS found, no action taken."
                 logger.error(m)
                 return False, m
-            all_wbs, wb_index, wb_name = self.DC.bdmwd_WB_REF_resolve(wb_ref)
+            all_wbs, wb_index, wb_name = self.DC.dc_WB_REF_resolve(wb_ref)
             # Check for an invalid wb_ref value.
             if not all_wbs and wb_index == -1 and wb_name is None:
                 m = f"wb_ref '{wb_ref}' is not valid."
@@ -1457,6 +1451,44 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             raise
     #endregion WORKFLOW_categorization_cmd() method
     # ------------------------------------------------------------------------ +
+    #region WORKFLOW_apply_cmd() command > wf cat 2
+    def WORKFLOW_apply_cmd(self, cmd : Dict) -> Tuple[bool, str]:
+        """Apply workflow to one or more WORKBOOKS in the DC.
+
+        A WORKFLOW_categorization_cmd command will use the wb_ref value in the cmd. 
+        Value is a number or a wb_name.
+
+        Arguments:
+            cmd (Dict): A valid BudMan View Model Command object. For this
+            command, must contain workflow_cmd = 'categorization' resulting in
+            a full command key of 'workflow_cmd_categorization'.
+
+        Returns:
+            Tuple[success : bool, result : Any]: The outcome of the command 
+            execution. If success is True, result contains result of the 
+            command, if False, a description of the error.
+            
+        Raises:
+            RuntimeError: A description of the
+            root error is contained in the exception message.
+        """
+        try:
+            pfx = f"{self.__class__.__name__}.{self.FI_init_cmd.__name__}: "
+            logger.info(f"Start: ...")
+            check_register = self.cp_cmd_arg_get(cmd, CMD_CHECK_REGISTER, None)
+            wb_ref = self.cp_cmd_arg_get(cmd, CMD_WB_REF, None)
+            wb_type = self.cp_cmd_arg_get(cmd, CMD_WB_TYPE, None)
+            all_wbs, wb_index, wb_name = self.DC.dc_WB_REF_resolve(wb_ref)
+            # Verify LOADED_WORKBOOKS to process.
+            wb_index =  self.dc_CHECK_REGISTER_index(wb_name)
+            check_register_dict = csv_DATA_COLLECTION_get_url("")
+            apply_check_register(ws)
+            return True, r
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion WORKFLOW_apply_cmd() method
+    # ------------------------------------------------------------------------ +
     #region WORKFLOW_check() command > wf check 2 
     def WORKFLOW_check_cmd(self, cmd : Dict) -> Tuple[bool, str]:
         """Apply workflow to one or more WORKBOOKS in the DC.
@@ -1493,7 +1525,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             wb_name = self.dc_WB_NAME
             all_wbs : bool = False
             r = f"Budget Manager Categorization Workflow:\n"
-            all_wbs, wb_index = self.bdmwd_WB_REF_resolve(wb_ref)
+            all_wbs, wb_index = self.dc_WB_REF_resolve(wb_ref)
             # TODO: what_if arg stops here. Build a list of LOADED_WORKBOOKS to process.
             # Check cmd needs loaded workbooks to check
             lwbl = self.dc_LOADED_WORKBOOKS
@@ -1755,15 +1787,30 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
     def dc_EXCEL_WORKBOOKS(self, value: DATA_COLLECTION) -> None:
         """Set the current collection of workbooks open in excel."""
         self.DC.dc_EXCEL_WORKBOOKS = value
+
+    @property 
+    def dc_CHECK_REGISTERS(self) -> DATA_COLLECTION:
+        """DC-Only: Return the check register data collection."""
+        return self.DC.dc_CHECK_REGISTERS
+    @dc_CHECK_REGISTERS.setter
+    def dc_CHECK_REGISTERS(self, value: DATA_COLLECTION) -> None:
+        """DC-Only: Set the check register data collection."""
+        self.DC.dc_CHECK_REGISTERS = value
+
+    @property 
+    def dc_LOADED_CHECK_REGISTERS(self) -> DATA_COLLECTION:
+        """DC-Only: Return the check register data collection."""
+        return self.DC.dc_LOADED_CHECK_REGISTERS
+    @dc_LOADED_CHECK_REGISTERS.setter
+    def dc_LOADED_CHECK_REGISTERS(self, value: DATA_COLLECTION) -> None:
+        """DC-Only: Set the check register data collection."""
+        self.DC.dc_LOADED_CHECK_REGISTERS = value
+
     # ------------------------------------------------------------------------ +
     #endregion BudMan Data Context Interface (client sdk) Properties
     # ------------------------------------------------------------------------ +
-    #                                                                          +
+    #region    BudMan Data Context Interface (client sdk) Methods
     # ------------------------------------------------------------------------ +
-    #region Data Context  (client sdk) Methods
-    #                                                                          +
-    # ------------------------------------------------------------------------ +
-    #region dc_FI_KEY_validate() method
     def dc_FI_KEY_validate(self, fi_key : str) -> int: 
         """Return True if the fi_key is valid."""
         try:
@@ -1772,9 +1819,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             # return self.budget_domain_model.bdm_FI_KEY_validate(fi_key)
         except Exception as e:
             return self.BMVM_cmd_exception(e)
-    #endregion dc_FI_KEY_validate() method
-    # ------------------------------------------------------------------------ +
-    #region dc_WF_KEY_validate() method
+
     def dc_WF_KEY_validate(self, wf_key : str) -> bool: 
         """Return True if the wf_key is valid."""
         try:
@@ -1782,9 +1827,15 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             return self.DC.dc_WF_KEY_validate(wf_key)
         except Exception as e:
             return self.BMVM_cmd_exception(e)
-    #endregion dc_WF_KEY_validate() method
-    # ------------------------------------------------------------------------ +
-    #region dc_WB_REF_validate() method
+
+    def dc_WF_KEY_resolve(self, wf_key : str) -> Tuple[bool, int, str]: 
+        """Return True if the wf_key is valid."""
+        try:
+            # Bind through the DC (data_context) object.
+            return self.DC.dc_WF_KEY_resolve(wf_key)
+        except Exception as e:
+            return self.BMVM_cmd_exception(e)
+
     def dc_WB_REF_validate(self, wb_ref : str) -> bool: 
         """Return True if the wb_ref is valid."""
         try:
@@ -1792,13 +1843,38 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             return self.DC.dc_WB_REF_validate(wb_ref)
         except Exception as e:
             return self.BMVM_cmd_exception(e)
-    #endregion dc_WB_REF_validate() method
+        
+    def dc_WORKBOOKS_member(self, wb_name: str) -> bool:
+        """DC-Only: Indicates whether the named workbook is a member of the DC."""
+        return self.DC.dc_WORKBOOKS_member(wb_name)    
+
+    def dc_WORKBOOK_loaded(self, wb_name: str) -> Workbook:
+        """Indicates whether the named workbook is loaded."""
+        return self.DC.dc_WORKBOOK_loaded(wb_name)
+
+    def dc_CHECK_REGISTER_name(self, wb_index: int) -> str:
+        """DC-Only: Return wb_name for wb_index or None if does not exist."""
+        return self.DC.dc_CHECK_REGISTER_name(wb_index)
+    
+    def dc_CHECK_REGISTER_index(self, wb_name: str = None) -> int:  
+        """DC-Only: Return the index of a check register based on wb_name.
+        
+        Args:
+            wb_name (str): The name of the check register to find.
+        Returns:
+            int: The index of the check register in the dc_CHECK_REGISTERS, or -1 if not found.
+        """
+        return self.DC.dc_CHECK_REGISTER_index(wb_name)
+    
+    def dc_CHECK_REGISTER_load(self, wb_name: str, wb_ref:str) -> DATA_COLLECTION:
+        """DC-Only: Load the specified check register by name."""
+        return self.DC.dc_CHECK_REGISTER_load(wb_name, wb_ref)
+
     # ------------------------------------------------------------------------ +
-    #region WB_loaded(wb_name) method
-    def WB_loaded(self, wb_name:str) -> bool: 
-        """Return True if wb_name is in the DC.LOADED_WORKBOOKS list."""
-        raise NotImplementedError("deprecated, use dc_WORKBOOK_loaded()")
-    #endregion WB_loaded(wb_name) method
+    #endregion BudMan Data Context Interface (client sdk) Methods
+    # ------------------------------------------------------------------------ +
+
+
     # ------------------------------------------------------------------------ +
     #region FI_get_loaded_workbooks() method
     def FI_WORKBOOKS_get(self) -> List[str]: 
@@ -1877,8 +1953,6 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             logger.error(p3u.exc_err_msg(e))
             raise
     #endregion FI_get_loaded_workbook_by_name() method
-    # ------------------------------------------------------------------------ +
-    #endregion Data Context Methods
     # ------------------------------------------------------------------------ +
     #                                                                          +
     #endregion ViewModelData_Context client implementation                         +

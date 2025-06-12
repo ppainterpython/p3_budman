@@ -1,6 +1,6 @@
 <mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/27.0.9 Chrome/134.0.6998.205 Electron/35.4.0 Safari/537.36" version="27.0.9">
   <diagram id="N458_lr4ttNGEyz7QCCE" name="Page-1">
-    <mxGraphModel dx="4351" dy="3996" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
+    <mxGraphModel dx="5861" dy="4854" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -1770,6 +1770,10 @@
             <mxPoint x="1270.75" y="-902" as="sourcePoint" />
             <mxPoint x="1284.75" y="-1020" as="targetPoint" />
             <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="1285" y="-1370" />
+              <mxPoint x="1605" y="-1370" />
+            </Array>
           </mxGeometry>
         </mxCell>
         <mxCell id="kQ5t4qy_jaQ6N--ZEEbe-54" value="" style="endArrow=block;endFill=1;html=1;edgeStyle=elbowEdgeStyle;align=left;verticalAlign=top;rounded=0;strokeColor=#FFFFFF;entryX=-0.001;entryY=0.051;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryPerimeter=0;jumpStyle=arc;" parent="1" source="kQ5t4qy_jaQ6N--ZEEbe-50" target="gPuFUhs2jfw6zia65dsm-25" edge="1">
@@ -2982,7 +2986,7 @@
           <mxGeometry x="2820" y="-1690" width="390" height="230" as="geometry" />
         </mxCell>
         <mxCell id="nZRIWWfzW7rEJoxc0ANi-98" value="&lt;span style=&quot;color: rgb(0, 127, 255); font-size: 36px;&quot;&gt;ViewModel (mvvm)&lt;/span&gt;" style="swimlane;whiteSpace=wrap;html=1;strokeColor=#007FFF;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=12;fontColor=default;fontStyle=1;fillColor=default;startSize=60;" parent="1" vertex="1">
-          <mxGeometry x="440" y="-2610" width="1350" height="1330" as="geometry" />
+          <mxGeometry x="440" y="-2610" width="1360" height="1330" as="geometry" />
         </mxCell>
         <mxCell id="kQ5t4qy_jaQ6N--ZEEbe-1" value="&lt;font style=&quot;font-size: 14px;&quot;&gt;ViewModelDataContext&lt;/font&gt;&lt;div&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;&amp;lt;&amp;lt;class&amp;gt;&amp;gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;budman_data_context_interface_base.py&lt;/span&gt;&lt;/div&gt;" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=60;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;strokeColor=#BAC8D3;fontColor=#EEEEEE;fillColor=#09555B;labelBackgroundColor=none;rounded=0;points=[[0,0,0,0,0],[0,0,0,0,30],[0,0.5,0,0,0],[0,0.75,0,0,0],[0,1,0,0,0],[0.25,0,0,0,0],[0.25,1,0,0,0],[0.5,0,0,0,0],[0.5,1,0,0,0],[0.75,0,0,0,0],[0.75,1,0,0,0],[1,0,0,0,0],[1,0.25,0,0,0],[1,0.5,0,0,0],[1,0.75,0,0,0],[1,1,0,0,0]];" parent="nZRIWWfzW7rEJoxc0ANi-98" vertex="1">
           <mxGeometry x="990" y="610" width="350" height="540" as="geometry">
@@ -3062,7 +3066,7 @@
           <mxGeometry y="520" width="350" height="20" as="geometry" />
         </mxCell>
         <mxCell id="nZRIWWfzW7rEJoxc0ANi-60" value="&lt;font style=&quot;font-size: 14px;&quot;&gt;ViewModelDataContext_Binding&lt;/font&gt;&lt;div&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;&amp;lt;&amp;lt;class&amp;gt;&amp;gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;view_model_data_context_binding.py&lt;/span&gt;&lt;/div&gt;" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=60;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;strokeColor=#BAC8D3;fontColor=#EEEEEE;fillColor=#09555B;labelBackgroundColor=none;rounded=0;" parent="nZRIWWfzW7rEJoxc0ANi-98" vertex="1">
-          <mxGeometry x="590" y="350" width="330" height="210" as="geometry">
+          <mxGeometry x="550" y="350" width="330" height="210" as="geometry">
             <mxRectangle x="430" y="598" width="140" height="30" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
@@ -3095,7 +3099,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="nZRIWWfzW7rEJoxc0ANi-69" value="&lt;font style=&quot;font-size: 14px;&quot;&gt;ViewModelCommandProcessor_Interface&lt;/font&gt;&lt;div&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;&amp;lt;&amp;lt;abstract base class&amp;gt;&amp;gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;view_model_command_processor.py&lt;/span&gt;&lt;/div&gt;" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=60;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;strokeColor=#BAC8D3;fontColor=#EEEEEE;fillColor=#09555B;labelBackgroundColor=none;rounded=0;" parent="nZRIWWfzW7rEJoxc0ANi-98" vertex="1">
-          <mxGeometry x="40" y="310" width="350" height="300" as="geometry">
+          <mxGeometry x="40" y="250" width="350" height="300" as="geometry">
             <mxRectangle x="430" y="598" width="140" height="30" as="alternateBounds" />
           </mxGeometry>
         </mxCell>

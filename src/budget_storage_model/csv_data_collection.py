@@ -28,7 +28,6 @@ from typing import Dict, List
 
 # third-party modules and packages
 import p3_utils as p3u, pyjson5, p3logging as p3l
-import pyjson5 as json5 
 # local modules and packages
 from budman_namespace import (
     DATA_COLLECTION, BDM_STORE, BSM_DATA_COLLECTION_CSV_STORE_FILETYPES)
@@ -41,7 +40,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 #region    csv_DATA_COLLECTION_get_url() function
 def csv_DATA_COLLECTION_get_url(csv_url : str = None) -> DATA_COLLECTION:
-    """Get a DATA_COLLECTION object from a URL.
+    """Get a DATA_COLLECTION object from a URL to a csv file in storage.
     
     A csv dictionary is read in from the csv_url. Parse the URL and decide
     how to load the DATA_COLLECTION object based on the URL scheme. Decode the
@@ -85,9 +84,6 @@ def csv_DATA_COLLECTION_load_file(csv_path : Path = None) -> DATA_COLLECTION:
                     data_collection[new_key] = row
         logger.debug(f"Complete {p3u.stop_timer(st)}")
         return data_collection
-    except json5.Json5DecoderException as e:
-        logger.error(p3u.exc_err_msg(e))
-        raise
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise

@@ -6,14 +6,14 @@ from pathlib import Path
 from urllib.parse import urlparse, unquote
 from typing import Dict
 # third-party modules and packages
-import p3_utils as p3u, p3logging as p3l
+import p3_utils as p3u, p3logging as p3l, pyjson5 as json5
 # local modules and packages
 # from budman_namespace import *
 from budman_namespace import (
     BDM_FOLDER, BDM_FI_COLLECTION,
     FI_DATA_COLLECTION, FI_NAME, FI_FOLDER,BDM_WF_COLLECTION,
     WF_INPUT_FOLDER,WF_WORKING_FOLDER, WF_OUTPUT_FOLDER,WF_NAME,
-    WB_INPUT, WB_WORKING, WB_OUTPUT
+    WB_INPUT, WB_WORKING, WB_OUTPUT, WB_TYPE_FOLDER_MAP, BDM_DATA_CONTEXT
     )
 from budget_storage_model import bsm_BDM_STORE_url_load
 from budman_workflows.budget_category_mapping import extract_category_tree
@@ -49,12 +49,11 @@ def configure_logging(logger_name : str = __name__, logtest : bool = False) -> N
         raise
 #endregion configure_logging() function
 # ------------------------------------------------------------------------ +
-# ---------------------------------------------------------------------------- +
-if __name__ == "__main__":
+#region bdm_tree() function
+def bdm_tree():
     wb_url = "file:///C:/Users/ppain/OneDrive/budget/p3_budget_manager_ca063e8b.jsonc"
     cr_url = "file:///C:/Users/ppain/OneDrive/budget/boa/data/new/CheckRegister_ToDate20250609.csv"
     try:
-        configure_logging(__name__, logtest=False)
         wb_path = p3u.verify_url_file_path(cr_url, test=False)
         # wb_path.parent  = abs_path to the parent directory
         # wb_path.stem = filename
@@ -74,22 +73,48 @@ if __name__ == "__main__":
         wf_col = bdms[BDM_WF_COLLECTION]
         for fi_key, fi_obj in bdms[BDM_FI_COLLECTION].items():
             fi_folder = fi_obj[FI_FOLDER]
-            print(f"'{fi_folder}' fi_key: {fi_key}")
+            fi_name = fi_obj[FI_NAME]
+            print(f"'{fi_folder}' [{fi_key}]'{fi_name}'")
+            if fi_obj[FI_DATA_COLLECTION] is None:
+                logger.warning(f"FI_DATA_COLLECTION is None for FI_KEY: {fi_key}")
+                continue
             for wf_key, data_obj in fi_obj[FI_DATA_COLLECTION].items():
                 wf_obj = wf_col[wf_key]
-                data_obj 
-                print(f"  '{wf_key}' wf_name: '{wf_obj[WF_NAME]}'")
+                wf_name = wf_obj[WF_NAME] 
+                # print(f"  '{wf_key}' wf_name: '{wf_obj[WF_NAME]}'")
                 wf_folders = {}
                 wf_folders[WB_INPUT] = wf_obj[WF_INPUT_FOLDER]
                 wf_folders[WB_WORKING] = wf_obj[WF_WORKING_FOLDER]
                 wf_folders[WB_OUTPUT] = wf_obj[WF_OUTPUT_FOLDER]
                 for wb_type, tuple_list in data_obj.items():
                     f = wf_folders[wb_type]
-                    print(f"    '{f}' wb_type:wb_type: {wb_type} ")
+                    tm = wf_obj[WB_TYPE_FOLDER_MAP][wb_type]
+                    print(f"  '{f}' [{wf_key}]'{tm}' ")
                     for tup in tuple_list:
-                        print(f"       '{tup[0]}' wb_path: {tup[1]}")
+                        print(f"     '{tup[0]}' wb_path: {tup[1]}")
 
 
+        logger.info(f"wb_path: '{wb_path}' url:'{wb_url}'")
+
+    except Exception as e:
+        m = p3u.exc_err_msg(e)
+        logger.error(m)
+    # bdm = bdms.bsm_BDM_STORE_url_load(bdms_url)
+    logger.info(f"Complete.")
+#endregion bdm_tree() function
+# ------------------------------------------------------------------------ +
+
+if __name__ == "__main__":
+    wb_url = "file:///C:/Users/ppain/OneDrive/budget/p3_budget_manager_ca063e8b.jsonc"
+    cr_url = "file:///C:/Users/ppain/OneDrive/budget/boa/data/new/CheckRegister_ToDate20250609.csv"
+    try:
+        configure_logging(__name__, logtest=False)
+        wb_path = p3u.verify_url_file_path(cr_url, test=False)
+        bdms = bsm_BDM_STORE_url_load(wb_url)
+        DC = bdms[BDM_DATA_CONTEXT]
+                
+        
+        
         logger.info(f"wb_path: '{wb_path}' url:'{wb_url}'")
 
     except Exception as e:

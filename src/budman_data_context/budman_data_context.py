@@ -29,14 +29,17 @@
 import pytest, os
 from pathlib import Path
 from abc import ABC, abstractmethod
+from typing import Tuple
 # third-party modules and packages
 from openpyxl import Workbook
 import logging, p3_utils as p3u, p3logging as p3l
 # local modules and packages
-from src.budman_namespace import (
+from budman_namespace import (
     DATA_CONTEXT, WORKBOOK_LIST, LOADED_WORKBOOK_COLLECTION,
-    BDM_STORE, DATA_COLLECTION)
+    BDM_STORE, DATA_COLLECTION, ALL_KEY)
 from budman_data_context import BudManDataContextBaseInterface
+from budget_storage_model.csv_data_collection import (
+    csv_DATA_COLLECTION_get_url, verify_url_file_path)
 #endregion imports
 # ---------------------------------------------------------------------------- +
 #region Globals
@@ -60,20 +63,21 @@ class BudManDataContext(BudManDataContextBaseInterface):
     #region __init__()
     def __init__(self) -> None:
         self._dc_initialized = False 
-        self._dc_BDM_STORE = None
-        self._FI_KEY = None       
-        self._WF_KEY = None       
-        self._WB_TYPE = None      
-        self._WB_NAME = None     
-        self._WB_REF = None
-        self._BDM_STORE : BDM_STORE = None 
-        self._WORKBOOKS : WORKBOOK_LIST = None 
-        self._LOADED_WORKBOOKS : LOADED_WORKBOOK_COLLECTION = None
-        self._EXCEL_WORKBOOKS : DATA_COLLECTION = None
-        self._DataContext = DATA_CONTEXT 
+        self._dc_FI_KEY = None       
+        self._dc_WF_KEY = None       
+        self._dc_WB_TYPE = None      
+        self._dc_WB_NAME = None     
+        self._dc_WB_REF = None
+        self._dc_BDM_STORE : BDM_STORE = None 
+        self._dc_WORKBOOKS : WORKBOOK_LIST = None 
+        self._dc_LOADED_WORKBOOKS : LOADED_WORKBOOK_COLLECTION = None
+        self._dc_EXCEL_WORKBOOKS : DATA_COLLECTION = None
+        self._dc_DataContext : DATA_CONTEXT = None 
+        self._dc_CHECK_REGISTERS : DATA_COLLECTION = None 
+        self._dc_LOADED_CHECK_REGISTERS : DATA_COLLECTION = None 
     #endregion __init__()
     # ------------------------------------------------------------------------ +
-    #region Concrete Properties
+    #region Concrete Interface Properties
     @property
     def dc_INITIALIZED(self) -> bool:
         """DC-Only: Indicates whether the data context has been initialized."""
@@ -88,22 +92,22 @@ class BudManDataContext(BudManDataContextBaseInterface):
         """DC-Only: Return the FI_KEY of the current Financial Institution.
         Current means that the other data in the DC is for this FI.
         """
-        return self._FI_KEY
+        return self._dc_FI_KEY
     @dc_FI_KEY.setter
     def dc_FI_KEY(self, value: str) -> None:
         """DC-Only: Set the FI_KEY of the current Financial Institution."""
-        self._FI_KEY = value
+        self._dc_FI_KEY = value
 
     @property
     def dc_WF_KEY(self) -> str:
         """DC-Only: Return the WF_KEY for the current workflow of interest.
         Current means that the other data in the DC is for this workflow.
         """
-        return self._WF_KEY
+        return self._dc_WF_KEY
     @dc_WF_KEY.setter
     def dc_WF_KEY(self, value: str) -> None:
         """DC-Only: Set the WF_KEY for the workflow."""
-        self._WF_KEY = value
+        self._dc_WF_KEY = value
 
     @property
     def dc_WB_TYPE(self) -> str:
@@ -112,11 +116,11 @@ class BudManDataContext(BudManDataContextBaseInterface):
         This indicates the type of data in the workflow being processed,
         e.g., 'input', 'output', 'working', etc.
         """
-        return self._WB_TYPE
+        return self._dc_WB_TYPE
     @dc_WB_TYPE.setter
     def dc_WB_TYPE(self, value: str) -> None:
         """DC-Only: Set the WB_TYPE workbook type."""
-        self._WB_TYPE = value
+        self._dc_WB_TYPE = value
 
     @property
     def dc_WB_NAME(self) -> str:
@@ -126,11 +130,11 @@ class BudManDataContext(BudManDataContextBaseInterface):
         that a user has specified this workbook specifically by name.
         This indicates the name of the workbook being processed, e.g., 'budget.xlsx',
         """
-        return self._WB_NAME
+        return self._dc_WB_NAME
     @dc_WB_NAME.setter
     def dc_WB_NAME(self, value: str) -> None:
         """DC-Only: Set the WB_NAME workbook name."""
-        self._WB_NAME = value
+        self._dc_WB_NAME = value
 
     @property
     def dc_WB_REF(self) -> str:
@@ -140,52 +144,71 @@ class BudManDataContext(BudManDataContextBaseInterface):
         workbook. The other data in the DC is updated in a similar fashion.
         After an operation on 'all' workbooks, the dc_WB_REF is set to 'all'.
         """
-        return self._WB_REF
+        return self._dc_WB_REF
     @dc_WB_REF.setter
     def dc_WB_REF(self, value: str) -> None:
         """DC-Only: Set the WB_REF workbook reference."""
-        self._WB_REF = value
+        self._dc_WB_REF = value
 
     @property
     def dc_BDM_STORE(self) -> str:
         """DC-Only: Return the BDM_STORE jsonc definition."""
-        return self._BDM_STORE
+        return self._dc_BDM_STORE
     @dc_BDM_STORE.setter
     def dc_BDM_STORE(self, value: str) -> None:
         """DC-Only: Set the BDM_STORE jsonc definition."""
-        self._BDM_STORE = value
+        self._dc_BDM_STORE = value
 
     @property
     def dc_WORKBOOKS(self) -> WORKBOOK_LIST:
         """DC-Only: Return the list of workbooks in the DC."""
-        return self._WORKBOOKS
+        return self._dc_WORKBOOKS
     @dc_WORKBOOKS.setter
     def dc_WORKBOOKS(self, value: WORKBOOK_LIST) -> None:
         """DC-Only: Set the list of workbooks in the DC."""
-        self._WORKBOOKS = value
+        self._dc_WORKBOOKS = value
 
     @property
     def dc_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_COLLECTION:
         """DC-Only: Return the list of workbooks currently loaded in the DC.
         Loaded means a file is loaded into memory and is available."""
-        return self._LOADED_WORKBOOKS
+        return self._dc_LOADED_WORKBOOKS
     @dc_LOADED_WORKBOOKS.setter
     def dc_LOADED_WORKBOOKS(self, value: LOADED_WORKBOOK_COLLECTION) -> None:
         """DC-Only: Set the list of workbooks currently loaded in the DC.
         Loaded means a file is loaded into memory and is available."""
-        self._LOADED_WORKBOOKS = value
+        self._dc_LOADED_WORKBOOKS = value
 
     @property
     def dc_EXCEL_WORKBOOKS(self) -> DATA_COLLECTION:
         """DC-Only: Return the collection of workbooks currently open in Excel."""
-        return self._EXCEL_WORKBOOKS
+        return self._dc_EXCEL_WORKBOOKS
     @dc_EXCEL_WORKBOOKS.setter
     def dc_EXCEL_WORKBOOKS(self, value: DATA_COLLECTION) -> None:
         """DC-Only: Set the collection of workbooks currently open in Excel."""
-        self._EXCEL_WORKBOOKS = value
-    #endregion Concrete Properties
+        self._dc_EXCEL_WORKBOOKS = value
+
+    @property 
+    def dc_CHECK_REGISTERS(self) -> DATA_COLLECTION:
+        """DC-Only: Return the check register data collection."""
+        return self._dc_CHECK_REGISTERS
+    @dc_CHECK_REGISTERS.setter
+    def dc_CHECK_REGISTERS(self, value: DATA_COLLECTION) -> None:
+        """DC-Only: Set the check register data collection."""
+        self._dc_CHECK_REGISTERS = value
+
+    @property 
+    def dc_LOADED_CHECK_REGISTERS(self) -> DATA_COLLECTION:
+        """DC-Only: Return the check register data collection."""
+        return self._dc_LOADED_CHECK_REGISTERS
+    @dc_LOADED_CHECK_REGISTERS.setter
+    def dc_LOADED_CHECK_REGISTERS(self, value: DATA_COLLECTION) -> None:
+        """DC-Only: Set the check register data collection."""
+        self._dc_LOADED_CHECK_REGISTERS = value
+
+    #endregion Concrete Interface Properties
     # ------------------------------------------------------------------------ +
-    #region Concrete Methods
+    #region Concrete Interface Methods
     def dc_initialize(self) -> None:
         """DC-Only: Initialize the data context."""
         self.dc_FI_KEY = None
@@ -195,7 +218,9 @@ class BudManDataContext(BudManDataContextBaseInterface):
         self.dc_BDM_STORE = dict()
         self.dc_WORKBOOKS = []
         self.dc_LOADED_WORKBOOKS = dict()
-        self.dc_EXCEL_WORKBOOKS = DATA_COLLECTION
+        self.dc_EXCEL_WORKBOOKS = dict()
+        self.dc_CHECK_REGISTERS = dict()
+        self.dc_LOADED_CHECK_REGISTERS = dict()
         self.dc_INITIALIZED = True
         return self
 
@@ -217,8 +242,74 @@ class BudManDataContext(BudManDataContextBaseInterface):
 
     def dc_WB_REF_validate(self, wb_ref: str) -> bool:
         """DC-Only: Validate the provided workbook reference."""
-        return isinstance(wb_ref, str) and len(wb_ref) > 0
+        try:
+            wb_all, wb_index, wb_name = self.dc_WB_REF_resolve(wb_ref)
+            if wb_all or wb_index >= 0 or wb_name is not None:
+                # If wb_all is True, or we have a valid index and name.
+                return True
+            return False
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise
+    
+    def dc_WB_REF_resolve(self, wb_ref:str|int) -> Tuple[bool,int, str]:
+        """DC-Only: Resolve a wb_ref to valid wb_index, wb_name, or ALL_KEY.
 
+        Args:
+            wb_ref (str|int): The wb_ref to validate and resolve. Expecting
+            a str with a digit, a wb_name, or the ALL_KEY constant.
+
+        Returns:
+            Tuple[wb_all:bool, wb_index:int, wb_name:str]: 
+                (True, -1, ALL_KEY) if wb_ref is ALL_KEY. 
+                (False, wb_index, wb_name) for a valid index, adds wb_name match.
+                (False, -1, wb_name) no valid index, found a wb_name.
+                (False, -1, None) if wb_ref is invalid index or name value.
+        
+        Raises:
+            TypeError: if wb_ref is not a str or int.
+        """
+        try:
+            if isinstance(wb_ref, str):
+                if wb_ref == ALL_KEY:
+                    return True, -1, ALL_KEY
+                if wb_ref.isdigit() or isinstance(wb_ref, int):
+                    # If the wb_ref is a digit, treat it as an index.
+                    wb_index = int(wb_ref)
+                    if wb_index < 0 or wb_index >= len(self.dc_WORKBOOKS):
+                        m = f"Invalid wb_index: {wb_index} for wb_ref: '{wb_ref}'"
+                        logger.error(m)
+                        return False, -1, None
+                    wb_name = self.dc_WORKBOOK_name(wb_index)
+                    if wb_name is None:
+                        return False, -1, None
+                    return False, wb_index, wb_name
+                else :
+                    # Could be a wb_name or a wb_url
+                    wb_url_path = verify_url_file_path(wb_ref, test=False)
+                    wb_name = wb_ref.strip() # TODO: flesh this out
+                    if wb_url_path is not None :
+                        wb_name = wb_url_path.name # TODO: flesh this out
+                        wb_index = self.dc_CHECK_REGISTER_index(wb_name)
+                    return False, -1, wb_name
+            return False, -1, None
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise
+
+    def dc_WORKBOOKS_member(self, wb_name: str) -> bool:
+        """DC-Only: Indicates whether the named workbook is a member of the DC."""
+        _ = p3u.is_str_or_none("wb_name", wb_name, raise_error=True)
+        # Reference the DC.WORKBOOKS property.
+        if (not self.dc_INITIALIZED or 
+                self.dc_WORKBOOKS is None or 
+                not isinstance(self.dc_WORKBOOKS, list)):
+            return False
+        wbl = self.dc_WORKBOOKS
+        return True if wb_name in [wb[0] for wb in wbl] else False
+    
     def dc_WORKBOOK_loaded(self, wb_name: str) -> bool:
         """DC-Only: Indicates whether the named workbook is loaded."""
         _ = p3u.is_str_or_none("wb_name", wb_name, raise_error=True)
@@ -323,5 +414,55 @@ class BudManDataContext(BudManDataContextBaseInterface):
         logger.error("BDM_STORE_save method is not implemented in this interface.")
         return None
 
-    #endregion Abstract Methods
+    def dc_CHECK_REGISTER_name(self, wb_index: int) -> str:
+        """DC-Only: Return wb_name for wb_index or None if does not exist."""
+        try:
+            if wb_index < 0 or wb_index >= len(self.dc_CHECK_REGISTERS):
+                logger.error(f"Invalid workbook index: {wb_index}")
+                return None
+            # DATA_COLLECTION is a dict {wb_name: wb_ref} 
+            wb_name, _ = self.dc_WORKBOOKS[wb_index] 
+            return wb_name
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise ValueError(f"Error retrieving workbook name for index {wb_index}: {e}")
+    
+    def dc_CHECK_REGISTER_index(self, wb_name: str = None) -> int:
+        """DC-Only: Return the index of a check_register based on wb_name.
+        
+        Args:
+            wb_name (str): The name of the workbook to find.
+        Returns:
+            int: The index in the CHECK_REGISTERS DATA_COLLECTION, 
+            or -1 if not found.
+        """
+        try:
+            crl = self.dc_CHECK_REGISTERS
+            for i, cr_name_in_list in enumerate(crl):
+                if cr_name_in_list == wb_name:
+                    return i
+            return -1
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+
+    def dc_CHECK_REGISTER_load(self, wb_name, wb_ref: str) -> DATA_COLLECTION:
+        """DC-Only: Load the specified workbook by wb_ref."""
+        try:
+            wb = csv_DATA_COLLECTION_get_url(wb_ref)
+            self.dc_WB_NAME = wb_name
+            self.dc_CHECK_REGISTERS[wb_name] = wb_ref
+            self.dc_LOADED_CHECK_REGISTERS[wb_name] = wb
+            return wb 
+        except Exception as e:
+            logger.error(f"Failed to load check register '{wb_name}': {e}")
+            raise
+
+    def dc_CHECK_REGISTER_add(self, wb_name: str, wb_ref: str, wb: DATA_COLLECTION) -> None:
+        """DC-Only: Add a new loaded workbook to the data context."""
+        self.dc_CHECK_REGISTERS[wb_name] = wb_ref
+        self.dc_LOADED_WORKBOOKS[wb_name] = wb
+        return None
+
+    #endregion Concrete Interface Methods
     # ------------------------------------------------------------------------ +

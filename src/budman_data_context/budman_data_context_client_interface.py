@@ -21,11 +21,14 @@
 #region Imports
 # python standard library modules and packages
 from abc import ABC, abstractmethod
+from typing import Tuple
 # third-party modules and packages
 from openpyxl import Workbook
 
 # local modules and packages
-from src.budman_namespace import design_language_namespace as bdmns
+from src.budman_namespace import (
+    DATA_COLLECTION,WORKBOOK_LIST, LOADED_WORKBOOK_COLLECTION
+    )
 from budman_data_context import BudManDataContextBaseInterface
 import p3_utils as p3u
 #endregion Imports
@@ -143,34 +146,65 @@ class BudManDataContextClientInterface(BudManDataContextBaseInterface):
         self.DC.dc_BDM_STORE = value
 
     @property
-    def dc_WORKBOOKS(self) -> bdmns.WORKBOOK_LIST:
+    def dc_WORKBOOKS(self) -> WORKBOOK_LIST:
         """Return the list of workbooks in the DC.
         This is a List of tuples, where each tuple contains the workbook name
         and its absolute path.
         """
         return self.DC.dc_WORKBOOKS
     @dc_WORKBOOKS.setter
-    def dc_WORKBOOKS(self, value: bdmns.WORKBOOK_LIST) -> None:
+    def dc_WORKBOOKS(self, value: WORKBOOK_LIST) -> None:
         """Set the list of workbooks in the DC."""
         self.DC.dc_WORKBOOKS = value
 
     @property
-    def dc_LOADED_WORKBOOKS(self) -> bdmns.LOADED_WORKBOOK_COLLECTION:
+    def dc_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_COLLECTION:
         """Return the list of loaded workbooks in the DC.
         This is a List of tuples, where each tuple contains the workbook name
         and its Workbook object.
         """
         return self.DC.dc_LOADED_WORKBOOKS
     @dc_LOADED_WORKBOOKS.setter
-    def dc_LOADED_WORKBOOKS(self, value: bdmns.LOADED_WORKBOOK_COLLECTION) -> None:
+    def dc_LOADED_WORKBOOKS(self, value: LOADED_WORKBOOK_COLLECTION) -> None:
         """Set the list of loaded workbooks in the DC."""
         self.DC.dc_LOADED_WORKBOOKS = value
+
+    @property
+    def dc_EXCEL_WORKBOOKS(self) -> DATA_COLLECTION:
+        """DC-Only: Return the collection of workbooks currently open in Excel."""
+        return self.DC.dc_EXCEL_WORKBOOKS
+    @dc_EXCEL_WORKBOOKS.setter
+    def dc_EXCEL_WORKBOOKS(self, value: DATA_COLLECTION) -> None:
+        """DC-Only: Set the collection of workbooks currently open in Excel."""
+        self.DC.dc_EXCEL_WORKBOOKS = value
+
+    @property 
+    def dc_CHECK_REGISTERS(self) -> DATA_COLLECTION:
+        """DC-Only: Return the check register data collection."""
+        return self.DC.dc_CHECK_REGISTERS
+    @dc_CHECK_REGISTERS.setter
+    def dc_CHECK_REGISTERS(self, value: DATA_COLLECTION) -> None:
+        """DC-Only: Set the check register data collection."""
+        self.DC.dc_CHECK_REGISTERS = value
+
+    @property 
+    def dc_LOADED_CHECK_REGISTERS(self) -> DATA_COLLECTION:
+        """DC-Only: Return the check register data collection."""
+        return self.DC.dc_CHECK_REGISTERS
+    @dc_LOADED_CHECK_REGISTERS.setter
+    def dc_LOADED_CHECK_REGISTERS(self, value: DATA_COLLECTION) -> None:
+        """DC-Only: Set the check register data collection."""
+        self.DC.dc_CHECK_REGISTERS = value
+
+
+
     #endregion BudManDataContextClientInterface Properties
     # ------------------------------------------------------------------------ +
     #region BudManDataContextClientInterface Methods
     def dc_initialize(self) -> None:
         """Initialize the data context."""
         super().dc_initialize()
+        self.DC.dc_initialize()
         return self
 
     def dc_FI_KEY_validate(self, fi_key: str) -> bool:
@@ -192,6 +226,15 @@ class BudManDataContextClientInterface(BudManDataContextBaseInterface):
     def dc_WB_REF_validate(self, wb_ref: str) -> bool:
         """Validate the provided workbook reference."""
         return self.DC.dc_WB_REF_validate(wb_ref)
+
+    def dc_WF_KEY_resolve(self, wf_key : str) -> Tuple[bool, int, str]: 
+        """Return True if the wf_key is valid."""
+        # Bind through the DC (data_context) object.
+        return self.DC.dc_WF_KEY_resolve(wf_key)
+
+    def dc_WORKBOOKS_member(self, wb_name: str) -> bool:
+        """DC-Only: Indicates whether the named workbook is a member of the DC."""
+        return self.DC.dc_WORKBOOKS_member(wb_name)    
 
     def dc_WORKBOOK_loaded(self, wb_name: str) -> Workbook:
         """Indicates whether the named workbook is loaded."""
@@ -220,6 +263,28 @@ class BudManDataContextClientInterface(BudManDataContextBaseInterface):
     def dc_BDM_STORE_save(self, file_path: str) -> None:
         """Save the BDM_STORE to the specified file path."""
         return self.DC.dc_BDM_STORE_save(file_path)
+    
+    def dc_CHECK_REGISTER_name(self, wb_index: int) -> str:
+        """DC-Only: Return wb_name for wb_index or None if does not exist."""
+        return self.DC.dc_CHECK_REGISTER_name(wb_index)
+    
+    def dc_CHECK_REGISTER_index(self, wb_name: str = None) -> int:  
+        """DC-Only: Return the index of a check register based on wb_name.
+        
+        Args:
+            wb_name (str): The name of the check register to find.
+        Returns:
+            int: The index of the check register in the dc_CHECK_REGISTERS, or -1 if not found.
+        """
+        return self.DC.dc_CHECK_REGISTER_index(wb_name)
+    
+    def dc_CHECK_REGISTER_load(self, wb_name: str, wb_ref:str) -> DATA_COLLECTION:
+        """DC-Only: Load the specified check register by name."""
+        return self.DC.dc_CHECK_REGISTER_load(wb_name, wb_ref)
+
+    def dc_CHECK_REGISTER_add(self, wb_name: str, wb_ref: str, wb: DATA_COLLECTION) -> None:
+        """DC-Only: Add a new loaded workbook to the data context."""
+        return self.DC.dc_CHECK_REGISTER_add(wb_name, wb_ref, wb)    
 
     #endregion BudManDataContextClientInterface Methods
     # ------------------------------------------------------------------------ +

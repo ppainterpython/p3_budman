@@ -1610,6 +1610,8 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
     def bdwb_WORKBOOKS_member(self, wb_name:str) -> bool: 
         """Return True if wb_name is a member of DC.WORKBOOKS list."""
         try:
+            # TODO: can I remove this because BudManDataContext now
+            # dc_WORKBOOKS_member()?
             _ = p3u.is_str_or_none("wb_name", wb_name, raise_error=True)
             # Reference the DC.WORKBOOKS property.
             wbl = self.bdmwd_WORKBOOKS_get()
