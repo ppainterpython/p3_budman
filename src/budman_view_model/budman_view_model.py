@@ -198,7 +198,8 @@ from budman_namespace import *
 from budman_workflows import (
     ORIGINAL_DESCRIPTION_COL_NAME,
     check_budget_category, check_sheet_columns,
-    map_budget_category, category_map_count, check_sheet_schema
+    map_budget_category, category_map_count, check_sheet_schema,
+    apply_check_register
     )
 from budget_domain_model import (
     BDMBaseInterface, BDMClientInterface, BudgetDomainModel, 
@@ -1358,6 +1359,8 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
                 wb_abs_path = cr_data_path.absolute()
                 # Add it to the WORKBOOKS list.
                 self.DC.bdmwd_WORKBOOKS_add(wb_name, wb_abs_path)
+                # Add to LOADED_WORKBOOKS_COLLECTION.
+                self.DC.dc_LOADED_WORKBOOKS[wb_name] = wb_abs_path
                 r += f"{P2}wb_index: {wb_index:>2} wb_name: '{wb_name:<40}'\n"
                 self.DC.dc_WB_REF = str(wb_index)  # Set the wb_ref in the DC.
                 self.DC._WB_NAME = wb_name  # Set the wb_name in the DC.
@@ -1401,7 +1404,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
                     m = f"wb_ref is None, no action taken."
                     logger.error(m)
                     return False, m
-            check_register = cmd.get('check_register', False)
+            check_register = self.cp_cmd_arg_get(cmd, CMD_ARG_CHECK_REGISTER, None)
             # Verify LOADED_WORKBOOKS to process.
             wb_ref = wb_ref or self.dc_WB_REF
             lwbl = self.dc_LOADED_WORKBOOKS
@@ -1431,17 +1434,23 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
 
             for wb_name, wb in wf_wb_list.items():
                 ws = wb.active
-                # Check for budget category column, add it if not present.
-                # check_budget_category(ws)
-                check_sheet_columns(ws)
-                # Map the 'Original Description' column to the 'Budget Category' column.
-                map_budget_category(ws,ORIGINAL_DESCRIPTION_COL_NAME, BUDGET_CATEGORY_COL)
-                # TODO: Fix the _save dependence on the DC fi_key, wf_key, wb_type.
-                # move tot he BDMWorkingData class.
-                self.model.bdmwd_WORKBOOK_save(wb_name, wb)
-                wb_index = self.DC.dc_WORKBOOK_index(wb_name)
-                r += f"{P2}Task: map_budget_category applied to " 
-                r += f"wb_index: {wb_index:>2} wb_name: '{wb_name:<40}', wb saved. \n"
+                if check_register:
+                    # Check for a check register column, add it if not present.
+                    # load the check register here
+                    check_register_dict = csv_DATA_COLLECTION_get_url("")
+                    apply_check_register(ws)
+                else:
+                    # Check for budget category column, add it if not present.
+                    # check_budget_category(ws)
+                    check_sheet_columns(ws)
+                    # Map the 'Original Description' column to the 'Budget Category' column.
+                    map_budget_category(ws,ORIGINAL_DESCRIPTION_COL_NAME, BUDGET_CATEGORY_COL)
+                    # TODO: Fix the _save dependence on the DC fi_key, wf_key, wb_type.
+                    # move tot he BDMWorkingData class.
+                    self.model.bdmwd_WORKBOOK_save(wb_name, wb)
+                    wb_index = self.DC.dc_WORKBOOK_index(wb_name)
+                    r += f"{P2}Task: map_budget_category applied to " 
+                    r += f"wb_index: {wb_index:>2} wb_name: '{wb_name:<40}', wb saved. \n"
             return True, r
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))

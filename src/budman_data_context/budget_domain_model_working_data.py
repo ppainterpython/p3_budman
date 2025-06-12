@@ -115,17 +115,17 @@ class BDMWorkingData(BudManDataContext, BDMClientInterface):
         """Set the list of workbooks in the DC."""
         logger.warning("Setting dc_WORKBOOKS directly is not supported.")
 
-    @property
-    def dc_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_COLLECTION:
-        """Return the list of workbooks currently loaded in the DC.
-        Loaded means a file is loaded into memory and is available. Pull
-        from the BDMWD."""
-        return self.bdmwd_LOADED_WORKBOOKS()
-    @dc_LOADED_WORKBOOKS.setter
-    def dc_LOADED_WORKBOOKS(self, value: LOADED_WORKBOOK_COLLECTION) -> None:
-        """Set the list of workbooks currently loaded in the DC.
-        Loaded means a file is loaded into memory and is available."""
-        logger.warning("Setting dc_LOADED_WORKBOOKS directly is not supported.")
+    # @property
+    # def dc_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_COLLECTION:
+    #     """Return the list of workbooks currently loaded in the DC.
+    #     Loaded means a file is loaded into memory and is available. Pull
+    #     from the BDMWD."""
+    #     return self.bdmwd_LOADED_WORKBOOKS()
+    # @dc_LOADED_WORKBOOKS.setter
+    # def dc_LOADED_WORKBOOKS(self, value: LOADED_WORKBOOK_COLLECTION) -> None:
+    #     """Set the list of workbooks currently loaded in the DC.
+    #     Loaded means a file is loaded into memory and is available."""
+    #     logger.warning("Setting dc_LOADED_WORKBOOKS directly is not supported.")
 
     def dc_FI_KEY_validate(self, fi_key: str) -> bool:
         """Model-aware: Validate the provided FI_KEY.
@@ -229,6 +229,75 @@ class BDMWorkingData(BudManDataContext, BDMClientInterface):
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
+    # ------------------------------------------------------------------------ +
+    # #region bdmwd_LOADED_WORKBOOKS() methods
+    def bdmwd_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_COLLECTION:
+        """Model-Aware: Return the LOADED_WORKBOOK_COLLECTION from the BDMWD."""
+        # Ask the model for the bdmwd_LOADED_WORKBOOKS.
+        return self.dc_LOADED_WORKBOOKS
+    def bdmwd_LOADED_WORKBOOKS_count(self) -> int:
+        """Return total count of BDMWD_LOADED_WORKBOOKS dictionary."""
+        return len(self.dc_LOADED_WORKBOOKS)
+
+    # def bdmwd_LOADED_WORKBOOKS_get(self) -> LOADED_WORKBOOK_COLLECTION | None:
+    #     """Get the BDMWD_LOADED_WORKBOOKS from the BDM_WORKING_DATA.
+
+    #     Returns:
+    #         LOADED_WORKBOOK_COLLECTION(Dict[wb_name: Workbook object])
+    #     """
+    #     try:
+    #         self.bdmwd_INITIALIZED()
+    #         if self.bdm_working_data is None:
+    #             m = f"BDM_WORKING_DATA is not set. "
+    #             logger.error(m)
+    #             raise ValueError(m)
+    #         return self.get_BDM_WORKING_DATA(BDMWD_LOADED_WORKBOOKS)
+    #     except Exception as e:
+    #         m = p3u.exc_err_msg(e)
+    #         logger.error(m)
+    #         raise
+
+    # def bdmwd_LOADED_WORKBOOKS_add(self,wb_name : str, wb : Workbook) -> None:
+    #     """Add an entry to BDMWD_LOADED_WORKBOOKS in the BDM_WORKING_DATA.
+
+    #     The BDMWD_LOADED_WORKBOOKS list holds tuples of workbook name and
+    #     the loaded Workbook object. When adding an entry, if the wb_name is 
+    #     already in the list, then do not add it again.
+
+    #     Returns:
+    #         None: on success.
+    #     Raises:
+    #         ValueError: if the BDM_WORKING_DATA is not set.
+    #         TypeError: if wb_name is not a str.
+    #         TypeError: if wb is not a Workbook object.
+    #         ValueError: if wb_name is None or an empty str.
+    #         ValueError: if wb is None.
+    #     """
+    #     try:
+    #         self.bdmwd_INITIALIZED()
+    #         p3u.is_str_or_none("wb_name",wb_name, raise_error = True)
+    #         m = "Updated" if wb_name in self.dc_LOADED_WORKBOOKS else "Added"
+    #         self.dc_LOADED_WORKBOOKS[wb_name] = wb  # Use dict-like access for easy updates.
+    #         logger.debug(f"{m} ('{wb_name}', '{str(wb)}') "
+    #                      f"to BDMWD_LOADED_WORKBOOKS.")
+    #         return None
+    #     except Exception as e:
+    #         m = p3u.exc_err_msg(e)
+    #         logger.error(m)
+    #         raise
+    # def bdwb_LOADED_WORKBOOKS_member(self, wb_name:str) -> bool: 
+    #     """Return True if wb_name is a member of DC.LOADED_WORKBOOKS list."""
+    #     try:
+    #         _ = p3u.is_str_or_none("wb_name", wb_name, raise_error=True)
+    #         # Reference the DC.LOADED_WORKBOOKS property. Dict(wb_name: Workbook).
+    #         lwbl = self.bdmwd_LOADED_WORKBOOKS_get()
+    #         return True if wb_name in lwbl else False
+    #     except Exception as e:
+    #         logger.error(p3u.exc_err_msg(e))
+    #         raise
+    #endregion bdmwd_LOADED_WORKBOOKS() methods
+    # ------------------------------------------------------------------------ +
+    
     #endregion BDMWorkingDataBaseInterface BDMWD DC-aware Interface.
     # ------------------------------------------------------------------------ +
     #region    BDMWorkingData Interface BDMWD Model-aware(fi,wf,wb) Interface.
@@ -255,10 +324,6 @@ class BDMWorkingData(BudManDataContext, BDMClientInterface):
         """
         # Use the model binding.
         return self.model.bdmwd_WORKBOOKS_add(wb_name, wb_abs_path_str)
-    def bdmwd_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_COLLECTION:
-        """Model-Aware: Return the LOADED_WORKBOOK_COLLECTION from the BDMWD."""
-        # Ask the model for the bdmwd_LOADED_WORKBOOKS.
-        return self.model.bdmwd_LOADED_WORKBOOKS_get()
     def bdmwd_WF_KEY_validate(self, wf_key: str) -> bool:
         """Model-Aware: Validate the provided WF_KEY."""
         return self.model.bdm_WF_KEY_validate(wf_key)

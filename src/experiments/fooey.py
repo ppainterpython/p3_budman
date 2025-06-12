@@ -9,6 +9,13 @@ from typing import Dict
 import p3_utils as p3u, p3logging as p3l
 # local modules and packages
 # from budman_namespace import *
+from budman_namespace import (
+    BDM_FOLDER, BDM_FI_COLLECTION,
+    FI_DATA_COLLECTION, FI_NAME, FI_FOLDER,BDM_WF_COLLECTION,
+    WF_INPUT_FOLDER,WF_WORKING_FOLDER, WF_OUTPUT_FOLDER,WF_NAME,
+    WB_INPUT, WB_WORKING, WB_OUTPUT
+    )
+from budget_storage_model import bsm_BDM_STORE_url_load
 from budman_workflows.budget_category_mapping import extract_category_tree
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -44,15 +51,46 @@ def configure_logging(logger_name : str = __name__, logtest : bool = False) -> N
 # ------------------------------------------------------------------------ +
 # ---------------------------------------------------------------------------- +
 if __name__ == "__main__":
-    # bdms_url = "file:///C:/Users/ppain/OneDrive/budget/p3_budget_manager_ca063e8b.jsonc"
+    wb_url = "file:///C:/Users/ppain/OneDrive/budget/p3_budget_manager_ca063e8b.jsonc"
+    cr_url = "file:///C:/Users/ppain/OneDrive/budget/boa/data/new/CheckRegister_ToDate20250609.csv"
     try:
         configure_logging(__name__, logtest=False)
-        root_logger = logging.getLogger()
-        for handler in root_logger.handlers:
-            print(f"Handler: {type(handler).__name__}('{handler.name}'), Level: {logging.getLevelName(handler.level)}")
-            if handler.name == 'stdout':
-                handler.setLevel(logging.CRITICAL)
-        output = extract_category_tree()
+        wb_path = p3u.verify_url_file_path(cr_url, test=False)
+        # wb_path.parent  = abs_path to the parent directory
+        # wb_path.stem = filename
+        # wb_path.suffix = filetype
+        # wb_path.name = full_filename
+        # path mapping:  
+        # BDM: FI: bdm_id / fi_folder(fi_key) / fi_data_coll(wf_key) / workbook_list(wf_purpose) / (wb_name.wb_type, wb_url)
+        # bsm:   '~/budget/'              'boa/'                                        'data/new/' data.xlsx
+        #      WF: bdm_id \ wf_key \  wf_folder(wf_purpose) \ wb_name.wb_type
+        #bdm_folder
+        #
+        bdms = bsm_BDM_STORE_url_load(wb_url)
+        fi_folders = list(bdms[BDM_FI_COLLECTION].keys())     
+        bdm_folder = bdms[BDM_FOLDER]
+        all_paths = []
+        fi_col = bdms[BDM_FI_COLLECTION]
+        wf_col = bdms[BDM_WF_COLLECTION]
+        for fi_key, fi_obj in bdms[BDM_FI_COLLECTION].items():
+            fi_folder = fi_obj[FI_FOLDER]
+            print(f"'{fi_folder}' fi_key: {fi_key}")
+            for wf_key, data_obj in fi_obj[FI_DATA_COLLECTION].items():
+                wf_obj = wf_col[wf_key]
+                data_obj 
+                print(f"  '{wf_key}' wf_name: '{wf_obj[WF_NAME]}'")
+                wf_folders = {}
+                wf_folders[WB_INPUT] = wf_obj[WF_INPUT_FOLDER]
+                wf_folders[WB_WORKING] = wf_obj[WF_WORKING_FOLDER]
+                wf_folders[WB_OUTPUT] = wf_obj[WF_OUTPUT_FOLDER]
+                for wb_type, tuple_list in data_obj.items():
+                    f = wf_folders[wb_type]
+                    print(f"    '{f}' wb_type:wb_type: {wb_type} ")
+                    for tup in tuple_list:
+                        print(f"       '{tup[0]}' wb_path: {tup[1]}")
+
+
+        logger.info(f"wb_path: '{wb_path}' url:'{wb_url}'")
 
     except Exception as e:
         m = p3u.exc_err_msg(e)

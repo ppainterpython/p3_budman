@@ -1796,70 +1796,70 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
     #endregion bdmwd_WORKBOOKS() methods
     # ------------------------------------------------------------------------ +
     #region bdmwd_LOADED_WORKBOOKS() methods
-    def bdmwd_LOADED_WORKBOOKS_count(self) -> int:
-        """Return total count of BDMWD_LOADED_WORKBOOKS dictionary."""
-        self.bdmwd_INITIALIZED()
-        return len(self.bdmwd_LOADED_WORKBOOKS_get())
+    # def bdmwd_LOADED_WORKBOOKS_count(self) -> int:
+    #     """Return total count of BDMWD_LOADED_WORKBOOKS dictionary."""
+    #     self.bdmwd_INITIALIZED()
+    #     return len(self.bdmwd_LOADED_WORKBOOKS_get())
 
-    def bdmwd_LOADED_WORKBOOKS_get(self) -> LOADED_WORKBOOK_COLLECTION | None:
-        """Get the BDMWD_LOADED_WORKBOOKS from the BDM_WORKING_DATA.
+    # def bdmwd_LOADED_WORKBOOKS_get(self) -> LOADED_WORKBOOK_COLLECTION | None:
+    #     """Get the BDMWD_LOADED_WORKBOOKS from the BDM_WORKING_DATA.
 
-        Returns:
-            LOADED_WORKBOOK_COLLECTION(Dict[wb_name: Workbook object])
-        """
-        try:
-            self.bdmwd_INITIALIZED()
-            if self.bdm_working_data is None:
-                m = f"BDM_WORKING_DATA is not set. "
-                logger.error(m)
-                raise ValueError(m)
-            return self.get_BDM_WORKING_DATA(BDMWD_LOADED_WORKBOOKS)
-        except Exception as e:
-            m = p3u.exc_err_msg(e)
-            logger.error(m)
-            raise
+    #     Returns:
+    #         LOADED_WORKBOOK_COLLECTION(Dict[wb_name: Workbook object])
+    #     """
+    #     try:
+    #         self.bdmwd_INITIALIZED()
+    #         if self.bdm_working_data is None:
+    #             m = f"BDM_WORKING_DATA is not set. "
+    #             logger.error(m)
+    #             raise ValueError(m)
+    #         return self.get_BDM_WORKING_DATA(BDMWD_LOADED_WORKBOOKS)
+    #     except Exception as e:
+    #         m = p3u.exc_err_msg(e)
+    #         logger.error(m)
+    #         raise
 
-    def bdmwd_LOADED_WORKBOOKS_add(self,wb_name : str, wb : Workbook) -> None:
-        """Add an entry to BDMWD_LOADED_WORKBOOKS in the BDM_WORKING_DATA.
+    # def bdmwd_LOADED_WORKBOOKS_add(self,wb_name : str, wb : Workbook) -> None:
+    #     """Add an entry to BDMWD_LOADED_WORKBOOKS in the BDM_WORKING_DATA.
 
-        The BDMWD_LOADED_WORKBOOKS list holds tuples of workbook name and
-        the loaded Workbook object. When adding an entry, if the wb_name is 
-        already in the list, then do not add it again.
+    #     The BDMWD_LOADED_WORKBOOKS list holds tuples of workbook name and
+    #     the loaded Workbook object. When adding an entry, if the wb_name is 
+    #     already in the list, then do not add it again.
 
-        Returns:
-            None: on success.
-        Raises:
-            ValueError: if the BDM_WORKING_DATA is not set.
-            TypeError: if wb_name is not a str.
-            TypeError: if wb is not a Workbook object.
-            ValueError: if wb_name is None or an empty str.
-            ValueError: if wb is None.
-        """
-        try:
-            self.bdmwd_INITIALIZED()
-            p3u.is_str_or_none("wb_name",wb_name, raise_error = True)
-            p3u.is_obj_of_type("wb", wb, Workbook, raise_error=True)
-            lwbs_list = self.bdmwd_LOADED_WORKBOOKS_get()
-            lwbs_list[wb_name] = wb  # Use dict-like access for easy updates.
-            m = "Updated" if self.bdwb_LOADED_WORKBOOKS_member(wb_name) else "Added"
-            logger.debug(f"{m} ('{wb_name}', '{str(wb)}') "
-                         f"to BDMWD_LOADED_WORKBOOKS.")
-            return None
-        except Exception as e:
-            m = p3u.exc_err_msg(e)
-            logger.error(m)
-            raise
+    #     Returns:
+    #         None: on success.
+    #     Raises:
+    #         ValueError: if the BDM_WORKING_DATA is not set.
+    #         TypeError: if wb_name is not a str.
+    #         TypeError: if wb is not a Workbook object.
+    #         ValueError: if wb_name is None or an empty str.
+    #         ValueError: if wb is None.
+    #     """
+    #     try:
+    #         self.bdmwd_INITIALIZED()
+    #         p3u.is_str_or_none("wb_name",wb_name, raise_error = True)
+    #         p3u.is_obj_of_type("wb", wb, Workbook, raise_error=True)
+    #         lwbs_list = self.bdmwd_LOADED_WORKBOOKS_get()
+    #         lwbs_list[wb_name] = wb  # Use dict-like access for easy updates.
+    #         m = "Updated" if self.bdwb_LOADED_WORKBOOKS_member(wb_name) else "Added"
+    #         logger.debug(f"{m} ('{wb_name}', '{str(wb)}') "
+    #                      f"to BDMWD_LOADED_WORKBOOKS.")
+    #         return None
+    #     except Exception as e:
+    #         m = p3u.exc_err_msg(e)
+    #         logger.error(m)
+    #         raise
     
-    def bdwb_LOADED_WORKBOOKS_member(self, wb_name:str) -> bool: 
-        """Return True if wb_name is a member of DC.LOADED_WORKBOOKS list."""
-        try:
-            _ = p3u.is_str_or_none("wb_name", wb_name, raise_error=True)
-            # Reference the DC.LOADED_WORKBOOKS property. Dict(wb_name: Workbook).
-            lwbl = self.bdmwd_LOADED_WORKBOOKS_get()
-            return True if wb_name in lwbl else False
-        except Exception as e:
-            logger.error(p3u.exc_err_msg(e))
-            raise
+    # def bdwb_LOADED_WORKBOOKS_member(self, wb_name:str) -> bool: 
+    #     """Return True if wb_name is a member of DC.LOADED_WORKBOOKS list."""
+    #     try:
+    #         _ = p3u.is_str_or_none("wb_name", wb_name, raise_error=True)
+    #         # Reference the DC.LOADED_WORKBOOKS property. Dict(wb_name: Workbook).
+    #         lwbl = self.bdmwd_LOADED_WORKBOOKS_get()
+    #         return True if wb_name in lwbl else False
+    #     except Exception as e:
+    #         logger.error(p3u.exc_err_msg(e))
+    #         raise
 
     #endregion bdmwd_LOADED_WORKBOOKS() methods
     # ------------------------------------------------------------------------ +
