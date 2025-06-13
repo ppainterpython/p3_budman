@@ -70,26 +70,30 @@ class BDMConfig(metaclass=BDMSingletonMeta):
         BDM_FILETYPE: ".jsonc",  # the BDM store filetype, default is jsonc
         BDM_FOLDER: "~/OneDrive/budget", 
         BDM_URL: None,
-        BDM_FI_COLLECTION: { # FI_COLLECTION (dict) {FI_KEY: FI_DATA}
+        BDM_FI_COLLECTION: { # FI_COLLECTION Dict[FI_KEY: FI_OBJECT]
             "boa": # FI_KEY
-            {      # FI_DATA
+            {      # FI_OBJECT
                 FI_KEY: "boa",
                 FI_NAME: "Bank of America",
                 FI_TYPE: "bank",
                 FI_FOLDER: "boa",
-                FI_DATA_COLLECTION: { # WORKBOOK_DATA_COLLECTION dict(wf_key: WORKBOOK_LIST)
-                     BDM_WF_CATEGORIZATION: {  # WOBKBOOK_LIST list(wb)
-                        WB_INPUT: [ # input data objects
+                FI_DATA_COLLECTION: { # FI_DATA_COLLECTION Dict[WF_KEY: WORKBOOK_DATA_COLLECTION]
+                     BDM_WF_CATEGORIZATION:  # WF_KEY: 
+                     {  # WORKBOOK_DATA_COLLECTION Dict[WF_PURPOSE: WORKBOOK_LIST]
+                        WB_INPUT: # WF_PURPOSE: WF_INPUT  (input data objects) 
+                        [  # WORKBOOK_LIST: List[WORKBOOK_ITEMS], WORKBOOK_ITEM: Tuple[WB_NAME, WB_URL]
                             ( "input_prefix_wb_name_1", "wb_url_1" ),
                             ( "input_prefix_wb_name_2", "wb_url_2" ),
                             ( "input_prefix_wb_name_3", "wb_url_3" )
                         ], 
-                        WB_WORKING: [ # working data objects, input and output
+                        WB_WORKING: # WF_PURPOSE: WF_WORKING  (working data objects) 
+                        [ # WORKBOOK_LIST: List[WORKBOOK_ITEMS], WORKBOOK_ITEM: Tuple[WB_NAME, WB_URL]
                             ( "wb_name_1", "wb_url_1" ),
                             ( "wb_name_2", "wb_url_2" ),
                             ( "wb_name_3", "wb_url_3" )
                         ], 
-                        WB_OUTPUT: [
+                        WB_OUTPUT: # WF_PURPOSE: WF_OUTPUT  (output data objects) 
+                        [  # WORKBOOK_LIST: List[WORKBOOK_ITEMS], WORKBOOK_ITEM: Tuple[WB_NAME, WB_URL]
                             ( "output_prefix_wb_name_1", "wb_url_4" ),
                             ( "output_prefix_wb_name_2", "wb_url_5" ),
                             ( "output_prefix_wb_name_3", "wb_url_6" )

@@ -170,12 +170,24 @@ BDM_VALID_PATH_ELEMENTS = (BDM_FOLDER, BDM_URL, FI_FOLDER,
 # ---------------------------------------------------------------------------- +
 # WORKBOOK_DATA_COLLECTION is a subclass of DATA_OBJECT (Dict) used to manage
 # Workflow-related (WF_) data associated with a specific FI).
-# The primary data object now is the WORKBOOK (an excel workbook). There are
-# stored by the BSM in files in folders in the filesystem, so there are Path 
-# strings associated. In the BDM, a WORKBOOK has a unique name, and a type.
-# Workbook types (WB_TYPE) indicate use of a workbook as either input data,
-# working data, or output data.
-# Workbook and folder Types
+# The primary data object now is the WORKBOOK (an excel workbook or a .csv file). 
+# These are stored by the BSM in files in folders in a storage system, so there 
+# are Path strings associated. In the BDM, a WORKBOOK has a unique name, and a 
+# type, the WB_TYPE. Another key concern is that BudMan is workflow-based. So
+# workbooks are processed an moved through a workflow. Each workflow is composed
+# tasks performed on the workbooks. A workbook can be input to or output from a 
+# workflow , or be held as working data in a workflow. So, workflows have a 
+# purpose associated with the folders to designate them as input, working, or 
+# output, the WF_PURPOSE.
+# Workbook types (WB_TYPE) identify the nature of the file and relate to the 
+# workbooks filename and filetype, which may be modified as workbooks move
+# through the workflow. 
+# Workflow Purpose:
+WF_INPUT = "wf_input" 
+WF_WORKING = "wf_working" 
+WF_OUTPUT ="wf_output" 
+WF_PURPOSE_VALID_VALUES = (WF_INPUT, WF_WORKING, WF_OUTPUT)
+
 WB_INPUT = "wb_input" 
 WB_WORKING = "wb_working" 
 WB_OUTPUT ="wb_output" 

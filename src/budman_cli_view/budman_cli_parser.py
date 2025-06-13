@@ -42,6 +42,7 @@ logger = logging.getLogger(__name__)
 # parent_parser.parse_args(['-vo', '-po'])
 # parent_parser.parse_args(['-wi'])
 # print("does this work?")
+print("loading BudManCLIParser ...")
 # ---------------------------------------------------------------------------- +
 class BudManCLIParser():
     """A class to parse command line arguments for the BudgetModelCLIView class.
@@ -317,13 +318,18 @@ class BudManCLIParser():
             raise
 
     def workflow_cmd_parser_setup(self) -> None:
-        """Apply workflows to data in Budget Manager."""
+        """The workflow command is used to perform tasks supported by the
+        different workflows configured in Budget Manager. Tasks are functional 
+        behaviors working with the available workbooks."""
         try:
             parser = self.workflow_cmd
             # Add subparsers for workflow command parser
             subparsers = parser.add_subparsers(
                 dest="workflow_cmd", title="Workflow Commands",
-                description="Available workflow commands: map-category, apply, reload, check.")
+                description="""The workflow command is used to execute workflow tasks on 
+                available workbooks. Each task has a subcommand used to present the
+                arguments appropriate for the task.
+                """)
             # Workflow tasks: map-category, apply, reload, check
             # task 'check' subcommand
             check_parser = subparsers.add_parser(
@@ -379,9 +385,10 @@ class BudManCLIParser():
                 action="store_true", 
                 help="Command is only parsed with results returned.")
 
+            self.add_common_args(parser)
             # Instead of propagating, just add common args directly to each subparser:
-            for subparser in [apply_parser, check_parser, reload_parser, categorization_parser]:
-                self.add_common_args(subparser)
+            # for subparser in [apply_parser, check_parser, reload_parser, categorization_parser]:
+            #     self.add_common_args(subparser)
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise
@@ -390,13 +397,15 @@ class BudManCLIParser():
         """Add common arguments to the provided parser."""
         try:
             common_args = parser.add_argument_group(
-                title="Common Arguments", 
-                description="Arguments common to all commands.")
+                title="Common Options", 
+                description="Add these to any command.")
             # Add common arguments to the parser
             common_args.add_argument(
                 "--parse-only","-po",  
                 action="store_true", 
-                help="Command is only parsed with results returned.")
+                help="""The command is only parsed and the resulting command
+                arguments and values are displayed without executing the 
+                  command.""")
             common_args.add_argument(
                 "--validate-only", "-vo", 
                 action="store_true", 

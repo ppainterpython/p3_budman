@@ -211,6 +211,7 @@ from budget_storage_model.csv_data_collection import (
 )
 from budman_data_context import BDMWorkingData
 from budman_workflows import budget_category_mapping
+from budman_cli_view import budman_cli_parser
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -801,21 +802,10 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
         if not isinstance(arg_name, str):
             raise TypeError("arg_name must be a string.")
         if arg_name not in cmd:
-            if default_value is not None:
-                return default_value
-            raise KeyError(f"Command argument '{arg_name}' not found in cmd.")
-        if arg_name not in BUDMAN_VALID_CMD_ARGS:
-            raise ValueError(f"Command argument '{arg_name}' is not a valid "
-                             f"BudMan command argument. Valid arguments are: "
-                             f"{BUDMAN_VALID_CMD_ARGS}")
+            return default_value
         value = cmd.get(arg_name, default_value)
         if value is None:
-            if default_value is not None:
-                return default_value
-            raise ValueError(f"Command argument '{arg_name}' cannot be None.")
-        if not isinstance(value, (str, int, float, bool)):
-            raise TypeError(f"Command argument '{arg_name}' must be a string, "
-                            f"int, float, or bool, not {type(value)}.")
+            return default_value
         return value
     #endregion cp_cmd_arg_get() Command Processing method
     #region cp_cmd_arg_set() Command Processing method
@@ -830,8 +820,6 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             raise ValueError(f"Command argument '{arg_name}' is not a valid "
                              f"BudMan command argument. Valid arguments are: "
                              f"{BUDMAN_VALID_CMD_ARGS}")
-        if value is None:
-            raise ValueError(f"Command argument '{arg_name}' cannot be None.")
         if not isinstance(value, (str, int, float, bool)):
             raise TypeError(f"Command argument '{arg_name}' must be a string, "
                             f"int, float, or bool, not {type(value)}.")
@@ -1332,7 +1320,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             wb_ref = self.cp_cmd_arg_get(cmd, CMD_WB_REF, self.dc_WB_REF)
             fi_key = self.cp_cmd_arg_get(cmd, CMD_FI_KEY, self.dc_FI_KEY)
             wf_key = self.cp_cmd_arg_get(cmd, CMD_WF_KEY, self.dc_WF_KEY)
-            wb_type = BDM_WF_INTAKE  #self.dc_WB_TYPE
+            wb_type = self.cp_cmd_arg_get(cmd, CMD_WB_TYPE, self.dc_WF_KEY)
             wb_count = len(self.dc_CHECK_REGISTERS)
             r = f"Budget Manager Loaded Check Register ({wb_count}):\n"
             # A check register workbook is a .csv file.
@@ -1478,7 +1466,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             check_register = self.cp_cmd_arg_get(cmd, CMD_CHECK_REGISTER, None)
             wb_ref = self.cp_cmd_arg_get(cmd, CMD_WB_REF, None)
             wb_type = self.cp_cmd_arg_get(cmd, CMD_WB_TYPE, None)
-            all_wbs, wb_index, wb_name = self.DC.dc_WB_REF_resolve(wb_ref)
+            all_wbs, wb_index, wb_name = self.DC.dc_WB_REF_resolve(check_register)
             # Verify LOADED_WORKBOOKS to process.
             wb_index =  self.dc_CHECK_REGISTER_index(wb_name)
             check_register_dict = csv_DATA_COLLECTION_get_url("")
@@ -1580,7 +1568,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
                 logger.error(m)
                 raise RuntimeError(f"{pfx}{m}")
             logger.info(f"Start: ...")
-            reload_target = cmd.get(RELOAD_TARGET, None)
+            reload_target = self.cp_cmd_arg_get(cmd, RELOAD_TARGET, None)
             if reload_target is None:
                 m = f"reload_target is None, no action taken."
                 logger.error(m)
@@ -1592,6 +1580,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
                 logger.info(m)
                 r += f"{m}\n"
                 importlib.reload(budget_category_mapping)
+                importlib.reload(budman_cli_parser)
                 cmc = category_map_count()
                 m = f"{P4}reloaded modules for target: '{reload_target}' count = {cmc}\n"
                 logger.info(m)
