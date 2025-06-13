@@ -26,7 +26,7 @@ In the BDM, data is mapped to files as storage units. Files are organized into f
 
 Workflows process files with tasks in a sequence. A general view is a task knows what folder will contain the files it must work with. Files are loosely considered to be used as input, working, or output data. Hence, a folder is designated as input, working, or output as a container type. In the BDM, files are kept in collections, each with a unique filename and filetype the union of which is referred to as the full filename (e.g., filename='March2025', filetype='.xlsx', full filename='March2025.xlsx'). Workflows may configure prefixes aligned to workflow input, working or output state.
 
-In our design language, files are Data Files (DF) and WorkBooks (WB) with another type designation of DF_TYPE or WB_TYPE (synonyms). This type maps to the input, working, output state concept. A __DATA_COLLECTION__ is a set of lists of files/workbooks (__WORKBOOK_LIST__ or __FILE_LIST__).
+In our design language, files are Data Files (DF) and WorkBooks (WB) with another type designation of DF_TYPE or WB_TYPE (synonyms). This type maps to the input, working, output state concept. A __DATA_COLLECTION__ is a set of lists of files/workbooks (__WORKBOOK_DATA_LIST__ or __FILE_LIST__).
 
 ### MVVM Command Pattern Technical Design
 

@@ -30,7 +30,8 @@ import p3_utils as p3u, pyjson5, p3logging as p3l
 import pyjson5 as json5 
 # local modules and packages
 from budman_namespace import (
-    BSM_PERSISTED_PROPERTIES, BDM_STORE, BSM_VALID_BDM_STORE_FILETYPES)
+    BSM_PERSISTED_PROPERTIES, BDM_STORE, VALID_BSM_BDM_STORE_FILETYPES,
+    VALID_WB_FILETYPES)
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region    Globals and Constants
@@ -124,7 +125,7 @@ def bsm_BDM_STORE_file_load(bdms_path : Path = None) -> BDM_STORE:
             m = f"bdms_path is not a file: '{bdms_path}'"
             logger.error(m)
             raise ValueError(m)
-        if not bdms_path.suffix in BSM_VALID_BDM_STORE_FILETYPES:
+        if not bdms_path.suffix in VALID_BSM_BDM_STORE_FILETYPES:
             m = f"bdms_path filetype is not supported: {bdms_path.suffix}"
             logger.error(m)
             raise ValueError(m)
@@ -246,15 +247,36 @@ def bsm_BDM_STORE_file_abs_path(filename : str, filetype : str, folder : str  ) 
 #endregion bsm_BDM_STORE_file_abs_path()
 # ---------------------------------------------------------------------------- +
 #region    bsm_get_workbook_names()
-def bsm_get_workbook_names(wb_folder : Path) -> List[Path]:
-    """Return list of workbook Paths from wb_folder path."""
+def bsm_get_workbook_names(abs_folder : Path) -> List[Path]:
+    """Return list of workbook Paths from absolute folder path."""
     try:
-        p3u.is_obj_of_type("wb_folder", wb_folder, Path, raise_error=True)
+        p3u.is_obj_of_type("wb_folder", abs_folder, Path, raise_error=True)
         # Get a list of Path objects for all .xlsx files in the folder.
-        wb_paths = list(wb_folder.glob("*.xlsx"))
+        wb_paths = list(abs_folder.glob("*.xlsx"))
         if not wb_paths:
-            logger.warning(f"No workbook files found in folder: {wb_folder}")
+            logger.warning(f"No workbook files found in folder: {abs_folder}")
             return []
+        filtered_wb_paths = bsm_filter_workbook_names(wb_paths)
+        return filtered_wb_paths
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion bsm_get_workbook_names()
+# ---------------------------------------------------------------------------- +
+#region    bsm_get_workbook_names()
+def bsm_get_workbook_names2(abs_folder : Path) -> List[Path]:
+    """Return list of workbook Paths from absolute folder path."""
+    try:
+        p3u.is_obj_of_type("wb_folder", abs_folder, Path, raise_error=True)
+        # Get a list of Path objects for all .xlsx files in the folder.
+        wb_paths = []
+        for filetype in VALID_WB_FILETYPES:
+            my_glob = f"*{filetype}"
+            filetype_paths = list(abs_folder.glob(my_glob))
+            if not filetype_paths:
+                logger.debug(f"No '{filetype}' files found in folder: {abs_folder}")
+                continue
+            wb_paths.extend(filetype_paths)
         filtered_wb_paths = bsm_filter_workbook_names(wb_paths)
         return filtered_wb_paths
     except Exception as e:

@@ -760,8 +760,8 @@ def execute_worklow_categorization(bm : BudgetDomainModel, fi_key: str, wf_key:s
     #     3: Save the output items to storage. 
     try:
         logger.info(f"{cp} Start: workflow: '{wf_key}' for FI('{fi_key}') ...")
-        wb_type = WB_INPUT # input workbooks
-        wb_c = bm.bdm_FI_WF_WORKBOOK_LIST_count(fi_key, wf_key, wb_type)
+        wb_type = WF_INPUT # input workbooks
+        wb_c = bm.bdm_FI_WF_WORKBOOK_DATA_LIST_count(fi_key, wf_key, wb_type)
         # if workbooks_dict is None or len(workbooks_dict) == 0:
         if wb_c is None or wb_c == 0:
             logger.info(f"{cp}    No workbooks for input.")
@@ -787,7 +787,7 @@ def execute_worklow_categorization(bm : BudgetDomainModel, fi_key: str, wf_key:s
 
             # Step 3: Save the output items to output storage.
             try:
-                bm.bsm_FI_WF_WORKBOOK_save(wb, wb_name, fi_key, wf_key, WB_OUTPUT)
+                bm.bsm_FI_WF_WORKBOOK_save(wb, wb_name, fi_key, wf_key, WF_OUTPUT)
             except Exception as e:
                 logger.error(f"{cp}    Error saving workbook: {wb_name}: {e}")
                 continue

@@ -30,6 +30,7 @@ import logging, os, getpass, time, copy
 from pathlib import Path
 from typing import List, Type, Generator, Dict, Tuple, Any
 # third-party modules and packages
+from rich.console import Console
 import p3_utils as p3u, pyjson5, p3logging as p3l
 import cmd2, argparse
 from cmd2 import (Cmd2ArgumentParser, with_argparser)
@@ -40,6 +41,7 @@ from budman_cli_view import BudManCLIParser
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
 logger = logging.getLogger(__name__)
+console = Console(force_terminal=True,width=BUDMAN_WIDTH, highlight=True)
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
@@ -198,10 +200,11 @@ class BudManCLIView(cmd2.Cmd):
             if _log_cli_cmd_execute(self, opts): return True, "parse_only"
             cmd = BudManCLIView.create_cmd(opts)
             status, result = self.CP.execute_cmd(cmd)
-            if status:
-                self.poutput(f"Result: {str(result)}")
-            else:
-                self.poutput(f"Error: {str(result)}")
+            console.print(result)
+            # if status:
+            #     self.poutput(f"Result: {str(result)}")
+            # else:
+            #     self.poutput(f"Error: {str(result)}")
             _log_cli_cmd_complete(self, opts)
             return (status, result)
         except SystemExit as e:

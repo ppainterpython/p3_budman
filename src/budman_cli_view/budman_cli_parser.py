@@ -42,7 +42,7 @@ logger = logging.getLogger(__name__)
 # parent_parser.parse_args(['-vo', '-po'])
 # parent_parser.parse_args(['-wi'])
 # print("does this work?")
-print("loading BudManCLIParser ...")
+# print("loading BudManCLIParser ...")
 # ---------------------------------------------------------------------------- +
 class BudManCLIParser():
     """A class to parse command line arguments for the BudgetModelCLIView class.

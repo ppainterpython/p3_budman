@@ -56,7 +56,7 @@ def configure_logging(logger_name : str, logtest : bool = True) -> None:
     etc.f
     TODO: Change BudManDataContext to use BDM_STORE if loaded to respond
     TODO: implement parse-only, validate-only and what-if argument support
-    TODO: Convert the WORKBOOK_LIST to DATA_COLLECTION from DATA_TUPLE_LIST. And
+    TODO: Convert the WORKBOOK_DATA_LIST to DATA_COLLECTION from DATA_TUPLE_LIST. And
     refine the FI_WF, WF_DATA_OBJECT, FI_DATA naming to just DATA_OBJECT. 
     DATA_OBJECTs are association with an fi_key, wf_key, and wb_type.
     TODO: BDM methods needed:

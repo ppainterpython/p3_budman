@@ -76,9 +76,13 @@ import p3_utils as p3u, pyjson5, p3logging as p3l
 from openpyxl import Workbook, load_workbook
 # local modules and packages
 from budman_namespace import *
-from budget_storage_model import (bsm_verify_folder, bsm_get_workbook_names)
-                                  
+from budget_storage_model import (
+    bsm_verify_folder, 
+    bsm_get_workbook_names,
+    bsm_get_workbook_names2
+    )                              
 from .model_base_interface import BDMBaseInterface
+from .bdm_workbook_class import BDMWorkbook
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -99,11 +103,6 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
         When instantiated, a config object is provided to the constructor.
 
     """
-    # ------------------------------------------------------------------------ +
-    #region class variables
-    # A config Template should be a BudgetDomainModel object, or a sub
-    _default_config_object : object = None #
-    #endregion class variables
     # ------------------------------------------------------------------------ +
     #region    BudgetDomainModel class constructor __init__()
     def __init__(self, bdm_config : Dict = None) -> None:
@@ -378,14 +377,14 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
     always in the context of a specific FI through the fi_key. WF_INPUT_FOLDER is
     a Path with various str reprs.
 
-    WB_INPUT - is a WB_TYPE, indicating used for input to a workflow. 
+    WF_INPUT - is a WF_PURPOSE, indicating used for input to a workflow. 
     Likely, workbooks of this type are referenced in the collection of 
     workbooks currently in the WF_INPUT_FOLDER folder.
 
     WF_WORKING_FOLDER - refers to the folder for a specific workflow. It is
     a Path with various str reprs.
 
-    WB_WORKING - is a WB_TYPE, indicating used to work on (input and output) 
+    WF_WORKING - is a WF_PURPOSE, indicating used to work on (input and output) 
     data for a workflow. Likely, workbooks of this type are referenced in the 
     collection of workbooks currently in the WF_WORKING_FOLDER folder. It is
     typical that working data is opened for read and write.
@@ -393,7 +392,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
     WF_OUTPUT_FOLDER - refers to the output folder for a specific workflow. It is
     a Path with various str reprs.
 
-    WB_OUTPUT - is a WB_TYPE, indicating used for output from a workflow. 
+    WF_OUTPUT - is a WF_PURPOSE, indicating used for output from a workflow. 
     Likely, workbooks of this type are referenced in the collection of 
     workbooks currently in the WF_OUTPUT_FOLDER folder. A common pattern is
     for a workflow to just copy workbooks to an output folder.
@@ -435,7 +434,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
         wf - workflow
     """
     # ======================================================================== +
-    #region    BDM_INITIALIZED BDM bdm_initialize(self, bsm_init, ...)
+    #region    BDM bdm_initialize(self, bsm_init, ...)
     def bdm_initialize(self, 
                  bsm_init : bool = True,
                  create_missing_folders : bool = True,
@@ -491,10 +490,10 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
-    #endregion BDM_INITIALIZED BDM bdm_initialize(self, bsm_init, ...) 
+    #endregion BDM bdm_initialize(self, bsm_init, ...) 
     # ------------------------------------------------------------------------ +
-    #region    BDM_INITIALIZED bdm_initialize_from_BDM_URL(self)
-    def bdm_initialize_from_BDM_URL(self,bsm_init:bool=True) -> None:
+    #region    bdm_initialize_from_BDM_STORE(self)
+    def bdm_initialize_from_BDM_STORE(self,bsm_init:bool=True) -> None:
         """Initialize the BudgetDomainModel, dynamically, from BDM_CONFIG values.
 
         The current session state of the BudgetDomainModel configuration can be stored
@@ -527,9 +526,9 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
-    #endregion BDM_INITIALIZED bdm_initialize_from_BDM_URL(self)
+    #endregion bdm_initialize_from_BDM_STORE(self)
     # ------------------------------------------------------------------------ +
-    #region    BDM FI_OBJECT pseudo-Object properties
+    #region    BDM FI_OBJECT methods
     def bdm_FI_OBJECT(self, fi_key:str) -> FI_OBJECT:
         """Return the FI_OBJECT for fi_key."""
         self.bdm_FI_KEY_validate(fi_key)
@@ -555,6 +554,20 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
         """Return the DATA_COLLECTION object of the FI_OBJECT for fi_key."""
         return self.bdm_FI_OBJECT(fi_key)[FI_DATA_COLLECTION]
 
+    def bdm_FI_WORKBOOK_COLLECTION(self, fi_key:str) -> DATA_COLLECTION:
+        """Return the FI_WORKBOOK_COLLECTION object of the FI_OBJECT for fi_key."""
+        return self.bdm_FI_OBJECT(fi_key)[FI_WORKBOOK_COLLECTION]
+
+    def bdm_FI_WORKBOOK_COLLECTION_set(self, fi_key:str, value:DATA_COLLECTION) -> DATA_COLLECTION:
+        """Set the FI_WORKBOOK_COLLECTION object of the FI_OBJECT for fi_key."""
+        try:
+            self.bdm_FI_OBJECT(fi_key)[FI_WORKBOOK_COLLECTION] = value
+            return
+        except Exception as e:
+            m = f"Error setting FI_WORKBOOK_COLLECTION for fi_key '{fi_key}': {p3u.exc_err_msg(e)}"
+            logger.error(m)
+            raise ValueError(m)
+
     def bdm_FI_DATA_COLLECTION_count(self, fi_key:str) -> int:
         """Return a count of objects in the FI_DATA_COLLECTION."""
         fi_data_collection = self.bdm_FI_DATA_COLLECTION(fi_key)
@@ -574,10 +587,10 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
             logger.error(m)
             raise ValueError(m)
         return True
-    #endregion BDM FI_OBJECT pseudo-Object properties
+    #endregion BDM FI_OBJECT methods
     # ------------------------------------------------------------------------ +
-    #region    BDM FI_WF_OBJECT DATA_OBJECT pseudo-Object properties
-    def bdm_FI_WF_DATA_OBJECT(self, fi_key:str, wf_key : str) -> DATA_OBJECT:
+    #region    BDM FI_WF_OBJECT WORKBOOK_DATA_COLLECTION methods
+    def bdm_WORKBOOK_DATA_COLLECTION(self, fi_key:str, wf_key : str) -> DATA_OBJECT:
         """Return the WF_DATA_OBJECT value for fi_key, wf_key."""
         if self.bdm_FI_DATA_COLLECTION_count(fi_key) == 0:
             return None
@@ -587,10 +600,10 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
             return None
         return self.bdm_FI_DATA_COLLECTION(fi_key)[wf_key]
     
-    def bdm_FI_WF_WORKBOOK_LIST(self, 
+    def bdm_WORKBOOK_DATA_LIST(self, 
                                 fi_key:str, wf_key:str, 
-                                wb_type:str) -> WORKBOOK_LIST:
-        """Return the WORKBOOK_LIST for the specified fi_key, wf_key, wb_type."""
+                                wf_purpose:str) -> WORKBOOK_DATA_LIST:
+        """Return the WORKBOOK_DATA_LIST for the specified fi_key, wf_key, wf_purpose."""
         if not self.bdm_FI_KEY_validate(fi_key):
             m = f"Invalid financial institution key '{fi_key}'."
             logger.error(m)
@@ -599,41 +612,41 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
             m = f"Invalid workflow key '{wf_key}'."
             logger.error(m)
             raise ValueError(m)
-        if wb_type not in WB_WORKBOOK_TYPES:
-            m = f"Invalid workbook type '{wb_type}' for workflow '{wf_key}'."
+        if wf_purpose not in VALID_WF_PURPOSE_VALUES:
+            m = f"Invalid workbook type '{wf_purpose}' for workflow '{wf_key}'."
             logger.error(m)
             raise ValueError(m)
-        wf_do = self.bdm_FI_WF_DATA_OBJECT(fi_key, wf_key)
-        if wf_do is None:
+        wb_data_collection = self.bdm_WORKBOOK_DATA_COLLECTION(fi_key, wf_key)
+        if wb_data_collection is None:
             return None
-        if wb_type not in wf_do.keys():
+        if wf_purpose not in wb_data_collection.keys():
             return None
-        # Capture the WORKBOOK_LIST for the specified wb_type.
-        wf_wbl = wf_do[wb_type]
-        if wf_wbl is None:
+        # Capture the WORKBOOK_DATA_LIST for the specified wf_purpose.
+        wb_data_list = wb_data_collection[wf_purpose]
+        if wb_data_list is None:
             return None
-        if not isinstance(wf_wbl, list):
-            m = f"FI_DATA '{fi_key}' '{wf_key}' is not a WORKBOOK_LIST"
-            m += f"{type(wf_wbl)}"
+        if not isinstance(wb_data_list, list):
+            m = f"FI_DATA '{fi_key}' '{wf_key}' is not a WORKBOOK_DATA_LIST"
+            m += f"{type(wb_data_list)}"
             logger.error(m)
             raise ValueError(m)
-        return wf_wbl
+        return wb_data_list
 
-    def bdm_FI_WF_WORKBOOK_LIST_count(self,
+    def bdm_FI_WF_WORKBOOK_DATA_LIST_count(self,
                                 fi_key:str, wf_key:str, wb_type:str) -> int:
-        """Return a count of WORKBOOK_LIST in the FI_DATA for fi_key, wf_key."""
-        wf_wbl = self.bdm_FI_WF_WORKBOOK_LIST(fi_key, wf_key, wb_type)
+        """Return a count of WORKBOOK_DATA_LIST in the FI_DATA for fi_key, wf_key."""
+        wf_wbl = self.bdm_WORKBOOK_DATA_LIST(fi_key, wf_key, wb_type)
         if wf_wbl is None:
             return 0
         if not isinstance(wf_wbl, list):
-            m = f"FI_DATA '{fi_key}' '{wf_key}' is not a WORKBOOK_LIST"
+            m = f"FI_DATA '{fi_key}' '{wf_key}' is not a WORKBOOK_DATA_LIST"
             m += f"{type(wf_wbl)}"
             logger.error(m)
             raise ValueError(m)
         return len(wf_wbl)
     # TODO: add bsm_WB_REF_validate() method to validate the
-    #       WORKBOOK_LIST wb_ref values, e.g., Path objects, str, etc.
-    #endregion BDM FI_WF_OBJECT DATA_OBJECT pseudo-Object properties
+    #       WORKBOOK_DATA_LIST wb_ref values, e.g., Path objects, str, etc.
+    #endregion BDM FI_WF_OBJECT WORKBOOK_DATA_COLLECTION methods
     # ------------------------------------------------------------------------ +
     #region    BDM WF_OBJECT pseudo-Object properties
     def bdm_WF_OBJECT(self, wf_key:str) -> WF_OBJECT:
@@ -677,11 +690,11 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
         """Return the WF_PREFIX_OUT value for wf_key."""
         return self.bdm_WF_OBJECT(wf_key)[WF_PREFIX_OUT]    
     
-    def bdm_WB_TYPE_FOLDER_MAP(self, wf_key:str, wb_type:str=None) -> str|dict:
-        """Return the WB_TYPE_FOLDER_MAP or specific mapped value for wb_type."""
-        if wb_type is None:
-            return self.bdm_WF_OBJECT(wf_key)[WB_TYPE_FOLDER_MAP]
-        return self.bdm_WF_OBJECT(wf_key)[WB_TYPE_FOLDER_MAP][wb_type]
+    def bdm_WF_PURPOSE_FOLDER_MAP(self, wf_key:str, wf_purpose:str=None) -> str|dict:
+        """Return the WF_PURPOSE_FOLDER_MAP or specific mapped value for wb_type."""
+        if wf_purpose is None:
+            return self.bdm_WF_OBJECT(wf_key)[WF_PURPOSE_FOLDER_MAP]
+        return self.bdm_WF_OBJECT(wf_key)[WF_PURPOSE_FOLDER_MAP][wf_purpose]
 
     def bdm_WF_KEY_validate(self, wf_key:str) -> bool:
         """Validate the workflow key."""
@@ -724,12 +737,14 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
             # TODO: Fix this when bdmwd is free
             def_fi = VALID_FI_KEYS[0]
             def_wf = BDM_WF_CATEGORIZATION
-            def_wbt = WB_WORKING
+            def_wfp = WF_WORKING
+            def_wbt = WB_TYPE_TRANSACTIONS
             # Initialize the budget model working data.
             self.bdm_working_data = {}
             self.set_BDM_WORKING_DATA(BDMWD_INITIALIZED, False)
             self.set_BDM_WORKING_DATA(BDMWD_FI_KEY, def_fi)
             self.set_BDM_WORKING_DATA(BDMWD_WF_KEY, def_wf)
+            self.set_BDM_WORKING_DATA(BDMWD_WF_PURPOSE, def_wfp)
             self.set_BDM_WORKING_DATA(BDMWD_WB_TYPE, def_wbt)
             self.set_BDM_WORKING_DATA(BDMWD_WB_NAME, None)
             self.set_BDM_WORKING_DATA(BDMWD_WORKBOOKS, list())
@@ -1046,6 +1061,85 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
         bsm_verify_folder(fi_ap, create_missing_folders, raise_errors)
     #endregion FI_DATA FI_FOLDER Path methods
     # ------------------------------------------------------------------------ +   
+    #region bsm_WORKBOOKS_discover() method
+    def bsm_WORKBOOKS_discover(self, fi_key:str) -> None:
+        """Discover WORKBOOKS for all FI's in the BDM."""
+        try:
+            if len(self.bdm_FI_COLLECTION) == 0:
+                m = f"No FI's to discover."
+                logger.debug(m)
+                return
+            logger.debug(f"Discovering WORKBOOKS for FI_KEY('{fi_key}')")
+            for fi_key in self.bdm_fi_collection.keys():
+                # Discover WORKBOOKS for each FI.
+                self.bsm_FI_WORKBOOKS_discover(fi_key)
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise
+    #endregion bsm_WORKBOOKS_discover() method
+    # ------------------------------------------------------------------------ +   
+    #region bsm_FI_WORKBOOKS_discover() method
+    def bsm_FI_WORKBOOKS_discover(self, fi_key:str) -> None:
+        """Discover all WORKBOOKS for the FI."""
+        try:
+            if self.bdm_FI_DATA_COLLECTION_count(fi_key) == 0:
+                m = f"FI_KEY('{fi_key}') has no workflow data."
+                logger.debug(m)
+                return
+            # Traverse the FI_OBJECT's FI_DATA_COLLECTION structure, compile
+            # a list of WORKBOOKS as BDMWorkbook objects with populated
+            # metadata.
+            wb_collection = {}
+            i = 0
+            for wf_key, wb_data_collection in self.bdm_FI_DATA_COLLECTION(fi_key).items():
+                for wf_purpose, wb_data_list in wb_data_collection.items():
+                    fid_list = list(self.bdm_WF_PURPOSE_FOLDER_MAP(wf_key).values())
+                    for folder_id in fid_list:
+                        wb_paths = []
+                        id = f"('{fi_key}', '{wf_key}', '{wf_purpose}', '{folder_id}')"
+                        folder_abs_path = self.bsm_WF_FOLDER_abs_path(fi_key, wf_key, folder_id)
+                        if folder_abs_path is None: 
+                            m = f"'{id}' path  is None.",
+                            logger.debug(m)
+                            continue
+                        if not folder_abs_path.exists():
+                            m = f"'{id}' path does not exist: {folder_abs_path}"
+                            logger.debug(m)
+                            continue
+                        wb_paths = bsm_get_workbook_names2(folder_abs_path)
+                        if len(wb_paths) == 0:
+                            m = f"'{id}' path has no workbooks: {folder_abs_path}"
+                            logger.debug(m)
+                            continue
+                        logger.debug(f"'{id}' found {len(wb_paths)} workbooks: {folder_abs_path}")
+                        for wb_path in wb_paths:
+                            # Create a BDMWorkbook object for each workbook.
+                            wb_filename = wb_path.stem
+                            wb_filetype = wb_path.suffix.lower()
+                            wb_name = wb_path.name
+                            wb_url = wb_path.as_uri()
+                            wb_index = i
+                            wb = BDMWorkbook(
+                                wb_name = wb_name, 
+                                wb_filename =  wb_filename,
+                                wb_filetype = wb_filetype,
+                                wb_url = wb_url,
+                                fi_key= fi_key,
+                                wf_key = wf_key,
+                                wf_purpose = wf_purpose,
+                                wb_index= wb_index,
+                                )
+                            wb_collection[wb_index] = wb
+                            i += 1
+            logger.debug(f"Discovered {len(wb_collection)} workbooks for FI_KEY('{fi_key}').")
+
+        except Exception as e:
+                m = p3u.exc_err_msg(e)
+                logger.error(m)
+                raise
+    #endregion bsm_FI_WORKBOOKS_discover() method
+    # ------------------------------------------------------------------------ + #region WF_OBJECT WF_FOLDER Path methods
     #region bsm_FI_DATA_COLLECTION_resolve() method
     def bsm_FI_DATA_COLLECTION_resolve(self, fi_key:str) -> None:
         """Resolve the FI_WORKFLOW_DATA for the specified fi_key and wf_key."""
@@ -1054,12 +1148,12 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
                 m = f"FI_KEY('{fi_key}') has no workflow data."
                 logger.debug(m)
                 return
-            # Enumerate the FI_OBJECT WF_DATA_COLLECTION.
-            wf_dc : WF_DATA_COLLECTION = self.bdm_FI_DATA_COLLECTION(fi_key)
-            for wf_key, wf_data_object in wf_dc.items():
-                # Resolve each WF_DATA_OBJECT in the collection.
-                self.bsm_WF_DATA_OBJECT_resolve(wf_data_object,
-                                                fi_key, wf_key)
+            # Enumerate the FI_OBJECT FI_DATA_COLLECTION,
+            # which is Dict[wf_key, WORKBOOK_DATA_COLLECTION]. There could be
+            # a WORKBOOK_DATA_COLLECTION for each workflow, or none.
+            for wf_key, wb_data_collection in self.bdm_FI_DATA_COLLECTION(fi_key).items():
+                # Resolve each WORKBOOK_DATA_COLLECTION.
+                self.bsm_WORKBOOK_DATA_COLLECTION_resolve(wb_data_collection,fi_key, wf_key)
         except Exception as e:
                 m = p3u.exc_err_msg(e)
                 logger.error(m)
@@ -1123,57 +1217,59 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
             raise
     #endregion WF_OBJECT WF_FOLDER Path methods
     # ------------------------------------------------------------------------ + #region WF_OBJECT WF_FOLDER Path methods
-    #region WF_DATA_OBJECT (WF_DO) pseudo-property methods
+    #region WORKBOOK_DATA_COLLECTION aka WF_DATA_OBJECT (WF_DO) pseudo-property methods
     """
-    A WF_DATA_OBJECT(Dict) is a DATA_OBJECT(Dict) with key/value pairs specific
-    to data for a workflow. A wf_do is retrieved with the 
+    A WORKBOOK_DATA_COLLECTION(Dict) is a DATA_OBJECT(Dict) with key/value pairs specific
+    to data for a workflow. A wb_data_collection is retrieved with the 
     bdm_FI_WF_DATA_OBJECT() method which could return other types of 
     DATA_OBJECTs in the future. These methods are BSM-related.
 
-    With the BSM, the wf_do properties relating to the storage model are 
-    WF_INPUT_FOLDER, WB_INPUT, WF_WORKING_FOLDER, WB_WORKING, WF_OUTPUT_FOLDER 
-    and WB_OUTPUT. These concern actual access to data in the filesystem. 
+    With the BSM, the wb_data_collection properties relating to the storage 
+    model are based on the workflow purpose values: WF_INPUT_FOLDER, WF_INPUT, 
+    WF_WORKING_FOLDER, WF_WORKING, WF_OUTPUT_FOLDER and WF_OUTPUT. These 
+    concern actual access to data in the storage system. 3 workflow purposes
+    are defined for each workflow and have corresponding folders mapped to them.
+    The WF_PURPOSE_FOLDER_MAP contains the mapping of workflow_purpose to
+    workflow_folder, used to map to actual folder paths in a storage system. 
     
-    One key overlap, is bsm_WF_INPUT and bsm_WF_OUTPUT. These are 
-    the same methods in both the BDM and BSM. Each are dictionaries with tuples
-    of each workbook in the corresponding WF_INPUT_FOLDER and WF_OUTPUT_FOLDER folders.
-    The key is the filename, or the workbook name, the value is the full path 
-    to the file.
     """
-    def bsm_WF_DATA_OBJECT_resolve(self, wf_do: WF_DATA_OBJECT,
+    def bsm_WORKBOOK_DATA_COLLECTION_resolve(self, wb_data_collection: WF_DATA_OBJECT,
                                    fi_key : str, wf_key : str):
-        """Resolve the WF_DATA_OBJECT based on the keys and values present."""
+        """Resolve the WORKBOOK_DATA_COLLECTION based on the keys and values present."""
         try:
             logger.debug(f"FI_KEY('{fi_key}') WF_KEY('{wf_key}')")
-            if wf_do is None or len(wf_do) == 0:
-                logger.debug(f"  WF_DATA_OBJECT is empty.")
+            if wb_data_collection is None or len(wb_data_collection) == 0:
+                logger.debug(f"  WORKBOOK_DATA_COLLECTION is empty.")
                 return
-            logger.debug(f"  WF_DATA_OBJECT({len(wf_do)} keys): {str(list(wf_do.keys()))}")
-            # Resolve all keys in the WF_DATA_OBJECT.
-            did_workbooks = False
-            for wf_do_key, wf_do_value in wf_do.items():
-                if wf_do_key not in WB_DATA_OBJECT_VALID_ATTR_KEYS:
-                    m = f"Invalid WF_DATA_OBJECT key '{wf_do_key}' "
+            logger.debug(f"  WORKBOOK_DATA_COLLECTION({len(wb_data_collection)} "
+                         f"keys): {str(list(wb_data_collection.keys()))}")
+            # Resolve all keys in the WORKBOOK_DATA_COLLECTION, which is a
+            # dictionary of workflow purpose values to WORKBOOK_DATA_LISTs, or
+            # Dict[wf_purpose, WORKBOOK_DATA_LIST].
+            did_workbook_lists = False
+            for wf_purpose, wf_do_value in wb_data_collection.items():
+                if wf_purpose not in VALID_WF_PURPOSE_VALUES:
+                    m = f"Invalid WORKBOOK_DATA_COLLECTION key '{wf_purpose}' "
                     m += f"for FI_KEY('{fi_key}') and WF_KEY('{wf_key}')"
                     logger.error(m)
                     raise ValueError(m)
-                if wf_do_key in WB_WORKBOOK_TYPES:
-                    if not did_workbooks:
-                        # Resolve all the WORKBOOK_LIST for WF_FOLDERs, just once.
-                        self.bsm_WF_DATA_OBJECT_WORKBOOKS_resolve(wf_do, fi_key, wf_key)
-                        did_workbooks = True
+                if wf_purpose in VALID_WF_PURPOSE_VALUES:
+                    if not did_workbook_lists:
+                        # Resolve all the WORKBOOK_DATA_LIST for WF_FOLDERs, just once.
+                        self.bsm_WF_DATA_OBJECT_WORKBOOKS_resolve(wb_data_collection, fi_key, wf_key)
+                        did_workbook_lists = True
                     else:
                         continue
                 else:
-                    raise NotImplementedError(f"WF_DATA_OBJECT key '{wf_do_key}' ")
+                    raise NotImplementedError(f"WORKBOOK_DATA_COLLECTION key '{wf_purpose}' ")
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
  
-    def bsm_WF_DATA_OBJECT_WORKBOOKS_resolve(self, wf_do: WF_DATA_OBJECT, 
+    def bsm_WF_DATA_OBJECT_WORKBOOKS_resolve(self, wb_data_collection: WF_DATA_OBJECT, 
                                  fi_key: str, wf_key : str):
-        """Resolve all WORKBOOK_LISTs for WF_FOLDERS(fi_key, wf_key) in the WF_DATA_OBJECT. 
+        """Resolve all WORKBOOK_DATA_LISTs for WF_FOLDERS(fi_key, wf_key) in the WF_DATA_OBJECT. 
 
         Workbooks are contained in folders in the filesystem. The folder_id 
         determines the absolute path to the folder, as per the following 
@@ -1192,19 +1288,19 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
         """
         try:
             # TODO: validate parameters.
-            for wf_do_key in wf_do.keys():
-                # Only handle WF_WORKBOOK scope for the workflow.
-                # A wf_do may have other keys, but we only care about the workbooks.
-                if wf_do_key not in WB_WORKBOOK_TYPES:
-                    logger.debug(f"  Skipping WF_DATA_OBJECT key: '{wf_do_key}'")
+            for wf_purpose in wb_data_collection.keys():
+                # Only handle WF_PURPOSE scope for the workflow.
+                # A wb_data_collection may have other keys, but we only care about the workbooks.
+                if wf_purpose not in VALID_WF_PURPOSE_VALUES:
+                    logger.debug(f"  Skipping WORKBOOK_DATA_COLLECTION key: '{wf_purpose}'")
                     continue
-                # Only interested in the WB_WORKBOOK_TYPES keys. Each of them
+                # Only interested in the WF_PURPOSE key values. Each of them
                 # is configured to one WF_FOLDER_PATH_ELEMENT. Get the
-                # appropriate folder_id for the WF_WORKBOOK_TYPE.
-                f_id = self.bdm_WB_TYPE_FOLDER_MAP(wf_key, wf_do_key)
+                # appropriate folder_id for the WF_PURPOSE.
+                f_id = self.bdm_WF_PURPOSE_FOLDER_MAP(wf_key, wf_purpose)
                 if f_id is None:
                     logger.debug(f"  FI('{fi_key}') WF('{wf_key}') "
-                                f"WF_DO['{wf_do_key}'] is None")
+                                f"WF_DO['{wf_purpose}'] is None")
                     continue
                 # WORKBOOKS are found in WF_FOLDERS, scan them all.
                 # Resolve all folders in this workflow for fi_key, wf_key.
@@ -1217,9 +1313,9 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
                     wb_name = wb_p.name
                     wb_item = (wb_name, str(wb_p))
                     wb_list.append(wb_item)
-                wf_do[wf_do_key] = wb_list # save wb_list to the wf_do
+                wb_data_collection[wf_purpose] = wb_list # save wb_list to the wf_do
                 logger.debug(f"  FI('{fi_key}') WF('{wf_key}') "
-                            f"WF_DO['{wf_do_key}'] maps to FOLDER('{f_id}') "
+                            f"WF_DO['{wf_purpose}'] maps to FOLDER('{f_id}') "
                             f"with {len(wb_list)} workbooks)")
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
@@ -1228,15 +1324,15 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
     # ------------------------------------------------------------------------ +   
     #region bsm_WORKBOOKS_LIST_load Methods
     def bsm_WORKBOOKS_LIST_load(self,
-                        wbl : WORKBOOK_LIST = None) -> LOADED_WORKBOOK_COLLECTION: 
-        """Load WORKBOOK_LIST returning a LOADED_WORKBOOK_COLLECTION
+                        wbl : WORKBOOK_DATA_LIST = None) -> LOADED_WORKBOOK_COLLECTION: 
+        """Load WORKBOOK_DATA_LIST returning a LOADED_WORKBOOK_COLLECTION
         
-        A WORKBOOK_LIST has tuples of wb_name and wb_abs_path. Iterate the
+        A WORKBOOK_DATA_LIST has tuples of wb_name and wb_abs_path. Iterate the
         list and load each one. This is BSM-scope only, loads from the 
         filesystem, no side effects to the BDM or BDMWD.
 
         Args:
-            wbl (WORKBOOK_LIST): A list of tuples containing the workbook name
+            wbl (WORKBOOK_DATA_LIST): A list of tuples containing the workbook name
             and the absolute path to the workbook file.
         
         Returns:
@@ -1264,12 +1360,12 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
 
     def bsm_LOADED_WORKBOOKS_save(self,
                                   lwbl : LOADED_WORKBOOK_COLLECTION,
-                                  wbl : WORKBOOK_LIST) -> None: 
+                                  wbl : WORKBOOK_DATA_LIST) -> None: 
         """Save LOADED_WORKBOOK_COLLECTION to the filesystem.
         
         A LOADED_WORKBOOK_COLLECTION has tuples of wb_name and a loaded Workbook
         object. Iterate the list, obtain the abs_path_str for each wb_name from 
-        the provided WORKBOOK_LIST, and save the workbook. This is BSM-scope 
+        the provided WORKBOOK_DATA_LIST, and save the workbook. This is BSM-scope 
         only, saves to the filesystem, no side effects to the BDM or BDMWD.
 
         Args:
@@ -1289,7 +1385,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
                 logger.warning("No workbooks abs_path_str, wbl arg was None.")
                 return None
             for wb_name, wb in lwbl:
-                # Find the corresponding workbook path in the WORKBOOK_LIST.
+                # Find the corresponding workbook path in the WORKBOOK_DATA_LIST.
                 for wbn, wb_path in wbl:
                     if wbn == wb_name:
                         break
@@ -1312,7 +1408,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
             loaded workbook object.
         """
         try:
-            wbl = self.bdm_FI_WF_WORKBOOK_LIST(fi_key, wf_key, wb_type)
+            wbl = self.bdm_WORKBOOK_DATA_LIST(fi_key, wf_key, wb_type)
             if wbl is None:
                 return
             for wb_name, wb_path in wbl:
@@ -1332,7 +1428,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
         the filesystem.
         """
         try:
-            f_id = self.bdm_WB_TYPE_FOLDER_MAP(wf_key, wb_type)
+            f_id = self.bdm_WF_PURPOSE_FOLDER_MAP(wf_key, wb_type)
             if f_id is None:
                 m = f"Invalid folder_id '{f_id}' for FI_KEY('{fi_key}') "
                 m += f"and WF_KEY('{wf_key}')"
@@ -1494,6 +1590,19 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
         self.bdm_working_data[BDMWD_WF_KEY] = value
 
     @property
+    def bdmwd_WF_PURPOSE(self) -> str:
+        """Return the current BDMWD_WF_PURPOSE value in the BDMWD."""
+        bdwd = self._valid_BDMWD()
+        if BDMWD_WF_PURPOSE not in bdwd:
+            self.bdm_working_data[BDMWD_WF_PURPOSE] = None
+        return self.bdm_working_data[BDMWD_WF_PURPOSE]
+    @bdmwd_WF_PURPOSE.setter
+    def bdmwd_WF_PURPOSE(self, value: str) -> None:
+        """Set the current BDMWD_WF_PURPOSE value in the BDMWD."""
+        _ = self._valid_BDMWD()
+        self.bdm_working_data[BDMWD_WF_PURPOSE] = value
+
+    @property
     def bdmwd_WB_TYPE(self) -> str:
         """Return the current BDMWD_WB_TYPE value in the BDMWD."""
         bdwd = self._valid_BDMWD()
@@ -1520,14 +1629,14 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
         self.bdm_working_data[BDMWD_WB_NAME] = value
 
     @property 
-    def bdmwd_WORKBOOKS(self) -> WORKBOOK_LIST:
+    def bdmwd_WORKBOOKS(self) -> WORKBOOK_DATA_LIST:
         """Return the current BDMWD_WORKBOOKS value in BDMWD."""
         bdwd = self._valid_BDMWD()
         if BDMWD_WORKBOOKS not in bdwd:
             self.bdm_working_data[BDMWD_WORKBOOKS] = None
         return self.bdm_working_data[BDMWD_WORKBOOKS]
     @bdmwd_WORKBOOKS.setter
-    def bdmwd_WORKBOOKS(self, value: WORKBOOK_LIST) -> None:
+    def bdmwd_WORKBOOKS(self, value: WORKBOOK_DATA_LIST) -> None:
         """Set the current  BDMWD_WORKBOOKS value in BDMWD."""
         _ = self._valid_BDMWD()
         self.bdm_working_data[BDMWD_WORKBOOKS] = value
@@ -1557,7 +1666,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
         """Get the BDMWD_WORKBOOKS value from the BDM_WORKING_DATA.
 
         Returns:
-            WORKBOOK_LIST: A list of tuples containing the workbook name and
+            WORKBOOK_DATA_LIST: A list of tuples containing the workbook name and
             the workbook abs_pat_str.
         """
         try:
@@ -1625,7 +1734,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
             logger.error(p3u.exc_err_msg(e))
             raise
 
-    def bdmwd_WORKBOOKS_resolve(self,initializing:bool=False) -> WORKBOOK_LIST:
+    def bdmwd_WORKBOOKS_resolve(self,initializing:bool=False) -> WORKBOOK_DATA_LIST:
         """Refresh the BDMWD_WORKBOOKS value relative to current BDM state.
 
         Args:
@@ -1643,10 +1752,10 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
         try:
             fi_key = self.bdmwd_FI_KEY
             wf_key = self.bdmwd_WF_KEY
-            wb_type = self.bdmwd_WB_TYPE
-            d = data_desc(fi_key, wf_key, wb_type)
+            wf_purpose = self.bdmwd_WF_PURPOSE
+            d = data_desc(fi_key, wf_key, wf_purpose)
 
-            wbl = self.bdm_FI_WF_WORKBOOK_LIST(fi_key, wf_key, wb_type)
+            wbl = self.bdm_WORKBOOK_DATA_LIST(fi_key, wf_key, wf_purpose)
             self.bdmwd_WORKBOOKS = wbl
             logger.debug(f"{d} BDMWD_WORKS resolved to: {wbl}")
             return self.bdmwd_WORKBOOKS
@@ -1658,7 +1767,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
     def bdmwd_WORKBOOK_load(self, wb_name) -> Workbook:
         """Load 1 workbook into the BDMWD, based on current BDMWD values.
 
-        The named workbook is located for the current FI, WF, and WB_TYPE.
+        The named workbook is located for the current FI, WF, and WF_PURPOSE.
         If loaded successfully, add it to the BDMWD_LOADED_WORKBOOKS list.
         If the workbook is already loaded, return it.
 
@@ -1677,10 +1786,10 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
             _ = p3u.is_str_or_none("wb_name", wb_name, raise_error=True)
             fi_key = self.bdmwd_FI_KEY
             wf_key = self.bdmwd_WF_KEY
-            wb_type = self.bdmwd_WB_TYPE
-            d = data_desc(fi_key, wf_key, wb_type)
+            wf_purpose = self.bdmwd_WF_PURPOSE
+            d = data_desc(fi_key, wf_key, wf_purpose)
 
-            wbl = self.bdm_FI_WF_WORKBOOK_LIST(fi_key, wf_key, wb_type)
+            wbl = self.bdm_WORKBOOK_DATA_LIST(fi_key, wf_key, wf_purpose)
             wb_ap = [val for key, val in wbl if key == wb_name][0]
             if wb_ap is None:
                 m = f"Workbook '{wb_name}' not found in BDMWD_WORKBOOKS."
@@ -1698,7 +1807,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
     def bdmwd_WORKBOOK_save(self, wb_name:str, wb:Workbook) -> None:
         """Save 1 workbook into the BDMWD, based on current BDMWD values.
 
-        The named workbook is located for the current FI, WF, and WB_TYPE.
+        The named workbook is located for the current FI, WF, and WF_PURPOSE.
 
         Args:
             wb_name (str): The name of the workbook to load.
@@ -1715,10 +1824,10 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
             _ = p3u.is_str_or_none("wb_name", wb_name, raise_error=True)
             fi_key = self.bdmwd_FI_KEY
             wf_key = self.bdmwd_WF_KEY
-            wb_type = self.bdmwd_WB_TYPE
-            d = data_desc(fi_key, wf_key, wb_type)
+            wf_purpose = self.bdmwd_WF_PURPOSE
+            d = data_desc(fi_key, wf_key, wf_purpose)
 
-            wbl = self.bdm_FI_WF_WORKBOOK_LIST(fi_key, wf_key, wb_type)
+            wbl = self.bdm_WORKBOOK_DATA_LIST(fi_key, wf_key, wf_purpose)
             wb_ap = [val for key, val in wbl if key == wb_name][0]
             if wb_ap is None:
                 # This wb_name is not known in the BDM.
@@ -1866,7 +1975,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
     #endregion bdmwd_LOADED_WORKBOOKS() methods
     # ------------------------------------------------------------------------ +
     #region bdmwd_FI methods
-    def bdmwd_FI_WORKBOOKS_load(self, fi_key : str, wf_key : str, wb_type : str
+    def bdmwd_FI_WORKBOOKS_load(self, fi_key : str, wf_key : str, wf_purpose : str
                                                     ) -> LOADED_WORKBOOK_COLLECTION:
         """Load wbs for fi_key,wf_key,wb_type, merge to BDMWD_LOADED_WORKBOOKS.
 
@@ -1884,21 +1993,21 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
         """
         try:
             self.bdmwd_INITIALIZED()
-            # Get the WORKBOOK_LIST for fi_key, wf_key and wb_type from the BDM.
-            wbl = self.bdm_FI_WF_WORKBOOK_LIST(fi_key, wf_key, wb_type)
+            # Get the WORKBOOK_DATA_LIST for fi_key, wf_key and wf_purpose from the BDM.
+            wbl = self.bdm_WORKBOOK_DATA_LIST(fi_key, wf_key, wf_purpose)
             if wbl is None or len(wbl) == 0:
                 logger.debug(f"No workbooks to load for FI_KEY('{fi_key}') "
                              f"WF_KEY('{wf_key}')")
                 return None
-            # Use the BSM to load the workbooks for fi_key, wf_key and wb_type.
+            # Use the BSM to load the workbooks for fi_key, wf_key and wf_purpose.
             logger.debug(f"Loading {len(wbl)} workbooks for "
                          f"FI_KEY('{fi_key}') WF_KEY('{wf_key}') "
-                         f"WB_TYPE('{wb_type}')")
+                         f"WF_PURPOSE('{wf_purpose}')")
             new_lwbl = self.bsm_WORKBOOKS_LIST_load(wbl)
             new_count = len(new_lwbl) if new_lwbl is not None else 0
             logger.debug(f"Loaded {new_count} workbooks for "
                          f"FI_KEY('{fi_key}') WF_KEY('{wf_key}') "
-                         f"WB_TYPE('{wb_type}')")
+                         f"WF_PURPOSE('{wf_purpose}')")
             # Update the BDMWD_LOADED_WORKBOOKS with the new loaded workbooks.
             bdmwd_lwbs = self.bdmwd_LOADED_WORKBOOKS_get()
             prev_count = len(bdmwd_lwbs) if bdmwd_lwbs is not None else 0
@@ -1914,7 +2023,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
             raise
 
     def bdmwd_FI_WORKBOOKS_save(self, fi_key : str, wf_key : str,
-                               wb_type : str) -> None:
+                               wf_purpose : str) -> None:
         """Save workbooks for an FI workflow."""
         try:
             self.bdmwd_INITIALIZED()
@@ -1922,13 +2031,13 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
             if lwbl is None or len(lwbl) == 0:
                 logger.debug(f"No loaded workbooks to save for "
                              f"FI_KEY('{fi_key}') WF_KEY('{wf_key}') "
-                             f"WB_TYPE('{wb_type}')")
+                             f"WF_PURPOSE('{wf_purpose}')")
                 return
             wbl = self.bdmwd_WORKBOOKS_get()
             if wbl is None or len(wbl) == 0:
                 logger.debug(f"No workbooks to save for "
                              f"FI_KEY('{fi_key}') WF_KEY('{wf_key}') "
-                             f"WB_TYPE('{wb_type}')")
+                             f"WF_PURPOSE('{wf_purpose}')")
                 return
             self.bsm_LOADED_WORKBOOKS_save(lwbl, wbl)
         except Exception as e:
@@ -2001,18 +2110,18 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
 
 # ---------------------------------------------------------------------------- +
 #region utility functions
-def data_desc(fi_key:str, wf_key:str, wb_type:str) -> str:
-    """Return a string describing the data for the given fi_key, wf_key and wb_type.
+def data_desc(fi_key:str, wf_key:str, wf_purpose:str) -> str:
+    """Return a string describing the data for the given fi_key, wf_key and WF_PURPOSE.
 
     Args:
         fi_key (str): The financial institution key.
         wf_key (str): The workflow key.
-        wb_type (str): The workbook type.
+        wf_purpose (str): The workflow purpose.
 
     Returns:
-        str: A string describing the data for the given fi_key, wf_key and wb_type.
+        str: A string describing the data for the given fi_key, wf_key and wf_purpose.
     """
-    return f"FI('{fi_key}') WF('{wf_key}') WBT('{wb_type}')"
+    return f"FI('{fi_key}') WF('{wf_key}') WBT('{wf_purpose}')"
 #endregion utility functions
 # ---------------------------------------------------------------------------- +
 #region log_BDM_info() function
@@ -2047,7 +2156,7 @@ def log_BDM_info(bdm : BudgetDomainModel) -> None:
             logger.debug(f"{P6}WF_OUTPUT_FOLDER: '{bdm.bdm_WF_FOLDER(wf_key,WF_OUTPUT_FOLDER)}'")
             logger.debug(f"{P6}WF_PREFIX_IN: '{bdm.bdm_WF_PREFIX_IN(wf_key)}' "
                          f"WF_PREFIX_OUT: '{bdm.bdm_WF_PREFIX_OUT(wf_key)}'")
-            logger.debug(f"{P6}WB_TYPE_FOLDER_MAP: {str(bdm.bdm_WB_TYPE_FOLDER_MAP(wf_key))}")
+            logger.debug(f"{P6}WF_PURPOSE_FOLDER_MAP: {str(bdm.bdm_WF_PURPOSE_FOLDER_MAP(wf_key))}")
         # Enumerate Budget Model Options
         bmoc = len(bdm.bdm_options)
         logger.debug(f"{P2}BDM_OPTION['{BDM_OPTIONS}']({bmoc})")
@@ -2112,7 +2221,7 @@ def log_BSM_info(bdm : BudgetDomainModel) -> None:
             logger.debug(f"{P4}Workflow:({bdm.bdm_WF_KEY(wf_key)}:{bdm.bdm_WF_NAME(wf_key)}: ")
             logger.debug(f"{P6}WF_INPUT_FOLDER: '{bdm.bdm_WF_FOLDER(wf_key,WF_INPUT_FOLDER)}'")
             logger.debug(f"{P6}WF_OUTPUT_FOLDER: '{bdm.bdm_WF_FOLDER(wf_key,WF_OUTPUT_FOLDER)}'")
-            logger.debug(f"{P6}WB_TYPE_FOLDER_MAP: {str(bdm.bdm_WB_TYPE_FOLDER_MAP(wf_key))}")
+            logger.debug(f"{P6}WF_PURPOSE_FOLDER_MAP: {str(bdm.bdm_WF_PURPOSE_FOLDER_MAP(wf_key))}")
     except Exception as e:
         m = p3u.exc_err_msg(e)
         logger.error(m)

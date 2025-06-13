@@ -27,7 +27,7 @@ from openpyxl import Workbook
 
 # local modules and packages
 from src.budman_namespace import (
-    DATA_COLLECTION,WORKBOOK_LIST, LOADED_WORKBOOK_COLLECTION
+    DATA_COLLECTION,WORKBOOK_DATA_LIST, LOADED_WORKBOOK_COLLECTION
     )
 from budman_data_context import BudManDataContextBaseInterface
 import p3_utils as p3u
@@ -110,13 +110,13 @@ class BudManDataContextClientInterface(BudManDataContextBaseInterface):
         self.DC.dc_WF_KEY = value
 
     @property
-    def dc_WB_TYPE(self) -> str:
-        """Return the WB_TYPE workbook type."""
-        return self.DC.dc_WB_TYPE
-    @dc_WB_TYPE.setter
-    def dc_WB_TYPE(self, value: str) -> None:
-        """Set the WB_TYPE workbook type."""
-        self.DC.dc_WB_TYPE = value
+    def dc_WF_PURPOSE(self) -> str:
+        """Return the WF_PURPOSE workbook type."""
+        return self.DC.dc_WF_PURPOSE
+    @dc_WF_PURPOSE.setter
+    def dc_WF_PURPOSE(self, value: str) -> None:
+        """Set the WF_PURPOSE workbook type."""
+        self.DC.dc_WF_PURPOSE = value
 
     @property
     def dc_WB_NAME(self) -> str:
@@ -146,14 +146,14 @@ class BudManDataContextClientInterface(BudManDataContextBaseInterface):
         self.DC.dc_BDM_STORE = value
 
     @property
-    def dc_WORKBOOKS(self) -> WORKBOOK_LIST:
+    def dc_WORKBOOKS(self) -> WORKBOOK_DATA_LIST:
         """Return the list of workbooks in the DC.
         This is a List of tuples, where each tuple contains the workbook name
         and its absolute path.
         """
         return self.DC.dc_WORKBOOKS
     @dc_WORKBOOKS.setter
-    def dc_WORKBOOKS(self, value: WORKBOOK_LIST) -> None:
+    def dc_WORKBOOKS(self, value: WORKBOOK_DATA_LIST) -> None:
         """Set the list of workbooks in the DC."""
         self.DC.dc_WORKBOOKS = value
 
@@ -215,9 +215,13 @@ class BudManDataContextClientInterface(BudManDataContextBaseInterface):
         """Validate the provided WF_KEY."""
         return self.DC.dc_WF_KEY_validate(wf_key)
 
-    def dc_WB_TYPE_validate(self, wb_type: str) -> bool:
-        """Validate the provided WB_TYPE."""
-        return self.DC.dc_WB_TYPE_validate(wb_type)
+    def dc_WF_PURPOSE_validate(self, wf_purpose: str) -> bool:
+        """Validate the provided WF_PURPOSE."""
+        return self.DC.dc_WF_PURPOSE_validate(wf_purpose)
+
+    def dc_WF_PURPOSE_validate(self, wf_purpose: str) -> bool:
+        """Validate the provided WF_PURPOSE."""
+        return self.DC.dc_WF_PURPOSE_validate(wf_purpose)
 
     def dc_WB_NAME_validate(self, wb_name: str) -> bool:
         """Validate the provided WB_NAME."""

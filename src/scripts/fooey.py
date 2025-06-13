@@ -13,7 +13,7 @@ from budman_namespace import (
     BDM_FOLDER, BDM_FI_COLLECTION,
     FI_DATA_COLLECTION, FI_NAME, FI_FOLDER,BDM_WF_COLLECTION,
     WF_INPUT_FOLDER,WF_WORKING_FOLDER, WF_OUTPUT_FOLDER,WF_NAME,
-    WB_INPUT, WB_WORKING, WB_OUTPUT, WB_TYPE_FOLDER_MAP
+    WF_INPUT, WF_WORKING, WF_OUTPUT, WF_PURPOSE_FOLDER_MAP
     )
 from budget_storage_model import bsm_BDM_STORE_url_load
 from budman_workflows.budget_category_mapping import extract_category_tree
@@ -83,12 +83,12 @@ if __name__ == "__main__":
                 wf_name = wf_obj[WF_NAME] 
                 # print(f"  '{wf_key}' wf_name: '{wf_obj[WF_NAME]}'")
                 wf_folders = {}
-                wf_folders[WB_INPUT] = wf_obj[WF_INPUT_FOLDER]
-                wf_folders[WB_WORKING] = wf_obj[WF_WORKING_FOLDER]
-                wf_folders[WB_OUTPUT] = wf_obj[WF_OUTPUT_FOLDER]
+                wf_folders[WF_INPUT] = wf_obj[WF_INPUT_FOLDER]
+                wf_folders[WF_WORKING] = wf_obj[WF_WORKING_FOLDER]
+                wf_folders[WF_OUTPUT] = wf_obj[WF_OUTPUT_FOLDER]
                 for wb_type, tuple_list in data_obj.items():
                     f = wf_folders[wb_type]
-                    tm = wf_obj[WB_TYPE_FOLDER_MAP][wb_type]
+                    tm = wf_obj[WF_PURPOSE_FOLDER_MAP][wb_type]
                     print(f"  '{f}' [{wf_key}]'{tm}' ")
                     for tup in tuple_list:
                         print(f"     '{tup[0]}' wb_path: {tup[1]}")

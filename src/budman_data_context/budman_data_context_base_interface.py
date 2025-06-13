@@ -26,7 +26,7 @@ from typing import Dict, List, Any
 from openpyxl import Workbook
 # local modules and packages
 from src.budman_namespace import (
-    DATA_CONTEXT, WORKBOOK_LIST, LOADED_WORKBOOK_COLLECTION,
+    DATA_CONTEXT, WORKBOOK_DATA_LIST, LOADED_WORKBOOK_COLLECTION,
     BDM_STORE, DATA_COLLECTION)
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -131,12 +131,12 @@ class BudManDataContextBaseInterface(ABC):
 
     @property
     @abstractmethod
-    def dc_WORKBOOKS(self) -> WORKBOOK_LIST:
+    def dc_WORKBOOKS(self) -> WORKBOOK_DATA_LIST:
         """Return the list of workbooks in the DC."""
         pass
     @dc_WORKBOOKS.setter
     @abstractmethod
-    def dc_WORKBOOKS(self, value: WORKBOOK_LIST) -> None:
+    def dc_WORKBOOKS(self, value: WORKBOOK_DATA_LIST) -> None:
         """Set the list of workbooks in the DC."""
         pass
 
@@ -213,7 +213,7 @@ class BudManDataContextBaseInterface(ABC):
         Args:
             wb_name (str): The name of the workbook to find.
         Returns:
-            int: The index of the workbook in the WORKBOOK_LIST, or -1 if not found.
+            int: The index of the workbook in the WORKBOOK_DATA_LIST, or -1 if not found.
         """
         pass
 

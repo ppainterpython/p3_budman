@@ -90,6 +90,7 @@ class BDMWorkingData(BudManDataContext, BDMClientInterface):
             bdm_store_dc = bdm_store.get(BDM_DATA_CONTEXT, {})
             self.dc_FI_KEY = bdm_store_dc.get(DC_FI_KEY, None)
             self.dc_WF_KEY = bdm_store_dc.get(DC_WF_KEY, None)
+            self.dc_WF_PURPOSE = bdm_store_dc.get(DC_WF_PURPOSE, None)
             self.dc_WB_TYPE = bdm_store_dc.get(DC_WB_TYPE, None)
             self.dc_WORKBOOKS = self.bdmwd_WORKBOOKS()
             self.dc_LOADED_WORKBOOKS = self.bdmwd_LOADED_WORKBOOKS()
@@ -110,11 +111,11 @@ class BDMWorkingData(BudManDataContext, BDMClientInterface):
     #          Overrides are used when the DC must be Model-Aware
     # ------------------------------------------------------------------------ +
     # @property
-    # def dc_WORKBOOKS(self) -> WORKBOOK_LIST:
+    # def dc_WORKBOOKS(self) -> WORKBOOK_DATA_LIST:
     #     """Return the list of workbooks in the DC, pull from the BDMWD."""
     #     return self.bdmwd_WORKBOOKS()
     # @dc_WORKBOOKS.setter
-    # def dc_WORKBOOKS(self, value: WORKBOOK_LIST) -> None:
+    # def dc_WORKBOOKS(self, value: WORKBOOK_DATA_LIST) -> None:
     #     """Set the list of workbooks in the DC."""
     #     logger.warning("Setting dc_WORKBOOKS directly is not supported.")
 
@@ -305,8 +306,8 @@ class BDMWorkingData(BudManDataContext, BDMClientInterface):
     # ------------------------------------------------------------------------ +
     #region    BDMWorkingData Interface BDMWD Model-aware(fi,wf,wb) Interface.
     # ------------------------------------------------------------------------ +
-    def bdmwd_WORKBOOKS(self) -> WORKBOOK_LIST:
-        """Model-Aware: Return the WORKBOOK_LIST from the BDMWD."""
+    def bdmwd_WORKBOOKS(self) -> WORKBOOK_DATA_LIST:
+        """Model-Aware: Return the WORKBOOK_DATA_LIST from the BDMWD."""
         # Ask the model for the bdmwd_WORKBOOKS.
         return self.model.bdmwd_WORKBOOKS_get()
     def bdmwd_WORKBOOKS_add(self, wb_name:str, wb_abs_path_str:str) -> None:

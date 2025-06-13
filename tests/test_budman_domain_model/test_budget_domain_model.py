@@ -18,6 +18,52 @@ from budget_domain_model.budget_domain_model import (log_BDM_info, log_BSM_info)
 logger = logging.getLogger(__name__)
 #endregion Globals
 # ---------------------------------------------------------------------------- +
+def test_budget_model_initialize_with_BDM_STORE() -> None:
+    """Test BudgetModel() constructor with BDM_STORE."""
+    try:
+        logger.info(test_budget_model_initialize_with_BDM_STORE.__doc__)
+        bdms_url = "file:///C:/Users/ppain/OneDrive/budget/p3_budget_manager_ca063e8b.jsonc"
+        bdmc = BDMConfig.BDM_STORE_url_load(bdms_url)
+        assert isinstance(bdmc, BDMConfig), \
+            "Expected BDMConfig instance from BDM_STORE url load."
+
+        bdm = BudgetDomainModel(bdmc.bdm_config_object)
+        assert isinstance(bdm, BudgetDomainModel), \
+            "Budget model should be a BudgetModel instance"        
+
+        # Initialize the budget model .
+        bdm.bdm_initialize()
+        bdm.bsm_FI_WORKBOOKS_discover("boa")
+        
+        # This instance should be full with resolved values and settings.
+        assert bdm.bdm_initialized, "Budget model should be initialized"
+        assert bdm.bdm_id is not None, "bdm.bdm_id should be set, not be None"
+        assert bdm.bdm_store_object is not None, \
+            "bdm.bdm_config_object should be set, not be None"
+        assert bdm.bdm_folder is not None, "bdm.bdm_folder should be set"
+        assert bdm.bdm_url is not None, \
+            "bdm.bdm_url should be None"
+        assert (bdm.bdm_fi_collection is not None and 
+                isinstance(bdm.bdm_fi_collection, dict) and 
+                len(bdm.bdm_fi_collection) > 0), \
+            "Financial institutions should non-empty dictionary"    
+        assert (bdm.bdm_wf_collection is not None and 
+                isinstance(bdm.bdm_wf_collection, dict) and 
+                len(bdm.bdm_wf_collection) > 0), \
+            "bdm.bdm_wf_collection should be non-empty dictionary"    
+        assert bdm.bdm_options is not None, "bdm.bdm_options should be set"
+        assert bdm.bdm_created_date is not None, "bdm.bdm_created_date should be set"
+        assert bdm.bdm_last_modified_date is not None, \
+            "bdm._last_modified_date should be set"
+        assert bdm.bdm_last_modified_by is not None, \
+            "bdm.bdm_last_modified_by should not be None"
+        assert (bdm.bdm_working_data is not None and 
+                isinstance(bdm.bdm_working_data, dict)), \
+            "bdm.bdm_working_data should be an empty dictionary"    
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        pytest.fail(f"BudgetDomainModel() raised an exception: {str(e)}")
+# ---------------------------------------------------------------------------- +
 def test_budget_model_construction_with_no_config_object() -> None:
     """Test BudgetModel() construction with no config_object."""
     try:
@@ -149,7 +195,7 @@ def test_BDM_FI_DATA_pseudo_Property_Methods():
                 f"Expected: {fi_key} to be a valid FI key."
             assert (bdm_fi := bdm.bdm_FI_OBJECT(fi_key)) is not None, \
                 f"Expected: {fi_key} to be a valid FI dict."
-            assert len(bdm_fi) == len(FI_OBJECT_VALID_ATTR_KEYS), \
+            assert len(bdm_fi) == len(VALID_FI_OBJECT_ATTR_KEYS), \
                 f"Expected: {fi_key} workbooks_in to be non-None."
             assert isinstance(bdm_fi, dict), \
                 f"Expected: {fi_key} workbooks_in to be valid FI_DATA."
@@ -194,30 +240,30 @@ def test_BDM_FI_WF_DATA_OBJECT_pseudo_Property_Methods():
             if bdm.bdm_FI_DATA_COLLECTION_count(fi_key) == 0:
                 return
             # Test access to FI WF_DATA_OBJECTs.
-            for wf_key in BDM_VALID_WORKFLOWS:
-                wf_do = bdm.bdm_FI_WF_DATA_OBJECT(fi_key, wf_key)
-                assert isinstance(wf_do := bdm.bdm_FI_WF_DATA_OBJECT(fi_key, wf_key),(dict,type(None))), \
+            for wf_key in VALID_BDM_WORKFLOWS:
+                wf_do = bdm.bdm_WORKBOOK_DATA_COLLECTION(fi_key, wf_key)
+                assert isinstance(wf_do := bdm.bdm_WORKBOOK_DATA_COLLECTION(fi_key, wf_key),(dict,type(None))), \
                     f"bdm_FI_DATA({fi_key}, {wf_key}) should None or WF_DATA_OBJECT"
                 if wf_do is not None:
                     l = len(wf_do)
                     assert isinstance(wf_do, dict), \
                         f"Expected bdm.bdm_FI_DATA({fi_key}, {wf_key}) to be a WF_OBJECT"
                     for wf_do_key in wf_do.keys():
-                        assert wf_do_key in WB_DATA_OBJECT_VALID_ATTR_KEYS, \
+                        assert wf_do_key in VALID_WORKBOOK_DATA_COLLECTION_ATTR_KEYS, \
                             f"Expected: {wf_do_key} to be a valid WF_OBJECT key."
-                        if wf_do_key == WB_INPUT:
+                        if wf_do_key == WF_INPUT:
                             assert bdm.bdm_WF_TYPE_MAP(wf_key,wf_do_key) == WF_INPUT_FOLDER, \
                                 f"Expected: key: '{wf_do_key}' to be '{WF_INPUT_FOLDER}'."
-                        elif wf_do_key == WB_OUTPUT:
+                        elif wf_do_key == WF_OUTPUT:
                             assert bdm.bdm_WF_TYPE_MAP(wf_key,wf_do_key) == WF_OUTPUT_FOLDER, \
                                 f"Expected: key: '{wf_do_key}' to be '{WF_OUTPUT_FOLDER}'."
     except Exception as e:
         pytest.fail(f"init_budget_model raised an exception: {str(e)}")
 # ---------------------------------------------------------------------------- +
-def test_bdm_FI_WF_WORKBOOK_LIST():
-    """Test test_bdm_FI_WF_WORKBOOK_LIST() Pseudo Property Method."""
+def test_bdm_FI_WF_WORKBOOK_DATA_LIST():
+    """Test test_bdm_FI_WF_WORKBOOK_DATA_LIST() Pseudo Property Method."""
     try:
-        logger.info(test_bdm_FI_WF_WORKBOOK_LIST.__doc__)
+        logger.info(test_bdm_FI_WF_WORKBOOK_DATA_LIST.__doc__)
         bdm = BudgetDomainModel().bdm_initialize()
         assert isinstance(bdm, BudgetDomainModel), \
             "Budget model should be a BudgetModel instance"
@@ -233,9 +279,9 @@ def test_bdm_FI_WF_WORKBOOK_LIST():
             if bdm.bdm_FI_DATA_COLLECTION_count(fi_key) == 0:
                 return
             # Test access to FI WF_DATA_OBJECTs.
-            for wf_key in BDM_VALID_WORKFLOWS:
-                wf_do = bdm.bdm_FI_WF_DATA_OBJECT(fi_key, wf_key)
-                assert isinstance(wf_do := bdm.bdm_FI_WF_DATA_OBJECT(fi_key, wf_key),(dict,type(None))), \
+            for wf_key in VALID_BDM_WORKFLOWS:
+                wf_do = bdm.bdm_WORKBOOK_DATA_COLLECTION(fi_key, wf_key)
+                assert isinstance(wf_do := bdm.bdm_WORKBOOK_DATA_COLLECTION(fi_key, wf_key),(dict,type(None))), \
                     f"bdm_FI_DATA({fi_key}, {wf_key}) should None or WF_DATA_OBJECT"
                 if wf_do is not None:
                     assert len(wf_do) != 0, \
@@ -243,12 +289,12 @@ def test_bdm_FI_WF_WORKBOOK_LIST():
                     assert isinstance(wf_do, dict), \
                         f"Expected bdm.bdm_FI_DATA({fi_key}, {wf_key}) to be a WF_OBJECT"
                     for wf_do_key in wf_do.keys():
-                        wbl = bdm.bdm_FI_WF_WORKBOOK_LIST(fi_key, wf_key, wf_do_key)
+                        wbl = bdm.bdm_WORKBOOK_DATA_LIST(fi_key, wf_key, wf_do_key)
                         if wbl is not None:
                             assert isinstance(wbl, list), \
-                                f"Expected: {wf_do_key} to be a valid WORKBOOK_LIST object."
-                            assert bdm.bdm_FI_WF_WORKBOOK_LIST_count(fi_key, wf_key, wf_do_key) >= 0, \
-                                f"Expected: count of WORKBOOK_LIST >= 0."
+                                f"Expected: {wf_do_key} to be a valid WORKBOOK_DATA_LIST object."
+                            assert bdm.bdm_FI_WF_WORKBOOK_DATA_LIST_count(fi_key, wf_key, wf_do_key) >= 0, \
+                                f"Expected: count of WORKBOOK_DATA_LIST >= 0."
     except Exception as e:
         pytest.fail(f"init_budget_model raised an exception: {str(e)}")
 # ---------------------------------------------------------------------------- +

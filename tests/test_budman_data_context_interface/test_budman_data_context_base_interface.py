@@ -84,7 +84,7 @@ class testBudManDC(BudManDataContextBaseInterface):
         print(f"Setting dc_BDM_STORE to {value}")
         return
     @property
-    def dc_WORKBOOKS(self) -> bdmns.WORKBOOK_LIST:
+    def dc_WORKBOOKS(self) -> bdmns.WORKBOOK_DATA_LIST:
         """Return the list of workbooks in the DC.
         This is a List of tuples, where each tuple contains the workbook name
         and its absolute path.
@@ -92,7 +92,7 @@ class testBudManDC(BudManDataContextBaseInterface):
         print("Getting dc_WORKBOOKS, [('test_wb1', '/path/to/test_wb1.xlsx'), ('test_wb2', '/path/to/test_wb2.xlsx')]")
         return [('test_wb1', '/path/to/test_wb1.xlsx'), ('test_wb2', '/path/to/test_wb2.xlsx')]
     @dc_WORKBOOKS.setter
-    def dc_WORKBOOKS(self, value: bdmns.WORKBOOK_LIST) -> None:
+    def dc_WORKBOOKS(self, value: bdmns.WORKBOOK_DATA_LIST) -> None:
         """Set the list of workbooks in the DC."""
         print(f"Setting dc_WORKBOOKS to {value}")
         return

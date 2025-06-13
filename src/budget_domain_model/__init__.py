@@ -19,12 +19,13 @@ from .budget_domain_model import BudgetDomainModel
 from .model_base_interface import BDMBaseInterface
 from .model_client_interface import BDMClientInterface
 from .budget_domain_model_config import BDMConfig
+from .bdm_workbook_class import BDMWorkbook
 
 # symbols for "from budman_model import *"
 __all__ = [
     "BudgetDomainModel",
     "BDMBaseInterface",
     "BDMClientInterface",
-    "BudgetDomainModelIdentity",
     "BDMConfig",
+    "BDMWorkbook"
 ]

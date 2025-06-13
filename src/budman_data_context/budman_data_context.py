@@ -35,7 +35,7 @@ from openpyxl import Workbook
 import logging, p3_utils as p3u, p3logging as p3l
 # local modules and packages
 from budman_namespace import (
-    DATA_CONTEXT, WORKBOOK_LIST, LOADED_WORKBOOK_COLLECTION,
+    DATA_CONTEXT, WORKBOOK_DATA_LIST, LOADED_WORKBOOK_COLLECTION,
     BDM_STORE, DATA_COLLECTION, ALL_KEY)
 from budman_data_context import BudManDataContextBaseInterface
 from budget_storage_model.csv_data_collection import (
@@ -65,11 +65,12 @@ class BudManDataContext(BudManDataContextBaseInterface):
         self._dc_initialized = False 
         self._dc_FI_KEY = None       
         self._dc_WF_KEY = None       
+        self._dc_WF_PURPOSE = None
         self._dc_WB_TYPE = None      
         self._dc_WB_NAME = None     
         self._dc_WB_REF = None
         self._dc_BDM_STORE : BDM_STORE = None 
-        self._dc_WORKBOOKS : WORKBOOK_LIST = None 
+        self._dc_WORKBOOKS : WORKBOOK_DATA_LIST = None 
         self._dc_LOADED_WORKBOOKS : LOADED_WORKBOOK_COLLECTION = None
         self._dc_EXCEL_WORKBOOKS : DATA_COLLECTION = None
         self._dc_DataContext : DATA_CONTEXT = None 
@@ -108,6 +109,19 @@ class BudManDataContext(BudManDataContextBaseInterface):
     def dc_WF_KEY(self, value: str) -> None:
         """DC-Only: Set the WF_KEY for the workflow."""
         self._dc_WF_KEY = value
+
+    @property
+    def dc_WF_PURPOSE(self) -> str:
+        """DC-Only: Return the current WF_PURPOSE (workbook type) .
+        Current means that the other data in the DC is for this workbook type. 
+        This indicates the type of data in the workflow being processed,
+        e.g., 'input', 'output', 'working', etc.
+        """
+        return self._dc_WF_PURPOSE
+    @dc_WF_PURPOSE.setter
+    def dc_WF_PURPOSE(self, value: str) -> None:
+        """DC-Only: Set the WF_PURPOSE workbook type."""
+        self._dc_WF_PURPOSE = value
 
     @property
     def dc_WB_TYPE(self) -> str:
@@ -160,11 +174,11 @@ class BudManDataContext(BudManDataContextBaseInterface):
         self._dc_BDM_STORE = value
 
     @property
-    def dc_WORKBOOKS(self) -> WORKBOOK_LIST:
+    def dc_WORKBOOKS(self) -> WORKBOOK_DATA_LIST:
         """DC-Only: Return the list of workbooks in the DC."""
         return self._dc_WORKBOOKS
     @dc_WORKBOOKS.setter
-    def dc_WORKBOOKS(self, value: WORKBOOK_LIST) -> None:
+    def dc_WORKBOOKS(self, value: WORKBOOK_DATA_LIST) -> None:
         """DC-Only: Set the list of workbooks in the DC."""
         self._dc_WORKBOOKS = value
 
@@ -213,6 +227,7 @@ class BudManDataContext(BudManDataContextBaseInterface):
         """DC-Only: Initialize the data context."""
         self.dc_FI_KEY = None
         self.dc_WF_KEY = None
+        self.dc_WF_PURPOSE = None
         self.dc_WB_TYPE = None
         self.dc_WB_NAME = None
         self.dc_BDM_STORE = dict()
@@ -231,6 +246,10 @@ class BudManDataContext(BudManDataContextBaseInterface):
     def dc_WF_KEY_validate(self, wf_key: str) -> bool:
         """DC-Only: Validate the provided WF_KEY."""
         return isinstance(wf_key, str) and len(wf_key) > 0
+
+    def dc_WF_PURPOSE_validate(self, wf_purpose: str) -> bool:
+        """DC-Only: Validate the provided WF_PURPOSE."""
+        return isinstance(wf_purpose, str) and len(wf_purpose) > 0
 
     def dc_WB_TYPE_validate(self, wb_type: str) -> bool:
         """DC-Only: Validate the provided WB_TYPE."""
@@ -341,7 +360,7 @@ class BudManDataContext(BudManDataContextBaseInterface):
         Args:
             wb_name (str): The name of the workbook to find.
         Returns:
-            int: The index of the workbook in the WORKBOOK_LIST, or -1 if not found.
+            int: The index of the workbook in the WORKBOOK_DATA_LIST, or -1 if not found.
         """
         try:
             wbl = self.dc_WORKBOOKS

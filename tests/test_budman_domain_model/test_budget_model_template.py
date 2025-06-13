@@ -126,7 +126,7 @@ def test_WF_OBJECT_Path_methods() -> None:
         for fi_key in VALID_FI_KEYS:
             assert bmt.bdm_FI_KEY_validate(fi_key), \
                 f"Expected: {fi_key} to be a valid FI key."
-            for wf_key in BDM_VALID_WORKFLOWS:
+            for wf_key in VALID_BDM_WORKFLOWS:
                 assert bmt.bdm_WF_KEY_validate(wf_key), \
                     f"Expected: {wf_key} to be a valid WF key."
                 for f_id in WF_FOLDER_PATH_ELEMENTS:
@@ -160,7 +160,7 @@ def test_BDM_FI_DATA_pseudo_Property_Methods():
                 f"Expected: {fi_key} to be a valid FI key."
             assert (bdm_fi := bmt.bdm_FI_OBJECT(fi_key)) is not None, \
                 f"Expected: {fi_key} to be a valid FI dict."
-            assert len(bdm_fi) == len(FI_OBJECT_VALID_ATTR_KEYS), \
+            assert len(bdm_fi) == len(VALID_FI_OBJECT_ATTR_KEYS), \
                 f"Expected: {fi_key} workbooks_in to be non-None."
             assert isinstance(bdm_fi, dict), \
                 f"Expected: {fi_key} workbooks_in to be valid dict."
@@ -186,12 +186,12 @@ def test_BDM_WF_Dictionary_Pseudo_Property_Methods():
         # the budget_model_config in the source code. 
 
         # Expect valid values to work from default setup.
-        for wf_key in BDM_VALID_WORKFLOWS:
+        for wf_key in VALID_BDM_WORKFLOWS:
             assert bmt.bdm_WF_KEY_validate(wf_key), \
                 f"Expected: {wf_key} to be a valid WF key."
             assert (bdm_WF_OBJECT := bmt.bdm_WF_OBJECT(wf_key)) is not None, \
                 f"Expected: {wf_key} to be a valid WF dict."
-            assert len(bdm_WF_OBJECT) == len(WF_OBJECT_VALID_ATTR_KEYS), \
+            assert len(bdm_WF_OBJECT) == len(VALID_WF_OBJECT_ATTR_KEYS), \
                 f"Expected: {wf_key} workbooks_in to be non-None."
             assert isinstance(bdm_WF_OBJECT, dict), \
                 f"Expected: {wf_key} workbooks_in to be valid dict."
@@ -199,8 +199,8 @@ def test_BDM_WF_Dictionary_Pseudo_Property_Methods():
                 f"Expected bdm_WF_KEY('{wf_key}'): '{wf_key}', got '{bdm_WF_OBJECT.bdm_WF_KEY(wf_key)}'."
             assert bmt.bdm_WF_NAME(wf_key) is not None, \
                 f"Expected bmt.bdm_WF_NAME({wf_key}) to be non-None"
-            assert bmt.bdm_WF_NAME(wf_key) in BDM_VALID_WORKFLOWS, \
-                f"Expected one of: {BDM_VALID_WORKFLOWS}, got '{bmt.bdm_WF_NAME(wf_key)}'"
+            assert bmt.bdm_WF_NAME(wf_key) in VALID_BDM_WORKFLOWS, \
+                f"Expected one of: {VALID_BDM_WORKFLOWS}, got '{bmt.bdm_WF_NAME(wf_key)}'"
             assert isinstance(bmt.bdm_WF_FOLDER(wf_key, WF_INPUT_FOLDER), (str, type(None))), \
                 f"Expected bmt.bdm_WF_INPUT_FOLDER({wf_key}) to type: None or str"
             assert isinstance(bmt.bdm_WF_FOLDER(wf_key,WF_OUTPUT_FOLDER), (str, type(None))), \

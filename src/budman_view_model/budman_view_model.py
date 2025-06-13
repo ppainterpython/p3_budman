@@ -192,6 +192,7 @@ from typing import List, Type, TYPE_CHECKING, Dict, Tuple, Any, Callable
 import p3_utils as p3u, pyjson5, p3logging as p3l
 from dynaconf import Dynaconf
 from openpyxl import Workbook, load_workbook
+# from rich.console import Console
 # local modules and packages
 from budman_settings import *
 from budman_namespace import *
@@ -223,16 +224,19 @@ CMD_VALIDATE_ONLY = "validate_only"
 CMD_WHAT_IF = "what_if"
 CMD_FI_KEY = "fi_key"
 CMD_WF_KEY = "wf_key"
+CMD_WF_PURPOSE = "wf_purpose"
 CMD_WB_TYPE = "wb_type"
 CMD_WB_NAME = "wb_name"
 CMD_WB_REF = "wb_ref"
 CMD_WB_INFO = "wb_info"
 CMD_CHECK_REGISTER = "check_register"
 BUDMAN_VALID_CMD_ARGS = (CMD_PARSE_ONLY, CMD_VALIDATE_ONLY,
-                        CMD_WHAT_IF, CMD_FI_KEY, CMD_WF_KEY,
+                        CMD_WHAT_IF, CMD_FI_KEY, CMD_WF_KEY,CMD_WF_PURPOSE,
                         CMD_WB_TYPE, CMD_WB_NAME, CMD_WB_REF,CMD_WB_INFO,
                         CMD_CHECK_REGISTER)
 logger = logging.getLogger(__name__)
+# console = Console(force_terminal=True, width=BUDMAN_WIDTH, highlight=True)
+# console.print(f"[bold green]Starting {__name__} module ...[/bold green]")
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
@@ -830,7 +834,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
     def BMVM_cmd_WB_INFO_LEVEL_validate(self, info_level) -> bool:
         """Return True if info_level is a valid value."""
         try:
-            return info_level == ALL_KEY or info_level in WB_INFO_VALID_LEVELS
+            return info_level == ALL_KEY or info_level in VALID_WB_INFO_LEVELS
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
@@ -897,10 +901,11 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
                 m = f"Invalid cmd object, no action taken."
                 logger.error(m)
                 raise RuntimeError(f"{pfx}{m}")
-            fi_key = cmd.get("fi_key", None)
-            wf_key = cmd.get("wf_key", BDM_WF_CATEGORIZATION)
-            wb_type = cmd.get("wb_type", WB_WORKING)
-            wb_name = cmd.get("wb_name", None)
+            fi_key = cmd.get(CMD_FI_KEY, None)
+            wf_key = cmd.get(CMD_WF_KEY, BDM_WF_CATEGORIZATION)
+            wf_purpose = cmd.get(CMD_WF_PURPOSE, WF_WORKING)
+            wb_type = cmd.get(CMD_WB_TYPE, WF_WORKING)
+            wb_name = cmd.get(CMD_WB_NAME, None)
             # TODO: Enable defaults for fi_key, wf_key, wb_type, wb_name in
             # settings.toml
             logger.info(f"Start: {str(cmd)}")
@@ -924,6 +929,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             # Set last values of FI_init_cmd in the DC.
             self.dc_FI_KEY = fi_key
             self.dc_WF_KEY = wf_key
+            self.dc_WF_PURPOSE = wf_purpose
             self.dc_WB_TYPE = wb_type
             self.dc_WB_NAME = wb_name
             # Create result
@@ -952,13 +958,6 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
         named (wb_name). Specifying a wb_name is optional, but will indicate
         the command applies to just the named workbook.
 
-        Arguments:
-            fi_key (str): The key for the financial institution. If None, 
-                no action is taken. If 'all', all workbooks are loaded.
-            wf_key (str): The key for the workflow.
-            wb_type (str): The type of workbook, either input or output.
-            wb_name (str): The name of the workbook. If None, all workbooks
-                modified since open are saved. If 'all', all workbooks are saved.
         Raises:
             RuntimeError: For exceptions.
         """
@@ -970,9 +969,10 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
                 logger.error(m)
                 raise RuntimeError(f"{pfx}{m}")
             # Get the command arguments.
-            fi_key = cmd.get("fi_key", None)
-            wf_key = cmd.get("wf_key", BDM_WF_CATEGORIZATION)
-            wb_type = cmd.get("wb_type", WB_INPUT)
+            fi_key = cmd.get(CMD_FI_KEY, None)
+            wf_key = cmd.get(CMD_WF_KEY, BDM_WF_CATEGORIZATION)
+            wf_purpose = cmd.get(CMD_WF_PURPOSE, WF_INPUT)
+            wb_type = cmd.get(CMD_WB_TYPE, WB_TYPE_TRANSACTIONS)
             wb_name = cmd.get("wb_name", None)
             # Resolve with current DC values.
             if fi_key != self.dc_FI_KEY:
@@ -1144,19 +1144,20 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             crl = self.DC.dc_CHECK_REGISTERS
             crl_count = len(crl) if crl else 0
 
-            # Prepare the output result
+            # Prepare the Console output result
             result = f"Budget Manager Data Context:\n"
             result += f"{P2}{DC_INITIALIZED}: {self.dc_INITIALIZED}\n"
             result += f"{P2}{WB_NAME}: {self.dc_WB_NAME}\n"
             result += f"{P2}{WB_REF}: {self.dc_WB_REF}\n"
             result += f"{P2}{FI_KEY}: {self.dc_FI_KEY}\n"
             result += f"{P2}{WF_KEY}: {self.dc_WF_KEY}\n"
+            result += f"{P2}{WF_PURPOSE}: {self.dc_WF_PURPOSE}\n"
             result += f"{P2}{WB_TYPE}: {self.dc_WB_TYPE}\n"
             result += f"{P2}{DC_BDM_STORE}: {bs_str}\n"
             result += f"{P2}{DC_WORKBOOKS}: {wbl_count}\n"
             if wbl_count > 0:
                 result += f"{P4}wb_ref wb_name{29 * ' '}excel abs_path\n"
-                # Enumerate the WORKBOOK_LIST (a DATA_TUPLE_LIST)
+                # Enumerate the WORKBOOK_DATA_LIST (a DATA_TUPLE_LIST)
                 for i, (wb_name, wb_ap) in enumerate(wbl):
                     ewb : bool = 'Y' if wb_name in excel_wb_list else 'N'
                     result += f"{P4}  {i:2}   {wb_name:<35}   {ewb}   '{wb_ap}'\n"
@@ -1266,6 +1267,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
                 raise RuntimeError(f"{pfx}{m}")
             fi_key = self.cp_cmd_arg_get(cmd, FI_KEY, self.dc_FI_KEY)
             wf_key = self.cp_cmd_arg_get(cmd, WF_KEY, self.dc_WF_KEY)
+            wf_purpose = self.cp_cmd_arg_get(cmd, WF_PURPOSE, self.dc_WF_PURPOSE)
             wb_type = self.cp_cmd_arg_get(cmd, WB_TYPE, self.dc_WB_TYPE)
             wb_count = len(self.dc_WORKBOOKS)
             r = f"Budget Manager Loaded Workbooks({wb_count}):\n"
@@ -1320,6 +1322,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             wb_ref = self.cp_cmd_arg_get(cmd, CMD_WB_REF, self.dc_WB_REF)
             fi_key = self.cp_cmd_arg_get(cmd, CMD_FI_KEY, self.dc_FI_KEY)
             wf_key = self.cp_cmd_arg_get(cmd, CMD_WF_KEY, self.dc_WF_KEY)
+            wf_purpose = self.cp_cmd_arg_get(cmd, CMD_WF_PURPOSE, self.dc_WF_PURPOSE)
             wb_type = self.cp_cmd_arg_get(cmd, CMD_WB_TYPE, self.dc_WF_KEY)
             wb_count = len(self.dc_CHECK_REGISTERS)
             r = f"Budget Manager Loaded Check Register ({wb_count}):\n"
@@ -1381,7 +1384,8 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
                 logger.error(m)
                 return False, m
             wb_ref = cmd.get(WB_REF, None) # from the cmd args
-            wb_type = cmd.get(WB_TYPE, WB_WORKING) or self.dc_WB_TYPE # from the cmd args
+            wf_purpose = cmd.get(WF_PURPOSE, WF_WORKING) or self.dc_WF_PURPOSE 
+            wb_type = cmd.get(WB_TYPE, WB_TYPE_TRANSACTIONS) or self.dc_WB_TYPE 
             if wb_ref is None and self.dc_WB_REF is None:
                     m = f"wb_ref is None, no action taken."
                     logger.error(m)
@@ -1465,6 +1469,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             logger.info(f"Start: ...")
             check_register = self.cp_cmd_arg_get(cmd, CMD_CHECK_REGISTER, None)
             wb_ref = self.cp_cmd_arg_get(cmd, CMD_WB_REF, None)
+            wf_purpose = self.cp_cmd_arg_get(cmd, CMD_WF_PURPOSE, None)
             wb_type = self.cp_cmd_arg_get(cmd, CMD_WB_TYPE, None)
             all_wbs, wb_index, wb_name = self.DC.dc_WB_REF_resolve(check_register)
             # Verify LOADED_WORKBOOKS to process.
@@ -1581,6 +1586,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
                 r += f"{m}\n"
                 importlib.reload(budget_category_mapping)
                 importlib.reload(budman_cli_parser)
+                importlib.reload(sys.modules[__name__])
                 cmc = category_map_count()
                 m = f"{P4}reloaded modules for target: '{reload_target}' count = {cmc}\n"
                 logger.info(m)
@@ -1637,7 +1643,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
     FI - Financial Institution, WF - Workflow, WB - Workbook, and BDM_STORE
     - Budget Manager Store where user-specific budget data is maintained. 
     The Data Context data is always scoped to the current values of the 'keys' 
-    for these primary objects: FI_KEY, WF_KEY, WB_TYPE, and WB_NAME. Changing 
+    for these primary objects: FI_KEY, WF_KEY, WF_PURPOSE, and WB_NAME. Changing 
     these values will cause the DC to flag the need for a refresh of the
     underlying data.
 
@@ -1751,11 +1757,11 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
         self.DC.dc_BDM_STORE = value
 
     @property 
-    def dc_WORKBOOKS(self) -> WORKBOOK_LIST:
+    def dc_WORKBOOKS(self) -> WORKBOOK_DATA_LIST:
         """Return the current workbooks value in DC per FI_KEY, WF_KEY, WB_TYPE."""
         return self.DC.dc_WORKBOOKS
     @dc_WORKBOOKS.setter
-    def dc_WORKBOOKS(self, value: WORKBOOK_LIST) -> None:
+    def dc_WORKBOOKS(self, value: WORKBOOK_DATA_LIST) -> None:
         """Set the current  dc_WORKBOOK value in DC."""
         self.DC.dc_WORKBOOKS = value
 
@@ -1867,7 +1873,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
     # ------------------------------------------------------------------------ +
     #region FI_get_loaded_workbooks() method
     def FI_WORKBOOKS_get(self) -> List[str]: 
-        """Retrieve the current WORKBOOK_LIST for the DC fi_key,wf_key,wb_type."""
+        """Retrieve the current WORKBOOK_DATA_LIST for the DC fi_key,wf_key,wb_type."""
         try:
             # Reference the BDMWD_LOADED_WORKBOOKS.
             return self.budget_domain_model.bdmwd_LOADED_WORKBOOKS_get()

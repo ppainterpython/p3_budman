@@ -79,21 +79,21 @@ class BDMConfig(metaclass=BDMSingletonMeta):
                 FI_FOLDER: "boa",
                 FI_DATA_COLLECTION: { # FI_DATA_COLLECTION Dict[WF_KEY: WORKBOOK_DATA_COLLECTION]
                      BDM_WF_CATEGORIZATION:  # WF_KEY: 
-                     {  # WORKBOOK_DATA_COLLECTION Dict[WF_PURPOSE: WORKBOOK_LIST]
-                        WB_INPUT: # WF_PURPOSE: WF_INPUT  (input data objects) 
-                        [  # WORKBOOK_LIST: List[WORKBOOK_ITEMS], WORKBOOK_ITEM: Tuple[WB_NAME, WB_URL]
+                     {  # WORKBOOK_DATA_COLLECTION Dict[WF_PURPOSE: WORKBOOK_DATA_LIST]
+                        WF_INPUT: # WF_PURPOSE: WF_INPUT  (input data objects) 
+                        [  # WORKBOOK_DATA_LIST: List[WORKBOOK_ITEMS], WORKBOOK_ITEM: Tuple[WB_NAME, WB_URL]
                             ( "input_prefix_wb_name_1", "wb_url_1" ),
                             ( "input_prefix_wb_name_2", "wb_url_2" ),
                             ( "input_prefix_wb_name_3", "wb_url_3" )
                         ], 
-                        WB_WORKING: # WF_PURPOSE: WF_WORKING  (working data objects) 
-                        [ # WORKBOOK_LIST: List[WORKBOOK_ITEMS], WORKBOOK_ITEM: Tuple[WB_NAME, WB_URL]
+                        WF_WORKING: # WF_PURPOSE: WF_WORKING  (working data objects) 
+                        [ # WORKBOOK_DATA_LIST: List[WORKBOOK_ITEMS], WORKBOOK_ITEM: Tuple[WB_NAME, WB_URL]
                             ( "wb_name_1", "wb_url_1" ),
                             ( "wb_name_2", "wb_url_2" ),
                             ( "wb_name_3", "wb_url_3" )
                         ], 
-                        WB_OUTPUT: # WF_PURPOSE: WF_OUTPUT  (output data objects) 
-                        [  # WORKBOOK_LIST: List[WORKBOOK_ITEMS], WORKBOOK_ITEM: Tuple[WB_NAME, WB_URL]
+                        WF_OUTPUT: # WF_PURPOSE: WF_OUTPUT  (output data objects) 
+                        [  # WORKBOOK_DATA_LIST: List[WORKBOOK_ITEMS], WORKBOOK_ITEM: Tuple[WB_NAME, WB_URL]
                             ( "output_prefix_wb_name_1", "wb_url_4" ),
                             ( "output_prefix_wb_name_2", "wb_url_5" ),
                             ( "output_prefix_wb_name_3", "wb_url_6" )
@@ -118,10 +118,10 @@ class BDMConfig(metaclass=BDMSingletonMeta):
                 WF_INPUT_FOLDER: None,
                 WF_WORKING_FOLDER: "data/new",
                 WF_OUTPUT_FOLDER: "data/categorized",
-                WB_TYPE_FOLDER_MAP:  {
-                    WB_OUTPUT: WF_OUTPUT_FOLDER,
-                    WB_WORKING: WF_WORKING_FOLDER,
-                    WB_INPUT: WF_INPUT_FOLDER
+                WF_PURPOSE_FOLDER_MAP:  {
+                    WF_OUTPUT: WF_OUTPUT_FOLDER,
+                    WF_WORKING: WF_WORKING_FOLDER,
+                    WF_INPUT: WF_INPUT_FOLDER
                 },
                 WF_PREFIX_IN: None,
                 WF_PREFIX_WORKING: None,
@@ -134,10 +134,10 @@ class BDMConfig(metaclass=BDMSingletonMeta):
                 WF_INPUT_FOLDER: "data/new", 
                 WF_WORKING_FOLDER: "data/categorized",
                 WF_OUTPUT_FOLDER: "data/finalized",
-                WB_TYPE_FOLDER_MAP:  {
-                    WB_OUTPUT: WF_OUTPUT_FOLDER,
-                    WB_WORKING: WF_WORKING_FOLDER,
-                    WB_INPUT: WF_INPUT_FOLDER
+                WF_PURPOSE_FOLDER_MAP:  {
+                    WF_OUTPUT: WF_OUTPUT_FOLDER,
+                    WF_WORKING: WF_WORKING_FOLDER,
+                    WF_INPUT: WF_INPUT_FOLDER
                 },
                 WF_PREFIX_IN: None,
                 WF_PREFIX_WORKING: "categorized_",
@@ -150,10 +150,10 @@ class BDMConfig(metaclass=BDMSingletonMeta):
                 WF_INPUT_FOLDER: "data/categorized",   
                 WF_WORKING_FOLDER: "data/finalized",
                 WF_OUTPUT_FOLDER: "data/finalized",
-                WB_TYPE_FOLDER_MAP:  {
-                    WB_OUTPUT: WF_OUTPUT_FOLDER,
-                    WB_WORKING: WF_WORKING_FOLDER,
-                    WB_INPUT: WF_INPUT_FOLDER
+                WF_PURPOSE_FOLDER_MAP:  {
+                    WF_OUTPUT: WF_OUTPUT_FOLDER,
+                    WF_WORKING: WF_WORKING_FOLDER,
+                    WF_INPUT: WF_INPUT_FOLDER
                 },
                 WF_PREFIX_IN: "categorized_",
                 WF_PREFIX_WORKING: "final_prep_",
@@ -173,7 +173,8 @@ class BDMConfig(metaclass=BDMSingletonMeta):
         BDM_DATA_CONTEXT: {
             DC_FI_KEY: "boa",  # Financial Institution Key
             DC_WF_KEY: BDM_WF_CATEGORIZATION,  # Workflow Key
-            DC_WB_TYPE: WB_WORKING,
+            DC_WF_PURPOSE: WF_WORKING,
+            DC_WB_TYPE: WF_WORKING,
             DC_CHECK_REGISTERS: None    # Workbook Type
         }
     }
@@ -485,7 +486,7 @@ class BDMConfig(metaclass=BDMSingletonMeta):
                 logger.debug(f"{P6}WF_OUTPUT_FOLDER: '{bmt.wf_object[WF_OUTPUT_FOLDER]}'")
                 logger.debug(f"{P6}WF_PREFIX_IN: '{bmt.wf_object[WF_PREFIX_IN]}' "
                             f"WF_PREFIX_OUT: '{bmt.wf_object[WF_PREFIX_OUT]}'")
-                logger.debug(f"{P6}WB_TYPE_FOLDER_MAP: {str(bmt.wf_object[WB_TYPE_FOLDER_MAP])}")
+                logger.debug(f"{P6}WB_TYPE_FOLDER_MAP: {str(bmt.wf_object[WF_PURPOSE_FOLDER_MAP])}")
             # Enumerate Budget Model Options
             bmo_c = len(bmt.bdm_options)
             logger.debug(f"{P2}BDM_OPTION('{BDM_OPTIONS}')({bmo_c})")
