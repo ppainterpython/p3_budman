@@ -183,6 +183,15 @@ class BudManDataContext(BudManDataContextBaseInterface):
         self._dc_WORKBOOKS = value
 
     @property
+    def dc_WORKBOOK_COLLECTION(self) -> DATA_COLLECTION:
+        """DC-Only: Return the list of workbooks in the DC."""
+        return self._dc_WORKBOOKS
+    @dc_WORKBOOK_COLLECTION.setter
+    def dc_WORKBOOK_COLLECTION(self, value: WORKBOOK_DATA_LIST) -> None:
+        """DC-Only: Set the list of workbooks in the DC."""
+        self._dc_WORKBOOKS = value
+
+    @property
     def dc_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_COLLECTION:
         """DC-Only: Return the list of workbooks currently loaded in the DC.
         Loaded means a file is loaded into memory and is available."""

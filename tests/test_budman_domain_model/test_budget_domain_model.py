@@ -33,7 +33,7 @@ def test_budget_model_initialize_with_BDM_STORE() -> None:
 
         # Initialize the budget model .
         bdm.bdm_initialize()
-        bdm.bsm_FI_WORKBOOKS_discover("boa")
+        # bdm.bsm_FI_WORKBOOKS_discover("boa")
         
         # This instance should be full with resolved values and settings.
         assert bdm.bdm_initialized, "Budget model should be initialized"

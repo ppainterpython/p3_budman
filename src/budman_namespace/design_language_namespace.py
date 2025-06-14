@@ -164,6 +164,8 @@ VALID_WF_OBJECT_ATTR_KEYS = (WF_KEY, WF_NAME,
                         WF_INPUT_FOLDER, WF_WORKING_FOLDER, WF_OUTPUT_FOLDER,
                         WF_PREFIX_IN, WF_PREFIX_OUT, WF_PURPOSE_FOLDER_MAP)
 WF_FOLDER_PATH_ELEMENTS = (WF_INPUT_FOLDER, WF_WORKING_FOLDER, WF_OUTPUT_FOLDER)
+WF_FOLDER = "wf_folder"
+WF_FOLDER_ID = "wf_folder_id"
 # ---------------------------------------------------------------------------- +
 # Some data values are used in conjunction with Path objects,
 # as elements of a pathname, such as folders and file names.
@@ -207,6 +209,7 @@ VALID_WB_TYPE_VALUES = (
     WB_TYPE_CHECK_REGISTER, WB_TYPE_TRANSACTIONS, 
     WB_TYPE_BUDGET
     )
+WB_URL = "wb_url"  
 # Workbook Filetype Constants
 WB_FILETYPE_CSV = ".csv"
 WB_FILETYPE_XLSX = ".xlsx"
@@ -355,7 +358,7 @@ BUDMAN_DEFAULT_WORKFLOW_VALUE = BDM_WF_CATEGORIZATION
 BUDMAN_DEFAULT_WORKBOOK_TYPE_VALUE = WF_WORKING
 # ---------------------------------------------------------------------------- +
 # Miscellaneous Convenience Constants
-BUDMAN_WIDTH = 200
+BUDMAN_WIDTH = 250
 P2 = "  "  # 2 space padding
 P4 = "    "  # 4 space padding
 P6 = "      "  # 6 space padding

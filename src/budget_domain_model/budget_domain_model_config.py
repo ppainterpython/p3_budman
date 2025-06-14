@@ -246,6 +246,8 @@ class BDMConfig(metaclass=BDMSingletonMeta):
         try:
             logger.debug("Start:  ...")
             bdm_store = bsm_BDM_STORE_url_load(bdm_url)
+            # Ensure the URL used to load is set in the config
+            bdm_store[BDM_URL] = bdm_url  
             # Validate the loaded BDM_STORE config. Raises error if not happy
             cls.BDM_CONFIG_validate(bdm_store)
             # Get the instance of BDMConfig configured from bdms

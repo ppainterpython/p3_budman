@@ -1143,7 +1143,9 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
                 self.DC.dc_EXCEL_WORKBOOKS = excel_wb_list
             crl = self.DC.dc_CHECK_REGISTERS
             crl_count = len(crl) if crl else 0
-
+            wbc = self.dc_WORKBOOK_COLLECTION
+            wbc_count = len(wbc) if wbc else 0
+    
             # Prepare the Console output result
             result = f"Budget Manager Data Context:\n"
             result += f"{P2}{DC_INITIALIZED}: {self.dc_INITIALIZED}\n"
@@ -1154,25 +1156,34 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             result += f"{P2}{WF_PURPOSE}: {self.dc_WF_PURPOSE}\n"
             result += f"{P2}{WB_TYPE}: {self.dc_WB_TYPE}\n"
             result += f"{P2}{DC_BDM_STORE}: {bs_str}\n"
-            result += f"{P2}{DC_WORKBOOKS}: {wbl_count}\n"
-            if wbl_count > 0:
-                result += f"{P4}wb_ref wb_name{29 * ' '}excel abs_path\n"
-                # Enumerate the WORKBOOK_DATA_LIST (a DATA_TUPLE_LIST)
-                for i, (wb_name, wb_ap) in enumerate(wbl):
-                    ewb : bool = 'Y' if wb_name in excel_wb_list else 'N'
-                    result += f"{P4}  {i:2}   {wb_name:<35}   {ewb}   '{wb_ap}'\n"
-            result += f"{P2}{DC_LOADED_WORKBOOKS}: {lwbl_count}\n"
-            if lwbl_count > 0:
-                # Iterate the LOADED_WORKBOOKS_COLLECTION (a DATA_COLLECTION)
-                for wb_name in list(lwbl.keys()):
-                    wb_index = self.DC.dc_WORKBOOK_index(wb_name)
-                    result += f"{P4}wb_index: {wb_index:>2} wb_name: '{wb_name:<40}'\n"
-            result += f"{P2}{DC_CHECK_REGISTERS}: {crl_count}\n"
-            if crl_count > 0:
-                # Iterate the LOADED_WORKBOOKS_COLLECTION (a DATA_COLLECTION)
-                for wb_name in list(crl.keys()):
-                    wb_index = self.DC.dc_CHECK_REGISTER_index(wb_name)
-                    result += f"{P4}wb_index: {wb_index:>2} wb_name: '{wb_name:<40}'\n"
+
+            result += f"{P2}{FI_WORKBOOK_COLLECTION}: {wbc_count}\n"
+            result += f"{P4}{WB_REF:6}{P2}{WB_TYPE:15}{P2}{WB_NAME:35}{P2}{WF_KEY:15}"
+            result += f"{P2}{WF_PURPOSE:10}{P2}{WF_FOLDER_ID:20}{P2}{WF_FOLDER:18}"
+            result += f"{P2}{WB_URL:150}\n"
+            if wbc_count > 0:
+                for i, wb in wbc.items():
+                    result += f"{wb.display_str()}\n"
+
+            # result += f"{P2}{DC_WORKBOOKS}: {wbl_count}\n"
+            # if wbl_count > 0:
+            #     result += f"{P4}wb_ref wb_name{29 * ' '}excel abs_path\n"
+            #     # Enumerate the WORKBOOK_DATA_LIST (a DATA_TUPLE_LIST)
+            #     for i, (wb_name, wb_ap) in enumerate(wbl):
+            #         ewb : bool = 'Y' if wb_name in excel_wb_list else 'N'
+            #         result += f"{P4}  {i:2}   {wb_name:<35}   {ewb}   '{wb_ap}'\n"
+            # result += f"{P2}{DC_LOADED_WORKBOOKS}: {lwbl_count}\n"
+            # if lwbl_count > 0:
+            #     # Iterate the LOADED_WORKBOOKS_COLLECTION (a DATA_COLLECTION)
+            #     for wb_name in list(lwbl.keys()):
+            #         wb_index = self.DC.dc_WORKBOOK_index(wb_name)
+            #         result += f"{P4}wb_index: {wb_index:>2} wb_name: '{wb_name:<40}'\n"
+            # result += f"{P2}{DC_CHECK_REGISTERS}: {crl_count}\n"
+            # if crl_count > 0:
+            #     # Iterate the LOADED_WORKBOOKS_COLLECTION (a DATA_COLLECTION)
+            #     for wb_name in list(crl.keys()):
+            #         wb_index = self.DC.dc_CHECK_REGISTER_index(wb_name)
+            #         result += f"{P4}wb_index: {wb_index:>2} wb_name: '{wb_name:<40}'\n"
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             return True, result
         except Exception as e:
@@ -1719,6 +1730,15 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
         self.DC.dc_WF_KEY = value
 
     @property
+    def dc_WF_PURPOSE(self) -> str:
+        """Return the WF_PURPOSE workbook type."""
+        return self.DC.dc_WF_PURPOSE
+    @dc_WF_PURPOSE.setter
+    def dc_WF_PURPOSE(self, value: str) -> None:
+        """Set the WF_PURPOSE workbook type."""
+        self.DC.dc_WF_PURPOSE = value
+
+    @property
     def dc_WB_TYPE(self) -> str:
         """Return the current workbook type value in DC."""
         return self.DC.dc_WB_TYPE
@@ -1764,6 +1784,15 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
     def dc_WORKBOOKS(self, value: WORKBOOK_DATA_LIST) -> None:
         """Set the current  dc_WORKBOOK value in DC."""
         self.DC.dc_WORKBOOKS = value
+
+    @property 
+    def dc_WORKBOOK_COLLECTION(self) -> DATA_COLLECTION:
+        """Return the WORKBOOK_COLLECTION for the current fi_key."""
+        return self.DC.dc_WORKBOOK_COLLECTION
+    @dc_WORKBOOK_COLLECTION.setter
+    def dc_WORKBOOK_COLLECTION(self, value: WORKBOOK_DATA_LIST) -> None:
+        """Set the current  WORKBOOK_COLLECTION value in DC."""
+        self.DC.dc_WORKBOOK_COLLECTION = value
 
     @property 
     def dc_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_COLLECTION:

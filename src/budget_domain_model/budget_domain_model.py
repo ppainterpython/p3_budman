@@ -482,6 +482,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
 
             if bsm_init:
                 self.bsm_initialize(create_missing_folders, raise_errors)
+                self.bsm_WORKBOOKS_discover()
             self.bdm_working_data = self.bdm_BDM_WORKING_DATA_initialize()
             self.bdm_initialized = True
             logger.debug(f"Complete: {p3u.stop_timer(st)}")   
@@ -648,7 +649,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
     #       WORKBOOK_DATA_LIST wb_ref values, e.g., Path objects, str, etc.
     #endregion BDM FI_WF_OBJECT WORKBOOK_DATA_COLLECTION methods
     # ------------------------------------------------------------------------ +
-    #region    BDM WF_OBJECT pseudo-Object properties
+    #region    BDM WF_OBJECT Dict attribute getter methods
     def bdm_WF_OBJECT(self, wf_key:str) -> WF_OBJECT:
         """Return the WF_OBJECT specified wf_key."""
         self.bdm_WF_KEY_validate(wf_key)
@@ -1062,16 +1063,16 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
     #endregion FI_DATA FI_FOLDER Path methods
     # ------------------------------------------------------------------------ +   
     #region bsm_WORKBOOKS_discover() method
-    def bsm_WORKBOOKS_discover(self, fi_key:str) -> None:
+    def bsm_WORKBOOKS_discover(self) -> None:
         """Discover WORKBOOKS for all FI's in the BDM."""
         try:
-            if len(self.bdm_FI_COLLECTION) == 0:
+            if len(self.bdm_fi_collection) == 0:
                 m = f"No FI's to discover."
                 logger.debug(m)
                 return
-            logger.debug(f"Discovering WORKBOOKS for FI_KEY('{fi_key}')")
             for fi_key in self.bdm_fi_collection.keys():
                 # Discover WORKBOOKS for each FI.
+                logger.debug(f"Discover WORKBOOKS for FI_KEY('{fi_key}')")
                 self.bsm_FI_WORKBOOKS_discover(fi_key)
         except Exception as e:
             m = p3u.exc_err_msg(e)
@@ -1094,44 +1095,56 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
             i = 0
             for wf_key, wb_data_collection in self.bdm_FI_DATA_COLLECTION(fi_key).items():
                 for wf_purpose, wb_data_list in wb_data_collection.items():
-                    fid_list = list(self.bdm_WF_PURPOSE_FOLDER_MAP(wf_key).values())
-                    for folder_id in fid_list:
-                        wb_paths = []
-                        id = f"('{fi_key}', '{wf_key}', '{wf_purpose}', '{folder_id}')"
-                        folder_abs_path = self.bsm_WF_FOLDER_abs_path(fi_key, wf_key, folder_id)
-                        if folder_abs_path is None: 
-                            m = f"'{id}' path  is None.",
-                            logger.debug(m)
-                            continue
-                        if not folder_abs_path.exists():
-                            m = f"'{id}' path does not exist: {folder_abs_path}"
-                            logger.debug(m)
-                            continue
-                        wb_paths = bsm_get_workbook_names2(folder_abs_path)
-                        if len(wb_paths) == 0:
-                            m = f"'{id}' path has no workbooks: {folder_abs_path}"
-                            logger.debug(m)
-                            continue
-                        logger.debug(f"'{id}' found {len(wb_paths)} workbooks: {folder_abs_path}")
-                        for wb_path in wb_paths:
-                            # Create a BDMWorkbook object for each workbook.
-                            wb_filename = wb_path.stem
-                            wb_filetype = wb_path.suffix.lower()
-                            wb_name = wb_path.name
-                            wb_url = wb_path.as_uri()
-                            wb_index = i
-                            wb = BDMWorkbook(
-                                wb_name = wb_name, 
-                                wb_filename =  wb_filename,
-                                wb_filetype = wb_filetype,
-                                wb_url = wb_url,
-                                fi_key= fi_key,
-                                wf_key = wf_key,
-                                wf_purpose = wf_purpose,
-                                wb_index= wb_index,
-                                )
-                            wb_collection[wb_index] = wb
-                            i += 1
+                    folder_id = self.bdm_WF_PURPOSE_FOLDER_MAP(wf_key, wf_purpose)
+                    if folder_id is None or len(folder_id) == 0:
+                        m = f"wb_data_collection('{fi_key}', '{wf_key}') has no '{wf_purpose}' wb_data_list."
+                        logger.debug(m)
+                        continue
+                    wf_folder = self.bdm_WF_FOLDER(wf_key, folder_id)
+                    if wf_folder is None or len(wf_folder) == 0:
+                        m = f"wb_data_collection('{fi_key}', '{wf_key}') has no '{wf_purpose}' wf_folder."
+                        logger.debug(m)
+                        continue
+                    wb_paths = []
+                    id = f"('{fi_key}', '{wf_key}', '{wf_purpose}', '{folder_id}')"
+                    folder_abs_path = self.bsm_WF_FOLDER_abs_path(fi_key, wf_key, folder_id)
+                    if folder_abs_path is None: 
+                        m = f"'{id}' wf_folder path  is None.",
+                        logger.debug(m)
+                        continue
+                    if not folder_abs_path.exists():
+                        m = f"'{id}' path does not exist: {folder_abs_path}"
+                        logger.debug(m)
+                        continue
+                    wb_paths = bsm_get_workbook_names2(folder_abs_path)
+                    if len(wb_paths) == 0:
+                        m = f"'{id}' path has no workbooks: {folder_abs_path}"
+                        logger.debug(m)
+                        continue
+                    logger.debug(f"'{id}' found {len(wb_paths)} workbooks: {folder_abs_path}")
+                    for wb_path in wb_paths:
+                        # Create a BDMWorkbook object for each workbook.
+                        wb_filename = wb_path.stem
+                        wb_filetype = wb_path.suffix.lower()
+                        wb_name = wb_path.name
+                        wb_url = wb_path.as_uri()
+                        wb_index = i
+                        wb = BDMWorkbook(
+                            wb_name = wb_name, 
+                            wb_filename =  wb_filename,
+                            wb_filetype = wb_filetype,
+                            wb_url = wb_url,
+                            fi_key= fi_key,
+                            wf_key = wf_key,
+                            wf_purpose = wf_purpose,
+                            wf_folder = wf_folder,
+                            wf_folder_id = folder_id,
+                            wb_index= wb_index,
+                            )
+                        wb_collection[wb_index] = wb
+                        i += 1
+            # Set the FI_WORKBOOK_COLLECTION for the FI_OBJECT.
+            self.bdm_FI_WORKBOOK_COLLECTION_set(fi_key, wb_collection)
             logger.debug(f"Discovered {len(wb_collection)} workbooks for FI_KEY('{fi_key}').")
 
         except Exception as e:

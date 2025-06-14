@@ -121,6 +121,8 @@ __all__ = [
     "WF_PURPOSE_FOLDER_MAP",
     "VALID_WF_OBJECT_ATTR_KEYS",
     "WF_FOLDER_PATH_ELEMENTS",
+    "WF_FOLDER",
+    "WF_FOLDER_ID",
     "VALID_BDM_PATH_ELEMENTS",
     "VALID_WORKBOOK_DATA_COLLECTION_ATTR_KEYS",
     # Workflow Purpose 
@@ -135,6 +137,7 @@ __all__ = [
     "WB_TYPE_TRANSACTIONS",
     "WB_TYPE_BUDGET",
     "VALID_WB_TYPE_VALUES",
+    "WB_URL",
     # Workbook File Type constants
     "WB_FILETYPE_CSV",
     "WB_FILETYPE_XLSX",

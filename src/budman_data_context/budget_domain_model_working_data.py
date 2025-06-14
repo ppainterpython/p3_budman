@@ -110,14 +110,25 @@ class BDMWorkingData(BudManDataContext, BDMClientInterface):
     #region    BudManDataContext (Interface) Property/Method Overrides.
     #          Overrides are used when the DC must be Model-Aware
     # ------------------------------------------------------------------------ +
-    # @property
-    # def dc_WORKBOOKS(self) -> WORKBOOK_DATA_LIST:
-    #     """Return the list of workbooks in the DC, pull from the BDMWD."""
-    #     return self.bdmwd_WORKBOOKS()
-    # @dc_WORKBOOKS.setter
-    # def dc_WORKBOOKS(self, value: WORKBOOK_DATA_LIST) -> None:
-    #     """Set the list of workbooks in the DC."""
-    #     logger.warning("Setting dc_WORKBOOKS directly is not supported.")
+    @property
+    def dc_WORKBOOK_COLLECTION(self) -> DATA_COLLECTION:
+        """Model-Aware: Return model.bdm_FI_WORKBOOK_COLLECTION(self.dc_FI_KEY)"""
+        try:
+            fi_key = self.dc_FI_KEY
+            if fi_key is None:
+                m = "The dc_FI_KEY is not set. Cannot get WORKBOOK_COLLECTION."
+                logger.error(m)
+                raise ValueError(m)
+            # Ask the model for the bdmwd_WORKBOOKS.
+            return self.model.bdm_FI_WORKBOOK_COLLECTION(fi_key)
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise ValueError(f"Failed: model.bdm_FI_WORKBOOK_COLLECTION({fi_key})")
+    @dc_WORKBOOK_COLLECTION.setter
+    def dc_WORKBOOK_COLLECTION(self, value: WORKBOOK_DATA_LIST) -> None:
+        """Set the list of workbooks in the DC."""
+        logger.warning("Setting dc_WORKBOOKS directly is not supported.")
 
     # @property
     # def dc_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_COLLECTION:
@@ -189,6 +200,7 @@ class BDMWorkingData(BudManDataContext, BDMClientInterface):
     #region    BDMWD Interface concrete implementation.
     # ------------------------------------------------------------------------ +
     #region    BDMWorkingDataBaseInterface BDMWD DC-aware Interface.
+    #region bdmwd_WB_REF_resolve() method
     # def bdmwd_WB_REF_resolve(self, wb_ref:str|int) -> Tuple[bool,int]:
     #     """DC-BDMWD-Only: Resolve a wb_ref to valid wb_index, wb_name, or ALL_KEY.
 
@@ -233,6 +245,7 @@ class BDMWorkingData(BudManDataContext, BDMClientInterface):
     #         m = p3u.exc_err_msg(e)
     #         logger.error(m)
     #         raise
+    #endregion bdmwd_WB_REF_resolve() method
     # ------------------------------------------------------------------------ +
     # #region bdmwd_LOADED_WORKBOOKS() methods
     def bdmwd_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_COLLECTION:

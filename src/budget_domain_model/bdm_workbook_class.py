@@ -17,7 +17,8 @@ from openpyxl import Workbook, load_workbook
 # local modules and packages
 from budman_namespace import (
     WB_TYPE_BUDGET, WB_TYPE_TRANSACTIONS,DC_CHECK_REGISTERS,
-    VALID_WB_TYPE_VALUES, WB_FILETYPE_MAP
+    VALID_WB_TYPE_VALUES, WB_FILETYPE_MAP, P2, P4, P6,
+    WB_REF, WB_NAME, WB_TYPE, WF_PURPOSE, WF_KEY, FI_KEY,
 )
 from budget_storage_model import (bsm_verify_folder, bsm_get_workbook_names)
                                   
@@ -45,10 +46,14 @@ class BDMWorkbook:
     fi_key: str = None
     wf_key: str = None
     wf_purpose: str = None
+    wf_folder_id: str = None
+    wf_folder: str = None
     loaded : bool = False
     wb_index : Optional[int] = None
     _content : Any = field(init=False) # Not included in todict() serialization
-
+    #endregion dataclass object attributes
+    # ------------------------------------------------------------------------ +
+    #region BDMWorkbook properties
     @property
     def content(self) -> Any:
         """ content property returns the workbook content. """
@@ -57,3 +62,22 @@ class BDMWorkbook:
     def content(self, value: Any) -> None:
         """ content property setter sets the workbook content. """
         self._content = value
+    #endregion BDMWorkbook properties
+    # ------------------------------------------------------------------------ +
+    #region BDMWorkbook methods
+    # ------------------------------------------------------------------------ +
+    #region display_str
+    def display_str(self) -> str:
+        """ Return a string representation of the BDMWorkbook object. """
+        s = f"{P4}{str(self.wb_index):^6}{P2}{str(self.wb_type):15}{P2}"
+        s += f"{str(self.wb_name):35}{P2}{str(self.wf_key):15}{P2}"
+        s += f"{str(self.wf_purpose):10}{P2}{str(self.wf_folder_id):20}{P2}"
+        s += f"{str(self.wf_folder):18}{P2}{str(self.wb_url):150}"
+        return s
+    #endregion display_str
+
+    # ------------------------------------------------------------------------ +
+    #endregion BDMWorkbook methods
+    # ------------------------------------------------------------------------ +
+    # ------------------------------------------------------------------------ +
+    # ------------------------------------------------------------------------ +

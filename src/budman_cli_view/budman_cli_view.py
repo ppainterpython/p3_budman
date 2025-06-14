@@ -41,7 +41,8 @@ from budman_cli_view import BudManCLIParser
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
 logger = logging.getLogger(__name__)
-console = Console(force_terminal=True,width=BUDMAN_WIDTH, highlight=True)
+console = Console(force_terminal=True,width=BUDMAN_WIDTH, highlight=True,
+                  soft_wrap=False)
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
