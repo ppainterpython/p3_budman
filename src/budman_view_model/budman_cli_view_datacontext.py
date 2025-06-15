@@ -166,52 +166,6 @@ class BudManCLIViewDataContext():
             logger.error(m)
             return False, m
     #endregion execute_cmd() command method
-    #region get_DC() Data Context method
-    def get_DC(self, attr_name : str) -> Any:
-        """Get an attribute from the the DC."""
-        try:
-            if not self.initialized:
-                m = f"{self.__class__.__name__} is not initialized."
-                logger.error(m)
-                return False, m
-            if self.dc is None:
-                m = f"{self.__class__.__name__} data context is None."
-                logger.error(m)
-                return False, m
-            if not hasattr(self.dc, attr_name):
-                m = f"{self.__class__.__name__} data context has no attribute: {attr_name}"
-                logger.error(m)
-                return False, m
-            attr = getattr(self.dc, attr_name)
-            return True, attr
-        except Exception as e:
-            logger.error(p3u.exc_err_msg(e))
-            raise
-    #endregion get_DC() Data Context method
-    # ------------------------------------------------------------------------ +
-    #region set_DC() Data Context method
-    def set_DC(self, attr_name : str, attr_value : Any) -> Any:
-        """Get an attribute from the the DC."""
-        try:
-            if not self.initialized:
-                m = f"{self.__class__.__name__} is not initialized."
-                logger.error(m)
-                return False, m
-            if self.dc is None:
-                m = f"{self.__class__.__name__} data context is None."
-                logger.error(m)
-                return False, m
-            if not hasattr(self.dc, attr_name):
-                m = f"{self.__class__.__name__} data context has no attribute: {attr_name}"
-                logger.error(m)
-                return False, m
-            attr = setattr(self.dc, attr_name, attr_value)
-            return True, attr
-        except Exception as e:
-            logger.error(p3u.exc_err_msg(e))
-            raise
-    #endregion set_DC() Data Context method
-    # ------------------------------------------------------------------------ +
     #                                                                          +
     #endregion BudgetManagerViewModelInterface Interface client access methods +
     # ======================================================================== +

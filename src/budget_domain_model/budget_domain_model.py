@@ -133,6 +133,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
         setattr(self, BDM_LAST_MODIFIED_DATE, self._created_date)
         setattr(self, BDM_LAST_MODIFIED_BY, getpass.getuser())
         setattr(self, BDM_WORKING_DATA, {})  
+        setattr(self, BDM_DATA_CONTEXT, {})  
         logger.debug("Complete: BudgetDomainModel().__init__() ...")
     #endregion BudgetDomainModel class constructor __init__()
     # ------------------------------------------------------------------------ +
@@ -143,14 +144,17 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
             BDM_ID: self.bdm_id,
             BDM_STORE_OBJECT: self.bdm_store_object,
             BDM_INITIALIZED: self.bdm_initialized,
+            BDM_FILENAME: self.bdm_filename,
+            BDM_FILETYPE: self.bdm_filetype,
             BDM_FOLDER: self.bdm_folder,
-            BDM_FI_COLLECTION: self.bdm_fi_collection,
             BDM_URL: self.bdm_url,
+            BDM_FI_COLLECTION: self.bdm_fi_collection,
             BDM_WF_COLLECTION: self.bdm_wf_collection,
             BDM_OPTIONS: self.bdm_options,
             BDM_CREATED_DATE: self.bdm_created_date,
             BDM_LAST_MODIFIED_DATE: self.bdm_last_modified_date,
             BDM_LAST_MODIFIED_BY: self.bdm_last_modified_by,
+            BDM_DATA_CONTEXT: self.bdm_data_context,
             BDM_WORKING_DATA: self.bdm_working_data
         }
         return ret
@@ -284,17 +288,6 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
         self._options = value
 
     @property
-    def bdm_working_data(self) -> BDM_WORKING_DATA_OBJECT:
-        """The budget domain model working data."""
-        self._wd = {} if self._wd is None else self._wd
-        return self._wd
-    @bdm_working_data.setter
-    def bdm_working_data(self, value: BDM_WORKING_DATA_OBJECT) -> None:
-        """Set the budget domain model working data."""
-        self._wd = {} if self._wd is None else self._wd
-        self._wd = value
-
-    @property
     def bdm_created_date(self) -> str:
         """The created date."""
         return self._created_date
@@ -321,6 +314,27 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
         """Set the last modified by."""
         self._last_modified_by = value
     
+    @property
+    def bdm_working_data(self) -> BDM_WORKING_DATA_OBJECT:
+        """The budget domain model working data."""
+        self._wd = {} if self._wd is None else self._wd
+        return self._wd
+    @bdm_working_data.setter
+    def bdm_working_data(self, value: BDM_WORKING_DATA_OBJECT) -> None:
+        """Set the budget domain model working data."""
+        self._wd = {} if self._wd is None else self._wd
+        self._wd = value
+
+    @property
+    def bdm_data_context(self) -> DATA_CONTEXT:
+        """The budget domain model data context values."""
+        self._data_context = {} if self._data_context is None else self._data_context
+        return self._data_context
+    @bdm_data_context.setter
+    def bdm_data_context(self, value: DATA_CONTEXT) -> None:
+        """Set the budget domain model working data."""
+        self._data_context = value
+
     #BDMBaseInterface properties
     @property
     def model_id(self) -> str:
@@ -478,11 +492,12 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
             setattr(self, BDM_CREATED_DATE, bdm_config[BDM_CREATED_DATE]) 
             setattr(self, BDM_LAST_MODIFIED_DATE, bdm_config[BDM_LAST_MODIFIED_DATE])
             setattr(self, BDM_LAST_MODIFIED_BY, bdm_config[BDM_LAST_MODIFIED_BY])
-            setattr(self, BDM_WORKING_DATA, {})  
+            setattr(self, BDM_WORKING_DATA, {})
+            setattr(self, BDM_DATA_CONTEXT, bdm_config[BDM_DATA_CONTEXT])
 
             if bsm_init:
                 self.bsm_initialize(create_missing_folders, raise_errors)
-                self.bsm_WORKBOOKS_discover()
+                all_workbooks = self.bsm_WORKBOOKS_discover()
             self.bdm_working_data = self.bdm_BDM_WORKING_DATA_initialize()
             self.bdm_initialized = True
             logger.debug(f"Complete: {p3u.stop_timer(st)}")   
@@ -493,40 +508,40 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
             raise
     #endregion BDM bdm_initialize(self, bsm_init, ...) 
     # ------------------------------------------------------------------------ +
-    #region    bdm_initialize_from_BDM_STORE(self)
-    def bdm_initialize_from_BDM_STORE(self,bsm_init:bool=True) -> None:
-        """Initialize the BudgetDomainModel, dynamically, from BDM_CONFIG values.
+    #region    bdm_initialize_from_BDM_STORE(self) NOT USED
+    # def bdm_initialize_from_BDM_STORE(self,bsm_init:bool=True) -> None:
+    #     """Initialize the BudgetDomainModel, dynamically, from BDM_CONFIG values.
 
-        The current session state of the BudgetDomainModel configuration can be stored
-        using the Budget Storage Model based on the URI in the BDM_URL
-        property. Load that and apply the values to the BudgetDomainModel instance.
+    #     The current session state of the BudgetDomainModel configuration can be stored
+    #     using the Budget Storage Model based on the URI in the BDM_URL
+    #     property. Load that and apply the values to the BudgetDomainModel instance.
 
-        Returns:
-            None: on success, else raises an exception.
-        """
-        try:
-            st = p3u.start_timer()
-            logger.debug(f"Start: ...")
-            # Initialize from the BDM_URL persisted configuration and data.
-            # Load the BudgetDomainModel Store values as a Dict with persisted
-            # attributes.
-            # Apply the configuration to the budget model (self)
-            # BSM_PERSISTED_PROPERTIES defines the attributes to be applied.
-            self.__dict__.update(copy.deepcopy(self.bdm_store_object))
-            bdm_config : Dict = None #bsm_BDM_URL_load(self)
-            for attr in BSM_PERSISTED_PROPERTIES:
-                if attr in bdm_config and hasattr(self, attr):
-                    setattr(self, attr, bdm_config[attr])
-            if bsm_init:
-                self.bsm_initialize()
-            self.bdm_working_data = self.bdm_BDM_WORKING_DATA_initialize()
-            self.bdm_initialized = True
-            logger.debug(f"Complete: {p3u.stop_timer(st)}")   
-            return 
-        except Exception as e:
-            m = p3u.exc_err_msg(e)
-            logger.error(m)
-            raise
+    #     Returns:
+    #         None: on success, else raises an exception.
+    #     """
+    #     try:
+    #         st = p3u.start_timer()
+    #         logger.debug(f"Start: ...")
+    #         # Initialize from the BDM_URL persisted configuration and data.
+    #         # Load the BudgetDomainModel Store values as a Dict with persisted
+    #         # attributes.
+    #         # Apply the configuration to the budget model (self)
+    #         # BSM_PERSISTED_PROPERTIES defines the attributes to be applied.
+    #         self.__dict__.update(copy.deepcopy(self.bdm_store_object))
+    #         bdm_config : Dict = None #bsm_BDM_URL_load(self)
+    #         for attr in BSM_PERSISTED_PROPERTIES:
+    #             if attr in bdm_config and hasattr(self, attr):
+    #                 setattr(self, attr, bdm_config[attr])
+    #         if bsm_init:
+    #             self.bsm_initialize()
+    #         self.bdm_working_data = self.bdm_BDM_WORKING_DATA_initialize()
+    #         self.bdm_initialized = True
+    #         logger.debug(f"Complete: {p3u.stop_timer(st)}")   
+    #         return 
+    #     except Exception as e:
+    #         m = p3u.exc_err_msg(e)
+    #         logger.error(m)
+    #         raise
     #endregion bdm_initialize_from_BDM_STORE(self)
     # ------------------------------------------------------------------------ +
     #region    BDM FI_OBJECT methods
@@ -551,27 +566,17 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
         """Return the FI_FOLDER value of the FI_OBJECT for fi_key."""
         return self.bdm_FI_OBJECT(fi_key)[FI_FOLDER]
     
-    def bdm_FI_DATA_COLLECTION(self, fi_key:str) -> DATA_COLLECTION:
+    def bdm_FI_WORKFLOW_DATA_COLLECTION(self, fi_key:str) -> DATA_COLLECTION:
         """Return the DATA_COLLECTION object of the FI_OBJECT for fi_key."""
-        return self.bdm_FI_OBJECT(fi_key)[FI_DATA_COLLECTION]
+        return self.bdm_FI_OBJECT(fi_key)[FI_WORKFLOW_DATA_COLLECTION]
 
-    def bdm_FI_WORKBOOK_COLLECTION(self, fi_key:str) -> DATA_COLLECTION:
+    def bdm_FI_WORKBOOK_DATA_COLLECTION(self, fi_key:str) -> DATA_COLLECTION:
         """Return the FI_WORKBOOK_COLLECTION object of the FI_OBJECT for fi_key."""
-        return self.bdm_FI_OBJECT(fi_key)[FI_WORKBOOK_COLLECTION]
+        return self.bdm_FI_OBJECT(fi_key)[FI_WORKBOOK_DATA_COLLECTION]
 
-    def bdm_FI_WORKBOOK_COLLECTION_set(self, fi_key:str, value:DATA_COLLECTION) -> DATA_COLLECTION:
-        """Set the FI_WORKBOOK_COLLECTION object of the FI_OBJECT for fi_key."""
-        try:
-            self.bdm_FI_OBJECT(fi_key)[FI_WORKBOOK_COLLECTION] = value
-            return
-        except Exception as e:
-            m = f"Error setting FI_WORKBOOK_COLLECTION for fi_key '{fi_key}': {p3u.exc_err_msg(e)}"
-            logger.error(m)
-            raise ValueError(m)
-
-    def bdm_FI_DATA_COLLECTION_count(self, fi_key:str) -> int:
+    def bdm_FI_WORKFLOW_DATA_COLLECTION_count(self, fi_key:str) -> int:
         """Return a count of objects in the FI_DATA_COLLECTION."""
-        fi_data_collection = self.bdm_FI_DATA_COLLECTION(fi_key)
+        fi_data_collection = self.bdm_FI_WORKFLOW_DATA_COLLECTION(fi_key)
         if fi_data_collection is None:
             return 0
         if not isinstance(fi_data_collection, dict):
@@ -579,6 +584,30 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
             logger.error(m)
             raise ValueError(m)
         return len(fi_data_collection)
+
+    def bdm_FI_WORKBOOK_DATA_COLLECTION_set(self, fi_key:str, value:DATA_COLLECTION) -> DATA_COLLECTION:
+        """Set the FI_WORKBOOK_COLLECTION object of the FI_OBJECT for fi_key."""
+        try:
+            self.bdm_FI_OBJECT(fi_key)[FI_WORKBOOK_DATA_COLLECTION] = value
+            return
+        except Exception as e:
+            m = f"Error setting FI_WORKBOOK_COLLECTION for fi_key '{fi_key}': {p3u.exc_err_msg(e)}"
+            logger.error(m)
+            raise ValueError(m)
+
+    # def bdm_FI_WORKBOOK_COLLECTION_merge(self, fi_key:str, source:DATA_COLLECTION) -> DATA_COLLECTION:
+    #     """Merge the source FI_WORKBOOK_COLLECTION. Soft merge for existing workbooks."""
+    #     try:
+    #         if self.bdm_FI_WORKBOOK_COLLECTION(fi_key) is None:
+    #             self.bdm_FI_WORKBOOK_COLLECTION_set(fi_key, source)
+    #             return source
+            
+    #         self.bdm_FI_OBJECT(fi_key)[FI_WORKBOOK_COLLECTION] = value
+    #         return
+    #     except Exception as e:
+    #         m = f"Error setting FI_WORKBOOK_COLLECTION for fi_key '{fi_key}': {p3u.exc_err_msg(e)}"
+    #         logger.error(m)
+    #         raise ValueError(m)
 
     def bdm_FI_KEY_validate(self, fi_key:str) -> bool:
         """Validate the financial institution key."""
@@ -590,16 +619,16 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
         return True
     #endregion BDM FI_OBJECT methods
     # ------------------------------------------------------------------------ +
-    #region    BDM FI_WF_OBJECT WORKBOOK_DATA_COLLECTION methods
-    def bdm_WORKBOOK_DATA_COLLECTION(self, fi_key:str, wf_key : str) -> DATA_OBJECT:
+    #region    BDM FI_WF_OBJECT WORKFLOW_DATA_COLLECTION methods
+    def bdm_WORKFLOW_DATA_COLLECTION(self, fi_key:str, wf_key : str) -> DATA_OBJECT:
         """Return the WF_DATA_OBJECT value for fi_key, wf_key."""
-        if self.bdm_FI_DATA_COLLECTION_count(fi_key) == 0:
+        if self.bdm_FI_WORKFLOW_DATA_COLLECTION_count(fi_key) == 0:
             return None
-        if self.bdm_FI_DATA_COLLECTION(fi_key) is None:
+        if self.bdm_FI_WORKFLOW_DATA_COLLECTION(fi_key) is None:
             return None
-        if wf_key not in self.bdm_FI_DATA_COLLECTION(fi_key).keys():
+        if wf_key not in self.bdm_FI_WORKFLOW_DATA_COLLECTION(fi_key).keys():
             return None
-        return self.bdm_FI_DATA_COLLECTION(fi_key)[wf_key]
+        return self.bdm_FI_WORKFLOW_DATA_COLLECTION(fi_key)[wf_key]
     
     def bdm_WORKBOOK_DATA_LIST(self, 
                                 fi_key:str, wf_key:str, 
@@ -617,7 +646,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
             m = f"Invalid workbook type '{wf_purpose}' for workflow '{wf_key}'."
             logger.error(m)
             raise ValueError(m)
-        wb_data_collection = self.bdm_WORKBOOK_DATA_COLLECTION(fi_key, wf_key)
+        wb_data_collection = self.bdm_WORKFLOW_DATA_COLLECTION(fi_key, wf_key)
         if wb_data_collection is None:
             return None
         if wf_purpose not in wb_data_collection.keys():
@@ -647,7 +676,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
         return len(wf_wbl)
     # TODO: add bsm_WB_REF_validate() method to validate the
     #       WORKBOOK_DATA_LIST wb_ref values, e.g., Path objects, str, etc.
-    #endregion BDM FI_WF_OBJECT WORKBOOK_DATA_COLLECTION methods
+    #endregion BDM FI_WF_OBJECT WORKFLOW_DATA_COLLECTION methods
     # ------------------------------------------------------------------------ +
     #region    BDM WF_OBJECT Dict attribute getter methods
     def bdm_WF_OBJECT(self, wf_key:str) -> WF_OBJECT:
@@ -1063,9 +1092,10 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
     #endregion FI_DATA FI_FOLDER Path methods
     # ------------------------------------------------------------------------ +   
     #region bsm_WORKBOOKS_discover() method
-    def bsm_WORKBOOKS_discover(self) -> None:
+    def bsm_WORKBOOKS_discover(self) -> Dict[str, DATA_COLLECTION]:
         """Discover WORKBOOKS for all FI's in the BDM."""
         try:
+            all_wbc = {}
             if len(self.bdm_fi_collection) == 0:
                 m = f"No FI's to discover."
                 logger.debug(m)
@@ -1073,7 +1103,11 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
             for fi_key in self.bdm_fi_collection.keys():
                 # Discover WORKBOOKS for each FI.
                 logger.debug(f"Discover WORKBOOKS for FI_KEY('{fi_key}')")
-                self.bsm_FI_WORKBOOKS_discover(fi_key)
+                wbc = self.bsm_FI_WORKBOOKS_discover(fi_key)
+                all_wbc[fi_key] = wbc
+            # Now have scanned all of the BDM storage to capture all BDMWorkbooks
+            # as a Dict[fi_key, BDMWorkbook] return the combined collection.
+            return all_wbc
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
@@ -1081,10 +1115,10 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
     #endregion bsm_WORKBOOKS_discover() method
     # ------------------------------------------------------------------------ +   
     #region bsm_FI_WORKBOOKS_discover() method
-    def bsm_FI_WORKBOOKS_discover(self, fi_key:str) -> None:
-        """Discover all WORKBOOKS for the FI."""
+    def bsm_FI_WORKBOOKS_discover(self, fi_key:str) -> DATA_COLLECTION:
+        """Discover all WORKBOOKS for the FI. Return a DATA_COLLECTION of BDMWorkbook objects."""
         try:
-            if self.bdm_FI_DATA_COLLECTION_count(fi_key) == 0:
+            if self.bdm_FI_WORKFLOW_DATA_COLLECTION_count(fi_key) == 0:
                 m = f"FI_KEY('{fi_key}') has no workflow data."
                 logger.debug(m)
                 return
@@ -1092,8 +1126,8 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
             # a list of WORKBOOKS as BDMWorkbook objects with populated
             # metadata.
             wb_collection = {}
-            i = 0
-            for wf_key, wb_data_collection in self.bdm_FI_DATA_COLLECTION(fi_key).items():
+            i :int = 0
+            for wf_key, wb_data_collection in self.bdm_FI_WORKFLOW_DATA_COLLECTION(fi_key).items():
                 for wf_purpose, wb_data_list in wb_data_collection.items():
                     folder_id = self.bdm_WF_PURPOSE_FOLDER_MAP(wf_key, wf_purpose)
                     if folder_id is None or len(folder_id) == 0:
@@ -1128,7 +1162,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
                         wb_filetype = wb_path.suffix.lower()
                         wb_name = wb_path.name
                         wb_url = wb_path.as_uri()
-                        wb_index = i
+                        wb_index :int = i
                         wb = BDMWorkbook(
                             wb_name = wb_name, 
                             wb_filename =  wb_filename,
@@ -1143,8 +1177,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
                             )
                         wb_collection[wb_index] = wb
                         i += 1
-            # Set the FI_WORKBOOK_COLLECTION for the FI_OBJECT.
-            self.bdm_FI_WORKBOOK_COLLECTION_set(fi_key, wb_collection)
+            return wb_collection
             logger.debug(f"Discovered {len(wb_collection)} workbooks for FI_KEY('{fi_key}').")
 
         except Exception as e:
@@ -1157,16 +1190,16 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
     def bsm_FI_DATA_COLLECTION_resolve(self, fi_key:str) -> None:
         """Resolve the FI_WORKFLOW_DATA for the specified fi_key and wf_key."""
         try:
-            if self.bdm_FI_DATA_COLLECTION_count(fi_key) == 0:
+            if self.bdm_FI_WORKFLOW_DATA_COLLECTION_count(fi_key) == 0:
                 m = f"FI_KEY('{fi_key}') has no workflow data."
                 logger.debug(m)
                 return
             # Enumerate the FI_OBJECT FI_DATA_COLLECTION,
-            # which is Dict[wf_key, WORKBOOK_DATA_COLLECTION]. There could be
-            # a WORKBOOK_DATA_COLLECTION for each workflow, or none.
-            for wf_key, wb_data_collection in self.bdm_FI_DATA_COLLECTION(fi_key).items():
-                # Resolve each WORKBOOK_DATA_COLLECTION.
-                self.bsm_WORKBOOK_DATA_COLLECTION_resolve(wb_data_collection,fi_key, wf_key)
+            # which is Dict[wf_key, WORKFLOW_DATA_COLLECTION]. There could be
+            # a WORKFLOW_DATA_COLLECTION for each workflow, or none.
+            for wf_key, wb_data_collection in self.bdm_FI_WORKFLOW_DATA_COLLECTION(fi_key).items():
+                # Resolve each WORKFLOW_DATA_COLLECTION.
+                self.bsm_WORKFLOW_DATA_COLLECTION_resolve(wb_data_collection,fi_key, wf_key)
         except Exception as e:
                 m = p3u.exc_err_msg(e)
                 logger.error(m)
@@ -1230,9 +1263,9 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
             raise
     #endregion WF_OBJECT WF_FOLDER Path methods
     # ------------------------------------------------------------------------ + #region WF_OBJECT WF_FOLDER Path methods
-    #region WORKBOOK_DATA_COLLECTION aka WF_DATA_OBJECT (WF_DO) pseudo-property methods
+    #region WORKFLOW_DATA_COLLECTION aka WF_DATA_OBJECT (WF_DO) pseudo-property methods
     """
-    A WORKBOOK_DATA_COLLECTION(Dict) is a DATA_OBJECT(Dict) with key/value pairs specific
+    A WORKFLOW_DATA_COLLECTION(Dict) is a DATA_OBJECT(Dict) with key/value pairs specific
     to data for a workflow. A wb_data_collection is retrieved with the 
     bdm_FI_WF_DATA_OBJECT() method which could return other types of 
     DATA_OBJECTs in the future. These methods are BSM-related.
@@ -1246,23 +1279,23 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
     workflow_folder, used to map to actual folder paths in a storage system. 
     
     """
-    def bsm_WORKBOOK_DATA_COLLECTION_resolve(self, wb_data_collection: WF_DATA_OBJECT,
+    def bsm_WORKFLOW_DATA_COLLECTION_resolve(self, wb_data_collection: WF_DATA_OBJECT,
                                    fi_key : str, wf_key : str):
-        """Resolve the WORKBOOK_DATA_COLLECTION based on the keys and values present."""
+        """Resolve the WORKFLOW_DATA_COLLECTION based on the keys and values present."""
         try:
             logger.debug(f"FI_KEY('{fi_key}') WF_KEY('{wf_key}')")
             if wb_data_collection is None or len(wb_data_collection) == 0:
-                logger.debug(f"  WORKBOOK_DATA_COLLECTION is empty.")
+                logger.debug(f"  WORKFLOW_DATA_COLLECTION is empty.")
                 return
-            logger.debug(f"  WORKBOOK_DATA_COLLECTION({len(wb_data_collection)} "
+            logger.debug(f"  WORKFLOW_DATA_COLLECTION({len(wb_data_collection)} "
                          f"keys): {str(list(wb_data_collection.keys()))}")
-            # Resolve all keys in the WORKBOOK_DATA_COLLECTION, which is a
+            # Resolve all keys in the WORKFLOW_DATA_COLLECTION, which is a
             # dictionary of workflow purpose values to WORKBOOK_DATA_LISTs, or
             # Dict[wf_purpose, WORKBOOK_DATA_LIST].
             did_workbook_lists = False
             for wf_purpose, wf_do_value in wb_data_collection.items():
                 if wf_purpose not in VALID_WF_PURPOSE_VALUES:
-                    m = f"Invalid WORKBOOK_DATA_COLLECTION key '{wf_purpose}' "
+                    m = f"Invalid WORKFLOW_DATA_COLLECTION key '{wf_purpose}' "
                     m += f"for FI_KEY('{fi_key}') and WF_KEY('{wf_key}')"
                     logger.error(m)
                     raise ValueError(m)
@@ -1274,7 +1307,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
                     else:
                         continue
                 else:
-                    raise NotImplementedError(f"WORKBOOK_DATA_COLLECTION key '{wf_purpose}' ")
+                    raise NotImplementedError(f"WORKFLOW_DATA_COLLECTION key '{wf_purpose}' ")
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
@@ -1305,7 +1338,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
                 # Only handle WF_PURPOSE scope for the workflow.
                 # A wb_data_collection may have other keys, but we only care about the workbooks.
                 if wf_purpose not in VALID_WF_PURPOSE_VALUES:
-                    logger.debug(f"  Skipping WORKBOOK_DATA_COLLECTION key: '{wf_purpose}'")
+                    logger.debug(f"  Skipping WORKFLOW_DATA_COLLECTION key: '{wf_purpose}'")
                     continue
                 # Only interested in the WF_PURPOSE key values. Each of them
                 # is configured to one WF_FOLDER_PATH_ELEMENT. Get the
@@ -2221,8 +2254,8 @@ def log_BSM_info(bdm : BudgetDomainModel) -> None:
             logger.debug(f"{P4}Financial Institution: "
                          f"{bdm.bdm_FI_KEY(fi_key)}:{bdm.bdm_FI_NAME(fi_key)}:"
                          f"{bdm.bdm_FI_TYPE(fi_key)}: '{bdm.bdm_FI_FOLDER(fi_key)}'")
-            c = bdm.bdm_FI_DATA_COLLECTION_count(fi_key)
-            fi_data = bdm.bdm_FI_DATA_COLLECTION(fi_key)
+            c = bdm.bdm_FI_WORKFLOW_DATA_COLLECTION_count(fi_key)
+            fi_data = bdm.bdm_FI_WORKFLOW_DATA_COLLECTION(fi_key)
             m = str(list(fi_data.keys())) if fi_data is not None else "'None'"
             logger.debug(f"{P6}FI Data({c}): {m}")
         # Enumerate workflows in the budget model

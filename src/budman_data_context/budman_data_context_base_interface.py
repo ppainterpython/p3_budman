@@ -27,6 +27,7 @@ from openpyxl import Workbook
 # local modules and packages
 from src.budman_namespace import (
     DATA_CONTEXT, WORKBOOK_DATA_LIST, LOADED_WORKBOOK_COLLECTION,
+    WORKBOOK_DATA_COLLECTION, WORKFLOW_DATA_COLLECTION,
     BDM_STORE, DATA_COLLECTION)
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -142,6 +143,22 @@ class BudManDataContextBaseInterface(ABC):
 
     @property
     @abstractmethod
+    def dc_WORKBOOK_DATA_COLLECTION(self) -> WORKBOOK_DATA_COLLECTION:
+        """Return the WORKBOOK_DATA_COLLECTION of workbooks in the DC.
+        Depends on the value of dc_FI_KEY, returning the 
+        FI_WORKBOOK_DATA_COLLECTION for that fi_key.
+        """
+        pass
+    @dc_WORKBOOK_DATA_COLLECTION.setter
+    @abstractmethod
+    def dc_WORKBOOK_DATA_COLLECTION(self, value: WORKBOOK_DATA_LIST) -> None:
+        """Set the WORKBOOK_DATA_COLLECTION of workbooks in the DC.
+        Depends on the value of dc_FI_KEY, returning the 
+        FI_WORKBOOK_DATA_COLLECTION for that fi_key."""
+        pass
+
+    @property
+    @abstractmethod
     def dc_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_COLLECTION:
         """Return the list of workbooks currently loaded in the DC.
         Loaded means a file is loaded into memory and is available."""
@@ -238,16 +255,14 @@ class BudManDataContextBaseInterface(ABC):
         pass
 
     @abstractmethod
-    def dc_BDM_STORE_load(self, file_path: str) -> BDM_STORE:
-        """Load the BDM_STORE from the specified file path. NotImplementedError.
-        The design presumes that the BDM_STORE is managed by the downstream
-        Model implementation, that the budget_domain_model uses it to 
-        initialize the state of the BDM. This implementation has no BDM.
+    def dc_BDM_STORE_load(self, bdm_url: str) -> BDM_STORE:
+        """Load a BDM_STORE from bdm_url, set dc_BDM_STORE.
+        All relevant DC values reference the dc_BDM_STORE.
         """
         pass
 
     @abstractmethod
-    def dc_BDM_STORE_save(self, bdm_store: BDM_STORE, file_path: str) -> None:
+    def dc_BDM_STORE_save(self, bdm_store: BDM_STORE, bdm_url: str) -> None:
         """Save the BDM_STORE to the specified file path."""
         pass
 

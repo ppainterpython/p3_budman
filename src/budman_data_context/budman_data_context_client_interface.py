@@ -27,7 +27,8 @@ from openpyxl import Workbook
 
 # local modules and packages
 from src.budman_namespace import (
-    DATA_COLLECTION,WORKBOOK_DATA_LIST, LOADED_WORKBOOK_COLLECTION
+    DATA_COLLECTION, WORKBOOK_DATA_LIST, LOADED_WORKBOOK_COLLECTION,
+    WORKBOOK_DATA_COLLECTION
     )
 from budman_data_context import BudManDataContextBaseInterface
 import p3_utils as p3u
@@ -158,6 +159,24 @@ class BudManDataContextClientInterface(BudManDataContextBaseInterface):
         self.DC.dc_WORKBOOKS = value
 
     @property
+    def dc_WORKBOOK_DATA_COLLECTION(self) -> WORKBOOK_DATA_COLLECTION:
+        """Return the WORKBOOK_DATA_COLLECTION of workbooks in the DC.
+        Depends on the value of dc_FI_KEY, returning the 
+        FI_WORKBOOK_DATA_COLLECTION for that fi_key.
+        """
+        if self.DC.dc_FI_KEY is None:
+            return None
+        return self.DC.dc_WORKBOOK_DATA_COLLECTION
+    @dc_WORKBOOK_DATA_COLLECTION.setter
+    def dc_WORKBOOK_DATA_COLLECTION(self, value: WORKBOOK_DATA_LIST) -> None:
+        """Set the WORKBOOK_DATA_COLLECTION of workbooks in the DC.
+        Depends on the value of dc_FI_KEY, returning the 
+        FI_WORKBOOK_DATA_COLLECTION for that fi_key."""
+        if self.DC.dc_FI_KEY is None:
+            return None
+        self.DC.dc_WORKBOOK_DATA_COLLECTION = value
+
+    @property
     def dc_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_COLLECTION:
         """Return the list of loaded workbooks in the DC.
         This is a List of tuples, where each tuple contains the workbook name
@@ -261,7 +280,9 @@ class BudManDataContextClientInterface(BudManDataContextBaseInterface):
         return self.DC.dc_WORKBOOK_add(wb_name, wb)
 
     def dc_BDM_STORE_load(self, file_path: str) -> None:
-        """Load the BDM_STORE from the specified file path."""
+        """Load a BDM_STORE from bdm_url, set dc_BDM_STORE.
+        All relevant DC values reference the dc_BDM_STORE.
+        """
         return self.DC.dc_BDM_STORE_load(file_path)
 
     def dc_BDM_STORE_save(self, file_path: str) -> None:

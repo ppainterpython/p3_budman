@@ -30,7 +30,7 @@ from openpyxl.cell.cell import Cell
 # local modules and packages
 from budman_namespace import *
 from .budget_category_mapping import (map_category, category_map_count)
-from budget_domain_model import (BudgetDomainModel)
+from budget_domain_model import (BudgetDomainModel, BDMWorkbook)
 # from data.p3_fi_transactions.budget_model import BudgetModel
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -636,7 +636,7 @@ def map_budget_category(sheet:Worksheet,src,dst) -> None:
 #endregion map_budget_category() function
 # ---------------------------------------------------------------------------- +
 #region apply_check_register() function
-def apply_check_register(sheet:Worksheet,check_reg:dict) -> None:
+def apply_check_register(cr_wb_content:BDM_CHECK_REGISTER, trans_wb_ref:BDM_TRANSACTION_WORKSHEET) -> None:
     """Apply the check transactions to the worksheet.
     
     The sheet has banking transaction data in rows and columns. 
@@ -649,16 +649,16 @@ def apply_check_register(sheet:Worksheet,check_reg:dict) -> None:
     """
     try:
         # Validate the input parameters.
-        if not check_sheet_columns(sheet, add_columns=False):
-            logger.error(f"Sheet '{sheet.title}' cannot be mapped due to "
+        if not check_sheet_columns(trans_wb_ref, add_columns=False):
+            logger.error(f"Sheet '{trans_wb_ref.title}' cannot be mapped due to "
                          f"missing required columns.")
             return
-        logger.info(f"Applying checks from check register to sheet: '{sheet.title}' ")
+        logger.info(f"Applying checks from check register to sheet: '{trans_wb_ref.title}' ")
         # transactions = WORKSHEET_data(sheet)
         # A row is a tuple of the Cell objects in the row. Tuples are 0-based
         # hdr is a list, also 0-based. So, using the index(name) will 
         # give the cell from a row tuple matching the column name in hdr.
-        hdr = [cell.value for cell in sheet[1]] 
+        hdr = [cell.value for cell in trans_wb_ref[1]] 
 
         # For each check, with the check number and the Budget Category
         # 'Banking.Checks to Categorize', find the row in the worksheet to modify.
@@ -689,13 +689,13 @@ def apply_check_register(sheet:Worksheet,check_reg:dict) -> None:
         year_month_i = col_i(YEAR_MONTH_COL_NAME,hdr)
         acct_name_i = col_i(ACCOUNT_NAME_COL_NAME,hdr)
         acct_code_i = col_i(ACCOUNT_CODE_COL_NAME,hdr)
-        acct_cell : Cell = sheet.cell(row=1, column=acct_name_i + 1)
+        acct_cell : Cell = trans_wb_ref.cell(row=1, column=acct_name_i + 1)
 
         # logger.info(f"Mapping '{src}'({src_col_index}) to "
         #             f"'{dst}'({dst_col_index})")
-        num_rows = sheet.max_row # or set a smaller limit
+        num_rows = trans_wb_ref.max_row # or set a smaller limit
         other_count = 0
-        for row in sheet.iter_rows(min_row=2):
+        for row in trans_wb_ref.iter_rows(min_row=2):
             # row is a 'tuple' of Cell objects, 0-based index
             row_idx = row[0].row  # Get the row index, the row number, 1-based.
             # Do the mapping from src to dst.

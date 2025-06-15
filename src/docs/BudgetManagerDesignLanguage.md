@@ -92,3 +92,15 @@ Now, the design needs expansion and refactoring. Here are some notes:
     #   - Set DebitOrCredit
     # A worklow and its tasks run under a wf_key and a wb_type.
 ```
+
+### Workflow Data Collection Transition Notes
+
+I have evolved this aspect of the BDM several times, but I have converged on a data model that has two parts. Originally, the BDM had __FI_DATA_COLLECTION__ which stored references to __WORKBOOK_ITEMS__ containing bits of information about workbooks in the context of a workflow process. This is workflow-centric, and helps achieve the goal of clean separation of the FI's data as it proceeds through a set of workflow tasks. That is still in the design.
+
+In addition to that view of an FI's workbook data, the __FI_OBJECT__ now has a __FI_WORKBOOK_COLLECTION__ containing all known workbooks for an FI. Each workbook object contains all the meta data known about a workbook, giving a workbook-centric data view.
+
+To add clarity, I am refactoring some type definitions:
+
+- __WORKFLOW_DATA_COLLECTION__ to organize the workbooks in the workflow-centric view.
+
+- __WORKBOOK_DATA_COLLECTION__ for the workbook-centric view.

@@ -67,6 +67,8 @@ def val_cmd_parser() -> cmd2.Cmd2ArgumentParser:
     return cli_parser.val_cmd if cli_parser else None
 def workflow_cmd_parser() -> cmd2.Cmd2ArgumentParser:
     return cli_parser.workflow_cmd if cli_parser else None
+def change_cmd_parser() -> cmd2.Cmd2ArgumentParser:
+    return cli_parser.change_cmd if cli_parser else None
 
 def _filter_opts(opts) -> Dict[str, Any]:
     if opts is None: return {}
@@ -136,6 +138,10 @@ class BudManCLIView(cmd2.Cmd):
                  app_name : str = "budman_cli") -> None:
         shortcuts = dict(cmd2.DEFAULT_SHORTCUTS)
         shortcuts.update({'wf': 'workflow'})
+        # shortcuts.update({'ch': 'change'})
+        # shortcuts.update({'sh': 'show'})
+        # shortcuts.update({'ld': 'load'})
+        # shortcuts.update({'sv': 'save'})
         self.app_name = app_name
         self._command_processor = MockViewModel() if command_processor is None else command_processor
         self.parse_only = False
@@ -224,6 +230,16 @@ class BudManCLIView(cmd2.Cmd):
     @cmd2.with_argparser(init_cmd_parser()) # This decorator links cmd2 with argparse.
     def do_init(self, opts):
         """Initialize aspects of the Data Context for the Budget Manager application."""
+        try:
+            status, result = self.cp_execute_cmd(opts)
+        except Exception as e:
+            self.pexcept(e)
+    #endregion init command - initialize aspects of the BudgetModel application.
+    # ------------------------------------------------------------------------ +
+    #region init command - initialize aspects of the BudgetModel application.
+    @cmd2.with_argparser(change_cmd_parser()) # This decorator links cmd2 with argparse.
+    def do_change(self, opts):
+        """Change (ch) attributes of workbooks and other objects in the Data Context for the Budget Manager application."""
         try:
             status, result = self.cp_execute_cmd(opts)
         except Exception as e:

@@ -3,16 +3,20 @@
 """ Implements data storage for Budget Domain Model.
 
     Keep it simple, use a JSONC file to load/save the budget domain model 
-    from/to storage. The BDM_STORE object is a dictionary in memory and a
-    json file in storage. Use a URL to reference it from other layers of 
-    application. Initially, the file scheme is supported for local files, 
-    but later it may be extended to support other storage services.
+    DATA_OBJECTs from/to storage. The BDM_STORE object is a dictionary in 
+    memory and a json file in storage. Use a URL to reference it from other 
+    layers of application. Initially, the file scheme is supported for 
+    local files, but later it may be extended to support other storage services.
 
     BSM only depends on the dict to json mapping, not detailed content structure
-    is used beyond that for validation.
+    is used beyond that for validation. BSM is not BDM-aware.
 
-    No dependencies to other application layers.
+    No dependencies to other application layers. However, it does include
+    the budman_namespace module for constants and type definitions, as a
+    convenience for the application developer.
 
+    June 15, 2025 - Happy Father's Day!
+    
     # TODO: switch verbs to put/get from save/load, consistent with URL usage.
     # TODO: move back to std lib json module, jsonc
 """
@@ -103,7 +107,7 @@ def bsm_BDM_STORE_url_save(bdm_store:BDM_STORE, bdms_url : str = None) -> Dict:
             bdms_path = Path.from_uri(bdms_url)
             logger.info(f"Loading BDM_STORE from path:'{bdms_path}' "
                         f"url:'{bdms_url}'")
-            return bsm_BDM_STORE_file_save(bdms_path)
+            return bsm_BDM_STORE_file_save(bdm_store, bdms_path)
         raise ValueError(f"Unsupported store_url scheme: {parsed_url.scheme}")
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))

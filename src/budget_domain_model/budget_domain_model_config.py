@@ -32,7 +32,7 @@ import p3_utils as p3u, pyjson5, p3logging as p3l
 # local modules and packages
 from budman_namespace import *
 from budget_storage_model import *
-# from budman_domain_model import BudgetDomainModel 
+from .bdm_workbook_class import BDMWorkbook 
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -77,9 +77,10 @@ class BDMConfig(metaclass=BDMSingletonMeta):
                 FI_NAME: "Bank of America",
                 FI_TYPE: "bank",
                 FI_FOLDER: "boa",
-                FI_DATA_COLLECTION: { # FI_DATA_COLLECTION Dict[WF_KEY: WORKBOOK_DATA_COLLECTION]
+                FI_WORKFLOW_DATA_COLLECTION: 
+                { # FI_WORKFLOW_DATA_COLLECTION Dict[WF_KEY: WORKFLOW_DATA_COLLECTION]
                      BDM_WF_CATEGORIZATION:  # WF_KEY: 
-                     {  # WORKBOOK_DATA_COLLECTION Dict[WF_PURPOSE: WORKBOOK_DATA_LIST]
+                     {  # WORKFLOW_DATA_COLLECTION Dict[WF_PURPOSE: WORKBOOK_DATA_LIST]
                         WF_INPUT: # WF_PURPOSE: WF_INPUT  (input data objects) 
                         [  # WORKBOOK_DATA_LIST: List[WORKBOOK_ITEMS], WORKBOOK_ITEM: Tuple[WB_NAME, WB_URL]
                             ( "input_prefix_wb_name_1", "wb_url_1" ),
@@ -98,16 +99,20 @@ class BDMConfig(metaclass=BDMSingletonMeta):
                             ( "output_prefix_wb_name_2", "wb_url_5" ),
                             ( "output_prefix_wb_name_3", "wb_url_6" )
                         ]
-                        }
-                    },
+                    }
                 },
+                FI_WORKBOOK_DATA_COLLECTION: 
+                    {  # FI_WORKBOOK_DATA_COLLECTION: Dict[WB_INDEX: WORKBOOK_OBJECT]
+                        0: {}
+                },
+            },
             "merrill": # FI_KEY
             {          # FI_DATA
                 FI_KEY: "merrill",
                 FI_NAME: "Merrill Lynch",
                 FI_TYPE: "brokerage",
                 FI_FOLDER: "merrill",
-                FI_DATA_COLLECTION: None,
+                FI_WORKFLOW_DATA_COLLECTION: None,
             },
         },
         BDM_WF_COLLECTION: {
@@ -220,13 +225,14 @@ class BDMConfig(metaclass=BDMSingletonMeta):
             raise
     #endregion BDM_CONFIG_default() classmethod
     # ------------------------------------------------------------------------ +
-    #region validate() created BDMConfig from a loaded BDM_STORE url.
+    #region BDM_CONFIG_validate_attributes() created BDMConfig from a loaded BDM_STORE url.
     @classmethod
-    def BDM_CONFIG_validate(cls, bdm_config : dict) -> None:
-        """Verify a BDM_CONFIG or BDM_STORE dictionary has all required fields.
+    def BDM_CONFIG_validate_attributes(cls, bdm_config : dict) -> None:
+        """Verify a BDM_CONFIG/BDM_STORE dict has all required attributes.
 
             Make sure the supplied dictionary has all the required
-            fields and values. If not, update it with default values.
+            attributes and values. If not, update it with default values.
+            Does not change valued in bdm_config, just adds missing ones.
         """
         try:
             logger.debug("Start:  ...")
@@ -237,7 +243,47 @@ class BDMConfig(metaclass=BDMSingletonMeta):
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
-    #endregion validate() created BDMConfig from a loaded BDM_STORE url.
+    #endregion BDM_CONFIG_validate_attributes() created BDMConfig from a loaded BDM_STORE url.
+    # ------------------------------------------------------------------------ +
+    #region BDM_STORE_rehydrate() replace selected json with objects.
+    @classmethod
+    def BDM_STORE_rehydrate(cls, bdm_store : dict) -> None:
+        """Populate a BDM_CONFIG with objects."""
+        try:
+            logger.debug("Start:  ...")
+            if not isinstance(bdm_store, dict):
+                raise ValueError(f"bdm_store must be a dictionary: {bdm_store}")
+            if len(bdm_store) == 0:
+                return None
+            # Populate the BDM_CONFIG with objects.
+            # Populate the FI_OBJECT.
+            if (BDM_FI_COLLECTION in bdm_store and
+                bdm_store[BDM_FI_COLLECTION] is not None and
+                isinstance(bdm_store[BDM_FI_COLLECTION], dict) and 
+                len(bdm_store[BDM_FI_COLLECTION]) > 0):
+                for fi_key, fi_object in bdm_store[BDM_FI_COLLECTION].items():
+                    if not isinstance(fi_object, dict):
+                        continue
+                    if (FI_WORKBOOK_DATA_COLLECTION not in fi_object or
+                        fi_object[FI_WORKBOOK_DATA_COLLECTION] is None or
+                        not isinstance(fi_object[FI_WORKBOOK_DATA_COLLECTION], dict) or
+                        len(fi_object[FI_WORKBOOK_DATA_COLLECTION]) == 0):
+                        continue
+                    for wb_index, wb_data in fi_object[FI_WORKBOOK_DATA_COLLECTION].items():
+                        if not isinstance(wb_data, dict):
+                            continue
+                        # Convert the WORKBOOK_ITEM to a WORKBOOK_OBJECT.
+                        wb_object = BDMWorkbook(**wb_data)
+                        # Replace the DATA_OBJECT with the WORKBOOK_OBJECT.
+                        # Use int for wb_index
+                        fi_object[FI_WORKBOOK_DATA_COLLECTION][wb_index] = wb_object
+            logger.debug(f"Complete:")   
+            return None
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise
+    #endregion BDM_STORE_rehydrate() created BDMConfig from a loaded BDM_STORE url.
     # ------------------------------------------------------------------------ +
     #region BDM_STORE_url_load() create BDM_CONFIG from a loaded BDM_STORE url.
     @classmethod
@@ -249,7 +295,9 @@ class BDMConfig(metaclass=BDMSingletonMeta):
             # Ensure the URL used to load is set in the config
             bdm_store[BDM_URL] = bdm_url  
             # Validate the loaded BDM_STORE config. Raises error if not happy
-            cls.BDM_CONFIG_validate(bdm_store)
+            cls.BDM_CONFIG_validate_attributes(bdm_store)
+            # Rehydrate any python class objects from json
+            cls.BDM_STORE_rehydrate(bdm_store)
             # Get the instance of BDMConfig configured from bdms
             bdm_config = BDMConfig(bdm_config = bdm_store)            
             logger.debug(f"Complete:")   

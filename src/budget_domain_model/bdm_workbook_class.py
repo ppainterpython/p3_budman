@@ -49,8 +49,8 @@ class BDMWorkbook:
     wf_folder_id: str = None
     wf_folder: str = None
     loaded : bool = False
-    wb_index : Optional[int] = None
-    _content : Any = field(init=False) # Not included in todict() serialization
+    wb_index : Optional[int] = -1
+    _content : Any = field(init=False,default=None) # Not included in todict() serialization
     #endregion dataclass object attributes
     # ------------------------------------------------------------------------ +
     #region BDMWorkbook properties
@@ -62,9 +62,33 @@ class BDMWorkbook:
     def content(self, value: Any) -> None:
         """ content property setter sets the workbook content. """
         self._content = value
+    @property
+    def name(self) -> Any:
+        """ wb_name property returns the workbook content. """
+        return self.wb_name
+    @name.setter
+    def name(self, value: Any) -> None:
+        """ wb_name property setter sets the workbook content. """
+        self.wb_name = value
     #endregion BDMWorkbook properties
     # ------------------------------------------------------------------------ +
     #region BDMWorkbook methods
+    # ------------------------------------------------------------------------ +
+    #region soft_merge
+    def soft_merge(self, source : "BDMWorkbook") -> bool:
+        """ Return True is source is the same workbook, merge new information. """
+        if not isinstance(source, BDMWorkbook):
+            raise TypeError("source must be a BDMWorkbook instance")
+        # First, evaluate if the two are the same workbook. Files can move
+        # around in storage.
+        if self.wb_name != source.wb_name or self.wb_url != source.wb_url:
+            logger.debug(f"Rejected based on wb_name, or wb_url differences.")
+            return None
+        # For now, just update the wb_type if self.wb_type is None or empty.
+        if not self.wb_type or self.wb_type == "not_set":
+            self.wb_type = source.wb_type
+        return False
+    #endregion display_str
     # ------------------------------------------------------------------------ +
     #region display_str
     def display_str(self) -> str:
@@ -72,10 +96,9 @@ class BDMWorkbook:
         s = f"{P4}{str(self.wb_index):^6}{P2}{str(self.wb_type):15}{P2}"
         s += f"{str(self.wb_name):35}{P2}{str(self.wf_key):15}{P2}"
         s += f"{str(self.wf_purpose):10}{P2}{str(self.wf_folder_id):20}{P2}"
-        s += f"{str(self.wf_folder):18}{P2}{str(self.wb_url):150}"
+        s += f"{str(self.wf_folder):18}" #{P2}{str(self.wb_url):150}"
         return s
     #endregion display_str
-
     # ------------------------------------------------------------------------ +
     #endregion BDMWorkbook methods
     # ------------------------------------------------------------------------ +

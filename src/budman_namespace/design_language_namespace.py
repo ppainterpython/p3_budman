@@ -11,6 +11,7 @@
 # third-party modules and packages
 from typing import Dict, List, Tuple, Any, Type, TYPE_CHECKING
 from openpyxl import Workbook
+from openpyxl.worksheet.worksheet import Worksheet as Worksheet
 # local modules and packages
 
 #endregion Imports
@@ -25,21 +26,27 @@ DATA_TUPLE_LIST = List[DATA_TUPLE]
 # WORKBOOK_DATA_LIST - the list of workbooks for a specific folder. 
 # It is a list of WORKBOOK_ITEM tuples: (workbook_name, workbook_abs_path)
 # The term WORKBOOK_DATA refers to some of the data associated with a workbook.
+
 WORKBOOK_DATA_COLLECTION = DATA_COLLECTION
+WORKFLOW_DATA_COLLECTION = DATA_COLLECTION
 WORKBOOK_DATA_LIST = DATA_TUPLE_LIST 
 WORKBOOK_ITEM = DATA_TUPLE
-WORKBOOK_DATA_COLLECTION = DATA_TUPLE_LIST
+WORKBOOK_OBJECT = object  # BDMWorkbook
 LOADED_WORKBOOK_COLLECTION = DATA_COLLECTION
 LOADED_WORKBOOK_ITEM = DATA_OBJECT
 DATA_CONTEXT = DATA_OBJECT
 BDM_STORE = DATA_OBJECT
 BDM_CONFIG = DATA_OBJECT
+BDM_CHECK_REGISTER = DATA_OBJECT
+BDM_TRANSACTION_WORKBOOK = Workbook
+BDM_TRANSACTION_WORKSHEET = Worksheet
+
 # MODEL_OBJECT : Type[object] = object()
 BDMO_OBJECT = DATA_OBJECT
 FI_OBJECT = DATA_OBJECT  # Financial Institution object
 FI_COLLECTION = DATA_COLLECTION
 FI_DATA_OBJECT = DATA_OBJECT
-FI_DATA_COLLECTION = DATA_COLLECTION
+FI_WORKFLOW_DATA_COLLECTION = DATA_COLLECTION
 WF_OBJECT = DATA_OBJECT  # Workflow object
 WF_COLLECTION = DATA_COLLECTION 
 # WF_DATA_COLLECTION workflow data collection (Dictionary key names)
@@ -107,7 +114,7 @@ VALID_BDM_PROPERTIES = (
     BDM_LAST_MODIFIED_BY, BDM_WORKING_DATA, BDM_DATA_CONTEXT)
 BSM_PERSISTED_PROPERTIES = (
     BDM_ID, BDM_FILENAME, BDM_FILETYPE, BDM_FOLDER, 
-    BDM_FI_COLLECTION, BDM_WF_COLLECTION,  
+    BDM_URL, BDM_FI_COLLECTION, BDM_WF_COLLECTION,  
     BDM_OPTIONS, BDM_CREATED_DATE, BDM_LAST_MODIFIED_DATE, BDM_LAST_MODIFIED_BY,
     BDM_DATA_CONTEXT)
 # ---------------------------------------------------------------------------- +
@@ -130,11 +137,11 @@ FI_KEY = FI_KEY
 FI_NAME = "fi_name"
 FI_TYPE = "fi_type"
 FI_FOLDER = "fi_folder" 
-FI_DATA_COLLECTION = "fi_data_collection" 
-FI_WORKBOOK_COLLECTION = "fi_workbook_collection" 
+FI_WORKFLOW_DATA_COLLECTION = "fi_workflow_data_collection" 
+FI_WORKBOOK_DATA_COLLECTION = "fi_workbook_data_collection" 
 # Additional FI_DATA-related constants
 VALID_FI_OBJECT_ATTR_KEYS = (FI_KEY, FI_NAME, FI_TYPE, FI_FOLDER, 
-                             FI_DATA_COLLECTION, FI_WORKBOOK_COLLECTION)
+                             FI_WORKFLOW_DATA_COLLECTION, FI_WORKBOOK_DATA_COLLECTION)
 VALID_FI_KEYS = ("boa", "merrill")
 VALID_FI_TYPES = ("bank", "brokerage", "organization", "person")
 BDM_FI_NAMES = ("Bank of America", "Merrill Lynch", "CitiBANK")
@@ -175,7 +182,7 @@ WF_FOLDER_ID = "wf_folder_id"
 VALID_BDM_PATH_ELEMENTS = (BDM_FOLDER, BDM_URL, FI_FOLDER, 
                            WF_INPUT_FOLDER, WF_WORKING_FOLDER, WF_OUTPUT_FOLDER)
 # ---------------------------------------------------------------------------- +
-# WORKBOOK_DATA_COLLECTION is a subclass of DATA_OBJECT (Dict) used to manage
+# WORKFLOW_DATA_COLLECTION is a subclass of DATA_OBJECT (Dict) used to manage
 # Workflow-related (WF_) data associated with a specific FI).
 # The primary data object now is the WORKBOOK (an excel workbook or a .csv file). 
 # These are stored by the BSM in files in folders in a storage system, so there 
@@ -195,7 +202,7 @@ WF_WORKING = "wf_working"
 WF_OUTPUT ="wf_output" 
 VALID_WF_PURPOSE_VALUES = (WF_INPUT, WF_WORKING, WF_OUTPUT)
 
-VALID_WORKBOOK_DATA_COLLECTION_ATTR_KEYS = (WF_INPUT, WF_WORKING, WF_OUTPUT)
+VALID_WORKFLOW_DATA_COLLECTION_ATTR_KEYS = (WF_INPUT, WF_WORKING, WF_OUTPUT)
 
 # NEW Workbook Type Constants. These define the types of workbooks that
 # might be stored in a storage system, such as a file system or a database.

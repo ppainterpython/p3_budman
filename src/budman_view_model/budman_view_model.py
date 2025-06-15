@@ -204,7 +204,7 @@ from budman_workflows import (
     )
 from budget_domain_model import (
     BDMBaseInterface, BDMClientInterface, BudgetDomainModel, 
-    BDMConfig
+    BDMConfig, BDMWorkbook
     )
 from budget_storage_model import *
 from budget_storage_model.csv_data_collection import (
@@ -212,7 +212,7 @@ from budget_storage_model.csv_data_collection import (
 )
 from budman_data_context import BDMWorkingData
 from budman_workflows import budget_category_mapping
-from budman_cli_view import budman_cli_parser
+from budman_cli_view import budman_cli_parser, budman_cli_view
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -454,6 +454,8 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
                 "show_cmd_workbooks": self.WORKBOOKS_show_cmd,
                 "load_cmd_workbooks": self.WORKBOOKS_load_cmd,
                 "load_cmd_check_register": self.CHECK_REGISTER_load_cmd,
+                "change_cmd": self.CHANGE_cmd,
+                "change_cmd_workbooks": self.CHANGE_cmd,
                 "workflow_cmd_categorization": self.WORKFLOW_categorization_cmd,
                 "workflow_cmd_reload": self.WORKFLOW_reload_cmd,
                 "workflow_cmd_apply": self.WORKFLOW_apply_cmd,
@@ -480,7 +482,8 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
     # ======================================================================== +
     #                                                                          +
     # ======================================================================== +
-    #region ViewModelCommandProcessor implementing the Command Pattern        +
+    #region ViewModel CommandProcessor implementing the Command Pattern        +
+    #region ViewModel CommandProcessor Pattern doc                     +
     """ ViewModelCommandProcessor Design Notes (future ABC)
 
     A Command Pattern supports a means to represent a command as an object,
@@ -515,9 +518,10 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
       which indicates to apply the action to all workbooks in the scope.
     
     """
+    #endregion ViewModel CommandProcessor Command Pattern doc                     +
     #                                                                          +
     # ------------------------------------------------------------------------ +
-    #region ViewModelCommandProcessor interface methods
+    #region ViewModel CommandProcessor interface methods
     # ------------------------------------------------------------------------ +
     #region cp_execute_cmd() Command Processing method
     def cp_execute_cmd(self, 
@@ -934,7 +938,6 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             self.dc_WB_NAME = wb_name
             # Create result
             lwbl_names = list(self.DC.dc_LOADED_WORKBOOKS.keys())
-            # lwbl_names = self.FI_get_loaded_workbook_names()
             result = f"Loaded {len(lwbl_names)} Workbooks: {str(lwbl_names)}"
             return True, result
         except Exception as e:
@@ -1034,21 +1037,22 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             # Save the BDM_STORE file with the BSM.
             # Construct the abs_path from BDM_STORE info configured in 
             # BUDMAN_SETTINGS.
-            budman_store_filename_value = self.settings[BDM_STORE_FILENAME]
-            budman_store_filetype_value = self.settings[BDM_STORE_FILETYPE]
-            budman_store_full_filename = f"{budman_store_filename_value}.{budman_store_filetype_value}"
-            budman_folder = self.settings[BUDMAN_FOLDER]
-            budman_folder_abs_path = Path(budman_folder).expanduser().resolve()
-            budman_store_abs_path = budman_folder_abs_path / budman_store_full_filename
-            # Update some values prior to saving.
-            self.budget_domain_model.bdm_url = budman_store_abs_path.as_uri()
-            self.budget_domain_model.bdm_last_modified_date = p3u.now_iso_date_string()
-            self.budget_domain_model.bdm_last_modified_by = getpass.getuser()
+            # budman_store_filename_value = self.settings[BDM_STORE_FILENAME]
+            # budman_store_filetype_value = self.settings[BDM_STORE_FILETYPE]
+            # budman_store_full_filename = f"{budman_store_filename_value}{budman_store_filetype_value}"
+            # budman_folder = self.settings[BUDMAN_FOLDER]
+            # budman_folder_abs_path = Path(budman_folder).expanduser().resolve()
+            # budman_store_abs_path = budman_folder_abs_path / budman_store_full_filename
+            # # Update some values prior to saving.
+            # self.budget_domain_model.bdm_url = budman_store_abs_path.as_uri()
+            # self.budget_domain_model.bdm_last_modified_date = p3u.now_iso_date_string()
+            # self.budget_domain_model.bdm_last_modified_by = getpass.getuser()
             # Get a Dict of the BudgetModel to store.
             budget_model_dict = self.budget_domain_model.to_dict()
             # Save the BDM_STORE file.
-            bsm_BDM_STORE_file_save(budget_model_dict, budman_store_abs_path)
-            logger.info(f"Saved BDM_STORE file: {budman_store_abs_path}")
+            bdm_url = self.dc_BDM_STORE[BDM_URL]
+            bsm_BDM_STORE_url_save(budget_model_dict, bdm_url)
+            logger.info(f"Saved BDM_STORE url: {bdm_url}")
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             return True, budget_model_dict
         except Exception as e:
@@ -1130,20 +1134,8 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             # Gather the current content of the DATA_CONTEXT.
             bs = self.dc_BDM_STORE
             bs_str = p3u.first_n(str(bs))
-            wbl = self.dc_WORKBOOKS
-            wbl_count = len(wbl) if wbl else 0
-            lwbl = self.dc_LOADED_WORKBOOKS
-            lwbl_count = len(lwbl) if lwbl else 0
-            # Update the current list of workbooks open in Excel
-            excel_wb_list = self.DC.dc_EXCEL_WORKBOOKS
-            success, result = p3u.open_excel_workbooks()
-            if success:
-                # result is a WB_INFO_COLLECTION, create a list of wb_names
-                excel_wb_list = list(result.keys())
-                self.DC.dc_EXCEL_WORKBOOKS = excel_wb_list
-            crl = self.DC.dc_CHECK_REGISTERS
-            crl_count = len(crl) if crl else 0
-            wbc = self.dc_WORKBOOK_COLLECTION
+            # Be workbook-centric is this view of the DC
+            wbc = self.dc_WORKBOOK_DATA_COLLECTION
             wbc_count = len(wbc) if wbc else 0
     
             # Prepare the Console output result
@@ -1157,33 +1149,14 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             result += f"{P2}{WB_TYPE}: {self.dc_WB_TYPE}\n"
             result += f"{P2}{DC_BDM_STORE}: {bs_str}\n"
 
-            result += f"{P2}{FI_WORKBOOK_COLLECTION}: {wbc_count}\n"
+            result += f"{P2}{FI_WORKBOOK_DATA_COLLECTION}: {wbc_count}\n"
             result += f"{P4}{WB_REF:6}{P2}{WB_TYPE:15}{P2}{WB_NAME:35}{P2}{WF_KEY:15}"
-            result += f"{P2}{WF_PURPOSE:10}{P2}{WF_FOLDER_ID:20}{P2}{WF_FOLDER:18}"
-            result += f"{P2}{WB_URL:150}\n"
+            result += f"{P2}{WF_PURPOSE:10}{P2}{WF_FOLDER_ID:20}{P2}{WF_FOLDER:18}\n"
+            # result += f"{P2}{WB_URL:150}\n"
             if wbc_count > 0:
                 for i, wb in wbc.items():
                     result += f"{wb.display_str()}\n"
 
-            # result += f"{P2}{DC_WORKBOOKS}: {wbl_count}\n"
-            # if wbl_count > 0:
-            #     result += f"{P4}wb_ref wb_name{29 * ' '}excel abs_path\n"
-            #     # Enumerate the WORKBOOK_DATA_LIST (a DATA_TUPLE_LIST)
-            #     for i, (wb_name, wb_ap) in enumerate(wbl):
-            #         ewb : bool = 'Y' if wb_name in excel_wb_list else 'N'
-            #         result += f"{P4}  {i:2}   {wb_name:<35}   {ewb}   '{wb_ap}'\n"
-            # result += f"{P2}{DC_LOADED_WORKBOOKS}: {lwbl_count}\n"
-            # if lwbl_count > 0:
-            #     # Iterate the LOADED_WORKBOOKS_COLLECTION (a DATA_COLLECTION)
-            #     for wb_name in list(lwbl.keys()):
-            #         wb_index = self.DC.dc_WORKBOOK_index(wb_name)
-            #         result += f"{P4}wb_index: {wb_index:>2} wb_name: '{wb_name:<40}'\n"
-            # result += f"{P2}{DC_CHECK_REGISTERS}: {crl_count}\n"
-            # if crl_count > 0:
-            #     # Iterate the LOADED_WORKBOOKS_COLLECTION (a DATA_COLLECTION)
-            #     for wb_name in list(crl.keys()):
-            #         wb_index = self.DC.dc_CHECK_REGISTER_index(wb_name)
-            #         result += f"{P4}wb_index: {wb_index:>2} wb_name: '{wb_name:<40}'\n"
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             return True, result
         except Exception as e:
@@ -1366,6 +1339,54 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             raise
     #endregion CHECK_REGISTER_load_cmd() method
     # ------------------------------------------------------------------------ +
+    #region CHANGE_cmd() command > wf cat 2
+    def CHANGE_cmd(self, cmd : Dict) -> Tuple[bool, str]:
+        """Change aspects of the Data Context.
+
+        A CHANGE_cmd command .
+
+        Arguments:
+            cmd (Dict): A valid BudMan View Model Command object. For this
+            command, must contain workflow_cmd = 'apply' resulting in
+            a full command key of 'workflow_cmd_apply'.
+
+        Returns:
+            Tuple[success : bool, result : Any]: The outcome of the command 
+            execution. If success is True, result contains result of the 
+            command, if False, a description of the error.
+            
+        Raises:
+            RuntimeError: A description of the
+            root error is contained in the exception message.
+        """
+        try:
+            logger.info(f"Start: ...")
+            validate_only = self.cp_cmd_arg_get(cmd, CMD_VALIDATE_ONLY, None)
+            what_if = self.cp_cmd_arg_get(cmd, CMD_WHAT_IF, None)
+            fi_key = self.cp_cmd_arg_get(cmd, CMD_FI_KEY, self.dc_FI_KEY)
+            wf_key = self.cp_cmd_arg_get(cmd, CMD_WF_KEY, self.dc_WF_KEY)
+            wb_ref = self.cp_cmd_arg_get(cmd, CMD_WB_REF, self.dc_WB_REF)
+            wb_type = self.cp_cmd_arg_get(cmd, CMD_WB_TYPE, self.dc_WB_TYPE)
+            wf_purpose = self.cp_cmd_arg_get(cmd, CMD_WF_PURPOSE, None)
+            all_wbs, wb_index, wb_name = self.DC.dc_WB_REF_resolve(wb_ref)
+            # Verify LOADED_WORKBOOKS to process.
+            obj : BDMWorkbook = self.dc_WORKBOOK_DATA_COLLECTION.get(wb_index, None)
+            if (obj):
+                wb_name = obj.wb_name
+                wb_loaded = obj.loaded
+                wb_content = obj.content
+                # Process the change workbook command.
+                if wb_type is not None:
+                    obj.wb_type = wb_type
+            if what_if:
+                return True, f"what_if: apply_check_register(cr_wb_ref, transaction_wb_ref)"
+            # apply_check_register(ws)
+            return True, ""
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion CHANGE_cmd() method
+    # ------------------------------------------------------------------------ +
     #region WORKFLOW_categorization_cmd() command > wf cat 2
     def WORKFLOW_categorization_cmd(self, cmd : Dict) -> Tuple[bool, str]:
         """Apply workflow to one or more WORKBOOKS in the DC.
@@ -1456,15 +1477,15 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
     # ------------------------------------------------------------------------ +
     #region WORKFLOW_apply_cmd() command > wf cat 2
     def WORKFLOW_apply_cmd(self, cmd : Dict) -> Tuple[bool, str]:
-        """Apply workflow to one or more WORKBOOKS in the DC.
+        """Apply workflow tasks to WORKBOOKS.
 
-        A WORKFLOW_categorization_cmd command will use the wb_ref value in the cmd. 
+        A WORKFLOW_apply_cmd command will use the wb_ref value in the cmd. 
         Value is a number or a wb_name.
 
         Arguments:
             cmd (Dict): A valid BudMan View Model Command object. For this
-            command, must contain workflow_cmd = 'categorization' resulting in
-            a full command key of 'workflow_cmd_categorization'.
+            command, must contain workflow_cmd = 'apply' resulting in
+            a full command key of 'workflow_cmd_apply'.
 
         Returns:
             Tuple[success : bool, result : Any]: The outcome of the command 
@@ -1476,18 +1497,26 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             root error is contained in the exception message.
         """
         try:
-            pfx = f"{self.__class__.__name__}.{self.FI_init_cmd.__name__}: "
             logger.info(f"Start: ...")
-            check_register = self.cp_cmd_arg_get(cmd, CMD_CHECK_REGISTER, None)
-            wb_ref = self.cp_cmd_arg_get(cmd, CMD_WB_REF, None)
+            validate_only = self.cp_cmd_arg_get(cmd, CMD_VALIDATE_ONLY, None)
+            what_if = self.cp_cmd_arg_get(cmd, CMD_WHAT_IF, None)
+            fi_key = self.cp_cmd_arg_get(cmd, CMD_FI_KEY, self.dc_FI_KEY)
+            wf_key = self.cp_cmd_arg_get(cmd, CMD_WF_KEY, self.dc_WF_KEY)
+            wb_ref = self.cp_cmd_arg_get(cmd, CMD_WB_REF, self.dc_WB_REF)
+            wb_type = self.cp_cmd_arg_get(cmd, CMD_WB_TYPE, self.dc_WB_TYPE)
             wf_purpose = self.cp_cmd_arg_get(cmd, CMD_WF_PURPOSE, None)
-            wb_type = self.cp_cmd_arg_get(cmd, CMD_WB_TYPE, None)
-            all_wbs, wb_index, wb_name = self.DC.dc_WB_REF_resolve(check_register)
+            cr_wb_ref = self.cp_cmd_arg_get(cmd, CMD_CHECK_REGISTER, None)
+            all_wbs, wb_index, wb_name = self.DC.dc_WB_REF_resolve(cr_wb_ref)
             # Verify LOADED_WORKBOOKS to process.
-            wb_index =  self.dc_CHECK_REGISTER_index(wb_name)
-            check_register_dict = csv_DATA_COLLECTION_get_url("")
-            apply_check_register(ws)
-            return True, r
+            obj : BDMWorkbook = self.dc_WORKBOOK_DATA_COLLECTION.get(wb_index, None)
+            if (obj):
+                wb_name = obj.wb_name
+                wb_loaded = obj.loaded
+                wb_content = obj.content
+            if what_if:
+                return True, f"what_if: apply_check_register(cr_wb_ref, transaction_wb_ref)"
+            # apply_check_register(ws)
+            return True, ""
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
@@ -1597,6 +1626,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
                 r += f"{m}\n"
                 importlib.reload(budget_category_mapping)
                 importlib.reload(budman_cli_parser)
+                importlib.reload(budman_cli_view)
                 importlib.reload(sys.modules[__name__])
                 cmc = category_map_count()
                 m = f"{P4}reloaded modules for target: '{reload_target}' count = {cmc}\n"
@@ -1616,7 +1646,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
     # ======================================================================== +
     #                                                                          +
     # ======================================================================== +
-    #region ViewModelData_Context client implementation                            +
+    #region    ViewModelData_Context client implementation                            +
     """BDM view_model Data Context Interface Documentation.
 
     Data Context (DC) Interface Overview
@@ -1673,33 +1703,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
     # ======================================================================== +
     #                                                                          +
     # ------------------------------------------------------------------------ +
-    #region Data Context (DC) Object binding (client sdk) methods
-    # ------------------------------------------------------------------------ +
-    #region get_DC() method
-    def get_DC(self) -> Any:
-        """Return the Data Context for the ViewModel."""
-        try:
-            return self.DC
-        except Exception as e:
-            logger.error(p3u.exc_err_msg(e))
-            raise
-    #endregion get_DC() method
-    # ------------------------------------------------------------------------ +
-    #region set_DC() method
-    def set_DC(self, dc : Any) -> None:
-        """Set the Data Context (DC) object binding for the ViewModel."""
-        try:
-            self.DC = dc
-        except Exception as e:
-            logger.error(p3u.exc_err_msg(e))
-            raise
-    #endregion set_DC() method
-    # ------------------------------------------------------------------------ +
-    #endregion Data Context (DC) Object binding (client sdk) methods
-    # ------------------------------------------------------------------------ +
-    #                                                                          +
-    # ------------------------------------------------------------------------ +
-    #region BudMan Data Context Interface (client sdk) Properties                                            +
+    #region    BudMan Data Context Interface (client sdk) Properties                                            +
     #                                                                          +
     # ------------------------------------------------------------------------ +
     @property
@@ -1785,14 +1789,23 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
         """Set the current  dc_WORKBOOK value in DC."""
         self.DC.dc_WORKBOOKS = value
 
-    @property 
-    def dc_WORKBOOK_COLLECTION(self) -> DATA_COLLECTION:
-        """Return the WORKBOOK_COLLECTION for the current fi_key."""
-        return self.DC.dc_WORKBOOK_COLLECTION
-    @dc_WORKBOOK_COLLECTION.setter
-    def dc_WORKBOOK_COLLECTION(self, value: WORKBOOK_DATA_LIST) -> None:
-        """Set the current  WORKBOOK_COLLECTION value in DC."""
-        self.DC.dc_WORKBOOK_COLLECTION = value
+    @property
+    def dc_WORKBOOK_DATA_COLLECTION(self) -> WORKBOOK_DATA_COLLECTION:
+        """Return the WORKBOOK_DATA_COLLECTION of workbooks in the DC.
+        Depends on the value of dc_FI_KEY, returning the 
+        FI_WORKBOOK_DATA_COLLECTION for that fi_key.
+        """
+        if self.DC.dc_FI_KEY is None:
+            return None
+        return self.DC.dc_WORKBOOK_DATA_COLLECTION
+    @dc_WORKBOOK_DATA_COLLECTION.setter
+    def dc_WORKBOOK_DATA_COLLECTION(self, value: WORKBOOK_DATA_LIST) -> None:
+        """Set the WORKBOOK_DATA_COLLECTION of workbooks in the DC.
+        Depends on the value of dc_FI_KEY, returning the 
+        FI_WORKBOOK_DATA_COLLECTION for that fi_key."""
+        if self.DC.dc_FI_KEY is None:
+            return None
+        self.DC.dc_WORKBOOK_DATA_COLLECTION = value
 
     @property 
     def dc_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_COLLECTION:
@@ -1896,87 +1909,6 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
 
     # ------------------------------------------------------------------------ +
     #endregion BudMan Data Context Interface (client sdk) Methods
-    # ------------------------------------------------------------------------ +
-
-
-    # ------------------------------------------------------------------------ +
-    #region FI_get_loaded_workbooks() method
-    def FI_WORKBOOKS_get(self) -> List[str]: 
-        """Retrieve the current WORKBOOK_DATA_LIST for the DC fi_key,wf_key,wb_type."""
-        try:
-            # Reference the BDMWD_LOADED_WORKBOOKS.
-            return self.budget_domain_model.bdmwd_LOADED_WORKBOOKS_get()
-        except Exception as e:
-            logger.error(p3u.exc_err_msg(e))
-            raise
-    #endregion FI_get_loaded_workbook_names() method
-    # ------------------------------------------------------------------------ +
-    #region FI_get_loaded_workbooks_count() method
-    def FI_get_loaded_workbooks_count(self) -> int: 
-        """Return count of all loaded workbooks from Data Context."""
-        try:
-            # Reference the BDMWD_LOADED_WORKBOOKS.
-            return self.budget_domain_model.bdmwd_LOADED_WORKBOOKS_count()
-        except Exception as e:
-            logger.error(p3u.exc_err_msg(e))
-            raise
-    #endregion FI_get_loaded_workbooks_count() method
-    # ------------------------------------------------------------------------ +
-    #region FI_get_loaded_workbooks() method
-    def FI_get_loaded_workbooks(self) -> List[str]: 
-        """Return names of all loaded workbooks from Data Context."""
-        try:
-            # Reference the BDMWD_LOADED_WORKBOOKS.
-            return self.budget_domain_model.bdmwd_LOADED_WORKBOOKS_get()
-        except Exception as e:
-            logger.error(p3u.exc_err_msg(e))
-            raise
-    #endregion FI_get_loaded_workbook_names() method
-    # ------------------------------------------------------------------------ +
-    #region FI_get_loaded_workbook_names() method
-    def FI_get_loaded_workbook_names(self) -> List[str]: 
-        """Return names of all loaded workbooks from Data Context."""
-        try:
-            # Reference the BDMWD_LOADED_WORKBOOKS.
-            bdmwd_wb_list = self.budget_domain_model.bdmwd_LOADED_WORKBOOKS_get()
-            wb_name_list = []
-            for wb_name, _ in bdmwd_wb_list:
-                wb_name_list.append(wb_name)
-            return wb_name_list
-        except Exception as e:
-            logger.error(p3u.exc_err_msg(e))
-            raise
-    #endregion FI_get_loaded_workbook_names() method
-    # ------------------------------------------------------------------------ +
-    #region FI_get_loaded_workbook_by_index() method
-    def FI_get_loaded_workbook_by_index(self, i:int=0) -> Workbook: 
-        """Reference loaded loaded workbooks by index, return Workbook object."""
-        try:
-            # Reference the BDMWD_LOADED_WORKBOOKS.
-            bdmwd_wb_list = self.budget_domain_model.bdmwd_LOADED_WORKBOOKS_get()
-            if i < len(bdmwd_wb_list):
-                wb_name, wb = bdmwd_wb_list[i]
-                return wb
-            return None
-        except Exception as e:
-            logger.error(p3u.exc_err_msg(e))
-            raise
-    #endregion FI_get_loaded_workbook_by_index() method
-    # ------------------------------------------------------------------------ +
-    #region FI_get_loaded_workbook_by_name() method
-    def FI_get_loaded_workbook_by_name(self, name:str=None) -> Workbook: 
-        """Reference loaded loaded workbooks by name, return Workbook object."""
-        try:
-            # Reference the BDMWD_LOADED_WORKBOOKS.
-            bdmwd_wb_list = self.budget_domain_model.bdmwd_LOADED_WORKBOOKS_get()
-            for wb_name, wb in bdmwd_wb_list:
-                if wb_name == name:
-                    return wb
-            return None
-        except Exception as e:
-            logger.error(p3u.exc_err_msg(e))
-            raise
-    #endregion FI_get_loaded_workbook_by_name() method
     # ------------------------------------------------------------------------ +
     #                                                                          +
     #endregion ViewModelData_Context client implementation                         +

@@ -207,12 +207,12 @@ def test_BDM_FI_DATA_pseudo_Property_Methods():
                 f"Expected one of: {VALID_FI_TYPES}, got '{bdm.bdm_FI_TYPE(fi_key)}'"
             assert bdm.bdm_FI_FOLDER(fi_key) is not None , \
                 f"Expected bdm.bdm_FI_FOLDER({fi_key}) to be non-None"
-            assert isinstance(bdm.bdm_FI_DATA_COLLECTION(fi_key), 
+            assert isinstance(bdm.bdm_FI_WORKFLOW_DATA_COLLECTION(fi_key), 
                               (dict, type(None))), \
                 f"bdm_FI_DATA({fi_key}) should be type(None) or WF_DATA_COLLECTION"
-            assert isinstance(bdm.bdm_FI_DATA_COLLECTION_count(fi_key), int), \
+            assert isinstance(bdm.bdm_FI_WORKFLOW_DATA_COLLECTION_count(fi_key), int), \
                 f"Expected bdm.bdm_FI_DATA_COLLECTION_count({fi_key}) to be > 0"
-            assert bdm.bdm_FI_DATA_COLLECTION_count(fi_key) >= 0, \
+            assert bdm.bdm_FI_WORKFLOW_DATA_COLLECTION_count(fi_key) >= 0, \
                 f"Expected bdm.bdm_FI_DATA_COLLECTION_count({fi_key}) to be > 0"
     except Exception as e:
         pytest.fail(f"init_budget_model raised an exception: {str(e)}")
@@ -230,26 +230,26 @@ def test_BDM_FI_WF_DATA_OBJECT_pseudo_Property_Methods():
 
         # Expect valid values to work from default setup.
         for fi_key in VALID_FI_KEYS:
-            assert isinstance(bdm.bdm_FI_DATA_COLLECTION(fi_key), 
+            assert isinstance(bdm.bdm_FI_WORKFLOW_DATA_COLLECTION(fi_key), 
                               (dict, type(None))), \
                 f"bdm_FI_DATA({fi_key}) should be type(None) or WF_DATA_COLLECTION"
-            assert isinstance(bdm.bdm_FI_DATA_COLLECTION_count(fi_key), int), \
+            assert isinstance(bdm.bdm_FI_WORKFLOW_DATA_COLLECTION_count(fi_key), int), \
                 f"Expected bdm.bdm_FI_DATA_COLLECTION_count({fi_key}) to be > 0"
-            assert bdm.bdm_FI_DATA_COLLECTION_count(fi_key) >= 0, \
+            assert bdm.bdm_FI_WORKFLOW_DATA_COLLECTION_count(fi_key) >= 0, \
                 f"Expected bdm.bdm_FI_DATA_COLLECTION_count({fi_key}) to be > 0"
-            if bdm.bdm_FI_DATA_COLLECTION_count(fi_key) == 0:
+            if bdm.bdm_FI_WORKFLOW_DATA_COLLECTION_count(fi_key) == 0:
                 return
             # Test access to FI WF_DATA_OBJECTs.
             for wf_key in VALID_BDM_WORKFLOWS:
-                wf_do = bdm.bdm_WORKBOOK_DATA_COLLECTION(fi_key, wf_key)
-                assert isinstance(wf_do := bdm.bdm_WORKBOOK_DATA_COLLECTION(fi_key, wf_key),(dict,type(None))), \
+                wf_do = bdm.bdm_WORKFLOW_DATA_COLLECTION(fi_key, wf_key)
+                assert isinstance(wf_do := bdm.bdm_WORKFLOW_DATA_COLLECTION(fi_key, wf_key),(dict,type(None))), \
                     f"bdm_FI_DATA({fi_key}, {wf_key}) should None or WF_DATA_OBJECT"
                 if wf_do is not None:
                     l = len(wf_do)
                     assert isinstance(wf_do, dict), \
                         f"Expected bdm.bdm_FI_DATA({fi_key}, {wf_key}) to be a WF_OBJECT"
                     for wf_do_key in wf_do.keys():
-                        assert wf_do_key in VALID_WORKBOOK_DATA_COLLECTION_ATTR_KEYS, \
+                        assert wf_do_key in VALID_WORKFLOW_DATA_COLLECTION_ATTR_KEYS, \
                             f"Expected: {wf_do_key} to be a valid WF_OBJECT key."
                         if wf_do_key == WF_INPUT:
                             assert bdm.bdm_WF_TYPE_MAP(wf_key,wf_do_key) == WF_INPUT_FOLDER, \
@@ -269,19 +269,19 @@ def test_bdm_FI_WF_WORKBOOK_DATA_LIST():
             "Budget model should be a BudgetModel instance"
 
         for fi_key in VALID_FI_KEYS:
-            assert isinstance(bdm.bdm_FI_DATA_COLLECTION(fi_key), 
+            assert isinstance(bdm.bdm_FI_WORKFLOW_DATA_COLLECTION(fi_key), 
                               (dict, type(None))), \
                 f"bdm_FI_DATA({fi_key}) should be type(None) or WF_DATA_COLLECTION"
-            assert isinstance(bdm.bdm_FI_DATA_COLLECTION_count(fi_key), int), \
+            assert isinstance(bdm.bdm_FI_WORKFLOW_DATA_COLLECTION_count(fi_key), int), \
                 f"Expected bdm.bdm_FI_DATA_COLLECTION_count({fi_key}) to be > 0"
-            assert bdm.bdm_FI_DATA_COLLECTION_count(fi_key) >= 0, \
+            assert bdm.bdm_FI_WORKFLOW_DATA_COLLECTION_count(fi_key) >= 0, \
                 f"Expected bdm.bdm_FI_DATA_COLLECTION_count({fi_key}) to be > 0"
-            if bdm.bdm_FI_DATA_COLLECTION_count(fi_key) == 0:
+            if bdm.bdm_FI_WORKFLOW_DATA_COLLECTION_count(fi_key) == 0:
                 return
             # Test access to FI WF_DATA_OBJECTs.
             for wf_key in VALID_BDM_WORKFLOWS:
-                wf_do = bdm.bdm_WORKBOOK_DATA_COLLECTION(fi_key, wf_key)
-                assert isinstance(wf_do := bdm.bdm_WORKBOOK_DATA_COLLECTION(fi_key, wf_key),(dict,type(None))), \
+                wf_do = bdm.bdm_WORKFLOW_DATA_COLLECTION(fi_key, wf_key)
+                assert isinstance(wf_do := bdm.bdm_WORKFLOW_DATA_COLLECTION(fi_key, wf_key),(dict,type(None))), \
                     f"bdm_FI_DATA({fi_key}, {wf_key}) should None or WF_DATA_OBJECT"
                 if wf_do is not None:
                     assert len(wf_do) != 0, \

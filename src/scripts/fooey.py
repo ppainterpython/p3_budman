@@ -11,7 +11,7 @@ import p3_utils as p3u, p3logging as p3l
 # from budman_namespace import *
 from budman_namespace import (
     BDM_FOLDER, BDM_FI_COLLECTION,
-    FI_DATA_COLLECTION, FI_NAME, FI_FOLDER,BDM_WF_COLLECTION,
+    FI_WORKFLOW_DATA_COLLECTION, FI_NAME, FI_FOLDER,BDM_WF_COLLECTION,
     WF_INPUT_FOLDER,WF_WORKING_FOLDER, WF_OUTPUT_FOLDER,WF_NAME,
     WF_INPUT, WF_WORKING, WF_OUTPUT, WF_PURPOSE_FOLDER_MAP
     )
@@ -75,10 +75,10 @@ if __name__ == "__main__":
             fi_folder = fi_obj[FI_FOLDER]
             fi_name = fi_obj[FI_NAME]
             print(f"'{fi_folder}' [{fi_key}]'{fi_name}'")
-            if fi_obj[FI_DATA_COLLECTION] is None:
+            if fi_obj[FI_WORKFLOW_DATA_COLLECTION] is None:
                 logger.warning(f"FI_DATA_COLLECTION is None for FI_KEY: {fi_key}")
                 continue
-            for wf_key, data_obj in fi_obj[FI_DATA_COLLECTION].items():
+            for wf_key, data_obj in fi_obj[FI_WORKFLOW_DATA_COLLECTION].items():
                 wf_obj = wf_col[wf_key]
                 wf_name = wf_obj[WF_NAME] 
                 # print(f"  '{wf_key}' wf_name: '{wf_obj[WF_NAME]}'")

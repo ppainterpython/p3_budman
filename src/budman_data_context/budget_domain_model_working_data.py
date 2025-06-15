@@ -110,25 +110,29 @@ class BDMWorkingData(BudManDataContext, BDMClientInterface):
     #region    BudManDataContext (Interface) Property/Method Overrides.
     #          Overrides are used when the DC must be Model-Aware
     # ------------------------------------------------------------------------ +
+    #region BudManDataContext Interface Property Overrides.
     @property
-    def dc_WORKBOOK_COLLECTION(self) -> DATA_COLLECTION:
-        """Model-Aware: Return model.bdm_FI_WORKBOOK_COLLECTION(self.dc_FI_KEY)"""
+    def dc_WORKBOOK_DATA_COLLECTION(self) -> DATA_COLLECTION:
+        """Model-Aware: Return model.bdm_FI_WORKBOOK_DATA_COLLECTION(self.dc_FI_KEY)"""
         try:
             fi_key = self.dc_FI_KEY
             if fi_key is None:
-                m = "The dc_FI_KEY is not set. Cannot get WORKBOOK_COLLECTION."
-                logger.error(m)
-                raise ValueError(m)
+                m = "dc_FI_KEY is None. Cannot get bdm_FI_WORKBOOK_DATA_COLLECTION."
+                logger.warning(m)
+                return None
             # Ask the model for the bdmwd_WORKBOOKS.
-            return self.model.bdm_FI_WORKBOOK_COLLECTION(fi_key)
+            return self.model.bdm_FI_WORKBOOK_DATA_COLLECTION(fi_key)
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise ValueError(f"Failed: model.bdm_FI_WORKBOOK_COLLECTION({fi_key})")
-    @dc_WORKBOOK_COLLECTION.setter
-    def dc_WORKBOOK_COLLECTION(self, value: WORKBOOK_DATA_LIST) -> None:
+    @dc_WORKBOOK_DATA_COLLECTION.setter
+    def dc_WORKBOOK_DATA_COLLECTION(self, value: WORKBOOK_DATA_LIST) -> None:
         """Set the list of workbooks in the DC."""
         logger.warning("Setting dc_WORKBOOKS directly is not supported.")
+    #endregion BudManDataContext Interface Property Overrides.
+    # ------------------------------------------------------------------------ +
+    #region BudManDataContext Interface Properties Overrides.
 
     # @property
     # def dc_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_COLLECTION:
@@ -172,8 +176,8 @@ class BDMWorkingData(BudManDataContext, BDMClientInterface):
     #     except Exception as e:
     #         return self.BMVM_cmd_exception(e)
 
+    #endregion BudManDataContext Interface Properties Overrides.
     # ------------------------------------------------------------------------ +
-
     #endregion BudManDataContext (Interface) Property/Method Overrides.
     # ======================================================================== +
 

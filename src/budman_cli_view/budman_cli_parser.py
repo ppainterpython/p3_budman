@@ -14,6 +14,10 @@ import p3_utils as p3u, p3logging as p3l
 import cmd2, argparse
 from cmd2 import (Cmd2ArgumentParser, with_argparser)
 # local modules and packages
+from budman_namespace import (
+    WB_TYPE_TRANSACTIONS, WB_TYPE_BUDGET, WB_TYPE_CHECK_REGISTER,
+    WB_TYPE_BDM_STORE, WB_TYPE_BDM_CONFIG, VALID_WB_TYPE_VALUES)
+                              
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -60,18 +64,45 @@ class BudManCLIParser():
         self.save_cmd = cmd2.Cmd2ArgumentParser()
         self.val_cmd = cmd2.Cmd2ArgumentParser()
         self.workflow_cmd = cmd2.Cmd2ArgumentParser()
+        self.change_cmd = cmd2.Cmd2ArgumentParser()
         self.init_cmd_parser_setup(app_name)
         self.show_cmd_parser_setup()
         self.load_cmd_parser_setup()
         self.save_cmd_parser_setup()
         self.val_cmd_parser_setup()
         self.workflow_cmd_parser_setup()
+        self.change_cmd_parser_setup()
         # self.init_cmd = cmd2.Cmd2ArgumentParser(parents=[parent_parser])
         # self.show_cmd = cmd2.Cmd2ArgumentParser(parents=[parent_parser])
         # self.load_cmd = cmd2.Cmd2ArgumentParser(parents=[parent_parser])
         # self.save_cmd = cmd2.Cmd2ArgumentParser(parents=[parent_parser])
         # self.val_cmd = cmd2.Cmd2ArgumentParser(parents=[parent_parser])
         # self.workflow_cmd = cmd2.Cmd2ArgumentParser(parents=[parent_parser])
+
+    def change_cmd_parser_setup(self,app_name : str = "not-set") -> None:
+        """Change settings."""
+        try:
+            parser = self.change_cmd
+            parser.prog = app_name
+            title = f"Change SubCommands"
+            # change subcommands: wb_type, wb_ref
+            subparsers = parser.add_subparsers(title=title, dest="change_cmd")
+            # subcommand init workbooks [wb_name] [-fi [fi_key] [-wf [wf_key]]
+            wb_type_subcmd_parser = subparsers.add_parser(
+                "wb_ref", 
+                aliases=["wb", "workbooks"], 
+                help="Workbook reference wb_name, wb_index, or 'all'.")
+            wb_type_subcmd_parser.set_defaults(change_cmd="workbooks")
+            wb_type_choices = VALID_WB_TYPE_VALUES
+            wb_type_subcmd_parser.add_argument(
+                "-t", "--wb_type",nargs="?", dest="wb_type", 
+                default = None,
+                choices=wb_type_choices,
+                help="Specify the workbook type to apply.")
+            self.add_common_args(wb_type_subcmd_parser)
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise
 
     def init_cmd_parser_setup(self,app_name : str = "not-set") -> None:
         """Setup 'init' cmd argument parsers."""
@@ -121,6 +152,8 @@ class BudManCLIParser():
                 action="store", 
                 default='all',
                 help="Workbook name.")
+            for subparser in [fi_subcmd_parser, wb_subcmd_parser]:
+                self.add_common_args(subparser)
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise
@@ -128,6 +161,7 @@ class BudManCLIParser():
     def show_cmd_parser_setup(self) -> None:
         """Setup the command line argument parsers for the show command."""
         try:
+            parser = self.show_cmd
             # show subcommands: datacontext, workbooks, fin_inst, workflows, and workbooks
             self.show_cmd_subparsers = self.show_cmd.add_subparsers(
                 dest="show_cmd")
@@ -178,6 +212,12 @@ class BudManCLIParser():
                 const = 'info', 
                 default = None,  # info | verbose
                 help="Show additional information about the workbook.")
+
+            for subparser in [self.show_wb_subcmd_parser, 
+                              self.show_wf_subcmd_parser,
+                              self.show_fi_subcmd_parser,
+                              self.show_datacontext_subcmd_parser]:
+                self.add_common_args(subparser)
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise
@@ -225,6 +265,7 @@ class BudManCLIParser():
                 action="store", 
                 default=cr_url,
                 help=f"Workbook url: a 'file://' to a check_register .csv or 'all'.")
+            self.add_common_args(parser)
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise
@@ -261,6 +302,7 @@ class BudManCLIParser():
                 "-wf", nargs="?", dest="wf_key", 
                 default= "all",
                 help="WF key value.") 
+            self.add_common_args(parser)
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise
@@ -324,12 +366,12 @@ class BudManCLIParser():
         try:
             parser = self.workflow_cmd
             # Add subparsers for workflow command parser
+            d = "The workflow command is used to execute workflow tasks on "
+            d += "available workbooks. Each task is associated with a "
+            d += "subcommand used to present the arguments relevant for the task."
             subparsers = parser.add_subparsers(
-                dest="workflow_cmd", title="Workflow Commands",
-                description="""The workflow command is used to execute workflow tasks on 
-                available workbooks. Each task has a subcommand used to present the
-                arguments appropriate for the task.
-                """)
+                dest="workflow_cmd", title="Workflow Task Commands",
+                description=d)
             # Workflow tasks: map-category, apply, reload, check
             # task 'check' subcommand
             check_parser = subparsers.add_parser(
@@ -357,6 +399,11 @@ class BudManCLIParser():
                 action="store", 
                 default='all',
                 help="Apply 1 or all check_registers to the workbooks.")
+            # apply_parser.add_argument(
+            #     "wb_ref", nargs="?",
+            #     action="store", 
+            #     default='all',
+            #     help="Workbook reference, name or number of a loaded workbook.")
             
             # Workflow subcommand: reload
             reload_parser = subparsers.add_parser(
@@ -385,10 +432,10 @@ class BudManCLIParser():
                 action="store_true", 
                 help="Command is only parsed with results returned.")
 
-            self.add_common_args(parser)
+            # self.add_common_args(parser)
             # Instead of propagating, just add common args directly to each subparser:
-            # for subparser in [apply_parser, check_parser, reload_parser, categorization_parser]:
-            #     self.add_common_args(subparser)
+            for subparser in [apply_parser, check_parser, reload_parser, categorization_parser]:
+                self.add_common_args(subparser)
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise
@@ -401,13 +448,16 @@ class BudManCLIParser():
                 description="Add these to any command.")
             # Add common arguments to the parser
             common_args.add_argument(
-                "--parse-only","-po",  
-                action="store_true", 
-                help="""The command is only parsed and the resulting command
-                arguments and values are displayed without executing the 
-                  command.""")
+                "wb_ref", nargs="?", 
+                action="store", 
+                default='all',
+                help="Workbook reference, name or number from show workbooks.")
             common_args.add_argument(
-                "--validate-only", "-vo", 
+                "-po", "--parse-only",  
+                action="store_true", 
+                help="The command line is only parsed and displayed without executing.")
+            common_args.add_argument(
+                "-vo", "--validate-only",  
                 action="store_true", 
                 help="Command args are only validated with results returned, but no cmd execution.")
             common_args.add_argument(
