@@ -6,6 +6,7 @@
 #region Imports
 # python standard libraries packages and modules 
 import logging
+from pathlib import Path
 # third-party  packages and module libraries
 from dynaconf import Dynaconf
 from p3_utils import exc_err_msg, dscr
@@ -34,20 +35,35 @@ class BudManSettings(metaclass=BDMSingletonMeta):
     def settings(self) -> Dynaconf:
         """Return the settings object."""
         return self._settings
-    
-#region configure_settings() function
-def configure_settings(self) -> None:
-    """Setup the application settings."""
-    try:
-        # Configure settings
-
-        self._settings = BudManApp_settings = Dynaconf(
-                envvar_prefix="DYNACONF",
-                settings_files=[BUDMAN_SETTINGS, '.secrets.toml'],
-            )
-        return self
-    except Exception as e:
-        print(exc_err_msg(e))
-        raise
-#endregion configure_settings() function
-# ------------------------------------------------------------------------ +
+    # ------------------------------------------------------------------------ +
+    #region    BDM_STORE_abs_path()
+    def BDM_STORE_abs_path(self) -> str:
+        """Return the absolute path to the BDM_STORE file."""
+        try:
+            budman_store_filename_value = self.settings[BDM_STORE_FILENAME]
+            budman_store_filetype_value = self.settings[BDM_STORE_FILETYPE]
+            budman_store_full_filename = f"{budman_store_filename_value}{budman_store_filetype_value}"
+            budman_folder = self.settings[BUDMAN_FOLDER]
+            budman_folder_abs_path = Path(budman_folder).expanduser().resolve()
+            budman_store_abs_path = budman_folder_abs_path / budman_store_full_filename
+            return str(budman_folder_abs_path)
+        except Exception as e:
+            logger.error(exc_err_msg(e))
+            raise
+    #endregion BDM_STORE_abs_path()
+    # ------------------------------------------------------------------------ +
+    #region    configure_settings() function
+    def configure_settings(self) -> None:
+        """Setup the application settings."""
+        try:
+            # Configure settings
+            self._settings = BudManApp_settings = Dynaconf(
+                    envvar_prefix="DYNACONF",
+                    settings_files=[BUDMAN_SETTINGS, '.secrets.toml'],
+                )
+            return self
+        except Exception as e:
+            print(exc_err_msg(e))
+            raise
+    #endregion configure_settings() function
+    # ------------------------------------------------------------------------ +

@@ -53,21 +53,20 @@ def configure_logging(logger_name : str, logtest : bool = True) -> None:
 
     TODO: refactor WORKBOOKS and LOADED_WORKBOOKS in a single DATA_COLLECTION
     with objects storing the WB_INFO such as loaded, in excel, abs_path, wb_name
-    etc.f
-    TODO: Change BudManDataContext to use BDM_STORE if loaded to respond
-    TODO: implement parse-only, validate-only and what-if argument support
+
     TODO: Convert the WORKBOOK_DATA_LIST to DATA_COLLECTION from DATA_TUPLE_LIST. And
     refine the FI_WF, WF_DATA_OBJECT, FI_DATA naming to just DATA_OBJECT. 
     DATA_OBJECTs are association with an fi_key, wf_key, and wb_type.
-    TODO: BDM methods needed:
-        - get WB_TYPE from WB_NAME, same for FI_KEY and WF_KEY
+
+    TODO: Change BudManDataContext to use BDM_STORE if loaded to respond
+
     TODO: handle the same WB_NAME being in several wf folders.
+
     TODO: Consider making BudManDataContext have a binding for Model and 
     ViewModel objects. As a concrete implementation, it provides model and 
     view_model properties. Consider some of the dc_methods conditionally
     forwarding calls onto the model or view_model properties, if the methods
     are available on those objects.
-    TODO: cp_validate_cmd() update new cmd args, some are unchecked
 """
 #endregion backlog - main todo list
 # ---------------------------------------------------------------------------- +
@@ -77,11 +76,16 @@ def main(bdms_url : str = None):
         bdms_url (str): Optional, the URL to BDM_STORE to load at startup.
     """
     try:
+        # TODO: modify to use BudManSettings() for user_settings, not app.
+        # Define a set of folders to search for it, auto-load.
         BudManMain_settings : Dynaconf = BudManSettings().settings
         if BudManMain_settings is None:
-                raise ValueError("Settings not configured.")
-        configure_logging(BudManMain_settings[APP_NAME], logtest=False) 
-        logger.debug(f"Started: bdms_url = '{bdms_url}'...")
+                raise ValueError("BudMan Settings not configured.")
+        app_name = BudManMain_settings.get(APP_NAME, "BudManApp")
+        configure_logging(app_name, logtest=False)
+        if bdms_url is None:
+            bdms_url = BudManMain_settings[BDM_STORE_URL]
+        logger.debug(f"Started: {app_name} bdms_url = '{bdms_url}'...")
         app = BudManApp(BudManMain_settings)
         logger.info(f"{dscr(app)} created. ...")
         app.run(bdms_url)  # Start the application
@@ -91,6 +95,6 @@ def main(bdms_url : str = None):
         sys.exit(1)
 
 if __name__ == "__main__":
-    bdms_url = "file:///C:/Users/ppain/OneDrive/budget/p3_budget_manager_ca063e8b.jsonc"
+    bdms_url = None #"file:///C:/Users/ppain/OneDrive/budget/p3_budget_manager_ca063e8b.jsonc"
     main(bdms_url)
     

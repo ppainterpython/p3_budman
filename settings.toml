@@ -11,6 +11,7 @@ short_app_name = "budman"         # ditto
 folder = "~/OneDrive/budget"   # Where data files will go
 store_filename = "p3_budget_manager_ca063e8b"  # a BSM file
 store_filetype = ".jsonc"  # a BSM filetype
+store_url = "file:///C:/Users/ppain/OneDrive/budget/p3_budget_manager_ca063e8b.jsonc"  
 default_fi = "boa" 
 default_workflow = "categorization" 
 default_workbook_type = "wf_working" 

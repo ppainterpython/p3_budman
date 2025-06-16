@@ -27,7 +27,7 @@
 import logging, os, time
 from pathlib import Path
 from urllib.parse import urlparse, unquote
-from typing import Dict, List
+from typing import Dict, List, Any
 
 # third-party modules and packages
 import p3_utils as p3u, pyjson5, p3logging as p3l
@@ -35,13 +35,17 @@ import pyjson5 as json5
 # local modules and packages
 from budman_namespace import (
     BSM_PERSISTED_PROPERTIES, BDM_STORE, VALID_BSM_BDM_STORE_FILETYPES,
-    VALID_WB_FILETYPES)
+    VALID_WB_FILETYPES, BSM_DATA_COLLECTION_CSV_STORE_FILETYPES,
+    WB_FILETYPE_CSV, WB_FILETYPE_XLSX)
+from budget_storage_model.csv_data_collection import (csv_DATA_COLLECTION_get_url)
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region    Globals and Constants
 logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
+# ---------------------------------------------------------------------------- +
+#region    BDM_STORE methods
 # ---------------------------------------------------------------------------- +
 #region    bsm_BDM_STORE_url_load() function
 def bsm_BDM_STORE_url_load(bdms_url : str = None) -> BDM_STORE:
@@ -207,6 +211,60 @@ def bsm_BDM_STORE_new(bdms_url : str = None) -> str:
         raise
 #endregion bsm_BDM_STORE_new module
 # ---------------------------------------------------------------------------- +
+#region    bsm_BDM_STORE_file_abs_path()
+def bsm_BDM_STORE_file_abs_path(filename : str, filetype : str, folder : str  ) -> Path:
+    """Construct a BDM_STORE abs_path."""
+    try:
+        full_filename = filename + filetype
+        folder_abs_path = Path(folder).expanduser().resolve()
+        full_abs_path = folder_abs_path / full_filename
+        return full_abs_path
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion bsm_BDM_STORE_file_abs_path()
+# ---------------------------------------------------------------------------- +
+#endregion BDM_STORE methods
+# ---------------------------------------------------------------------------- +
+#region    WORKBOOK methods
+# ---------------------------------------------------------------------------- +
+#region    bsm_WORKBOOK_url_get(wb_url : str = None) -> Any
+def bsm_WORKBOOK_url_get(wb_url : str = None) -> Any:
+    """Load a workbook from a URL.
+
+    Args:
+        wb_url (str): The URL to the workbook to load.
+    
+    Returns:
+        Any: The loaded workbook object.
+    """
+    try:
+        p3u.is_non_empty_str("wb_url", wb_url, raise_error=True)
+        wb_abs_path = bsm_WB_URL_verify_file_scheme(wb_url, test=True)
+        wb_filetype = wb_abs_path.suffix.lower()
+        # Dispatch based on filetype.
+        if wb_filetype not in [WB_FILETYPE_XLSX, WB_FILETYPE_CSV]:
+            # If the filetype is not supported, raise an error.
+            m = f"Unsupported workbook filetype: {wb_filetype} in file: {wb_abs_path}"
+            logger.error(m)
+            raise ValueError(m)
+        if wb_filetype == WB_FILETYPE_CSV:
+            # If the filetype is CSV, load it as a CSV file.
+            logger.info(f"Loading workbook as CSV from file: '{wb_abs_path}'")
+            csv_data_collection = csv_DATA_COLLECTION_get_url(wb_url)
+            return csv_data_collection
+        if wb_filetype == WB_FILETYPE_XLSX:
+            # If the filetype is XLSX, load it as an Excel workbook.
+            logger.info(f"Loading workbook as XLSX from file: '{wb_abs_path}'")
+            wb_content = bsm_WORKBOOK_url_get(wb_abs_path)
+            return wb_content
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion bsm_WORKBOOK_url_get(wb_url : str = None) -> Any
+# ---------------------------------------------------------------------------- +
+#endregion    WORKBOOK methods
+# ---------------------------------------------------------------------------- +
 #region    bsm_verify_folder(ap: Path, create:bool=True, raise_errors:bool=True) -> bool
 def bsm_verify_folder(ap: Path, create:bool=True, raise_errors:bool=True) -> bool:
     """Verify the folder exists, create it if it does not exist.
@@ -236,19 +294,6 @@ def bsm_verify_folder(ap: Path, create:bool=True, raise_errors:bool=True) -> boo
         logger.error(p3u.exc_err_msg(e))
         raise
 #endregion bsm_verify_folder(ap: Path, create:bool=True, raise_errors:bool=True) -> bool
-# ---------------------------------------------------------------------------- +
-#region    bsm_BDM_STORE_file_abs_path()
-def bsm_BDM_STORE_file_abs_path(filename : str, filetype : str, folder : str  ) -> Path:
-    """Construct a BDM_STORE abs_path."""
-    try:
-        full_filename = filename + filetype
-        folder_abs_path = Path(folder).expanduser().resolve()
-        full_abs_path = folder_abs_path / full_filename
-        return full_abs_path
-    except Exception as e:
-        logger.error(p3u.exc_err_msg(e))
-        raise
-#endregion bsm_BDM_STORE_file_abs_path()
 # ---------------------------------------------------------------------------- +
 #region    bsm_get_workbook_names()
 def bsm_get_workbook_names(abs_folder : Path) -> List[Path]:
@@ -302,4 +347,55 @@ def bsm_filter_workbook_names(wb_paths : List[Path]) -> List[Path]:
         logger.error(p3u.exc_err_msg(e))
         raise
 #endregion bsm_filter_workbook_names()
+# ---------------------------------------------------------------------------- +
+#region    Common methods
+# ---------------------------------------------------------------------------- +
+#region    bsm_WB_URL_resolve(wb_url : str = None) -> Path
+# ---------------------------------------------------------------------------- +
+#region    bsm_WB_URL_verify_file_scheme(url: str) function 
+def bsm_WB_URL_verify_file_scheme(wb_url: str,test:bool=True) -> Path:
+    """Verify wb_url is a valid file url and path, return it as a Path object."""
+    try:
+        p3u.is_non_empty_str("wb_url", wb_url, raise_error=True)
+        parsed_url = urlparse(wb_url)
+        if parsed_url.scheme != "file":
+            raise ValueError(f"URL scheme is not 'file': {parsed_url.scheme}")
+        file_path = Path.from_uri(wb_url)
+        if test and not file_path.exists():
+            raise FileNotFoundError(f"File does not exist: {file_path}")
+        return file_path
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion bsm_WB_URL_verify_file_scheme(url: str) function
+# ---------------------------------------------------------------------------- +
+#region    bsm_WORKBOOK_verify_file_path_for_load(url: str) function 
+def bsm_WORKBOOK_verify_file_path_for_load(file_path: Path) -> None:
+    """Verify that the file path is valid and ready to load or raise error."""
+    try:
+        p3u.is_obj_of_type("file_path", file_path, Path, raise_error=True)
+        if not file_path.exists():
+            raise FileNotFoundError(f"File does not exist: {file_path}")
+        if not file_path.exists():
+            m = f"file does not exist: {file_path}"
+            logger.error(m)
+            raise FileNotFoundError(m)
+        if not file_path.is_file():
+            m = f"csv_path is not a file: '{file_path}'"
+            logger.error(m)
+            raise ValueError(m)
+        if not file_path.suffix in BSM_DATA_COLLECTION_CSV_STORE_FILETYPES:
+            m = f"csv_path filetype is not supported: {file_path.suffix}"
+            logger.error(m)
+            raise ValueError(m)
+        if file_path.stat().st_size == 0:
+            m = f"file is empty: {file_path}"
+            logger.error(m)
+            raise ValueError(m)
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion bsm_WORKBOOK_verify_file_path_for_load(url: str) function
+# ---------------------------------------------------------------------------- +
+#endregion Common methods
 # ---------------------------------------------------------------------------- +

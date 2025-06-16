@@ -32,7 +32,7 @@ class BudManApp(metaclass=BDMSingletonMeta):
     # ------------------------------------------------------------------------ +
     # region Class Properties    
     def __init__(self, app_settings : Dynaconf = None) -> None:
-        """Initialize the BudManApp."""
+        """BudManApp__init__()."""
         self._settings : Dynaconf = app_settings
         self._cli_view: object = None  # type: ignore
         self._app_name: str = None

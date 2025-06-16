@@ -231,7 +231,7 @@ class BudManCLIParser():
             # subcommand load BDM_STORE
             bm_store_subcmd_parser = subparsers.add_parser(
                 "BDM_STORE",
-                aliases=["store", "bms", "BMS", "budget_manager_store","BDM_STORE"], 
+                aliases=["store", "bms", "budget_manager_store","BDM_STORE"], 
                 help="Load the Budget Manager Store file.")
             bm_store_subcmd_parser.set_defaults(load_cmd="BDM_STORE")
             # subcommand load workbooks [wb_name] [fi_key]
@@ -243,7 +243,7 @@ class BudManCLIParser():
             wb_subcmd_parser.add_argument(
                 "wb_ref", nargs="?",
                 action="store", 
-                default='all',
+                default=None,
                 help=f"Workbook reference: wb_name or wb_index or 'all'.")
             wb_subcmd_parser.add_argument(
                 "-fi", nargs="?", dest="fi_key", 
@@ -266,6 +266,11 @@ class BudManCLIParser():
                 default=cr_url,
                 help=f"Workbook url: a 'file://' to a check_register .csv or 'all'.")
             self.add_common_args(parser)
+            for subparser in [ 
+                              check_register_subcmd_parser,
+                              wb_subcmd_parser,
+                              bm_store_subcmd_parser]:
+                self.add_common_args(subparser)
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise
@@ -447,11 +452,11 @@ class BudManCLIParser():
                 title="Common Options", 
                 description="Add these to any command.")
             # Add common arguments to the parser
-            common_args.add_argument(
-                "wb_ref", nargs="?", 
-                action="store", 
-                default='all',
-                help="Workbook reference, name or number from show workbooks.")
+            # common_args.add_argument(
+            #     "wb_ref", nargs="?", 
+            #     action="store", 
+            #     default='all',
+            #     help="Workbook reference, name or number from show workbooks.")
             common_args.add_argument(
                 "-po", "--parse-only",  
                 action="store_true", 

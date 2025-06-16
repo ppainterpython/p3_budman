@@ -1525,7 +1525,8 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
     #region bsm_load_workbook(self, workbook_path:Path) function
     def bsm_load_workbook(self, input_path:Path) -> Workbook:
         """Load a transaction file for a Financial Institution Workflow.
-
+        
+        Deprecating in favor of budget_storage_model.bsm_WORKBOOK_file_load()
         Storage Model: This is a Model function, loading an excel workbook
         file into memory.
 

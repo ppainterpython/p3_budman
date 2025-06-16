@@ -21,7 +21,7 @@
 #region Imports
 # python standard library modules and packages
 from abc import ABC, abstractmethod
-from typing import Dict, List, Any
+from typing import Tuple, Any
 # third-party modules and packages
 from openpyxl import Workbook
 # local modules and packages
@@ -37,6 +37,12 @@ class BudManDataContextBaseInterface(ABC):
     #region Abstract Properties
     @property
     @abstractmethod
+    def dc_VALID(self) -> bool:
+        """DC-Only: Indicates whether the data context is valid."""
+        pass
+    
+    @property
+    @abstractmethod
     def dc_INITIALIZED(self) -> bool:
         """Indicates whether the data context has been initialized."""
         pass
@@ -44,6 +50,17 @@ class BudManDataContextBaseInterface(ABC):
     @abstractmethod
     def dc_INITIALIZED(self, value: bool) -> None:
         """Set the initialized state of the data context."""
+        pass
+
+    @property
+    @abstractmethod
+    def dc_FI_OBJECT(self) -> str:
+        """DC-Only: Return the FI_OBJECT of the current Financial Institution. """
+        pass
+    @dc_FI_OBJECT.setter
+    @abstractmethod
+    def dc_FI_OBJECT(self, value: str) -> None:
+        """DC-Only: Set the FI_OBJECT of the current Financial Institution."""
         pass
 
     @property
@@ -69,6 +86,19 @@ class BudManDataContextBaseInterface(ABC):
     @dc_WF_KEY.setter
     @abstractmethod
     def dc_WF_KEY(self, value: str) -> None:
+        """Set the WF_KEY for the workflow."""
+        pass
+
+    @property
+    @abstractmethod
+    def dc_WF_PURPOSE(self) -> str:
+        """Return the WF_KEY for the current workflow of interest.
+        Current means that the other data in the DC is for this workflow.
+        """
+        pass
+    @dc_WF_PURPOSE.setter
+    @abstractmethod
+    def dc_WF_PURPOSE(self, value: str) -> None:
         """Set the WF_KEY for the workflow."""
         pass
 
@@ -132,17 +162,6 @@ class BudManDataContextBaseInterface(ABC):
 
     @property
     @abstractmethod
-    def dc_WORKBOOKS(self) -> WORKBOOK_DATA_LIST:
-        """Return the list of workbooks in the DC."""
-        pass
-    @dc_WORKBOOKS.setter
-    @abstractmethod
-    def dc_WORKBOOKS(self, value: WORKBOOK_DATA_LIST) -> None:
-        """Set the list of workbooks in the DC."""
-        pass
-
-    @property
-    @abstractmethod
     def dc_WORKBOOK_DATA_COLLECTION(self) -> WORKBOOK_DATA_COLLECTION:
         """Return the WORKBOOK_DATA_COLLECTION of workbooks in the DC.
         Depends on the value of dc_FI_KEY, returning the 
@@ -155,6 +174,17 @@ class BudManDataContextBaseInterface(ABC):
         """Set the WORKBOOK_DATA_COLLECTION of workbooks in the DC.
         Depends on the value of dc_FI_KEY, returning the 
         FI_WORKBOOK_DATA_COLLECTION for that fi_key."""
+        pass
+
+    @property
+    @abstractmethod
+    def dc_WORKBOOKS(self) -> WORKBOOK_DATA_LIST:
+        """Return the list of workbooks in the DC."""
+        pass
+    @dc_WORKBOOKS.setter
+    @abstractmethod
+    def dc_WORKBOOKS(self, value: WORKBOOK_DATA_LIST) -> None:
+        """Set the list of workbooks in the DC."""
         pass
 
     @property
@@ -199,6 +229,11 @@ class BudManDataContextBaseInterface(ABC):
         pass
 
     @abstractmethod
+    def dc_WF_PURPOSE_validate(self, wf_purpose: str) -> bool:
+        """Validate the provided WF_PURPOSE."""
+        pass
+
+    @abstractmethod
     def dc_WB_TYPE_validate(self, wb_type: str) -> bool:
         """Validate the provided WB_TYPE."""
         pass
@@ -211,6 +246,11 @@ class BudManDataContextBaseInterface(ABC):
     @abstractmethod
     def dc_WB_REF_validate(self, wb_ref: str) -> bool:
         """Validate the provided workbook reference."""
+        pass
+
+    @abstractmethod
+    def dc_WB_REF_resolve(self, wb_ref: str) -> Tuple[bool,int, str]:
+        """Resolve the provided workbook reference."""
         pass
 
     @abstractmethod
@@ -235,7 +275,7 @@ class BudManDataContextBaseInterface(ABC):
         pass
 
     @abstractmethod
-    def dc_WORKBOOK_load(self, wb_name: str) -> Workbook:
+    def dc_WORKBOOK_load(self, wb_index: str) -> Any:
         """Load the specified workbook by name."""
         pass
 

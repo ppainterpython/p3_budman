@@ -29,13 +29,14 @@
 import pytest, os
 from pathlib import Path
 from abc import ABC, abstractmethod
-from typing import Tuple
+from typing import Tuple, Any
 # third-party modules and packages
 from openpyxl import Workbook
 import logging, p3_utils as p3u, p3logging as p3l
 # local modules and packages
 from budman_namespace import (
-    FI_OBJECT,
+    FI_OBJECT, FI_COLLECTION, VALID_WF_PURPOSE_VALUES,
+    VALID_WB_TYPE_VALUES,
     DATA_CONTEXT, WORKBOOK_DATA_LIST, LOADED_WORKBOOK_COLLECTION,
     WORKBOOK_DATA_COLLECTION, WORKFLOW_DATA_COLLECTION,
     BDM_STORE, DATA_COLLECTION, ALL_KEY, FI_KEY, WF_KEY, WB_REF, WB_NAME,
@@ -84,7 +85,12 @@ class BudManDataContext(BudManDataContextBaseInterface):
         self._dc_LOADED_CHECK_REGISTERS : DATA_COLLECTION = None 
     #endregion __init__()
     # ------------------------------------------------------------------------ +
-    #region Concrete Interface Properties
+    #region Concrete Property Interface implementations 
+    @property
+    def dc_VALID(self) -> bool:
+        """DC-Only: Indicates whether the data context is valid."""
+        return self.dc_is_valid()
+    
     @property
     def dc_INITIALIZED(self) -> bool:
         """DC-Only: Indicates whether the data context has been initialized."""
@@ -94,15 +100,38 @@ class BudManDataContext(BudManDataContextBaseInterface):
         """DC-Only: Set the initialized state of the data context."""
         self._dc_initialized = value
 
+    #region    dc_FI_OBJECT
+    @property
+    def dc_FI_OBJECT(self) -> str:
+        """DC-Only: Return the FI_OBJECT of the current Financial Institution. """
+        return self._dc_FI_OBJECT if self.dc_VALID else None
+    @dc_FI_OBJECT.setter
+    def dc_FI_OBJECT(self, value: str) -> None:
+        """DC-Only: Set the FI_OBJECT of the current Financial Institution."""
+        if not self.dc_VALID: return None
+        self._dc_FI_OBJECT = value
+    #endregion dc_FI_OBJECT
+
     @property
     def dc_FI_KEY(self) -> str:
         """DC-Only: Return the FI_KEY of the current Financial Institution.
+        Depends on the value of dc_BDM_STORE.
         Current means that the other data in the DC is for this FI.
         """
+        if self.dc_BDM_STORE is None:
+            m = "dc_BDM_STORE is None. Cannot get fi_key."
+            logger.warning(m)
+            return None
         return self._dc_FI_KEY
     @dc_FI_KEY.setter
     def dc_FI_KEY(self, value: str) -> None:
-        """DC-Only: Set the FI_KEY of the current Financial Institution."""
+        """DC-Only: Set the FI_KEY of the current Financial Institution.
+        Depends on the value of dc_BDM_STORE.
+        """
+        if self.dc_BDM_STORE is None:
+            m = "dc_BDM_STORE is None. Cannot set fi_key."
+            logger.warning(m)
+            return None
         self._dc_FI_KEY = value
 
     @property
@@ -180,31 +209,25 @@ class BudManDataContext(BudManDataContextBaseInterface):
         self._dc_BDM_STORE = value
 
     @property
+    def dc_WORKBOOK_DATA_COLLECTION(self) -> DATA_COLLECTION:
+        """DC-Only: Return the WORKBOOK_DATA_COLLECTION of workbooks in the DC.
+        Depends on the value of dc_FI_KEY, returning the 
+        FI_WORKBOOK_DATA_COLLECTION for that fi_key."""
+        if not self.dc_VALID: return None
+        return self._dc_WORKBOOK_DATA_COLLECTION
+    @dc_WORKBOOK_DATA_COLLECTION.setter
+    def dc_WORKBOOK_DATA_COLLECTION(self, value: WORKBOOK_DATA_LIST) -> None:
+        """DC-Only: Set the list of workbooks in the DC."""
+        if not self.dc_VALID: return None
+        self._dc_WORKBOOK_DATA_COLLECTION = value
+
+    @property
     def dc_WORKBOOKS(self) -> WORKBOOK_DATA_LIST:
         """DC-Only: Return the list of workbooks in the DC."""
         return self._dc_WORKBOOKS
     @dc_WORKBOOKS.setter
     def dc_WORKBOOKS(self, value: WORKBOOK_DATA_LIST) -> None:
         """DC-Only: Set the list of workbooks in the DC."""
-        self._dc_WORKBOOKS = value
-
-    @property
-    def dc_WORKBOOK_DATA_COLLECTION(self) -> DATA_COLLECTION:
-        """DC-Only: Return the WORKBOOK_DATA_COLLECTION of workbooks in the DC.
-        Depends on the value of dc_FI_KEY, returning the 
-        FI_WORKBOOK_DATA_COLLECTION for that fi_key."""
-        if self.dc_FI_KEY is None:
-            m = "dc_FI_KEY is None. Cannot get bdm_FI_WORKBOOK_DATA_COLLECTION."
-            logger.warning(m)
-            return None
-        return self._dc_WORKBOOK_DATA_COLLECTION
-    @dc_WORKBOOK_DATA_COLLECTION.setter
-    def dc_WORKBOOK_DATA_COLLECTION(self, value: WORKBOOK_DATA_LIST) -> None:
-        """DC-Only: Set the list of workbooks in the DC."""
-        if self.dc_FI_KEY is None:
-            m = "dc_FI_KEY is None. Cannot get bdm_FI_WORKBOOK_DATA_COLLECTION."
-            logger.warning(m)
-            return None
         self._dc_WORKBOOKS = value
 
     @property
@@ -250,35 +273,43 @@ class BudManDataContext(BudManDataContextBaseInterface):
     #region Concrete Interface Methods
     def dc_initialize(self) -> None:
         """DC-Only: Initialize the data context."""
+        self.dc_FI_OBJECT = None 
         self.dc_FI_KEY = None
         self.dc_WF_KEY = None
         self.dc_WF_PURPOSE = None
         self.dc_WB_TYPE = None
         self.dc_WB_NAME = None
+        self.dc_WB_REF = None
         self.dc_BDM_STORE = dict()
         self.dc_WORKBOOKS = []
+        self.dc_WORKBOOK_DATA_COLLECTION = dict()
         self.dc_LOADED_WORKBOOKS = dict()
         self.dc_EXCEL_WORKBOOKS = dict()
+        self.dc_DataContext = dict()
         self.dc_CHECK_REGISTERS = dict()
         self.dc_LOADED_CHECK_REGISTERS = dict()
         self.dc_INITIALIZED = True
         return self
 
     def dc_FI_KEY_validate(self, fi_key: str) -> bool:
-        """DC-Only: Validate the provided FI_KEY."""
-        return isinstance(fi_key, str) and len(fi_key) > 0
+        """DC-Only: Validate the provided FI_KEY.
+           Is the fi_key valid in the current BDM_STORE?
+        """
+        if not self.dc_VALID: return False
+        return fi_key in self.dc_BDM_STORE[FI_COLLECTION]
 
     def dc_WF_KEY_validate(self, wf_key: str) -> bool:
         """DC-Only: Validate the provided WF_KEY."""
-        return isinstance(wf_key, str) and len(wf_key) > 0
+        if not self.dc_VALID: return False
+        return wf_key in self.dc_BDM_STORE[WORKFLOW_DATA_COLLECTION]
 
     def dc_WF_PURPOSE_validate(self, wf_purpose: str) -> bool:
         """DC-Only: Validate the provided WF_PURPOSE."""
-        return isinstance(wf_purpose, str) and len(wf_purpose) > 0
+        return wf_purpose in VALID_WF_PURPOSE_VALUES
 
     def dc_WB_TYPE_validate(self, wb_type: str) -> bool:
         """DC-Only: Validate the provided WB_TYPE."""
-        return isinstance(wb_type, str) and len(wb_type) > 0
+        return wb_type in VALID_WB_TYPE_VALUES
 
     def dc_WB_NAME_validate(self, wb_name: str) -> bool:
         """DC-Only: Validate the provided WB_NAME."""
@@ -317,7 +348,10 @@ class BudManDataContext(BudManDataContextBaseInterface):
         try:
             # Resolve the wb_ref to a valid index and name. Without knowing
             # the type of the workbook in reference.
-            # Returns: Tuple[wb_all:bool, wb_index:int, wb_name:str]: 
+            # Returns: Tuple[wb_all:bool, wb_index:int, wb_name:str]:
+            if wb_ref is None:
+                logger.error("wb_ref is None. Cannot resolve.")
+                return False, -1, None
             if isinstance(wb_ref, str):
                 if wb_ref == ALL_KEY:
                     return True, -1, ALL_KEY
@@ -376,6 +410,7 @@ class BudManDataContext(BudManDataContextBaseInterface):
         """DC-Only: Indicates whether the named workbook is loaded."""
         _ = p3u.is_str_or_none("wb_name", wb_name, raise_error=True)
         # Reference the DC.LOADED_WORKBOOKS property.
+        if not self.dc_VALID: return False
         if (not self.dc_INITIALIZED or 
                 self.dc_LOADED_WORKBOOKS is None or 
                 not isinstance(self.dc_LOADED_WORKBOOKS, dict)):
@@ -417,7 +452,7 @@ class BudManDataContext(BudManDataContextBaseInterface):
         """
         try:
             # Note: transitioning to dc_WORKBOOK_COLLECTION from dc_WORKBOOKS
-            wbc = self.dc_WORKBOOK
+            wbc = self.dc_WORKBOOK_DATA_COLLECTION
             i = -1
             for i, (key, obj) in enumerate(wbc):
                 if isinstance(obj, object) and hasattr(obj, 'name'):
@@ -429,20 +464,10 @@ class BudManDataContext(BudManDataContextBaseInterface):
             logger.error(p3u.exc_err_msg(e))
             raise
 
-    def dc_WORKBOOK_load(self, wb_name: str) -> Workbook:
-        """DC-Only: Load the specified workbook by name."""
-        wb_path = Path(wb_name)
-        if not wb_path.exists():
-            wb = Workbook()
-        else:
-            try:
-                wb = Workbook(wb_path)
-            except Exception as e:
-                logger.error(f"Failed to load workbook '{wb_name}': {e}")
-                raise
-        self.dc_WB_NAME = wb_name
-        self.dc_WORKBOOK_add(wb_name, wb)
-        return wb 
+    def dc_WORKBOOK_load(self, wb_index: str) -> Any:
+        """DC-Only: Load the workbook indicated by wb_index."""
+        logger.warning("dc_WORKBOOK_load must be overridden.")
+        return None 
 
     def dc_WORKBOOK_save(self, wb_name: str, wb: Workbook) -> None:
         """DC-Only: Save the specified workbook by name."""
@@ -541,4 +566,23 @@ class BudManDataContext(BudManDataContextBaseInterface):
         return None
 
     #endregion Concrete Interface Methods
+    # ------------------------------------------------------------------------ +
+    #region    Helper methods
+    # ------------------------------------------------------------------------ +
+    #region dc_is_valid()
+    def dc_is_valid(self) -> bool:
+        """DC-Only: Check if the data context is valid and initialized."""
+        if not self.dc_INITIALIZED:
+            logger.error("Data context is not initialized.")
+            return False
+        if self.dc_BDM_STORE is None:
+            logger.error("Data context BDM_STORE is not set.")
+            return False
+        if self.dc_FI_KEY is None:
+            logger.error("Data context FI_KEY is not set.")
+            return False
+        return True
+    #endregion dc_is_valid()
+    # ------------------------------------------------------------------------ +
+    #endregion Helper methods
     # ------------------------------------------------------------------------ +

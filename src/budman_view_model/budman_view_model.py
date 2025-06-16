@@ -192,7 +192,6 @@ from typing import List, Type, TYPE_CHECKING, Dict, Tuple, Any, Callable
 import p3_utils as p3u, pyjson5, p3logging as p3l
 from dynaconf import Dynaconf
 from openpyxl import Workbook, load_workbook
-# from rich.console import Console
 # local modules and packages
 from budman_settings import *
 from budman_namespace import *
@@ -207,9 +206,9 @@ from budget_domain_model import (
     BDMConfig, BDMWorkbook
     )
 from budget_storage_model import *
-from budget_storage_model.csv_data_collection import (
-    csv_DATA_COLLECTION_get_url, verify_url_file_path
-)
+# from budget_storage_model.csv_data_collection import (
+#     csv_DATA_COLLECTION_get_url, bsm_WORKBOOK_url_get
+# )
 from budman_data_context import BDMWorkingData
 from budman_workflows import budget_category_mapping
 from budman_cli_view import budman_cli_parser, budman_cli_view
@@ -235,8 +234,6 @@ BUDMAN_VALID_CMD_ARGS = (CMD_PARSE_ONLY, CMD_VALIDATE_ONLY,
                         CMD_WB_TYPE, CMD_WB_NAME, CMD_WB_REF,CMD_WB_INFO,
                         CMD_CHECK_REGISTER)
 logger = logging.getLogger(__name__)
-# console = Console(force_terminal=True, width=BUDMAN_WIDTH, highlight=True)
-# console.print(f"[bold green]Starting {__name__} module ...[/bold green]")
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
@@ -390,7 +387,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             # Check if the budget domain model is initialized.
             bdm = self.initialize_bdm(load_user_store=load_user_store)
             # Create/initialize a BDMWorkingData data_context 
-            self.data_context = BDMWorkingData(self.model).initialize()
+            self.data_context = BDMWorkingData(self.model).dc_initialize()
             # Initialize the command map.
             self.initialize_cmd_map()  # TODO: move to DataContext class
             self.initialized = True
@@ -483,7 +480,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
     #                                                                          +
     # ======================================================================== +
     #region ViewModel CommandProcessor implementing the Command Pattern        +
-    #region ViewModel CommandProcessor Pattern doc                     +
+    #region design notes                                                       +
     """ ViewModelCommandProcessor Design Notes (future ABC)
 
     A Command Pattern supports a means to represent a command as an object,
@@ -518,7 +515,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
       which indicates to apply the action to all workbooks in the scope.
     
     """
-    #endregion ViewModel CommandProcessor Command Pattern doc                     +
+    #endregion design notes                                                    +
     #                                                                          +
     # ------------------------------------------------------------------------ +
     #region ViewModel CommandProcessor interface methods
@@ -869,7 +866,6 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
     #                                                                          +
     # ------------------------------------------------------------------------ +
     #region Command Execution Methods
-    #                                                                          +
     # ------------------------------------------------------------------------ +
     #region FI_init_cmd() command > init FI boa
     def FI_init_cmd(self, cmd : Dict = None) -> Tuple[bool, str]: 
@@ -1035,18 +1031,6 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             st = p3u.start_timer()
             logger.info(f"Start: ...")
             # Save the BDM_STORE file with the BSM.
-            # Construct the abs_path from BDM_STORE info configured in 
-            # BUDMAN_SETTINGS.
-            # budman_store_filename_value = self.settings[BDM_STORE_FILENAME]
-            # budman_store_filetype_value = self.settings[BDM_STORE_FILETYPE]
-            # budman_store_full_filename = f"{budman_store_filename_value}{budman_store_filetype_value}"
-            # budman_folder = self.settings[BUDMAN_FOLDER]
-            # budman_folder_abs_path = Path(budman_folder).expanduser().resolve()
-            # budman_store_abs_path = budman_folder_abs_path / budman_store_full_filename
-            # # Update some values prior to saving.
-            # self.budget_domain_model.bdm_url = budman_store_abs_path.as_uri()
-            # self.budget_domain_model.bdm_last_modified_date = p3u.now_iso_date_string()
-            # self.budget_domain_model.bdm_last_modified_by = getpass.getuser()
             # Get a Dict of the BudgetModel to store.
             budget_model_dict = self.budget_domain_model.to_dict()
             # Save the BDM_STORE file.
@@ -1080,22 +1064,12 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
         """
         try:
             st = p3u.start_timer()
-            pfx = f"{self.__class__.__name__}.{self.FI_init_cmd.__name__}: "
-            if p3u.is_not_obj_of_type("cmd",cmd,dict,pfx):
-                m = f"Invalid cmd object, no action taken."
-                logger.error(m)
-                raise RuntimeError(f"{pfx}{m}")
             logger.info(f"Start: ...")
             # Load the BDM_STORE file with the BSM.
             # Use the BDM_STORE configured in BUDMAN_SETTINGS.
-            budman_store_filename_value = self.settings[BDM_STORE_FILENAME]
-            budman_store_filetype_value = self.settings[BDM_STORE_FILETYPE]
-            budman_store_full_filename = f"{budman_store_filename_value}.{budman_store_filetype_value}"
-            budman_folder = self.settings[BUDMAN_FOLDER]
-            budman_folder_abs_path = Path(budman_folder).expanduser().resolve()
-            budman_store_abs_path = budman_folder_abs_path / budman_store_full_filename
+            bdm_url = self.dc_BDM_STORE[BDM_URL]
             # Load the BDM_STORE file.
-            budman_store_dict = bsm_BDM_STORE_file_load(budman_store_abs_path)
+            budman_store_dict = bsm_BDM_STORE_url_load(bdm_url)
             self.dc_BDM_STORE = budman_store_dict
             self.BDM_STORE_loaded = True
             logger.info(f"Complete: {p3u.stop_timer(st)}")
@@ -1238,29 +1212,19 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             root error is contained in the exception message.
         """
         try:
-            pfx = f"{self.__class__.__name__}.{self.FI_init_cmd.__name__}: "
-            if p3u.is_not_obj_of_type("cmd",cmd,dict,pfx):
-                m = f"Invalid cmd object, no action taken."
-                logger.error(m)
-                raise RuntimeError(f"{pfx}{m}")
             logger.info(f"Start: ...")
             wb_ref = self.cp_cmd_arg_get(cmd, WB_REF, self.dc_WB_REF)
-            if wb_ref is None:
-                m = f"wb_ref is None, no action taken."
-                logger.error(m)
-                raise RuntimeError(f"{pfx}{m}")
             fi_key = self.cp_cmd_arg_get(cmd, FI_KEY, self.dc_FI_KEY)
             wf_key = self.cp_cmd_arg_get(cmd, WF_KEY, self.dc_WF_KEY)
             wf_purpose = self.cp_cmd_arg_get(cmd, WF_PURPOSE, self.dc_WF_PURPOSE)
             wb_type = self.cp_cmd_arg_get(cmd, WB_TYPE, self.dc_WB_TYPE)
-            wb_count = len(self.dc_WORKBOOKS)
-            r = f"Budget Manager Loaded Workbooks({wb_count}):\n"
+
+            wb_count = len(self.dc_WORKBOOK_DATA_COLLECTION)
+            r = f"Budget Manager Workbooks({wb_count}):\n"
             all_wbs, wb_index, wb_name = self.DC.dc_WB_REF_resolve(wb_ref)
             # Check for an invalid wb_ref value.
-            if not all_wbs and wb_index == -1 and wb_name is None:
-                m = f"wb_ref '{wb_ref}' is not valid."
-                logger.error(m)
-                return False, m
+            if BudManViewModel.wb_ref_not_valid(all_wbs, wb_index, wb_name):
+                return False, f"wb_ref '{wb_ref}' is not valid."
             # Now either all_wbs or a specific workbook is to be loaded.
             if all_wbs:
                 lwbl = self.model.bdmwd_FI_WORKBOOKS_load(fi_key, wf_key, wb_type)
@@ -1270,7 +1234,16 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
                     wb_index = self.DC.dc_WORKBOOK_index(wb_name)
                     r += f"{P2}wb_index: {wb_index:>2} wb_name: '{wb_name:<40}'\n"
             else:
-                _ = self.model.bdmwd_WORKBOOK_load(wb_name)
+                wb_obj : BDMWorkbook = self.dc_WORKBOOK_DATA_COLLECTION.get(str(wb_index), None)
+                if wb_obj is None:
+                    m = f"Workbook with index '{wb_index}' not found in WORKBOOK_DATA_COLLECTION."
+                    logger.error(m)
+                    return False, m
+                content = bsm_WORKBOOK_url_get(wb_obj.wb_url)
+                if content is None:
+                    m = f"Failed to load Workbook data from '{wb_name}'."
+                    logger.error(m)
+                    return False, m
                 r += f"{P2}wb_index: {wb_index:>2} wb_name: '{wb_name:<40}'\n"
                 self.DC.dc_WB_REF = str(wb_index)  # Set the wb_ref in the DC.
                 self.DC._dc_WB_NAME = wb_name  # Set the wb_name in the DC.
@@ -1638,6 +1611,26 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             raise
     #endregion WORKFLOW_reload_cmd() method
     # ------------------------------------------------------------------------ +
+    #region    helper methods for command execution
+    @classmethod
+    def wb_ref_not_valid(cls, all_wbs: bool, wb_index: int, wb_name: str) -> bool:
+        """Check if the workbook reference is not valid.
+
+        Arguments:
+            all_wbs (bool): True if all workbooks are to be processed.
+            wb_index (int): The index of the workbook.
+            wb_name (str): The name of the workbook.
+
+        Returns:
+            bool: True if the workbook reference is not valid, False otherwise.
+        """
+        if not all_wbs and wb_index == -1 and wb_name is None:
+            m = f"wb_ref '{wb_ref}' is not valid."
+            logger.error(m)
+            return True
+        return False
+    #endregion helper methods for command execution
+    # ------------------------------------------------------------------------ +
     #                                                                          +
     #endregion Command Execution Methods
     # ------------------------------------------------------------------------ +
@@ -1704,7 +1697,6 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
     #                                                                          +
     # ------------------------------------------------------------------------ +
     #region    BudMan Data Context Interface (client sdk) Properties                                            +
-    #                                                                          +
     # ------------------------------------------------------------------------ +
     @property
     def dc_INITIALIZED(self) -> bool:
