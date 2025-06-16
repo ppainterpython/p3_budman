@@ -20,7 +20,7 @@
     ViewModelCommandProcessor
     -------------------------
 
-    - Provides Command Processing for the command pattern, used by Views and
+    - Provides Command Processor for the command pattern, used by Views and
       other upstream clients to submit commands to the ViewModel. The command
     - Provides the Command Binding Implementations. The cmd_map property 
       holds a map from the supported command_keys to the methods that
@@ -193,6 +193,7 @@ import p3_utils as p3u, pyjson5, p3logging as p3l
 from dynaconf import Dynaconf
 from openpyxl import Workbook, load_workbook
 # local modules and packages
+from p3_mvvm import (Model_Base, Model_Binding)
 from budman_settings import *
 from budman_namespace import *
 from budman_workflows import (
@@ -201,14 +202,12 @@ from budman_workflows import (
     map_budget_category, category_map_count, check_sheet_schema,
     apply_check_register
     )
+
 from budget_domain_model import (
-    BDMBaseInterface, BDMClientInterface, BudgetDomainModel, 
+    BudgetDomainModel, 
     BDMConfig, BDMWorkbook
     )
 from budget_storage_model import *
-# from budget_storage_model.csv_data_collection import (
-#     csv_DATA_COLLECTION_get_url, bsm_WORKBOOK_url_get
-# )
 from budman_data_context import BDMWorkingData
 from budman_workflows import budget_category_mapping
 from budman_cli_view import budman_cli_parser, budman_cli_view
@@ -237,16 +236,22 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
-class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interfaces
-    # ======================================================================== +
-    #region BudManViewModel class intrinsics
-    """A Budget Manager View Model providing CommandProcessing & Data Context.
+class BudManViewModel(Model_Binding): # future ABC for DC, CP, VM interfaces
+    #region BudManViewModel class doc string                                   +
+    """BudManViewModel - A Budget Manager View Model providing 
+    CommandProcessor & Data Context.
     
-    This ViewModel provides 3 primary design pattern implementations:
-        1. ViewModel - the behavior of a View Model in MVVM.
-        2. Command Processing (CP) and
-        3. Data Context (DC)
+    This ViewModel, BudManViewModel, depends on some primary MVVM design 
+    pattern abstract behaviors:
+        1. ViewModel_Base - the behavior of a View Model in MVVM.
+        2. ViewModelCommandProcessor_Base (CP), Command Processor behavior,
+        3. ViewModelDataContext_Base (DC), Data Context behavior, and
+        4. Model_Base - the Model behavior.
          
+    BudManViewModel is a concrete implementation of the ViewModel_Base and
+    ViewModelCommandProcessor_Base. It applies the ViewModelDataContext_Binding
+    and Model_Binding to access concrete Model and Data Context implementations.
+
     Each pattern is backed by defined interfaces for properties and methods. 
     CP is the means for a View to take actions performing commands against data 
     in the DC. From an MVVM pattern perspective, DC is the only medium of data 
@@ -257,10 +262,14 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
     to perform the requested actions. A View Model may publish events as well, 
     which a View may subscribe to.
     """
+    #endregion BudManViewModel class doc string                                +
+
+    # ======================================================================== +
+    #region BudManViewModel_Base class intrinsics                              +
     # ======================================================================== +
     #                                                                          +
     # ------------------------------------------------------------------------ +
-    #region __init__() constructor method
+    #region    BudManViewModel Class __init__() constructor method             +
     def __init__(self, bdms_url : str = None, settings : Dynaconf = None) -> None:
         super().__init__()
         self._bdm_store_url : str = bdms_url
@@ -272,18 +281,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
         self._cmd_map : Dict[str, Callable] = None
     #endregion __init__() constructor method
     # ------------------------------------------------------------------------ +
-    #region BudManViewModel Class Properties
-    @property
-    def model(self) -> BDMBaseInterface:
-        """Return the model object reference."""
-        return self._budget_domain_model
-    @model.setter
-    def model(self, bdm: BDMBaseInterface) -> None:
-        """Set the model object reference."""
-        if not isinstance(bdm, BDMBaseInterface):
-            raise TypeError("model must be a BDMBaseInterface instance")
-        self._budget_domain_model = bdm
-
+    #region    BudManViewModel Class Properties                                +
     @property
     def bdms_url(self) -> str:
         """Return the BDM_STORE URL."""
@@ -307,6 +305,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
         if not isinstance(settings, Dynaconf):
             raise TypeError("settings must be a Dynaconf instance")
         self._settings = settings
+
     @property
     def initialized(self) -> bool:
         """Return True if the ViewModel is initialized."""
@@ -317,16 +316,6 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
         if not isinstance(value, bool):
             raise ValueError("initialized must be a boolean value.")
         self._initialized = value
-    @property
-    def budget_domain_model(self) -> BudgetDomainModel:
-        """Return the BudgetModel instance."""
-        return self._budget_domain_model
-    @budget_domain_model.setter
-    def budget_domain_model(self, value: BudgetDomainModel) -> None:
-        """Set the BudgetModel instance."""
-        if not isinstance(value, BudgetDomainModel):
-            raise ValueError("budget_model must be a BudgetModel instance.")
-        self._budget_domain_model = value
 
     def _valid_DC(self) -> BDMWorkingData:
         """Init self._data_context if it is None."""
@@ -341,44 +330,9 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
-
-    @property
-    def data_context(self) -> BDMWorkingData:
-        """Return the data context object."""
-        _ = self._valid_DC()  # Ensure _data_context is valid
-        return self._data_context
-    @data_context.setter
-    def data_context(self, value: BDMWorkingData) -> None:
-        """Set the data context object."""
-        if not isinstance(value, BDMWorkingData):
-            raise ValueError("data_context must be a BDMWorkingData instance.")
-        self._data_context = value
-    @property
-    def DC(self) -> BDMWorkingData:
-        """Return the data context (DC) dictionary.
-        This is an alias for the data_context property."""
-        _ = self._valid_DC()  # Ensure _data_context is valid
-        return self._data_context
-    @DC.setter
-    def DC(self, value: BDMWorkingData) -> None:
-        """Set the data context (DC) dictionary.
-        This is an alias for the data_context property."""
-        if not isinstance(value, BDMWorkingData):
-            raise ValueError("DC property value must be a BDMWorkingData object.")
-        self._data_context = value
-    @property
-    def cmd_map(self) -> Dict[str, Callable]:
-        """Return the command map dictionary."""
-        return self._cmd_map
-    @cmd_map.setter
-    def cmd_map(self, value: Dict[str, Callable]) -> None:
-        """Set the command map dictionary."""
-        if not isinstance(value, dict):
-            raise ValueError("cmd_map must be a dictionary.")
-        self._cmd_map = value
-    #endregion Properties
+    #endregion BudManViewModel Class Properties                                +
     # ------------------------------------------------------------------------ +
-    #region initialize() method
+    #region    BudManViewModel Class initialize() method                       +
     def initialize(self, load_user_store : bool = False) -> "BudManViewModel":
         """Initialize the command view_model."""
         try:
@@ -387,18 +341,19 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             # Check if the budget domain model is initialized.
             bdm = self.initialize_bdm(load_user_store=load_user_store)
             # Create/initialize a BDMWorkingData data_context 
-            self.data_context = BDMWorkingData(self.model).dc_initialize()
+            self.data_context = BDMWorkingData(self.model)
+            self.DC.dc_initialize()
             # Initialize the command map.
-            self.initialize_cmd_map()  # TODO: move to DataContext class
+            self.cp_initialize_cmd_map()  # TODO: move to DataContext class
             self.initialized = True
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             return self
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
-    #endregion initialize() method
+    #endregion BudManViewModel Class initialize() method                       +
     # ------------------------------------------------------------------------ +
-    #region initialize_bdm() method
+    #region    BudManViewModel Class initialize_bdm() method                   +
     def initialize_bdm(self, load_user_store : bool = False) -> "BudManViewModel":
         """Initialize the view_model's budget_domain_model."""
         try:
@@ -435,14 +390,14 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
-    #endregion initialize_bdm() method
+    #endregion BudManViewModel Class initialize_bdm() method                   +
     # ------------------------------------------------------------------------ +
-    #region initialize_cmd_map() method
-    def initialize_cmd_map(self) -> None:
+    #region    ViewModelCommandProcessor_Binding cp_initialize_cmd_map() method+
+    def cp_initialize_cmd_map(self) -> None:
         """Initialize the cmd_map dictionary."""
         try:
             # Use the following cmd_map to dispatch the command for execution.
-            self.cmd_map = {
+            self.cp_cmd_map = {
                 "init_cmd_fin_inst": self.FI_init_cmd,
                 "save_cmd_workbooks": self.FI_LOADED_WORKBOOKS_save_cmd,
                 "load_cmd_BDM_STORE": self.BDM_STORE_load_cmd,
@@ -461,25 +416,14 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
-    #endregion initialize_cmd_map() method
+    #endregion ViewModelCommandProcessor_Binding cp_initialize_cmd_map() method+
     # ------------------------------------------------------------------------ +
     #endregion BudManViewModel class intrinsics
     # ======================================================================== +
 
     # ======================================================================== +
-    #region BudManViewModel - Budget Manager View Model implementation         +
-    """BudManViewModel provides 3 services for clients:
-
-       1. ViewModel - the behavior of a View Model in MVVM.
-       2. ViewModelCommandProcessor - the Command Pattern.
-       3. ViewModelDataContext - the Data Context Pattern.
-
-    See the module notes at the top of this file.
-    """
+    #region    ViewModelCommandProcessor_Base                                  +
     # ======================================================================== +
-    #                                                                          +
-    # ======================================================================== +
-    #region ViewModel CommandProcessor implementing the Command Pattern        +
     #region design notes                                                       +
     """ ViewModelCommandProcessor Design Notes (future ABC)
 
@@ -516,11 +460,50 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
     
     """
     #endregion design notes                                                    +
-    #                                                                          +
     # ------------------------------------------------------------------------ +
-    #region ViewModel CommandProcessor interface methods
+    #region    ViewModelCommandProcessor_Base Properties                       +
+    @property
+    def cp_cmd_map(self) -> Dict[str, Callable]:
+        """Return the command map dictionary."""
+        return self._cmd_map
+    @cp_cmd_map.setter
+    def cp_cmd_map(self, value: Dict[str, Callable]) -> None:
+        """Set the command map dictionary."""
+        if not isinstance(value, dict):
+            raise ValueError("cmd_map must be a dictionary.")
+        self._cmd_map = value
+
+    @property
+    def data_context(self) -> BDMWorkingData:
+        """Return the data context object."""
+        # _ = self._valid_DC()  # Ensure _data_context is valid
+        return self._data_context
+    @data_context.setter
+    def data_context(self, value: BDMWorkingData) -> None:
+        """Set the data context object."""
+        if not isinstance(value, BDMWorkingData):
+            raise ValueError("data_context must be a BDMWorkingData instance.")
+        self._data_context = value
+
+    @property
+    def DC(self) -> BDMWorkingData:
+        """Return the data context (DC) dictionary.
+        This is an alias for the data_context property."""
+        _ = self._valid_DC()  # Ensure _data_context is valid
+        return self._data_context
+    @DC.setter
+    def DC(self, value: BDMWorkingData) -> None:
+        """Set the data context (DC) dictionary.
+        This is an alias for the data_context property."""
+        if not isinstance(value, BDMWorkingData):
+            raise ValueError("DC property value must be a BDMWorkingData object.")
+        self._data_context = value
+
+    #endregion ViewModelCommandProcessor_Base Properties                       +
     # ------------------------------------------------------------------------ +
-    #region cp_execute_cmd() Command Processing method
+    #region ViewModelCommandProcessor_Base methods                             +
+    # ------------------------------------------------------------------------ +
+    #region cp_execute_cmd() Command Processor method
     def cp_execute_cmd(self, 
                          cmd : Dict = None,
                          raise_error : bool = False) -> Tuple[bool, Any]:
@@ -554,14 +537,14 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             # if cp_validate_cmd() is good, continue.
             validate_only: bool = self.cp_cmd_arg_get(cmd,CMD_VALIDATE_ONLY)
             full_cmd_key = result
-            func = self.cmd_map.get(full_cmd_key)
+            func = self.cp_cmd_map.get(full_cmd_key)
             function_name = func.__name__
             if validate_only:
                 result = f"vo-command: {function_name}({str(cmd)})"
                 logger.info(result)
                 return True, result
             logger.info(f"Executing command: {function_name}({str(cmd)})")
-            status, result = self.cmd_map.get(full_cmd_key)(cmd)
+            status, result = self.cp_cmd_map.get(full_cmd_key)(cmd)
             logger.info(f"Complete Command: [{p3u.stop_timer(st)}] {(status, str(result))}")
             return status, result
         except Exception as e:
@@ -570,8 +553,8 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             if raise_error:
                 raise RuntimeError(m)
             return False, m
-    #endregion cp_execute_cmd() Command Processing method
-    #region cp_validate_cmd() Command Processing method
+    #endregion cp_execute_cmd() Command Processor method
+    #region cp_validate_cmd() Command Processor method
     def cp_validate_cmd(self, cmd : Dict = None,
                         validate_all : bool = False) -> Tuple[bool, str]:
         """Validate the cmd object for cmd_key and parameters.
@@ -597,10 +580,18 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             self.cp_validate_cmd_object(cmd, my_prefix, raise_error = True)
             # After cp_validate_cmd_object() returns, we know cmd has content
             # to examine and validate.
+            # For a few args, apply the DC values if not value given in the cmd.
+            if self.cp_cmd_arg_get(cmd, CMD_FI_KEY) is None:
+                self.cp_cmd_arg_set(cmd, CMD_FI_KEY,
+                                    self.DC.dc_FI_KEY)
+            if self.cp_cmd_arg_get(cmd, CMD_WF_KEY) is None:
+                self.cp_cmd_arg_set(cmd, CMD_WF_KEY,
+                                    self.DC.dc_WF_KEY)
             validate_all: bool = self.cp_cmd_arg_get(cmd,CMD_VALIDATE_ONLY)
             # If validate_all, the don't return a result until all cmd args 
             # are validated.
-            all_results : str = None
+            all_results : str = "All Results:\n" if validate_all else ""
+            result = "It's all good." 
             if validate_all:
                 all_results = f"Command validation info: \n{P2}cmd: {str(cmd)}\n"
             # Extract the cmd_key and full_cmd_key from the cmd, or error out.
@@ -613,7 +604,6 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
                     return False, result
                 else:
                     # accumulate msgs, validate all cmd args
-                    all_results += f"{P2}{result}\n"
                     success = False
             # Validate the cmd arguments.
             for key, value in cmd.items():
@@ -624,7 +614,6 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
                         result = f"Invalid fi_key value: '{value}'."
                         success = False 
                         logger.error(result)
-                        all_results += f"{P2}{result}\n"
                     continue
                 elif key == CMD_WB_NAME: 
                     continue
@@ -633,7 +622,6 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
                         result = f"Invalid wf_key value: '{value}'."
                         success = False 
                         logger.error(result)
-                        all_results += f"{P2}{result}\n"
                     if value == ALL_KEY:
                         logger.warning(f"wf_key: '{ALL_KEY}' not implemented."
                                     f" Defaulting to {BDM_WF_CATEGORIZATION}.")
@@ -644,13 +632,11 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
                         result = f"Invalid wb_ref level: '{value}'."
                         success = False 
                         logger.error(result)
-                        all_results += f"{P2}{result}\n"
                 elif key == CMD_WB_INFO:
                     if not self.BMVM_cmd_WB_INFO_LEVEL_validate(value):
                         result = f"Invalid wb_info level: '{value}'."
                         success = False 
                         logger.error(result)
-                        all_results += f"{P2}{result}\n"
                 elif key == CMD_PARSE_ONLY: 
                     po = cmd.get(CMD_PARSE_ONLY, False)
                     continue
@@ -663,13 +649,16 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
                 elif key == CMD_CHECK_REGISTER:
                     continue
                 else:
-                    m = f"Unchecked argument key: '{key}': '{value}'."
-                    logger.debug(m)
+                    result = f"Unchecked argument key: '{key}': '{value}'."
+                    logger.debug(result)
                 # If not validate_all and success is False, return. Else, 
                 # continue validating all cmd args.
                 if not validate_all and not success:
                     # Without validate_all, if error, return, else continue
                     return success, result
+                else:
+                    # If validate_all, accumulate results.
+                    all_results += f"{P2}{result}\n"
             # Argument check is complete
             if success:
                 logger.info(f"Command validated - full_cmd_key: '{full_cmd_key}' cmd: {str(cmd)}")
@@ -680,8 +669,8 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
-    #endregion cp_validate_cmd() Command Processing method
-    #region cp_validate_cmd_object() Command Processing method
+    #endregion cp_validate_cmd() Command Processor method
+    #region cp_validate_cmd_object() Command Processor method
     def cp_validate_cmd_object(self, 
                                cmd : Dict = None,
                                prefix: str = None,
@@ -724,8 +713,8 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
-    #endregion cp_validate_cmd_object() Command Processing method
-    #region cp_cmd_key() Command Processing method
+    #endregion cp_validate_cmd_object() Command Processor method
+    #region cp_cmd_key() Command Processor method
     def cp_cmd_key(self, cmd : Dict = None) -> Tuple[bool, str]:
         """Extract a cmd_key is present in the cmd, return it.
 
@@ -752,8 +741,8 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
-    #endregion cp_cmd_key() Command Processing method
-    #region cp_full_cmd_key() Command Processing method
+    #endregion cp_cmd_key() Command Processor method
+    #region cp_full_cmd_key() Command Processor method
     def cp_full_cmd_key(self, cmd : Dict = None) -> Tuple[bool, str, str]:
         """Extract a full cmd key with subcommand if included.
 
@@ -789,7 +778,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             # if sub_cmd in None, use cmd_key as full_cmd_key.
             full_cmd_key = cmd_key + '_' + sub_cmd if p3u.str_notempty(sub_cmd) else cmd_key
             # Validate the full_cmd_key against the command map.
-            if full_cmd_key not in self.cmd_map:
+            if full_cmd_key not in self.cp_cmd_map:
                 m = f"Command key '{full_cmd_key}' not found in the command map."
                 logger.error(m)
                 success = False
@@ -797,8 +786,8 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
-    #endregion cp_full_cmd_key() Command Processing method
-    #region cp_cmd_arg_get() Command Processing method
+    #endregion cp_full_cmd_key() Command Processor method
+    #region cp_cmd_arg_get() Command Processor method
     def cp_cmd_arg_get(self, cmd: Dict,
                        arg_name: str, default_value: Any = None) -> Any:
         """Get a command argument value from the cmd dictionary."""                  
@@ -812,8 +801,8 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
         if value is None:
             return default_value
         return value
-    #endregion cp_cmd_arg_get() Command Processing method
-    #region cp_cmd_arg_set() Command Processing method
+    #endregion cp_cmd_arg_get() Command Processor method
+    #region cp_cmd_arg_set() Command Processor method
     def cp_cmd_arg_set(self, cmd: Dict,
                        arg_name: str, value: Any) -> None:
         """Set a command argument value in the cmd dictionary."""
@@ -830,8 +819,8 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
                             f"int, float, or bool, not {type(value)}.")
         # Set the value in the cmd dictionary.
         cmd[arg_name] = value
-    #endregion cp_cmd_arg_set() Command Processing method
-    #region BMVM_cmd_WB_INFO_LEVEL_validate() Command Processing method
+    #endregion cp_cmd_arg_set() Command Processor method
+    #region BMVM_cmd_WB_INFO_LEVEL_validate() Command Processor method
     def BMVM_cmd_WB_INFO_LEVEL_validate(self, info_level) -> bool:
         """Return True if info_level is a valid value."""
         try:
@@ -840,8 +829,8 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
-    #endregion BMVM_cmd_WB_INFO_LEVEL_validate() Command Processing method
-    #region BMVM_cmd_exception() Command Processing method
+    #endregion BMVM_cmd_WB_INFO_LEVEL_validate() Command Processor method
+    #region BMVM_cmd_exception() Command Processor method
     def BMVM_cmd_exception(self, e : Exception=None) -> Tuple[bool, str]:
         """Handle cmd exceptions.
         
@@ -859,11 +848,9 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             m = p3u.exc_err_msg(e)
             logger.error(m)
             return False, m
-    #endregion BMVM_cmd_exception() Command Processing method
+    #endregion BMVM_cmd_exception() Command Processor method
     # ------------------------------------------------------------------------ +
-    #endregion Command Processing methods
-    # ------------------------------------------------------------------------ +
-    #                                                                          +
+    #endregion ViewModelCommandProcessor_Base methods                          +
     # ------------------------------------------------------------------------ +
     #region Command Execution Methods
     # ------------------------------------------------------------------------ +
@@ -1111,6 +1098,8 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             # Be workbook-centric is this view of the DC
             wbc = self.dc_WORKBOOK_DATA_COLLECTION
             wbc_count = len(wbc) if wbc else 0
+            lwbl = self.dc_LOADED_WORKBOOKS
+            lwbl_count = len(lwbl) if lwbl else 0
     
             # Prepare the Console output result
             result = f"Budget Manager Data Context:\n"
@@ -1130,6 +1119,11 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             if wbc_count > 0:
                 for i, wb in wbc.items():
                     result += f"{wb.display_str()}\n"
+            result += f"{P2}{DC_LOADED_WORKBOOKS}: {lwbl_count}\n"
+            if lwbl_count > 0:
+                # Iterate the LOADED_WORKBOOKS_COLLECTION (a DATA_COLLECTION)
+                for wb_index, wb in lwbl.items():
+                    result += f"{wb.display_brief_str()}\n"
 
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             return True, result
@@ -1228,26 +1222,14 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             # Now either all_wbs or a specific workbook is to be loaded.
             if all_wbs:
                 lwbl = self.model.bdmwd_FI_WORKBOOKS_load(fi_key, wf_key, wb_type)
-                self.DC.dc_WB_REF = ALL_KEY # Set the wb_ref in the DC.
-                self.DC.dc_WB_NAME = None   # Set the wb_name in the DC.
+                self.dc_WB_REF = ALL_KEY # Set the wb_ref in the DC.
+                self.dc_WB_NAME = None   # Set the wb_name in the DC.
                 for wb_name in list(lwbl.keys()):
-                    wb_index = self.DC.dc_WORKBOOK_index(wb_name)
+                    wb_index = self.dc_WORKBOOK_index(wb_name)
                     r += f"{P2}wb_index: {wb_index:>2} wb_name: '{wb_name:<40}'\n"
             else:
-                wb_obj : BDMWorkbook = self.dc_WORKBOOK_DATA_COLLECTION.get(str(wb_index), None)
-                if wb_obj is None:
-                    m = f"Workbook with index '{wb_index}' not found in WORKBOOK_DATA_COLLECTION."
-                    logger.error(m)
-                    return False, m
-                content = bsm_WORKBOOK_url_get(wb_obj.wb_url)
-                if content is None:
-                    m = f"Failed to load Workbook data from '{wb_name}'."
-                    logger.error(m)
-                    return False, m
-                r += f"{P2}wb_index: {wb_index:>2} wb_name: '{wb_name:<40}'\n"
-                self.DC.dc_WB_REF = str(wb_index)  # Set the wb_ref in the DC.
-                self.DC._dc_WB_NAME = wb_name  # Set the wb_name in the DC.
-            return True, r
+                success, r = self.dc_WORKBOOK_load(wb_index)
+            return success, r
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
@@ -1425,10 +1407,11 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
 
             for wb_name, wb in wf_wb_list.items():
                 ws = wb.active
+                wb_url = ""
                 if check_register:
                     # Check for a check register column, add it if not present.
                     # load the check register here
-                    check_register_dict = csv_DATA_COLLECTION_get_url("")
+                    check_register_dict = csv_DATA_COLLECTION_get(wb_url)
                     apply_check_register(ws)
                 else:
                     # Check for budget category column, add it if not present.
@@ -1479,15 +1462,42 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
             wb_type = self.cp_cmd_arg_get(cmd, CMD_WB_TYPE, self.dc_WB_TYPE)
             wf_purpose = self.cp_cmd_arg_get(cmd, CMD_WF_PURPOSE, None)
             cr_wb_ref = self.cp_cmd_arg_get(cmd, CMD_CHECK_REGISTER, None)
-            all_wbs, wb_index, wb_name = self.DC.dc_WB_REF_resolve(cr_wb_ref)
-            # Verify LOADED_WORKBOOKS to process.
-            obj : BDMWorkbook = self.dc_WORKBOOK_DATA_COLLECTION.get(wb_index, None)
-            if (obj):
-                wb_name = obj.wb_name
-                wb_loaded = obj.loaded
-                wb_content = obj.content
-            if what_if:
-                return True, f"what_if: apply_check_register(cr_wb_ref, transaction_wb_ref)"
+            all_wbs, cr_wb_index, cr_wb_name = self.DC.dc_WB_REF_resolve(cr_wb_ref)
+            if self.wb_ref_not_valid(all_wbs, cr_wb_index, cr_wb_name):
+                m = f"cr_wb_ref '{cr_wb_ref}' is not valid."
+                logger.error(m)
+                return False, m
+            all_wbs, wb_index, wb_name = self.DC.dc_WB_REF_resolve(wb_ref)
+            if self.wb_ref_not_valid(all_wbs, wb_index, wb_name):
+                m = f"wb_ref '{wb_ref}' is not valid."
+                logger.error(m)
+                return False, m
+            cr_wb : BDMWorkbook = self.dc_WORKBOOK_DATA_COLLECTION.get(str(cr_wb_index), None)
+            if (cr_wb is None):
+                m = f"cr_wb_ref '{cr_wb_index}':'{cr_wb_name}' not found in wb collection."
+                logger.error(m)
+                return False, m
+            wb : BDMWorkbook = self.dc_WORKBOOK_DATA_COLLECTION.get(str(wb_index), None)
+            if (wb is None):
+                m = f"wb_ref '{wb_index}':'{wb_name}' not found in wb collection."
+                logger.error(m)
+                return False, m
+            if cr_wb_index not in self.dc_LOADED_WORKBOOKS:
+                cr_content = self.dc_WORKBOOK_load(cr_wb_index)
+                if cr_wb_index not in self.dc_LOADED_WORKBOOKS:
+                    m = f"Failed trying to load cr_wb_ref '{cr_wb_index}':'{cr_wb_name}'."
+                    logger.error(m)
+                    return False, m 
+            cr_content = self.dc_LOADED_WORKBOOKS[cr_wb_index]
+            if wb_index not in self.dc_LOADED_WORKBOOKS:
+                wb_content = self.dc_WORKBOOK_load(wb_index)
+                if wb_index not in self.dc_LOADED_WORKBOOKS:
+                    m = f"Failed trying to load wb_ref '{wb_index}':'{wb_name}'."
+                    logger.error(m)
+                    return False, m 
+            wb_content = self.dc_LOADED_WORKBOOKS[wb_index]
+            logger.debug(f"cr_wb_name: {cr_wb_name}, cr_wb_index: {cr_wb_index}, ")
+
             # apply_check_register(ws)
             return True, ""
         except Exception as e:
@@ -1635,11 +1645,13 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
     #endregion Command Execution Methods
     # ------------------------------------------------------------------------ +
     #                                                                          +
-    #endregion ViewModelCommandProcessor implementing the Command Pattern     +
+    #endregion ViewModelCommandProcessor_Base                                  +
     # ======================================================================== +
-    #                                                                          +
+ 
     # ======================================================================== +
-    #region    ViewModelData_Context client implementation                            +
+    #region    ViewModelDataContext_Binding to BudManDataContext               + 
+    # ======================================================================== +
+    #region    BudManDataContext_Base design notes                             +
     """BDM view_model Data Context Interface Documentation.
 
     Data Context (DC) Interface Overview
@@ -1648,7 +1660,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
     Budget Manager is designed around the MVVM (Model View ViewModel) design
     pattern. In MVVM implementations, a View binds to a ViewModel through an
     abstract Data Context (DC) object interface. Also, there is often a Command
-    Processing pattern to map command actions from a user interface View to 
+    Processor pattern to map command actions from a user interface View to 
     data actions in the DC. 
     
     Herein, the design is to have the DC interface provide support Commands 
@@ -1693,10 +1705,9 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
     BudgetDomainWorkingData object, available in the BudgetDomainManager 
     bdm_working_data property. 
     """
-    # ======================================================================== +
-    #                                                                          +
+    #endregion BudManDataContext_Base design notes                             +
     # ------------------------------------------------------------------------ +
-    #region    BudMan Data Context Interface (client sdk) Properties                                            +
+    #region    BudManDataContext_Binding Properties                            +
     # ------------------------------------------------------------------------ +
     @property
     def dc_INITIALIZED(self) -> bool:
@@ -1838,7 +1849,7 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
     # ------------------------------------------------------------------------ +
     #endregion BudMan Data Context Interface (client sdk) Properties
     # ------------------------------------------------------------------------ +
-    #region    BudMan Data Context Interface (client sdk) Methods
+    #region    BudManDataContext_Binding Methods                               +
     # ------------------------------------------------------------------------ +
     def dc_FI_KEY_validate(self, fi_key : str) -> int: 
         """Return True if the fi_key is valid."""
@@ -1881,6 +1892,10 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
         """Indicates whether the named workbook is loaded."""
         return self.DC.dc_WORKBOOK_loaded(wb_name)
 
+    def dc_WORKBOOK_load(self, wb_index: str) -> Tuple[bool, str]:
+        """Load a workbook by its wb_index."""
+        return self.DC.dc_WORKBOOK_load(wb_index)
+
     def dc_CHECK_REGISTER_name(self, wb_index: int) -> str:
         """DC-Only: Return wb_name for wb_index or None if does not exist."""
         return self.DC.dc_CHECK_REGISTER_name(wb_index)
@@ -1903,8 +1918,36 @@ class BudManViewModel(BDMClientInterface): # future ABC for DC, CP, VM interface
     #endregion BudMan Data Context Interface (client sdk) Methods
     # ------------------------------------------------------------------------ +
     #                                                                          +
-    #endregion ViewModelData_Context client implementation                         +
+    #endregion ViewModelDataContext_Binding to BudManDataContext               +
+    # ======================================================================== +
+
+    # ======================================================================== +
+    #region    Model_Binding to BudgetDomainModel                              + 
     # ======================================================================== +
     #                                                                          +
-    #endregion BudManViewModel - BudMan View Model implementation
+    # ------------------------------------------------------------------------ +
+    #region    Model_Binding Properties                                        +
+    @property
+    def budget_domain_model(self) -> BudgetDomainModel:
+        """Return the BudgetModel instance."""
+        return self._budget_domain_model
+    @budget_domain_model.setter
+    def budget_domain_model(self, value: BudgetDomainModel) -> None:
+        """Set the BudgetModel instance."""
+        if not isinstance(value, BudgetDomainModel):
+            raise ValueError("budget_model must be a BudgetModel instance.")
+        self._budget_domain_model = value
+
+    @property
+    def model(self) -> Model_Base:
+        """Return the model object reference."""
+        return self._budget_domain_model
+    @model.setter
+    def model(self, bdm: Model_Base) -> None:
+        """Set the model object reference."""
+        if not isinstance(bdm, Model_Base):
+            raise TypeError("model must be a BDMBaseInterface instance")
+        self._budget_domain_model = bdm
+    #endregion Model_Binding Properties                                        +
+    #endregion ViewModelDataContext_Binding to BudManDataContext               +
     # ======================================================================== +

@@ -32,12 +32,15 @@ from typing import Dict, List, Any
 # third-party modules and packages
 import p3_utils as p3u, pyjson5, p3logging as p3l
 import pyjson5 as json5 
+from openpyxl import Workbook, load_workbook
 # local modules and packages
 from budman_namespace import (
     BSM_PERSISTED_PROPERTIES, BDM_STORE, VALID_BSM_BDM_STORE_FILETYPES,
     VALID_WB_FILETYPES, BSM_DATA_COLLECTION_CSV_STORE_FILETYPES,
     WB_FILETYPE_CSV, WB_FILETYPE_XLSX)
-from budget_storage_model.csv_data_collection import (csv_DATA_COLLECTION_get_url)
+from budget_storage_model.csv_data_collection import (
+    csv_DATA_COLLECTION_get, csv_DATA_COLLECTION_load_file,
+    )
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region    Globals and Constants
@@ -251,17 +254,64 @@ def bsm_WORKBOOK_url_get(wb_url : str = None) -> Any:
         if wb_filetype == WB_FILETYPE_CSV:
             # If the filetype is CSV, load it as a CSV file.
             logger.info(f"Loading workbook as CSV from file: '{wb_abs_path}'")
-            csv_data_collection = csv_DATA_COLLECTION_get_url(wb_url)
+            csv_data_collection = csv_DATA_COLLECTION_load_file(wb_abs_path)
             return csv_data_collection
         if wb_filetype == WB_FILETYPE_XLSX:
             # If the filetype is XLSX, load it as an Excel workbook.
             logger.info(f"Loading workbook as XLSX from file: '{wb_abs_path}'")
-            wb_content = bsm_WORKBOOK_url_get(wb_abs_path)
+            wb_content = bsm_WORKBOOK_file_load(wb_abs_path)
             return wb_content
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
 #endregion bsm_WORKBOOK_url_get(wb_url : str = None) -> Any
+# ---------------------------------------------------------------------------- +
+# ---------------------------------------------------------------------------- +
+#region    bsm_WORKBOOK_file_load(wb_abs_path : str = None) -> Any
+def bsm_WORKBOOK_file_load(wb_path:Path) -> Workbook:
+    """Load a transaction file for a Financial Institution Workflow.
+
+    Storage Model: This is a Model function, loading an excel workbook
+    file into memory.
+
+    Args:
+        wb_path (Path): The path of the workbook file to load.
+
+    Returns:
+        Workbook: The loaded transaction workbook.
+    """
+    try:
+        logger.debug(f"BSM: Loading workbook file: '{wb_path}'")
+        wb = load_workbook(filename=wb_path)
+        return wb
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion bsm_WORKBOOK_file_load(wb_abs_path : str = None) -> Any
+# ---------------------------------------------------------------------------- +
+#region    bsm_WORKBOOK_file_save(wb:Workbook,wb_abs_path : str = None) -> Any
+def bsm_WORKBOOK_file_save(wb:Workbook,wb_path:Path) -> None:
+    """Save a transaction file for a Financial Institution Workflow.
+
+    Storage Model: This is a Model function, storing an excel workbook
+    file to storage.
+
+    Args:
+        wb (Workbook): The workbook to save.
+        wb_path (Path): The path of the workbook file to save.
+
+    """
+    st = time.time()
+    try:
+        # TODO: add logic to for workbook open in excel, work around.
+        logger.info("Saving wb: ...")
+        wb.save(filename=wb_path)
+        logger.info(f"Saved wb to '{wb_path}'")
+        return
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise    
+#endregion bsm_WORKBOOK_file_load(wb_abs_path : str = None) -> Any
 # ---------------------------------------------------------------------------- +
 #endregion    WORKBOOK methods
 # ---------------------------------------------------------------------------- +

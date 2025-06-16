@@ -81,7 +81,7 @@ from budget_storage_model import (
     bsm_get_workbook_names,
     bsm_get_workbook_names2
     )                              
-from .model_base_interface import BDMBaseInterface
+from p3_mvvm.model_base_ABC import Model_Base
 from .bdm_workbook_class import BDMWorkbook
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -90,7 +90,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
-class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
+class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
     # ======================================================================== +
     #region BudgetDomainModel class intrinsics
     # ======================================================================== +
@@ -1525,7 +1525,7 @@ class BudgetDomainModel(BDMBaseInterface,metaclass=BDMSingletonMeta):
     #region bsm_load_workbook(self, workbook_path:Path) function
     def bsm_load_workbook(self, input_path:Path) -> Workbook:
         """Load a transaction file for a Financial Institution Workflow.
-        
+
         Deprecating in favor of budget_storage_model.bsm_WORKBOOK_file_load()
         Storage Model: This is a Model function, loading an excel workbook
         file into memory.

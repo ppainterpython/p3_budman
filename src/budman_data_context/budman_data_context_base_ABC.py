@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------- +
-#region budman_data_context_base_interface.py module
+#region budman_data_context_base_ABC.py module
 """ BudManDataContextBaseInterface: Abstract Base Class interface.
 
     A Data Context (DC) is a component of the MVVM design pattern for 
@@ -16,7 +16,7 @@
 
     Each property and method herein documents its purpose. 
 """
-#endregion budman_data_context_base_interface.py module
+#endregion budman_data_context_base_ABC.py module
 # ---------------------------------------------------------------------------- +
 #region Imports
 # python standard library modules and packages
@@ -31,7 +31,7 @@ from src.budman_namespace import (
     BDM_STORE, DATA_COLLECTION)
 #endregion Imports
 # ---------------------------------------------------------------------------- +
-class BudManDataContextBaseInterface(ABC):
+class BudManDataContext_Base(ABC):
     """Abstract Base Class Interface for Budget Manager Data Context."""
 
     #region Abstract Properties
@@ -50,6 +50,17 @@ class BudManDataContextBaseInterface(ABC):
     @abstractmethod
     def dc_INITIALIZED(self, value: bool) -> None:
         """Set the initialized state of the data context."""
+        pass
+
+    @property
+    @abstractmethod
+    def dc_id(self) -> str:
+        """Identify the data context implementation."""
+        pass
+    @dc_id.setter
+    @abstractmethod
+    def dc_id(self, value: str) -> None:
+        """Set the identifier for the data context implementation."""
         pass
 
     @property
@@ -272,6 +283,11 @@ class BudManDataContextBaseInterface(ABC):
         Returns:
             int: The index of the workbook in the WORKBOOK_DATA_LIST, or -1 if not found.
         """
+        pass
+
+    @abstractmethod
+    def dc_WORKBOOK_get(self, wb_index: str) -> Any:
+        """Get the workbook at wb_url."""
         pass
 
     @abstractmethod

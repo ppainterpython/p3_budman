@@ -12,7 +12,7 @@ import logging, p3_utils as p3u, p3logging as p3l
 # local modules and packages
 # from config import settings
 from budman_namespace import *
-from budman_data_context import BudManDataContextBaseInterface
+from budman_data_context import BudManDataContext_Base
 from budman_data_context import BDMWorkingData
 #endregion imports
 # ---------------------------------------------------------------------------- +

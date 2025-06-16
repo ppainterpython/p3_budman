@@ -22,7 +22,6 @@ from budman_namespace import (
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
 logger = logging.getLogger(__name__)
-# ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
 
@@ -125,7 +124,7 @@ class BudManCLIParser():
                 help="Workbook name.")
             wb_subcmd_parser.add_argument(
                 "-fi", nargs="?", dest="fi_key", 
-                default = "all",
+                default = None,
                 help="FI key value.")
             wb_subcmd_parser.add_argument(
                 "-wf", nargs="?", dest="wf_key", 
@@ -145,10 +144,10 @@ class BudManCLIParser():
             fi_subcmd_parser.add_argument(
                 "-wf", nargs="?", dest="wf_key", 
                 action="store", 
-                default = 'all',
+                default = None,
                 help="Workflow key value.")
             fi_subcmd_parser.add_argument(
-                "-wb", nargs="?", dest="wb_name", 
+                "-wn", nargs="?", dest="wb_name", 
                 action="store", 
                 default='all',
                 help="Workbook name.")
@@ -190,7 +189,7 @@ class BudManCLIParser():
             self.show_wf_subcmd_parser.add_argument(
                 "wf_key", nargs="?", 
                 action="store", 
-                default = 'all',
+                default = None,
                 help="Workflow key value.")
             # show workbooks subcommand
             self.show_wb_subcmd_parser  = self.show_cmd_subparsers.add_parser(
@@ -247,11 +246,11 @@ class BudManCLIParser():
                 help=f"Workbook reference: wb_name or wb_index or 'all'.")
             wb_subcmd_parser.add_argument(
                 "-fi", nargs="?", dest="fi_key", 
-                default= "all",
+                default= None,
                 help="FI key value.") 
             wb_subcmd_parser.add_argument(
                 "-wf", nargs="?", dest="wf_key", 
-                default= "all",
+                default= None,
                 help="WF key value.") 
             # subcommand load check_register [wb_url]
             check_register_subcmd_parser = subparsers.add_parser(
@@ -336,7 +335,7 @@ class BudManCLIParser():
             self.val_wf_key_subcmd_parser.add_argument(
                 "wf_ref", nargs="?", 
                 action="store", 
-                default = 'all',
+                default = None,
                 help="wf_key value for valid workflow or 'all'.")
             # val wb_name subcommand
             self.val_wb_name_subcmd_parser = self.val_cmd_subparsers.add_parser(
@@ -358,7 +357,7 @@ class BudManCLIParser():
             self.val_fi_key_subcmd_parser.add_argument(
                 "fi_ref", nargs="?", 
                 action="store", 
-                default = 'all',
+                default = None,
                 help="fi_key value for valid Fin. Inst. or 'all'.")
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
@@ -400,15 +399,15 @@ class BudManCLIParser():
                 help="Task: Apply some operation to workbooks.")
             apply_parser.set_defaults(workflow_cmd="apply")
             apply_parser.add_argument(
+                "-wr","--wb_ref", nargs="?",
+                action="store", dest='wb_ref', 
+                default=None,
+                help="Workbook reference, wb_index, wb_name or 'all' workbooks.")
+            apply_parser.add_argument(
                 "-cr", "--check_register", nargs="?",
                 action="store", 
-                default='all',
-                help="Apply 1 or all check_registers to the workbooks.")
-            # apply_parser.add_argument(
-            #     "wb_ref", nargs="?",
-            #     action="store", 
-            #     default='all',
-            #     help="Workbook reference, name or number of a loaded workbook.")
+                default=None,
+                help="a wb_ref to a check register(s). wb_index, wb_name or 'all'.")
             
             # Workflow subcommand: reload
             reload_parser = subparsers.add_parser(

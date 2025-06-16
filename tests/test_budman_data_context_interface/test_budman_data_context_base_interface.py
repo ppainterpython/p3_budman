@@ -10,14 +10,14 @@ from openpyxl import Workbook
 # local modules and packages
 import logging, p3_utils as p3u, p3logging as p3l
 from src.budman_namespace import design_language_namespace as bdmns
-from budman_data_context import BudManDataContextBaseInterface
+from budman_data_context import BudManDataContext_Base
 #endregion imports
 # ---------------------------------------------------------------------------- +
 #region Globals
 logger = logging.getLogger(__name__)
 #endregion Globals
 # ---------------------------------------------------------------------------- +
-class testBudManDC(BudManDataContextBaseInterface):
+class testBudManDC(BudManDataContext_Base):
     """A test subclass of BudManDataContextBaseInterface."""
     def __init__(self):
         super().__init__()
@@ -176,7 +176,7 @@ class TestBudManDataContextBaseInterface():
             logger.info(self.test_budman_data_context_base_interface.__doc__)
             # Try to instantiate the abstract base class, should raise TypeError.
             with pytest.raises(TypeError) as excinfo:
-                bdmdc = BudManDataContextBaseInterface(), \
+                bdmdc = BudManDataContext_Base(), \
                 f"BudManDataContextBaseInterface() should not be instantiated directly, got: {type(bdmdc)}"
         except Exception as e:
             pytest.fail(f"BudManDataContextBaseInterface() raised an exception: {str(e)}")
@@ -188,7 +188,7 @@ class TestBudManDataContextBaseInterface():
             # Try to instantiate the abstract base class, should raise TypeError.
             bdmdc = testBudManDC()
             assert bdmdc is not None, "testBudManDC() should not be None"
-            assert isinstance(bdmdc, BudManDataContextBaseInterface), "Expected testBudManDC to be a subclass of BudManDataContextBaseInterface, got: " + str(type(bdmdc))
+            assert isinstance(bdmdc, BudManDataContext_Base), "Expected testBudManDC to be a subclass of BudManDataContextBaseInterface, got: " + str(type(bdmdc))
             assert bdmdc.dc_INITIALIZED is True, "Expected INITIALIZED to be True after instantiation"
             assert "Getting INITIALIZED" in capsys.readouterr().out, "Expected 'Getting INITIALIZED' in output, got: " + capsys.readouterr().out
             bdmdc.dc_INITIALIZED = True

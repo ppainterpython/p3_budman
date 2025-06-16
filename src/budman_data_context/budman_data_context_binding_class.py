@@ -30,11 +30,11 @@ from src.budman_namespace import (
     DATA_COLLECTION, WORKBOOK_DATA_LIST, LOADED_WORKBOOK_COLLECTION,
     WORKBOOK_DATA_COLLECTION
     )
-from budman_data_context import BudManDataContextBaseInterface
+from budman_data_context import BudManDataContext_Base
 import p3_utils as p3u
 #endregion Imports
 # ---------------------------------------------------------------------------- +
-class BudManDataContextClientInterface(BudManDataContextBaseInterface):
+class BudManDataContext_Binding(BudManDataContext_Base):
     """BudManDataContextClientInterface: Interface for a Data Context clients.
     
     This interface is used by clients to interact with a Data Context (DC)
@@ -48,40 +48,59 @@ class BudManDataContextClientInterface(BudManDataContextBaseInterface):
     @classmethod
     def _valid_data_context(cls, dc_value: object) -> None:
         """Check if the provided data context is valid raise error if not."""
-        if not isinstance(dc_value, BudManDataContextBaseInterface):
-            raise TypeError("dc_value must be an instance of BudManDataContextBaseInterface")
+        if not isinstance(dc_value, BudManDataContext_Base):
+            raise TypeError("dc_value must be an instance of BudManDataContext_Base")
         return None
     #endregion Class Methods
-    def __init__(self, dc_value: BudManDataContextBaseInterface) -> None:
+    # ------------------------------------------------------------------------ +
+    #region BudManDataContext_Binding __init__() method
+    def __init__(self, *args, dc_value: BudManDataContext_Base,dc_id : str = None) -> None:
         """Initialize the BudManDataContextClientInterface with a data context."""
-        super().__init__()
-        BudManDataContextClientInterface._valid_data_context(dc_value)
+        super().__init__(*args, dc_id=dc_id)
+        BudManDataContext_Binding._valid_data_context(dc_value)
         self._data_context = dc_value
-
-    #region BudManDataContextClientInterface Properties
+    #endregion BudManDataContext_Binding __init__() method
+    # ------------------------------------------------------------------------ +
+    #region BudManDataContext_Binding Properties
     @property
-    def data_context(self) -> BudManDataContextBaseInterface:
+    def data_context(self) -> BudManDataContext_Base:
         """Return the data context object."""
         return self._data_context
     @data_context.setter
-    def data_context(self, dc_value: BudManDataContextBaseInterface) -> None:
+    def data_context(self, dc_value: BudManDataContext_Base) -> None:
         """Set the data context object."""
         self._data_context = dc_value
 
-    def _valid_DC(self) -> None:
-        """raise exception if the DC property is invalid."""
-        BudManDataContextClientInterface._valid_data_context(self._data_context)
-
     @property
-    def DC(self) -> BudManDataContextBaseInterface:
+    def DC(self) -> BudManDataContext_Base:
         """Return the name of the data context."""
         self._valid_DC()
         return self.data_context
     @DC.setter
-    def DC(self, value: BudManDataContextBaseInterface) -> None:
+    def DC(self, value: BudManDataContext_Base) -> None:
         """Set the name of the data context."""
         self._valid_DC()
+        BudManDataContext_Binding._valid_data_context(value)
         self.data_context = value
+    #endregion BudManDataContext_Binding Properties
+    # ------------------------------------------------------------------------ +
+    #region BudManDataContext_Binding Methods
+    def _valid_DC(self) -> None:
+        """raise exception if the DC property is invalid."""
+        BudManDataContext_Binding._valid_data_context(self._data_context)
+    #endregion BudManDataContext_Binding Methods
+    # ------------------------------------------------------------------------ +
+    #region BudManDataContext_Base Properties (concrete)
+    @property
+    def dc_id(self) -> str:
+        """Return the identifier for the data context implementation."""
+        self._valid_DC()
+        return self.DC.dc_id
+    @dc_id.setter
+    def dc_id(self, value: str) -> None:
+        """Set the identifier for the data context implementation."""
+        self._valid_DC()
+        self.DC.dc_id = value
 
     @property
     def dc_INITIALIZED(self) -> bool:
@@ -214,12 +233,9 @@ class BudManDataContextClientInterface(BudManDataContextBaseInterface):
     def dc_LOADED_CHECK_REGISTERS(self, value: DATA_COLLECTION) -> None:
         """DC-Only: Set the check register data collection."""
         self.DC.dc_CHECK_REGISTERS = value
-
-
-
-    #endregion BudManDataContextClientInterface Properties
+    #endregion BudManDataContext_Base Properties (concrete)
     # ------------------------------------------------------------------------ +
-    #region BudManDataContextClientInterface Methods
+    #region BudManDataContext_Base Methods (concrete)
     def dc_initialize(self) -> None:
         """Initialize the data context."""
         super().dc_initialize()
@@ -241,6 +257,10 @@ class BudManDataContextClientInterface(BudManDataContextBaseInterface):
     def dc_WF_PURPOSE_validate(self, wf_purpose: str) -> bool:
         """Validate the provided WF_PURPOSE."""
         return self.DC.dc_WF_PURPOSE_validate(wf_purpose)
+
+    def dc_WB_TYPE_validate(self, wb_type: str) -> bool:
+        """DC-Only: Validate the provided WB_TYPE."""
+        return self.DC.dc_WB_TYPE_validate(wb_type)
 
     def dc_WB_NAME_validate(self, wb_name: str) -> bool:
         """Validate the provided WB_NAME."""
@@ -311,5 +331,5 @@ class BudManDataContextClientInterface(BudManDataContextBaseInterface):
         """DC-Only: Add a new loaded workbook to the data context."""
         return self.DC.dc_CHECK_REGISTER_add(wb_name, wb_ref, wb)    
 
-    #endregion BudManDataContextClientInterface Methods
+    #endregion BudManDataContext_Base Methods (concrete)
     # ------------------------------------------------------------------------ +

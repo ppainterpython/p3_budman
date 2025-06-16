@@ -20,9 +20,6 @@ from budman_namespace import (
     VALID_WB_TYPE_VALUES, WB_FILETYPE_MAP, P2, P4, P6,
     WB_REF, WB_NAME, WB_TYPE, WF_PURPOSE, WF_KEY, FI_KEY,
 )
-from budget_storage_model import (bsm_verify_folder, bsm_get_workbook_names)
-                                  
-from .model_base_interface import BDMBaseInterface
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -99,6 +96,14 @@ class BDMWorkbook:
         s += f"{str(self.wf_folder):18}" #{P2}{str(self.wb_url):150}"
         return s
     #endregion display_str
+    # ------------------------------------------------------------------------ +
+    #region display_brief_str
+    def display_brief_str(self) -> str:
+        """ Return a string representation of the BDMWorkbook object. """
+        s = f"{P4}{str(self.wb_index):^6}{P2}{str(self.wb_type):15}{P2}"
+        s += f"{str(self.wb_name):35}"
+        return s
+    #endregion display_brief_str
     # ------------------------------------------------------------------------ +
     #endregion BDMWorkbook methods
     # ------------------------------------------------------------------------ +

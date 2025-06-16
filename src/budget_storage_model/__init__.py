@@ -21,7 +21,7 @@ from .budget_storage_model import (
     bsm_WORKBOOK_verify_file_path_for_load,
 )
 from .csv_data_collection import (
-    csv_DATA_COLLECTION_get_url,
+    csv_DATA_COLLECTION_get,
     csv_DATA_COLLECTION_load_file
 )
 
@@ -38,4 +38,6 @@ __all__ = [
     "bsm_WB_URL_verify_file_scheme",
     "bsm_WORKBOOK_verify_file_path_for_load",
     "bsm_WORKBOOK_url_get",
+    "csv_DATA_COLLECTION_get",
+    "csv_DATA_COLLECTION_load_file"
 ]

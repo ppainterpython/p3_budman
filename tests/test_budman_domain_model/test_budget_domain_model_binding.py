@@ -11,7 +11,7 @@ import inspect
 import logging, p3_utils as p3u, p3logging as p3l
 # local libraries
 from budman_namespace import *
-from budget_domain_model import BDMBaseInterface
+from budget_domain_model import Model_Base
 from budget_domain_model import BudgetDomainModel
 #endregion imports
 # ---------------------------------------------------------------------------- +
@@ -31,7 +31,7 @@ class TestBudgetDomainModelBinding:
         cls = globals()[model_class_name]
         if not inspect.isclass(cls):
             raise TypeError(f"{model_class_name} is not a class")
-        if not issubclass(cls, BDMBaseInterface):
+        if not issubclass(cls, Model_Base):
             raise TypeError(f"{model_class_name} is not a subclass of BDMBaseInterface")
         model_cls = cls
         return model_cls
@@ -42,7 +42,7 @@ class TestBudgetDomainModelBinding:
             logger.info(self.test_budget_domain_model_binding.__doc__)
             # Create a BudgetDomainModel instance.
             bdm = model_class()
-            assert isinstance(bdm, BDMBaseInterface), \
+            assert isinstance(bdm, Model_Base), \
                 "BudgetDomainModel should be a BudgetDomainModel instance"
             assert isinstance(bdm, BudgetDomainModel), \
                 "BudgetDomainModel should be a BudgetDomainModel instance"

@@ -74,6 +74,7 @@ WB_TYPE = "wb_type"
 WB_NAME = "wb_name"
 WB_REF = "wb_ref"
 WB_INFO = "wb_info"
+WB_URL = "wb_url" 
 # ---------------------------------------------------------------------------- +
 # Attribute value constants
 WB_INFO_LEVEL_INFO = "info"

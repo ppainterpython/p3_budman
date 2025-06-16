@@ -20,21 +20,18 @@ import logging, p3_utils as p3u, p3logging as p3l
 # local modules and packages for necessary classes and functions
 from budman_namespace import *
 from budman_data_context import BudManDataContext
-from budget_domain_model.budget_domain_model import BudgetDomainModel
-from budget_domain_model.model_base_interface import BDMBaseInterface
-from budget_domain_model.model_client_interface import BDMClientInterface
-from budget_storage_model.csv_data_collection import (
-    csv_DATA_COLLECTION_get_url, verify_url_file_path
-)
+from budget_domain_model import BDMWorkbook
+from p3_mvvm import Model_Base, Model_Binding
+from budget_storage_model import bsm_WORKBOOK_url_get
 
 #endregion imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
-MODEL_OBJECT = BDMBaseInterface
+MODEL_OBJECT = Model_Base
 logger = logging.getLogger(__name__)
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
-class BDMWorkingData(BudManDataContext, BDMClientInterface):
+class BDMWorkingData(BudManDataContext, Model_Binding):
     """DC and Model-Aware: BDMWD -Budget Domain Model Working Data. 
     
         BDMWorkingData sits between the ViewModel and the Model. Its role is
@@ -59,9 +56,11 @@ class BDMWorkingData(BudManDataContext, BDMClientInterface):
     #region    BDMWorkingData class intrinsics
     # ------------------------------------------------------------------------ +
     #region __init__() method init during BDMWorkingData constructor.
-    def __init__(self, bdm : Any = None) -> None:
-        super().__init__()
+    def __init__(self,  bdm : Any = None, *args, dc_id : str = None) -> None:
+        dc_id = args[0] if len(args) > 0 else None
+        super().__init__(*args, dc_id=dc_id)
         self._budget_domain_model : MODEL_OBJECT = bdm
+        self._dc_id = self.__class__.__name__ if not self._dc_id else None
     #endregion __init__() method init during BDMWorkingData constructor.
     # ------------------------------------------------------------------------ +
     #endregion    BDMWorkingData class intrinsics
@@ -144,14 +143,41 @@ class BDMWorkingData(BudManDataContext, BDMClientInterface):
             logger.error(p3u.exc_err_msg(e))
             raise
 
+    def dc_WORKBOOK_get(self, wb_url: str) -> Tuple[bool, str]:
+        """Model-aware: Get the workbook at wb_url."""
+        try:
+            wb_obj : BDMWorkbook = self.dc_WORKBOOK_DATA_COLLECTION.get(wb_url, None)
+            if wb_obj is None:
+                m = f"dc_WORKBOOK_DATA_COLLECTION does not have a workbook with wb_url '{wb_url}'."
+                logger.error(m)
+                return False, m
+        except Exception as e:
+            m = f"Error loading workbook url '{wb_url}': {p3u.exc_err_msg(e)}"
+            logger.error(m)
+            return False, m
+
     def dc_WORKBOOK_load(self, wb_index: str) -> Tuple[bool, str]:
         """Model-aware: Load the workbook indicated by wb_index."""
         try:
-            wb_obj = self.dc_WORKBOOK_DATA_COLLECTION.get(wb_index, None)
+            wb_obj : BDMWorkbook= self.dc_WORKBOOK_DATA_COLLECTION.get(wb_index, None)
             if wb_obj is None:
                 m = f"dc_WORKBOOK_DATA_COLLECTION does not have a workbook with index '{wb_index}'."
                 logger.error(m)
                 return False, m
+            content = bsm_WORKBOOK_url_get(wb_obj.wb_url)
+            if content is None:
+                m = f"Failed to load Workbook data for '{wb_obj.wb_name}'."
+                logger.error(m)
+                return False, m
+            r = f"{P2}wb_index: {wb_index:>2} wb_name: '{wb_obj.wb_name:<40}'\n"
+            self.dc_WB_REF = str(wb_index)  # Set the wb_ref in the DC.
+            self._dc_WB_NAME = wb_obj.wb_name  # Set the wb_name in the DC.
+            # Add to the loaded workbooks collection.
+            self.dc_LOADED_WORKBOOKS[wb_index] = content
+            wb_obj.loaded = True
+            logger.info(f"Loaded workbook '{wb_index}':'{wb_obj.wb_name}' "
+                        f"from url '{wb_obj.wb_url}'.")
+            return True, r
         except Exception as e:
             m = f"Error loading workbook with index '{wb_index}': {p3u.exc_err_msg(e)}"
             logger.error(m)

@@ -10,7 +10,7 @@ import win32com.client as win32
 import p3_utils as p3u, p3logging as p3l
 # local modules and packages
 # from budman_namespace import *
-from budget_storage_model.csv_data_collection import csv_DATA_COLLECTION_get_url
+from budget_storage_model.csv_data_collection import csv_DATA_COLLECTION_get
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -47,7 +47,7 @@ cvs_url = "file:///C:/Users/ppain/OneDrive/budget/boa/data/new/CheckRegister_ToD
 if __name__ == "__main__":
     try:
         configure_logging(__name__, logtest=False)
-        data_col = csv_DATA_COLLECTION_get_url(cvs_url)
+        data_col = csv_DATA_COLLECTION_get(cvs_url)
         print(f"Data Collection URL: {cvs_url}")
     except Exception as e:
         m = p3u.exc_err_msg(e)
