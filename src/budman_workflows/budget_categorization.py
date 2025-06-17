@@ -29,7 +29,8 @@ from openpyxl.cell.cell import Cell
 
 # local modules and packages
 from budman_namespace import *
-from .budget_category_mapping import (map_category, category_map_count)
+from .budget_category_mapping import (
+    map_category, category_map_count, check_register_map)
 from budget_domain_model import (BudgetDomainModel, BDMWorkbook)
 # from data.p3_fi_transactions.budget_model import BudgetModel
 #endregion Imports
@@ -636,7 +637,7 @@ def map_budget_category(sheet:Worksheet,src,dst) -> None:
 #endregion map_budget_category() function
 # ---------------------------------------------------------------------------- +
 #region apply_check_register() function
-def apply_check_register(cr_wb_content:BDM_CHECK_REGISTER, trans_wb_ref:BDM_TRANSACTION_WORKSHEET) -> None:
+def apply_check_register(cr_wb_content:BDM_CHECK_REGISTER, trans_wb_ref:BDM_TRANSACTION_WORKBOOK) -> None:
     """Apply the check transactions to the worksheet.
     
     The sheet has banking transaction data in rows and columns. 
@@ -649,82 +650,51 @@ def apply_check_register(cr_wb_content:BDM_CHECK_REGISTER, trans_wb_ref:BDM_TRAN
     """
     try:
         # Validate the input parameters.
-        if not check_sheet_columns(trans_wb_ref, add_columns=False):
-            logger.error(f"Sheet '{trans_wb_ref.title}' cannot be mapped due to "
+        p3u.is_not_obj_of_type("cr_wb_content", cr_wb_content, dict, raise_error=True)
+        p3u.is_not_obj_of_type("trans_wb_ref",trans_wb_ref, Workbook, raise_error=True)
+        # Validate the input parameters.
+        cr = cr_wb_content
+        sh = trans_wb_ref.active  # Get the active worksheet.
+        if not check_sheet_columns(sh, add_columns=False):
+            logger.error(f"Sheet '{sh.title}' cannot be mapped due to "
                          f"missing required columns.")
             return
-        logger.info(f"Applying checks from check register to sheet: '{trans_wb_ref.title}' ")
+        logger.info(f"Applying checks from check register to sheet: '{sh.title}' ")
         # transactions = WORKSHEET_data(sheet)
         # A row is a tuple of the Cell objects in the row. Tuples are 0-based
         # hdr is a list, also 0-based. So, using the index(name) will 
         # give the cell from a row tuple matching the column name in hdr.
-        hdr = [cell.value for cell in trans_wb_ref[1]] 
+        hdr = [cell.value for cell in sh[1]] 
+        budget_cat = hdr.index(BUDGET_CATEGORY_COL_NAME)
+        orig_desc = hdr.index(ORIGINAL_DESCRIPTION_COL_NAME)
 
         # For each check, with the check number and the Budget Category
         # 'Banking.Checks to Categorize', find the row in the worksheet to modify.
         target_cat = 'Banking.Checks to Categorize'
+        check_pat = re.compile(r'^.*Check\s*x*(\d{1,6})\b.*$')  
 
-        # if src in hdr:
-        #     src_col_index = hdr.index(src)
-        # else:
-        #     logger.error(f"Source column '{src}' not found in header row.")
-        #     return
-        # if dst in hdr:
-        #     dst_col_index = hdr.index(dst)
-        # else:
-        #     logger.error(f"Destination column '{dst}' not found in header row.")
-        #     return
-        
-        # TODO: need to refactor this to do replacements by col_name or something.
-        # This is specific to the Budget Category mapping, which now is to be
-        # split into 3 levels: Level1, Level2, Level3.
-
-        # These are values to set in the rows.
-        date_i = col_i(DATE_COL_NAME,hdr)
-        l1_i = col_i(LEVEL_1_COL_NAME,hdr)
-        l2_i = col_i(LEVEL_2_COL_NAME,hdr)
-        l3_i = col_i(LEVEL_3_COL_NAME,hdr)
-        amt_i = col_i(AMOUNT_COL_NAME,hdr)
-        dORc_i = col_i(DEBIT_CREDIT_COL_NAME,hdr)
-        year_month_i = col_i(YEAR_MONTH_COL_NAME,hdr)
-        acct_name_i = col_i(ACCOUNT_NAME_COL_NAME,hdr)
-        acct_code_i = col_i(ACCOUNT_CODE_COL_NAME,hdr)
-        acct_cell : Cell = trans_wb_ref.cell(row=1, column=acct_name_i + 1)
-
-        # logger.info(f"Mapping '{src}'({src_col_index}) to "
-        #             f"'{dst}'({dst_col_index})")
-        num_rows = trans_wb_ref.max_row # or set a smaller limit
-        other_count = 0
-        for row in trans_wb_ref.iter_rows(min_row=2):
+        trans_match = []
+        for row in sh.iter_rows(min_row=2):
             # row is a 'tuple' of Cell objects, 0-based index
-            row_idx = row[0].row  # Get the row index, the row number, 1-based.
-            # Do the mapping from src to dst.
-            # dst_cell = row[dst_col_index]
-            # src_value = row[src_col_index].value 
-            # dst_value = map_category(src_value)
-            # dst_cell.value = dst_value 
-            # row[dst_col_index].value = dst_value 
-            # Set the additional values for BudMan in the row
-        #     date_val = row[date_i].value
-        #     year_month = year_month_str(date_val) if date_val else None
-        #     row[year_month_i].value = year_month
-        #     l1, l2, l3 = split_budget_category(dst_value)
-        #     row[l1_i].value = l1 if l1_i != -1 else None
-        #     row[l2_i].value = l2 if l2_i != -1 else None
-        #     row[l3_i].value = l3 if l3_i != -1 else None
-        #     row[dORc_i].value = 'C' if row[amt_i].value > 0 else 'D'
-        #     acct_value = row[acct_name_i].value
-        #     t_acct_code = acct_value.split('-')[-1].strip()
-        #     row[acct_code_i].value = t_acct_code if acct_code_i != -1 else None
-
-        #     transaction = WORKSHEET_row_data(row,hdr) 
-        #     trans_str = transaction.data_str()
-        #     del transaction  # Clean up the transaction object.
-        #     if dst_value == 'Other':
-        #         other_count += 1
-        #         logger.debug(f"{row_idx:04}:{trans_str}" )
-        # logger.info(f"Completed budget category mapping for '{num_rows}' rows. "
-        #             f"Other count: '{other_count}'.")
+            budget_cat_cell = row[budget_cat]
+            if budget_cat_cell.value and target_cat in budget_cat_cell.value:
+                orig_desc_cell = row[orig_desc]
+                desc = row[orig_desc].value if orig_desc != -1 else ""
+                m = check_pat.match(desc)
+                if m:
+                    check_key = m.group(1)
+                    if check_key in cr:
+                        # Modify the transaction with the check number.
+                        pay_to = cr[check_key]['Pay-To']
+                        new_cat = check_register_map[pay_to] if pay_to in check_register_map else 'Unknown'
+                        new_desc = f"{pay_to} Check: {check_key}"
+                        row[budget_cat].value = new_cat
+                        row[orig_desc].value = new_desc
+                        logger.info(f"Modified transaction for check: '{check_key}' "
+                                    f"new_desc: '{new_desc}' new_cat: '{new_cat}'")
+                logger.info(f"'{sh.title}' Match '{target_cat}' desc={desc}")
+        logger.info(f"Found {len(trans_match)} transactions in sheet "
+                    f"'{sh.title}' with category '{target_cat}' to modify.")
         return None
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))

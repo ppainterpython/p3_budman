@@ -79,7 +79,9 @@ from budman_namespace import *
 from budget_storage_model import (
     bsm_verify_folder, 
     bsm_get_workbook_names,
-    bsm_get_workbook_names2
+    bsm_get_workbook_names2,
+    bsm_WORKBOOK_file_load,
+    bsm_WORKBOOK_file_save,
     )                              
 from p3_mvvm.model_base_ABC import Model_Base
 from .bdm_workbook_class import BDMWorkbook
@@ -1515,61 +1517,13 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
             m = f"BDM: Loading FI_KEY('{fi_key}') WF_KEY('{wf_key}') "
             m += f"workbook('{workbook_name}'): abs_path: '{str(wbap)}'"
             logger.debug(m)
-            wb = self.bsm_load_workbook(wbap)
+            wb = bsm_WORKBOOK_file_load(wbap)
             return wb
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
     #endregion FI_WF Methods
     # ------------------------------------------------------------------------ +   
-    #region bsm_load_workbook(self, workbook_path:Path) function
-    def bsm_load_workbook(self, input_path:Path) -> Workbook:
-        """Load a transaction file for a Financial Institution Workflow.
-
-        Deprecating in favor of budget_storage_model.bsm_WORKBOOK_file_load()
-        Storage Model: This is a Model function, loading an excel workbook
-        file into memory.
-
-        Args:
-            workbook_path (Path): The path of the workbook file to load.
-
-        Returns:
-            Workbook: The loaded transaction workbook.
-        """
-        me = self.bsm_load_workbook
-        try:
-            logger.debug(f"BSM: Loading workbook file: '{input_path}'")
-            wb = load_workbook(filename=input_path)
-            return wb
-        except Exception as e:
-            logger.error(p3u.exc_msg(me, e))
-            raise
-    #endregion bsm_load_workbook(self, fi_key:str, process_folder:str) function
-    # ------------------------------------------------------------------------ +
-    #region bsm_save_workbook() function
-    def bsm_save_workbook(self, workbook : Workbook = None, output_path:str=None) -> None:
-        """Save the workbook to the filesystem.
-        
-        Args:
-            output_path (str): The absolute path of the transaction file to save.
-
-        Returns:
-            None
-
-        """
-        me = self.bsm_save_workbook
-        st = time.time()
-        try:
-            # TODO: add logic to for workbook open in excel, work around.
-            logger.info("Saving wb: ...")
-            workbook.save(filename=output_path)
-            logger.info(f"Saved wb to '{output_path}'")
-            return
-        except Exception as e:
-            logger.error(p3u.exc_msg(me, e))
-            raise    
-    #endregion bsm_save_workbook() function
-    # ------------------------------------------------------------------------ +
     #endregion BSM - Budget Storage Model methods
     # ======================================================================== +
 
@@ -1842,7 +1796,7 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
                 m = f"Workbook '{wb_name}' not found in BDMWD_WORKBOOKS."
                 logger.error(m)
                 raise ValueError(m)
-            wb = self.bsm_load_workbook(wb_ap)
+            wb = bsm_WORKBOOK_file_load(wb_ap)
             self.bdmwd_LOADED_WORKBOOKS_add(wb_name, wb)
             logger.debug(f"{d} loaded wb: '{wb_name}' from '{wb_ap}'")
             return wb
@@ -1881,7 +1835,7 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
                 m = f"Workbook '{wb_name}' not found in BDMWD_WORKBOOKS."
                 logger.error(m)
                 raise ValueError(m)
-            wb = self.bsm_save_workbook(wb,wb_ap)
+            wb = bsm_WORKBOOK_file_save(wb,wb_ap)
             logger.debug(f"{d} saved wb: '{wb_name}' to '{wb_ap}'")
             return wb
         except Exception as e:

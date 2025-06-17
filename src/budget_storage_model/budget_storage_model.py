@@ -39,7 +39,7 @@ from budman_namespace import (
     VALID_WB_FILETYPES, BSM_DATA_COLLECTION_CSV_STORE_FILETYPES,
     WB_FILETYPE_CSV, WB_FILETYPE_XLSX)
 from budget_storage_model.csv_data_collection import (
-    csv_DATA_COLLECTION_get, csv_DATA_COLLECTION_load_file,
+    csv_DATA_COLLECTION_url_get, csv_DATA_COLLECTION_file_load,
     )
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -254,7 +254,7 @@ def bsm_WORKBOOK_url_get(wb_url : str = None) -> Any:
         if wb_filetype == WB_FILETYPE_CSV:
             # If the filetype is CSV, load it as a CSV file.
             logger.info(f"Loading workbook as CSV from file: '{wb_abs_path}'")
-            csv_data_collection = csv_DATA_COLLECTION_load_file(wb_abs_path)
+            csv_data_collection = csv_DATA_COLLECTION_file_load(wb_abs_path)
             return csv_data_collection
         if wb_filetype == WB_FILETYPE_XLSX:
             # If the filetype is XLSX, load it as an Excel workbook.
@@ -266,6 +266,41 @@ def bsm_WORKBOOK_url_get(wb_url : str = None) -> Any:
         raise
 #endregion bsm_WORKBOOK_url_get(wb_url : str = None) -> Any
 # ---------------------------------------------------------------------------- +
+#region    bsm_WORKBOOK_url_put(wb:Any, wb_url : str = None) -> Any
+def bsm_WORKBOOK_url_put(wb:Any, wb_url : str = None) -> Any:
+    """Put a workbook to a URL.
+
+    Args:
+        wb (Any): The workbook to save.
+        wb_url (str): The URL to the workbook to load.
+    
+    Returns:
+        Any: The loaded workbook object.
+    """
+    try:
+        p3u.is_non_empty_str("wb_url", wb_url, raise_error=True)
+        wb_abs_path = bsm_WB_URL_verify_file_scheme(wb_url, test=True)
+        wb_filetype = wb_abs_path.suffix.lower()
+        # Dispatch based on filetype.
+        if wb_filetype not in [WB_FILETYPE_XLSX, WB_FILETYPE_CSV]:
+            # If the filetype is not supported, raise an error.
+            m = f"Unsupported workbook filetype: {wb_filetype} in file: {wb_abs_path}"
+            logger.error(m)
+            raise ValueError(m)
+        if wb_filetype == WB_FILETYPE_CSV:
+            # If the filetype is CSV, load it as a CSV file.
+            logger.info(f"Loading workbook as CSV from file: '{wb_abs_path}'")
+            csv_data_collection = csv_DATA_COLLECTION_url_put(wb, wb_url)
+            return csv_data_collection
+        if wb_filetype == WB_FILETYPE_XLSX:
+            # If the filetype is XLSX, load it as an Excel workbook.
+            logger.info(f"Loading workbook as XLSX from file: '{wb_abs_path}'")
+            wb_content = bsm_WORKBOOK_file_save(wb,wb_abs_path)
+            return wb_content
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion bsm_WORKBOOK_url_put(wb_url : str = None) -> Any
 # ---------------------------------------------------------------------------- +
 #region    bsm_WORKBOOK_file_load(wb_abs_path : str = None) -> Any
 def bsm_WORKBOOK_file_load(wb_path:Path) -> Workbook:
@@ -283,6 +318,7 @@ def bsm_WORKBOOK_file_load(wb_path:Path) -> Workbook:
     try:
         logger.debug(f"BSM: Loading workbook file: '{wb_path}'")
         wb = load_workbook(filename=wb_path)
+        wb._source_filename = wb_path.stem
         return wb
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))

@@ -43,7 +43,7 @@ from budman_namespace import (
     BDM_STORE, DATA_COLLECTION, ALL_KEY, FI_KEY, WF_KEY, WB_REF, WB_NAME,
     WB_TYPE, WF_PURPOSE)
 from budman_data_context import BudManDataContext_Base
-from budget_storage_model.csv_data_collection import (csv_DATA_COLLECTION_get)
+from budget_storage_model.csv_data_collection import (csv_DATA_COLLECTION_url_get)
 #endregion imports
 # ---------------------------------------------------------------------------- +
 #region Globals
@@ -605,7 +605,7 @@ class BudManDataContext(BudManDataContext_Base):
     def dc_CHECK_REGISTER_load(self, wb_name, wb_ref: str) -> DATA_COLLECTION:
         """DC-Only: Load the specified workbook by wb_ref."""
         try:
-            wb = csv_DATA_COLLECTION_get(wb_ref)
+            wb = csv_DATA_COLLECTION_url_get(wb_ref)
             self.dc_WB_NAME = wb_name
             self.dc_CHECK_REGISTERS[wb_name] = wb_ref
             self.dc_LOADED_CHECK_REGISTERS[wb_name] = wb

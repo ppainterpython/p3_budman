@@ -349,7 +349,7 @@ category_map = {
     r'(?i)\bMUD\s*PUPPIES\b': 'Pets.Grooming',
 #endregion Pets
 #region Professional and Historical Organizations
-    r'(?i)\bID:INSTITUTEEL\b': 'Professional.IEEE',
+    r'(?i)\bID:INSTITUTEEL\b': 'Organizations.IEEE',
 #endregion Professional and Historical Organizations
 #region Work-related Expenses
     r'(?i)\bRHEINWERK\/SAP\s*PRESS.*\b': 'Work-related.Training.SAP',
@@ -511,14 +511,15 @@ category_map = {
 check_register_map = {
     'Unknown': 'Banking.Checks to Categorize',
     'Nicole Smith': 'Health and Wellbeing.Hair Care.Nicole Smith',
-    'Landmark Roofing and Construction': 's',
-    'Tejas Chapter DRT': '',
-    'Maria Oyestas': 'Unknown',
+    'Landmark Roofing and Construction': 'Housing.Improvements.Landmark Roofing',
+    'Tejas Chapter DRT': 'Organizations.DRT.Tejas Chapter',
+    'Maria Oyestas': 'Housing.Maid Service.Maria Oyestas',
     'Passport Services': 'Travel.Passport Services.Check 2883',
     'APQT': 'Medical.Physical Therapy.APQT',
-    'Detergent Maria Oyestas': '',
+    'Detergent Maria Oyestas': 'Groceries.Misc.Detergent Maria Oyestas',
     'Colonel George Moffett Chapter DAR': 'Professional and Historical Organizations.DAR.Colonel George Moffett Chapter',
     'Hannah Painter': 'Misc.Reimbursement.Hannah Painter',
+    'Laura Painter': 'Banking.Laura Painter',
     'Lawn Sprinkler': 'Housing.Lawn Care.Sprinkler Maintenance',
     'HVAC Grape Cove Unknown': 'Housing.HVAC.Unknown',
 }

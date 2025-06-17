@@ -1123,7 +1123,7 @@ class BudManViewModel(Model_Binding): # future ABC for DC, CP, VM interfaces
             if lwbl_count > 0:
                 # Iterate the LOADED_WORKBOOKS_COLLECTION (a DATA_COLLECTION)
                 for wb_index, wb in lwbl.items():
-                    result += f"{wb.display_brief_str()}\n"
+                    result += f"{wbc[wb_index].display_brief_str()}\n"
 
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             return True, result
@@ -1411,7 +1411,7 @@ class BudManViewModel(Model_Binding): # future ABC for DC, CP, VM interfaces
                 if check_register:
                     # Check for a check register column, add it if not present.
                     # load the check register here
-                    check_register_dict = csv_DATA_COLLECTION_get(wb_url)
+                    check_register_dict = csv_DATA_COLLECTION_url_get(wb_url)
                     apply_check_register(ws)
                 else:
                     # Check for budget category column, add it if not present.
@@ -1497,8 +1497,8 @@ class BudManViewModel(Model_Binding): # future ABC for DC, CP, VM interfaces
                     return False, m 
             wb_content = self.dc_LOADED_WORKBOOKS[wb_index]
             logger.debug(f"cr_wb_name: {cr_wb_name}, cr_wb_index: {cr_wb_index}, ")
-
-            # apply_check_register(ws)
+            # Ready to apply the check register to the workbook.
+            apply_check_register(cr_content, wb_content)
             return True, ""
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
