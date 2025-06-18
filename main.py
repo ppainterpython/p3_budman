@@ -83,11 +83,13 @@ def main(bdms_url : str = None):
                 raise ValueError("BudMan Settings not configured.")
         app_name = BudManMain_settings.get(APP_NAME, "BudManApp")
         configure_logging(app_name, logtest=False)
+        fs = ""  # from settings""
         if bdms_url is None:
             bdms_url = BudManMain_settings[BDM_STORE_URL]
-        logger.debug(f"Started: {app_name} bdms_url = '{bdms_url}'...")
+            fs ="(from settings) "
+        logger.info(f"BizEVENT: Started {app_name} User BDM_STORE {fs}bdms_url = '{bdms_url}'...")
         app = BudManApp(BudManMain_settings)
-        logger.info(f"{dscr(app)} created. ...")
+        logger.debug(f"{dscr(app)} created. ...")
         app.run(bdms_url)  # Start the application
         logger.debug(f"Complete:")
     except Exception as e:
@@ -97,4 +99,4 @@ def main(bdms_url : str = None):
 if __name__ == "__main__":
     bdms_url = None #"file:///C:/Users/ppain/OneDrive/budget/p3_budget_manager_ca063e8b.jsonc"
     main(bdms_url)
-    
+    exit(0)

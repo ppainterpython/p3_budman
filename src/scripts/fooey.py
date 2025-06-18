@@ -15,7 +15,7 @@ from budman_namespace import (
     WF_INPUT_FOLDER,WF_WORKING_FOLDER, WF_OUTPUT_FOLDER,WF_NAME,
     WF_INPUT, WF_WORKING, WF_OUTPUT, WF_PURPOSE_FOLDER_MAP
     )
-from budget_storage_model import bsm_BDM_STORE_url_load
+from budget_storage_model import bsm_BDM_STORE_url_get
 from budman_workflows.budget_category_mapping import extract_category_tree
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -65,7 +65,7 @@ if __name__ == "__main__":
         #      WF: bdm_id \ wf_key \  wf_folder(wf_purpose) \ wb_name.wb_type
         #bdm_folder
         #
-        bdms = bsm_BDM_STORE_url_load(wb_url)
+        bdms = bsm_BDM_STORE_url_get(wb_url)
         fi_folders = list(bdms[BDM_FI_COLLECTION].keys())     
         bdm_folder = bdms[BDM_FOLDER]
         all_paths = []

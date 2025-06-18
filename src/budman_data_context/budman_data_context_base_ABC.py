@@ -21,14 +21,14 @@
 #region Imports
 # python standard library modules and packages
 from abc import ABC, abstractmethod
-from typing import Tuple, Any
+from typing import Tuple, Any, Union, Dict
 # third-party modules and packages
 from openpyxl import Workbook
 # local modules and packages
 from src.budman_namespace import (
     DATA_CONTEXT, WORKBOOK_DATA_LIST, LOADED_WORKBOOK_COLLECTION,
     WORKBOOK_DATA_COLLECTION, WORKFLOW_DATA_COLLECTION,
-    BDM_STORE, DATA_COLLECTION)
+    BDM_STORE, DATA_COLLECTION, WORKBOOK_OBJECT)
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 class BudManDataContext_Base(ABC):
@@ -306,8 +306,13 @@ class BudManDataContext_Base(ABC):
         pass
 
     @abstractmethod
-    def dc_WORKBOOK_add(self, wb_name: str, wb: Workbook) -> None:
+    def dc_WORKBOOK_add(self, wb_name: str, wb: Union[Workbook, Dict]) -> None:
         """Add a new workbook to the data context."""
+        pass
+
+    @abstractmethod
+    def dc_WORKBOOK_find(self, find_key: str, value: str) -> WORKBOOK_OBJECT:
+        """Locate and return a workbook by the key and value."""
         pass
 
     @abstractmethod

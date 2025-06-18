@@ -75,6 +75,8 @@ WB_NAME = "wb_name"
 WB_REF = "wb_ref"
 WB_INFO = "wb_info"
 WB_URL = "wb_url" 
+WB_ID = "wb_id"  
+WB_INDEX = "wb_index"  # Index of the workbook in a collection
 # ---------------------------------------------------------------------------- +
 # Attribute value constants
 WB_INFO_LEVEL_INFO = "info"

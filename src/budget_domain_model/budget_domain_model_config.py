@@ -269,14 +269,13 @@ class BDMConfig(metaclass=BDMSingletonMeta):
                         not isinstance(fi_object[FI_WORKBOOK_DATA_COLLECTION], dict) or
                         len(fi_object[FI_WORKBOOK_DATA_COLLECTION]) == 0):
                         continue
-                    for wb_index, wb_data in fi_object[FI_WORKBOOK_DATA_COLLECTION].items():
+                    for wb_id, wb_data in fi_object[FI_WORKBOOK_DATA_COLLECTION].items():
                         if not isinstance(wb_data, dict):
                             continue
                         # Convert the WORKBOOK_ITEM to a WORKBOOK_OBJECT.
                         wb_object = BDMWorkbook(**wb_data)
                         # Replace the DATA_OBJECT with the WORKBOOK_OBJECT.
-                        # Use int for wb_index
-                        fi_object[FI_WORKBOOK_DATA_COLLECTION][wb_index] = wb_object
+                        fi_object[FI_WORKBOOK_DATA_COLLECTION][wb_id] = wb_object
             logger.debug(f"Complete:")   
             return None
         except Exception as e:
@@ -291,7 +290,7 @@ class BDMConfig(metaclass=BDMSingletonMeta):
         """Configure this BDMConfig object from loading a BDM_STORE url."""
         try:
             logger.debug("Start:  ...")
-            bdm_store = bsm_BDM_STORE_url_load(bdm_url)
+            bdm_store = bsm_BDM_STORE_url_get(bdm_url)
             # Ensure the URL used to load is set in the config
             bdm_store[BDM_URL] = bdm_url  
             # Validate the loaded BDM_STORE config. Raises error if not happy

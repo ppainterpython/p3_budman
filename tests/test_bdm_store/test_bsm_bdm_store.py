@@ -66,13 +66,13 @@ def test_bsm_BDM_STORE_url_load(temp_dir):
                 with pytest.raises(Exception) as exc_info:
                     logger.info(f"    Expecting exception for '{bdms_path.name}':' "
                                 f" for invalid json file")
-                    bsm_BDM_STORE_url_load(url)
+                    bsm_BDM_STORE_url_get(url)
             elif bdms_path.name == TEXT_FILE:
                 # file with unsupported file type
                 with pytest.raises(ValueError) as exc_info:
                     logger.info(f"    Expecting exception ValueError for '{bdms_path.name}':' "
                                 f" for BDM_STORE file unsupported file type")
-                    bsm_BDM_STORE_url_load(url)
+                    bsm_BDM_STORE_url_get(url)
                 assert exc_info.type is ValueError, \
                     f"Expected ValueError, got: {exc_info.type}"
                 exp_content = "bdms_path filetype is not supported"
@@ -83,42 +83,42 @@ def test_bsm_BDM_STORE_url_load(temp_dir):
                 with pytest.raises(ValueError) as exc_info:
                     logger.info(f"    Expecting exception ValueError for '{bdms_path.name}':' "
                                 f" for BDM_STORE file empty json file")
-                    bsm_BDM_STORE_url_load(url)
+                    bsm_BDM_STORE_url_get(url)
                 assert exc_info.type is ValueError, \
                     f"Expected ValueError, got: {exc_info.type}"
                 exp_content = "file is empty"
                 assert exp_content in str(exc_info.value), \
                     f"Expected '{exp_content}' in message, got: {exc_info.value}"
             else:
-                bdm_store = bsm_BDM_STORE_url_load(url)
+                bdm_store = bsm_BDM_STORE_url_get(url)
                 assert bdm_store is not None
                 assert isinstance(bdm_store, dict)
         # Unhappy path tests
         # Invalid file URL with non-absolute path, not specifically caught in target function
         with pytest.raises(ValueError) as exc_info:
             logger.info("    Expecting exception FileNotFoundError for invalid path")
-            bsm_BDM_STORE_url_load("file:///xxxxxxxx.json")
+            bsm_BDM_STORE_url_get("file:///xxxxxxxx.json")
         exp_content = "URI is not absolute:"
         assert exp_content in str(exc_info.value), \
             f"Expected '{exp_content}' in message, got: {exc_info.value}"
         # Invalid file URL to non-existent file
         with pytest.raises(FileNotFoundError) as exc_info:
             logger.info("    Expecting exception FileNotFoundError for invalid path")
-            bsm_BDM_STORE_url_load("file:///C:\\xxxxxxxx.json")
+            bsm_BDM_STORE_url_get("file:///C:\\xxxxxxxx.json")
         exp_content = "file does not exist:"
         assert exp_content in str(exc_info.value), \
             f"Expected '{exp_content}' in message, got: {exc_info.value}"
         # Invalid file URL with no scheme
         with pytest.raises(ValueError) as exc_info:
             logger.info("    Expecting exception ValueError for invalid url")
-            bsm_BDM_STORE_url_load("xxxxxxxx.json")
+            bsm_BDM_STORE_url_get("xxxxxxxx.json")
         exp_content = "Invalid URL"
         assert exp_content in str(exc_info.value), \
             f"Expected '{exp_content}' in message, got: {exc_info.value}"
         # Non-str for URL
         with pytest.raises(TypeError) as exc_info:
             logger.info("    Expecting exception TypeError non-str URL")
-            bsm_BDM_STORE_url_load(123)
+            bsm_BDM_STORE_url_get(123)
         exp_content = "must be type:'str', not type:"
         assert exp_content in str(exc_info.value), \
             f"Expected '{exp_content}' in message, got: {exc_info.value}"

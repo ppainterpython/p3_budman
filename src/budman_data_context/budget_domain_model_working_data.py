@@ -159,24 +159,26 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
     def dc_WORKBOOK_load(self, wb_index: str) -> Tuple[bool, str]:
         """Model-aware: Load the workbook indicated by wb_index."""
         try:
-            wb_obj : BDMWorkbook= self.dc_WORKBOOK_DATA_COLLECTION.get(wb_index, None)
-            if wb_obj is None:
+            wdc = self.dc_WORKBOOK_DATA_COLLECTION
+            wb = BDMWorkbook.by_index(wb_index, wdc)
+            if wb is None:
                 m = f"dc_WORKBOOK_DATA_COLLECTION does not have a workbook with index '{wb_index}'."
                 logger.error(m)
                 return False, m
-            content = bsm_WORKBOOK_url_get(wb_obj.wb_url)
+            content = bsm_WORKBOOK_url_get(wb.wb_url)
             if content is None:
-                m = f"Failed to load Workbook data for '{wb_obj.wb_name}'."
+                m = f"Failed to load Workbook data for '{wb.wb_name}'."
                 logger.error(m)
                 return False, m
-            r = f"{P2}wb_index: {wb_index:>2} wb_name: '{wb_obj.wb_name:<40}'\n"
+            wb_index = BDMWorkbook.wb_index(wb.wb_id, wdc)
+            r = f"{P2}wb_index: {wb_index:>2} wb_name: '{wb.wb_name:<40}'\n"
             self.dc_WB_REF = str(wb_index)  # Set the wb_ref in the DC.
-            self._dc_WB_NAME = wb_obj.wb_name  # Set the wb_name in the DC.
+            self._dc_WB_NAME = wb.wb_name  # Set the wb_name in the DC.
             # Add to the loaded workbooks collection.
-            self.dc_LOADED_WORKBOOKS[wb_index] = content
-            wb_obj.loaded = True
-            logger.info(f"Loaded workbook '{wb_index}':'{wb_obj.wb_name}' "
-                        f"from url '{wb_obj.wb_url}'.")
+            self.dc_LOADED_WORKBOOKS[wb.wb_id] = content
+            wb.loaded = True
+            logger.info(f"Loaded workbook '{wb.wb_id}' "
+                        f"from url '{wb.wb_url}'.")
             return True, r
         except Exception as e:
             m = f"Error loading workbook with index '{wb_index}': {p3u.exc_err_msg(e)}"
@@ -191,7 +193,6 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
     #region    BDMWD Interface concrete implementation.
     # ------------------------------------------------------------------------ +
     #region    BDMWorkingDataBaseInterface BDMWD DC-aware Interface.
-    # #region bdmwd_LOADED_WORKBOOKS() methods
     def bdmwd_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_COLLECTION:
         """Model-Aware: Return the LOADED_WORKBOOK_COLLECTION from the BDMWD."""
         # Ask the model for the bdmwd_LOADED_WORKBOOKS.
@@ -199,8 +200,6 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
     def bdmwd_LOADED_WORKBOOKS_count(self) -> int:
         """Return total count of BDMWD_LOADED_WORKBOOKS dictionary."""
         return len(self.dc_LOADED_WORKBOOKS)
-
-    
     #endregion BDMWorkingDataBaseInterface BDMWD DC-aware Interface.
     # ------------------------------------------------------------------------ +
     #region    BDMWorkingData Interface BDMWD Model-aware(fi,wf,wb) Interface.

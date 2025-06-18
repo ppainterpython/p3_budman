@@ -376,7 +376,25 @@ class BudManCLIParser():
             subparsers = parser.add_subparsers(
                 dest="workflow_cmd", title="Workflow Task Commands",
                 description=d)
-            # Workflow tasks: map-category, apply, reload, check
+            # Workflow task sub-command: task
+            task_parser = subparsers.add_parser(
+                "task",
+                aliases=["t"], 
+                help="Task: Perform a specific workflow task on workbooks.")
+            task_parser.set_defaults(workflow_cmd="wf_task")
+            task_parser.add_argument(
+                "task_name", nargs="?",
+                action="store", 
+                default=None,
+                help=("Name of the task function to perform, e.g., 'discover'. "
+                       "Or, 'list' to display a list of valid task names."))
+            task_parser.add_argument(
+                "task_args",
+                nargs="*",
+                default=None,
+                help="List of arguments to pass to the workflow task."
+            )
+            # Workflow specific task subcmds: map-category, apply, reload, check
             # task 'check' subcommand
             check_parser = subparsers.add_parser(
                 "check",

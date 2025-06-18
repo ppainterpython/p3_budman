@@ -10,12 +10,14 @@ import p3_utils as p3u, p3logging as p3l, pyjson5 as json5
 # local modules and packages
 # from budman_namespace import *
 from budman_namespace import (
-    BDM_FOLDER, BDM_FI_COLLECTION,
+    BDM_STORE, BDM_FOLDER, BDM_FI_COLLECTION,
+    FI_WORKBOOK_DATA_COLLECTION,
     FI_WORKFLOW_DATA_COLLECTION, FI_NAME, FI_FOLDER,BDM_WF_COLLECTION,
     WF_INPUT_FOLDER,WF_WORKING_FOLDER, WF_OUTPUT_FOLDER,WF_NAME,
     WF_INPUT, WF_WORKING, WF_OUTPUT, WF_PURPOSE_FOLDER_MAP, BDM_DATA_CONTEXT
     )
-from budget_storage_model import bsm_BDM_STORE_url_load
+from budget_storage_model import bsm_BDM_STORE_url_get, bsm_BDM_STORE_url_put
+from budget_domain_model.bdm_workbook_class import BDMWorkbook
 from budman_workflows.budget_category_mapping import extract_category_tree
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -65,7 +67,7 @@ def bdm_tree():
         #      WF: bdm_id \ wf_key \  wf_folder(wf_purpose) \ wb_name.wb_type
         #bdm_folder
         #
-        bdms = bsm_BDM_STORE_url_load(wb_url)
+        bdms = bsm_BDM_STORE_url_get(wb_url)
         fi_folders = list(bdms[BDM_FI_COLLECTION].keys())     
         bdm_folder = bdms[BDM_FOLDER]
         all_paths = []
@@ -103,6 +105,59 @@ def bdm_tree():
     logger.info(f"Complete.")
 #endregion bdm_tree() function
 # ------------------------------------------------------------------------ +
+#region bdm_store_change() function
+def bdm_store_change(bdms:BDM_STORE):
+    try:
+        # change key from '0' to 'wf_folder' + '|' + 'wb_name'
+        # change 'loaded' to 'wb_loaded'
+
+
+        # wb_path.parent  = abs_path to the parent directory
+        # wb_path.stem = filename
+        # wb_path.suffix = filetype
+        # wb_path.name = full_filename
+        # path mapping:  
+        # BDM: FI: bdm_id / fi_folder(fi_key) / fi_data_coll(wf_key) / workbook_list(wf_purpose) / (wb_name.wb_type, wb_url)
+        # bsm:   '~/budget/'              'boa/'                                        'data/new/' data.xlsx
+        #      WF: bdm_id \ wf_key \  wf_folder(wf_purpose) \ wb_name.wb_type
+        #bdm_folder
+        #
+        if (BDM_FI_COLLECTION in bdms and
+            bdms[BDM_FI_COLLECTION] is not None and
+            isinstance(bdms[BDM_FI_COLLECTION], dict) and 
+            len(bdms[BDM_FI_COLLECTION]) > 0):
+            for fi_key, fi_object in bdms[BDM_FI_COLLECTION].items():
+                if not isinstance(fi_object, dict):
+                    continue
+                if (FI_WORKBOOK_DATA_COLLECTION not in fi_object or
+                    fi_object[FI_WORKBOOK_DATA_COLLECTION] is None or
+                    not isinstance(fi_object[FI_WORKBOOK_DATA_COLLECTION], dict) or
+                    len(fi_object[FI_WORKBOOK_DATA_COLLECTION]) == 0):
+                    continue
+                wdc = fi_object[FI_WORKBOOK_DATA_COLLECTION]
+                for wb_index, wb_data in wdc.items():
+                    if not isinstance(wb_data, dict):
+                        continue
+                    if 'loaded' in wb_data:
+                        # Change 'loaded' to 'wb_loaded'
+                        wb_data['wb_loaded'] = wb_data.pop('loaded')
+                    if 'wb_index' in wb_data:
+                        del wb_data['wb_index']
+                    # Convert the WORKBOOK_ITEM to a WORKBOOK_OBJECT.
+                    wb_object = BDMWorkbook(**wb_data)
+                    # Replace the DATA_OBJECT with the WORKBOOK_OBJECT.
+                    # Use wb_id as the key, no longer the int for wb_index
+                    del wdc[wb_index]
+                    wb_id = wb_object.wb_id
+                    wdc[wb_id] = wb_object
+
+    except Exception as e:
+        m = p3u.exc_err_msg(e)
+        logger.error(m)
+    # bdm = bdms.bsm_BDM_STORE_url_load(bdms_url)
+    logger.info(f"Complete.")
+#endregion bdm_store_change() function
+# ------------------------------------------------------------------------ +
 
 if __name__ == "__main__":
     wb_url = "file:///C:/Users/ppain/OneDrive/budget/p3_budget_manager_ca063e8b.jsonc"
@@ -110,9 +165,9 @@ if __name__ == "__main__":
     try:
         configure_logging(__name__, logtest=False)
         wb_path = p3u.verify_url_file_path(cr_url, test=False)
-        bdms = bsm_BDM_STORE_url_load(wb_url)
-        DC = bdms[BDM_DATA_CONTEXT]
-                
+        bdms = bsm_BDM_STORE_url_get(wb_url)
+        bdm_store_change(bdms)
+        bsm_BDM_STORE_url_put(bdms, wb_url)
         
         
         logger.info(f"wb_path: '{wb_path}' url:'{wb_url}'")

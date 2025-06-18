@@ -21,14 +21,14 @@
 #region Imports
 # python standard library modules and packages
 from abc import ABC, abstractmethod
-from typing import Tuple
+from typing import Tuple, Union, Dict
 # third-party modules and packages
 from openpyxl import Workbook
 
 # local modules and packages
 from src.budman_namespace import (
     DATA_COLLECTION, WORKBOOK_DATA_LIST, LOADED_WORKBOOK_COLLECTION,
-    WORKBOOK_DATA_COLLECTION
+    WORKBOOK_DATA_COLLECTION, WORKBOOK_OBJECT
     )
 from budman_data_context import BudManDataContext_Base
 import p3_utils as p3u
@@ -295,10 +295,14 @@ class BudManDataContext_Binding(BudManDataContext_Base):
         """Remove the specified workbook by name."""
         return self.DC.dc_WORKBOOK_remove(wb_name)
 
-    def dc_WORKBOOK_add(self, wb_name: str, wb: Workbook) -> None:
+    def dc_WORKBOOK_add(self, wb_name: str, wb: Union[Workbook,Dict]) -> None:
         """Add a new workbook to the data context."""
         return self.DC.dc_WORKBOOK_add(wb_name, wb)
 
+    def dc_WORKBOOK_find(self, find_key: str, value: str) -> WORKBOOK_OBJECT:
+        """DC-Only: Locate and return a workbook by the key and value."""
+        return self.DC.dc_WORKBOOK_find(find_key, value)
+    
     def dc_BDM_STORE_load(self, file_path: str) -> None:
         """Load a BDM_STORE from bdm_url, set dc_BDM_STORE.
         All relevant DC values reference the dc_BDM_STORE.

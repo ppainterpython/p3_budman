@@ -51,12 +51,12 @@ def csv_DATA_COLLECTION_url_get(csv_url : str = None) -> DATA_COLLECTION:
     """
     try:
         st = p3u.start_timer()
-        logger.info(f"Get DATA_COLLECTION from  url: '{csv_url}'")
+        logger.debug(f"Get DATA_COLLECTION from  url: '{csv_url}'")
         # only support file:// scheme for now.
         # csv_path = verify_url_file_path(csv_url, test=True)
         csv_path = p3u.verify_url_file_path(csv_url, test=True)
         result = csv_DATA_COLLECTION_file_load(csv_path)
-        logger.info(f"Complete csv_path: {csv_path} {p3u.stop_timer(st)}")
+        logger.debug(f"Complete csv_path: {csv_path} {p3u.stop_timer(st)}")
         return result
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
@@ -77,12 +77,12 @@ def csv_DATA_COLLECTION_url_put(csv_dict:dict,csv_url : str = None) -> DATA_COLL
     """
     try:
         st = p3u.start_timer()
-        logger.info(f"Get DATA_COLLECTION from  url: '{csv_url}'")
+        logger.debug(f"Get DATA_COLLECTION from  url: '{csv_url}'")
         # only support file:// scheme for now.
         # csv_path = verify_url_file_path(csv_url, test=True)
         csv_path = p3u.verify_url_file_path(csv_url, test=True)
         result = csv_DATA_COLLECTION_file_save(csv_path)
-        logger.info(f"Complete csv_path: {csv_path} {p3u.stop_timer(st)}")
+        logger.debug(f"Complete csv_path: {csv_path} {p3u.stop_timer(st)}")
         return result
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
@@ -109,6 +109,7 @@ def csv_DATA_COLLECTION_file_load(csv_path : Path = None) -> DATA_COLLECTION:
                         logger.warning(f"Skipping row: {row}")
                         continue
                     data_collection[new_key] = row
+        logger.info(f"BizEVENT: Loaded DATA_COLLECTION from  file: '{csv_path}'")
         logger.debug(f"Complete {p3u.stop_timer(st)}")
         return data_collection
     except Exception as e:
@@ -137,6 +138,7 @@ def csv_DATA_COLLECTION_file_save(wb_dict:dict,csv_path : Path = None) -> DATA_C
                         logger.warning(f"Skipping row: {row}")
                         continue
                     data_collection[new_key] = row
+        logger.info(f"BizEVENT: Loading DATA_COLLECTION from  file: '{csv_path}'")
         logger.debug(f"Complete {p3u.stop_timer(st)}")
         return data_collection
     except Exception as e:

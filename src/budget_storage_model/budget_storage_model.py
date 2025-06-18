@@ -39,7 +39,8 @@ from budman_namespace import (
     VALID_WB_FILETYPES, BSM_DATA_COLLECTION_CSV_STORE_FILETYPES,
     WB_FILETYPE_CSV, WB_FILETYPE_XLSX)
 from budget_storage_model.csv_data_collection import (
-    csv_DATA_COLLECTION_url_get, csv_DATA_COLLECTION_file_load,
+    csv_DATA_COLLECTION_url_get, csv_DATA_COLLECTION_url_put,
+    csv_DATA_COLLECTION_file_load, csv_DATA_COLLECTION_file_save
     )
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -50,8 +51,8 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 #region    BDM_STORE methods
 # ---------------------------------------------------------------------------- +
-#region    bsm_BDM_STORE_url_load() function
-def bsm_BDM_STORE_url_load(bdms_url : str = None) -> BDM_STORE:
+#region    bsm_BDM_STORE_url_get() function
+def bsm_BDM_STORE_url_get(bdms_url : str = None) -> BDM_STORE:
     """BSM: Load a BDM_STORE object from a URL.
     
     Entry point for a BDM_STORE file load operation. Parse the URL and decide
@@ -76,16 +77,16 @@ def bsm_BDM_STORE_url_load(bdms_url : str = None) -> BDM_STORE:
         if parsed_url.scheme == "file":
             # Decode the URL and convert it to a Path object.
             bdms_path = Path.from_uri(bdms_url)
-            logger.info(f"Loading BDM_STORE from path: '{bdms_path}' URL: '{bdms_url}'")
+            logger.debug(f"Loading BDM_STORE from path: '{bdms_path}' URL: '{bdms_url}'")
             return bsm_BDM_STORE_file_load(bdms_path)
         raise ValueError(f"Unsupported URL scheme: {parsed_url.scheme}")
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
-#endregion bsm_BDM_STORE_url_load() function
+#endregion bsm_BDM_STORE_url_get() function
 # ---------------------------------------------------------------------------- +
-#region    bsm_BDM_STORE_url_save() function
-def bsm_BDM_STORE_url_save(bdm_store:BDM_STORE, bdms_url : str = None) -> Dict:
+#region    bsm_BDM_STORE_url_put() function
+def bsm_BDM_STORE_url_put(bdm_store:BDM_STORE, bdms_url : str = None) -> Dict:
     """BSM: Save the BDM_STORE object to storage at the url.
     
     Store the BDM_STORE dictionary with a storage service based on the url.
@@ -112,14 +113,14 @@ def bsm_BDM_STORE_url_save(bdm_store:BDM_STORE, bdms_url : str = None) -> Dict:
         if parsed_url.scheme == "file":
             # Decode the URL into a Path object.
             bdms_path = Path.from_uri(bdms_url)
-            logger.info(f"Loading BDM_STORE from path:'{bdms_path}' "
+            logger.debug(f"Putting BDM_STORE to url:'{bdms_path}' "
                         f"url:'{bdms_url}'")
             return bsm_BDM_STORE_file_save(bdm_store, bdms_path)
         raise ValueError(f"Unsupported store_url scheme: {parsed_url.scheme}")
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
-#endregion bsm_BDM_STORE_url_save() function
+#endregion bsm_BDM_STORE_url_put() function
 # ---------------------------------------------------------------------------- +
 #region    bsm_BDM_STORE_file_load() function
 def bsm_BDM_STORE_file_load(bdms_path : Path = None) -> BDM_STORE:
@@ -127,7 +128,7 @@ def bsm_BDM_STORE_file_load(bdms_path : Path = None) -> BDM_STORE:
     try:
         if bdms_path is None or not isinstance(bdms_path, Path):
             raise ValueError("bdms_path is None or not a Path object.")
-        logger.info(f"Loading BDM_STORE from  file: '{bdms_path}'")
+        logger.debug(f"Loading BDM_STORE from  file: '{bdms_path}'")
         if not bdms_path.exists():
             m = f"file does not exist: {bdms_path}"
             logger.error(m)
@@ -148,7 +149,7 @@ def bsm_BDM_STORE_file_load(bdms_path : Path = None) -> BDM_STORE:
             bdms_json : str = f.read()
             bdms_json_size = len(bdms_json)
             bdm_store_content = json5.decode(bdms_json,10)
-        logger.info(f"Loaded '{bdms_json_size}' chars of json content from file: '{bdms_path}'")
+        logger.info(f"BizEVENT: Loaded '{bdms_json_size}' chars of json content from file: '{bdms_path}'")
         return bdm_store_content
     except json5.Json5DecoderException as e:
         logger.error(p3u.exc_err_msg(e))
@@ -166,13 +167,13 @@ def bsm_BDM_STORE_file_save(bdm_store:BDM_STORE, bdms_path:Path) -> None:
         p3u.is_obj_of_type("bdm_store", bdm_store, dict, raise_error=True)
         # store_path must be a non-empty string.
         p3u.is_obj_of_type("bdms_path", bdms_path, Path, raise_error=True)
-        logger.info("Saving Budget Manager Store to file: '{bdms_path}'")
+        logger.info(f"Saving BDM_STORE to file: '{bdms_path}'")
         # Only persist the properties in BDM_PERSISTED_PROPERTIES.
         filtered_bsm = {k: v for k, v in bdm_store.items() if k in BSM_PERSISTED_PROPERTIES}
         jsonc_content = json5.encode(filtered_bsm)
         with open(bdms_path, "w") as f:
             f.write(jsonc_content)
-        logger.info(f"Saved BDM_URL to file: {bdms_path}")
+        logger.info(f"BizEVENT: Saved BDM_STORE to file: {bdms_path}")
         return None
     except json5.Json5UnstringifiableType as e:
         logger.error(p3u.exc_err_msg(e))
@@ -253,12 +254,12 @@ def bsm_WORKBOOK_url_get(wb_url : str = None) -> Any:
             raise ValueError(m)
         if wb_filetype == WB_FILETYPE_CSV:
             # If the filetype is CSV, load it as a CSV file.
-            logger.info(f"Loading workbook as CSV from file: '{wb_abs_path}'")
+            logger.debug(f"Loading workbook as CSV from file: '{wb_abs_path}'")
             csv_data_collection = csv_DATA_COLLECTION_file_load(wb_abs_path)
             return csv_data_collection
         if wb_filetype == WB_FILETYPE_XLSX:
             # If the filetype is XLSX, load it as an Excel workbook.
-            logger.info(f"Loading workbook as XLSX from file: '{wb_abs_path}'")
+            logger.debug(f"Loading workbook as XLSX from file: '{wb_abs_path}'")
             wb_content = bsm_WORKBOOK_file_load(wb_abs_path)
             return wb_content
     except Exception as e:
@@ -372,7 +373,7 @@ def bsm_verify_folder(ap: Path, create:bool=True, raise_errors:bool=True) -> boo
             m = f"Folder does not exist: '{str(ap)}'"
             logger.error(m)
             if create:
-                logger.info(f"Creating folder: '{str(ap)}'")
+                logger.info(f"BizEVENT: Creating folder: '{str(ap)}'")
                 ap.mkdir(parents=True, exist_ok=True)
             else:
                 raise ValueError(m)

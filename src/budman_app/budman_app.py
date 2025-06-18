@@ -37,7 +37,7 @@ class BudManApp(metaclass=BDMSingletonMeta):
         self._cli_view: object = None  # type: ignore
         self._app_name: str = None
         d = dscr(self)
-        logger.info(f"{d}.__init__() completed ...")
+        logger.debug(f"{d}.__init__() completed ...")
     # ------------------------------------------------------------------------ +
     @property
     def settings(self) -> Dynaconf:
@@ -83,7 +83,6 @@ class BudManApp(metaclass=BDMSingletonMeta):
             if not hasattr(self, 'cli_view') or self.cli_view is None:
                 raise ValueError("CLI View not initialized. Call budman_app_setup() first.")
             self.cli_view.cmdloop() if startup else None # Application CLI loop
-            _ = "pause"
         except Exception as e:
             m = exc_err_msg(e)
             logger.error(m)
@@ -94,9 +93,8 @@ class BudManApp(metaclass=BDMSingletonMeta):
     def budman_app_exit_handler(self):
         """start the cli repl loop."""
         try:
-            m = f"Exiting {self.settings[APP_NAME]}..."
+            m = f"BizEVENT: Exiting application {self.settings[APP_NAME]}..."
             logger.info(m)
-            print(m)
         except Exception as e:
             m = exc_err_msg(e)
             logger.error(m)
@@ -136,7 +134,9 @@ class BudManApp(metaclass=BDMSingletonMeta):
         """start the cli repl loop."""
         try:
             startup = not testmode
+            logger.info(f"BizEVENT: Entering user input command loop.")
             self.budman_app_cli_cmdloop(startup=startup) # Application CLI loop
+            logger.info(f"BizEVENT: Exit from user input command loop.")
         except Exception as e:
             m = exc_err_msg(e)
             logger.error(m)
@@ -159,7 +159,7 @@ class BudManApp(metaclass=BDMSingletonMeta):
             if self.settings is None:
                 raise ValueError("Settings not configured.")
             self.app_name = self.settings.get(APP_NAME, "BudManApp")
-            logger.info(f"Started: {self.app_name} bdms_url = '{bdms_url}'...")
+            logger.debug(f"Started: {self.app_name} bdms_url = '{bdms_url}'...")
             self.budman_app_setup(bdms_url, testmode)  # Create the BudManApp instance
             self.budman_app_start(testmode)  # Create the BudManApp instance
             logger.debug(f"Complete:")
@@ -168,6 +168,5 @@ class BudManApp(metaclass=BDMSingletonMeta):
             logger.error(m)
         d = dscr(self)
         logger.info(f"{d} exiting ...")
-        exit(0)
     #endregion run() function
     # ------------------------------------------------------------------------ +

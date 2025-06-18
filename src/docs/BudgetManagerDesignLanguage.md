@@ -104,3 +104,10 @@ To add clarity, I am refactoring some type definitions:
 - __WORKFLOW_DATA_COLLECTION__ to organize the workbooks in the workflow-centric view.
 
 - __WORKBOOK_DATA_COLLECTION__ for the workbook-centric view.
+
+## Change Journal
+
+| Date       | Description                                                      |
+|------------|------------------------------------------------------------------|
+| 06/17/2025 | Removed bdm_initialize_from_BDM_STORE(self) from budget_domain_model.py|
+|06/17/2025|Modified BDMWorkbook class and WORKBOOK_DATA_COLLECTION to be use the wb_id as the key, not a list index. The wb_index used in layers above BDM, not persisted in BDMWorkbook.|

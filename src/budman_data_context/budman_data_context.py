@@ -29,19 +29,18 @@
 import pytest, os
 from pathlib import Path
 from abc import ABC, abstractmethod
-from typing import Tuple, Any
+from typing import Tuple, Any, Union, Dict
 # third-party modules and packages
 from openpyxl import Workbook
 import logging, p3_utils as p3u, p3logging as p3l
 # local modules and packages
 from budman_namespace import (
     FI_OBJECT, BDM_FI_COLLECTION, BDM_WF_COLLECTION,
-    VALID_WF_PURPOSE_VALUES,
-    VALID_WB_TYPE_VALUES,
+    VALID_WF_PURPOSE_VALUES, VALID_WB_TYPE_VALUES,
     DATA_CONTEXT, WORKBOOK_DATA_LIST, LOADED_WORKBOOK_COLLECTION,
-    WORKBOOK_DATA_COLLECTION, WORKFLOW_DATA_COLLECTION,
-    BDM_STORE, DATA_COLLECTION, ALL_KEY, FI_KEY, WF_KEY, WB_REF, WB_NAME,
-    WB_TYPE, WF_PURPOSE)
+    WORKBOOK_DATA_COLLECTION, WORKFLOW_DATA_COLLECTION, WORKBOOK_OBJECT,
+    BDM_STORE, DATA_COLLECTION, ALL_KEY, FI_KEY, WF_KEY, WB_ID, WB_REF, WB_NAME,
+    WB_TYPE, WF_PURPOSE, WB_INDEX)
 from budman_data_context import BudManDataContext_Base
 from budget_storage_model.csv_data_collection import (csv_DATA_COLLECTION_url_get)
 #endregion imports
@@ -375,7 +374,7 @@ class BudManDataContext(BudManDataContext_Base):
                 if wb_ref.isdigit() or isinstance(wb_ref, int):
                     # If the wb_ref is a digit, treat it as an index.
                     wb_index = wb_ref
-                    obj = self.dc_WORKBOOK_DATA_COLLECTION[wb_index]
+                    obj = self.dc_WORKBOOK_find(WB_INDEX, wb_index)
                     if obj :
                         wb_name = getattr(obj, WB_NAME)
                         return False, wb_index, wb_name
@@ -412,17 +411,6 @@ class BudManDataContext(BudManDataContext_Base):
             logger.error(m)
             raise
 
-    def dc_WORKBOOKS_member(self, wb_name: str) -> bool:
-        """DC-Only: Indicates whether the named workbook is a member of the DC."""
-        _ = p3u.is_str_or_none("wb_name", wb_name, raise_error=True)
-        # Reference the DC.WORKBOOKS property.
-        if (not self.dc_INITIALIZED or 
-                self.dc_WORKBOOKS is None or 
-                not isinstance(self.dc_WORKBOOKS, list)):
-            return False
-        wbl = self.dc_WORKBOOKS
-        return True if wb_name in [wb[0] for wb in wbl] else False
-    
     def dc_WORKBOOK_loaded(self, wb_name: str) -> bool:
         """DC-Only: Indicates whether the named workbook is loaded."""
         _ = p3u.is_str_or_none("wb_name", wb_name, raise_error=True)
@@ -486,6 +474,11 @@ class BudManDataContext(BudManDataContext_Base):
         logger.warning("dc_WORKBOOK_get must be overridden.")
         return None 
 
+    def dc_WORKBOOK_put(self, wb:Any,wb_url: str) -> None:
+        """DC-Only: Put the workbook at wb_url."""
+        logger.warning("dc_WORKBOOK_put must be overridden.")
+        return None 
+
     def dc_WORKBOOK_load(self, wb_index: str) -> Any:
         """DC-Only: Load the workbook indicated by wb_index."""
         try:
@@ -532,29 +525,46 @@ class BudManDataContext(BudManDataContext_Base):
             raise
         return None
 
-    def dc_WORKBOOK_add(self, wb_name: str, wb: Workbook) -> None:
+    def dc_WORKBOOK_add(self, wb_name: str, wb: Union[Workbook, Dict]) -> None:
         """DC-Only: Add a new workbook to the data context."""
-        self.dc_LOADED_WORKBOOKS[wb_name] = wb
+        # TODO: Not used yet, Handle duplicates by wb_name, need wb_id for uniqueness
+        self.dc_WORKBOOK_DATA_COLLECTION[wb_name] = wb
         return None
 
-    def dc_WORKBOOK_find(self, wb_key: str, value: str) -> None:
+    def dc_WORKBOOK_find(self, find_key: str, value: str) -> WORKBOOK_OBJECT:
         """DC-Only: Locate and return a workbook by the key and value."""
         try:
             if not self.dc_VALID:
                 logger.error("Data context is not valid.")
                 return None
-            if wb_key not in self.dc_WORKBOOK_DATA_COLLECTION:
-                logger.error(f"Workbook key '{wb_key}' not found in WORKBOOK_DATA_COLLECTION.")
-                return None
-            for wb_name, wb in self.dc_WORKBOOK_DATA_COLLECTION.items():
-                if getattr(wb, wb_key, None) == value:
+            # If the wb_key is WB_ID, that is the key to the collection.
+            if find_key == WB_ID:
+                if value in self.dc_WORKBOOK_DATA_COLLECTION:
+                    return self.dc_WORKBOOK_DATA_COLLECTION[value]
+                else:   
+                    logger.error(f"Workbook find_key '{find_key}' not found in WORKBOOK_DATA_COLLECTION.")
+                    return None
+            if find_key == WB_INDEX:
+                # If the find_key is WB_INDEX, we need to convert value to int.
+                try:
+                    wb_index = int(value)
+                    if wb_index < 0 or wb_index >= len(self.dc_WORKBOOK_DATA_COLLECTION):
+                        logger.error(f"Invalid workbook index: {wb_index}")
+                        return None
+                    return list(self.dc_WORKBOOK_DATA_COLLECTION.values())[wb_index]
+                except ValueError:
+                    logger.error(f"Invalid value for WB_INDEX: {value}")
+                    return None
+            # Search each workbook in the collection for the find_key: value.
+            for wb_id, wb in self.dc_WORKBOOK_DATA_COLLECTION.items():
+                if getattr(wb, find_key, None) == value:
                     return wb
-            logger.warning(f"No workbook found with {wb_key} = {value}.")
+            logger.warning(f"No workbook found with {find_key} = {value}.")
             return None
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
-            raise ValueError(f"Error finding workbook by {wb_key} = {value}: {e}")
+            raise ValueError(f"Error finding workbook by {find_key} = {value}: {e}")
 
     def dc_BDM_STORE_load(self, bdm_url: str) -> None:
         """DC-Only: Load a BDM_STORE from bdm_url, set dc_BDM_STORE.
