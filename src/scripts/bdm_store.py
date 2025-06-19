@@ -17,7 +17,7 @@ from budman_namespace import (
     WF_INPUT, WF_WORKING, WF_OUTPUT, WF_PURPOSE_FOLDER_MAP, BDM_DATA_CONTEXT
     )
 from budget_storage_model import bsm_BDM_STORE_url_get, bsm_BDM_STORE_url_put
-from budget_domain_model.bdm_workbook_class import BDMWorkbook
+from budman_namespace.bdm_workbook_class import BDMWorkbook
 from budman_workflows.budget_category_mapping import extract_category_tree
 #endregion Imports
 # ---------------------------------------------------------------------------- +

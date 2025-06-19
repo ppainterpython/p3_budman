@@ -209,7 +209,7 @@ class BudManCLIParser():
                 dest="wb_info",
                 action="store",
                 const = 'info', 
-                default = None,  # info | verbose
+                default = 'info',  # info | verbose
                 help="Show additional information about the workbook.")
 
             for subparser in [self.show_wb_subcmd_parser, 

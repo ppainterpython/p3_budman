@@ -116,13 +116,13 @@ class TestBDMWorkingDataBaseInterface():
             assert bdmwd_bi.dc_WB_NAME_validate("") is False, "Expected dc_WB_NAME_validate to return False for empty WB_NAME"
             assert bdmwd_bi.dc_WB_REF_validate("test_wb_ref") is True, "Expected dc_WB_REF_validate to return True for valid WB_REF('test_wb_ref')"
             assert bdmwd_bi.dc_WB_REF_validate("") is False, "Expected dc_WB_REF_validate to return False for empty WB_REF"
-            wb = bdmwd_bi.dc_WORKBOOK_load("test_workbook.xlsx")
+            wb = bdmwd_bi.dc_WORKBOOK_file_load("test_workbook.xlsx")
             assert wb is not None, "dc_WORKBOOK_load should return a Workbook instance"
             assert isinstance(wb, Workbook), "Expected dc_WORKBOOK_load to return a Workbook instance, got: " + str(type(wb))
             assert bdmwd_bi.dc_WORKBOOK_loaded("test_workbook.xlsx") is True, "Expected dc_WORKBOOK_loaded to return True for loaded workbook"
             assert bdmwd_bi.dc_WORKBOOK_loaded("non_existent_workbook.xlsx") is False, "Expected dc_WORKBOOK_loaded to return False for non-existent workbook"
             # Test saving the workbook
-            bdmwd_bi.dc_WORKBOOK_save("test_workbook.xlsx", wb)
+            bdmwd_bi.dc_WORKBOOK_file_save("test_workbook.xlsx", wb)
             assert os.path.exists("test_workbook.xlsx"), "Expected test_workbook.xlsx to exist after saving"
             # Test removing the workbook
             bdmwd_bi.dc_WORKBOOK_remove("test_workbook.xlsx")

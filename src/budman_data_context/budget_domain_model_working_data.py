@@ -18,9 +18,9 @@ from typing import Any, Tuple, Dict, List
 from openpyxl import Workbook
 import logging, p3_utils as p3u, p3logging as p3l
 # local modules and packages for necessary classes and functions
-from budman_namespace import *
+from budman_namespace.design_language_namespace import *
+from budman_namespace.bdm_workbook_class import BDMWorkbook
 from budman_data_context import BudManDataContext
-from budget_domain_model import BDMWorkbook
 from p3_mvvm import Model_Base, Model_Binding
 from budget_storage_model import bsm_WORKBOOK_url_get
 
@@ -134,8 +134,6 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
             except Exception as e:
                 m = f"{p3u.exc_err_msg(e)}"
                 logger.error(m)
-            self.dc_WORKBOOKS = self.bdmwd_WORKBOOKS()
-            self.dc_LOADED_WORKBOOKS = self.bdmwd_LOADED_WORKBOOKS()
             self.dc_CHECK_REGISTERS = bdm_store_dc.get(DC_CHECK_REGISTERS, {})
             self.dc_INITIALIZED = True
             return self
@@ -143,7 +141,7 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
             logger.error(p3u.exc_err_msg(e))
             raise
 
-    def dc_WORKBOOK_get(self, wb_url: str) -> Tuple[bool, str]:
+    def dc_WORKBOOK_url_get(self, wb_url: str) -> Tuple[bool, str]:
         """Model-aware: Get the workbook at wb_url."""
         try:
             wb_obj : BDMWorkbook = self.dc_WORKBOOK_DATA_COLLECTION.get(wb_url, None)
@@ -156,11 +154,13 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
             logger.error(m)
             return False, m
 
-    def dc_WORKBOOK_load(self, wb_index: str) -> Tuple[bool, str]:
+    def dc_WORKBOOK_file_load(self, wb_index: str) -> Tuple[bool, str]:
         """Model-aware: Load the workbook indicated by wb_index."""
         try:
+            if not isinstance(wb_index, str):
+                raise TypeError(f"wb_index must be a string, got {type(wb_index)}")
             wdc = self.dc_WORKBOOK_DATA_COLLECTION
-            wb = BDMWorkbook.by_index(wb_index, wdc)
+            wb : BDMWorkbook= self.dc_WORKBOOK_by_index(wb_index)
             if wb is None:
                 m = f"dc_WORKBOOK_DATA_COLLECTION does not have a workbook with index '{wb_index}'."
                 logger.error(m)
@@ -170,7 +170,7 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
                 m = f"Failed to load Workbook data for '{wb.wb_name}'."
                 logger.error(m)
                 return False, m
-            wb_index = BDMWorkbook.wb_index(wb.wb_id, wdc)
+            wb_index = self.dc_WORKBOOK_wb_index(wb.wb_id, wdc)
             r = f"{P2}wb_index: {wb_index:>2} wb_name: '{wb.wb_name:<40}'\n"
             self.dc_WB_REF = str(wb_index)  # Set the wb_ref in the DC.
             self._dc_WB_NAME = wb.wb_name  # Set the wb_name in the DC.

@@ -8,11 +8,11 @@
 # ---------------------------------------------------------------------------- +
 #region Imports
 # python standard libraries packages and modules 
-import atexit, pathlib, logging, inspect, logging.config  #, logging.handlers
+import atexit, pathlib, time, logging, inspect, logging.config  #, logging.handlers
 # third-party  packages and module libraries
 from dynaconf import Dynaconf
 import p3logging as p3l
-from p3_utils import exc_err_msg, dscr
+from p3_utils import exc_err_msg, dscr, start_timer, stop_timer
 # local packages and module libraries
 from budman_settings import *
 from budman_namespace import BDMSingletonMeta
@@ -31,11 +31,12 @@ class BudManApp(metaclass=BDMSingletonMeta):
     """BudManApp: The main application class for the Budget Manager."""
     # ------------------------------------------------------------------------ +
     # region Class Properties    
-    def __init__(self, app_settings : Dynaconf = None) -> None:
+    def __init__(self, app_settings : Dynaconf = None, start_time:float=time.time()) -> None:
         """BudManApp__init__()."""
         self._settings : Dynaconf = app_settings
         self._cli_view: object = None  # type: ignore
         self._app_name: str = None
+        self._start_time: float = start_time
         d = dscr(self)
         logger.debug(f"{d}.__init__() completed ...")
     # ------------------------------------------------------------------------ +
@@ -72,7 +73,12 @@ class BudManApp(metaclass=BDMSingletonMeta):
         """Set the CLI view."""
         if not isinstance(cli_view, object):
             raise TypeError("cli_view must be an object")
-        self._cli_view = cli_view  
+        self._cli_view = cli_view 
+
+    @property
+    def start_time(self) -> float:
+        """Return the application start time."""
+        return self._start_time
     #endregion Class Properties
     # ------------------------------------------------------------------------ +
     #region budman_app_cli_cmdloop() function
@@ -134,6 +140,8 @@ class BudManApp(metaclass=BDMSingletonMeta):
         """start the cli repl loop."""
         try:
             startup = not testmode
+            logger.debug(f"{self.settings[APP_NAME]} application initialization "
+                           f"complete {stop_timer(self.start_time)} seconds.")
             logger.info(f"BizEVENT: Entering user input command loop.")
             self.budman_app_cli_cmdloop(startup=startup) # Application CLI loop
             logger.info(f"BizEVENT: Exit from user input command loop.")

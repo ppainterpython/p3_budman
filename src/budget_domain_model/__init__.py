@@ -14,10 +14,8 @@ __name__ = "budman_domain_model"
 __description__ = "Budget Manager (BudMan) Model implementation."
 __license__ = "MIT"
 
-# from .budget_domain_model_identity import BudgetDomainModelIdentity
 from .budget_domain_model import BudgetDomainModel
 from .budget_domain_model_config import BDMConfig
-from .bdm_workbook_class import BDMWorkbook
 
 # symbols for "from budman_model import *"
 __all__ = [
@@ -25,5 +23,4 @@ __all__ = [
     "Model_Base",
     "Model_Binding",
     "BDMConfig",
-    "BDMWorkbook"
 ]

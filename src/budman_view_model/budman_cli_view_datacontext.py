@@ -115,6 +115,7 @@ class BudManCLIViewDataContext():
     def initialize(self, cp : Callable, dc : object) -> "BudManCLIViewDataContext":
         """Initialize the data context."""
         try:
+            logger.info(f"BizEVENT: View setup for BudManCLIViewDataContext.")
             self.cp = cp
             self.dc = dc
             self.initialized = True

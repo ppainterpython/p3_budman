@@ -1,20 +1,34 @@
 # ---------------------------------------------------------------------------- +
 #region budman_data_context_base_ABC.py module
-""" BudManDataContextBaseInterface: Abstract Base Class interface.
+""" BudManDataContext_Base: Abstract Base Class interface.
 
     A Data Context (DC) is a component of the MVVM design pattern for 
     applications. It separates concerns by Model, View Model and View object
-    functional layers. A DC is an abstraction for data used by ViewModels
-    and Models and even directly by a View.
+    functional layers, providing an traction for data used by ViewModels, 
+    Models and a View.
 
-    The properties and methods reflect the application design language, in terms
-    of the domain model objects, command processing, etc. 
+    The properties and methods reflect the BudMan application design language, 
+    in terms of the domain model objects, command processing, etc. So, it is
+    Budget Domain Model (BDM) aware, but not bound to a particular View, 
+    ViewModel, or Model interface. But, the key concepts in the BDM concerning
+    Financial Institutions (FI), Workflows (WF), Workbooks (WB), and the
+    Budget Data Model (BDM_STORE) are all represented in the Data Context.
 
     A Data Context is not a Model, nor a View Model, it is a bridge between
     the two. It provides a way to access and manipulate data without exposing
-    the underlying implementation details.
+    the underlying implementation details. It provides the application context
+    at any moment in time, so the values change.
 
-    Each property and method herein documents its purpose. 
+    This ABC defines the interface which is applied by concrete implementations.
+
+    Each property and method herein documents its purpose. Most of the 
+    properties and methods, if the return value is not None, return basic 
+    data types, or aliases for those defined in the Design Language namespace.
+    However, some of the return a BUDMAN_RESULT, which is a tuple of
+    (success: bool, result: Any). This scheme is used to be forgiving when
+    errors occur. The success value being True means no error and the result
+    value is the output of the function. When success is False, the result
+    value is a string describing the error.
 """
 #endregion budman_data_context_base_ABC.py module
 # ---------------------------------------------------------------------------- +
@@ -28,13 +42,23 @@ from openpyxl import Workbook
 from src.budman_namespace import (
     DATA_CONTEXT, WORKBOOK_DATA_LIST, LOADED_WORKBOOK_COLLECTION,
     WORKBOOK_DATA_COLLECTION, WORKFLOW_DATA_COLLECTION,
-    BDM_STORE, DATA_COLLECTION, WORKBOOK_OBJECT)
+    BDM_STORE, DATA_COLLECTION, WORKBOOK_OBJECT, BUDMAN_RESULT,
+    WORKBOOK_CONTENT)
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 class BudManDataContext_Base(ABC):
     """Abstract Base Class Interface for Budget Manager Data Context."""
+    # ------------------------------------------------------------------------ +
+    #region BudManDataContext_Base Properties (abstract) 
+    @property
+    def dc_id(self) -> str:
+        """Identify the data context implementation."""
+        pass
+    @dc_id.setter
+    def dc_id(self, value: str) -> None:
+        """Set the identifier for the data context implementation."""
+        pass
 
-    #region Abstract Properties
     @property
     @abstractmethod
     def dc_VALID(self) -> bool:
@@ -176,15 +200,19 @@ class BudManDataContext_Base(ABC):
     def dc_WORKBOOK_DATA_COLLECTION(self) -> WORKBOOK_DATA_COLLECTION:
         """Return the WORKBOOK_DATA_COLLECTION of workbooks in the DC.
         Depends on the value of dc_FI_KEY, returning the 
-        FI_WORKBOOK_DATA_COLLECTION for that fi_key.
-        """
+        FI_WORKBOOK_DATA_COLLECTION for that fi_key.The WORKBOOK_DATA_COLLECTION
+        is sorted by the key, wb_id, the wb_index is based on the sorted order."""
         pass
     @dc_WORKBOOK_DATA_COLLECTION.setter
     @abstractmethod
     def dc_WORKBOOK_DATA_COLLECTION(self, value: WORKBOOK_DATA_LIST) -> None:
         """Set the WORKBOOK_DATA_COLLECTION of workbooks in the DC.
         Depends on the value of dc_FI_KEY, returning the 
-        FI_WORKBOOK_DATA_COLLECTION for that fi_key."""
+        FI_WORKBOOK_DATA_COLLECTION for that fi_key.
+        The WORKBOOK_DATA_COLLECTION should be sorted by the key,
+        wb_id as it is updated. The wb_index should be based on the 
+        sorted order of the WORKBOOK_DATA_COLLECTION.
+        """
         pass
 
     @property
@@ -221,9 +249,9 @@ class BudManDataContext_Base(ABC):
     def dc_EXCEL_WORKBOOKS(self, value: LOADED_WORKBOOK_COLLECTION) -> None:
         """Set the collection of workbooks currently open in Excel."""
         pass
-    #endregion Abstract Properties
+    #endregion BudManDataContext_Base Properties (abstract)
     # ------------------------------------------------------------------------ +
-    #region Abstract Methods
+    #region BudManDataContext_Base Methods (abstract)
     @abstractmethod
     def dc_initialize(self) -> DATA_CONTEXT:
         """Initialize the data context."""
@@ -261,7 +289,22 @@ class BudManDataContext_Base(ABC):
 
     @abstractmethod
     def dc_WB_REF_resolve(self, wb_ref: str) -> Tuple[bool,int, str]:
-        """Resolve the provided workbook reference."""
+        """Resolve a wb_ref to valid wb_index, wb_name, or ALL_KEY.
+
+        Args:
+            wb_ref (str|int): The wb_ref to validate and resolve. Expecting
+            a str with a digit, a wb_name, or the ALL_KEY constant.
+
+        Returns:
+            Tuple[wb_all:bool, wb_index:int, wb_name:str]: 
+                (True, -1, ALL_KEY) if wb_ref is ALL_KEY. 
+                (False, wb_index, wb_name) for a valid index, adds wb_name match.
+                (False, -1, wb_name) no valid index, found a wb_name.
+                (False, -1, None) if wb_ref is invalid index or name value.
+        
+        Raises:
+            TypeError: if wb_ref is not a str or int.
+        """
         pass
 
     @abstractmethod
@@ -286,19 +329,43 @@ class BudManDataContext_Base(ABC):
         pass
 
     @abstractmethod
-    def dc_WORKBOOK_get(self, wb_index: str) -> Any:
-        """Get the workbook at wb_url."""
+    def dc_WORKBOOK_by_index(self, wb_index: int) -> WORKBOOK_OBJECT:
+        """Return (True, BDWWorkbook on success, (False, error_msg) on failure."""
         pass
 
     @abstractmethod
-    def dc_WORKBOOK_load(self, wb_index: str) -> Any:
-        """Load the specified workbook by name."""
+    def dc_WORKBOOK_find(self, find_key: str, value: str) -> WORKBOOK_OBJECT:
+        """Locate and return a workbook by the key and value."""
+        pass
+
+    #region   WORKBOOK_CONTENT storage-related methods
+    @abstractmethod
+    def dc_WORKBOOK_url_get(self, wb_url: str) -> WORKBOOK_CONTENT:
+        """Get the workbook content at wb_url."""
         pass
 
     @abstractmethod
-    def dc_WORKBOOK_save(self, wb_name: str, wb: Workbook) -> None:
-        """Save the specified workbook by name."""
+    def dc_WORKBOOK_url_put(self, wb_content: WORKBOOK_CONTENT, wb_url:str) -> None:
+        """Put the workbook content at wb_url."""
         pass
+
+    @abstractmethod
+    def dc_WORKBOOK_file_load(self, wb_index: str) -> BUDMAN_RESULT:
+        """Load the specified workbook content by wb_index into dc_LOADED_WORKBOOKS.
+           Returns:
+                BUDMAN_RESULT: a Tuple[success: bool, result: Any].
+                success = True, result is a message about the loaded workbook
+                indicating the workbook is available in the 
+                dc_LOADED_WORKBOOKS collection.
+                success = False, result is a string describing the error.
+        """
+        pass
+
+    @abstractmethod
+    def dc_WORKBOOK_file_save(self, wb_index: str, wb_content: Workbook) -> None:
+        """Save the specified workbook content by name."""
+        pass
+    #endregion WORKBOOK_CONTENT storage-related methods
 
     @abstractmethod
     def dc_WORKBOOK_remove(self, wb_name: str) -> None:
@@ -308,11 +375,6 @@ class BudManDataContext_Base(ABC):
     @abstractmethod
     def dc_WORKBOOK_add(self, wb_name: str, wb: Union[Workbook, Dict]) -> None:
         """Add a new workbook to the data context."""
-        pass
-
-    @abstractmethod
-    def dc_WORKBOOK_find(self, find_key: str, value: str) -> WORKBOOK_OBJECT:
-        """Locate and return a workbook by the key and value."""
         pass
 
     @abstractmethod
@@ -327,5 +389,5 @@ class BudManDataContext_Base(ABC):
         """Save the BDM_STORE to the specified file path."""
         pass
 
-    #endregion Abstract Methods
+    #endregion BudManDataContext_Base Methods (abstract)
     # ------------------------------------------------------------------------ +

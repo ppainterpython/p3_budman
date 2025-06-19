@@ -1,26 +1,38 @@
 # ---------------------------------------------------------------------------- +
 #region test_budman_data_context.py
-""" BudManDataContext: A concrete implementation BudManDataContextBaseInterface 
+"""DC-Only: BudManDataContext: A concrete implementation BudManDataContext_Base 
     for the Budget Manager application. 
     
     A Data Context (DC) is a component of the MVVM design pattern for 
     applications. It separates concerns by Model, View Model and View object
-    functional layers. A DC is an abstraction for data used by ViewModels
-    and Models and even directly by a View.
+    functional layers, providing an traction for data used by ViewModels, 
+    Models and a View.
 
-    The properties and methods reflect the application design language, in terms
-    of the domain model objects, command processing, etc. 
+    The properties and methods reflect the BudMan application design language, 
+    in terms of the domain model objects, command processing, etc. So, it is
+    Budget Domain Model (BDM) aware, but not bound to a particular View, 
+    ViewModel, or Model interface. But, the key concepts in the BDM concerning
+    Financial Institutions (FI), Workflows (WF), Workbooks (WB), and the
+    Budget Data Model (BDM_STORE) are all represented in the Data Context.
 
     A Data Context is not a Model, nor a View Model, it is a bridge between
     the two. It provides a way to access and manipulate data without exposing
-    the underlying implementation details.
+    the underlying implementation details. It provides the application context
+    at any moment in time, so the values change.
 
-    Each property and method herein documents its purpose. This class provides 
-    a minimalist implementation of the interface, which can be
-    extended by subclasses to provide more specific functionality. Here there 
-    is no reference to outside data objects, such as a Model or ViewModel. 
-    Subclasses may override or extend the default DC behavior.
-
+    Each property and method herein documents its purpose. Most of the 
+    properties and methods, if the return value is not None, return basic 
+    data types, or aliases for those defined in the Design Language namespace.
+    However, some of the return a BUDMAN_RESULT, which is a tuple of
+    (success: bool, result: Any). This scheme is used to be forgiving when
+    errors occur. The success value being True means no error and the result
+    value is the output of the function. When success is False, the result
+    value is a string describing the error.
+    
+    This class provides a minimalist implementation of the interface, 
+    which can be extended by subclasses to provide more specific functionality. 
+    Here there is no reference to outside data objects, such as a Model or 
+    ViewModel. Subclasses may override or extend the default DC behavior.
 """
 #endregion test_budman_data_context.py
 # ---------------------------------------------------------------------------- +
@@ -34,14 +46,14 @@ from typing import Tuple, Any, Union, Dict
 from openpyxl import Workbook
 import logging, p3_utils as p3u, p3logging as p3l
 # local modules and packages
-from budman_namespace import (
+from budman_namespace.design_language_namespace import (
     FI_OBJECT, BDM_FI_COLLECTION, BDM_WF_COLLECTION,
     VALID_WF_PURPOSE_VALUES, VALID_WB_TYPE_VALUES,
     DATA_CONTEXT, WORKBOOK_DATA_LIST, LOADED_WORKBOOK_COLLECTION,
-    WORKBOOK_DATA_COLLECTION, WORKFLOW_DATA_COLLECTION, WORKBOOK_OBJECT,
+    WORKBOOK_DATA_COLLECTION, WORKBOOK_OBJECT,
     BDM_STORE, DATA_COLLECTION, ALL_KEY, FI_KEY, WF_KEY, WB_ID, WB_REF, WB_NAME,
-    WB_TYPE, WF_PURPOSE, WB_INDEX)
-from budman_data_context import BudManDataContext_Base
+    WB_TYPE, WF_PURPOSE, WB_INDEX, BUDMAN_RESULT, WORKBOOK_CONTENT)
+from budman_data_context.budman_data_context_base_ABC import BudManDataContext_Base
 from budget_storage_model.csv_data_collection import (csv_DATA_COLLECTION_url_get)
 #endregion imports
 # ---------------------------------------------------------------------------- +
@@ -50,18 +62,7 @@ logger = logging.getLogger(__name__)
 #endregion Globals
 # ---------------------------------------------------------------------------- +
 class BudManDataContext(BudManDataContext_Base):
-    """An implementation of BudManDataContextBaseInterface for Budget Manager.
-    
-    This class provides a basic implementation of the data context. Herein, the
-    data_context interface will perform some actions locally and pass others
-    to the budget domain model (BDM) for processing. Methods assumed to be
-    implemented by the BDM are not implemented here, rather raise a 
-    NotImplementedError exception. 
-
-    The backing values for the properties are fully implemented for the 
-    data_context interface. Overrides in a subclass should be aware and use
-    super() to access the base class properties and methods appropriately.
-    """
+    """Concrete, non-MVVM-Aware implementation of BudManDataContext_Base."""
     # ------------------------------------------------------------------------ +
     #region BudManDataContext__init__()
     def __init__(self, *args, dc_id : str = None) -> None:
@@ -86,6 +87,17 @@ class BudManDataContext(BudManDataContext_Base):
     #endregion BudManDataContext__init__()
     # ------------------------------------------------------------------------ +
     #region BudManDataContext_Base Properties (concrete) 
+    @property
+    def dc_id(self) -> str:
+        """DC-Only: Identify the data context implementation."""
+        return self._dc_id
+    @dc_id.setter
+    def dc_id(self, value: str) -> None:
+        """DC-Only: Set the identifier for the data context implementation."""
+        if not isinstance(value, str):
+            raise TypeError("dc_id must be a string.")
+        self._dc_id = value
+
     @property
     def dc_VALID(self) -> bool:
         """DC-Only: Indicates whether the data context is valid."""
@@ -129,7 +141,7 @@ class BudManDataContext(BudManDataContext_Base):
         Depends on the value of dc_BDM_STORE.
         Current means that the other data in the DC is for this FI.
         """
-        if self.dc_BDM_STORE is None:
+        if self.dc_BDM_STORE is None and not self._initialization_in_progress:
             m = "dc_BDM_STORE is None. Cannot get fi_key."
             logger.warning(m)
             return None
@@ -139,7 +151,7 @@ class BudManDataContext(BudManDataContext_Base):
         """DC-Only: Set the FI_KEY of the current Financial Institution.
         Depends on the value of dc_BDM_STORE.
         """
-        if self.dc_BDM_STORE is None:
+        if self.dc_BDM_STORE is None and not self._initialization_in_progress:
             m = "dc_BDM_STORE is None. Cannot set fi_key."
             logger.warning(m)
             return None
@@ -223,14 +235,24 @@ class BudManDataContext(BudManDataContext_Base):
     def dc_WORKBOOK_DATA_COLLECTION(self) -> DATA_COLLECTION:
         """DC-Only: Return the WORKBOOK_DATA_COLLECTION of workbooks in the DC.
         Depends on the value of dc_FI_KEY, returning the 
-        FI_WORKBOOK_DATA_COLLECTION for that fi_key."""
+        FI_WORKBOOK_DATA_COLLECTION for that fi_key. The WORKBOOK_DATA_COLLECTION
+        is sorted by the key, wb_id, the wb_index is based on the sorted order."""
         if not self.dc_VALID: return None
         return self._dc_WORKBOOK_DATA_COLLECTION
     @dc_WORKBOOK_DATA_COLLECTION.setter
     def dc_WORKBOOK_DATA_COLLECTION(self, value: WORKBOOK_DATA_LIST) -> None:
-        """DC-Only: Set the list of workbooks in the DC."""
+        """DC-Only: Set the WORKBOOK_DATA_COLLECTION of workbooks in the DC.
+        Depends on the value of dc_FI_KEY, returning the 
+        FI_WORKBOOK_DATA_COLLECTION for that fi_key.
+        The WORKBOOK_DATA_COLLECTION should be sorted by the key,
+        wb_id as it is updated. The wb_index should be based on the 
+        sorted order of the WORKBOOK_DATA_COLLECTION.
+        """
         if not self.dc_VALID: return None
-        self._dc_WORKBOOK_DATA_COLLECTION = value
+        if not isinstance(value, dict):
+            raise TypeError(f"dc_WORKBOOK_DATA_COLLECTION must be a dict, "
+                            f"not a type: '{type(value).__name__}'")
+        self._dc_WORKBOOK_DATA_COLLECTION = dict(sorted(value.items()))
 
     @property
     def dc_WORKBOOKS(self) -> WORKBOOK_DATA_LIST:
@@ -282,10 +304,6 @@ class BudManDataContext(BudManDataContext_Base):
     #endregion BudManDataContext_Base Properties (concrete)
     # ------------------------------------------------------------------------ +
     #region BudManDataContext_Base Methods (concrete)
-    def dc_id(self) -> str:
-        """DC-Only: Identify the data context implementation."""
-        return self._dc_id
-
     def dc_initialize(self) -> None:
         """DC-Only: Initialize the data context."""
         self.dc_FI_OBJECT = None 
@@ -378,7 +396,7 @@ class BudManDataContext(BudManDataContext_Base):
                     if obj :
                         wb_name = getattr(obj, WB_NAME)
                         return False, wb_index, wb_name
-                    if wb_index < 0 or wb_index >= len(self.dc_WORKBOOKS):
+                    if wb_index < 0 or wb_index >= len(self.dc_WORKBOOK_DATA_COLLECTION):
                         m = f"Invalid wb_index: {wb_index} for wb_ref: '{wb_ref}'"
                         logger.error(m)
                         return False, -1, None
@@ -397,7 +415,7 @@ class BudManDataContext(BudManDataContext_Base):
             elif isinstance(wb_ref, int):
                 # If the wb_ref is an int, treat it as an index.
                 wb_index = wb_ref
-                if wb_index < 0 or wb_index >= len(self.dc_WORKBOOKS):
+                if wb_index < 0 or wb_index >= len(self.dc_WORKBOOK_DATA_COLLECTION):
                     m = f"Invalid wb_index: {wb_index} for wb_ref: '{wb_ref}'"
                     logger.error(m)
                     return False, -1, None
@@ -447,7 +465,7 @@ class BudManDataContext(BudManDataContext_Base):
             logger.error(p3u.exc_err_msg(e))
             raise ValueError(f"Error retrieving workbook name for index {wb_index}: {e}")
     
-    def dc_WORKBOOK_index(self, wb_name: str = None) -> int:
+    def dc_WORKBOOK_index(self, wb_id: str = None) -> int:
         """DC-Only: Return the index of a workbook based on wb_name.
         
         Args:
@@ -457,36 +475,110 @@ class BudManDataContext(BudManDataContext_Base):
         """
         try:
             # Note: transitioning to dc_WORKBOOK_COLLECTION from dc_WORKBOOKS
-            wbc = self.dc_WORKBOOK_DATA_COLLECTION
+            wdc = self.dc_WORKBOOK_DATA_COLLECTION
             i = -1
-            for i, (key, obj) in enumerate(wbc):
-                if isinstance(obj, object) and hasattr(obj, 'name'):
-                    return KeyError
-                if isinstance(obj, dict) and obj.get('name', None) == wb_name:
-                    return key
+            if wb_id is None or not isinstance(wb_id, str) or len(wb_id) == 0:
+                logger.error(f" TypeError(wb_id must be a string, got {type(wb_id)})")
+                return -1
+            wdc_key_list = list(wdc.keys())
+            if wb_id in wdc_key_list:
+                # If the wb_id is in the keys, return its index.
+                return wdc_key_list.index(wb_id)
             return -1
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
+    
+    def dc_WORKBOOK_by_index(self, wb_index: str) -> BUDMAN_RESULT:
+        """DC-Only: Return (True, BDWWorkbook on success, (False, error_msg) on failure."""
+        try:
+            if not self.dc_VALID:
+                m = "Data context is not valid."
+                logger.error(m)
+                return False, m
+            if not isinstance(wb_index, str):
+                m = (f"TypeError: wb_index must be a string, got {type(wb_index)}")
+                logger.error(m)
+                return False, m
+            # Convert wb_index to int if it is a digit.
+            try:
+                wb_index_i = int(wb_index)
+            except ValueError:
+                m = (f"ValueError: wb_index '{wb_index}' is not a valid integer.")
+                logger.error(m)
+                return False, m
+            try:
+                if wb_index_i < 0 or wb_index_i >= len(self.dc_WORKBOOK_DATA_COLLECTION):
+                    logger.error(f"Invalid workbook index: {wb_index}")
+                    return None
+                return list(self.dc_WORKBOOK_DATA_COLLECTION.values())[wb_index_i]
+            except ValueError:
+                logger.error(f"Invalid value for WB_INDEX: {wb_index_i}")
+                return None
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise ValueError(f"Error retrieving workbook by index '{wb_index}': {e}")
 
-    def dc_WORKBOOK_get(self, wb_url: str) -> Any:
-        """DC-Only: Get the workbook at wb_url."""
+    def dc_WORKBOOK_find(self, find_key: str, value: str) -> WORKBOOK_OBJECT:
+        """DC-Only: Locate and return a workbook by the key and value."""
+        try:
+            if not self.dc_VALID:
+                logger.error("Data context is not valid.")
+                return None
+            # If the wb_key is WB_ID, that is the key to the collection.
+            if find_key == WB_ID:
+                if value in self.dc_WORKBOOK_DATA_COLLECTION:
+                    return self.dc_WORKBOOK_DATA_COLLECTION[value]
+                else:   
+                    logger.error(f"Workbook find_key '{find_key}' not found in WORKBOOK_DATA_COLLECTION.")
+                    return None
+            if find_key == WB_INDEX:
+                # If the find_key is WB_INDEX.
+                return self.dc_WORKBOOK_by_index(value)
+            # Search each workbook in the collection for the find_key: value.
+            for wb_id, wb in self.dc_WORKBOOK_DATA_COLLECTION.items():
+                if getattr(wb, find_key, None) == value:
+                    return wb
+            logger.warning(f"No workbook found with {find_key} = {value}.")
+            return None
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise ValueError(f"Error finding workbook by {find_key} = {value}: {e}")
+
+    #region WORKBOOK_CONTENT storage-related methods
+    def dc_WORKBOOK_url_get(self, wb_url: str) -> WORKBOOK_CONTENT:
+        """DC-Only: Get the workbook content at wb_url."""
         logger.warning("dc_WORKBOOK_get must be overridden.")
         return None 
 
-    def dc_WORKBOOK_put(self, wb:Any,wb_url: str) -> None:
+    def dc_WORKBOOK_url_put(self, wb_content:WORKBOOK_CONTENT, wb_url: str) -> None:
         """DC-Only: Put the workbook at wb_url."""
         logger.warning("dc_WORKBOOK_put must be overridden.")
         return None 
 
-    def dc_WORKBOOK_load(self, wb_index: str) -> Any:
-        """DC-Only: Load the workbook indicated by wb_index."""
+    def dc_WORKBOOK_file_load(self, wb_index: str) -> BUDMAN_RESULT:
+        """DC-Only: Load the specified workbook by wb_index into dc_LOADED_WORKBOOKS.
+           Returns:
+                BUDMAN_RESULT: a Tuple[success: bool, result: Any].
+                success = True, result is a message about the loaded workbook
+                indicating the workbook is available in the 
+                dc_LOADED_WORKBOOKS collection.
+                success = False, result is a string describing the error.
+        """
         try:
             if not self.dc_VALID:
                 logger.error("Data context is not valid.")
                 return None
             if not isinstance(wb_index, str):
                 raise TypeError(f"wb_index must be a string, got {type(wb_index)}")
+            wdc = self.dc_WORKBOOK_DATA_COLLECTION
+            wb = self.dc_WORKBOOK_by_index(wb_index, wdc)
+            if wb is None:
+                m = f"dc_WORKBOOK_DATA_COLLECTION does not have a workbook with index '{wb_index}'."
+                logger.error(m)
+                return False, m
             wb_obj = self.dc_WORKBOOK_DATA_COLLECTION.get(wb_index, None)
             if wb_obj is None:
                 m = f"dc_WORKBOOK_DATA_COLLECTION does not have a workbook with index '{wb_index}'."
@@ -498,15 +590,16 @@ class BudManDataContext(BudManDataContext_Base):
             logger.error(m)
             raise ValueError(f"Error loading workbook with index '{wb_index}': {e}")
 
-    def dc_WORKBOOK_save(self, wb_name: str, wb: Workbook) -> None:
-        """DC-Only: Save the specified workbook by name."""
-        wb_path = Path(wb_name)
+    def dc_WORKBOOK_file_save(self, wb_index: str, wb: Workbook) -> None:
+        """DC-Only: Save the specified workbook content by name."""
+        wb_path = Path(wb_index)
         try:
             wb.save(wb_path)
         except Exception as e:
-            logger.error(f"Failed to save workbook '{wb_name}': {e}")
+            logger.error(f"Failed to save workbook '{wb_index}': {e}")
             raise
         return None
+    #endregion WORKBOOK_CONTENT storage-related methods
 
     def dc_WORKBOOK_remove(self, wb_name: str) -> None:
         """DC-Only: Remove the specified workbook by name."""
@@ -531,41 +624,6 @@ class BudManDataContext(BudManDataContext_Base):
         self.dc_WORKBOOK_DATA_COLLECTION[wb_name] = wb
         return None
 
-    def dc_WORKBOOK_find(self, find_key: str, value: str) -> WORKBOOK_OBJECT:
-        """DC-Only: Locate and return a workbook by the key and value."""
-        try:
-            if not self.dc_VALID:
-                logger.error("Data context is not valid.")
-                return None
-            # If the wb_key is WB_ID, that is the key to the collection.
-            if find_key == WB_ID:
-                if value in self.dc_WORKBOOK_DATA_COLLECTION:
-                    return self.dc_WORKBOOK_DATA_COLLECTION[value]
-                else:   
-                    logger.error(f"Workbook find_key '{find_key}' not found in WORKBOOK_DATA_COLLECTION.")
-                    return None
-            if find_key == WB_INDEX:
-                # If the find_key is WB_INDEX, we need to convert value to int.
-                try:
-                    wb_index = int(value)
-                    if wb_index < 0 or wb_index >= len(self.dc_WORKBOOK_DATA_COLLECTION):
-                        logger.error(f"Invalid workbook index: {wb_index}")
-                        return None
-                    return list(self.dc_WORKBOOK_DATA_COLLECTION.values())[wb_index]
-                except ValueError:
-                    logger.error(f"Invalid value for WB_INDEX: {value}")
-                    return None
-            # Search each workbook in the collection for the find_key: value.
-            for wb_id, wb in self.dc_WORKBOOK_DATA_COLLECTION.items():
-                if getattr(wb, find_key, None) == value:
-                    return wb
-            logger.warning(f"No workbook found with {find_key} = {value}.")
-            return None
-        except Exception as e:
-            m = p3u.exc_err_msg(e)
-            logger.error(m)
-            raise ValueError(f"Error finding workbook by {find_key} = {value}: {e}")
-
     def dc_BDM_STORE_load(self, bdm_url: str) -> None:
         """DC-Only: Load a BDM_STORE from bdm_url, set dc_BDM_STORE.
         All relevant DC values reference the dc_BDM_STORE.
@@ -587,7 +645,7 @@ class BudManDataContext(BudManDataContext_Base):
                 logger.error(f"Invalid workbook index: {wb_index}")
                 return None
             # DATA_COLLECTION is a dict {wb_name: wb_ref} 
-            wb_name, _ = self.dc_WORKBOOKS[wb_index] 
+            wb_name = self.dc_WORKBOOK_name(wb_index) 
             return wb_name
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))

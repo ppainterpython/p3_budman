@@ -156,6 +156,7 @@ class BudManCLIView(cmd2.Cmd):
     def initialize(self) -> None:
         """Initialize the BudManCLIView class."""
         try:
+            logger.info(f"BizEVENT: View setup for BudManCLIView({self.app_name}).")
             # self.cli_parser.view_cmd = self
             self.initialized = True
             return self

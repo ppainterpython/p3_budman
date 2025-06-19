@@ -167,7 +167,7 @@ def bsm_BDM_STORE_file_save(bdm_store:BDM_STORE, bdms_path:Path) -> None:
         p3u.is_obj_of_type("bdm_store", bdm_store, dict, raise_error=True)
         # store_path must be a non-empty string.
         p3u.is_obj_of_type("bdms_path", bdms_path, Path, raise_error=True)
-        logger.info(f"Saving BDM_STORE to file: '{bdms_path}'")
+        logger.debug(f"Saving BDM_STORE to file: '{bdms_path}'")
         # Only persist the properties in BDM_PERSISTED_PROPERTIES.
         filtered_bsm = {k: v for k, v in bdm_store.items() if k in BSM_PERSISTED_PROPERTIES}
         jsonc_content = json5.encode(filtered_bsm)

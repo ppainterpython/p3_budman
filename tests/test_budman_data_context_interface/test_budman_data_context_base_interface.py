@@ -143,11 +143,11 @@ class testBudManDC(BudManDataContext_Base):
         print(f"Checking if workbook '{wb_name}' is loaded.")
         # For testing, we assume the workbook is loaded if it exists in dc_LOADED_WORKBOOKS.
         return None
-    def dc_WORKBOOK_load(self, wb_name: str) -> Workbook:
+    def dc_WORKBOOK_file_load(self, wb_name: str) -> Workbook:
         """Load the specified workbook by name."""
         print(f"Loading workbook '{wb_name}'.")
         return Workbook()  # Return a new Workbook instance for testing.
-    def dc_WORKBOOK_save(self, wb_name: str, wb: Workbook) -> None:
+    def dc_WORKBOOK_file_save(self, wb_name: str, wb: Workbook) -> None:
         """Save the specified workbook by name."""
         print(f"Saving workbook '{wb_name}'.")
         return None
@@ -208,10 +208,10 @@ class TestBudManDataContextBaseInterface():
             assert bdmdc.dc_WB_NAME_validate("test_wb_name") is True, "Expected dc_WB_NAME_validate to return True"
             assert bdmdc.dc_WB_REF_validate("test_wb_ref") is True, "Expected dc_WB_REF_validate to return True"
             assert bdmdc.dc_WORKBOOK_loaded("test_wb1") is None, "Expected WORKBOOK_loaded to return None for test_wb1"
-            wb = bdmdc.dc_WORKBOOK_load("test_wb1")
+            wb = bdmdc.dc_WORKBOOK_file_load("test_wb1")
             assert isinstance(wb, Workbook), "Expected WORKBOOK_load to return a Workbook instance"
             assert "Loading workbook 'test_wb1'" in capsys.readouterr().out, "Expected 'Loading workbook 'test_wb1'' in output, got: " + capsys.readouterr().out
-            bdmdc.dc_WORKBOOK_save("test_wb1", wb)
+            bdmdc.dc_WORKBOOK_file_save("test_wb1", wb)
             assert "Saving workbook 'test_wb1'" in capsys.readouterr().out, "Expected 'Saving workbook 'test_wb1'' in output, got: " + capsys.readouterr().out
             bdmdc.dc_WORKBOOK_remove("test_wb1")
             assert "Removing workbook 'test_wb1'" in capsys.readouterr().out, "Expected 'Removing workbook 'test_wb1'' in output, got: " + capsys.readouterr().out

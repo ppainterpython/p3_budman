@@ -195,21 +195,22 @@ from openpyxl import Workbook, load_workbook
 # local modules and packages
 from p3_mvvm import (Model_Base, Model_Binding)
 from budman_settings import *
-from budman_namespace import *
+from budman_namespace.design_language_namespace import *
+from budman_namespace.bdm_workbook_class import BDMWorkbook
 from budman_workflows import (
     ORIGINAL_DESCRIPTION_COL_NAME,
-    check_budget_category, check_sheet_columns,
-    map_budget_category, category_map_count, check_sheet_schema,
+    category_map_count, check_sheet_columns,
+    map_budget_category, check_sheet_schema,
     apply_check_register
     )
+from budman_workflows import budget_category_mapping
 
 from budget_domain_model import (
     BudgetDomainModel, 
-    BDMConfig, BDMWorkbook
+    BDMConfig
     )
 from budget_storage_model import *
 from budman_data_context import BDMWorkingData
-from budman_workflows import budget_category_mapping
 from budman_cli_view import budman_cli_parser, budman_cli_view
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -539,7 +540,6 @@ class BudManViewModel(Model_Binding): # future ABC for DC, CP, VM interfaces
             If raise-errors is True, RuntimeError: A description of the
             root error is contained in the exception message.
         """
-        pfx = f"{self.__class__.__name__}.{self.cp_execute_cmd.__name__}: "
         try:
             st = p3u.start_timer()
             logger.info(f"Start Command: {cmd}")
@@ -1097,12 +1097,7 @@ class BudManViewModel(Model_Binding): # future ABC for DC, CP, VM interfaces
         """
         try:
             st = p3u.start_timer()
-            pfx = f"{self.__class__.__name__}.{self.FI_init_cmd.__name__}: "
-            if p3u.is_not_obj_of_type("cmd",cmd,dict,pfx):
-                m = f"Invalid cmd object, no action taken."
-                logger.error(m)
-                raise RuntimeError(f"{pfx}{m}")
-            logger.info(f"Start: ...")
+            logger.debug(f"Start: ...")
             # Gather the current content of the DATA_CONTEXT.
             bs = self.dc_BDM_STORE
             bs_str = p3u.first_n(str(bs))
@@ -1112,7 +1107,7 @@ class BudManViewModel(Model_Binding): # future ABC for DC, CP, VM interfaces
             lwbc = self.dc_LOADED_WORKBOOKS
             lwbc_count = len(lwbc) if lwbc else 0
     
-            # Prepare the Console output result
+            # Prepare the Command output result
             result = f"Budget Manager Data Context:\n"
             result += f"{P2}{DC_INITIALIZED}: {self.dc_INITIALIZED}\n"
             result += f"{P2}{WB_NAME}: {self.dc_WB_NAME}\n"
@@ -1122,22 +1117,8 @@ class BudManViewModel(Model_Binding): # future ABC for DC, CP, VM interfaces
             result += f"{P2}{WF_PURPOSE}: {self.dc_WF_PURPOSE}\n"
             result += f"{P2}{WB_TYPE}: {self.dc_WB_TYPE}\n"
             result += f"{P2}{DC_BDM_STORE}: {bs_str}\n"
-
-            result += f"{P2}{FI_WORKBOOK_DATA_COLLECTION}: {wdc_count}\n"
-            result += f"{P4}{WB_REF:6}{P2}{WB_TYPE:15}{P2}{WB_NAME:35}{P2}{WF_KEY:15}"
-            result += f"{P2}{WF_PURPOSE:10}{P2}{WF_FOLDER_ID:20}{P2}{WF_FOLDER:18}\n"
-            # result += f"{P2}{WB_URL:150}\n"
-            if wdc_count > 0:
-                for i, wb in enumerate(wdc.values()):
-                    result += f"{wb.display_str(i)}\n"
-            if lwbc_count > 0:
-                result += f"{P2}{DC_LOADED_WORKBOOKS}: {lwbc_count}\n"
-                wdcl = list(wdc.keys())
-                for wb_id in list(lwbc.keys()):
-                    wb = self.dc_WORKBOOK_DATA_COLLECTION[wb_id]
-                    i = wdcl.index(wb_id) if wb_id in wdcl else -1
-                    result += f"{wdc[wb.wb_id].display_brief_str(i)}\n"
-
+            success, wdc_result = self.get_workbook_data_collection_info_str()
+            result += wdc_result
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             return True, result
         except Exception as e:
@@ -1167,30 +1148,30 @@ class BudManViewModel(Model_Binding): # future ABC for DC, CP, VM interfaces
             root error is contained in the exception message.
         """
         try:
-            pfx = f"{self.__class__.__name__}.{self.FI_init_cmd.__name__}: "
-            if p3u.is_not_obj_of_type("cmd",cmd,dict,pfx):
-                m = f"Invalid cmd object, no action taken."
-                logger.error(m)
-                raise RuntimeError(f"{pfx}{m}")
-            logger.info(f"Start: ...")
-            wb_ref = cmd.get(WB_REF, None)
-            wb_info = cmd.get(WB_INFO, None)
-            if wb_ref is None:
-                m = f"wb_ref is None, no action taken."
-                logger.error(m)
-                raise RuntimeError(f"{pfx}{m}")
-            wb_count = len(self.dc_WORKBOOKS)
-            r = f"Budget Manager Workbooks({wb_count}):\n"
-            if wb_ref.isdigit():
-                wb_refnum = int(wb_ref)
-                wb_info = self.dc_WORKBOOKS[wb_refnum] if wb_refnum < wb_count else None
-                l = "Yes" if self.dc_WORKBOOK_loaded(wb_info[0]) else "No "
-                r += f"{P2}{wb_refnum:>2} {l} {wb_info[0]:<40} '{wb_info[1]}'\n"
-            elif wb_ref == ALL_KEY:
-                for i, (wb_name, wb_ap) in enumerate(self.dc_WORKBOOKS):
-                    l = "Yes" if self.dc_WORKBOOK_loaded(wb_name) else "No "
-                    r += f"{P2}{i:>2} {l} {wb_name:<40} '{wb_ap}'\n"
-            return True, r
+            logger.debug(f"Start: ...")
+            wb_ref = self.cp_cmd_arg_get(cmd, WB_REF, self.dc_WB_REF)
+            fi_key = self.cp_cmd_arg_get(cmd, FI_KEY, self.dc_FI_KEY)
+            wf_key = self.cp_cmd_arg_get(cmd, WF_KEY, self.dc_WF_KEY)
+            wf_purpose = self.cp_cmd_arg_get(cmd, WF_PURPOSE, self.dc_WF_PURPOSE)
+            wb_type = self.cp_cmd_arg_get(cmd, WB_TYPE, self.dc_WB_TYPE)
+            all_wbs, wb_index, wb_name = self.dc_WB_REF_resolve(wb_ref)
+            # Check for an invalid wb_ref value.
+            if BudManViewModel.wb_ref_not_valid(all_wbs, wb_index, wb_name):
+                return False, f"wb_ref '{wb_ref}' is not valid."
+            wb_count = len(self.dc_WORKBOOK_DATA_COLLECTION)
+            result = f"Budget Manager Workbooks({wb_count}):\n"
+            # Now either all_wbs or a specific workbook is to be loaded.
+            if all_wbs:
+                success, wdc_result = self.get_workbook_data_collection_info_str()
+                result += wdc_result
+            else:
+                wb : BDMWorkbook = None
+                success, wb, _ = self.get_workbook(wb_ref, load=False) 
+                if not success:
+                    return False, f"Error getting workbook '{wb_ref}': {wb}"
+                l = "Yes" if wb.wb_loaded else "No "
+                result += f"{P2}{wb_index:>2} {l} {wb.wb_name} '{wb.wb_url}'\n"
+            return True, result
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
@@ -1228,18 +1209,18 @@ class BudManViewModel(Model_Binding): # future ABC for DC, CP, VM interfaces
 
             wb_count = len(self.dc_WORKBOOK_DATA_COLLECTION)
             r = f"Budget Manager Workbooks({wb_count}):\n"
-            all_wbs, wb_index, wb_name = self.DC.dc_WB_REF_resolve(wb_ref)
+            all_wbs, wb_index, wb_id = self.dc_WB_REF_resolve(wb_ref)
             # Check for an invalid wb_ref value.
-            if BudManViewModel.wb_ref_not_valid(all_wbs, wb_index, wb_name):
+            if BudManViewModel.wb_ref_not_valid(all_wbs, wb_index, wb_id):
                 return False, f"wb_ref '{wb_ref}' is not valid."
             # Now either all_wbs or a specific workbook is to be loaded.
             if all_wbs:
                 lwbl = self.model.bdmwd_FI_WORKBOOKS_load(fi_key, wf_key, wb_type)
                 self.dc_WB_REF = ALL_KEY # Set the wb_ref in the DC.
                 self.dc_WB_NAME = None   # Set the wb_name in the DC.
-                for wb_name in list(lwbl.keys()):
-                    wb_index = self.dc_WORKBOOK_index(wb_name)
-                    r += f"{P2}wb_index: {wb_index:>2} wb_name: '{wb_name:<40}'\n"
+                for wb_id in list(lwbl.keys()):
+                    wb_index = self.dc_WORKBOOK_index(wb_id)
+                    r += f"{P2}wb_index: {wb_index:>2} wb_name: '{wb_id:<40}'\n"
             else:
                 success, r = self.dc_WORKBOOK_load(wb_index)
             return success, r
@@ -1294,7 +1275,7 @@ class BudManViewModel(Model_Binding): # future ABC for DC, CP, VM interfaces
                     logger.error(m)
                     return False, m
                 # Add it to the WORKBOOKS list.
-                self.dc_WORKBOOKS_add((wb_name, wb_ref))
+                self.dc_WORKBOOK_add((wb_name, wb_ref))
                 # Add to LOADED_WORKBOOKS_COLLECTION.
                 self.DC.dc_LOADED_WORKBOOKS[wb_name] = cr_data
                 r += f"{P2}wb_index: {wb_index:>2} wb_name: '{wb_name:<40}'\n"
@@ -1335,10 +1316,10 @@ class BudManViewModel(Model_Binding): # future ABC for DC, CP, VM interfaces
             wb_ref = self.cp_cmd_arg_get(cmd, CMD_WB_REF, self.dc_WB_REF)
             wb_type = self.cp_cmd_arg_get(cmd, CMD_WB_TYPE, self.dc_WB_TYPE)
             wf_purpose = self.cp_cmd_arg_get(cmd, CMD_WF_PURPOSE, None)
-            all_wbs, wb_index, wb_name = self.DC.dc_WB_REF_resolve(wb_ref)
+            all_wbs, wb_index, wb_name = self.dc_WB_REF_resolve(wb_ref)
             # Verify LOADED_WORKBOOKS to process.
             wdc = self.dc_WORKBOOK_DATA_COLLECTION
-            wb = BDMWorkbook.by_index(wb_index,wdc)
+            wb = self.dc_WORKBOOK_by_index(wb_index,wdc)
             if (wb):
                 wb_name = wb.wb_name
                 wb_loaded = wb.loaded
@@ -1407,7 +1388,6 @@ class BudManViewModel(Model_Binding): # future ABC for DC, CP, VM interfaces
                 return False, m
             # Now either all_wbs or a specific workbook is to be processed.
             # This applies to loaded workbooks only.
-            # wb_count = len(self.dc_WORKBOOKS)
             wf_wb_list :LOADED_WORKBOOK_COLLECTION = None
             r : str = f"Budget Manager Categorization Workflow \n"
             if all_wbs:
@@ -1445,7 +1425,7 @@ class BudManViewModel(Model_Binding): # future ABC for DC, CP, VM interfaces
     #endregion WORKFLOW_categorization_cmd() method
     # ------------------------------------------------------------------------ +
     #region WORKFLOW_apply_cmd() command > wf cat 2
-    def WORKFLOW_apply_cmd(self, cmd : Dict) -> Tuple[bool, str]:
+    def WORKFLOW_apply_cmd(self, cmd : Dict) -> BUDMAN_RESULT:
         """Apply workflow tasks to WORKBOOKS.
 
         A WORKFLOW_apply_cmd command will use the wb_ref value in the cmd. 
@@ -1467,6 +1447,7 @@ class BudManViewModel(Model_Binding): # future ABC for DC, CP, VM interfaces
         """
         try:
             logger.info(f"Start: ...")
+            # capture cmd args
             validate_only = self.cp_cmd_arg_get(cmd, CMD_VALIDATE_ONLY, None)
             what_if = self.cp_cmd_arg_get(cmd, CMD_WHAT_IF, None)
             fi_key = self.cp_cmd_arg_get(cmd, CMD_FI_KEY, self.dc_FI_KEY)
@@ -1475,42 +1456,18 @@ class BudManViewModel(Model_Binding): # future ABC for DC, CP, VM interfaces
             wb_type = self.cp_cmd_arg_get(cmd, CMD_WB_TYPE, self.dc_WB_TYPE)
             wf_purpose = self.cp_cmd_arg_get(cmd, CMD_WF_PURPOSE, None)
             cr_wb_ref = self.cp_cmd_arg_get(cmd, CMD_CHECK_REGISTER, None)
-            all_wbs, cr_wb_index, cr_wb_name = self.DC.dc_WB_REF_resolve(cr_wb_ref)
-            if self.wb_ref_not_valid(all_wbs, cr_wb_index, cr_wb_name):
-                m = f"cr_wb_ref '{cr_wb_ref}' is not valid."
+            # Needs a check_register (cr) and a transaction workbook (wb).
+            success, cr_wb, cr_content = self.get_workbook(cr_wb_ref)
+            if not success:
+                m = f"Failed to load check register '{cr_wb_ref}' - {cr_content}"
                 logger.error(m)
                 return False, m
-            all_wbs, wb_index, wb_name = self.DC.dc_WB_REF_resolve(wb_ref)
-            if self.wb_ref_not_valid(all_wbs, wb_index, wb_name):
-                m = f"wb_ref '{wb_ref}' is not valid."
+            success, wb, wb_content = self.get_workbook(wb_ref)
+            if not success:
+                m = f"Failed to load transaction workbook '{wb_ref}' - {wb_content}"
                 logger.error(m)
                 return False, m
-            wdc = self.dc_WORKBOOK_DATA_COLLECTION
-            cr_wb = BDMWorkbook.by_index(wdc,cr_wb_index)
-            if (cr_wb is None):
-                m = f"cr_wb_ref '{cr_wb_index}':'{cr_wb_name}' not found in wb collection."
-                logger.error(m)
-                return False, m
-            wb = BDMWorkbook.by_index(wdc,wb_index)
-            if (wb is None):
-                m = f"wb_ref '{wb_index}':'{wb_name}' not found in wb collection."
-                logger.error(m)
-                return False, m
-            if cr_wb_index not in self.dc_LOADED_WORKBOOKS:
-                cr_content = self.dc_WORKBOOK_load(cr_wb_index)
-                if cr_wb_index not in self.dc_LOADED_WORKBOOKS:
-                    m = f"Failed trying to load cr_wb_ref '{cr_wb_index}':'{cr_wb_name}'."
-                    logger.error(m)
-                    return False, m 
-            cr_content = self.dc_LOADED_WORKBOOKS[cr_wb_index]
-            if wb_index not in self.dc_LOADED_WORKBOOKS:
-                wb_content = self.dc_WORKBOOK_load(wb_index)
-                if wb_index not in self.dc_LOADED_WORKBOOKS:
-                    m = f"Failed trying to load wb_ref '{wb_index}':'{wb_name}'."
-                    logger.error(m)
-                    return False, m 
-            wb_content = self.dc_LOADED_WORKBOOKS[wb_index]
-            logger.debug(f"cr_wb_name: {cr_wb_name}, cr_wb_index: {cr_wb_index}, ")
+            logger.debug(f"cr_wb_name: {cr_wb.wb_name}, wb_name: {wb.wb_name}, ")
             # Ready to apply the check register to the workbook.
             apply_check_register(cr_content, wb_content)
             return True, ""
@@ -1675,6 +1632,73 @@ class BudManViewModel(Model_Binding): # future ABC for DC, CP, VM interfaces
     #endregion WORKFLOW_reload_cmd() method
     # ------------------------------------------------------------------------ +
     #region    helper methods for command execution
+    # ------------------------------------------------------------------------ +
+    #region get_workbook_data_collection_info_str() method
+    def get_workbook_data_collection_info_str(self) -> Tuple[bool, BDMWorkbook, WORKBOOK_CONTENT]: 
+        """Construct an outout string with information about the WORKBOOKS."""
+        try:
+            logger.debug(f"Start: ...")
+            # Be workbook-centric is this view of the DC
+            wdc = self.dc_WORKBOOK_DATA_COLLECTION
+            wdc_count = len(wdc) if wdc else 0
+            lwbc = self.dc_LOADED_WORKBOOKS
+            lwbc_count = len(lwbc) if lwbc else 0
+
+            # Prepare the output result
+            result = f"{P2}{FI_WORKBOOK_DATA_COLLECTION}: {wdc_count}\n"
+            result += f"{P4}{WB_REF:6}{P2}{WB_TYPE:15}{P2}{WB_NAME:35}{P2}{WF_KEY:15}"
+            result += f"{P2}{WF_PURPOSE:10}{P2}{WF_FOLDER_ID:20}{P2}{WF_FOLDER:18}\n"
+            # result += f"{P2}{WB_URL:150}\n"
+            if wdc_count > 0:
+                for i, wb in enumerate(wdc.values()):
+                    result += f"{wb.display_str(i)}\n"
+            if lwbc_count > 0:
+                result += f"{P2}{DC_LOADED_WORKBOOKS}: {lwbc_count}\n"
+                wdcl = list(wdc.keys())
+                for wb_id in list(lwbc.keys()):
+                    wb = self.dc_WORKBOOK_DATA_COLLECTION[wb_id]
+                    i = wdcl.index(wb_id) if wb_id in wdcl else -1
+                    result += f"{wdc[wb.wb_id].display_brief_str(i)}\n"
+            logger.info(f"Complete:")
+            return True, result
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            return False, m
+    #endregion get_workbook_data_collection_info_str() method
+    # ------------------------------------------------------------------------ +
+    #region get_workbook_content() method
+    def get_workbook(self, wb_ref:str, load : bool = True) -> Tuple[bool, BDMWorkbook, WORKBOOK_CONTENT]: 
+        """From the wb_ref, validate and return the loaded content of the workbook."""
+        try:
+            all_wbs, wb_index, wb_name = self.DC.dc_WB_REF_resolve(wb_ref)
+            if self.wb_ref_not_valid(all_wbs, wb_index, wb_name):
+                m = f"wb_ref '{wb_ref}' is not valid."
+                logger.error(m)
+                return False, m
+            wdc = self.dc_WORKBOOK_DATA_COLLECTION
+            success, result = wdc.by_index(wb_index)
+            if not success:     
+                m = f"wb_ref '{wb_ref}' not found in WORKBOOK_DATA_COLLECTION."
+                logger.error(m)
+                return False, m
+            wb = result
+            wb_content = None
+            wb.wb_loaded = wb.wb_id in self.dc_LOADED_WORKBOOKS
+            if not wb.wb_loaded and load:
+                wb_content = self.dc_WORKBOOK_load(wb_index)
+                if wb_index not in self.dc_LOADED_WORKBOOKS:
+                    m = f"Failed trying to load wb_ref '{wb_index}':'{wb_name}'."
+                    logger.error(m)
+                    return False, m 
+            return True, wb, wb_content
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            return False, m
+    #endregion get_workbook_content() method
+    # ------------------------------------------------------------------------ +
+    #region    wb_ref_not_valid() method
     @classmethod
     def wb_ref_not_valid(cls, all_wbs: bool, wb_index: int, wb_name: str) -> bool:
         """Check if the workbook reference is not valid.
@@ -1692,6 +1716,8 @@ class BudManViewModel(Model_Binding): # future ABC for DC, CP, VM interfaces
             logger.error(m)
             return True
         return False
+    #endregion wb_ref_not_valid() method
+    # ------------------------------------------------------------------------ +
     #endregion helper methods for command execution
     # ------------------------------------------------------------------------ +
     #                                                                          +
@@ -1937,17 +1963,22 @@ class BudManViewModel(Model_Binding): # future ABC for DC, CP, VM interfaces
         except Exception as e:
             return self.BMVM_cmd_exception(e)
         
-    def dc_WORKBOOKS_member(self, wb_name: str) -> bool:
-        """DC-Only: Indicates whether the named workbook is a member of the DC."""
-        return self.DC.dc_WORKBOOKS_member(wb_name)    
+    def dc_WB_REF_resolve(self, wf_key : str) -> Tuple[bool, int, str]: 
+        """DC_Binding : Return True if the wf_key is valid."""
+        # Bind through the DC (data_context) object.
+        return self.DC.dc_WF_KEY_resolve(wf_key)
 
     def dc_WORKBOOK_loaded(self, wb_name: str) -> Workbook:
         """Indicates whether the named workbook is loaded."""
         return self.DC.dc_WORKBOOK_loaded(wb_name)
 
+    def dc_WORKBOOK_by_index(self, wb_index: int) -> WORKBOOK_OBJECT:
+        """DC_Binding: Return (True, BDWWorkbook on success, (False, error_msg) on failure."""
+        return self.DC.dc_WORKBOOK_index(wb_index)
+
     def dc_WORKBOOK_load(self, wb_index: str) -> Tuple[bool, str]:
         """Load a workbook by its wb_index."""
-        return self.DC.dc_WORKBOOK_load(wb_index)
+        return self.DC.dc_WORKBOOK_file_load(wb_index)
 
     def dc_CHECK_REGISTER_name(self, wb_index: int) -> str:
         """DC-Only: Return wb_name for wb_index or None if does not exist."""

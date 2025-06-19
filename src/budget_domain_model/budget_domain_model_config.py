@@ -30,9 +30,10 @@ from typing import List, Dict, Any
 from openpyxl import Workbook, load_workbook
 import p3_utils as p3u, pyjson5, p3logging as p3l
 # local modules and packages
-from budman_namespace import *
+from budman_namespace.bdm_singleton_meta import BDMSingletonMeta
+from budman_namespace.design_language_namespace import *
 from budget_storage_model import *
-from .bdm_workbook_class import BDMWorkbook 
+from budman_namespace.bdm_workbook_class import BDMWorkbook 
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants

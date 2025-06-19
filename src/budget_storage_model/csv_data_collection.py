@@ -103,12 +103,11 @@ def csv_DATA_COLLECTION_file_load(csv_path : Path = None) -> DATA_COLLECTION:
                 # Use the first column as the key, rest as values.
                 if row:
                     check_number = row["Number"].strip()
-                    new_key = check_number
-                    if new_key in data_collection:
-                        logger.warning(f"Duplicate key found: {new_key}")
+                    if check_number in data_collection:
+                        logger.warning(f"Duplicate key found: {check_number}")
                         logger.warning(f"Skipping row: {row}")
                         continue
-                    data_collection[new_key] = row
+                    data_collection[check_number] = row
         logger.info(f"BizEVENT: Loaded DATA_COLLECTION from  file: '{csv_path}'")
         logger.debug(f"Complete {p3u.stop_timer(st)}")
         return data_collection

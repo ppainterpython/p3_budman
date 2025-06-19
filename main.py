@@ -13,13 +13,14 @@ import sys, logging
 from pathlib import Path
 from dynaconf import Dynaconf
 import p3logging as p3l
-from p3_utils import exc_err_msg, dscr
+from p3_utils import exc_err_msg, dscr, start_timer, stop_timer
 from budman_settings import *
 from src.budman_app.budman_app import BudManApp
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
 logger = logging.getLogger(__name__)
+app_start_time : float = start_timer()
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
@@ -99,4 +100,6 @@ def main(bdms_url : str = None):
 if __name__ == "__main__":
     bdms_url = None #"file:///C:/Users/ppain/OneDrive/budget/p3_budget_manager_ca063e8b.jsonc"
     main(bdms_url)
+    logger.info(f"BizEVENT: {Path(__file__).name} completed successfully "
+                f"in {stop_timer(app_start_time)} seconds.")
     exit(0)

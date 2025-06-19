@@ -75,7 +75,8 @@ from typing import List, Type, Generator, Dict, Tuple, Any, TYPE_CHECKING
 import p3_utils as p3u, pyjson5, p3logging as p3l
 from openpyxl import Workbook, load_workbook
 # local modules and packages
-from budman_namespace import *
+from budman_namespace.bdm_singleton_meta import BDMSingletonMeta
+from budman_namespace.design_language_namespace import *
 from budget_storage_model import (
     bsm_verify_folder, 
     bsm_get_workbook_names,
@@ -84,7 +85,7 @@ from budget_storage_model import (
     bsm_WORKBOOK_file_save,
     )                              
 from p3_mvvm.model_base_ABC import Model_Base
-from .bdm_workbook_class import BDMWorkbook
+from budman_namespace.bdm_workbook_class import BDMWorkbook
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -1731,8 +1732,6 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
     def bdwb_WORKBOOKS_member(self, wb_name:str) -> bool: 
         """Return True if wb_name is a member of DC.WORKBOOKS list."""
         try:
-            # TODO: can I remove this because BudManDataContext now
-            # dc_WORKBOOKS_member()?
             _ = p3u.is_str_or_none("wb_name", wb_name, raise_error=True)
             # Reference the DC.WORKBOOKS property.
             wbl = self.bdmwd_WORKBOOKS_get()
@@ -1915,210 +1914,6 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
-
-    #endregion bdmwd_WORKBOOKS() methods
-    # ------------------------------------------------------------------------ +
-    #region bdmwd_LOADED_WORKBOOKS() methods
-    # def bdmwd_LOADED_WORKBOOKS_count(self) -> int:
-    #     """Return total count of BDMWD_LOADED_WORKBOOKS dictionary."""
-    #     self.bdmwd_INITIALIZED()
-    #     return len(self.bdmwd_LOADED_WORKBOOKS_get())
-
-    # def bdmwd_LOADED_WORKBOOKS_get(self) -> LOADED_WORKBOOK_COLLECTION | None:
-    #     """Get the BDMWD_LOADED_WORKBOOKS from the BDM_WORKING_DATA.
-
-    #     Returns:
-    #         LOADED_WORKBOOK_COLLECTION(Dict[wb_name: Workbook object])
-    #     """
-    #     try:
-    #         self.bdmwd_INITIALIZED()
-    #         if self.bdm_working_data is None:
-    #             m = f"BDM_WORKING_DATA is not set. "
-    #             logger.error(m)
-    #             raise ValueError(m)
-    #         return self.get_BDM_WORKING_DATA(BDMWD_LOADED_WORKBOOKS)
-    #     except Exception as e:
-    #         m = p3u.exc_err_msg(e)
-    #         logger.error(m)
-    #         raise
-
-    # def bdmwd_LOADED_WORKBOOKS_add(self,wb_name : str, wb : Workbook) -> None:
-    #     """Add an entry to BDMWD_LOADED_WORKBOOKS in the BDM_WORKING_DATA.
-
-    #     The BDMWD_LOADED_WORKBOOKS list holds tuples of workbook name and
-    #     the loaded Workbook object. When adding an entry, if the wb_name is 
-    #     already in the list, then do not add it again.
-
-    #     Returns:
-    #         None: on success.
-    #     Raises:
-    #         ValueError: if the BDM_WORKING_DATA is not set.
-    #         TypeError: if wb_name is not a str.
-    #         TypeError: if wb is not a Workbook object.
-    #         ValueError: if wb_name is None or an empty str.
-    #         ValueError: if wb is None.
-    #     """
-    #     try:
-    #         self.bdmwd_INITIALIZED()
-    #         p3u.is_str_or_none("wb_name",wb_name, raise_error = True)
-    #         p3u.is_obj_of_type("wb", wb, Workbook, raise_error=True)
-    #         lwbs_list = self.bdmwd_LOADED_WORKBOOKS_get()
-    #         lwbs_list[wb_name] = wb  # Use dict-like access for easy updates.
-    #         m = "Updated" if self.bdwb_LOADED_WORKBOOKS_member(wb_name) else "Added"
-    #         logger.debug(f"{m} ('{wb_name}', '{str(wb)}') "
-    #                      f"to BDMWD_LOADED_WORKBOOKS.")
-    #         return None
-    #     except Exception as e:
-    #         m = p3u.exc_err_msg(e)
-    #         logger.error(m)
-    #         raise
-    
-    # def bdwb_LOADED_WORKBOOKS_member(self, wb_name:str) -> bool: 
-    #     """Return True if wb_name is a member of DC.LOADED_WORKBOOKS list."""
-    #     try:
-    #         _ = p3u.is_str_or_none("wb_name", wb_name, raise_error=True)
-    #         # Reference the DC.LOADED_WORKBOOKS property. Dict(wb_name: Workbook).
-    #         lwbl = self.bdmwd_LOADED_WORKBOOKS_get()
-    #         return True if wb_name in lwbl else False
-    #     except Exception as e:
-    #         logger.error(p3u.exc_err_msg(e))
-    #         raise
-
-    #endregion bdmwd_LOADED_WORKBOOKS() methods
-    # ------------------------------------------------------------------------ +
-    #region bdmwd_FI methods
-    def bdmwd_FI_WORKBOOKS_load(self, fi_key : str, wf_key : str, wf_purpose : str
-                                                    ) -> LOADED_WORKBOOK_COLLECTION:
-        """Load wbs for fi_key,wf_key,wb_type, merge to BDMWD_LOADED_WORKBOOKS.
-
-        For a given fi_key, wf_key and wb_type, load the workbooks from the
-        filesystem and merge them into the BDMWD_LOADED_WORKBOOKS list.
-
-        Args:
-            fi_key (str): The financial institution key.
-            wf_key (str): The workflow key.
-            wb_type (str): The workbook type.
-
-        Returns:
-            LOADED_WORKBOOK_COLLECTION: Dict[str,Workbook] containing the 
-            workbook name and the loaded workbook object.
-        """
-        try:
-            self.bdmwd_INITIALIZED()
-            # Get the WORKBOOK_DATA_LIST for fi_key, wf_key and wf_purpose from the BDM.
-            wbl = self.bdm_WORKBOOK_DATA_LIST(fi_key, wf_key, wf_purpose)
-            if wbl is None or len(wbl) == 0:
-                logger.debug(f"No workbooks to load for FI_KEY('{fi_key}') "
-                             f"WF_KEY('{wf_key}')")
-                return None
-            # Use the BSM to load the workbooks for fi_key, wf_key and wf_purpose.
-            logger.debug(f"Loading {len(wbl)} workbooks for "
-                         f"FI_KEY('{fi_key}') WF_KEY('{wf_key}') "
-                         f"WF_PURPOSE('{wf_purpose}')")
-            new_lwbl = self.bsm_WORKBOOKS_LIST_load(wbl)
-            new_count = len(new_lwbl) if new_lwbl is not None else 0
-            logger.debug(f"Loaded {new_count} workbooks for "
-                         f"FI_KEY('{fi_key}') WF_KEY('{wf_key}') "
-                         f"WF_PURPOSE('{wf_purpose}')")
-            # Update the BDMWD_LOADED_WORKBOOKS with the new loaded workbooks.
-            bdmwd_lwbs = self.bdmwd_LOADED_WORKBOOKS_get()
-            prev_count = len(bdmwd_lwbs) if bdmwd_lwbs is not None else 0
-            if new_count == 0: return bdmwd_lwbs
-            bdmwd_lwbs.update(new_lwbl)
-            logger.debug(f"Updated BDMWD_LOADED_WORKBOOKS({prev_count}) with "
-                         f"{new_count} loaded workbooks, "
-                         f"total = {len(bdmwd_lwbs)}")
-            return self.bdmwd_LOADED_WORKBOOKS_get()
-        except Exception as e:
-            m = p3u.exc_err_msg(e)
-            logger.error(m)
-            raise
-
-    def bdmwd_FI_WORKBOOKS_save(self, fi_key : str, wf_key : str,
-                               wf_purpose : str) -> None:
-        """Save workbooks for an FI workflow."""
-        try:
-            self.bdmwd_INITIALIZED()
-            lwbl = self.bdmwd_LOADED_WORKBOOKS_get()
-            if lwbl is None or len(lwbl) == 0:
-                logger.debug(f"No loaded workbooks to save for "
-                             f"FI_KEY('{fi_key}') WF_KEY('{wf_key}') "
-                             f"WF_PURPOSE('{wf_purpose}')")
-                return
-            wbl = self.bdmwd_WORKBOOKS_get()
-            if wbl is None or len(wbl) == 0:
-                logger.debug(f"No workbooks to save for "
-                             f"FI_KEY('{fi_key}') WF_KEY('{wf_key}') "
-                             f"WF_PURPOSE('{wf_purpose}')")
-                return
-            self.bsm_LOADED_WORKBOOKS_save(lwbl, wbl)
-        except Exception as e:
-            m = p3u.exc_err_msg(e)
-            logger.error(m)
-            raise            
-
-    def bdmwd_FI_set(self, fi_key : str) -> None:
-        """Set the BDMWD_FI_KEY in the BDM_WORKING_DATA.
-
-        Args:
-            fi_key (str): The financial institution key.
-        """
-        try:
-            self.bdmwd_INITIALIZED()
-            # fi_key must be a valid key or 'all'.
-            _ = p3u.str_empty(fi_key, raise_error=True) # Raises TypeError, ValueError
-            _ = self.bdm_FI_KEY_validate(fi_key) # Raises ValueError fi_key
-            self.set_BDM_WORKING_DATA(BDMWD_FI_KEY, fi_key)
-            logger.debug(f"Set BDMWD_FI_KEY to '{fi_key}'")
-        except Exception as e:
-            m = p3u.exc_err_msg(e)
-            logger.error(m)
-            raise
-    #endregion bdmwd_FI methods
-    # ------------------------------------------------------------------------ +
-    #region bdmwd_INITIALIZED methods
-    def bdmwd_INITIALIZED(self) -> bool:
-        """Test if BDM_WORKING_DATA was initialized. Raise RuntimeError if not.
-        """
-        try:
-            if (hasattr(self, BDM_WORKING_DATA) and
-                isinstance(self.bdm_working_data, dict) and
-                BDMWD_INITIALIZED in self.bdm_working_data and
-                self.bdm_working_data[BDMWD_INITIALIZED]): return True
-            m = f"BDM_WORKING_DATA was not initialized. "
-            m += f"Use the bdm_BDM_WORKING_DATA_initialize() method."
-            logger.error(m)
-            raise RuntimeError(m)
-        except RuntimeError as e:
-            raise
-        except Exception as e:
-            m = p3u.exc_err_msg(e)
-            logger.error(m)
-            raise
-    def bdmwd_INITIALIZED_get(self) -> bool:
-        """Get the BDMWD_INITIALIZED from the BDM_WORKING_DATA.
-        """
-        try:
-            self.bdmwd_INITIALIZED()
-            return self.get_BDM_WORKING_DATA(BDMWD_INITIALIZED) 
-        except Exception as e:
-            m = p3u.exc_err_msg(e)
-            logger.error(m)
-            raise
-    def bdmwd_INITIALIZED_set(self, value : bool) -> bool:
-        """Set the BDMWD_INITIALIZED in BDM_WORKING_DATA.
-        """
-        try:
-            self.bdmwd_INITIALIZED()
-            return self.set_BDM_WORKING_DATA(BDMWD_INITIALIZED, value) 
-        except Exception as e:
-            m = p3u.exc_err_msg(e)
-            logger.error(m)
-            raise
-    #endregion bdmwd_INITIALIZED methods
-    # ------------------------------------------------------------------------ +
-    #endregion BDMWD - Budget Domain Model Working Data methods
-    # ======================================================================== +
 
 # ---------------------------------------------------------------------------- +
 #region utility functions
