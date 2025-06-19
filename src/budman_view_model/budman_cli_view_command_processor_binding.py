@@ -1,12 +1,11 @@
 # ---------------------------------------------------------------------------- +
-#region budman_cli_view_datacontext.py module
-""" budman_cli_view_datacontext.py implements BudgetManagerCLIViewDataContext class.
+#region budman_cli_view_command_processor_binding.py module
+""" BudManCLICommandProcessor_Binding class implementation. 
 
-BudManCLIViewDataContext serves as a ViewModelCommandProcessor provider 
-implementation for the BudManCLIView class. The CLIView is a
-command line interpreter user interface for the BudMan application.
+BudManCLICommandProcessor_Binding serves as a CommandProcessor binding 
+implementation for a View class.
 """
-#endregion bdm_view_model.py module
+#endregion budman_cli_view_command_processor_binding.py module
 # ---------------------------------------------------------------------------- +
 #region Imports
 # python standard library modules and packages
@@ -24,14 +23,9 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
-class BudManCLIViewDataContext():
+class BudManCLICommandProcessor_Binding():
     # ======================================================================== +
     #region BudManCLIViewDataContext class
-    """A DataContext for the BudgetManagerCLIView.
-    This Data Context (DC) is bound to a ViewModel of type 
-    BudgetManagerViewModelInterface. The two concerns of the ViewModel are
-    command processing and DC properties and methods needed by the View.
-    """
     # ======================================================================== +
     #                                                                          +
     # ------------------------------------------------------------------------ +
@@ -39,12 +33,10 @@ class BudManCLIViewDataContext():
     #endregion Class Variables
     # ------------------------------------------------------------------------ +
     #region __init__() constructor method
-    def __init__(self, view_model : object) -> None:
+    def __init__(self) -> None:
         super().__init__()
         self._initialized : bool = False
-        self._view_model : object = view_model
         self._cp : Callable = None  # Command Processor
-        self._dc : object = None    # Data Context
     #endregion __init__() constructor method
     # ------------------------------------------------------------------------ +
     #region Properties
@@ -59,16 +51,7 @@ class BudManCLIViewDataContext():
         if not isinstance(value, bool):
             raise ValueError("initialized must be a boolean value.")
         self._initialized = value  
-    @property
-    def view_model(self) -> object:
-        """Return the view model."""
-        return self._view_model
-    @view_model.setter
-    def view_model(self, value : object) -> None:
-        """Set the view model."""
-        if not isinstance(value, object):
-            raise ValueError("view_model must be an object.")
-        self._view_model = value
+
     @property
     def command_processor(self) -> Callable:
         """Return the command processor."""
@@ -79,16 +62,6 @@ class BudManCLIViewDataContext():
         if not callable(value):
             raise ValueError("command_processor must be a callable.")
         self._cp = value
-    @property
-    def data_context(self) -> object:
-        """Return the data context."""
-        return self._dc
-    @data_context.setter
-    def data_context(self, value : object) -> None:
-        """Set the data context."""
-        if not isinstance(value, object):
-            raise ValueError("data_context must be an object.")
-        self._dc = value
     @property
     def cp(self) -> Callable:
         """Return the command processor."""
@@ -112,12 +85,11 @@ class BudManCLIViewDataContext():
     #endregion Properties
     # ------------------------------------------------------------------------ +
     #region initialize() method
-    def initialize(self, cp : Callable, dc : object) -> "BudManCLIViewDataContext":
+    def initialize(self, cp : Callable) -> "BudManCLICommandProcessor_Binding":
         """Initialize the data context."""
         try:
             logger.info(f"BizEVENT: View setup for BudManCLIViewDataContext.")
             self.cp = cp
-            self.dc = dc
             self.initialized = True
             return self
         except Exception as e:

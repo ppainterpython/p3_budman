@@ -16,8 +16,10 @@ from p3_utils import exc_err_msg, dscr, start_timer, stop_timer
 # local packages and module libraries
 from budman_settings import *
 from budman_namespace import BDMSingletonMeta
-from budman_view_model import (BudManViewModel, BudManCLIViewDataContext)
+from budman_view_model import (BudManViewModel, BudManCLICommandProcessor_Binding)
 from budman_cli_view import BudManCLIView
+from budget_domain_model import (BudgetDomainModel)
+from budman_data_context import BDMWorkingData
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -109,22 +111,38 @@ class BudManApp(metaclass=BDMSingletonMeta):
     # ------------------------------------------------------------------------ +
     #region budman_app_setup() function
     def budman_app_setup(self, bdms_url : str = None, testmode : bool = False):
-        """Assemble the application for startup.
+        """Assemble the application for startup. Do Dependency Injection.
                 
         Args:
             bdms_url (str): Optional, the URL to BDM_STORE to load at startup.
             testmode (bool): If True, run in test mode.
         """
         try:
-            # create and initialize view model
             logger.debug(f"Started: bdms_url = '{bdms_url}'...")
-            bmvm = BudManViewModel(bdms_url, self.settings)
-            bmvm.initialize(load_user_store=True) # Initialize the BudgetModelCommandViewModel
-            # create and initialize a data context, for the view model
-            bm_cliview_dc = BudManCLIViewDataContext(bmvm)
-            bm_cliview_dc.initialize(cp=bmvm.cp_execute_cmd,dc=bmvm.data_context) 
-            # create and initialize the view
-            self.cli_view = BudManCLIView(bm_cliview_dc).initialize()
+            # In our MVVM pattern design, create the ViewModel, Model, and view
+            # independently, and then bind them together.
+            # Start by creating the ViewModel.
+            view_model = BudManViewModel(bdms_url, self.settings)
+            # Next, create a model. In our case, we use the ViewModel for that.
+            model = view_model.initialize_model(bdms_url)
+            # Next, bind the model to the ViewModel.
+            view_model.model = model
+            # Next, create the Data Context for the ViewModel.
+            data_context : BDMWorkingData = BDMWorkingData()
+            # Next, bind the model to the data context.
+            data_context.model = model
+            # Next, initialize the data context.
+            data_context.dc_initialize() 
+            # Next, bind the data context to the ViewModel.
+            view_model.data_context = data_context
+            # Next, initialize the ViewModel.
+            view_model.initialize()
+            # Next, create the CommandProcessor_Binding object.
+            cli_cp = BudManCLICommandProcessor_Binding()
+            # Next, bind the view_model as the CommandProcessor_Base.
+            cli_cp.initialize(cp=view_model.cp_execute_cmd) 
+            # Next, create and initialize the view and bind the CommandProcessor.
+            self.cli_view = BudManCLIView(cli_cp).initialize() 
             # Register exit handler
             atexit.register(self.budman_app_exit_handler)
             logger.debug(f"Complete:")

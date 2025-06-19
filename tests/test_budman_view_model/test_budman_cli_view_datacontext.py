@@ -9,7 +9,7 @@ from pathlib import Path
 import logging, p3_utils as p3u, p3logging as p3l
 # local libraries
 from budman_namespace import *
-from budman_view_model import BudManCLIViewDataContext, BudManViewModel
+from budman_view_model import BudManCLICommandProcessor_Binding, BudManViewModel
 #endregion imports
 # ---------------------------------------------------------------------------- +
 #region Globals
@@ -21,8 +21,8 @@ def test_BudgetManagerCLIViewDataContext__init__():
     try:
         logger.info(test_BudgetManagerCLIViewDataContext__init__.__doc__)
         # Create a BudgetManagerCLIViewDataContext instance
-        bmv_dc = BudManCLIViewDataContext(None)
-        assert isinstance(bmv_dc, BudManCLIViewDataContext), \
+        bmv_dc = BudManCLICommandProcessor_Binding(None)
+        assert isinstance(bmv_dc, BudManCLICommandProcessor_Binding), \
             f"Expected BudgetManagerCLIViewDataContext, got: " + str(type(bmv_dc))
         assert not bmv_dc.initialized, \
             "Should not be initialized"
@@ -50,8 +50,8 @@ def test_BudgetManagerCLIViewDataContext__init__with_viewmodel():
         assert bmvm.initialized, \
             "view_model should be initialized"
         # Create a BudgetManagerCLIViewDataContext instance with a ViewModel      
-        bmv_dc = BudManCLIViewDataContext(bmvm)
-        assert isinstance(bmv_dc, BudManCLIViewDataContext), \
+        bmv_dc = BudManCLICommandProcessor_Binding(bmvm)
+        assert isinstance(bmv_dc, BudManCLICommandProcessor_Binding), \
             f"Expected BudgetManagerCLIViewDataContext, got: " + str(type(bmv_dc))
         assert not bmv_dc.initialized, \
             "Should not be initialized yet"
@@ -79,8 +79,8 @@ def test_BudgetManagerCLIViewDataContext_initialize():
         assert bmvm.initialized, \
             "view_model should be initialized"
         # Create a BudgetManagerCLIViewDataContext instance with a ViewModel      
-        bmv_dc = BudManCLIViewDataContext(bmvm)
-        assert isinstance(bmv_dc, BudManCLIViewDataContext), \
+        bmv_dc = BudManCLICommandProcessor_Binding(bmvm)
+        assert isinstance(bmv_dc, BudManCLICommandProcessor_Binding), \
             f"Expected BudgetManagerCLIViewDataContext, got: " + str(type(bmv_dc))
         assert not bmv_dc.initialized, \
             "Should not be initialized yet"
@@ -122,8 +122,8 @@ def test_BudgetManagerCLIViewDataContext_execute_cmd():
         assert bmvm.initialized, \
             "view_model should be initialized"
         # Create a BudgetManagerCLIViewDataContext instance with a ViewModel      
-        bmv_dc = BudManCLIViewDataContext(bmvm)
-        assert isinstance(bmv_dc, BudManCLIViewDataContext), \
+        bmv_dc = BudManCLICommandProcessor_Binding(bmvm)
+        assert isinstance(bmv_dc, BudManCLICommandProcessor_Binding), \
             f"Expected BudgetManagerCLIViewDataContext, got: " + str(type(bmv_dc))
         assert not bmv_dc.initialized, \
             "Should not be initialized yet"

@@ -56,10 +56,10 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
     #region    BDMWorkingData class intrinsics
     # ------------------------------------------------------------------------ +
     #region __init__() method init during BDMWorkingData constructor.
-    def __init__(self,  bdm : Any = None, *args, dc_id : str = None) -> None:
+    def __init__(self,  model : Model_Base = None, *args, dc_id : str = None) -> None:
         dc_id = args[0] if len(args) > 0 else None
         super().__init__(*args, dc_id=dc_id)
-        self._budget_domain_model : MODEL_OBJECT = bdm
+        self._model : MODEL_OBJECT = model
         self._dc_id = self.__class__.__name__ if not self._dc_id else None
     #endregion __init__() method init during BDMWorkingData constructor.
     # ------------------------------------------------------------------------ +
@@ -73,13 +73,13 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
     @property
     def model(self) -> MODEL_OBJECT:
         """Return the model object reference."""
-        return self._budget_domain_model
+        return self._model
     @model.setter
     def model(self, bdm: MODEL_OBJECT) -> None:
         """Set the model object reference."""
         if not isinstance(bdm, MODEL_OBJECT):
             raise TypeError(f"model must be a {MODEL_OBJECT} instance")
-        self._budget_domain_model = bdm
+        self._model = bdm
     #endregion BDMClientInterface Interface Properties
     # ------------------------------------------------------------------------ +
     #endregion BDMClientInterface concrete implementation.
@@ -104,12 +104,17 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
             BDMWorkingData: The initialized BDMWorkingData instance.
         """
         try:
+            # We are Model-Aware, so we can access the model.
+            if self.model is None:
+                m = "There is no model binding. Cannot dc_initialize BDMWorkingData."
+                logger.error(m)
+                raise ValueError(m)
             # Perform BudManDataContext.dc_initialize() to set up the DC.
             super().dc_initialize()
             # The model's BDM_STORE_OBJECT was used to initialize the model.
             bdm_store = getattr(self.model, BDM_STORE_OBJECT, None)
             if bdm_store is None:
-                m = "The model does not have a bdm_store_object."
+                m = "The model binding does not have a bdm_store_object."
                 logger.error(m)
                 raise ValueError(m)
             # Place a reference to the bdm_store in the DC.

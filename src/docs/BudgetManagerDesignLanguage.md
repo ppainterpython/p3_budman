@@ -105,9 +105,14 @@ To add clarity, I am refactoring some type definitions:
 
 - __WORKBOOK_DATA_COLLECTION__ for the workbook-centric view.
 
+### Making BudManViewModel a subclass of BudManDataContext_Binding
+
+To keep it simple, and keep an eye on a clean, and simple Dependency Injection pattern, I am making all bindings happen after object instantiation. Using initialize methods, the *_binding classes are configured with the reference to their concrete objects at initialization time, not object instantiation time.
+
 ## Change Journal
 
 | Date       | Description                                                      |
 |------------|------------------------------------------------------------------|
 | 06/17/2025 | Removed bdm_initialize_from_BDM_STORE(self) from budget_domain_model.py|
 |06/17/2025|Modified BDMWorkbook class and WORKBOOK_DATA_COLLECTION to be use the wb_id as the key, not a list index. The wb_index used in layers above BDM, not persisted in BDMWorkbook.|
+|6/19/2025|Making BudManViewModel a subclass of BudManDataContext_Binding finally.|

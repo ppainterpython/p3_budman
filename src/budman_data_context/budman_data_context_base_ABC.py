@@ -62,7 +62,7 @@ class BudManDataContext_Base(ABC):
     @property
     @abstractmethod
     def dc_VALID(self) -> bool:
-        """DC-Only: Indicates whether the data context is valid."""
+        """Indicates whether the data context is valid."""
         pass
     
     @property
@@ -90,12 +90,12 @@ class BudManDataContext_Base(ABC):
     @property
     @abstractmethod
     def dc_FI_OBJECT(self) -> str:
-        """DC-Only: Return the FI_OBJECT of the current Financial Institution. """
+        """Return the FI_OBJECT of the current Financial Institution. """
         pass
     @dc_FI_OBJECT.setter
     @abstractmethod
     def dc_FI_OBJECT(self, value: str) -> None:
-        """DC-Only: Set the FI_OBJECT of the current Financial Institution."""
+        """Set the FI_OBJECT of the current Financial Institution."""
         pass
 
     @property
@@ -140,7 +140,7 @@ class BudManDataContext_Base(ABC):
     @property
     @abstractmethod
     def dc_WB_TYPE(self) -> str:
-        """Return the current WB_TYPE (workbook type) .
+        """Return the current WB_TYPE (workbook type).
         Current means that the other data in the DC is for this workbook type. 
         This indicates the type of data in the workflow being processed,
         e.g., 'input', 'output', 'working', etc.

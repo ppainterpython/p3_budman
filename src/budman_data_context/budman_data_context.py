@@ -396,6 +396,11 @@ class BudManDataContext(BudManDataContext_Base):
                     obj = self.dc_WORKBOOK_find(WB_INDEX, wb_index)
                     if obj :
                         wb_name = getattr(obj, WB_NAME)
+                        # TODO: add WB_INDEX and ALL_WORKBOOKS to DC
+                        #TODO: when resolving a wb_ref, set the dc values for:
+                        # dc_ALL_WORKBOOKS, dc_WB_INDEX, dc_WB_NAME, dc_WB_ID,
+                        # dc_WB_REF, dc_WB_TYPE, dc_WF_PURPOSE, dc_WF_KEY?
+                        # Or should cp_validate_cmd() do that?
                         return False, wb_index, wb_name
                     if wb_index < 0 or wb_index >= len(self.dc_WORKBOOK_DATA_COLLECTION):
                         m = f"Invalid wb_index: {wb_index} for wb_ref: '{wb_ref}'"
