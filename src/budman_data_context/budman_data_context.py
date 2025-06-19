@@ -101,7 +101,8 @@ class BudManDataContext(BudManDataContext_Base):
     @property
     def dc_VALID(self) -> bool:
         """DC-Only: Indicates whether the data context is valid."""
-        return self.dc_is_valid()
+        success, reason = self.dc_is_valid()
+        return success
     
     @property
     def dc_INITIALIZED(self) -> bool:
@@ -492,10 +493,9 @@ class BudManDataContext(BudManDataContext_Base):
     def dc_WORKBOOK_by_index(self, wb_index: str) -> BUDMAN_RESULT:
         """DC-Only: Return (True, BDWWorkbook on success, (False, error_msg) on failure."""
         try:
-            if not self.dc_VALID:
-                m = "Data context is not valid."
-                logger.error(m)
-                return False, m
+            success, reason = self.dc_is_valid()
+            if not success:
+                return False, reason
             if not isinstance(wb_index, str):
                 m = (f"TypeError: wb_index must be a string, got {type(wb_index)}")
                 logger.error(m)
@@ -509,12 +509,16 @@ class BudManDataContext(BudManDataContext_Base):
                 return False, m
             try:
                 if wb_index_i < 0 or wb_index_i >= len(self.dc_WORKBOOK_DATA_COLLECTION):
-                    logger.error(f"Invalid workbook index: {wb_index}")
-                    return None
-                return list(self.dc_WORKBOOK_DATA_COLLECTION.values())[wb_index_i]
+                    m = (f"Invalid workbook index: {wb_index_i} for wb_index: '{wb_index}'")
+                    logger.error(m)
+                    return False, m
+                wb = list(self.dc_WORKBOOK_DATA_COLLECTION.values())[wb_index_i]
+                return True, wb
             except ValueError:
-                logger.error(f"Invalid value for WB_INDEX: {wb_index_i}")
-                return None
+                m = (f"ValueError: wb_index '{wb_index}' is not a valid index in the "
+                      f"dc_WORKBOOK_DATA_COLLECTION.")
+                logger.error(m)
+                return False, m
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
@@ -535,7 +539,10 @@ class BudManDataContext(BudManDataContext_Base):
                     return None
             if find_key == WB_INDEX:
                 # If the find_key is WB_INDEX.
-                return self.dc_WORKBOOK_by_index(value)
+                success, wb = self.dc_WORKBOOK_by_index(value)
+                if success:
+                    return wb
+                return None
             # Search each workbook in the collection for the find_key: value.
             for wb_id, wb in self.dc_WORKBOOK_DATA_COLLECTION.items():
                 if getattr(wb, find_key, None) == value:
@@ -693,25 +700,32 @@ class BudManDataContext(BudManDataContext_Base):
     #region    Helper methods
     # ------------------------------------------------------------------------ +
     #region dc_is_valid()
-    def dc_is_valid(self) -> bool:
-        """DC-Only: Check if the data context is valid and initialized."""
+    def dc_is_valid(self) -> BUDMAN_RESULT:
+        """DC-Only: Check if the data context is valid and usable.
+        Returns:
+            BUDMAN_RESULT: A tuple of (success: bool, reason: str).0
+            bool: True if the data context is valid, False otherwise.   
+            str: A 'reason' message indicating the reason for invalidity.
+        """
         if not isinstance(self, BudManDataContext_Base):
-            logger.error("Data context must be an instance of BudManDataContext_Base")
+            m = "Data context must be an instance of BudManDataContext_Base"
+            logger.error(m)
+            return False, m
         if not self.dc_INITIALIZED:
             # If initialization in progress, then act like it is valid, during the
             # initialization process.
             if self._initialization_in_progress:
-                logger.debug("Data context initialization in progress.")
-                return True
-            logger.debug("Data context is not initialized.")
-            return False
+                m = "Data context initialization in progress."
+                logger.debug(m)
+                return True, m
+            m = "Data context is not initialized."
+            logger.error(m)
+            return False, m
         if self.dc_BDM_STORE is None:
-            logger.error("Data context BDM_STORE is not set.")
-            return False
-        # if self.dc_FI_KEY is None:
-        #     logger.error("Data context FI_KEY is not set.")
-        #     return False
-        return True
+            m = "Data context BDM_STORE is not set."
+            logger.error(m)
+            return False, m
+        return True, "It's all good, the data context is valid."
     #endregion dc_is_valid()
     # ------------------------------------------------------------------------ +
     #endregion Helper methods

@@ -313,7 +313,7 @@ class BudManDataContext_Binding(BudManDataContext_Base):
 
     def dc_WORKBOOK_by_index(self, wb_index: int) -> WORKBOOK_OBJECT:
         """DC_Binding: Return (True, BDWWorkbook on success, (False, error_msg) on failure."""
-        return self.DC.dc_WORKBOOK_index(wb_index)
+        return self.DC.dc_WORKBOOK_by_index(wb_index)
 
     def dc_WORKBOOK_find(self, find_key: str, value: str) -> WORKBOOK_OBJECT:
         """DC_Binding: Locate and return a workbook by the key and value."""

@@ -1675,13 +1675,13 @@ class BudManViewModel(Model_Binding): # future ABC for DC, CP, VM interfaces
             if self.wb_ref_not_valid(all_wbs, wb_index, wb_name):
                 m = f"wb_ref '{wb_ref}' is not valid."
                 logger.error(m)
-                return False, m
+                return False, m, None
             wdc = self.dc_WORKBOOK_DATA_COLLECTION
-            success, result = wdc.by_index(wb_index)
+            success, result = self.dc_WORKBOOK_by_index(wb_index)
             if not success:     
                 m = f"wb_ref '{wb_ref}' not found in WORKBOOK_DATA_COLLECTION."
                 logger.error(m)
-                return False, m
+                return False, m, None
             wb = result
             wb_content = None
             wb.wb_loaded = wb.wb_id in self.dc_LOADED_WORKBOOKS
@@ -1690,12 +1690,12 @@ class BudManViewModel(Model_Binding): # future ABC for DC, CP, VM interfaces
                 if wb_index not in self.dc_LOADED_WORKBOOKS:
                     m = f"Failed trying to load wb_ref '{wb_index}':'{wb_name}'."
                     logger.error(m)
-                    return False, m 
+                    return False, m, None
             return True, wb, wb_content
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
-            return False, m
+            return False, m, None
     #endregion get_workbook_content() method
     # ------------------------------------------------------------------------ +
     #region    wb_ref_not_valid() method
@@ -1966,7 +1966,7 @@ class BudManViewModel(Model_Binding): # future ABC for DC, CP, VM interfaces
     def dc_WB_REF_resolve(self, wf_key : str) -> Tuple[bool, int, str]: 
         """DC_Binding : Return True if the wf_key is valid."""
         # Bind through the DC (data_context) object.
-        return self.DC.dc_WF_KEY_resolve(wf_key)
+        return self.DC.dc_WB_REF_resolve(wf_key)
 
     def dc_WORKBOOK_loaded(self, wb_name: str) -> Workbook:
         """Indicates whether the named workbook is loaded."""
@@ -1974,7 +1974,7 @@ class BudManViewModel(Model_Binding): # future ABC for DC, CP, VM interfaces
 
     def dc_WORKBOOK_by_index(self, wb_index: int) -> WORKBOOK_OBJECT:
         """DC_Binding: Return (True, BDWWorkbook on success, (False, error_msg) on failure."""
-        return self.DC.dc_WORKBOOK_index(wb_index)
+        return self.DC.dc_WORKBOOK_by_index(wb_index)
 
     def dc_WORKBOOK_load(self, wb_index: str) -> Tuple[bool, str]:
         """Load a workbook by its wb_index."""
