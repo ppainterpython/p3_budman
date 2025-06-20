@@ -140,9 +140,11 @@ class BudManApp(metaclass=BDMSingletonMeta):
             # Next, create the CommandProcessor_Binding object.
             cli_cp = BudManCLICommandProcessor_Binding()
             # Next, bind the view_model as the CommandProcessor_Base.
-            cli_cp.initialize(cp=view_model.cp_execute_cmd) 
+            cli_cp.CP = view_model.cp_execute_cmd 
+            # cli_cp.initialize(cp=view_model.cp_execute_cmd) 
             # Next, create and initialize the view and bind the CommandProcessor.
-            self.cli_view = BudManCLIView(cli_cp).initialize() 
+            self.cli_view = BudManCLIView(cli_cp,self.app_name,self.settings)
+            self.cli_view.initialize() 
             # Register exit handler
             atexit.register(self.budman_app_exit_handler)
             logger.debug(f"Complete:")

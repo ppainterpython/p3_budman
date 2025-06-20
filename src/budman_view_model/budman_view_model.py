@@ -233,10 +233,15 @@ CMD_CHECK_REGISTER = "check_register"
 CMD_WF_TASK = "wf_task"
 CMD_TASK_ARGS = "task_args"
 CMD_TASK_NAME = "task_name"
+CMD_HANDLER_NAME = "handler_name"
+CMD_LIST_SWITCH = "list_switch" 
+CMD_LEVEL_VALUE = "level_value"
+CMD_ROLLOVER_SWITCH = "rollover_switch"
 BUDMAN_VALID_CMD_ARGS = (CMD_PARSE_ONLY, CMD_VALIDATE_ONLY,
                         CMD_WHAT_IF, CMD_FI_KEY, CMD_WF_KEY,CMD_WF_PURPOSE,
                         CMD_WB_TYPE, CMD_WB_NAME, CMD_WB_REF,CMD_WB_INFO,
-                        CMD_CHECK_REGISTER)
+                        CMD_CHECK_REGISTER,CMD_HANDLER_NAME,CMD_LIST_SWITCH,
+                        CMD_LEVEL_VALUE, CMD_ROLLOVER_SWITCH)
 logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
@@ -423,6 +428,7 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
                 "workflow_cmd_apply": self.WORKFLOW_apply_cmd,
                 "workflow_cmd_check": self.WORKFLOW_check_cmd,
                 "workflow_cmd_task": self.WORKFLOW_task_cmd,
+                "app_cmd_log_subcmd": self.APP_cmd
             }
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
@@ -659,8 +665,9 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
                 elif key == CMD_CHECK_REGISTER:
                     continue
                 else:
-                    result = f"Unchecked argument key: '{key}': '{value}'."
-                    logger.debug(result)
+                    if key not in BUDMAN_VALID_CMD_ARGS:
+                        result = f"Unchecked argument key: '{key}': '{value}'."
+                        logger.debug(result)
                 # If not validate_all and success is False, return. Else, 
                 # continue validating all cmd args.
                 if not validate_all and not success:
@@ -1291,7 +1298,7 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
     def CHANGE_cmd(self, cmd : Dict) -> Tuple[bool, str]:
         """Change aspects of the Data Context.
 
-        A CHANGE_cmd command .
+        A CHANGE_cmd command uses the wb_ref arg parameter.
 
         Arguments:
             cmd (Dict): A valid BudMan View Model Command object. For this
@@ -1335,6 +1342,40 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             logger.error(p3u.exc_err_msg(e))
             raise
     #endregion CHANGE_cmd() method
+    # ------------------------------------------------------------------------ +
+    #region APP_cmd() command > wf cat 2
+    def APP_cmd(self, cmd : Dict) -> Tuple[bool, str]:
+        """View or change app settings.
+
+        The APP_cmd command can use a variety of other command line arguments.
+
+        Arguments:
+            cmd (Dict): A valid BudMan View Model Command object. For this
+            command, must contain app_cmd = 'log' resulting in
+            a full command key of 'app_cmd_log' as well as others to come.
+
+        Returns:
+            Tuple[success : bool, result : Any]: The outcome of the command 
+            execution. If success is True, result contains result of the 
+            command, if False, a description of the error.
+            
+        Raises:
+            RuntimeError: A description of the
+            root error is contained in the exception message.
+        """
+        try:
+            logger.info(f"Start: ...")
+            validate_only = self.cp_cmd_arg_get(cmd, CMD_VALIDATE_ONLY, None)
+            what_if = self.cp_cmd_arg_get(cmd, CMD_WHAT_IF, None)
+            handler_name = self.cp_cmd_arg_get(cmd, CMD_HANDLER_NAME, None)
+            list_switch = self.cp_cmd_arg_get(cmd, CMD_LIST_SWITCH, False)
+            level_value = self.cp_cmd_arg_get(cmd, CMD_LEVEL_VALUE, None)
+            rollover_switch = self.cp_cmd_arg_get(cmd, CMD_ROLLOVER_SWITCH, False)
+            return True, ""
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion APP_cmd() method
     # ------------------------------------------------------------------------ +
     #region WORKFLOW_categorization_cmd() command > wf cat 2
     def WORKFLOW_categorization_cmd(self, cmd : Dict) -> Tuple[bool, str]:

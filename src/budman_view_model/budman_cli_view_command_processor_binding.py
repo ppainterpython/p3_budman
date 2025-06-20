@@ -25,12 +25,9 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 class BudManCLICommandProcessor_Binding():
     # ======================================================================== +
-    #region BudManCLIViewDataContext class
+    #region BudManCLICommandProcessor_Binding class
     # ======================================================================== +
     #                                                                          +
-    # ------------------------------------------------------------------------ +
-    #region Class Variables
-    #endregion Class Variables
     # ------------------------------------------------------------------------ +
     #region __init__() constructor method
     def __init__(self) -> None:
@@ -63,33 +60,23 @@ class BudManCLICommandProcessor_Binding():
             raise ValueError("command_processor must be a callable.")
         self._cp = value
     @property
-    def cp(self) -> Callable:
+    def CP(self) -> Callable:
         """Return the command processor."""
         return self._cp
-    @cp.setter
-    def cp(self, value : Callable) -> None:
+    @CP.setter
+    def CP(self, value : Callable) -> None:
         """Set the command processor."""
         if not callable(value):
             raise ValueError("command_processor must be a callable.")
         self._cp = value
-    @property
-    def dc(self) -> object:
-        """Return the data context."""
-        return self._dc
-    @dc.setter
-    def dc(self, value : object) -> None:
-        """Set the data context."""
-        if not isinstance(value, object):
-            raise ValueError("data_context must be an object.")
-        self._dc = value
     #endregion Properties
     # ------------------------------------------------------------------------ +
     #region initialize() method
     def initialize(self, cp : Callable) -> "BudManCLICommandProcessor_Binding":
         """Initialize the data context."""
         try:
-            logger.info(f"BizEVENT: View setup for BudManCLIViewDataContext.")
-            self.cp = cp
+            logger.info(f"BizEVENT: View setup for BudManCLICommandProcessor_Binding.")
+            self.CP = cp
             self.initialized = True
             return self
         except Exception as e:
@@ -97,7 +84,7 @@ class BudManCLICommandProcessor_Binding():
             raise
     #endregion initialize() method
     # ------------------------------------------------------------------------ +
-    #endregion BudManCLIViewDataContext class
+    #endregion BudManCLICommandProcessor_Binding class
     # ======================================================================== +
 
     # ======================================================================== +
@@ -107,7 +94,7 @@ class BudManCLICommandProcessor_Binding():
     #                                                                          +
     # ------------------------------------------------------------------------ +
     #region execute_cmd() method
-    def execute_cmd(self, cmd : Dict = None) -> Tuple[bool, Any]:
+    def cp_execute_cmd(self, cmd : Dict = None) -> Tuple[bool, Any]:
         """Execute a command with the Budget Model View Model.
 
         Pass the command request through to the command processor for
@@ -129,11 +116,11 @@ class BudManCLICommandProcessor_Binding():
                 logger.error(m)
                 return False, m
             # if the cp is not bound, return an error.
-            if self.cp is None:
+            if self.CP is None:
                 m = f"{self.__class__.__name__} command processor is None."
                 logger.error(m)
                 return False, m
-            return self.cp(cmd)
+            return self.CP(cmd)
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)

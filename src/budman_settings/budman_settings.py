@@ -11,7 +11,7 @@ from pathlib import Path
 from dynaconf import Dynaconf
 from p3_utils import exc_err_msg, dscr
 # local packages and module libraries
-from budman_namespace import BDMSingletonMeta
+from budman_namespace.bdm_singleton_meta import BDMSingletonMeta
 from .budman_settings_constants import *
 #endregion Imports
 # ---------------------------------------------------------------------------- +

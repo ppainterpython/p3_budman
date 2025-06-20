@@ -14,7 +14,7 @@ import p3_utils as p3u, p3logging as p3l
 import cmd2, argparse
 from cmd2 import (Cmd2ArgumentParser, with_argparser)
 # local modules and packages
-from budman_namespace import (
+from budman_namespace.design_language_namespace import (
     WB_TYPE_TRANSACTIONS, WB_TYPE_BUDGET, WB_TYPE_CHECK_REGISTER,
     WB_TYPE_BDM_STORE, WB_TYPE_BDM_CONFIG, VALID_WB_TYPE_VALUES)
                               
@@ -23,29 +23,6 @@ from budman_namespace import (
 #region Globals and Constants
 logger = logging.getLogger(__name__)
 #endregion Globals and Constants
-# ---------------------------------------------------------------------------- +
-
-# parent_parser = cmd2.Cmd2ArgumentParser(add_help=False)
-# parent_parser.add_argument(
-#     "-po", "--parse-only", 
-#     action="store_true",
-#     help="Command is only parsed with results returned."
-#     )
-# parent_parser.add_argument(
-#     "-vo", "--validate-only", 
-#     action="store_true", 
-#     help="All command args are validated with results returned, but no command execution."
-#     )
-# parent_parser.add_argument(
-#     "-wi", "--what-if",  
-#     action="store_true", 
-#     help="Return details what a valid command would do, but does not execute."
-#     )
-# parent_parser.print_help()
-# parent_parser.parse_args(['-vo', '-po'])
-# parent_parser.parse_args(['-wi'])
-# print("does this work?")
-# print("loading BudManCLIParser ...")
 # ---------------------------------------------------------------------------- +
 class BudManCLIParser():
     """A class to parse command line arguments for the BudgetModelCLIView class.
@@ -64,6 +41,7 @@ class BudManCLIParser():
         self.val_cmd = cmd2.Cmd2ArgumentParser()
         self.workflow_cmd = cmd2.Cmd2ArgumentParser()
         self.change_cmd = cmd2.Cmd2ArgumentParser()
+        self.app_cmd = cmd2.Cmd2ArgumentParser()
         self.init_cmd_parser_setup(app_name)
         self.show_cmd_parser_setup()
         self.load_cmd_parser_setup()
@@ -71,12 +49,43 @@ class BudManCLIParser():
         self.val_cmd_parser_setup()
         self.workflow_cmd_parser_setup()
         self.change_cmd_parser_setup()
-        # self.init_cmd = cmd2.Cmd2ArgumentParser(parents=[parent_parser])
-        # self.show_cmd = cmd2.Cmd2ArgumentParser(parents=[parent_parser])
-        # self.load_cmd = cmd2.Cmd2ArgumentParser(parents=[parent_parser])
-        # self.save_cmd = cmd2.Cmd2ArgumentParser(parents=[parent_parser])
-        # self.val_cmd = cmd2.Cmd2ArgumentParser(parents=[parent_parser])
-        # self.workflow_cmd = cmd2.Cmd2ArgumentParser(parents=[parent_parser])
+        self.app_cmd_parser_setup()
+
+    def app_cmd_parser_setup(self,app_name : str = "not-set") -> None:
+        """Application settings and feature controls."""
+        try:
+            parser = self.app_cmd
+            parser.prog = app_name
+            title = self.app_cmd_parser_setup.__doc__
+            # app subcommands: logging
+            subparsers = parser.add_subparsers(title=title, dest="app_cmd")
+            # app log [handler-name] [--list] [--level [level-value]] [--rollover]
+            log_subcmd_parser = subparsers.add_parser(
+                "log", 
+                # aliases=["log"], 
+                help="Workbook reference wb_name, wb_index, or 'all'.")
+            log_subcmd_parser.set_defaults(app_cmd="log_subcmd")
+            log_subcmd_parser.add_argument(
+                "handler_name", nargs="?", 
+                default = None,
+                help="Optional name of a logging handler.")
+            log_subcmd_parser.add_argument(
+                "--list", "-ls", dest="list_switch", 
+                action = 'store_true',
+                help="List information about the logging setup.")
+            log_subcmd_parser.add_argument(
+                "--level", "-l", nargs="?", dest="level_value", 
+                action = 'store',
+                default = None,
+                help="Optional name or integer logging level designator.")
+            log_subcmd_parser.add_argument(
+                "--rollover", "-r", dest="rollover_switch", 
+                action = 'store_true',
+                help="Cause file loggers to rollover now.")
+            self.add_common_args(log_subcmd_parser)
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise
 
     def change_cmd_parser_setup(self,app_name : str = "not-set") -> None:
         """Change settings."""

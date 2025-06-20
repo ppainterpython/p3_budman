@@ -20,14 +20,7 @@ from .budman_settings import BudManSettings
 # target for 'from budman_app import *'
 __all__ = [
     "BudManSettings",
-    "BUDMAN_SETTINGS",
-    "BUDMAN_FOLDER",
-    "BDM_STORE_FILENAME",
-    "BDM_STORE_FILETYPE",
-    "BDM_STORE_URL",
-    "BUDMAN_DEFAULT_FI",
-    "BUDMAN_DEFAULT_WORKFLOW",
-    "BUDMAN_DEFAULT_WORKBOOK_TYPE",
+    "THIS_APP_NAME",
     "APP_NAME",
     "SHORT_APP_NAME"
 ]

@@ -14,7 +14,8 @@ from pathlib import Path
 from dynaconf import Dynaconf
 import p3logging as p3l
 from p3_utils import exc_err_msg, dscr, start_timer, stop_timer
-from budman_settings import *
+from budman_settings.budman_settings_constants import *
+from budman_settings.budman_settings import BudManSettings
 from src.budman_app.budman_app import BudManApp
 #endregion Imports
 # ---------------------------------------------------------------------------- +

@@ -35,7 +35,8 @@ import p3_utils as p3u, pyjson5, p3logging as p3l
 import cmd2, argparse
 from cmd2 import (Cmd2ArgumentParser, with_argparser)
 # local modules and packages
-from budman_namespace import *
+from budman_namespace.design_language_namespace import *
+from budman_settings import *
 from budman_cli_view import BudManCLIParser
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -69,6 +70,8 @@ def workflow_cmd_parser() -> cmd2.Cmd2ArgumentParser:
     return cli_parser.workflow_cmd if cli_parser else None
 def change_cmd_parser() -> cmd2.Cmd2ArgumentParser:
     return cli_parser.change_cmd if cli_parser else None
+def app_cmd_parser() -> cmd2.Cmd2ArgumentParser:
+    return cli_parser.app_cmd if cli_parser else None
 
 def _filter_opts(opts) -> Dict[str, Any]:
     if opts is None: return {}
@@ -135,15 +138,13 @@ class BudManCLIView(cmd2.Cmd):
     #region    __init__() method
     def __init__(self, 
                  command_processor : object | MockViewModel = None,
-                 app_name : str = "budman_cli") -> None:
+                 app_name : str = "budman_cli",
+                 settings : BudManSettings = None) -> None:
         shortcuts = dict(cmd2.DEFAULT_SHORTCUTS)
         shortcuts.update({'wf': 'workflow'})
-        # shortcuts.update({'ch': 'change'})
-        # shortcuts.update({'sh': 'show'})
-        # shortcuts.update({'ld': 'load'})
-        # shortcuts.update({'sv': 'save'})
         self.app_name = app_name
         self._command_processor = MockViewModel() if command_processor is None else command_processor
+        self._settings : BudManSettings = settings if settings else BudManSettings()
         self.parse_only = False
         self.terminal_width = 100 # TODO: add to settings.
         cmd2.Cmd.__init__(self, shortcuts=shortcuts)
@@ -201,11 +202,15 @@ class BudManCLIView(cmd2.Cmd):
     # ------------------------------------------------------------------------ +
     #region ViewModelCommandProcessor Interface Methods
     def cp_execute_cmd(self, opts : argparse.Namespace) -> Tuple[str, Any]:
-        """Send a cmd through the command_processor using 
-        ViewModelCommandProcessor implementation."""
+        """Send a cmd through the command_processor.
+         
+        This view is a CommandProcessor_Binding, proxy-ing commands through
+        a binding setup at setup time, Dependency Injection."""
         try:
             st = p3u.start_timer()
-            if _log_cli_cmd_execute(self, opts): return True, "parse_only"
+            if _log_cli_cmd_execute(self, opts): 
+                console.print(f"Execute Command: {str(_filter_opts(opts))}")
+                return True, "parse_only"
             cmd = BudManCLIView.create_cmd(opts)
             status, result = self.CP.execute_cmd(cmd)
             console.print(result)
@@ -374,6 +379,23 @@ class BudManCLIView(cmd2.Cmd):
         except Exception as e:
             self.pexcept(e)
     #endregion workflow command
+    # ------------------------------------------------------------------------ +
+    #region app command
+    @with_argparser(app_cmd_parser())
+    def do_app(self, opts):
+        """View and adjust app settings and features.
+        
+        Arguments:
+            opts (argparse.Namespace): The command line options after parsing
+            the arguments with argparse. The opts dict becomes the command
+            object for the command processor.
+
+        """
+        try:
+            status, result = self.cp_execute_cmd(opts)
+        except Exception as e:
+            self.pexcept(e)
+    #endregion app command
     # ------------------------------------------------------------------------ +
     #region exit and quit commands
     def do_exit(self, args):
