@@ -35,7 +35,7 @@
 #region Imports
 # python standard library modules and packages
 from abc import ABC, abstractmethod
-from typing import Tuple, Any, Union, Dict
+from typing import Tuple, Any, Union, Dict, Optional
 # third-party modules and packages
 from openpyxl import Workbook
 # local modules and packages
@@ -74,17 +74,6 @@ class BudManDataContext_Base(ABC):
     @abstractmethod
     def dc_INITIALIZED(self, value: bool) -> None:
         """Set the initialized state of the data context."""
-        pass
-
-    @property
-    @abstractmethod
-    def dc_id(self) -> str:
-        """Identify the data context implementation."""
-        pass
-    @dc_id.setter
-    @abstractmethod
-    def dc_id(self, value: str) -> None:
-        """Set the identifier for the data context implementation."""
         pass
 
     @property
@@ -170,6 +159,35 @@ class BudManDataContext_Base(ABC):
 
     @property
     @abstractmethod
+    def dc_WB_INDEX(self) -> int:
+        """Return the current WB_INDEX .
+        
+        Current means that the other data in the DC is for this workbook, and 
+        that a user has specified this workbook specifically by index.
+        This index is the 0-based index order of the dc_WORKBOOK_DATA_COLLECTION.
+        """
+        pass
+    @dc_WB_INDEX.setter
+    @abstractmethod
+    def dc_WB_INDEX(self, value: int) -> None:
+        """Set the WB_NAME workbook name."""
+        pass
+
+    @property
+    @abstractmethod
+    def dc_WB_ALL_WORKBOOKS(self) -> bool:
+        """True indicates all workbooks in the DC are selected.
+        False indicate that ALL selection is not in effect.
+        """
+        pass
+    @dc_WB_ALL_WORKBOOKS.setter
+    @abstractmethod
+    def dc_WB_ALL_WORKBOOKS(self, value: bool) -> None:
+        """Set the WB_NAME workbook name."""
+        pass
+
+    @property
+    @abstractmethod
     def dc_WB_REF(self) -> str:
         """Return the current WB_REF workbook reference.
         
@@ -205,7 +223,7 @@ class BudManDataContext_Base(ABC):
         pass
     @dc_WORKBOOK_DATA_COLLECTION.setter
     @abstractmethod
-    def dc_WORKBOOK_DATA_COLLECTION(self, value: WORKBOOK_DATA_LIST) -> None:
+    def dc_WORKBOOK_DATA_COLLECTION(self, value: WORKBOOK_DATA_COLLECTION) -> None:
         """Set the WORKBOOK_DATA_COLLECTION of workbooks in the DC.
         Depends on the value of dc_FI_KEY, returning the 
         FI_WORKBOOK_DATA_COLLECTION for that fi_key.
@@ -283,6 +301,11 @@ class BudManDataContext_Base(ABC):
         pass
 
     @abstractmethod
+    def dc_WB_INDEX_validate(self, wb_index: int) -> bool:
+        """Validate the provided WB_INDEX."""
+        pass
+
+    @abstractmethod
     def dc_WB_REF_validate(self, wb_ref: str) -> bool:
         """Validate the provided workbook reference."""
         pass
@@ -308,6 +331,13 @@ class BudManDataContext_Base(ABC):
         pass
 
     @abstractmethod
+    def dc_WORKBOOK_validate(self, wb : WORKBOOK_OBJECT) -> bool:
+        """Validate the type of WORKBOOK_OBJECT.
+        Abstract: sub-class hook to test specialized WORKBOOK_OBJECT types.
+        """
+        pass
+
+    @abstractmethod
     def dc_WORKBOOK_loaded(self, wb_name: str) -> bool:
         """Indicates whether the named workbook is loaded."""
         pass
@@ -318,18 +348,18 @@ class BudManDataContext_Base(ABC):
         pass 
        
     @abstractmethod
-    def dc_WORKBOOK_index(self, wb_name: str = None) -> int:
-        """Return the index of a workbook based on wb_name.
+    def dc_WORKBOOK_index(self, wb_id: str = None) -> int:
+        """Return the index of a workbook based on wb_id.
         
         Args:
-            wb_name (str): The name of the workbook to find.
+            wb_id (str): The wb_id of the workbook to index.
         Returns:
             int: The index of the workbook in the WORKBOOK_DATA_LIST, or -1 if not found.
         """
         pass
 
     @abstractmethod
-    def dc_WORKBOOK_by_index(self, wb_index: int) -> WORKBOOK_OBJECT:
+    def dc_WORKBOOK_by_index(self, wb_index: int) -> Optional[WORKBOOK_OBJECT]:
         """Return (True, BDWWorkbook on success, (False, error_msg) on failure."""
         pass
 
@@ -340,18 +370,43 @@ class BudManDataContext_Base(ABC):
 
     #region   WORKBOOK_CONTENT storage-related methods
     @abstractmethod
-    def dc_WORKBOOK_url_get(self, wb_url: str) -> WORKBOOK_CONTENT:
-        """Get the workbook content at wb_url."""
+    def dc_WORKBOOK_content_get(self, wb: WORKBOOK_OBJECT) -> BUDMAN_RESULT:
+        """DC-Only: Get the workbook content from dc_LOADED_WORKBOOKS property
+        if present. This class is not Model-Aware, so the application may
+        use other means to arrange for content to be there with appropriate
+        overrides or by putting the content directly with 
+        dc_WORKBOOK_content_put. To be simple and consistent, use the 
+        WORKBOOK_OBJECT to access the workbook content. In other methods, 
+        a wb_ref is resolved to a WORKBOOK_OBJECT, so this method can be 
+        used to get the content of a workbook by its WORKBOOK_OBJECT.
+
+        Args:
+            wb (WORKBOOK_OBJECT): The workbook object to retrieve content for.
+        Returns:
+            Optional[WORKBOOK_CONTENT]: The content of the workbook if available,
+            otherwise None.
+        """
         pass
 
     @abstractmethod
-    def dc_WORKBOOK_url_put(self, wb_content: WORKBOOK_CONTENT, wb_url:str) -> None:
-        """Put the workbook content at wb_url."""
+    def dc_WORKBOOK_content_put(self, wb_content: WORKBOOK_CONTENT, wb: WORKBOOK_OBJECT) -> BUDMAN_RESULT:
+        """DC-Only: Put the workbook content into dc_LOADED_WORKBOOKS property.
+        This class is not Model-Aware, so the application may
+        put content in for a WORKBOOK_OBJECT with this method in the blind.
+        To be simple and consistent, use the WORKBOOK_OBJECT to access 
+        the workbook content. In other methods, a wb_ref is resolved to a 
+        WORKBOOK_OBJECT, so this method can be used to put the content of a 
+        workbook by its WORKBOOK_OBJECT.
+        Args:
+            wb_content (WORKBOOK_CONTENT): The content to put into the 
+            dc_LOADED_WORKBOOKS property.
+            wb (WORKBOOK_OBJECT): The workbook object owning the content.
+        """
         pass
 
     @abstractmethod
-    def dc_WORKBOOK_file_load(self, wb_index: str) -> BUDMAN_RESULT:
-        """Load the specified workbook content by wb_index into dc_LOADED_WORKBOOKS.
+    def dc_WORKBOOK_load(self, wb: WORKBOOK_OBJECT) -> BUDMAN_RESULT:
+        """Load workbook content into dc_LOADED_WORKBOOKS.
            Returns:
                 BUDMAN_RESULT: a Tuple[success: bool, result: Any].
                 success = True, result is a message about the loaded workbook

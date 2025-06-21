@@ -85,7 +85,7 @@ def main(bdms_url : str = None):
                 raise ValueError("BudMan Settings not configured.")
         app_name = BudManMain_settings.get(APP_NAME, "BudManApp")
         configure_logging(app_name, logtest=False)
-        fs = ""  # from settings""
+        fs = ""  # from settings 
         if bdms_url is None:
             bdms_url = BudManMain_settings[BDM_STORE_URL]
             fs ="(from settings) "

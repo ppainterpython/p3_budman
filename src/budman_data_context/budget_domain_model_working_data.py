@@ -13,7 +13,7 @@ Budget Domain Model.
 #region imports
 # python standard libraries
 from pathlib import Path
-from typing import Any, Tuple, Dict, List
+from typing import Any, Tuple, Dict, List, Optional
 # third-party modules and packages
 from openpyxl import Workbook
 import logging, p3_utils as p3u, p3logging as p3l
@@ -22,7 +22,7 @@ from budman_namespace.design_language_namespace import *
 from budman_namespace.bdm_workbook_class import BDMWorkbook
 from budman_data_context import BudManDataContext
 from p3_mvvm import Model_Base, Model_Binding
-from budget_storage_model import bsm_WORKBOOK_url_get
+from budget_storage_model import bsm_WORKBOOK_content_url_get, bsm_WB_URL_verify
 
 #endregion imports
 # ---------------------------------------------------------------------------- +
@@ -67,9 +67,9 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
     # ======================================================================== +
 
     # ======================================================================== +
-    #region    BDMClientInterface concrete implementation.
+    #region    Model_Binding concrete implementation.
     # ------------------------------------------------------------------------ +
-    #region    BDMClientInterface Interface Properties
+    #region    Model_Binding Interface Properties
     @property
     def model(self) -> MODEL_OBJECT:
         """Return the model object reference."""
@@ -80,19 +80,19 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
         if not isinstance(bdm, MODEL_OBJECT):
             raise TypeError(f"model must be a {MODEL_OBJECT} instance")
         self._model = bdm
-    #endregion BDMClientInterface Interface Properties
+    #endregion Model_Binding Interface Properties
     # ------------------------------------------------------------------------ +
     #endregion BDMClientInterface concrete implementation.
     # ======================================================================== +
 
     # ======================================================================== +
-    #region    BudManDataContext(BudManDataContextBaseInterface) Overrides.
+    #region    BudManDataContext(BudManDataContext_Base) Model-Aware Overrides.
     #          These method overrides are Model-Aware behavior.
     # ------------------------------------------------------------------------ +
-    #region BudManDataContext Property Overrides.
-    #endregion BudManDataContext Interface Property Overrides.
+    #region    BudManDataContext(BudManDataContext_Base) Model-Aware Property Overrides.
+    #endregion BudManDataContext(BudManDataContext_Base) Property Overrides.
     # ------------------------------------------------------------------------ +
-    #region    BudManDataContext Method Overrides.
+    #region    BudManDataContext(BudManDataContext_Base) Method Model-Aware Overrides.
     def dc_initialize(self) -> "BudManDataContext":
         """Model-Aware: Initialize the BDMWorkingData instance after construction.
         
@@ -146,47 +146,90 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
             logger.error(p3u.exc_err_msg(e))
             raise
 
-    def dc_WORKBOOK_url_get(self, wb_url: str) -> Tuple[bool, str]:
-        """Model-aware: Get the workbook at wb_url."""
+    def dc_WORKBOOK_validate(self, wb : WORKBOOK_OBJECT) -> bool:
+        """Model-Aware: Validate the type of WORKBOOK_OBJECT.
+        Abstract: sub-class hook to test specialized WORKBOOK_OBJECT types.
+        DC-ONLY: check builtin type: 'object'.
+        Model-Aware: validate type: BDMWorkbook class.
+        """
         try:
-            wb_obj : BDMWorkbook = self.dc_WORKBOOK_DATA_COLLECTION.get(wb_url, None)
-            if wb_obj is None:
-                m = f"dc_WORKBOOK_DATA_COLLECTION does not have a workbook with wb_url '{wb_url}'."
+            if not isinstance(wb, BDMWorkbook):
+                m = (f"wb must be type: 'BDMWorkbook', "
+                     f"not type: {type(wb).__name__}.")
+                logger.error(m)
+                return False
+            return True
+        except Exception as e:
+            m = f"Error validating workbook: {p3u.exc_err_msg(e)}"
+            logger.error(m)
+            return False, m
+        
+    def dc_WORKBOOK_content_get(self, wb : BDMWorkbook) -> BUDMAN_RESULT:
+        """Model-Aware: Get the workbook content from dc_LOADED_WORKBOOKS property
+        if present. This class is not Model-Aware, so the application may
+        use other means to arrange for content to be there with appropriate
+        overrides or by putting the content directly with 
+        dc_WORKBOOK_content_put. To be simple and consistent, use the 
+        WORKBOOK_OBJECT to access the workbook content. In other methods, 
+        a wb_ref is resolved to a WORKBOOK_OBJECT, so this method can be 
+        used to get the content of a workbook by its WORKBOOK_OBJECT.
+
+        Args:
+            wb (WORKBOOK_OBJECT): The workbook object to retrieve content for.
+        Returns:
+            Optional[WORKBOOK_CONTENT]: The content of the workbook if available,
+            otherwise None.
+        """
+        try:
+            # Model-Aware World
+            success : bool = False
+            result : BDMWorkbook | str = None
+            if not self.dc_WORKBOOK_validate(wb):
+                m = f"Invalid workbook object: {wb!r}"
                 logger.error(m)
                 return False, m
+            # Check if the workbook is loaded in dc_LOADED_WORKBOOKS.
+            wb_content = None
+            wb.wb_loaded = wb.wb_id in self.dc_LOADED_WORKBOOKS
+            if wb.wb_loaded :
+                # Retrieve the workbook content from dc_LOADED_WORKBOOKS.
+                wb_content = self.dc_LOADED_WORKBOOKS[wb.wb_id]
+                if wb_content is None:
+                    m = f"Workbook content for '{wb.wb_id}' is not loaded."
+                    logger.error(m)
+                    return False, m
+                return True, wb_content
+            return self.dc_WORKBOOK_load(wb)
         except Exception as e:
-            m = f"Error loading workbook url '{wb_url}': {p3u.exc_err_msg(e)}"
+            m = f"Error loading workbook '{wb.wb_id}': {p3u.exc_err_msg(e)}"
             logger.error(m)
             return False, m
 
-    def dc_WORKBOOK_file_load(self, wb_index: str) -> Tuple[bool, str]:
-        """Model-aware: Load the workbook indicated by wb_index."""
+    def dc_WORKBOOK_load(self, wb : BDMWorkbook) -> BUDMAN_RESULT:
+        """Model-aware: Load the workbook indicated by wb."""
         try:
-            if not isinstance(wb_index, str):
-                raise TypeError(f"wb_index must be a string, got {type(wb_index)}")
-            wdc = self.dc_WORKBOOK_DATA_COLLECTION
-            wb : BDMWorkbook= self.dc_WORKBOOK_by_index(wb_index)
-            if wb is None:
-                m = f"dc_WORKBOOK_DATA_COLLECTION does not have a workbook with index '{wb_index}'."
+            # Model-Aware World
+            success : bool = False
+            result : BDMWorkbook | str = None
+            if not self.dc_WORKBOOK_validate(wb):
+                m = f"Invalid workbook object: {wb!r}"
                 logger.error(m)
                 return False, m
-            content = bsm_WORKBOOK_url_get(wb.wb_url)
-            if content is None:
-                m = f"Failed to load Workbook data for '{wb.wb_name}'."
-                logger.error(m)
-                return False, m
-            wb_index = self.dc_WORKBOOK_wb_index(wb.wb_id, wdc)
-            r = f"{P2}wb_index: {wb_index:>2} wb_name: '{wb.wb_name:<40}'\n"
-            self.dc_WB_REF = str(wb_index)  # Set the wb_ref in the DC.
-            self._dc_WB_NAME = wb.wb_name  # Set the wb_name in the DC.
+            # Model-aware: Get the workbook content object.
+            wb_content = bsm_WORKBOOK_content_url_get(wb.wb_url)
             # Add to the loaded workbooks collection.
-            self.dc_LOADED_WORKBOOKS[wb.wb_id] = content
-            wb.loaded = True
+            self.dc_LOADED_WORKBOOKS[wb.wb_id] = wb_content
+            wb_index = self.dc_WORKBOOK_index(wb.wb_id)
+            self.dc_WB_INDEX = wb_index  # Set the wb_ref in the DC.
+            self.dc_WB_NAME = wb.wb_name  # Set the wb_name in the DC.
+            self.dc_WB_REF = wb.wb_id
+            wb.wb_loaded = True
             logger.info(f"Loaded workbook '{wb.wb_id}' "
                         f"from url '{wb.wb_url}'.")
+            r = f"{P2}wb_index: {wb_index:>2} wb_id: '{wb.wb_id:<40}'\n"
             return True, r
         except Exception as e:
-            m = f"Error loading workbook with index '{wb_index}': {p3u.exc_err_msg(e)}"
+            m = f"Error loading wb_index '{wb_index}': {p3u.exc_err_msg(e)}"
             logger.error(m)
             return False, m
     #endregion BudManDataContext Method Overrides.

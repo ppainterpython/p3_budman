@@ -187,7 +187,7 @@
 # python standard library modules and packages
 import logging, sys, getpass, time, copy, importlib
 from pathlib import Path
-from typing import List, Type, TYPE_CHECKING, Dict, Tuple, Any, Callable
+from typing import List, Type, Optional, Dict, Tuple, Any, Callable
 # third-party modules and packages
 import p3_utils as p3u, pyjson5, p3logging as p3l
 from dynaconf import Dynaconf
@@ -227,6 +227,8 @@ CMD_WF_KEY = "wf_key"
 CMD_WF_PURPOSE = "wf_purpose"
 CMD_WB_TYPE = "wb_type"
 CMD_WB_NAME = "wb_name"
+CMD_WB_INDEX = "wb_index"
+CMD_ALL_WBS = "all_wbs"
 CMD_WB_REF = "wb_ref"
 CMD_WB_INFO = "wb_info"
 CMD_CHECK_REGISTER = "check_register"
@@ -241,7 +243,9 @@ BUDMAN_VALID_CMD_ARGS = (CMD_PARSE_ONLY, CMD_VALIDATE_ONLY,
                         CMD_WHAT_IF, CMD_FI_KEY, CMD_WF_KEY,CMD_WF_PURPOSE,
                         CMD_WB_TYPE, CMD_WB_NAME, CMD_WB_REF,CMD_WB_INFO,
                         CMD_CHECK_REGISTER,CMD_HANDLER_NAME,CMD_LIST_SWITCH,
-                        CMD_LEVEL_VALUE, CMD_ROLLOVER_SWITCH)
+                        CMD_LEVEL_VALUE, CMD_ROLLOVER_SWITCH,CMD_WB_INDEX, 
+                        CMD_ALL_WBS)
+
 logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
@@ -287,7 +291,6 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
         self._initialized : bool = False
         self._BDM_STORE_loaded : bool = False
         self._budget_domain_model : BudgetDomainModel = None
-        # self._data_context : BDMWorkingData = None
         self._cmd_map : Dict[str, Callable] = None
     #endregion __init__() constructor method
     # ------------------------------------------------------------------------ +
@@ -407,7 +410,7 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             raise
     #endregion BudManViewModel Class initialize_model() method                   +
     # ------------------------------------------------------------------------ +
-    #region    ViewModelCommandProcessor_Binding cp_initialize_cmd_map() method+
+    #region    ViewModelCommandProcessor_Base cp_initialize_cmd_map() method+
     def cp_initialize_cmd_map(self) -> None:
         """Initialize the cmd_map dictionary."""
         try:
@@ -433,7 +436,7 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
-    #endregion ViewModelCommandProcessor_Binding cp_initialize_cmd_map() method+
+    #endregion ViewModelCommandProcessor_Base cp_initialize_cmd_map() method+
     # ------------------------------------------------------------------------ +
     #endregion BudManViewModel class intrinsics
     # ======================================================================== +
@@ -445,7 +448,7 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
     """ ViewModelCommandProcessor Design Notes (future ABC)
 
     A Command Pattern supports a means to represent a command as an object,
-    in out case, a dictionary. The command is a request to perform an action
+    in our case, a dictionary. The command is a request to perform an action
     and includes arguments. Both the command and the arguments are validated
     before executing the command. The command is a dictionary with a
     command key and a an optional sub-command value. The command key includes
@@ -489,32 +492,6 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
         if not isinstance(value, dict):
             raise ValueError("cmd_map must be a dictionary.")
         self._cmd_map = value
-
-    # @property
-    # def data_context(self) -> BDMWorkingData:
-    #     """Return the data context object."""
-    #     # _ = self._valid_DC()  # Ensure _data_context is valid
-    #     return self._data_context
-    # @data_context.setter
-    # def data_context(self, value: BDMWorkingData) -> None:
-    #     """Set the data context object."""
-    #     if not isinstance(value, BDMWorkingData):
-    #         raise ValueError("data_context must be a BDMWorkingData instance.")
-    #     self._data_context = value
-
-    # @property
-    # def DC(self) -> BDMWorkingData:
-    #     """Return the data context (DC) dictionary.
-    #     This is an alias for the data_context property."""
-    #     _ = self._valid_DC()  # Ensure _data_context is valid
-    #     return self._data_context
-    # @DC.setter
-    # def DC(self, value: BDMWorkingData) -> None:
-    #     """Set the data context (DC) dictionary.
-    #     This is an alias for the data_context property."""
-    #     if not isinstance(value, BDMWorkingData):
-    #         raise ValueError("DC property value must be a BDMWorkingData object.")
-    #     self._data_context = value
 
     #endregion ViewModelCommandProcessor_Base Properties                       +
     # ------------------------------------------------------------------------ +
@@ -604,7 +581,7 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
                 self.cp_cmd_arg_set(cmd, CMD_WF_KEY,
                                     self.DC.dc_WF_KEY)
             validate_all: bool = self.cp_cmd_arg_get(cmd,CMD_VALIDATE_ONLY)
-            # If validate_all, the don't return a result until all cmd args 
+            # If validate_all, then don't return a result until all cmd args 
             # are validated.
             all_results : str = "All Results:\n" if validate_all else ""
             result = "It's all good." 
@@ -625,6 +602,11 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             for key, value in cmd.items():
                 if key == cmd_key: 
                     continue
+                elif key == CMD_WB_INDEX:
+                    if not self.dc_WB_INDEX_validate(value):
+                        result = f"Invalid wb_index value: '{value}'."
+                        success = False 
+                        logger.error(result)
                 elif key == CMD_FI_KEY:
                     if not self.dc_FI_KEY_validate(value):
                         result = f"Invalid fi_key value: '{value}'."
@@ -869,8 +851,14 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
     # ------------------------------------------------------------------------ +
     #endregion ViewModelCommandProcessor_Base methods                          +
     # ------------------------------------------------------------------------ +
-    #region Command Execution Methods
     # ------------------------------------------------------------------------ +
+    #                                                                          +
+    #endregion ViewModelCommandProcessor_Base                                  +
+    # ======================================================================== +
+ 
+    # ======================================================================== +
+    #region    Command Execution Methods                                       +
+    # ======================================================================== +
     #region FI_init_cmd() command > init FI boa
     def FI_init_cmd(self, cmd : Dict = None) -> Tuple[bool, str]: 
         """Execute FI_init command for one fi_key or 'all'.
@@ -1186,11 +1174,11 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
     #endregion DATA_CONTEXT_show_cmd() method
     # ------------------------------------------------------------------------ +
     #region WORKBOOKS_load_cmd() command > load wb 0
-    def WORKBOOKS_load_cmd(self, cmd : Dict) -> Tuple[bool, str]:
-        """Model-aware: Load one or more WORKBOOKS in the DC.
+    def WORKBOOKS_load_cmd(self, cmd : Dict) -> BUDMAN_RESULT:
+        """Model-aware: Load workbook content for one or more WORKBOOKS in the DC.
 
         A load_cmd_workbooks command will use the wb_ref value in the cmd. 
-        Value is a number or a wb_name.
+        Value is a number, a wb_name or ALL.
 
         Arguments:
             cmd (Dict): A valid BudMan View Model Command object. For this
@@ -1208,29 +1196,34 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
         """
         try:
             logger.info(f"Start: ...")
-            wb_ref = self.cp_cmd_arg_get(cmd, WB_REF, self.dc_WB_REF)
-            fi_key = self.cp_cmd_arg_get(cmd, FI_KEY, self.dc_FI_KEY)
-            wf_key = self.cp_cmd_arg_get(cmd, WF_KEY, self.dc_WF_KEY)
-            wf_purpose = self.cp_cmd_arg_get(cmd, WF_PURPOSE, self.dc_WF_PURPOSE)
-            wb_type = self.cp_cmd_arg_get(cmd, WB_TYPE, self.dc_WB_TYPE)
+            wb : Optional[WORKBOOK_OBJECT] = None
+            wb_index : int = self.cp_cmd_arg_get(cmd, CMD_WB_INDEX, self.dc_WB_INDEX)
+            all_wbs : bool = self.cp_cmd_arg_get(cmd, CMD_ALL_WBS, self.dc_WB_ALL_WORKBOOKS)
+            wb_ref : str = self.cp_cmd_arg_get(cmd, WB_REF, self.dc_WB_REF)
 
             wb_count = len(self.dc_WORKBOOK_DATA_COLLECTION)
             r = f"Budget Manager Workbooks({wb_count}):\n"
-            all_wbs, wb_index, wb_id = self.dc_WB_REF_resolve(wb_ref)
-            # Check for an invalid wb_ref value.
-            if BudManViewModel.wb_ref_not_valid(all_wbs, wb_index, wb_id):
-                return False, f"wb_ref '{wb_ref}' is not valid."
             # Now either all_wbs or a specific workbook is to be loaded.
+            if not all_wbs:
+                # WB_INDEX is already validated.
+                wb = self.dc_WORKBOOK_by_index(wb_index)
+                if wb is None:
+                    m = f"wb_index '{wb_index}' is not valid."
+                    logger.error(m)
+                    return False, m
+                return self.dc_WORKBOOK_content_get(wb)
             if all_wbs:
+                fi_key = self.cp_cmd_arg_get(cmd, CMD_FI_KEY, self.dc_FI_KEY)
+                wf_key = self.cp_cmd_arg_get(cmd, CMD_WF_KEY, self.dc_WF_KEY)
+                wf_purpose = self.cp_cmd_arg_get(cmd, CMD_WF_PURPOSE, self.dc_WF_PURPOSE)
+                wb_type = self.cp_cmd_arg_get(cmd, CMD_WB_TYPE, self.dc_WF_KEY)
                 lwbl = self.model.bdmwd_FI_WORKBOOKS_load(fi_key, wf_key, wb_type)
                 self.dc_WB_REF = ALL_KEY # Set the wb_ref in the DC.
                 self.dc_WB_NAME = None   # Set the wb_name in the DC.
                 for wb_id in list(lwbl.keys()):
                     wb_index = self.dc_WORKBOOK_index(wb_id)
-                    r += f"{P2}wb_index: {wb_index:>2} wb_name: '{wb_id:<40}'\n"
-            else:
-                success, r = self.dc_WORKBOOK_load(wb_index)
-            return success, r
+                    r += f"{P2}wb_index: {wb_index:>2} wb_id: '{wb_id:<40}' loaded.\n"
+                return True, r
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
@@ -1326,7 +1319,7 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             all_wbs, wb_index, wb_name = self.dc_WB_REF_resolve(wb_ref)
             # Verify LOADED_WORKBOOKS to process.
             wdc = self.dc_WORKBOOK_DATA_COLLECTION
-            wb = self.dc_WORKBOOK_by_index(wb_index,wdc)
+            wb = self.dc_WORKBOOK_by_index(wb_index)
             if (wb):
                 wb_name = wb.wb_name
                 wb_loaded = wb.loaded
@@ -1712,24 +1705,26 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
     def get_workbook(self, wb_ref:str, load : bool = True) -> Tuple[bool, BDMWorkbook, WORKBOOK_CONTENT]: 
         """From the wb_ref, validate and return the loaded content of the workbook."""
         try:
-            all_wbs, wb_index, wb_name = self.DC.dc_WB_REF_resolve(wb_ref)
-            if self.wb_ref_not_valid(all_wbs, wb_index, wb_name):
+            wb : Optional[BDMWorkbook] = None
+            all_wbs, wb_index, wb = self.DC.dc_WB_REF_resolve(wb_ref)
+            if self.wb_ref_not_valid(all_wbs, wb_index, wb):
                 m = f"wb_ref '{wb_ref}' is not valid."
                 logger.error(m)
                 return False, m, None
-            wdc = self.dc_WORKBOOK_DATA_COLLECTION
-            success, result = self.dc_WORKBOOK_by_index(wb_index)
-            if not success:     
+            if all_wbs:
+                m = f"wb_ref '{wb_ref}' all_wbs is not supported here."
+                logger.error(m)
+                return False, m, None
+            if not wb:     
                 m = f"wb_ref '{wb_ref}' not found in WORKBOOK_DATA_COLLECTION."
                 logger.error(m)
                 return False, m, None
-            wb = result
             wb_content = None
             wb.wb_loaded = wb.wb_id in self.dc_LOADED_WORKBOOKS
             if not wb.wb_loaded and load:
-                wb_content = self.dc_WORKBOOK_load(wb_index)
-                if wb_index not in self.dc_LOADED_WORKBOOKS:
-                    m = f"Failed trying to load wb_ref '{wb_index}':'{wb_name}'."
+                success, wb_content = self.dc_WORKBOOK_content_get(wb)
+                if not success or wb_index not in self.dc_LOADED_WORKBOOKS:
+                    m = f"Failed trying to load wb_ref '{wb_index}':'{wb.wb_id}'."
                     logger.error(m)
                     return False, m, None
             return True, wb, wb_content
@@ -1762,290 +1757,9 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
     #endregion helper methods for command execution
     # ------------------------------------------------------------------------ +
     #                                                                          +
-    #endregion Command Execution Methods
-    # ------------------------------------------------------------------------ +
-    #                                                                          +
-    #endregion ViewModelCommandProcessor_Base                                  +
+    #endregion Command Execution Methods                                       +
     # ======================================================================== +
  
-    # ======================================================================== +
-    #region    ViewModelDataContext_Binding to BudManDataContext               + 
-    # ======================================================================== +
-    #region    BudManDataContext_Base design notes                             +
-    """BDM view_model Data Context Interface Documentation.
-
-    Data Context (DC) Interface Overview
-    ------------------------------------
-
-    Budget Manager is designed around the MVVM (Model View ViewModel) design
-    pattern. In MVVM implementations, a View binds to a ViewModel through an
-    abstract Data Context (DC) object interface. Also, there is often a Command
-    Processor pattern to map command actions from a user interface View to 
-    data actions in the DC. 
-    
-    Herein, the design is to have the DC interface provide support Commands 
-    as well as Data properties and methods. To keep the scope of the View Model 
-    limited concerning DC data, all understanding of the structure of  
-    data is in the DC which binds to the Model BDMWD object. The DC properties and
-    methods are where downstream APIs are used, not in the Command Binding
-    Implementation methods.
-    
-    These DC methods are used by Commands to access and perform actions on the
-    DC data values. As an API, the DC methods are an abstraction to support a 
-    View Model and View trying to interact upstream with a user. Some are data 
-    requests and others perform work on the Data Context state while owning
-    the concern for syncing with the Model downstream.    
-
-    This View Model leverages the DC as a single interface to leverages 
-    BudgetManager Domain Model (BDM) through Budget Domain Working Data (BDMWD)
-    "library" to reference actual data for the application Model, in memory. 
-    When storage actions are required, the DC may utilize the 
-    BudgetManager Storage Model (BSM) interface library.
-
-    Data Context Scope
-    ------------------
-
-    In the BudgetManager design language, the primary object concepts are
-    FI - Financial Institution, WF - Workflow, WB - Workbook, and BDM_STORE
-    - Budget Manager Store where user-specific budget data is maintained. 
-    The Data Context data is always scoped to the current values of the 'keys' 
-    for these primary objects: FI_KEY, WF_KEY, WF_PURPOSE, and WB_NAME. Changing 
-    these values will cause the DC to flag the need for a refresh of the
-    underlying data.
-
-    Data Context Concrete Implementation
-    ------------------------------------
-    The BudgetManagerDataContextInterface is an abstract interface used by client
-    modules through binding to an object with a concrete implementation of the
-    interface. The concrete implementation is the BudgetManagerDataContext class 
-    in the Budget Manager application design. This singleton instance is 
-    referenced by the ViewModel and, possibly, View if needed.
-
-    DC is initialized with a reference to the BudgetDomainModel 
-    BudgetDomainWorkingData object, available in the BudgetDomainManager 
-    bdm_working_data property. 
-    """
-    #endregion BudManDataContext_Base design notes                             +
-    # ------------------------------------------------------------------------ +
-    #region    BudManDataContext_Binding Properties                            +
-    # ------------------------------------------------------------------------ +
-    # @property
-    # def dc_INITIALIZED(self) -> bool:
-    #     """Return the value of the DC_INITIALIZED attribute."""
-    #     return self.DC.dc_INITIALIZED
-    # @dc_INITIALIZED.setter
-    # def dc_INITIALIZED(self, value: bool) -> None:
-    #     """Set the value of the DC_INITIALIZED attribute."""
-    #     self.DC.dc_INITIALIZED = value
-
-    # @property
-    # def dc_FI_KEY(self) -> str:
-    #     """Return the current financial institution key value in DC."""
-    #     return self.DC.dc_FI_KEY
-    # @dc_FI_KEY.setter
-    # def dc_FI_KEY(self, value: str) -> None:
-    #     """Set the current financial institution key value in DC."""
-    #     self.DC.dc_FI_KEY = value
-
-    # @property
-    # def dc_WF_KEY(self) -> str:
-    #     """Return the current workflow key value in DC."""
-    #     return self.DC.dc_WF_KEY
-    # @dc_WF_KEY.setter
-    # def dc_WF_KEY(self, value: str) -> None:
-    #     """Set the current workflow key value in DC."""
-    #     self.DC.dc_WF_KEY = value
-
-    # @property
-    # def dc_WF_PURPOSE(self) -> str:
-    #     """Return the WF_PURPOSE workbook type."""
-    #     return self.DC.dc_WF_PURPOSE
-    # @dc_WF_PURPOSE.setter
-    # def dc_WF_PURPOSE(self, value: str) -> None:
-    #     """Set the WF_PURPOSE workbook type."""
-    #     self.DC.dc_WF_PURPOSE = value
-
-    # @property
-    # def dc_WB_TYPE(self) -> str:
-    #     """Return the current workbook type value in DC."""
-    #     return self.DC.dc_WB_TYPE
-    # @dc_WB_TYPE.setter
-    # def dc_WB_TYPE(self, value: str) -> None:
-    #     """Set the current workbook type value in DC."""
-    #     self.DC.dc_WB_TYPE = value
-
-    # @property
-    # def dc_WB_NAME(self) -> str:
-    #     """Return the current workbook name value in DC."""
-    #     return self.DC.dc_WB_NAME
-
-    # @dc_WB_NAME.setter
-    # def dc_WB_NAME(self, value: str) -> None:
-    #     """Set the current workbook name value in DC."""
-    #     self.DC.dc_WB_NAME = value
-
-    # @property
-    # def dc_WB_REF(self) -> str:
-    #     """Return the current workbook ref value in DC."""
-    #     return self.DC.dc_WB_REF
-
-    # @dc_WB_REF.setter
-    # def dc_WB_REF(self, value: str) -> None:
-    #     """Set the current workbook ref value in DC."""
-    #     self.DC.dc_WB_REF = value
-
-    # @property
-    # def dc_BDM_STORE(self) -> str:
-    #     """Return the current BDM_STORE value in DC."""
-    #     return self.DC.dc_BDM_STORE
-    # @dc_BDM_STORE.setter
-    # def dc_BDM_STORE(self, value: str) -> None:
-    #     """Set the current BDM_STORE value in DC."""
-    #     self.DC.dc_BDM_STORE = value
-
-    # @property 
-    # def dc_WORKBOOKS(self) -> WORKBOOK_DATA_LIST:
-    #     """Return the current workbooks value in DC per FI_KEY, WF_KEY, WB_TYPE."""
-    #     return self.DC.dc_WORKBOOKS
-    # @dc_WORKBOOKS.setter
-    # def dc_WORKBOOKS(self, value: WORKBOOK_DATA_LIST) -> None:
-    #     """Set the current  dc_WORKBOOK value in DC."""
-    #     self.DC.dc_WORKBOOKS = value
-
-    # @property
-    # def dc_WORKBOOK_DATA_COLLECTION(self) -> WORKBOOK_DATA_COLLECTION:
-    #     """Return the WORKBOOK_DATA_COLLECTION of workbooks in the DC.
-    #     Depends on the value of dc_FI_KEY, returning the 
-    #     FI_WORKBOOK_DATA_COLLECTION for that fi_key.
-    #     """
-    #     if self.DC.dc_FI_KEY is None:
-    #         return None
-    #     return self.DC.dc_WORKBOOK_DATA_COLLECTION
-    # @dc_WORKBOOK_DATA_COLLECTION.setter
-    # def dc_WORKBOOK_DATA_COLLECTION(self, value: WORKBOOK_DATA_LIST) -> None:
-    #     """Set the WORKBOOK_DATA_COLLECTION of workbooks in the DC.
-    #     Depends on the value of dc_FI_KEY, returning the 
-    #     FI_WORKBOOK_DATA_COLLECTION for that fi_key."""
-    #     if self.DC.dc_FI_KEY is None:
-    #         return None
-    #     self.DC.dc_WORKBOOK_DATA_COLLECTION = value
-
-    # @property 
-    # def dc_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_COLLECTION:
-    #     """Return the current loaded workbooks value in DC."""
-    #     return self.DC.dc_LOADED_WORKBOOKS
-    # @dc_LOADED_WORKBOOKS.setter
-    # def dc_LOADED_WORKBOOKS(self, value: LOADED_WORKBOOK_COLLECTION) -> None:
-    #     """Set the current loaded workbooks value in DC."""
-    #     self.DC.dc_LOADED_WORKBOOKS = value
-
-    # @property 
-    # def dc_EXCEL_WORKBOOKS(self) -> DATA_COLLECTION:
-    #     """Return the current collection of workbooks open in excel."""
-    #     return self.DC.dc_EXCEL_WORKBOOKS
-    # @dc_EXCEL_WORKBOOKS.setter
-    # def dc_EXCEL_WORKBOOKS(self, value: DATA_COLLECTION) -> None:
-    #     """Set the current collection of workbooks open in excel."""
-    #     self.DC.dc_EXCEL_WORKBOOKS = value
-
-    # @property 
-    # def dc_CHECK_REGISTERS(self) -> DATA_COLLECTION:
-    #     """DC-Only: Return the check register data collection."""
-    #     return self.DC.dc_CHECK_REGISTERS
-    # @dc_CHECK_REGISTERS.setter
-    # def dc_CHECK_REGISTERS(self, value: DATA_COLLECTION) -> None:
-    #     """DC-Only: Set the check register data collection."""
-    #     self.DC.dc_CHECK_REGISTERS = value
-
-    # @property 
-    # def dc_LOADED_CHECK_REGISTERS(self) -> DATA_COLLECTION:
-    #     """DC-Only: Return the check register data collection."""
-    #     return self.DC.dc_LOADED_CHECK_REGISTERS
-    # @dc_LOADED_CHECK_REGISTERS.setter
-    # def dc_LOADED_CHECK_REGISTERS(self, value: DATA_COLLECTION) -> None:
-    #     """DC-Only: Set the check register data collection."""
-    #     self.DC.dc_LOADED_CHECK_REGISTERS = value
-
-    # ------------------------------------------------------------------------ +
-    #endregion BudMan Data Context Interface (client sdk) Properties
-    # ------------------------------------------------------------------------ +
-    #region    BudManDataContext_Binding Methods                               +
-    # ------------------------------------------------------------------------ +
-    # def dc_FI_KEY_validate(self, fi_key : str) -> int: 
-    #     """Return True if the fi_key is valid."""
-    #     try:
-    #         # Bind through the DC (data_context) object.
-    #         return self.DC.dc_FI_KEY_validate(fi_key)
-    #         # return self.budget_domain_model.bdm_FI_KEY_validate(fi_key)
-    #     except Exception as e:
-    #         return self.BMVM_cmd_exception(e)
-
-    # def dc_WF_KEY_validate(self, wf_key : str) -> bool: 
-    #     """Return True if the wf_key is valid."""
-    #     try:
-    #         # Bind through the DC (data_context) object.
-    #         return self.DC.dc_WF_KEY_validate(wf_key)
-    #     except Exception as e:
-    #         return self.BMVM_cmd_exception(e)
-
-    # def dc_WF_KEY_resolve(self, wf_key : str) -> Tuple[bool, int, str]: 
-    #     """Return True if the wf_key is valid."""
-    #     try:
-    #         # Bind through the DC (data_context) object.
-    #         return self.DC.dc_WF_KEY_resolve(wf_key)
-    #     except Exception as e:
-    #         return self.BMVM_cmd_exception(e)
-
-    # def dc_WB_REF_validate(self, wb_ref : str) -> bool: 
-    #     """Return True if the wb_ref is valid."""
-    #     try:
-    #         # Bind through the DC (data_context) object
-    #         return self.DC.dc_WB_REF_validate(wb_ref)
-    #     except Exception as e:
-    #         return self.BMVM_cmd_exception(e)
-        
-    # def dc_WB_REF_resolve(self, wf_key : str) -> Tuple[bool, int, str]: 
-    #     """DC_Binding : Return True if the wf_key is valid."""
-    #     # Bind through the DC (data_context) object.
-    #     return self.DC.dc_WB_REF_resolve(wf_key)
-
-    # def dc_WORKBOOK_loaded(self, wb_name: str) -> Workbook:
-    #     """Indicates whether the named workbook is loaded."""
-    #     return self.DC.dc_WORKBOOK_loaded(wb_name)
-
-    # def dc_WORKBOOK_by_index(self, wb_index: int) -> WORKBOOK_OBJECT:
-    #     """DC_Binding: Return (True, BDWWorkbook on success, (False, error_msg) on failure."""
-    #     return self.DC.dc_WORKBOOK_by_index(wb_index)
-
-    # def dc_WORKBOOK_load(self, wb_index: str) -> Tuple[bool, str]:
-    #     """Load a workbook by its wb_index."""
-    #     return self.DC.dc_WORKBOOK_file_load(wb_index)
-
-    # def dc_CHECK_REGISTER_name(self, wb_index: int) -> str:
-    #     """DC-Only: Return wb_name for wb_index or None if does not exist."""
-    #     return self.DC.dc_CHECK_REGISTER_name(wb_index)
-    
-    # def dc_CHECK_REGISTER_index(self, wb_name: str = None) -> int:  
-    #     """DC-Only: Return the index of a check register based on wb_name.
-        
-    #     Args:
-    #         wb_name (str): The name of the check register to find.
-    #     Returns:
-    #         int: The index of the check register in the dc_CHECK_REGISTERS, or -1 if not found.
-    #     """
-    #     return self.DC.dc_CHECK_REGISTER_index(wb_name)
-    
-    # def dc_CHECK_REGISTER_load(self, wb_name: str, wb_ref:str) -> DATA_COLLECTION:
-    #     """DC-Only: Load the specified check register by name."""
-    #     return self.DC.dc_CHECK_REGISTER_load(wb_name, wb_ref)
-
-    # ------------------------------------------------------------------------ +
-    #endregion BudMan Data Context Interface (client sdk) Methods
-    # ------------------------------------------------------------------------ +
-    #                                                                          +
-    #endregion ViewModelDataContext_Binding to BudManDataContext               +
-    # ======================================================================== +
-
     # ======================================================================== +
     #region    Model_Binding to BudgetDomainModel                              + 
     # ======================================================================== +

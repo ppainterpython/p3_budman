@@ -41,7 +41,7 @@
 import pytest, os
 from pathlib import Path
 from abc import ABC, abstractmethod
-from typing import Tuple, Any, Union, Dict
+from typing import Tuple, Any, Union, Dict, Optional
 # third-party modules and packages
 from openpyxl import Workbook
 import logging, p3_utils as p3u, p3logging as p3l
@@ -52,7 +52,7 @@ from budman_namespace.design_language_namespace import (
     DATA_CONTEXT, WORKBOOK_DATA_LIST, LOADED_WORKBOOK_COLLECTION,
     WORKBOOK_DATA_COLLECTION, WORKBOOK_OBJECT,
     BDM_STORE, DATA_COLLECTION, ALL_KEY, FI_KEY, WF_KEY, WB_ID, WB_REF, WB_NAME,
-    WB_TYPE, WF_PURPOSE, WB_INDEX, BUDMAN_RESULT, WORKBOOK_CONTENT)
+    WB_TYPE, WF_PURPOSE, WB_INDEX, WB_URL, BUDMAN_RESULT, WORKBOOK_CONTENT)
 from budman_data_context.budman_data_context_base_ABC import BudManDataContext_Base
 from budget_storage_model.csv_data_collection import (csv_DATA_COLLECTION_url_get)
 #endregion imports
@@ -75,7 +75,9 @@ class BudManDataContext(BudManDataContext_Base):
         self._dc_WF_PURPOSE = None
         self._dc_WB_TYPE = None      
         self._dc_WB_NAME = None     
+        self._dc_WB_INDEX : int = -1
         self._dc_WB_REF = None
+        self._dc_WB_ALL_WORKBOOKS : bool = False
         self._dc_BDM_STORE : BDM_STORE = None 
         self._dc_WORKBOOKS : WORKBOOK_DATA_LIST = None # deprecated, use dc_WORKBOOK_DATA_COLLECTION
         self._dc_WORKBOOK_DATA_COLLECTION : WORKBOOK_DATA_COLLECTION = None 
@@ -210,6 +212,22 @@ class BudManDataContext(BudManDataContext_Base):
         self._dc_WB_NAME = value
 
     @property
+    def dc_WB_INDEX(self) -> int:
+        """DC-Only: Return the current WB_INDEX workbook index.
+        
+        Current means that the other data in the DC is for this workbook, and 
+        that a user has specified this workbook specifically by index.
+        The index is based on the order of workbooks in the dc_WORKBOOK_DATA_COLLECTION.
+        """
+        return self._dc_WB_INDEX
+    @dc_WB_INDEX.setter
+    def dc_WB_INDEX(self, value: int) -> None:
+        """DC-Only: Set the WB_INDEX workbook index."""
+        if not isinstance(value, int):
+            raise TypeError(f"dc_WB_INDEX must be an int, not {type(value).__name__}")
+        self._dc_WB_INDEX = value
+
+    @property
     def dc_WB_REF(self) -> str:
         """DC-Only: Return the current WB_REF workbook reference.
         
@@ -222,6 +240,17 @@ class BudManDataContext(BudManDataContext_Base):
     def dc_WB_REF(self, value: str) -> None:
         """DC-Only: Set the WB_REF workbook reference."""
         self._dc_WB_REF = value
+
+    @property
+    def dc_WB_ALL_WORKBOOKS(self) -> bool:
+        """DC-Only: Return True if the current operation is on all workbooks."""
+        return self._dc_WB_ALL_WORKBOOKS
+    @dc_WB_ALL_WORKBOOKS.setter
+    def dc_WB_ALL_WORKBOOKS(self, value: bool) -> None:
+        """DC-Only: Set the flag indicating if the current operation is on all workbooks."""
+        if not isinstance(value, bool):
+            raise TypeError(f"dc_WB_ALL_WORKBOOKS must be a bool, not {type(value).__name__}")
+        self._dc_WB_ALL_WORKBOOKS = value
 
     @property
     def dc_BDM_STORE(self) -> str:
@@ -313,7 +342,9 @@ class BudManDataContext(BudManDataContext_Base):
         self.dc_WF_PURPOSE = None
         self.dc_WB_TYPE = None
         self.dc_WB_NAME = None
+        self.dc_WB_INDEX : int = -1
         self.dc_WB_REF = None
+        self.dc_WB_ALL_WORKBOOKS : bool = False
         self.dc_BDM_STORE = dict()
         self.dc_WORKBOOKS = []
         self.dc_WORKBOOK_DATA_COLLECTION = dict()
@@ -350,12 +381,24 @@ class BudManDataContext(BudManDataContext_Base):
         """DC-Only: Validate the provided WB_NAME."""
         return isinstance(wb_name, str) and len(wb_name) > 0
 
+    def dc_WB_INDEX_validate(self, wb_index: int) -> bool:
+        """DC-Only: Validate the provided wb_index.
+
+        Args:
+            wb_index (int): The index of the workbook to validate.
+
+        Returns:
+            bool: True if valid, False otherwise.
+        """
+        if not self.dc_VALID: return False
+        return wb_index >= 0 and wb_index < len(self.dc_WORKBOOK_DATA_COLLECTION)
+
     def dc_WB_REF_validate(self, wb_ref: str) -> bool:
         """DC-Only: Validate the provided workbook reference."""
         try:
-            wb_all, wb_index, wb_name = self.dc_WB_REF_resolve(wb_ref)
-            if wb_all or int(wb_index) >= 0 or wb_name is not None:
-                # If wb_all is True, or we have a valid index and name.
+            wb_all, wb_index, wb = self.dc_WB_REF_resolve(wb_ref)
+            if wb_all or int(wb_index) >= 0 or wb is not None:
+                # If wb_all is True, or we have a valid index and wb.
                 return True
             return False
         except Exception as e:
@@ -368,14 +411,15 @@ class BudManDataContext(BudManDataContext_Base):
 
         Args:
             wb_ref (str|int): The wb_ref to validate and resolve. Expecting
-            a str with a digit, a wb_name, or the ALL_KEY constant.
+            an int, str with a digit, a str with ALL_KEY, or a str with 
+            wb_id, wb_name or wb_url.
 
         Returns:
-            Tuple[wb_all:bool, wb_index:int, wb_name:str]: 
-                (True, -1, ALL_KEY) if wb_ref is ALL_KEY. 
-                (False, wb_index, wb_name) for a valid index, adds wb_name match.
-                (False, -1, wb_name) no valid index, found a wb_name.
-                (False, -1, None) if wb_ref is invalid index or name value.
+            Tuple[wb_all:bool, wb_index:int, WORKBOOK_OBJECT: wb]: 
+                (True, -1, None) if wb_ref is ALL_KEY. 
+                (False, wb_index, wb) for a valid index and its workbook.
+                (False, wb_index, wb) matched wb_id, wb_name or wb_url.
+                (False, -1, None) if wb_ref is invalid match.
         
         Raises:
             TypeError: if wb_ref is not a str or int.
@@ -387,53 +431,58 @@ class BudManDataContext(BudManDataContext_Base):
             if wb_ref is None:
                 logger.error("wb_ref is None. Cannot resolve.")
                 return False, -1, None
-            if isinstance(wb_ref, str):
-                if wb_ref == ALL_KEY:
-                    return True, -1, ALL_KEY
-                if wb_ref.isdigit() or isinstance(wb_ref, int):
-                    # If the wb_ref is a digit, treat it as an index.
-                    wb_index = wb_ref
-                    obj = self.dc_WORKBOOK_find(WB_INDEX, wb_index)
-                    if obj :
-                        wb_name = getattr(obj, WB_NAME)
-                        # TODO: add WB_INDEX and ALL_WORKBOOKS to DC
-                        #TODO: when resolving a wb_ref, set the dc values for:
-                        # dc_ALL_WORKBOOKS, dc_WB_INDEX, dc_WB_NAME, dc_WB_ID,
-                        # dc_WB_REF, dc_WB_TYPE, dc_WF_PURPOSE, dc_WF_KEY?
-                        # Or should cp_validate_cmd() do that?
-                        return False, wb_index, wb_name
-                    if wb_index < 0 or wb_index >= len(self.dc_WORKBOOK_DATA_COLLECTION):
-                        m = f"Invalid wb_index: {wb_index} for wb_ref: '{wb_ref}'"
-                        logger.error(m)
-                        return False, -1, None
-                    wb_name = self.dc_WORKBOOK_name(wb_index)
-                    if wb_name is None:
-                        return False, -1, None
-                    return False, wb_index, wb_name
-                else :
-                    # Could be a wb_name or a wb_url
-                    wb_url_path = p3u.verify_url_file_path(wb_ref, test=False)
-                    wb_name = wb_ref.strip() # TODO: flesh this out
-                    if wb_url_path is not None :
-                        wb_name = wb_url_path.name # TODO: flesh this out
-                        wb_index = self.dc_CHECK_REGISTER_index(wb_name)
-                    return False, -1, wb_name
-            elif isinstance(wb_ref, int):
-                # If the wb_ref is an int, treat it as an index.
-                wb_index = wb_ref
-                if wb_index < 0 or wb_index >= len(self.dc_WORKBOOK_DATA_COLLECTION):
-                    m = f"Invalid wb_index: {wb_index} for wb_ref: '{wb_ref}'"
-                    logger.error(m)
-                    return False, -1, None
-                wb_name = self.dc_WORKBOOK_name(wb_index)
-                if wb_name is None:
-                    return False, -1, None
-                return False, wb_index, wb_name
+            # wb_ref is intended to be flexible for the user. It can be:
+            # - an integer value representing a workbook index
+            # - a string of digits convertible to int workbook index
+            # - a string 'all' representing all workbooks
+            # - a string representing a workbook id, name, or url
+
+            # Process integer wb_index
+            wi_int = self.dc_WB_INDEX_validate_int(wb_ref)
+            success : bool = False
+            result : Optional[WORKBOOK_OBJECT] | Optional[str] = None
+            all_wbs : bool = False
+            if wi_int >= 0:
+                # BUDMAN_RETURN??
+                wb = self.dc_WORKBOOK_by_index(wi_int)
+                if wb is not None:
+                    return all_wbs, wi_int, wb 
+                return False, -1, None
+            # Match ALL_KEY
+            if isinstance(wb_ref, str) and wb_ref.strip() == ALL_KEY:
+                return True, -1, None
+            # If not a str, then invalid from this point.
+            if not isinstance(wb_ref, str):
+                return True, -1, None
+            # Check for wb_id
+            if wb_ref in self.dc_WORKBOOK_DATA_COLLECTION:
+                wb = self.dc_WORKBOOK_DATA_COLLECTION[wb_ref]
+                wb_index = self.dc_WORKBOOK_index(wb_ref)
+                return False, wb_index, wb
+            # Check for wb_name
+            wb = self.dc_WORKBOOK_find(WB_NAME, wb_ref)
+            if wb is not None:
+                wb_index = self.dc_WORKBOOK_index(wb_ref)
+                return False, wb_index, wb
+            # Check for wb_url
+            wb = self.dc_WORKBOOK_find(WB_URL, wb_ref)
+            if wb is not None:
+                wb_index = self.dc_WORKBOOK_index(wb_ref)
+                return False, wb_index, wb
             return False, -1, None
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
+    
+    def dc_WORKBOOK_validate(self, wb : WORKBOOK_OBJECT) -> bool:
+        """DC-Only: Validate the type of WORKBOOK_OBJECT.
+        Abstract: sub-class hook to test specialized WORKBOOK_OBJECT types.
+        DC-ONLY: check builtin type: 'object'.
+        Model-Aware subclasses should override to validate a specific type.
+        """
+        if not self.dc_VALID: return False
+        return isinstance(wb, object)
 
     def dc_WORKBOOK_loaded(self, wb_name: str) -> bool:
         """DC-Only: Indicates whether the named workbook is loaded."""
@@ -471,8 +520,8 @@ class BudManDataContext(BudManDataContext_Base):
             logger.error(p3u.exc_err_msg(e))
             raise ValueError(f"Error retrieving workbook name for index {wb_index}: {e}")
     
-    def dc_WORKBOOK_index(self, wb_id: str = None) -> int:
-        """DC-Only: Return the index of a workbook based on wb_name.
+    def dc_WORKBOOK_index(self, wb_id: str ) -> int:
+        """DC-Only: Return the wb_index of a workbook from its wb_id.
         
         Args:
             wb_name (str): The name of the workbook to find.
@@ -495,35 +544,33 @@ class BudManDataContext(BudManDataContext_Base):
             logger.error(p3u.exc_err_msg(e))
             raise
     
-    def dc_WORKBOOK_by_index(self, wb_index: str) -> BUDMAN_RESULT:
-        """DC-Only: Return (True, BDWWorkbook on success, (False, error_msg) on failure."""
+    def dc_WORKBOOK_by_index(self, wb_index: int) -> Optional[WORKBOOK_OBJECT]:
+        """DC-Only: Return obj or None."""
         try:
             success, reason = self.dc_is_valid()
             if not success:
                 return False, reason
-            if not isinstance(wb_index, str):
-                m = (f"TypeError: wb_index must be a string, got {type(wb_index)}")
+            if not isinstance(wb_index, int):
+                m = (f"TypeError: wb_index must be a int, got {type(wb_index)}")
                 logger.error(m)
-                return False, m
+                return None
             # Convert wb_index to int if it is a digit.
             try:
-                wb_index_i = int(wb_index)
-            except ValueError:
-                m = (f"ValueError: wb_index '{wb_index}' is not a valid integer.")
-                logger.error(m)
-                return False, m
-            try:
-                if wb_index_i < 0 or wb_index_i >= len(self.dc_WORKBOOK_DATA_COLLECTION):
-                    m = (f"Invalid workbook index: {wb_index_i} for wb_index: '{wb_index}'")
+                if wb_index < 0 or wb_index >= len(self.dc_WORKBOOK_DATA_COLLECTION):
+                    m = (f"Workbook index out of range: {wb_index}")
                     logger.error(m)
-                    return False, m
-                wb = list(self.dc_WORKBOOK_DATA_COLLECTION.values())[wb_index_i]
-                return True, wb
+                    return None
+                wb = list(self.dc_WORKBOOK_DATA_COLLECTION.values())[wb_index]
+                if wb is None:
+                    m = (f"No workbook with index '{wb_index}' found in dc_WORKBOOK_DATA_COLLECTION.")
+                    logger.error(m)
+                    return None
+                return wb
             except ValueError:
                 m = (f"ValueError: wb_index '{wb_index}' is not a valid index in the "
                       f"dc_WORKBOOK_DATA_COLLECTION.")
                 logger.error(m)
-                return False, m
+                return None
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
@@ -560,18 +607,68 @@ class BudManDataContext(BudManDataContext_Base):
             raise ValueError(f"Error finding workbook by {find_key} = {value}: {e}")
 
     #region WORKBOOK_CONTENT storage-related methods
-    def dc_WORKBOOK_url_get(self, wb_url: str) -> WORKBOOK_CONTENT:
-        """DC-Only: Get the workbook content at wb_url."""
-        logger.warning("dc_WORKBOOK_get must be overridden.")
-        return None 
+    def dc_WORKBOOK_content_get(self, wb: WORKBOOK_OBJECT) -> BUDMAN_RESULT:
+        """DC-Only: Get the workbook content from dc_LOADED_WORKBOOKS property
+        if present. This class is not Model-Aware, so the application may
+        use other means to arrange for content to be there with appropriate
+        overrides or by putting the content directly with 
+        dc_WORKBOOK_content_put. To be simple and consistent, use the 
+        WORKBOOK_OBJECT to access the workbook content. In other methods, 
+        a wb_ref is resolved to a WORKBOOK_OBJECT, so this method can be 
+        used to get the content of a workbook by its WORKBOOK_OBJECT.
 
-    def dc_WORKBOOK_url_put(self, wb_content:WORKBOOK_CONTENT, wb_url: str) -> None:
-        """DC-Only: Put the workbook at wb_url."""
-        logger.warning("dc_WORKBOOK_put must be overridden.")
-        return None 
+        Args:
+            wb (WORKBOOK_OBJECT): The workbook object to retrieve content for.
+        Returns:
+            Optional[WORKBOOK_CONTENT]: The content of the workbook if available,
+            otherwise None.
+        """
+        success, result = self.dc_is_valid()
+        try:
+            success, result = self.dc_is_valid()
+            if not success: return False, result
+            if wb is None :
+                logger.error("dc_WORKBOOK_content_get requires a valid WORKBOOK_OBJECT.")
+                return False, None
+            if wb.wb_id in self.dc_LOADED_WORKBOOKS:
+                # If the workbook is loaded, return its content.
+                return True, self.dc_LOADED_WORKBOOKS[wb.wb_id]           
+            return False, None
+        except Exception as e:
+            m = p3u.exc_err_msg(e)  
+            logger.error(m)
+            return False, m
+    
+    def dc_WORKBOOK_content_put(self, wb_content:WORKBOOK_CONTENT, wb: WORKBOOK_OBJECT) -> BUDMAN_RESULT:
+        """DC-Only: Put the workbook content into dc_LOADED_WORKBOOKS property.
+        This class is not Model-Aware, so the application may
+        put content in for a WORKBOOK_OBJECT with this method in the blind.
+        To be simple and consistent, use the WORKBOOK_OBJECT to access 
+        the workbook content. In other methods, a wb_ref is resolved to a 
+        WORKBOOK_OBJECT, so this method can be used to put the content of a 
+        workbook by its WORKBOOK_OBJECT.
 
-    def dc_WORKBOOK_file_load(self, wb_index: str) -> BUDMAN_RESULT:
-        """DC-Only: Load the specified workbook by wb_index into dc_LOADED_WORKBOOKS.
+        Args:
+            wb_content (WORKBOOK_CONTENT): The content to put into the 
+            dc_LOADED_WORKBOOKS property.
+            wb (WORKBOOK_OBJECT): The workbook object owning the content.
+        """
+        try:
+            success, result = self.dc_is_valid()
+            if not success: return False, result
+            if wb is None :
+                logger.error("dc_WORKBOOK_content_get requires a valid WORKBOOK_OBJECT.")
+                return None
+            self.dc_LOADED_WORKBOOKS[wb.wb_id] = wb_content
+            return True, None 
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            return False, m
+        
+    def dc_WORKBOOK_load(self, wb: WORKBOOK_OBJECT) -> BUDMAN_RESULT:
+        """DC-Only: Load the specified workbook content by returning it from 
+           dc_LOADED_WORKBOOKS property if present.
            Returns:
                 BUDMAN_RESULT: a Tuple[success: bool, result: Any].
                 success = True, result is a message about the loaded workbook
@@ -580,27 +677,31 @@ class BudManDataContext(BudManDataContext_Base):
                 success = False, result is a string describing the error.
         """
         try:
-            if not self.dc_VALID:
-                logger.error("Data context is not valid.")
-                return None
-            if not isinstance(wb_index, str):
-                raise TypeError(f"wb_index must be a string, got {type(wb_index)}")
-            wdc = self.dc_WORKBOOK_DATA_COLLECTION
-            wb = self.dc_WORKBOOK_by_index(wb_index, wdc)
-            if wb is None:
-                m = f"dc_WORKBOOK_DATA_COLLECTION does not have a workbook with index '{wb_index}'."
-                logger.error(m)
-                return False, m
-            wb_obj = self.dc_WORKBOOK_DATA_COLLECTION.get(wb_index, None)
-            if wb_obj is None:
-                m = f"dc_WORKBOOK_DATA_COLLECTION does not have a workbook with index '{wb_index}'."
-                logger.error(m)
-                return False, m
-            return True, wb_obj
+            # DC-Only World
+            success : bool = False
+            result : Any = None
+            success, result = self.dc_is_valid()
+            if not success: return False, result
+            # self.dc_WORKBOOK_OBJECT
+            if not self.dc_WORKBOOK_validate(wb):
+                raise TypeError(f"wb must be an object, got {type(wb).__name__}")
+            # Check if the workbook is already loaded. But need something to 
+            # look for, maybe wb_id, wb_name, or name?
+            wb_id = str(getattr(wb, WB_ID, None))
+            wb_name = str(getattr(wb, WB_NAME, None))
+            name = str(getattr(wb, 'name', None))
+            if wb_id and wb_id not in self.dc_LOADED_WORKBOOKS:
+                return False, f"Workbook with id '{wb_id}' is not loaded."
+            # Add settings in DC for the workbook. 
+            wb_name = str(getattr(wb, WB_NAME, None))
+            self.dc_WB_REF = str(self.dc_WORKBOOK_index(wb_id))
+            self._dc_WB_NAME = wb_name  
+            self.dc_LOADED_WORKBOOKS[wb_id] 
+            return True, None
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
-            raise ValueError(f"Error loading workbook with index '{wb_index}': {e}")
+            raise ValueError(f"Error loading workbook id: '{wb!r}': {e}")
 
     def dc_WORKBOOK_file_save(self, wb_index: str, wb: Workbook) -> None:
         """DC-Only: Save the specified workbook content by name."""

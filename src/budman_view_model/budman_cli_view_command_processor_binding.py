@@ -11,7 +11,7 @@ implementation for a View class.
 # python standard library modules and packages
 import logging, os, getpass, time, copy
 from pathlib import Path
-from typing import List, Type, Generator, Dict, Tuple, Any, Callable
+from typing import List, Type, Generator, Dict, Tuple, Any, Callable, Optional
 # third-party modules and packages
 import p3_utils as p3u, pyjson5, p3logging as p3l
 # local modules and packages
@@ -59,6 +59,8 @@ class BudManCLICommandProcessor_Binding():
         if not callable(value):
             raise ValueError("command_processor must be a callable.")
         self._cp = value
+        self.initialized = True if self._cp is not None else False 
+
     @property
     def CP(self) -> Callable:
         """Return the command processor."""
@@ -69,10 +71,11 @@ class BudManCLICommandProcessor_Binding():
         if not callable(value):
             raise ValueError("command_processor must be a callable.")
         self._cp = value
+        self.initialized = True if self._cp is not None else False 
     #endregion Properties
     # ------------------------------------------------------------------------ +
     #region initialize() method
-    def initialize(self, cp : Callable) -> "BudManCLICommandProcessor_Binding":
+    def initialize(self, cp : Optional[Callable]) -> "BudManCLICommandProcessor_Binding":
         """Initialize the data context."""
         try:
             logger.info(f"BizEVENT: View setup for BudManCLICommandProcessor_Binding.")
