@@ -140,22 +140,77 @@ class BudManCLIView(cmd2.Cmd):
                  settings : Optional[BudManSettings] = None) -> None:
         shortcuts = dict(cmd2.DEFAULT_SHORTCUTS)
         shortcuts.update({'wf': 'workflow'})
-        self.app_name = app_name
+        self._app_name = app_name
         self._command_processor = command_processor
         self._settings : BudManSettings = settings if settings else BudManSettings()
-        self.parse_only :bool = False
-        self.terminal_width :int = 100 # TODO: add to settings.
+        self._parse_only :bool = False
+        self._current_cmd :Optional[str] = None
         cmd2.Cmd.__init__(self, shortcuts=shortcuts)
+        self.register_precmd_hook(self.precmd_hook)
+        self.register_postcmd_hook(self.postcmd_hook)
         # super().__init__()
         BudManCLIView.prompt = PO_ON_PROMPT if self.parse_only else PO_OFF_PROMPT
         self.initialized : bool = True
     #endregion __init__() method
     # ------------------------------------------------------------------------ +
+    #region   BudManCLIView class properties
+    @property
+    def app_name(self) -> str:
+        """Get the app_name property."""
+        return self._app_name
+    @app_name.setter
+    def app_name(self, value: str) -> None:
+        """Set the app_name property."""
+        if not isinstance(value, str):
+            raise TypeError("app_name must be a string.")
+        self._app_name = value
+        BudManCLIView.prompt = PO_ON_PROMPT if self.parse_only else PO_OFF_PROMPT
+
+    @property
+    def parse_only(self) -> bool:
+        """Get the parse_only property."""
+        return self._parse_only
+    @parse_only.setter
+    def parse_only(self, value: bool) -> None:
+        """Set the parse_only property."""
+        if not isinstance(value, bool):
+            raise TypeError("parse_only must be a boolean.")
+        self._parse_only = value
+        BudManCLIView.prompt = PO_ON_PROMPT if self.parse_only else PO_OFF_PROMPT
+
+    @property
+    def current_cmd(self) -> Optional[str]:
+        """Get the current_cmd property."""
+        return self._current_cmd
+    @current_cmd.setter
+    def current_cmd(self, value: Optional[str]) -> None:
+        """Set the current_cmd property."""
+        if value is not None and not isinstance(value, str):
+            raise TypeError("current_cmd must be a string or None.")
+        self._current_cmd = value
+        if value:
+            logger.debug(f"Current command set to: {value}")
+        else:
+            logger.debug("Current command cleared.")
+
+    @property
+    def settings(self) -> BudManSettings:
+        """Get the settings property."""
+        return self._settings
+    @settings.setter
+    def settings(self, value: BudManSettings) -> None:
+        """Set the settings property."""
+        if not isinstance(value, BudManSettings):
+            raise TypeError("settings must be a BudManSettings instance.")
+        self._settings = value
+        logger.debug(f"Settings updated: {self._settings}")
+    #endregion BudManCLIView class properties
+    # ------------------------------------------------------------------------ +
     #region    BudManCLIView Methods
     def initialize(self) -> None:
         """Initialize the BudManCLIView class."""
         try:
-            logger.info(f"BizEVENT: View setup for BudManCLIView({self.app_name}).")
+            logger.info(f"BizEVENT: View setup for BudManCLIView({self._app_name}).")
             # self.cli_parser.view_cmd = self
             self.initialized = True
             return self
@@ -163,6 +218,33 @@ class BudManCLIView(cmd2.Cmd):
             logger.exception(p3u.exc_err_msg(e))
             raise
     #endregion BudManCLIView Methods
+    # ------------------------------------------------------------------------ +
+    #region   precmd_hook() Methods
+    def precmd_hook(self, data: cmd2.plugin.PrecommandData) -> cmd2.plugin.PrecommandData:
+        """Tweak the cmd args before cp_execute_cmd()."""
+        try:
+            logger.debug(f"Start:")
+            # self.cli_parser.view_cmd = self
+            self.current_cmd = data.statement.command
+            logger.debug(f"Complete:")
+            return data
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise
+    #endregion precmd_hook Methods
+    # ------------------------------------------------------------------------ +
+    #region   postcmd_hook() Methods
+    def postcmd_hook(self, data: cmd2.plugin.PostcommandData) -> cmd2.plugin.PostcommandData:
+        """Clean after cmd execution."""
+        try:
+            logger.debug(f"Start:")
+            self.current_cmd = None
+            logger.debug(f"Complete:")
+            return data
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise
+    #endregion postcmd_hook Methods
     # ------------------------------------------------------------------------ +
     #endregion BudManCLIView class  intrinsics
     # ======================================================================== +
@@ -176,12 +258,12 @@ class BudManCLIView(cmd2.Cmd):
     @property
     def command_processor(self) -> Callable:
         """Get the command_processor property."""
-        return self._command_processor
-    
+        return self._command_processor    
     @command_processor.setter
     def command_processor(self, value: Callable) -> None:
         """Set the command_processor property."""
         self._command_processor = value
+
     @property
     def CP(self) -> Callable:
         """Alias for the command_processor property."""
@@ -203,8 +285,11 @@ class BudManCLIView(cmd2.Cmd):
         a binding setup at setup time, Dependency Injection."""
         try:
             st = p3u.start_timer()
-            if _log_cli_cmd_execute(self, opts): 
-                console.print(f"Execute Command: {str(_filter_opts(opts))}")
+            _log_cli_cmd_execute(self, opts)
+            parse_only : bool = self.parse_only or opts.parse_only
+            cmd_line = f"{self.current_cmd} {opts.cmd2_statement.get()}"
+            if self.parse_only or opts.parse_only: 
+                console.print(f"parse-only: '{cmd_line}' {str(_filter_opts(opts))}")
                 return True, CMD_PARSE_ONLY
             cmd = BudManCLIView.create_cmd(opts)
             status, result = self.CP.cp_execute_cmd(cmd)

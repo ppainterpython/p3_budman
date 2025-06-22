@@ -640,7 +640,7 @@ class BudManDataContext(BudManDataContext_Base):
             return False, m
     
     def dc_WORKBOOK_content_put(self, wb_content:WORKBOOK_CONTENT, wb: WORKBOOK_OBJECT) -> BUDMAN_RESULT:
-        """DC-Only: Put the workbook content into dc_LOADED_WORKBOOKS property.
+        """DC-Only: Put the workbook's content into dc_LOADED_WORKBOOKS property.
         This class is not Model-Aware, so the application may
         put content in for a WORKBOOK_OBJECT with this method in the blind.
         To be simple and consistent, use the WORKBOOK_OBJECT to access 
@@ -666,7 +666,7 @@ class BudManDataContext(BudManDataContext_Base):
             logger.error(m)
             return False, m
         
-    def dc_WORKBOOK_load(self, wb: WORKBOOK_OBJECT) -> BUDMAN_RESULT:
+    def dc_WORKBOOK_load(self, wb_content:WORKBOOK_CONTENT, wb: WORKBOOK_OBJECT) -> BUDMAN_RESULT:
         """DC-Only: Load the specified workbook content by returning it from 
            dc_LOADED_WORKBOOKS property if present.
            Returns:
@@ -703,7 +703,7 @@ class BudManDataContext(BudManDataContext_Base):
             logger.error(m)
             raise ValueError(f"Error loading workbook id: '{wb!r}': {e}")
 
-    def dc_WORKBOOK_file_save(self, wb_index: str, wb: Workbook) -> None:
+    def dc_WORKBOOK_save(self, wb_index: str, wb: Workbook) -> BUDMAN_RESULT:
         """DC-Only: Save the specified workbook content by name."""
         wb_path = Path(wb_index)
         try:

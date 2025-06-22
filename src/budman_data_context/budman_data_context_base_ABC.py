@@ -370,18 +370,18 @@ class BudManDataContext_Base(ABC):
 
     #region   WORKBOOK_CONTENT storage-related methods
     @abstractmethod
-    def dc_WORKBOOK_content_get(self, wb: WORKBOOK_OBJECT) -> BUDMAN_RESULT:
-        """DC-Only: Get the workbook content from dc_LOADED_WORKBOOKS property
-        if present. This class is not Model-Aware, so the application may
-        use other means to arrange for content to be there with appropriate
-        overrides or by putting the content directly with 
-        dc_WORKBOOK_content_put. To be simple and consistent, use the 
-        WORKBOOK_OBJECT to access the workbook content. In other methods, 
-        a wb_ref is resolved to a WORKBOOK_OBJECT, so this method can be 
-        used to get the content of a workbook by its WORKBOOK_OBJECT.
+    def dc_WORKBOOK_content_get(self, wb: WORKBOOK_OBJECT, load:bool=True) -> BUDMAN_RESULT:
+        """Abstract: Get the workbook content from dc_LOADED_WORKBOOKS property,
+        if present, and return as result. This abstract class is not 
+        Model-Aware, so the application may use other means to arrange for 
+        content to be there with appropriate overrides or by putting the 
+        content directly with dc_WORKBOOK_content_put. To be simple and 
+        consistent, use the WORKBOOK_OBJECT to access the workbook metadata.
 
         Args:
             wb (WORKBOOK_OBJECT): The workbook object to retrieve content for.
+            load (bool): If True, load the content from storage if not 
+                already loaded.
         Returns:
             Optional[WORKBOOK_CONTENT]: The content of the workbook if available,
             otherwise None.
@@ -389,8 +389,8 @@ class BudManDataContext_Base(ABC):
         pass
 
     @abstractmethod
-    def dc_WORKBOOK_content_put(self, wb_content: WORKBOOK_CONTENT, wb: WORKBOOK_OBJECT) -> BUDMAN_RESULT:
-        """DC-Only: Put the workbook content into dc_LOADED_WORKBOOKS property.
+    def dc_WORKBOOK_content_put(self, wb_content:WORKBOOK_CONTENT, wb: WORKBOOK_OBJECT) -> BUDMAN_RESULT:
+        """Abstract: Put the workbook's content to storage.
         This class is not Model-Aware, so the application may
         put content in for a WORKBOOK_OBJECT with this method in the blind.
         To be simple and consistent, use the WORKBOOK_OBJECT to access 
@@ -399,26 +399,32 @@ class BudManDataContext_Base(ABC):
         workbook by its WORKBOOK_OBJECT.
         Args:
             wb_content (WORKBOOK_CONTENT): The content to put into the 
-            dc_LOADED_WORKBOOKS property.
+                dc_LOADED_WORKBOOKS property.
             wb (WORKBOOK_OBJECT): The workbook object owning the content.
-        """
-        pass
-
-    @abstractmethod
-    def dc_WORKBOOK_load(self, wb: WORKBOOK_OBJECT) -> BUDMAN_RESULT:
-        """Load workbook content into dc_LOADED_WORKBOOKS.
-           Returns:
-                BUDMAN_RESULT: a Tuple[success: bool, result: Any].
-                success = True, result is a message about the loaded workbook
-                indicating the workbook is available in the 
+        Returns:
+            BUDMAN_RESULT: a Tuple[success: bool, result: Any].
+                success = True, result is a message about the loaded 
+                workbook indicating the workbook is available in the 
                 dc_LOADED_WORKBOOKS collection.
                 success = False, result is a string describing the error.
         """
         pass
 
     @abstractmethod
-    def dc_WORKBOOK_file_save(self, wb_index: str, wb_content: Workbook) -> None:
-        """Save the specified workbook content by name."""
+    def dc_WORKBOOK_load(self, wb: WORKBOOK_OBJECT) -> BUDMAN_RESULT:
+        """Abstract: Load workbook's content for storage, add to dc_LOADED_WORKBOOKS.
+           Returns:
+                BUDMAN_RESULT: a Tuple[success: bool, result: Any].
+                    success = True, result is a message about the loaded 
+                    workbook indicating the workbook is available in the 
+                    dc_LOADED_WORKBOOKS collection.
+                    success = False, result is a string describing the error.
+        """
+        pass
+
+    @abstractmethod
+    def dc_WORKBOOK_save(self,wb_content:WORKBOOK_CONTENT, wb: WORKBOOK_OBJECT) -> BUDMAN_RESULT:
+        """Abstract: Save the specified workbook's content to storage."""
         pass
     #endregion WORKBOOK_CONTENT storage-related methods
 

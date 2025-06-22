@@ -210,6 +210,7 @@ VALID_WORKFLOW_DATA_COLLECTION_ATTR_KEYS = (WF_INPUT, WF_WORKING, WF_OUTPUT)
 
 # NEW Workbook Type Constants. These define the types of workbooks that
 # might be stored in a storage system, such as a file system or a database.
+# These symbols navigate the transition from the BDM to the BSM.
 WB_TYPE_BDM_STORE = "bdm_store"
 WB_TYPE_BDM_CONFIG = "bdm_config"
 WB_TYPE_CHECK_REGISTER = "check_register"

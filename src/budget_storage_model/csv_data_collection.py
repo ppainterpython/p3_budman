@@ -24,13 +24,14 @@
 import csv, logging, os, time
 from pathlib import Path
 from urllib.parse import urlparse, unquote
-from typing import Dict, List
+from typing import Dict, Any
 
 # third-party modules and packages
 import p3_utils as p3u, pyjson5, p3logging as p3l
 # local modules and packages
 from budman_namespace import (
-    DATA_COLLECTION, BDM_STORE, BSM_DATA_COLLECTION_CSV_STORE_FILETYPES)
+    DATA_COLLECTION, BDM_STORE, BSM_DATA_COLLECTION_CSV_STORE_FILETYPES,
+    WB_FILETYPE_CSV)
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region    Globals and Constants
@@ -64,7 +65,7 @@ def csv_DATA_COLLECTION_url_get(csv_url : str = None) -> DATA_COLLECTION:
 #endregion csv_DATA_COLLECTION_get_url() function
 # ---------------------------------------------------------------------------- +
 #region    csv_DATA_COLLECTION_put_url() function
-def csv_DATA_COLLECTION_url_put(csv_dict:dict,csv_url : str = None) -> DATA_COLLECTION:
+def csv_DATA_COLLECTION_url_put(csv_dict:dict, csv_url : str = None) -> None:
     """Put a DATA_COLLECTION object to a URL in storage.
     
     A csv dictionary is stored to the csv_url. Parse the URL and decide
@@ -81,9 +82,9 @@ def csv_DATA_COLLECTION_url_put(csv_dict:dict,csv_url : str = None) -> DATA_COLL
         # only support file:// scheme for now.
         # csv_path = verify_url_file_path(csv_url, test=True)
         csv_path = p3u.verify_url_file_path(csv_url, test=True)
-        result = csv_DATA_COLLECTION_file_save(csv_path)
+        csv_DATA_COLLECTION_file_save(csv_dict, csv_path)
         logger.debug(f"Complete csv_path: {csv_path} {p3u.stop_timer(st)}")
-        return result
+        return
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
@@ -94,8 +95,13 @@ def csv_DATA_COLLECTION_file_load(csv_path : Path = None) -> DATA_COLLECTION:
     """Load a DATA_COLLECTION from a csv file at the given Path."""
     try:
         st = p3u.start_timer()
-        logger.debug(f"Loading DATA_COLLECTION from  file: '{csv_path}'")
+        logger.debug(f"BSM: Start: Loading DATA_COLLECTION from csv file: '{csv_path}'")
         p3u.verify_file_path_for_load(csv_path)
+        # Only hand csv files here.
+        if csv_path.suffix != WB_FILETYPE_CSV:
+            m = f"csv_path filetype is not supported: {csv_path.suffix}"
+            logger.error(m)
+            raise ValueError(m)
         with open(csv_path, "r",newline="") as f:
             reader = csv.DictReader(f, skipinitialspace=True)
             data_collection: DATA_COLLECTION = {}
@@ -108,8 +114,8 @@ def csv_DATA_COLLECTION_file_load(csv_path : Path = None) -> DATA_COLLECTION:
                         logger.warning(f"Skipping row: {row}")
                         continue
                     data_collection[check_number] = row
-        logger.info(f"BizEVENT: Loaded DATA_COLLECTION from  file: '{csv_path}'")
-        logger.debug(f"Complete {p3u.stop_timer(st)}")
+        logger.info(f"BizEVENT: BSM: Loaded DATA_COLLECTION from csv file: '{csv_path}'")
+        logger.debug(f"BSM: Complete {p3u.stop_timer(st)}")
         return data_collection
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
@@ -117,29 +123,34 @@ def csv_DATA_COLLECTION_file_load(csv_path : Path = None) -> DATA_COLLECTION:
 #endregion bsm_BDM_STORE_file_load() function
 # ---------------------------------------------------------------------------- +
 #region    csv_DATA_COLLECTION_file_save() function
-def csv_DATA_COLLECTION_file_save(wb_dict:dict,csv_path : Path = None) -> DATA_COLLECTION:
+def csv_DATA_COLLECTION_file_save(cvs_dict: Dict[str, Dict[str, Any]], csv_path : Path = None) -> None:
     """Load a DATA_COLLECTION from a csv file at the given Path."""
     try:
-        # NEED TO FINISH THIS FUNCTION
         st = p3u.start_timer()
         logger.debug(f"Loading DATA_COLLECTION from  file: '{csv_path}'")
-        p3u.verify_file_path_for_load(csv_path)
-        with open(csv_path, "r",newline="") as f:
-            reader = csv.DictReader(f)
-            data_collection: DATA_COLLECTION = {}
-            for row in reader:
-                # Use the first column as the key, rest as values.
-                if row:
-                    check_number = row["Number"].strip()
-                    new_key = "check-" + check_number
-                    if new_key in data_collection:
-                        logger.warning(f"Duplicate key found: {new_key}")
-                        logger.warning(f"Skipping row: {row}")
-                        continue
-                    data_collection[new_key] = row
-        logger.info(f"BizEVENT: Loading DATA_COLLECTION from  file: '{csv_path}'")
+        p3u.verify_file_path_for_save(csv_path)
+        # Only hand csv files here.
+        if csv_path.suffix != WB_FILETYPE_CSV:
+            m = f"csv_path filetype is not supported: {csv_path.suffix}"
+            logger.error(m)
+            raise ValueError(m)
+        # Extract the fieldnames from the first row of the wb_dict.
+        try:
+            first_record = next(iter(cvs_dict.values()))
+        except StopIteration:
+            m = "The wb_dict is empty, cannot determine fieldnames."
+            logger.error(m)
+            raise ValueError(m)
+        fieldnames = list(first_record.keys())
+
+        with open(csv_path, "w", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames, extrasaction='ignore')
+            writer.writeheader()
+            for row in cvs_dict.values():
+                writer.writerow(row)
+        logger.info(f"BizEVENT: Save DATA_COLLECTION to csv  file: '{csv_path}'")
         logger.debug(f"Complete {p3u.stop_timer(st)}")
-        return data_collection
+        return
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise

@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
 class BudManCLIParser():
+    #region class BudManCLIParser initialization
     """A class to parse command line arguments for the BudgetModelCLIView class.
 
     This class is used to parse command line arguments for the BudgetModelCLIView
@@ -50,7 +51,9 @@ class BudManCLIParser():
         self.workflow_cmd_parser_setup()
         self.change_cmd_parser_setup()
         self.app_cmd_parser_setup()
-
+    #endregion class BudManCLIParser initialization
+    # ------------------------------------------------------------------------ +
+    #region Command Parser Setup Methods
     def app_cmd_parser_setup(self,app_name : str = "not-set") -> None:
         """Application settings and feature controls."""
         try:
@@ -291,7 +294,7 @@ class BudManCLIParser():
             raise
 
     def save_cmd_parser_setup(self) -> None:
-        """Setup the command line argument parsers for the save command."""
+        """Save Command: parser setup"""
         try:
             # Save subcommands: BDM_STORE, workbooks
             parser = self.save_cmd
@@ -304,24 +307,26 @@ class BudManCLIParser():
                 help="Save the Budget Manager Store file.")
             self.save_bm_store_subcmd_parser.set_defaults(save_cmd="BDM_STORE")
             # subcommand save workbooks [wb_name] [fi_key]
-            self.save_wb_subcmd_parser  = subparsers.add_parser(
-                "workbooks",
-                aliases=["wb", "WB"], 
-                help="Save workbook information.")
+            self.save_wb_subcmd_parser = self.add_WORKBOOKS_subparser(subparsers)
             self.save_wb_subcmd_parser.set_defaults(save_cmd="workbooks")
-            self.save_wb_subcmd_parser.add_argument(
-                "-wb", nargs="?", dest="wb_ref",
-                action="store", 
-                default='all',
-                help="Workbook reference, name or number from show workbooks.")
-            self.save_wb_subcmd_parser.add_argument(
-                "-fi", nargs="?", dest="fi_key", 
-                default= "all",
-                help="FI key value.") 
-            self.save_wb_subcmd_parser.add_argument(
-                "-wf", nargs="?", dest="wf_key", 
-                default= "all",
-                help="WF key value.") 
+            # self.save_wb_subcmd_parser  = subparsers.add_parser(
+            #     "workbooks",
+            #     aliases=["wb", "WB"], 
+            #     help="Save workbook information.")
+            # self.save_wb_subcmd_parser.set_defaults(save_cmd="workbooks")
+            # self.save_wb_subcmd_parser.add_argument(
+            #     "-wb", nargs="?", dest="wb_ref",
+            #     action="store", 
+            #     default='all',
+            #     help="Workbook reference, name or number from show workbooks.")
+            # self.save_wb_subcmd_parser.add_argument(
+            #     "-fi", nargs="?", dest="fi_key", 
+            #     default= "all",
+            #     help="FI key value.") 
+            # self.save_wb_subcmd_parser.add_argument(
+            #     "-wf", nargs="?", dest="wf_key", 
+            #     default= "all",
+            #     help="WF key value.") 
             self.add_common_args(parser)
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
@@ -477,6 +482,39 @@ class BudManCLIParser():
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise
+    #endregion Command Parser Setup Methods
+    # ------------------------------------------------------------------------ +
+    #region Common Sub-parsers for Commands
+    def add_WORKBOOKS_subparser(self, subparsers) -> None:
+        """Add a WORKBOOKS subparser to the provided subparsers.""" 
+        try:
+            wb_subcmd_parser  = subparsers.add_parser(
+                "workbooks",
+                aliases=["wb", "WB"], 
+                help="Select workbooks for.")
+            wb_subcmd_parser.set_defaults(load_cmd="workbooks")
+            group = wb_subcmd_parser.add_mutually_exclusive_group(required=True)
+            group.add_argument(
+                "wb_index", nargs="?",
+                type=int, 
+                default = -1,
+                help=f"Workbook index: number associated in the workbook list, 0-based.")
+            group.add_argument(
+                "-all", dest="all_wbs", 
+                action = "store_true",
+                help="All workbooks switch.") 
+            wb_subcmd_parser.add_argument(
+                "-fi", nargs="?", dest="fi_key", 
+                default= None,
+                help="FI key value.") 
+            wb_subcmd_parser.add_argument(
+                "-wf", nargs="?", dest="wf_key", 
+                default= None,
+                help="WF key value.") 
+            return wb_subcmd_parser
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise
 
     def add_common_args(self, parser: cmd2.Cmd2ArgumentParser) -> object:
         """Add common arguments to the provided parser."""
@@ -506,5 +544,5 @@ class BudManCLIParser():
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise
-
+    #region Common Sub-parsers for Commands
     # ------------------------------------------------------------------------ +

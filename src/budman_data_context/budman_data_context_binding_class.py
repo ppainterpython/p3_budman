@@ -433,9 +433,9 @@ class BudManDataContext_Binding(BudManDataContext_Base):
         """
         return self.DC.dc_WORKBOOK_load(wb_index)
 
-    def dc_WORKBOOK_file_save(self, wb_name: str, wb: Workbook) -> None:
+    def dc_WORKBOOK_save(self, wb_name: str, wb: Workbook) -> BUDMAN_RESULT:
         """DC_Binding: Save the specified workbook by name."""
-        return self.DC.dc_WORKBOOK_file_save(wb_name, wb)
+        return self.DC.dc_WORKBOOK_save(wb_name, wb)
     #endregion WORKBOOK_CONTENT storage-related methods
 
     def dc_WORKBOOK_remove(self, wb_name: str) -> None:
