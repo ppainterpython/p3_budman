@@ -12,6 +12,7 @@ __pycache__/
 # log files
 *.log
 logs/
+backup/
 
 # Distribution / packaging
 .Python

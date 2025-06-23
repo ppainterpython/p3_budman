@@ -14,7 +14,8 @@ from pathlib import Path
 from dynaconf import Dynaconf
 import p3logging as p3l
 from p3_utils import exc_err_msg, dscr, start_timer, stop_timer
-from budman_settings import *
+from budman_settings.budman_settings_constants import *
+from budman_settings.budman_settings import BudManSettings
 from src.budman_app.budman_app import BudManApp
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -84,7 +85,7 @@ def main(bdms_url : str = None):
                 raise ValueError("BudMan Settings not configured.")
         app_name = BudManMain_settings.get(APP_NAME, "BudManApp")
         configure_logging(app_name, logtest=False)
-        fs = ""  # from settings""
+        fs = ""  # from settings 
         if bdms_url is None:
             bdms_url = BudManMain_settings[BDM_STORE_URL]
             fs ="(from settings) "

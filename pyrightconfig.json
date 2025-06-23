@@ -1,0 +1,5 @@
+{
+  "typeCheckingMode": "off",
+  "exclude": ["**/site-packages", "**/venv", "**/.venv", "~/venvs"],
+  "include": ["src", "p3_budman"]
+}

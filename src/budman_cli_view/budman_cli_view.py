@@ -28,14 +28,15 @@ declarations are contained in that one class, separate from the View code.
 # python standard library modules and packages
 import logging, os, getpass, time, copy
 from pathlib import Path
-from typing import List, Type, Generator, Dict, Tuple, Any
+from typing import List, Type, Generator, Dict, Tuple, Any, Optional, Union, Callable
 # third-party modules and packages
 from rich.console import Console
 import p3_utils as p3u, pyjson5, p3logging as p3l
 import cmd2, argparse
 from cmd2 import (Cmd2ArgumentParser, with_argparser)
 # local modules and packages
-from budman_namespace import *
+from budman_namespace.design_language_namespace import *
+from budman_settings import *
 from budman_cli_view import BudManCLIParser
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -43,6 +44,11 @@ from budman_cli_view import BudManCLIParser
 logger = logging.getLogger(__name__)
 console = Console(force_terminal=True,width=BUDMAN_WIDTH, highlight=True,
                   soft_wrap=False)
+
+BMCLI_SYSTEM_EXIT_WARNING = "Not exiting due to SystemExit"
+PO_OFF_PROMPT = "p3budman> "
+PO_ON_PROMPT = "po-p3budman> "
+CMD_PARSE_ONLY = "parse_only"
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
@@ -69,6 +75,8 @@ def workflow_cmd_parser() -> cmd2.Cmd2ArgumentParser:
     return cli_parser.workflow_cmd if cli_parser else None
 def change_cmd_parser() -> cmd2.Cmd2ArgumentParser:
     return cli_parser.change_cmd if cli_parser else None
+def app_cmd_parser() -> cmd2.Cmd2ArgumentParser:
+    return cli_parser.app_cmd if cli_parser else None
 
 def _filter_opts(opts) -> Dict[str, Any]:
     if opts is None: return {}
@@ -90,33 +98,26 @@ def _show_args_only(cli_view : "BudManCLIView", opts) -> bool:
     cli_view.poutput(f"args: {str(oc)} parse_only: {cli_view.parse_only}")
     return cli_view.parse_only
 
-BMCLI_SYSTEM_EXIT_WARNING = "Not exiting due to SystemExit"
-PO_OFF_PROMPT = "p3budman> "
-PO_ON_PROMPT = "po-p3budman> "
 #endregion Configure the CLI parser 
-# ---------------------------------------------------------------------------- +
-#region MockViewModel class
-class MockViewModel():
-    """Mock view_model object for the BudgetModel.
-    
-    Simulates an unknown view_model object for the BudgetModel.
-    Supports dot notation for accessing attributes."""
-    # TODO: Use ABC for view_model interface. 
-    def __getattr__(self, item):
-        return self[item] if item in self.__dict__ else None
-    
-    def __setattr__(self, item, value):
-        self[item] = value
-
-#endregion MockViewModel class
 # ---------------------------------------------------------------------------- +
 class BudManCLIView(cmd2.Cmd):
     # ======================================================================== +
     #region BudManCLIView class intrinsics
     """An MVVM View class for BudMan implementing a command line interface.
     
-    Operates under MVVM pattern, strictly. Instantiated with a blind 
-    command_processor object providing the ViewModelCommandProcessor interface.
+    Operates under MVVM pattern, as a View concerned with all users interaction. 
+    Also, the Command Processor pattern is applied to parse user input into 
+    well-formed "command" objects to be executed downstream. This view has not
+    Command Execution methods to accomplish actual work on actual data. It 
+    handles defining commands, initializing command and argument parsing, and 
+    then submitting command objects to a Command Processor through binding.
+    At app-setup time (Dependency Injection), the view is bound to objects
+    providing the ViewModelCommandProcessor_Base and ViewModelDataContext_Base
+    interfaces (abstract base class - ABC). Those objects provide those 
+    services. As a client of those service providers, this View implements the
+    ViewModelCommandProcessor_Binding interface, and the 
+    ViewModelDataContext_Binding interface. The _Binding implementations are
+    Concrete classes serving as the client-sdk to the concrete service objects.
     Using cmd2 package which embeds the argparse package. Cmd2 handles the
     command structure and argparse handles the argument lists for each command.
     TODO: Use ABC for ViewModelCommandProcessor interface.
@@ -134,29 +135,82 @@ class BudManCLIView(cmd2.Cmd):
     # ------------------------------------------------------------------------ +
     #region    __init__() method
     def __init__(self, 
-                 command_processor : object | MockViewModel = None,
-                 app_name : str = "budman_cli") -> None:
+                 command_processor : Optional[Callable] = None,
+                 app_name : str = "budman_cli",
+                 settings : Optional[BudManSettings] = None) -> None:
         shortcuts = dict(cmd2.DEFAULT_SHORTCUTS)
         shortcuts.update({'wf': 'workflow'})
-        # shortcuts.update({'ch': 'change'})
-        # shortcuts.update({'sh': 'show'})
-        # shortcuts.update({'ld': 'load'})
-        # shortcuts.update({'sv': 'save'})
-        self.app_name = app_name
-        self._command_processor = MockViewModel() if command_processor is None else command_processor
-        self.parse_only = False
-        self.terminal_width = 100 # TODO: add to settings.
+        self._app_name = app_name
+        self._command_processor = command_processor
+        self._settings : BudManSettings = settings if settings else BudManSettings()
+        self._parse_only :bool = False
+        self._current_cmd :Optional[str] = None
         cmd2.Cmd.__init__(self, shortcuts=shortcuts)
+        self.register_precmd_hook(self.precmd_hook)
+        self.register_postcmd_hook(self.postcmd_hook)
         # super().__init__()
         BudManCLIView.prompt = PO_ON_PROMPT if self.parse_only else PO_OFF_PROMPT
-        self.initialized = True
+        self.initialized : bool = True
     #endregion __init__() method
+    # ------------------------------------------------------------------------ +
+    #region   BudManCLIView class properties
+    @property
+    def app_name(self) -> str:
+        """Get the app_name property."""
+        return self._app_name
+    @app_name.setter
+    def app_name(self, value: str) -> None:
+        """Set the app_name property."""
+        if not isinstance(value, str):
+            raise TypeError("app_name must be a string.")
+        self._app_name = value
+        BudManCLIView.prompt = PO_ON_PROMPT if self.parse_only else PO_OFF_PROMPT
+
+    @property
+    def parse_only(self) -> bool:
+        """Get the parse_only property."""
+        return self._parse_only
+    @parse_only.setter
+    def parse_only(self, value: bool) -> None:
+        """Set the parse_only property."""
+        if not isinstance(value, bool):
+            raise TypeError("parse_only must be a boolean.")
+        self._parse_only = value
+        BudManCLIView.prompt = PO_ON_PROMPT if self.parse_only else PO_OFF_PROMPT
+
+    @property
+    def current_cmd(self) -> Optional[str]:
+        """Get the current_cmd property."""
+        return self._current_cmd
+    @current_cmd.setter
+    def current_cmd(self, value: Optional[str]) -> None:
+        """Set the current_cmd property."""
+        if value is not None and not isinstance(value, str):
+            raise TypeError("current_cmd must be a string or None.")
+        self._current_cmd = value
+        if value:
+            logger.debug(f"Current command set to: {value}")
+        else:
+            logger.debug("Current command cleared.")
+
+    @property
+    def settings(self) -> BudManSettings:
+        """Get the settings property."""
+        return self._settings
+    @settings.setter
+    def settings(self, value: BudManSettings) -> None:
+        """Set the settings property."""
+        if not isinstance(value, BudManSettings):
+            raise TypeError("settings must be a BudManSettings instance.")
+        self._settings = value
+        logger.debug(f"Settings updated: {self._settings}")
+    #endregion BudManCLIView class properties
     # ------------------------------------------------------------------------ +
     #region    BudManCLIView Methods
     def initialize(self) -> None:
         """Initialize the BudManCLIView class."""
         try:
-            logger.info(f"BizEVENT: View setup for BudManCLIView({self.app_name}).")
+            logger.info(f"BizEVENT: View setup for BudManCLIView({self._app_name}).")
             # self.cli_parser.view_cmd = self
             self.initialized = True
             return self
@@ -164,55 +218,82 @@ class BudManCLIView(cmd2.Cmd):
             logger.exception(p3u.exc_err_msg(e))
             raise
     #endregion BudManCLIView Methods
+    # ------------------------------------------------------------------------ +
+    #region   precmd_hook() Methods
+    def precmd_hook(self, data: cmd2.plugin.PrecommandData) -> cmd2.plugin.PrecommandData:
+        """Tweak the cmd args before cp_execute_cmd()."""
+        try:
+            logger.debug(f"Start:")
+            # self.cli_parser.view_cmd = self
+            self.current_cmd = data.statement.command
+            logger.debug(f"Complete:")
+            return data
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise
+    #endregion precmd_hook Methods
+    # ------------------------------------------------------------------------ +
+    #region   postcmd_hook() Methods
+    def postcmd_hook(self, data: cmd2.plugin.PostcommandData) -> cmd2.plugin.PostcommandData:
+        """Clean after cmd execution."""
+        try:
+            logger.debug(f"Start:")
+            self.current_cmd = None
+            logger.debug(f"Complete:")
+            return data
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise
+    #endregion postcmd_hook Methods
+    # ------------------------------------------------------------------------ +
     #endregion BudManCLIView class  intrinsics
     # ======================================================================== +
 
     # ======================================================================== +
-    #region ViewModelCommandProcessor interface implementation
+    #region ViewModelCommandProcessor_Binding implementation
     # ======================================================================== +
     #                                                                          +
     # ------------------------------------------------------------------------ +
-    #region ViewModelCommandProcessor Interface Properties
+    #region ViewModelCommandProcessor_Binding Properties
     @property
-    def command_processor(self) -> object:
+    def command_processor(self) -> Callable:
         """Get the command_processor property."""
-        return self._command_processor
-    
+        return self._command_processor    
     @command_processor.setter
-    def command_processor(self, value: object) -> None:
+    def command_processor(self, value: Callable) -> None:
         """Set the command_processor property."""
-        if not isinstance(value, (MockViewModel, object)):
-            raise ValueError("command_processor must be a MockViewModel or object.")
         self._command_processor = value
+
     @property
-    def CP(self) -> object:
+    def CP(self) -> Callable:
         """Alias for the command_processor property."""
         return self._command_processor
     
     @CP.setter
-    def CP(self, value: object) -> None:
+    def CP(self, value: Callable) -> None:
         """Alias for the command_processor property."""
-        if not isinstance(value, (MockViewModel, object)):
-            raise ValueError("command_processor must be a MockViewModel or object.")
         self._command_processor = value
-    #endregion ViewModelCommandProcessor Interface Properties
+    #endregion ViewModelCommandProcessor_Binding Properties
     # ------------------------------------------------------------------------ +
 
     # ------------------------------------------------------------------------ +
-    #region ViewModelCommandProcessor Interface Methods
+    #region ViewModelCommandProcessor_Binding Methods
     def cp_execute_cmd(self, opts : argparse.Namespace) -> Tuple[str, Any]:
-        """Send a cmd through the command_processor using 
-        ViewModelCommandProcessor implementation."""
+        """Send a cmd through the command_processor.
+         
+        This view is a CommandProcessor_Binding, proxy-ing commands through
+        a binding setup at setup time, Dependency Injection."""
         try:
             st = p3u.start_timer()
-            if _log_cli_cmd_execute(self, opts): return True, "parse_only"
+            _log_cli_cmd_execute(self, opts)
+            parse_only : bool = self.parse_only or opts.parse_only
+            cmd_line = f"{self.current_cmd} {opts.cmd2_statement.get()}"
+            if self.parse_only or opts.parse_only: 
+                console.print(f"parse-only: '{cmd_line}' {str(_filter_opts(opts))}")
+                return True, CMD_PARSE_ONLY
             cmd = BudManCLIView.create_cmd(opts)
-            status, result = self.CP.execute_cmd(cmd)
+            status, result = self.CP.cp_execute_cmd(cmd)
             console.print(result)
-            # if status:
-            #     self.poutput(f"Result: {str(result)}")
-            # else:
-            #     self.poutput(f"Error: {str(result)}")
             _log_cli_cmd_complete(self, opts)
             return (status, result)
         except SystemExit as e:
@@ -220,7 +301,7 @@ class BudManCLIView(cmd2.Cmd):
             self.pwarning(BMCLI_SYSTEM_EXIT_WARNING)
         except Exception as e:
             self.pexcept(e)
-    #endregion ViewModelCommandProcessor Interface methods
+    #endregion ViewModelCommandProcessor_Binding methods
     # ------------------------------------------------------------------------ +
 
     # ------------------------------------------------------------------------ +
@@ -328,7 +409,7 @@ class BudManCLIView(cmd2.Cmd):
         """Examine or set values in Budget Manager."""
         try:
             _ = _show_args_only(self, opts)
-            if opts.val_cmd == "parse_only":
+            if opts.val_cmd == CMD_PARSE_ONLY:
                 if opts.po_value == "toggle":
                     self.parse_only = not self.parse_only
                 elif opts.po_value == "on":
@@ -374,6 +455,23 @@ class BudManCLIView(cmd2.Cmd):
         except Exception as e:
             self.pexcept(e)
     #endregion workflow command
+    # ------------------------------------------------------------------------ +
+    #region app command
+    @with_argparser(app_cmd_parser())
+    def do_app(self, opts):
+        """View and adjust app settings and features.
+        
+        Arguments:
+            opts (argparse.Namespace): The command line options after parsing
+            the arguments with argparse. The opts dict becomes the command
+            object for the command processor.
+
+        """
+        try:
+            status, result = self.cp_execute_cmd(opts)
+        except Exception as e:
+            self.pexcept(e)
+    #endregion app command
     # ------------------------------------------------------------------------ +
     #region exit and quit commands
     def do_exit(self, args):

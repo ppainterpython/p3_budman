@@ -1914,6 +1914,10 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
+    #endregion bdmwd_WORKBOOKS() methods
+    # --------------------------------------------------------------------- +
+    #endregion    BDMWD - Budget Domain Model Working Data methods - DC Interface
+    # ======================================================================== +
 
 # ---------------------------------------------------------------------------- +
 #region utility functions

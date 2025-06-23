@@ -34,7 +34,7 @@ import p3_utils as p3u, pyjson5, p3logging as p3l
 import pyjson5 as json5 
 from openpyxl import Workbook, load_workbook
 # local modules and packages
-from budman_namespace import (
+from budman_namespace.design_language_namespace import (
     BSM_PERSISTED_PROPERTIES, BDM_STORE, VALID_BSM_BDM_STORE_FILETYPES,
     VALID_WB_FILETYPES, BSM_DATA_COLLECTION_CSV_STORE_FILETYPES,
     WB_FILETYPE_CSV, WB_FILETYPE_XLSX)
@@ -232,15 +232,15 @@ def bsm_BDM_STORE_file_abs_path(filename : str, filetype : str, folder : str  ) 
 # ---------------------------------------------------------------------------- +
 #region    WORKBOOK methods
 # ---------------------------------------------------------------------------- +
-#region    bsm_WORKBOOK_url_get(wb_url : str = None) -> Any
-def bsm_WORKBOOK_url_get(wb_url : str = None) -> Any:
-    """Load a workbook from a URL.
+#region    bsm_WORKBOOK_content_url_get(wb_url : str = None) -> Any
+def bsm_WORKBOOK_content_url_get(wb_url : str) -> Any:
+    """Load workbook content from a storage URL.
 
     Args:
         wb_url (str): The URL to the workbook to load.
     
     Returns:
-        Any: The loaded workbook object.
+        Any: The loaded workbook content object.
     """
     try:
         p3u.is_non_empty_str("wb_url", wb_url, raise_error=True)
@@ -259,7 +259,7 @@ def bsm_WORKBOOK_url_get(wb_url : str = None) -> Any:
             return csv_data_collection
         if wb_filetype == WB_FILETYPE_XLSX:
             # If the filetype is XLSX, load it as an Excel workbook.
-            logger.debug(f"Loading workbook as XLSX from file: '{wb_abs_path}'")
+            logger.debug(f"Loading excel workbook from file: '{wb_abs_path}'")
             wb_content = bsm_WORKBOOK_file_load(wb_abs_path)
             return wb_content
     except Exception as e:
@@ -268,11 +268,11 @@ def bsm_WORKBOOK_url_get(wb_url : str = None) -> Any:
 #endregion bsm_WORKBOOK_url_get(wb_url : str = None) -> Any
 # ---------------------------------------------------------------------------- +
 #region    bsm_WORKBOOK_url_put(wb:Any, wb_url : str = None) -> Any
-def bsm_WORKBOOK_url_put(wb:Any, wb_url : str = None) -> Any:
-    """Put a workbook to a URL.
+def bsm_WORKBOOK_url_put(wb_content:Any, wb_url : str = None) -> None:
+    """Put a workbook content to a storage URL.
 
     Args:
-        wb (Any): The workbook to save.
+        wb_content (Any): The workbook to save.
         wb_url (str): The URL to the workbook to load.
     
     Returns:
@@ -291,13 +291,13 @@ def bsm_WORKBOOK_url_put(wb:Any, wb_url : str = None) -> Any:
         if wb_filetype == WB_FILETYPE_CSV:
             # If the filetype is CSV, load it as a CSV file.
             logger.info(f"Loading workbook as CSV from file: '{wb_abs_path}'")
-            csv_data_collection = csv_DATA_COLLECTION_url_put(wb, wb_url)
-            return csv_data_collection
+            csv_DATA_COLLECTION_url_put(wb_content, wb_url)
+            return 
         if wb_filetype == WB_FILETYPE_XLSX:
             # If the filetype is XLSX, load it as an Excel workbook.
             logger.info(f"Loading workbook as XLSX from file: '{wb_abs_path}'")
-            wb_content = bsm_WORKBOOK_file_save(wb,wb_abs_path)
-            return wb_content
+            wb_content = bsm_WORKBOOK_file_save(wb_content,wb_abs_path)
+            return
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
@@ -317,17 +317,30 @@ def bsm_WORKBOOK_file_load(wb_path:Path) -> Workbook:
         Workbook: The loaded transaction workbook.
     """
     try:
+        st = p3u.start_timer()
         logger.debug(f"BSM: Loading workbook file: '{wb_path}'")
-        wb = load_workbook(filename=wb_path)
-        wb._source_filename = wb_path.stem
-        return wb
+        p3u.verify_file_path_for_load(wb_path)
+        # Only hand xlsx files here.
+        if  wb_path.suffix != WB_FILETYPE_XLSX:
+            m = f"wb_path filetype is not supported: {wb_path.suffix}"
+            logger.error(m)
+            raise ValueError(m)
+        wb_content = load_workbook(filename=wb_path)
+        wb_content._source_filename = wb_path.stem
+        if wb_content is None:
+            m = f"BSM: Failed to load xlsx workbook from file: '{wb_path}'"
+            logger.error(m)
+            raise ValueError(m)
+        logger.info(f"BizEVENT: BSM: Loaded excel workbook from file: '{wb_path}'")
+        logger.debug(f"BSM: Complete {p3u.stop_timer(st)}")
+        return wb_content
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
 #endregion bsm_WORKBOOK_file_load(wb_abs_path : str = None) -> Any
 # ---------------------------------------------------------------------------- +
 #region    bsm_WORKBOOK_file_save(wb:Workbook,wb_abs_path : str = None) -> Any
-def bsm_WORKBOOK_file_save(wb:Workbook,wb_path:Path) -> None:
+def bsm_WORKBOOK_file_save(wb_content:Workbook,wb_path:Path) -> None:
     """Save a transaction file for a Financial Institution Workflow.
 
     Storage Model: This is a Model function, storing an excel workbook
@@ -342,8 +355,11 @@ def bsm_WORKBOOK_file_save(wb:Workbook,wb_path:Path) -> None:
     try:
         # TODO: add logic to for workbook open in excel, work around.
         logger.info("Saving wb: ...")
-        wb.save(filename=wb_path)
-        logger.info(f"Saved wb to '{wb_path}'")
+        # Make a backup copy of the csv file if it exists.
+        if wb_path.exists():
+            p3u.copy_backup(wb_path, Path("backup"))
+        wb_content.save(filename=wb_path)
+        logger.info(f"BizEVENT: Saved excel workbook to '{wb_path}'")
         return
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
@@ -438,6 +454,19 @@ def bsm_filter_workbook_names(wb_paths : List[Path]) -> List[Path]:
 #region    Common methods
 # ---------------------------------------------------------------------------- +
 #region    bsm_WB_URL_resolve(wb_url : str = None) -> Path
+# ---------------------------------------------------------------------------- +
+#region    bsm_WB_URL_verify(wb_url: str) function 
+def bsm_WB_URL_verify(wb_url: str,test:bool=True) -> Any:
+    """Verify wb_url is valid for the BSM.
+    
+    At present, only file scheme is supported."""
+    try:
+        p3u.is_non_empty_str("wb_url", wb_url, raise_error=True)
+        return bsm_WB_URL_verify_file_scheme(wb_url, test=test)
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion bsm_WB_URL_verify(url: str) function
 # ---------------------------------------------------------------------------- +
 #region    bsm_WB_URL_verify_file_scheme(url: str) function 
 def bsm_WB_URL_verify_file_scheme(wb_url: str,test:bool=True) -> Path:

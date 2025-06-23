@@ -4,9 +4,11 @@
 # TODO: import budman_dc_namespace for constants use herein, BDM_CATEGORIZATION, etc.
 # ---------------------------------------------------------------------------- +
 
+# root level
 app_name = "p3_budget_manager"    # used for some defaults in places
 short_app_name = "budman"         # ditto
 
+# [budman] Table
 [budman]
 folder = "~/OneDrive/budget"   # Where data files will go
 store_filename = "p3_budget_manager_ca063e8b"  # a BSM file
@@ -14,6 +16,11 @@ store_filetype = ".jsonc"  # a BSM filetype
 store_url = "file:///C:/Users/ppain/OneDrive/budget/p3_budget_manager_ca063e8b.jsonc"  
 default_fi = "boa" 
 default_workflow = "categorization" 
-default_workbook_type = "wf_working" 
+default_workflow_purpose = "wf_working" 
+default_workbook_type = "transactions"
 
-
+# [logging] Table
+[logging]
+default_handler = "daily"
+default_level = "DEBUG"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+config_filename = "budget_model_logging_config.jsonc"  # logging config file

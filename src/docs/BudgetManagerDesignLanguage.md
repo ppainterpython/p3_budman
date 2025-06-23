@@ -4,17 +4,15 @@ An application for managing a budget is the outcome here. Budgets are about trac
 
 Words mean something. Much is written about a design language, but what I have in mind is, first, to tell the narrative story of the applications purpose and value to its users. Then, establish a vocabulary that will be consistent when describing the design and implementation of the applications. Here is the BudMan narrative. Key words are placed in __bold__, nouns and verbs.
 
-## Managing to a Budget
+## The Application Narrative - Managing to a Budget
 
 All people, families, businesses and organizations have a budget, managed or not. The budget is a framework and practices to know how much money is coming in and going out. Most budgets are related to income and spending, making money and spending money. Our __Budget Model__ is straight-forward. Money is tracked by by transactions occurring with __Financial Institutions (FI)__ such as banks and brokerage firms. Typically, one uses __Accounts__ with an FI and can obtain a record of all transactions for each account either by a statement document, online banking, or downloading a file. BudMan refers to such data collections as __Workbooks (WB)__ , specifically, Excel workbooks or csv files. A workbook is from a specific FI and contains rows of transaction information, such as date, amount, description, etc.
 
 Tracking income and expenses over time is critical to the value of a budget. Often, FI's will update account status on a monthly basis, issuing statements, or workbooks in the BudMan narrative. There will be workbooks from each FI, at least for each month, and perhaps separately for each account. Gathering the new input into the budget for user benefit requires processing the workbooks, and hence, a means to manage that processing. BudMan uses __Workflows (WF)__ to handle the processing. A workflow is a series of tasks performed on the workbooks. A task uses input, produces output, and may utilize working copies of data for a time.
 
-## Design for the MVVM Pattern
+## Application Design Patterns: MVVM Model-View-ViewModel, Data Context, Command Processor, Binding and Dependency Injection
 
-Managing a budget with an application is the goal. I chose to make it a command line application to handle excel __Workbooks__, doing the tedious stuff and let the user use Excel for the actual user experience regarding the numbers. Hence, the __View__ in our design is a simple command line interface (__CLI__). But, the __View Model__, __Data Context__, and __Model__ designs do not have knowledge of that.
-
-## Technical Design Overview
+Managing a budget with an application is the goal. Being a fan of the MVVM Design Pattern, the design framework is structure around the concepts of View (user interaction, ViewModel ("business logic" and application state), and Model (data models, objects, relationships, mapping to storage, etc.) I chose to make it a command line application to handle excel __Workbooks__, doing the tedious stuff and let the user use Excel for the actual user experience regarding the numbers. Hence, the __View__ in our design is a simple command line interface (__CLI__). But, the __View Model__, design not dependent on of that. Also, I include a Data Context and Command Processor patterns, from .NET MVVM.
 
 Having written a story, the narrative embodied in the design language of an application, it remains to create a technical design to implement the narrative. Several key factors are considered for the design. First, the concept of managing to a budget presents several domains of interest. As I am a fan of domain-driven design, the Budget Domain Model design is a critical influencer. Another influence is applying the MVVM design pattern for software applications.
 
@@ -30,7 +28,7 @@ In our design language, files are Data Files (DF) and WorkBooks (WB) with anothe
 
 ### MVVM Command Pattern Technical Design
 
-Our MVVM design includes a sub-pattern for Command Processing (CP) as well as a Data Context (DC). Early on, I learned the .NET MVVM framework and that has no doubt influenced my thinking as I design one in python. Because I can, I decided to include the CP and DC in an uber-DC pattern.
+Our MVVM design includes a sub-pattern for Command Processing (CP) as well as a Data Context (DC). Early on, I learned the .NET MVVM framework and that has no doubt influenced my thinking as I design one in python.
 
 View -> ViewDataContext(bindings for CP, DC) -> ViewModel(bindings for CP, DC) -> uber-DC -> Model
 
@@ -62,7 +60,37 @@ The __View Model__ is created first, as the application starts. It is the respon
 
 In the __View Model__ initialization, it loads the __BDM_STORE__ and applies the appropriate state assignments to the __Data Context__ to prime it for the application.
 
-### Data Context Technical Design
+### Data Context Design Notes
+
+#### Data Context (DC) Pattern Overview
+
+Budget Manager is designed around the MVVM (Model View ViewModel) design pattern. In MVVM implementations, a View binds to a ViewModel through an abstract Data Context (DC) object interface. Also, there is often a Command
+Processor pattern to map command actions from a user interface View to data actions in the DC.
+
+Herein, the design is to have the DC interface provide support Commands as well as Data properties and methods. To keep the scope of the View Model limited concerning DC data, all understanding of the structure of data is in the DC which binds to the Model BDMWD object. The DC properties and methods are where downstream APIs are used, not in the Command Binding Implementation methods.
+
+These DC methods are used by Commands to access and perform actions on the DC data values. As an API, the DC methods are an abstraction to support a View Model and View trying to interact upstream with a user. Some are data requests and others perform work on the Data Context state while owning the concern for syncing with the Model downstream.
+
+This View Model leverages the DC as a single interface to leverages BudgetManager Domain Model (BDM) through a Budget Domain Working Data (BDMWD) "library" to reference actual data for the application Model, in memory. When storage actions are required, the DC may utilize the BudgetManager Storage Model (BSM) interface library.
+
+#### Data Context Scope
+
+In the BudgetManager design language, the primary object concepts are
+
+- FI - Financial Institution,
+- WF - Workflow,
+- WB - Workbook, and
+- BDM_STORE = Budget Manager Store where user-specific budget data is maintained.
+
+The Data Context data is always scoped to the current values of the 'keys' for these primary objects: FI_KEY, WF_KEY, WF_PURPOSE, and WB_NAME. Changing these values will cause the DC to flag the need for a refresh of the underlying data.
+
+#### Data Context Concrete Implementation
+
+The BudManDataContext_Base abstract base class is an abstract interface used by client modules through binding to an object with a concrete implementation of the interface. The concrete implementation is the BudManDataContext class in the Budget Manager application design. This singleton instance is referenced by the ViewModel and, possibly, View if needed.
+
+DC is initialized with a reference to the BudgetDomainModel BudgetDomainWorkingData object, available in the BudgetDomainManager bdm_working_data property.
+
+#### Data Context Object Types
 
 The concept of __Workbook__ is expanding. Need to change __WB_TYPE__ to __WF_PURPOSE__, to model the intended use by a __Workflow__ of a __Workbook__ and the __Folder__ containing it both in the __BDM__ and __BSM__. So __WB_TYPE__ is redefined to cover excel workbooks and csv workbooks of differing types. We have the most common case of a workbook in excel holding financial transaction data, typically downloaded from an institution. But these begin life as .csv files and become .xlsx files, one aspect of the type. The other is that now we have the __Check Register__ workbook, which is a csv file.
 
@@ -105,9 +133,14 @@ To add clarity, I am refactoring some type definitions:
 
 - __WORKBOOK_DATA_COLLECTION__ for the workbook-centric view.
 
+### Making BudManViewModel a subclass of BudManDataContext_Binding
+
+To keep it simple, and keep an eye on a clean, and simple Dependency Injection pattern, I am making all bindings happen after object instantiation. Using initialize methods, the *_binding classes are configured with the reference to their concrete objects at initialization time, not object instantiation time.
+
 ## Change Journal
 
 | Date       | Description                                                      |
 |------------|------------------------------------------------------------------|
 | 06/17/2025 | Removed bdm_initialize_from_BDM_STORE(self) from budget_domain_model.py|
 |06/17/2025|Modified BDMWorkbook class and WORKBOOK_DATA_COLLECTION to be use the wb_id as the key, not a list index. The wb_index used in layers above BDM, not persisted in BDMWorkbook.|
+|6/19/2025|Making BudManViewModel a subclass of BudManDataContext_Binding finally.|

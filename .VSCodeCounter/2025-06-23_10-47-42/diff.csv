@@ -1,0 +1,27 @@
+"filename", "language", "Markdown", "Python", "Draw.io", "TOML", "JSON", "JSON with Comments", "comment", "blank", "total"
+"c:\Users\ppain\repos\python\p3_budman\budget_model_logging_config.jsonc", "JSON with Comments", 0, 0, 0, 0, 0, 0, 12, 0, 12
+"c:\Users\ppain\repos\python\p3_budman\main.py", "Python", 0, 1, 0, 0, 0, 0, 0, 0, 1
+"c:\Users\ppain\repos\python\p3_budman\pyrightconfig.json", "JSON", 0, 0, 0, 0, 5, 0, 0, 0, 5
+"c:\Users\ppain\repos\python\p3_budman\settings.toml", "TOML", 0, 0, 0, 5, 0, 0, 3, -1, 7
+"c:\Users\ppain\repos\python\p3_budman\src\budget_domain_model\budget_domain_model.py", "Python", 0, 0, 0, 0, 0, 0, 4, 0, 4
+"c:\Users\ppain\repos\python\p3_budman\src\budget_storage_model\__init__.py", "Python", 0, 2, 0, 0, 0, 0, 0, 0, 2
+"c:\Users\ppain\repos\python\p3_budman\src\budget_storage_model\budget_storage_model.py", "Python", 0, 21, 0, 0, 0, 0, 8, 0, 29
+"c:\Users\ppain\repos\python\p3_budman\src\budget_storage_model\csv_data_collection.py", "Python", 0, 11, 0, 0, 0, 0, -45, 2, -32
+"c:\Users\ppain\repos\python\p3_budman\src\budman_app\budman_app.py", "Python", 0, 9, 0, 0, 0, 0, 11, 0, 20
+"c:\Users\ppain\repos\python\p3_budman\src\budman_cli_view\budman_cli_parser.py", "Python", 0, 56, 0, 0, 0, 0, -10, 0, 46
+"c:\Users\ppain\repos\python\p3_budman\src\budman_cli_view\budman_cli_view.py", "Python", 0, 67, 0, 0, 0, 0, 29, 2, 98
+"c:\Users\ppain\repos\python\p3_budman\src\budman_data_context\budget_domain_model_working_data.py", "Python", 0, 70, 0, 0, 0, 0, 48, 3, 121
+"c:\Users\ppain\repos\python\p3_budman\src\budman_data_context\budman_data_context.py", "Python", 0, 35, 0, 0, 0, 0, 65, 5, 105
+"c:\Users\ppain\repos\python\p3_budman\src\budman_data_context\budman_data_context_base_ABC.py", "Python", 0, 14, 0, 0, 0, 0, 44, 3, 61
+"c:\Users\ppain\repos\python\p3_budman\src\budman_data_context\budman_data_context_binding_class.py", "Python", 0, 27, 0, 0, 0, 0, 60, 7, 94
+"c:\Users\ppain\repos\python\p3_budman\src\budman_namespace\design_language_namespace.py", "Python", 0, 1, 0, 0, 0, 0, 0, -1, 0
+"c:\Users\ppain\repos\python\p3_budman\src\budman_settings\__init__.py", "Python", 0, -7, 0, 0, 0, 0, 0, 0, -7
+"c:\Users\ppain\repos\python\p3_budman\src\budman_settings\budman_settings_constants.py", "Python", 0, 4, 0, 0, 0, 0, 4, 4, 12
+"c:\Users\ppain\repos\python\p3_budman\src\budman_view_model\budman_cli_view_command_processor_binding.py", "Python", 0, 63, 0, 0, 0, 0, 67, 5, 135
+"c:\Users\ppain\repos\python\p3_budman\src\budman_view_model\budman_cli_view_datacontext.py", "Python", 0, -88, 0, 0, 0, 0, -82, -3, -173
+"c:\Users\ppain\repos\python\p3_budman\src\budman_view_model\budman_view_model.py", "Python", 0, -73, 0, 0, 0, 0, -74, -29, -176
+"c:\Users\ppain\repos\python\p3_budman\src\budman_workflows\budget_categorization.py", "Python", 0, 1, 0, 0, 0, 0, -1, 0, 0
+"c:\Users\ppain\repos\python\p3_budman\src\budman_workflows\budget_category_mapping.py", "Python", 0, 123, 0, 0, 0, 0, 0, 1, 124
+"c:\Users\ppain\repos\python\p3_budman\src\docs\Architecture V4.drawio", "Draw.io", 0, 0, 3975, 0, 0, 0, 0, 1, 3976
+"c:\Users\ppain\repos\python\p3_budman\src\docs\BudgetManagerDesignLanguage.md", "Markdown", 19, 0, 0, 0, 0, 0, 0, 14, 33
+"Total", "-", 19, 337, 3975, 5, 5, 0, 143, 13, 4497

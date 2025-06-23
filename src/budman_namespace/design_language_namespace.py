@@ -23,18 +23,17 @@ DATA_TUPLE = Tuple[str, DATA_OBJECT]  # A tuple of (key, value) for data objects
 DATA_COLLECTION = Dict[str, DATA_OBJECT] 
 DATA_LIST = List[DATA_OBJECT] 
 DATA_TUPLE_LIST = List[DATA_TUPLE] 
-# WORKBOOK_DATA_LIST - the list of workbooks for a specific folder. 
-# It is a list of WORKBOOK_ITEM tuples: (workbook_name, workbook_abs_path)
-# The term WORKBOOK_DATA refers to some of the data associated with a workbook.
-
-BUDMAN_RESULT = Tuple[bool, str, Any]  # (success, message or data)
-WORKBOOK_OBJECT = object
-WORKBOOK_CONTENT = object
+# BUDMAN data type constants
+type WORKBOOK_ID = str
+type BUDMAN_RESULT = tuple[bool, Any]  # A tuple of (success, message or data)
+# BUDMAN_RESULT = Tuple[bool, Any]  # (success, message or data)
+type WORKBOOK_OBJECT = object
+type WORKBOOK_CONTENT = Any
 WORKBOOK_DATA_COLLECTION = Dict[str, WORKBOOK_OBJECT]
 WORKFLOW_DATA_COLLECTION = DATA_COLLECTION
 WORKBOOK_DATA_LIST = DATA_TUPLE_LIST 
 WORKBOOK_ITEM = DATA_TUPLE
-LOADED_WORKBOOK_COLLECTION = DATA_COLLECTION
+LOADED_WORKBOOK_COLLECTION = dict[WORKBOOK_ID, WORKBOOK_CONTENT]
 LOADED_WORKBOOK_ITEM = DATA_OBJECT
 DATA_CONTEXT = DATA_OBJECT
 BDM_STORE = DATA_OBJECT
@@ -211,6 +210,7 @@ VALID_WORKFLOW_DATA_COLLECTION_ATTR_KEYS = (WF_INPUT, WF_WORKING, WF_OUTPUT)
 
 # NEW Workbook Type Constants. These define the types of workbooks that
 # might be stored in a storage system, such as a file system or a database.
+# These symbols navigate the transition from the BDM to the BSM.
 WB_TYPE_BDM_STORE = "bdm_store"
 WB_TYPE_BDM_CONFIG = "bdm_config"
 WB_TYPE_CHECK_REGISTER = "check_register"

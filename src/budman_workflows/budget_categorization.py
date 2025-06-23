@@ -28,7 +28,7 @@ from openpyxl.worksheet.worksheet import Worksheet
 from openpyxl.cell.cell import Cell
 
 # local modules and packages
-from budman_namespace.design_language_namespace import *
+from budman_namespace import *
 from .budget_category_mapping import (
     map_category, category_map_count, check_register_map)
 from budget_domain_model import (BudgetDomainModel)
@@ -537,7 +537,7 @@ def year_month_str(date:object) -> str:
 #endregion year_month_str() function
 # ---------------------------------------------------------------------------- +
 #region map_budget_category() function
-def map_budget_category(sheet:Worksheet,src,dst) -> None:
+def map_budget_category(sheet:Worksheet,src,dst) -> str:
     """Map a src column to budget category putting result in dst column.
     
     The sheet has banking transaction data in rows and columns. 
@@ -595,7 +595,7 @@ def map_budget_category(sheet:Worksheet,src,dst) -> None:
         acct_code_i = col_i(ACCOUNT_CODE_COL_NAME,hdr)
         acct_cell : Cell = sheet.cell(row=1, column=acct_name_i + 1)
 
-        logger.info(f"Mapping '{src}'({src_col_index}) to "
+        logger.debug(f"Mapping '{src}'({src_col_index}) to "
                     f"'{dst}'({dst_col_index})")
         num_rows = sheet.max_row # or set a smaller limit
         other_count = 0
@@ -623,13 +623,14 @@ def map_budget_category(sheet:Worksheet,src,dst) -> None:
 
             transaction = WORKSHEET_row_data(row,hdr) 
             trans_str = transaction.data_str()
-            del transaction  # Clean up the transaction object.
             if dst_value == 'Other':
                 other_count += 1
-                logger.debug(f"{row_idx:04}:{trans_str}" )
-        logger.info(f"Completed budget category mapping for '{num_rows}' rows. "
-                    f"Other count: '{other_count}'.")
-        return None
+                if abs(transaction.amount) > 100:
+                    logger.debug(f"{row_idx:04}:{trans_str}" )
+            del transaction  # Clean up the transaction object.
+        m = f"Mapped rows: '{num_rows}', Budget Category 'Other' count: {other_count}"
+        logger.info(m)
+        return m
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise    
@@ -737,9 +738,8 @@ def execute_worklow_categorization(bm : BudgetDomainModel, fi_key: str, wf_key:s
             return
         logger.info(f"{cp}    {wb_c} workbooks for input.")
         # Now process each input workbook.
-        # for wb_name, wb_ap in reversed(workbooks_dict.items()):
         # Step 1: Load the workbooks sequentially.
-        for wb_name, wb in bm.bsm_FI_WF_WORKBOOKS_generate(fi_key, wf_key, wb_type):
+        for wb_id, wb in bm.bsm_FI_WF_WORKBOOKS_generate(fi_key, wf_key, wb_type):
             logger.info(f"{cp}    Workbook({wb_name})")
                 
             # Step 2: Process the workbooks applying the workflow function

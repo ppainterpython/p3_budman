@@ -26,7 +26,7 @@ def test_BDM_STORE_load():
         bmvm = BudManViewModel().initialize(load_user_store=True)
         assert isinstance(bmvm, BudManViewModel), \
             "Expected BudManCommandViewModel, got: " + str(type(bmvm))
-        assert bmvm.BDM_STORE_loaded, \
+        assert bmvm._BDM_STORE_loaded, \
             "BDM_STORE should be loaded"
         assert bmvm.budget_domain_model is not None, \
             "bmvm.budget_model should not be None"

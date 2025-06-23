@@ -55,6 +55,18 @@
             "maxBytes": 52428800, // 5MB
             "backupCount": 2
         }
+        // file handler for logging to a file
+        // "daily": {
+        //     "class": "logging.handlers.TimedRotatingFileHandler",
+        //     "when": "midnight",
+        //     "interval": 1,
+        //     "level": "DEBUG",
+        //     "formatter": "module_or_class",
+        //     "filename": "logs/p3_budman_daily.log",
+        //     "maxBytes": 512000, // 5KB
+        //     "utc": false,
+        //     "backupCount": 30
+        // }
     },
     "root": {
         "level": "DEBUG",
