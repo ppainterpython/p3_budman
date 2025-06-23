@@ -309,24 +309,6 @@ class BudManCLIParser():
             # subcommand save workbooks [wb_name] [fi_key]
             self.save_wb_subcmd_parser = self.add_WORKBOOKS_subparser(subparsers)
             self.save_wb_subcmd_parser.set_defaults(save_cmd="workbooks")
-            # self.save_wb_subcmd_parser  = subparsers.add_parser(
-            #     "workbooks",
-            #     aliases=["wb", "WB"], 
-            #     help="Save workbook information.")
-            # self.save_wb_subcmd_parser.set_defaults(save_cmd="workbooks")
-            # self.save_wb_subcmd_parser.add_argument(
-            #     "-wb", nargs="?", dest="wb_ref",
-            #     action="store", 
-            #     default='all',
-            #     help="Workbook reference, name or number from show workbooks.")
-            # self.save_wb_subcmd_parser.add_argument(
-            #     "-fi", nargs="?", dest="fi_key", 
-            #     default= "all",
-            #     help="FI key value.") 
-            # self.save_wb_subcmd_parser.add_argument(
-            #     "-wf", nargs="?", dest="wf_key", 
-            #     default= "all",
-            #     help="WF key value.") 
             self.add_common_args(parser)
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
@@ -397,6 +379,31 @@ class BudManCLIParser():
             subparsers = parser.add_subparsers(
                 dest="workflow_cmd", title="Workflow Task Commands",
                 description=d)
+            # workflow categorization subcommand
+            categorization_parser = subparsers.add_parser(
+                "categorization",
+                aliases=["cat", "CAT", "c"], 
+                help="Apply Categorization workflow.")
+            categorization_parser.set_defaults(workflow_cmd="categorization")
+            group = categorization_parser.add_mutually_exclusive_group(required=True)
+            group.add_argument(
+                "wb_index", nargs="?",
+                type=int, 
+                default = -1,
+                help=f"Workbook index: number associated in the workbook list, 0-based.")
+            group.add_argument(
+                "-all", dest="all_wbs", 
+                action = "store_true",
+                help="All workbooks switch.") 
+            # categorization_parser.add_argument(
+            #     "wb_ref", nargs="?",
+            #     action="store", 
+            #     default='all',
+            #     help="Workbook reference as either the name or number of a loaded workbook.")
+            categorization_parser.add_argument(
+                "--check-register","-cr",  
+                action="store_true", 
+                help="Command is only parsed with results returned.")
             # Workflow task sub-command: task
             task_parser = subparsers.add_parser(
                 "task",
@@ -459,21 +466,6 @@ class BudManCLIParser():
                 action="store", 
                 default='category_map',
                 help="Name of module to reload, or 'all' re-loadable.")
-            # workflow categorization subcommand
-            categorization_parser = subparsers.add_parser(
-                "categorization",
-                aliases=["cat", "CAT", "c"], 
-                help="Apply Categorization workflow.")
-            categorization_parser.set_defaults(workflow_cmd="categorization")
-            categorization_parser.add_argument(
-                "wb_ref", nargs="?",
-                action="store", 
-                default='all',
-                help="Workbook reference as either the name or number of a loaded workbook.")
-            categorization_parser.add_argument(
-                "--check-register","-cr",  
-                action="store_true", 
-                help="Command is only parsed with results returned.")
 
             # self.add_common_args(parser)
             # Instead of propagating, just add common args directly to each subparser:
@@ -544,5 +536,5 @@ class BudManCLIParser():
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise
-    #region Common Sub-parsers for Commands
+    #endregion Common Sub-parsers for Commands
     # ------------------------------------------------------------------------ +

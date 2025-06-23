@@ -241,8 +241,11 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
                     m = f"Workbook content for '{wb.wb_id}' is not loaded."
                     logger.error(m)
                     return False, m
-                return True, wb_content
-            return self.dc_WORKBOOK_save(wb_content, wb)
+                return True, result
+            else:
+                m = f"Workbook '{wb.wb_id}' is not loaded after saving."
+                logger.error(m)
+                return False, m
         except Exception as e:
             m = f"Error loading workbook '{wb.wb_id}': {p3u.exc_err_msg(e)}"
             logger.error(m)

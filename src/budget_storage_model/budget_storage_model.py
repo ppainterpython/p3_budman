@@ -355,6 +355,9 @@ def bsm_WORKBOOK_file_save(wb_content:Workbook,wb_path:Path) -> None:
     try:
         # TODO: add logic to for workbook open in excel, work around.
         logger.info("Saving wb: ...")
+        # Make a backup copy of the csv file if it exists.
+        if wb_path.exists():
+            p3u.copy_backup(wb_path, Path("backup"))
         wb_content.save(filename=wb_path)
         logger.info(f"BizEVENT: Saved excel workbook to '{wb_path}'")
         return

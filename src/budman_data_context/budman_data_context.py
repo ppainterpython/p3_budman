@@ -391,7 +391,27 @@ class BudManDataContext(BudManDataContext_Base):
             bool: True if valid, False otherwise.
         """
         if not self.dc_VALID: return False
-        return wb_index >= 0 and wb_index < len(self.dc_WORKBOOK_DATA_COLLECTION)
+        if not isinstance(wb_index, int):
+            m = (f"TypeError: wb_index must be a int, got {type(wb_index)}")
+            logger.error(m)
+            return False
+        # Check if the index is valid.
+        try:
+            if wb_index < 0 or wb_index >= len(self.dc_WORKBOOK_DATA_COLLECTION):
+                m = (f"Workbook index out of range: {wb_index}")
+                logger.error(m)
+                return False
+            wb = list(self.dc_WORKBOOK_DATA_COLLECTION.values())[wb_index]
+            if wb is None:
+                m = (f"No workbook with index '{wb_index}' found in dc_WORKBOOK_DATA_COLLECTION.")
+                logger.error(m)
+                return False
+            return True
+        except ValueError:
+            m = (f"ValueError: wb_index '{wb_index}' is not a valid index in the "
+                    f"dc_WORKBOOK_DATA_COLLECTION.")
+            logger.error(m)
+            return False
 
     def dc_WB_REF_validate(self, wb_ref: str) -> bool:
         """DC-Only: Validate the provided workbook reference."""
@@ -547,30 +567,9 @@ class BudManDataContext(BudManDataContext_Base):
     def dc_WORKBOOK_by_index(self, wb_index: int) -> Optional[WORKBOOK_OBJECT]:
         """DC-Only: Return obj or None."""
         try:
-            success, reason = self.dc_is_valid()
-            if not success:
-                return False, reason
-            if not isinstance(wb_index, int):
-                m = (f"TypeError: wb_index must be a int, got {type(wb_index)}")
-                logger.error(m)
-                return None
-            # Convert wb_index to int if it is a digit.
-            try:
-                if wb_index < 0 or wb_index >= len(self.dc_WORKBOOK_DATA_COLLECTION):
-                    m = (f"Workbook index out of range: {wb_index}")
-                    logger.error(m)
-                    return None
-                wb = list(self.dc_WORKBOOK_DATA_COLLECTION.values())[wb_index]
-                if wb is None:
-                    m = (f"No workbook with index '{wb_index}' found in dc_WORKBOOK_DATA_COLLECTION.")
-                    logger.error(m)
-                    return None
-                return wb
-            except ValueError:
-                m = (f"ValueError: wb_index '{wb_index}' is not a valid index in the "
-                      f"dc_WORKBOOK_DATA_COLLECTION.")
-                logger.error(m)
-                return None
+            if self.dc_WB_INDEX_validate(wb_index):
+                return list(self.dc_WORKBOOK_DATA_COLLECTION.values())[wb_index]
+            return None
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)

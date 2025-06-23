@@ -54,7 +54,6 @@ def csv_DATA_COLLECTION_url_get(csv_url : str = None) -> DATA_COLLECTION:
         st = p3u.start_timer()
         logger.debug(f"Get DATA_COLLECTION from  url: '{csv_url}'")
         # only support file:// scheme for now.
-        # csv_path = verify_url_file_path(csv_url, test=True)
         csv_path = p3u.verify_url_file_path(csv_url, test=True)
         result = csv_DATA_COLLECTION_file_load(csv_path)
         logger.debug(f"Complete csv_path: {csv_path} {p3u.stop_timer(st)}")
@@ -80,7 +79,6 @@ def csv_DATA_COLLECTION_url_put(csv_dict:dict, csv_url : str = None) -> None:
         st = p3u.start_timer()
         logger.debug(f"Get DATA_COLLECTION from  url: '{csv_url}'")
         # only support file:// scheme for now.
-        # csv_path = verify_url_file_path(csv_url, test=True)
         csv_path = p3u.verify_url_file_path(csv_url, test=True)
         csv_DATA_COLLECTION_file_save(csv_dict, csv_path)
         logger.debug(f"Complete csv_path: {csv_path} {p3u.stop_timer(st)}")
@@ -102,6 +100,7 @@ def csv_DATA_COLLECTION_file_load(csv_path : Path = None) -> DATA_COLLECTION:
             m = f"csv_path filetype is not supported: {csv_path.suffix}"
             logger.error(m)
             raise ValueError(m)
+        
         with open(csv_path, "r",newline="") as f:
             reader = csv.DictReader(f, skipinitialspace=True)
             data_collection: DATA_COLLECTION = {}
@@ -143,6 +142,9 @@ def csv_DATA_COLLECTION_file_save(cvs_dict: Dict[str, Dict[str, Any]], csv_path 
             raise ValueError(m)
         fieldnames = list(first_record.keys())
 
+        # Make a backup copy of the csv file if it exists.
+        if csv_path.exists():
+            p3u.copy_backup(csv_path, "backup")
         with open(csv_path, "w", newline="") as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames, extrasaction='ignore')
             writer.writeheader()
@@ -155,49 +157,4 @@ def csv_DATA_COLLECTION_file_save(cvs_dict: Dict[str, Dict[str, Any]], csv_path 
         logger.error(p3u.exc_err_msg(e))
         raise
 #endregion bsm_BDM_STORE_file_save() function
-# ---------------------------------------------------------------------------- +
-#region    verify_url_file_path(url: str) function 
-# def verify_url_file_path(url: str,test:bool=True) -> Path:
-#     """Verify that the URL is a valid file path and return it as a Path object."""
-#     try:
-#         p3u.is_non_empty_str("url", url, raise_error=True)
-#         parsed_url = urlparse(url)
-#         if parsed_url.scheme != "file":
-#             raise ValueError(f"URL scheme is not 'file': {parsed_url.scheme}")
-#         file_path = Path.from_uri(url)
-#         if test and not file_path.exists():
-#             raise FileNotFoundError(f"File does not exist: {file_path}")
-#         return file_path
-#     except Exception as e:
-#         logger.error(p3u.exc_err_msg(e))
-#         raise
-#endregion verify_url_file_path(url: str) function
-# ---------------------------------------------------------------------------- +
-#region    verify_file_path_for_load(url: str) function 
-# def verify_file_path_for_load(file_path: Path) -> None:
-#     """Verify that the file path is valid and ready to load or raise error."""
-#     try:
-#         p3u.is_obj_of_type("file_path", file_path, Path, raise_error=True)
-#         if not file_path.exists():
-#             raise FileNotFoundError(f"File does not exist: {file_path}")
-#         if not file_path.exists():
-#             m = f"file does not exist: {file_path}"
-#             logger.error(m)
-#             raise FileNotFoundError(m)
-#         if not file_path.is_file():
-#             m = f"csv_path is not a file: '{file_path}'"
-#             logger.error(m)
-#             raise ValueError(m)
-#         if not file_path.suffix in BSM_DATA_COLLECTION_CSV_STORE_FILETYPES:
-#             m = f"csv_path filetype is not supported: {file_path.suffix}"
-#             logger.error(m)
-#             raise ValueError(m)
-#         if file_path.stat().st_size == 0:
-#             m = f"file is empty: {file_path}"
-#             logger.error(m)
-#             raise ValueError(m)
-#     except Exception as e:
-#         logger.error(p3u.exc_err_msg(e))
-#         raise
-#endregion verify_file_path_for_load(url: str) function
 # ---------------------------------------------------------------------------- +
