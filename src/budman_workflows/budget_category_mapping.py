@@ -366,7 +366,7 @@ category_map = {
     r'(?i).*DUCKFEET\s*USA.*': 'Clothing.Shoes.Duckfeet USA',
     r'(?i).*KOHLS\.COM.*': 'Clothing.Apparel.Kohls',
     r'(?i).*COMFORT\s*SHOE\s*STORES.*': 'Clothing.Shoes.Comfort Shoe Stores',
-    r'(?i)\bID:RUNNINGWARE\b': 'Clothing.Shoes,Running Warehouse',
+    r'(?i)\bID:RUNNINGWARE\b': 'Clothing.Shoes.Running Warehouse',
     r'(?i)\bMARDEL\b': 'Shopping.Misc.Mardel',
     r'(?i)\bBUC-EE\'S\b': 'Shopping.Misc.Buc-ees',
     r'(?i).*SADDLEBACK.*': 'Shopping.SaddleBack Leather',

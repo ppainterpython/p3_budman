@@ -335,15 +335,16 @@ def check_sheet_schema(wb: Workbook, correct: bool = False) -> bool:
 def check_budget_category(sheet:Worksheet,add_columns : bool = True) -> bool:
     """Check that the sheet is ready to process budget category.
     
-    BudMan uses 4 columns to categorize transactions in a sheet:
-    1. 'Budget Category' - the budget category for the transaction. It is a str
+    BudMan uses the following columns in transactions workbooks. The columns are
+    added if not present:
+    1. 'Budget Category' - str: the budget category for the transaction. It is a str
         with up to 3 dotted levels of budget categories, e.g. "Housing.Improvements.Flooring".
-    2. 'Level1' - the first level of the budget category, e.g. "Housing".
-    3. 'Level2' - the second level of the budget category, e.g. "Improvements".
-    4. 'Level3' - the third level of the budget category, e.g. "Flooring".
-    A column 'Budget Category' is added to the sheet if it does not exist.
-    3 columns are added to the sheet if they do not exist: 'Level1', 'Level2', 
-    'Level3', adjacent to the 'Budget Category' column.
+    2. Account Code - str: the short-name of the FI account for the transaction.
+    3. 'Level1' - str: the first level of the budget category, e.g. "Housing".
+    4. 'Level2' - str: the second level of the budget category, e.g. "Improvements".
+    5. 'Level3' - str: the third level of the budget category, e.g. "Flooring".
+    6. DebitOrCredit - str: 'D' for debit, 'C' for credit.
+    7. YearMonth - str: encoded version of date in format 'YYYY-MM-mmm', e.g. '2025-01-Jan'.
 
     Args:
         sheet (openpyxl.worksheet): The worksheet to map.
@@ -610,7 +611,7 @@ def map_budget_category(sheet:Worksheet,src,dst) -> str:
             # row[dst_col_index].value = dst_value 
             # Set the additional values for BudMan in the row
             date_val = row[date_i].value
-            year_month = year_month_str(date_val) if date_val else None
+            year_month : str = year_month_str(date_val) if date_val else None
             row[year_month_i].value = year_month
             l1, l2, l3 = split_budget_category(dst_value)
             row[l1_i].value = l1 if l1_i != -1 else None

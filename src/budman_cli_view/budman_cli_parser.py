@@ -379,31 +379,30 @@ class BudManCLIParser():
             subparsers = parser.add_subparsers(
                 dest="workflow_cmd", title="Workflow Task Commands",
                 description=d)
+            
             # workflow categorization subcommand
             categorization_parser = subparsers.add_parser(
                 "categorization",
                 aliases=["cat", "CAT", "c"], 
                 help="Apply Categorization workflow.")
             categorization_parser.set_defaults(workflow_cmd="categorization")
-            group = categorization_parser.add_mutually_exclusive_group(required=True)
-            group.add_argument(
-                "wb_index", nargs="?",
-                type=int, 
-                default = -1,
-                help=f"Workbook index: number associated in the workbook list, 0-based.")
-            group.add_argument(
-                "-all", dest="all_wbs", 
-                action = "store_true",
-                help="All workbooks switch.") 
-            # categorization_parser.add_argument(
-            #     "wb_ref", nargs="?",
-            #     action="store", 
-            #     default='all',
-            #     help="Workbook reference as either the name or number of a loaded workbook.")
+
+            self.add_wb_index_argument(categorization_parser)
+            # group = categorization_parser.add_mutually_exclusive_group(required=True)
+            # group.add_argument(
+            #     "wb_index", nargs="?",
+            #     type=int, 
+            #     default = -1,
+            #     help=f"Workbook index: number associated in the workbook list, 0-based.")
+            # group.add_argument(
+            #     "-all", dest="all_wbs", 
+            #     action = "store_true",
+            #     help="All workbooks switch.") 
             categorization_parser.add_argument(
                 "--check-register","-cr",  
                 action="store_true", 
                 help="Command is only parsed with results returned.")
+            
             # Workflow task sub-command: task
             task_parser = subparsers.add_parser(
                 "task",
@@ -504,6 +503,24 @@ class BudManCLIParser():
                 default= None,
                 help="WF key value.") 
             return wb_subcmd_parser
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise
+
+    def add_wb_index_argument(self, parser) -> None:
+        """Add a wb_index or all_wbs arguments.""" 
+        try:
+            group = parser.add_mutually_exclusive_group(required=True)
+            group.add_argument(
+                "wb_index", nargs="?",
+                type=int, 
+                default = -1,
+                help=f"Workbook index: number associated in the workbook list, 0-based.")
+            group.add_argument(
+                "-all", dest="all_wbs", 
+                action = "store_true",
+                help="All workbooks switch.") 
+            return
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise
