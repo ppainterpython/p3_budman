@@ -1081,7 +1081,6 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             wf_key = self.cp_cmd_arg_get(cmd, WF_KEY, self.dc_WF_KEY)
             wf_purpose = self.cp_cmd_arg_get(cmd, WF_PURPOSE, self.dc_WF_PURPOSE)
             wb_type = self.cp_cmd_arg_get(cmd, WB_TYPE, self.dc_WB_TYPE)
-            # TODO: leverage WB_REF being resolved in cp_validate_cmd
             all_wbs, wb_index, wb_name = self.dc_WB_REF_resolve(wb_ref)
             # Check for an invalid wb_ref value.
             if BudManViewModel.wb_ref_not_valid(all_wbs, wb_index, wb_name):
@@ -1433,8 +1432,10 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
                     logger.error(m)
                     return False, m
                 wb_id = wb.wb_id
+                wb.wb_loaded = wb_id in self.dc_LOADED_WORKBOOKS
+
                 if not wb.wb_loaded:
-                    m = f"Workbook '{wb_content.wb_name}' is not loaded, no action taken."
+                    m = f"Workbook '{wb.wb_id}' is not loaded, no action taken."
                     logger.error(m)
                     return False, m
                 # Obtain the wb_content for wb_id.
@@ -1684,22 +1685,27 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
 
             # Prepare the output result
             result = f"{P2}{FI_WORKBOOK_DATA_COLLECTION}: {wdc_count}\n"
-            result += f"{P4}{WB_REF:6}{P2}{WB_TYPE:15}{P2}{WB_NAME:35}{P2}{WF_KEY:15}"
-            result += f"{P2}{WF_PURPOSE:10}{P2}{WF_FOLDER_ID:20}{P2}{WF_FOLDER:18}\n"
-            # result += f"{P2}{WB_URL:150}\n"
+            result += f"{P4}{WB_INDEX:6}{P2}{WB_ID:50}{P2}"
+            result += f"wb_loaded{P2}{WB_CONTENT:30}"
+            print(result)
+            result += "\n"
+            wb : BDMWorkbook = None
             if wdc_count > 0:
                 for i, wb in enumerate(wdc.values()):
-                    result += f"{wb.display_str(i)}\n"
-            if lwbc_count > 0:
-                result += f"{P2}{DC_LOADED_WORKBOOKS}: {lwbc_count}\n"
-                wdcl = list(wdc.keys())
-                for wb_id in list(lwbc.keys()):
-                    wb = self.dc_WORKBOOK_DATA_COLLECTION[wb_id]
-                    wb_content = lwbc[wb_id]
+                    wb.wb_loaded = wb.wb_id in lwbc
+                    wb_content = lwbc[wb.wb_id] if wb.wb_loaded else None
                     wb_c_str = self.get_wb_content_repr(wb_content)
-                    i = wdcl.index(wb_id) if wb_id in wdcl else -1
-                    result += (f"{wdc[wb.wb_id].display_brief_str(i)}  "
-                               f"{wb_c_str}\n")
+                    r = f"{wb.display_str(i,wb_c_str)}"
+                    print(r)
+                    result += r + "\n"
+            # if lwbc_count > 0:
+            #     result += f"{P2}{DC_LOADED_WORKBOOKS}: {lwbc_count}\n"
+            #     wdcl = list(wdc.keys())
+            #     for wb_id in list(lwbc.keys()):
+            #         wb = self.dc_WORKBOOK_DATA_COLLECTION[wb_id]
+            #         i = wdcl.index(wb_id) if wb_id in wdcl else -1
+            #         result += (f"{wdc[wb.wb_id].display_brief_str(i)}  "
+            #                    f"{wb_c_str}\n")
             logger.info(f"Complete:")
             return True, result
         except Exception as e:
@@ -1712,6 +1718,8 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
     def get_wb_content_repr(self, wb_content:Any) -> str: 
         """Return a display string representation fo the wb_content."""
         try:
+            if wb_content is None:
+                return "not loaded"
             wb_content_repr = "wb_content: "
             d = p3u.dscr(wb_content)
             if wb_content is None:

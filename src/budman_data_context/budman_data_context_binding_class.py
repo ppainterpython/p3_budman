@@ -325,6 +325,10 @@ class BudManDataContext_Binding(BudManDataContext_Base):
     def dc_WF_PURPOSE_validate(self, wf_purpose: str) -> bool:
         """DC_Binding: Validate the provided WF_PURPOSE."""
         return self.DC.dc_WF_PURPOSE_validate(wf_purpose)
+    
+    def dc_WB_ID_validate(self, wb_id):
+        """Validate the provided WB_ID."""
+        return self.DC.dc_WB_ID_validate(wb_id)
 
     def dc_WB_TYPE_validate(self, wb_type: str) -> bool:
         """DC_Binding: Validate the provided WB_TYPE."""
@@ -362,9 +366,9 @@ class BudManDataContext_Binding(BudManDataContext_Base):
         """
         return self.DC.dc_WORKBOOK_validate(wb)
     
-    def dc_WORKBOOK_loaded(self, wb_name: str) -> Workbook:
-        """DC_Binding: Indicates whether the named workbook is loaded."""
-        return self.DC.dc_WORKBOOK_loaded(wb_name)
+    def dc_WORKBOOK_loaded(self, wb_id: str) -> Workbook:
+        """Indicates whether the workbook with wb_id is loaded."""
+        return self.DC.dc_WORKBOOK_loaded(wb_id)
     
     def dc_WORKBOOK_name(self, wb_index: int) -> str:
         """DC_Binding: Return the wb_name associated with the give wb_index."""

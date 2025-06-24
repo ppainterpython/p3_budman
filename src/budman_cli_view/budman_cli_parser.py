@@ -388,16 +388,12 @@ class BudManCLIParser():
             categorization_parser.set_defaults(workflow_cmd="categorization")
 
             self.add_wb_index_argument(categorization_parser)
-            # group = categorization_parser.add_mutually_exclusive_group(required=True)
-            # group.add_argument(
-            #     "wb_index", nargs="?",
-            #     type=int, 
-            #     default = -1,
-            #     help=f"Workbook index: number associated in the workbook list, 0-based.")
-            # group.add_argument(
-            #     "-all", dest="all_wbs", 
-            #     action = "store_true",
-            #     help="All workbooks switch.") 
+
+            categorization_parser.add_argument(
+                "--load_workbook","-l", 
+                action="store_true", 
+                help="Load the workbook if not yet loaded.")
+            
             categorization_parser.add_argument(
                 "--check-register","-cr",  
                 action="store_true", 

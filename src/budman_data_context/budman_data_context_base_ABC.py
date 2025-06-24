@@ -286,6 +286,11 @@ class BudManDataContext_Base(ABC):
         pass
 
     @abstractmethod
+    def dc_WB_ID_validate(self, wb_id: str) -> bool:
+        """Validate the provided WB_ID."""
+        pass
+
+    @abstractmethod
     def dc_WF_PURPOSE_validate(self, wf_purpose: str) -> bool:
         """Validate the provided WF_PURPOSE."""
         pass
@@ -338,8 +343,8 @@ class BudManDataContext_Base(ABC):
         pass
 
     @abstractmethod
-    def dc_WORKBOOK_loaded(self, wb_name: str) -> bool:
-        """Indicates whether the named workbook is loaded."""
+    def dc_WORKBOOK_loaded(self, wb_id: str) -> bool:
+        """Indicates whether the workbook with wb_id is loaded."""
         pass
 
     @abstractmethod

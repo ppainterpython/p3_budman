@@ -373,6 +373,12 @@ class BudManDataContext(BudManDataContext_Base):
         """DC-Only: Validate the provided WF_PURPOSE."""
         return wf_purpose in VALID_WF_PURPOSE_VALUES
 
+    def dc_WB_ID_validate(self, wb_id: str) -> bool:
+        """Validate the provided WB_ID."""
+        if not self.dc_VALID: return False
+        _ = p3u.is_str_or_none("wb_id", wb_id, raise_error=True)
+        return True if wb_id in self.dc_WORKBOOK_DATA_COLLECTION else False
+
     def dc_WB_TYPE_validate(self, wb_type: str) -> bool:
         """DC-Only: Validate the provided WB_TYPE."""
         return wb_type in VALID_WB_TYPE_VALUES
@@ -504,17 +510,17 @@ class BudManDataContext(BudManDataContext_Base):
         if not self.dc_VALID: return False
         return isinstance(wb, object)
 
-    def dc_WORKBOOK_loaded(self, wb_name: str) -> bool:
-        """DC-Only: Indicates whether the named workbook is loaded."""
-        _ = p3u.is_str_or_none("wb_name", wb_name, raise_error=True)
-        # Reference the DC.LOADED_WORKBOOKS property.
+    def dc_WORKBOOK_loaded(self, wb_id: str) -> bool:
+        """Indicates whether the workbook with wb_id is loaded."""
         if not self.dc_VALID: return False
-        if (not self.dc_INITIALIZED or 
-                self.dc_LOADED_WORKBOOKS is None or 
-                not isinstance(self.dc_LOADED_WORKBOOKS, dict)):
+        if (not self.dc_INITIALIZED or not self.dc_WB_ID_validate(wb_id)):
             return False
         lwbl = self.dc_LOADED_WORKBOOKS
-        return True if wb_name in lwbl else False
+        if (lwbl is None or 
+            not isinstance(self.dc_LOADED_WORKBOOKS, dict) or
+            len(lwbl) == 0):
+            return False
+        return True if wb_id in lwbl else False
 
     def dc_WORKBOOK_name(self, wb_index: int) -> str:
         """DC-Only: Return wb_name for wb_index or None if does not exist."""

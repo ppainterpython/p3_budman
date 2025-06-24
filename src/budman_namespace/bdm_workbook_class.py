@@ -91,20 +91,23 @@ class BDMWorkbook:
     #region BDMWorkbook instance methods
     # ------------------------------------------------------------------------ +
     #region display_str
-    def display_str(self, wb_index:int=-1) -> str:
+    def display_str(self, wb_index:int=-1,wb_content:str="not loaded") -> str:
         """ Return a string representation of the BDMWorkbook object. """
-        s = f"{P4}{str(wb_index):>4}{P4}{str(self.wb_type):15}{P2}"
-        s += f"{str(self.wb_name):35}{P2}{str(self.wf_key):15}{P2}"
-        s += f"{str(self.wf_purpose):10}{P2}{str(self.wf_folder_id):20}{P2}"
-        s += f"{str(self.wf_folder):18}" #{P2}{str(self.wb_url):150}"
+        # Test output layout
+        #{P2}{FI_WORKBOOK_DATA_COLLECTION}: {wdc_count}\n"
+        #{P4}{WB_INDEX:8}{P2}{WB_ID:50}{P2}wb_loaded{P2}{WB_CONTENT:30}{P2}{WB_TYPE:15}{P2}{WB_TYPE:15}{P2}{WF_KEY:15}{P2}{WF_PURPOSE:10}{P2}\n
+        #
+        s = f"{P6}{str(wb_index):>2}{P6}{str(self.wb_id):50}{P2}"
+        s += f"{str(self.wb_loaded):^9}{P2}{wb_content:30}{P2}"
+        s += f"{str(self.wb_type):15}"
         return s
     #endregion display_str
     # ------------------------------------------------------------------------ +
     #region display_brief_str
     def display_brief_str(self, wb_index:int=-1) -> str:
         """ Return a string representation of the BDMWorkbook object. """
-        s = f"{P4}{str(wb_index):^6}{P2}{str(self.wb_type):15}{P2}"
-        s += f"{str(self.wb_name):35}"
+        s = f"{P4}{str(wb_index):^6}{P4}{str(self.wb_name):35}{P2}"
+        s += f"{str(self.wb_type):15}{P2}"
         return s
     #endregion display_brief_str
     # ------------------------------------------------------------------------ +
