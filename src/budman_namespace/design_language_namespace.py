@@ -142,6 +142,7 @@ FI_KEY = FI_KEY
 FI_NAME = "fi_name"
 FI_TYPE = "fi_type"
 FI_FOLDER = "fi_folder" 
+FI_TRANSACTION_DESCRIPTION_COLUMN = "fi_transaction_description_column"
 FI_WORKFLOW_DATA_COLLECTION = "fi_workflow_data_collection" 
 FI_WORKBOOK_DATA_COLLECTION = "fi_workbook_data_collection" 
 # Additional FI_DATA-related constants

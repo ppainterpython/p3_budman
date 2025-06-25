@@ -52,7 +52,9 @@ from budman_namespace.design_language_namespace import (
     DATA_CONTEXT, WORKBOOK_DATA_LIST, LOADED_WORKBOOK_COLLECTION,
     WORKBOOK_DATA_COLLECTION, WORKBOOK_OBJECT,
     BDM_STORE, DATA_COLLECTION, ALL_KEY, FI_KEY, WF_KEY, WB_ID, WB_REF, WB_NAME,
-    WB_TYPE, WF_PURPOSE, WB_INDEX, WB_URL, BUDMAN_RESULT, WORKBOOK_CONTENT)
+    WB_TYPE, WF_PURPOSE, WB_INDEX, WB_URL, BUDMAN_RESULT, WORKBOOK_CONTENT,
+    BDM_DATA_CONTEXT, DC_FI_KEY, DC_WF_KEY, DC_WF_PURPOSE, DC_WB_TYPE,
+    DC_CHECK_REGISTERS)
 from budman_data_context.budman_data_context_base_ABC import BudManDataContext_Base
 from budget_storage_model.csv_data_collection import (csv_DATA_COLLECTION_url_get)
 #endregion imports
@@ -66,6 +68,7 @@ class BudManDataContext(BudManDataContext_Base):
     # ------------------------------------------------------------------------ +
     #region BudManDataContext__init__()
     def __init__(self, *args, dc_id : str = None) -> None:
+        """DC-Only: Constructor Initialize the BudManDataContext."""
         self._initialization_in_progress = True
         self._dc_id :str = dc_id if dc_id else self.__class__.__name__
         self._dc_initialized = False 
@@ -335,27 +338,38 @@ class BudManDataContext(BudManDataContext_Base):
     # ------------------------------------------------------------------------ +
     #region BudManDataContext_Base Methods (concrete)
     def dc_initialize(self) -> None:
-        """DC-Only: Initialize the data context."""
-        self.dc_FI_OBJECT = None 
-        self.dc_FI_KEY = None
-        self.dc_WF_KEY = None
-        self.dc_WF_PURPOSE = None
-        self.dc_WB_TYPE = None
-        self.dc_WB_NAME = None
-        self.dc_WB_INDEX : int = -1
-        self.dc_WB_REF = None
-        self.dc_WB_ALL_WORKBOOKS : bool = False
-        self.dc_BDM_STORE = dict()
-        self.dc_WORKBOOKS = []
-        self.dc_WORKBOOK_DATA_COLLECTION = dict()
-        self.dc_LOADED_WORKBOOKS = dict()
-        self.dc_EXCEL_WORKBOOKS = dict()
-        self.dc_DataContext = dict()
-        self.dc_CHECK_REGISTERS = dict()
-        self.dc_LOADED_CHECK_REGISTERS = dict()
-        self.dc_INITIALIZED = True
-        self._initialization_in_progress = False
-        return self
+        """DC-Only: Runtime Initialize the data context."""
+        try:
+            # For best outcome, the subclass should set dc_BDM_STORE ahead of time.
+            self.dc_BDM_STORE = dict() if self.dc_BDM_STORE is None else self.dc_BDM_STORE
+            # Update DC values saved in BDM_STORE.BDM_DATA_CONTEXT.
+            bdms = self.dc_BDM_STORE
+            bdm_store_dc = bdms.get(BDM_DATA_CONTEXT, {})
+            self.dc_FI_KEY = bdm_store_dc.get(DC_FI_KEY, None)
+            self.dc_WF_KEY = bdm_store_dc.get(DC_WF_KEY, None)
+            self.dc_WF_PURPOSE = bdm_store_dc.get(DC_WF_PURPOSE, None)
+            self.dc_WB_TYPE = bdm_store_dc.get(DC_WB_TYPE, None)
+            self.dc_CHECK_REGISTERS = bdm_store_dc.get(DC_CHECK_REGISTERS, {})
+            # Just initialize the rest of the DC properties.
+            # Further Model-Aware initialization is done in the subclass.
+            self.dc_FI_OBJECT = None 
+            self.dc_WB_NAME = None
+            self.dc_WB_INDEX : int = -1
+            self.dc_WB_REF = None
+            self.dc_WB_ALL_WORKBOOKS : bool = False
+            self.dc_WORKBOOKS = []
+            self.dc_WORKBOOK_DATA_COLLECTION = dict()
+            self.dc_LOADED_WORKBOOKS = dict()
+            self.dc_EXCEL_WORKBOOKS = dict()
+            self.dc_DataContext = dict()
+            self.dc_LOADED_CHECK_REGISTERS = dict()
+            self.dc_INITIALIZED = True
+            self._initialization_in_progress = False
+            return self
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise RuntimeError(f"Failed to initialize the data context: {m}")
 
     def dc_FI_KEY_validate(self, fi_key: str) -> bool:
         """DC-Only: Validate the provided FI_KEY.

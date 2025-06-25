@@ -12,21 +12,42 @@
 # ---------------------------------------------------------------------------- +
 #region Imports
 # python standard library modules and packages
-import re, pathlib as Path, sys, io, logging
-from datetime import datetime as dt
-
+from typing import Dict, Any, Optional, Union, List
 # third-party modules and packages
 import p3logging as p3l, p3_utils as p3u
-from treelib import Tree
 
 # local modules and packages.
+
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
-logger = logging.getLogger(__name__)
+#logger = logging.getLogger(__name__)
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
-#region Category Map
+#region check_register_map
+# Map a CheckRegister .csv 'Pay-To' field to a Budget Category
+# Append 'Check: nnnnn' to level3
+# Process a workbook to match 'Checks to Categorize, map in check_register_map,
+# replace the desciption with the key value appended with ' - Check: nnnnn' and
+# set the Budget_Category.
+check_register_map = {
+    'Unknown': 'Banking.Checks to Categorize',
+    'Nicole Smith': 'Health and Wellbeing.Hair Care.Nicole Smith',
+    'Landmark Roofing and Construction': 'Housing.Improvements.Landmark Roofing',
+    'Tejas Chapter DRT': 'Organizations.DRT.Tejas Chapter',
+    'Maria Oyestas': 'Housing.Maid Service.Maria Oyestas',
+    'Passport Services': 'Travel.Passport Services.Check 2883',
+    'APQT': 'Medical.Physical Therapy.APQT',
+    'Detergent Maria Oyestas': 'Groceries.Detergent Maria Oyestas',
+    'Colonel George Moffett Chapter DAR': 'Professional and Historical Organizations.DAR.Colonel George Moffett Chapter',
+    'Hannah Painter': 'Misc.Reimbursement.Hannah Painter',
+    'Laura Painter': 'Banking.Laura Painter',
+    'Lawn Sprinkler': 'Housing.Lawn Care.Sprinkler Maintenance',
+    'HVAC Grape Cove Unknown': 'Housing.HVAC.Unknown',
+}
+#endregion check_register_map
+# ---------------------------------------------------------------------------- +
+#region category_map
 # category_map : dict[pattern: str, category:str] = {}
 # The category_map key is an re:search pattern, that when it matches, the value
 # is returned. The pattern is applied to description text and returns a 
@@ -262,10 +283,11 @@ category_map = {
     r'(?i).*TOTAL\s*WINE\s*AND.*': 'Consumable Goods.Liquor.Total Wine and More',
     r'(?i)\bTWIN\sLIQUORS\b': 'Consumable Goods.Liquor.Twin Liquors',
     r'(?i).*KOMEN\sLIQUOR\b': 'Consumable Goods.Liquor.Komen Liquor',
+    # Restaurants
     r'(?i).*BELLA\s*SERA.*': 'Consumable Goods.Restaurants.Bella Sera',
     r'(?i).*CASA\s*GARCIA.*': 'Consumable Goods.Restaurants.Garcias',
     r'(?i).*LANDRYS.*': 'Consumable Goods.Restaurants.Landrys',
-    r'(?i).*FAVOR\s*SONIC.*DRIVEIN.*': 'Consumable Goods.Restaurants.Favor.Sonic Drive-In',
+    r'(?i).*FAVOR\s*SONIC.*DRIVEIN.*': 'Consumable Goods.Favor.Sonic Drive-In',
     r'(?i).*BURGER\s*KING.*': 'Consumable Goods.Restaurants.Burger King',
     r'(?i).*GATTILAND\s*ROUND\s*ROCK.*': 'Consumable Goods.Restaurants.Gattiland',
     r'(?i).*COTTON\s*PATCH\s*CAFE.*': 'Consumable Goods.Restaurants.Cotton Patch Cafe',
@@ -283,7 +305,7 @@ category_map = {
     r'(?i).*FANN\'S\s*PHILLY\s*GRILL.*': 'Consumable Goods.Restaurants.Fanns Philly Grill',
     r'(?i).*VILLA\s*FRESH\s*ITALI.*': 'Consumable Goods.Restaurants.Villa Fresh Italian',
     r'(?i).*THUNDERCLOUD.*': 'Consumable Goods.Restaurants.Thundercloud Subs',
-    r'(?i).*FAVOR\s*HOODYS\s*SUBS.*': 'Consumable Goods.Restaurants.Favor.Hoodys Subs',
+    r'(?i).*FAVOR\s*HOODYS\s*SUBS.*': 'Consumable Goods.Favor.Hoodys Subs',
     r'(?i).*BLAZE\s*PIZZA.*': 'Consumable Goods.Restaurants.Blaze Pizza',
     r'(?i).*SANTIAGO\'*S\s*TEX\s*MEX.*': 'Consumable Goods.Restaurants.Santiagos Tex Mex',
     r'(?i).*CHEESECAKE\s*AUSTIN.*': 'Consumable Goods.Restaurants.CheeseCake Austin',
@@ -301,15 +323,6 @@ category_map = {
     r'(?i).*ROUND\s*ROCK\s*DONUTS.*': 'Consumable Goods.Restaurants.Round Rock Donuts',
     r'(?i).*HOPDODDY.*': 'Consumable Goods.Restaurants.Hopdoddy',
     r'(?i)\bPANERA\s*BREAD.*': 'Consumable Goods.Restaurants.Panera Bread',
-    r'(?i)\bFAVOR\s*TACODELI.*': 'Consumable Goods.Restaurants.Favor.Taco Deli',
-    r'(?i)\bFAVOR\s*TROPICAL\s*SMOOTH.*': 'Consumable Goods.Restaurants.Favor.Tropical Smoothie',
-    r'(?i)\bFAVOR\s*SMOKEYMOS.*': 'Consumable Goods.Restaurants.Favor.Smokey Mo\'s',
-    r'(?i)\bFAVOR\s*PANDA\s*EXPRESS.*': 'Consumable Goods.Restaurants.Favor.Panda Express',
-    r'(?i)\bFAVOR\s*NOODYS.*': 'Consumable Goods.Restaurants.Favor.Hoodys',
-    r'(?i)\bFAVOR\s*AMYS\s*ICE\s*CREAM.*': 'Consumable Goods.Restaurants.Favor.Amys Ice Cream',
-    r'(?i)\bFAVOR\s*PIZZA\s*HUT.*': 'Consumable Goods.Restaurants.Favor.Amys Ice Cream',
-    r'(?i)\bFAVOR\s*MCDONALDS.*': 'Consumable Goods.Restaurants.Favor.McDonalds',
-    r'(?i)\bFAVOR\s*SLAPBOX\s*PIZZ.*': 'Consumable Goods.Restaurants.Favor.Slapbox Pizza',
     r'(?i).*MONUMENT\s*CAFE.*': 'Consumable Goods.Restaurants.Monument Cafe',
     r'(?i)\bJASON\'S\s*DELI.*': 'Consumable Goods.Restaurants.Jasons Deli',
     r'(?i).*SHIPLEY\s*DO-NUTS': 'Consumable Goods.Restaurants.Shipleys Donuts',
@@ -321,10 +334,6 @@ category_map = {
     r'(?i)\bTST\*LA\sMARGARITA\b': 'Consumable Goods.Restaurants.La Margarita',
     r'(?i)\bSURF\sAND\sTURF\b': 'Consumable Goods.Restaurants.Surf and Turf',
     r'(?i)\bCASA\sOLE\b': 'Consumable Goods.Restaurants.Casa Ole',
-    r'(?i)\bID:DOORDASH\b': 'Consumable Goods.Restaurants.Door Dash',
-    r'(?i)\bID:DOORDASHINC\b': 'Consumable Goods.Restaurants.Door Dash',
-    r'(?i)\s\*DOORDASH\b': 'Consumable Goods.Restaurants.Door Dash',
-    r'(?i).*DOORDASH.*': 'Consumable Goods.Restaurants.Door Dash',
     r'(?i)\bDAIRY\sQUEEN\b': 'Consumable Goods.Restaurants.Dairy Queen',
     r'(?i)\bCHICK-FIL-A\b': 'Consumable Goods.Restaurants.Chick-Fil-A',
     r'(?i)\bMOD\sPIZZA\b': 'Consumable Goods.Restaurants.Mod Pizza',
@@ -345,9 +354,24 @@ category_map = {
     r'(?i).*TACO\s*BELL.*': "Consumable Goods.Restaurants.Taco Bell",
     r'(?i).*MAMA\s*BETTY.*': "Consumable Goods.Restaurants.Mama Betty's",
     r'(?i).*OLIVE\s*GARDEN.*': "Consumable Goods.Restaurants.Olive Garden",
-    r'(?i)\bCANTEEN\s*AUSTIN.*': "Consumable Goods.Restaurants.Misc.Canteen Austin",
-    r'(?i)\bBSWRR\s*GUEST\s*TRAYS.*': "Consumable Goods.Restaurants.Misc.Hospital",
-    r'(?i)\bTOMLINSON\'S\s*FEED.*': "Consumable Goods.Restaurants.Misc.Tomlinson's Feed",
+    r'(?i)\bCANTEEN\s*AUSTIN.*': "Consumable Goods.Restaurants.Canteen Austin",
+    r'(?i)\bBSWRR\s*GUEST\s*TRAYS.*': "Consumable Goods.Restaurants.Hospital",
+    r'(?i)\bTOMLINSON\'S\s*FEED.*': "Consumable Goods.Restaurants.Tomlinson's Feed",
+    # Door Dash
+    r'(?i)\bID:DOORDASH\b': 'Consumable Goods.Door Dash',
+    r'(?i)\bID:DOORDASHINC\b': 'Consumable Goods.Door Dash',
+    r'(?i)\s\*DOORDASH\b': 'Consumable Goods.Door Dash',
+    r'(?i).*DOORDASH.*': 'Consumable Goods.Door Dash',
+    # Favor
+    r'(?i)\bFAVOR\s*TACODELI.*': 'Consumable Goods.Favor.Taco Deli',
+    r'(?i)\bFAVOR\s*TROPICAL\s*SMOOTH.*': 'Consumable Goods.Favor.Tropical Smoothie',
+    r'(?i)\bFAVOR\s*SMOKEYMOS.*': 'Consumable Goods.Favor.Smokey Mo\'s',
+    r'(?i)\bFAVOR\s*PANDA\s*EXPRESS.*': 'Consumable Goods.Favor.Panda Express',
+    r'(?i)\bFAVOR\s*NOODYS.*': 'Consumable Goods.Favor.Hoodys',
+    r'(?i)\bFAVOR\s*AMYS\s*ICE\s*CREAM.*': 'Consumable Goods.Favor.Amys Ice Cream',
+    r'(?i)\bFAVOR\s*PIZZA\s*HUT.*': 'Consumable Goods.Favor.Amys Ice Cream',
+    r'(?i)\bFAVOR\s*MCDONALDS.*': 'Consumable Goods.Favor.McDonalds',
+    r'(?i)\bFAVOR\s*SLAPBOX\s*PIZZ.*': 'Consumable Goods.Favor.Slapbox Pizza',
 #endregion Restaurants, Door Dash, Eating Out, Snacks
 #region Shopping - Amazon, Apple, Clothing, etc.
     r'(?i).*APOLLA\s*PERFORM.*': 'Clothing.Apparel.Apolla Performance',
@@ -622,139 +646,32 @@ category_map = {
 #endregion Unknowns, one-offs (applied last)
 #region Checks categorized manually by number - run last
     r'(?i)\bCheck\s*x*\d*\b': 'Banking.Checks to Categorize'
+#endregion Checks categorized manually by number - run last
 }
-#endregion Category Map
-#region check_register_map
-# Map a CheckRegister .csv 'Pay-To' field to a Budget Category
-# Append 'Check: nnnnn' to level3
-# Process a workbook to match 'Checks to Categorize, map in check_register_map,
-# replace the desciption with the key value appended with ' - Check: nnnnn' and
-# set the Budget_Category.
-check_register_map = {
-    'Unknown': 'Banking.Checks to Categorize',
-    'Nicole Smith': 'Health and Wellbeing.Hair Care.Nicole Smith',
-    'Landmark Roofing and Construction': 'Housing.Improvements.Landmark Roofing',
-    'Tejas Chapter DRT': 'Organizations.DRT.Tejas Chapter',
-    'Maria Oyestas': 'Housing.Maid Service.Maria Oyestas',
-    'Passport Services': 'Travel.Passport Services.Check 2883',
-    'APQT': 'Medical.Physical Therapy.APQT',
-    'Detergent Maria Oyestas': 'Groceries.Detergent Maria Oyestas',
-    'Colonel George Moffett Chapter DAR': 'Professional and Historical Organizations.DAR.Colonel George Moffett Chapter',
-    'Hannah Painter': 'Misc.Reimbursement.Hannah Painter',
-    'Laura Painter': 'Banking.Laura Painter',
-    'Lawn Sprinkler': 'Housing.Lawn Care.Sprinkler Maintenance',
-    'HVAC Grape Cove Unknown': 'Housing.HVAC.Unknown',
-}
-#endregion check_register_map
+#endregion category_map
 # ---------------------------------------------------------------------------- +
-#region category_map_count() function
-def category_map_count():
-    return len(category_map)
-#endregion category_map_count() function
-# ---------------------------------------------------------------------------- +
-#region map_category() function
-def map_category(src_str):
-    """Map a transaction description to a budget category."""
-    # Run the src_str through the category_map to find a match.
-    try:
-        for pattern, category in category_map.items():
-            if re.search(pattern, str(src_str), re.IGNORECASE):
-                return category
-        return 'Other'  # Default category if no match is found
-    except re.PatternError as e:
-        logger.error(p3u.exc_msg(map_category, e))
-        logger.error(f'Pattern error: category_map dict: ' 
-                     f'{{ \"{e.pattern}\": \"{category}\" }}')
-        raise
-    except Exception as e:
-        logger.error(p3u.exc_msg(map_category, e))
-        raise
-#endregion map_category() function
-# ---------------------------------------------------------------------------- +
-#region extract_category_tree()
-def dot(n1:str=None, n2:str=None, n3:str=None) -> str:
-    """Format provided nodes with a dot in between."""
-    if not n1: return None
-    c = f"{n1}.{n2}" if n2 else n1
-    if not n2: return c
-    return f"{n1}.{n2}.{n3}" if n3 else c  
+#region category_histogram
+class CategoryCounter(dict):
+    """A custom dictionary to count occurrences of budget categories."""
+    def __missing__(self, key):
+        return 0
+    def count(self, key: str) -> str:
+        """Increment the count for key, return key."""
+        self[key] += 1
+        return key
+category_histogram : Optional[CategoryCounter] = None
 
-def extract_category_tree(level:int=2):
-    """Extract the category tree from the category_map."""
-    try:
-        now = dt.now()
-        now_str = now.strftime("%Y-%m-%d %I:%M:%S %p")
-        tree = Tree()
-        bct = tree.create_node("Budget", "root")  # Root node
-        filter_list = ["Darkside"]        
-        for _, category in zip(category_map.items(), check_register_map.items()):
-            l1, l2, l3 = split_budget_category(category)
-            if l1 in filter_list:
-                continue
-            if tree.contains(l1): 
-                # If Level 1 already exists, find it
-                l1_node = tree.get_node(l1)
-            else:
-                l1_node = tree.create_node(l1, l1, parent="root")
-            if not l2 or level < 2:
-                continue
-            c = dot(l1, l2)
-            if tree.contains(c):
-                # If Level 2 already exists, find it
-                l2_node = tree.get_node(c)
-            else:
-                l2_node = tree.create_node(l2, c, parent=l1_node)
-            if not l3 or level < 3:
-                continue
-            c = dot(l1, l2, l3)
-            if tree.contains(c):
-                # If Level 3 already exists, find it
-                l3_node = tree.get_node(c)
-            else:
-                l3_node = tree.create_node(l3, c, parent=l2_node)
-        buffer = io.StringIO()
-        sys.stdout = buffer  # Redirect stdout to capture tree output
-        print(f"Budget Category List(level {level}) {now_str}\n")
-        tree.show()
-        sys.stdout = sys.__stdout__  # Reset stdout
-        output = buffer.getvalue()
-        return output
-    except Exception as e:
-        logger.error(p3u.exc_err_msg(e))
-        raise
-#endregion extract_category_tree()# ---------------------------------------------------------------------------- +
-# ---------------------------------------------------------------------------- +
-#region split_budget_category() -> tuple function
-def split_budget_category(budget_category: str) -> tuple[str, str, str]:
-    """Split a budget category string into three levels.
-    
-    The budget category is expected to be in the format "Level1.Level2.Level3".
-    If the budget category does not have all three levels, the missing levels 
-    will be set to an empty string.
+def get_category_histogram() -> CategoryCounter:
+    """Get the category histogram, initializing it if necessary."""
+    global category_histogram
+    if category_histogram is None:
+        category_histogram = CategoryCounter()
+    return category_histogram
 
-    Args:
-        budget_category (str): The budget category string to split.
-
-    Returns:
-        tuple[str, str, str]: A tuple containing Level1, Level2, and Level3.
-    """
-    try:
-        if not isinstance(budget_category, str):
-            raise TypeError(f"Expected 'budget_category' to be a str, got {type(budget_category)}")
-        l1 = l2 = l3 = ""
-        c = budget_category.count('.')
-        if c >= 2:
-            # Split the budget category by '.' and ensure we have 3 parts.
-            l1, l2, l3 = budget_category.split('.',3)
-        elif c == 1:
-            # Split the budget category by '.' and ensure we have 2 parts.
-            l1, l2 = budget_category.split('.',2)
-        else:
-            # If no '.' is present, treat the whole string as Level1.
-            l1 = budget_category
-        return l1, l2, l3
-    except Exception as e:
-        logger.error(p3u.exc_err_msg(e))
-        raise
-#endregion split_budget_category() function
+def clear_category_histogram():
+    """Clear the category histogram."""
+    global category_histogram
+    category_histogram = CategoryCounter()
+    return category_histogram
+#endregion category_histogram
 # ---------------------------------------------------------------------------- +

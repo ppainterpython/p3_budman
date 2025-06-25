@@ -390,14 +390,14 @@ class BudManCLIParser():
             self.add_wb_index_argument(categorization_parser)
 
             categorization_parser.add_argument(
-                "--load_workbook","-l", 
+                "--load_workbook","-l", "-load", 
                 action="store_true", 
                 help="Load the workbook if not yet loaded.")
             
             categorization_parser.add_argument(
                 "--check-register","-cr",  
                 action="store_true", 
-                help="Command is only parsed with results returned.")
+                help="Specified workbook is type: Check Register.")
             
             # Workflow task sub-command: task
             task_parser = subparsers.add_parser(
@@ -454,7 +454,7 @@ class BudManCLIParser():
             reload_parser = subparsers.add_parser(
                 "reload",
                 aliases=["r"], 
-                help="Reload modules.")
+                help="(move to App cmd) Reload modules.")
             reload_parser.set_defaults(workflow_cmd="reload")
             reload_parser.add_argument(
                 "reload_target", nargs="?",
@@ -512,6 +512,12 @@ class BudManCLIParser():
                 type=int, 
                 default = -1,
                 help=f"Workbook index: number associated in the workbook list, 0-based.")
+            # group.add_argument(
+            #     "wb_list", nargs="*",
+            #     action='extend',
+            #     type=int, 
+            #     default = [],
+            #     help=f"Workbook index: one or more numbers (spaces, no commas) indexing from the workbook list, 0-based.")
             group.add_argument(
                 "-all", dest="all_wbs", 
                 action = "store_true",

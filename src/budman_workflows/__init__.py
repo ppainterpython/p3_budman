@@ -18,24 +18,49 @@ __name__ = "budman_workflows"
 __description__ = "Budget Manager (BudMan) Workflow process implementation."
 __license__ = "MIT"
 
-from .budget_category_mapping import (
-    map_category, category_map, category_map_count
+from .workflow_utils import (
+    generate_hash_key, 
+    split_budget_category, 
+    extract_category_tree, 
+    category_map_count, 
+    map_category, 
 )
 from .budget_categorization import (
-    check_budget_category, check_sheet_columns, map_budget_category,
-    check_sheet_schema,ORIGINAL_DESCRIPTION_COL_NAME, apply_check_register
+    check_sheet_columns, 
+    check_sheet_schema, 
+    check_budget_category, 
+    ORIGINAL_DESCRIPTION_COL_NAME, 
+    map_budget_category,
+    apply_check_register
+)
+from .budget_category_mapping import (
+    category_map, 
+    check_register_map, 
+    category_histogram,
+    clear_category_histogram,
+    get_category_histogram
 )
 
 # symbols for "from budman_model import *"
 __all__ = [
-    "budget_category_mapping",  # list modules here to use importlib.reload()
-    "check_budget_category",
+    # workflow_utils.py module
+    "generate_hash_key",
+    "split_budget_category",
+    "category_map_count",
+    "extract_category_tree",
+    "category_map_count",
+    "map_category",
+    # budget_categorization.py module
     "check_sheet_columns",
     "check_sheet_schema",
+    "check_budget_category",
     "ORIGINAL_DESCRIPTION_COL_NAME",
     "map_budget_category",
-    "map_category",
+    "apply_check_register",
+    # budget_category_mapping.py module
     "category_map",
-    "category_map_count",
-    "apply_check_register"
+    "check_register_map",
+    "category_histogram",
+    "clear_category_histogram",
+    "get_category_histogram"
 ]

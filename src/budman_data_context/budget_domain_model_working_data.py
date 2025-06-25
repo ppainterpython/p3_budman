@@ -111,23 +111,19 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
                 m = "There is no model binding. Cannot dc_initialize BDMWorkingData."
                 logger.error(m)
                 raise ValueError(m)
-            # Perform BudManDataContext.dc_initialize() to set up the DC.
-            super().dc_initialize()
+            # With the model available, obtain the BDM_STORE_OBJECT from the 
+            # model, used to initialize it. The DC initialize chain uses it.
             # The model's BDM_STORE_OBJECT was used to initialize the model.
             bdm_store = getattr(self.model, BDM_STORE_OBJECT, None)
             if bdm_store is None:
                 m = "The model binding does not have a bdm_store_object."
                 logger.error(m)
                 raise ValueError(m)
-            # Place a reference to the bdm_store in the DC.
+            # Place a reference to the bdm_store in the DC, for super().dc_initialize().
             self.dc_BDM_STORE = bdm_store
-            # Update DC values save in BDM_STORE.BDM_DATA_CONTEXT.
-            bdm_store_dc = bdm_store.get(BDM_DATA_CONTEXT, {})
-            self.dc_FI_KEY = bdm_store_dc.get(DC_FI_KEY, None)
-            self.dc_WF_KEY = bdm_store_dc.get(DC_WF_KEY, None)
-            self.dc_WF_PURPOSE = bdm_store_dc.get(DC_WF_PURPOSE, None)
-            self.dc_WB_TYPE = bdm_store_dc.get(DC_WB_TYPE, None)
-            # Set the model-aware properties.
+            # Perform BudManDataContext.dc_initialize() to set up the DC-Only parts.
+            super().dc_initialize()
+            # Model-Aware DC property initialization.
             try:
                 if not self.dc_FI_KEY:
                     m = "dc_FI_KEY is None. Cannot initialize dc_WORKBOOK_DATA_COLLECTION."
@@ -141,7 +137,6 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
             except Exception as e:
                 m = f"{p3u.exc_err_msg(e)}"
                 logger.error(m)
-            self.dc_CHECK_REGISTERS = bdm_store_dc.get(DC_CHECK_REGISTERS, {})
             self.dc_INITIALIZED = True
             return self
         except Exception as e:
