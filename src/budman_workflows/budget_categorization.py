@@ -523,7 +523,7 @@ def process_budget_category(wb_object:WORKBOOK_OBJECT,
             logger.error(m)
             return False, m
         wb : Workbook = bdm_DC.dc_LOADED_WORKBOOKS[bdm_wb.wb_id]
-        if not p3u.is_not_obj_of_type("wb", wb, Workbook):
+        if p3u.is_not_obj_of_type("wb", wb, Workbook):
             m = f"Error accessing wb_content for workbook: '{bdm_wb.wb_id}'."
             logger.error(m)
             return False, m
@@ -533,10 +533,6 @@ def process_budget_category(wb_object:WORKBOOK_OBJECT,
                     f"missing required columns.")
             logger.error(m)
             return False, m
-        rules_count = category_map_count()
-        logger.info(f"Task: Apply '{rules_count}' budget category mapping rules "
-                    f"to {ws.max_row-1} rows in workbook: '{bdm_wb.wb_id}' "
-                    f"worksheet: '{ws.title}'")
         # A row is a tuple of the Cell objects in the row. Tuples are 0-based
         # hdr is a list, also 0-based. So, using the index(name) will 
         # give the cell from a row tuple matching the column name in hdr.
@@ -576,6 +572,11 @@ def process_budget_category(wb_object:WORKBOOK_OBJECT,
         num_rows = ws.max_row # or set a smaller limit
         other_count = 0
         ch = get_category_histogram()  # Clear the histogram before processing.
+        rules_count = category_map_count()
+        logger.info(f"Start Task: Apply '{rules_count}' budget category mapping rules "
+                    f"to {ws.max_row-1} rows in workbook: '{bdm_wb.wb_id}' "
+                    f"worksheet: '{ws.title}'")
+        st = p3u.start_timer()
         for row in ws.iter_rows(min_row=2):
             # row is a 'tuple' of Cell objects, 0-based index
             row_idx = row[0].row  # Get the row index, the row number, 1-based.
@@ -605,8 +606,12 @@ def process_budget_category(wb_object:WORKBOOK_OBJECT,
                 if abs(transaction.amount) > 100:
                     logger.debug(f"{row_idx:04}:{trans_str}" )
             del transaction  # Clean up the transaction object.
-        m = (f"Task Complete: Mapped rows: '{num_rows}', to '{len(ch)}' "
-             f"Budget Categories, 'Other' category count: {ch['Other']}")
+        time_taken = p3u.stop_timer(st)
+        elapsed : float = time.time() - st
+        per_row = elapsed / (num_rows - 1) if num_rows > 1 else 0.0
+        m = (f"Task Complete: {time_taken} Mapped '{num_rows}' rows, to "
+             f"'{len(ch)}' Categories, {per_row:6f} seconds per row, "
+             f"'Other' category count: {ch['Other']}")
         logger.info(m)
         return True, m
     except Exception as e:

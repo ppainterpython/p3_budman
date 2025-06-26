@@ -372,6 +372,10 @@ class BudManDataContext_Binding(BudManDataContext_Base):
         # Bind through the DC (data_context) object.
         return self.DC.dc_WB_REF_resolve(wf_key)
 
+    def dc_WORKBOOK_DATA_COLLECTION_validate(self) -> bool:
+        """Validate the type of WORKBOOK_DATA_COLLECTION."""
+        return self.DC.dc_WORKBOOK_DATA_COLLECTION_validate()
+    
     def dc_WORKBOOK_validate(self, wb: WORKBOOK_OBJECT) -> bool:
         """DC-Binding: Validate the type of WORKBOOK_OBJECT.
         Abstract: sub-class hook to test specialized WORKBOOK_OBJECT types.

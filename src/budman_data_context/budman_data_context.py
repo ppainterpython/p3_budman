@@ -84,13 +84,13 @@ class BudManDataContext(BudManDataContext_Base):
         self._dc_ALL_WBS : bool = False
         self._dc_BDM_STORE : BDM_STORE = None 
         self._dc_WORKBOOK : WORKBOOK_OBJECT = None 
-        self._dc_WORKBOOK_DATA_COLLECTION : WORKBOOK_DATA_COLLECTION = None 
-        self._dc_WORKBOOKS : WORKBOOK_DATA_LIST = None # deprecated, use dc_WORKBOOK_DATA_COLLECTION
-        self._dc_LOADED_WORKBOOKS : LOADED_WORKBOOK_COLLECTION = None
-        self._dc_EXCEL_WORKBOOKS : DATA_COLLECTION = None
-        self._dc_DataContext : DATA_CONTEXT = None 
-        self._dc_CHECK_REGISTERS : DATA_COLLECTION = None 
-        self._dc_LOADED_CHECK_REGISTERS : DATA_COLLECTION = None 
+        self._dc_WORKBOOK_DATA_COLLECTION : WORKBOOK_DATA_COLLECTION = dict() 
+        self._dc_WORKBOOKS : WORKBOOK_DATA_LIST = list() # deprecated, use dc_WORKBOOK_DATA_COLLECTION
+        self._dc_LOADED_WORKBOOKS : LOADED_WORKBOOK_COLLECTION = dict()
+        self._dc_EXCEL_WORKBOOKS : DATA_COLLECTION = dict()
+        self._dc_DataContext : DATA_CONTEXT = dict()
+        self._dc_CHECK_REGISTERS : DATA_COLLECTION = dict() 
+        self._dc_LOADED_CHECK_REGISTERS : DATA_COLLECTION = dict() 
     #endregion BudManDataContext__init__()
     # ------------------------------------------------------------------------ +
     #region BudManDataContext_Base Properties (concrete) 
@@ -118,6 +118,9 @@ class BudManDataContext(BudManDataContext_Base):
     @dc_INITIALIZED.setter
     def dc_INITIALIZED(self, value: bool) -> None:
         """DC-Only: Set the initialized state of the data context."""
+        if value:
+            # Full enable dc_VALID after upstream sets to True
+            self._initialization_in_progress = False
         self._dc_initialized = value
 
     @property
@@ -368,7 +371,6 @@ class BudManDataContext(BudManDataContext_Base):
             self.dc_CHECK_REGISTERS = bdm_store_dc.get(DC_CHECK_REGISTERS, {})
             # Further Model-Aware initialization can be done in the subclass.
             # So, don't change the values here.
-            self._initialization_in_progress = False
             return self
         except Exception as e:
             m = p3u.exc_err_msg(e)
@@ -421,6 +423,8 @@ class BudManDataContext(BudManDataContext_Base):
             return False
         # Check if the index is valid.
         try:
+            if not self.dc_WORKBOOK_DATA_COLLECTION_validate():
+                return False
             if wb_index < 0 or wb_index >= len(self.dc_WORKBOOK_DATA_COLLECTION):
                 m = (f"Workbook index out of range: {wb_index}")
                 logger.error(m)
@@ -519,6 +523,19 @@ class BudManDataContext(BudManDataContext_Base):
             logger.error(m)
             raise
     
+    def dc_WORKBOOK_DATA_COLLECTION_validate(self) -> bool:
+        """Validate the type of WORKBOOK_DATA_COLLECTION."""
+        if not self.dc_VALID: return False
+        if self.dc_WORKBOOK_DATA_COLLECTION is None:
+            logger.error("dc_WORKBOOK_DATA_COLLECTION is None.")
+            return False
+        wdc = self.dc_WORKBOOK_DATA_COLLECTION
+        if not isinstance(wdc, dict):
+            logger.error(f"dc_WORKBOOK_DATA_COLLECTION must be a dict, "
+                         f"not type: '{type(wdc).__name__}'")
+            return False
+        return True 
+
     def dc_WORKBOOK_validate(self, wb : WORKBOOK_OBJECT) -> bool:
         """DC-Only: Validate the type of WORKBOOK_OBJECT.
         Abstract: sub-class hook to test specialized WORKBOOK_OBJECT types.

@@ -347,6 +347,11 @@ class BudManDataContext_Base(ABC):
         pass
 
     @abstractmethod
+    def dc_WORKBOOK_DATA_COLLECTION_validate(self, wdc : WORKBOOK_DATA_COLLECTION) -> bool:
+        """Validate the type of WORKBOOK_DATA_COLLECTION."""
+        pass
+
+    @abstractmethod
     def dc_WORKBOOK_validate(self, wb : WORKBOOK_OBJECT) -> bool:
         """Validate the type of WORKBOOK_OBJECT.
         Abstract: sub-class hook to test specialized WORKBOOK_OBJECT types.

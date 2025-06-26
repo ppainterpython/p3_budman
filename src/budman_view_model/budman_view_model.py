@@ -1706,7 +1706,7 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             # Prepare the output result
             result = f"{P2}{FI_WORKBOOK_DATA_COLLECTION}: {wdc_count}\n"
             result += f"{P4}{WB_INDEX:6}{P2}{WB_ID:50}{P2}"
-            result += f"wb_loaded{P2}{WB_CONTENT:30}"
+            result += f"{WB_TYPE:14}{P2}wb_loaded{P2}{WB_CONTENT:30}"
             # print(result)
             result += "\n"
             wb : BDMWorkbook = None
@@ -1740,17 +1740,13 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
         try:
             if wb_content is None:
                 return "not loaded"
-            wb_content_repr = "wb_content: "
             d = p3u.dscr(wb_content)
-            if wb_content is None:
-                wb_content_repr += "None"
+            if isinstance(wb_content, Workbook):
+                return f"({wb_content!r})"
             elif isinstance(wb_content, dict):
-                wb_content_repr += f"{d}[{len(wb_content)} items]"
-            elif isinstance(wb_content, Workbook):
-                wb_content_repr += f"Workbook({wb_content!r})"
+                return f"{d}[{len(wb_content)} items]"
             else:
-                wb_content_repr += f"{d}"
-            return wb_content_repr
+                return f"{d}"
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)

@@ -98,8 +98,8 @@ class BDMWorkbook:
         #{P4}{WB_INDEX:8}{P2}{WB_ID:50}{P2}wb_loaded{P2}{WB_CONTENT:30}{P2}{WB_TYPE:15}{P2}{WB_TYPE:15}{P2}{WF_KEY:15}{P2}{WF_PURPOSE:10}{P2}\n
         #
         s = f"{P6}{str(wb_index):>2}{P6}{str(self.wb_id):50}{P2}"
-        s += f"{str(self.wb_loaded):^9}{P2}{wb_content:30}{P2}"
-        s += f"{str(self.wb_type):15}"
+        s += f"{str(self.wb_type):14}{P2}{str(self.wb_loaded):^9}"
+        s += f"{P2}{wb_content:30}{P2}"
         return s
     #endregion display_str
     # ------------------------------------------------------------------------ +
