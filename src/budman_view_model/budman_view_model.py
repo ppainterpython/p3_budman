@@ -199,7 +199,7 @@ from budman_namespace.design_language_namespace import *
 from budman_namespace.bdm_workbook_class import BDMWorkbook
 from budman_workflows import (
     category_map_count, check_sheet_columns,
-    check_sheet_schema,map_budget_category,
+    check_sheet_schema,process_budget_category,
     apply_check_register, get_category_histogram
     )
 from budman_workflows import budget_category_mapping
@@ -1130,7 +1130,7 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             logger.debug(f"Start: ...")
             wb : Optional[WORKBOOK_OBJECT] = None
             wb_index : int = self.cp_cmd_arg_get(cmd, CMD_WB_INDEX, self.dc_WB_INDEX)
-            all_wbs : bool = self.cp_cmd_arg_get(cmd, CMD_ALL_WBS, self.dc_WB_ALL_WORKBOOKS)
+            all_wbs : bool = self.cp_cmd_arg_get(cmd, CMD_ALL_WBS, self.dc_ALL_WBS)
             wb_ref : str = self.cp_cmd_arg_get(cmd, WB_REF, self.dc_WB_REF)
 
             wb_count = len(self.dc_WORKBOOK_DATA_COLLECTION)
@@ -1187,7 +1187,7 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             # Get the command arguments.
             wb : Optional[WORKBOOK_OBJECT] = None
             wb_index : int = self.cp_cmd_arg_get(cmd, CMD_WB_INDEX, self.dc_WB_INDEX)
-            all_wbs : bool = self.cp_cmd_arg_get(cmd, CMD_ALL_WBS, self.dc_WB_ALL_WORKBOOKS)
+            all_wbs : bool = self.cp_cmd_arg_get(cmd, CMD_ALL_WBS, self.dc_ALL_WBS)
             # CMD_WB_INDEX/CMD_ALL_WBS are already validated.
             if all_wbs:
                 # Put all the LOADED_WORKBOOK_COLLECTION from the DC to storage.
@@ -1394,8 +1394,11 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
     def WORKFLOW_categorization_cmd(self, cmd : Dict) -> BUDMAN_RESULT:
         """Apply categorization workflow to one or more WORKBOOKS in the DC.
 
-        A WORKFLOW_categorization_cmd command will use the wb_ref value in the cmd. 
-        Value is a number or a wb_name.
+        As a workflow process, the WORKFLOW_categorization_cmd method has the
+        job to marshall the necessary input objects, implied by the command
+        arguments and perhaps Data Context, and then invoke the appropriate 
+        function or method to conduct the requested process, tasks, etc. It also
+        catches the return status and result to return.
 
         Arguments:
             cmd (Dict): A valid BudMan View Model Command object. For this
@@ -1412,72 +1415,76 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             root error is contained in the exception message.
         """
         try:
-            wb_content : Optional[WORKBOOK_OBJECT] = None
+            success : bool = False
+            r : str = ""
+            fr : str = f"Workflow Categorization \n"
+            m : str = ""
+            lwbc :LOADED_WORKBOOK_COLLECTION = None
+            bdm_wb : Optional[BDMWorkbook] = None
+            wb_content : Optional[WORKBOOK_CONTENT] = None
             wb_index : int = self.cp_cmd_arg_get(cmd, CMD_WB_INDEX, self.dc_WB_INDEX)
-            all_wbs : bool = self.cp_cmd_arg_get(cmd, CMD_ALL_WBS, self.dc_WB_ALL_WORKBOOKS)
-            check_register : bool = self.cp_cmd_arg_get(cmd, CMD_CHECK_REGISTER ,self.dc_CHECK_REGISTERS)
-            wf_wb_list :LOADED_WORKBOOK_COLLECTION = None
+            all_wbs : bool = self.cp_cmd_arg_get(cmd, CMD_ALL_WBS, self.dc_ALL_WBS)
             # wb_index and all_wbs are validated already. 
-            # Model-Aware: For the FI currently in the focus of the DC, we need
-            # some FI-specific info, the name of the transaction workbook 
-            # column used to map budget categories, the source.
-            src_col_name = self.dc_FI_OBJECT[FI_TRANSACTION_DESCRIPTION_COLUMN]
-            if not p3u.is_non_empty_str("src_col_name", src_col_name):
-                m = f"Source column name '{src_col_name}' is not valid."
-                logger.error(m)
-                return False, m
             # Choose either all_wbs or a specific workbook designated by 
             # wb_index to be processed. This applies to loaded workbooks only, 
             # so configure wf_wb_list with the intended workbooks to categorize.
             if all_wbs:
                 # If all_wbs, process all loaded workbooks.
-                wf_wb_list = self.dc_LOADED_WORKBOOKS
+                lwbc = self.dc_LOADED_WORKBOOKS
             else:
                 # wb_index is already validated.
-                wb = self.dc_WORKBOOK_by_index(wb_index)
-                if wb is None:
-                    m = f"wb_index '{self.dc_WB_INDEX}' is not valid."
+                bdm_wb = self.dc_WORKBOOK_by_index(wb_index)
+                if bdm_wb is None:
+                    m = f"wb_index '{wb_index}' is not valid."
                     logger.error(m)
                     return False, m
-                wb_id = wb.wb_id
-                wb.wb_loaded = wb_id in self.dc_LOADED_WORKBOOKS
-
-                if not wb.wb_loaded:
-                    m = f"Workbook '{wb.wb_id}' is not loaded, no action taken."
+                wb_id = bdm_wb.wb_id
+                bdm_wb.wb_loaded = wb_id in self.dc_LOADED_WORKBOOKS
+                if not bdm_wb.wb_loaded:
+                    m = f"Workbook '{bdm_wb.wb_id}' is not loaded, no action taken."
                     logger.error(m)
                     return False, m
                 # Obtain the wb_content for wb_id.
                 wb_content = self.dc_LOADED_WORKBOOKS[wb_id]
                 # add the single wb to the process list.
-                wf_wb_list = {wb_id: wb_content}
+                lwbc = {wb_id: wb_content}
             # Process the intended workbooks.
-            for wb_id, wb_content in wf_wb_list.items():
-                r : str = f"Workflow Categorization \n"
-                ws = wb_content.active
-                wb = self.dc_WORKBOOK_DATA_COLLECTION[wb_id]
-                wb_url = ""
-                if check_register:
+            for wb_id, wb_content in lwbc.items():
+                bdm_wb = self.dc_WORKBOOK_DATA_COLLECTION[wb_id]
+                wb_index = self.dc_WORKBOOK_index(wb_id)
+                self.dc_WORKBOOK = bdm_wb
+                self.dc_WB_INDEX = wb_index  # Set the wb_index in the DC.
+                # if bdm_wb.wb_type == WB_TYPE_CHECK_REGISTER:
                     # Check for a check register column, add it if not present.
                     # load the check register here
-                    check_register_dict = csv_DATA_COLLECTION_url_get(wb_url)
-                    apply_check_register(ws)
-                else:
-                    # Check for budget category column, add it if not present.
-                    # check_budget_category(ws)
-                    check_sheet_columns(ws)
-                    # Map the FI's src_col_name to the BUDGET_CATEGORY_COL column.
-                    msg = map_budget_category(ws,src_col_name, BUDGET_CATEGORY_COL)
-                    wb_content = self.dc_LOADED_WORKBOOKS[wb_id]
-                    self.dc_WORKBOOK_content_put(wb_content, wb)
-                    wb_index = self.dc_WORKBOOK_index(wb_id)
-                    r += f"{P2}Task: map_category " 
-                    r += f"wb_index: {wb_index:>2} wb_id: '{wb_id:<40}', wb saved. \n"
-                    r += f"{P2}{P6}Result: {msg}\n"
-            ch = get_category_histogram()
-            m = (f"Mapped '{len(ch)}' Budget Categories, "
-                f"'Other' category count: {ch['Other']}")
+                    # check_register_dict = csv_DATA_COLLECTION_url_get(wb_url)
+                    # apply_check_register(ws)
+                if bdm_wb.wb_type == WB_TYPE_TRANSACTIONS:
+                    m = (f"{P2}Task: process_budget_category() " 
+                         f"wb_index: {wb_index:>2} wb_id: '{wb_id:<40}', ")
+                    logger.debug(m)
+                    fr += m + "\n"
+                    success, r = process_budget_category(bdm_wb, self.DC)
+                    if not success:
+                        r = (f"{P4}Task Failed: process_budget_category() wb_id: "
+                             f"'{wb_id}'\n{P8}Result: {r}")
+                        logger.error(r)
+                        fr += r + "\n"
+                        continue
+                    m = (f"{P2}Task: dc_WORKBOOK_content_put() " 
+                        f"wb_index: {wb_index:>2} wb_id: '{wb_id:<40}', ")
+                    logger.debug(m)
+                    fr += m + "\n"
+                    success, m = self.dc_WORKBOOK_content_put(wb_content, bdm_wb)
+                    if not success:
+                        m = (f"{P4}Task Failed: dc_WORKBOOK_content_put() wb_id: "
+                             f"'{wb_id}'\n{P8}Result: {m}")
+                        logger.error(m)
+                        fr += m + "\n"
+                        continue
+                    fr += f"{P8}Result: {r}\n"
             logger.info(m)
-            return True, r
+            return True, fr
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
@@ -1795,7 +1802,7 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
         """
         # Get the command arguments.
         wb_index : int = self.cp_cmd_arg_get(cmd, CMD_WB_INDEX, self.dc_WB_INDEX)
-        all_wbs : bool = self.cp_cmd_arg_get(cmd, CMD_ALL_WBS, self.dc_WB_ALL_WORKBOOKS)
+        all_wbs : bool = self.cp_cmd_arg_get(cmd, CMD_ALL_WBS, self.dc_ALL_WBS)
         wb_ref : str = self.cp_cmd_arg_get(cmd, WB_REF, self.dc_WB_REF)
         # Get the command arguments.
         fi_key = cmd.get(CMD_FI_KEY, None)

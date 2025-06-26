@@ -89,9 +89,23 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
 
     # ======================================================================== +
     #region    BudManDataContext(BudManDataContext_Base) Model-Aware Overrides.
-    #          These method overrides are Model-Aware behavior.
+    #          These method overrides implement Model-Aware behavior.
     # ------------------------------------------------------------------------ +
     #region    BudManDataContext(BudManDataContext_Base) Model-Aware Property Overrides.
+    @property
+    def dc_WORKBOOK(self) -> BDMWorkbook:
+        """Return the current workbook in focus in the DC."""
+        if not self.dc_VALID: return None
+        return self._dc_WORKBOOK
+    @dc_WORKBOOK.setter
+    def dc_WORKBOOK(self, value: Optional[BDMWorkbook]) -> None:
+        """Set the current workbook in focus in the DC."""
+        if not self.dc_VALID: return None
+        if not isinstance(value, BDMWorkbook):
+            raise TypeError(f"dc_WORKBOOK must be a type: BDMWorkbook, "
+                            f"not a type: '{type(value).__name__}'")
+        self._dc_WORKBOOK = value
+
     #endregion BudManDataContext(BudManDataContext_Base) Property Overrides.
     # ------------------------------------------------------------------------ +
     #region    BudManDataContext(BudManDataContext_Base) Method Model-Aware Overrides.

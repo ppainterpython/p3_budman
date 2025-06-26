@@ -218,15 +218,15 @@ class BudManDataContext_Binding(BudManDataContext_Base):
         self.DC.dc_WB_REF = value
 
     @property
-    def dc_WB_ALL_WORKBOOKS(self) -> bool:
+    def dc_ALL_WBS(self) -> bool:
         """DC-Only: Return True if the current operation is on all workbooks."""
-        return self.DC.dc_WB_ALL_WORKBOOKS
-    @dc_WB_ALL_WORKBOOKS.setter
-    def dc_WB_ALL_WORKBOOKS(self, value: bool) -> None:
+        return self.DC.dc_ALL_WBS
+    @dc_ALL_WBS.setter
+    def dc_ALL_WBS(self, value: bool) -> None:
         """DC-Only: Set the flag indicating if the current operation is on all workbooks."""
         if not isinstance(value, bool):
             raise TypeError(f"dc_WB_ALL_WORKBOOKS must be a bool, not {type(value).__name__}")
-        self.DC.dc_WB_ALL_WORKBOOKS = value
+        self.DC.dc_ALL_WBS = value
 
     @property
     def dc_BDM_STORE(self) -> str:
@@ -238,16 +238,18 @@ class BudManDataContext_Binding(BudManDataContext_Base):
         self.DC.dc_BDM_STORE = value
 
     @property
-    def dc_WORKBOOKS(self) -> WORKBOOK_DATA_LIST:
-        """DC_Binding: Return the list of workbooks in the DC.
-        This is a List of tuples, where each tuple contains the workbook name
-        and its absolute path.
-        """
-        return self.DC.dc_WORKBOOKS
-    @dc_WORKBOOKS.setter
-    def dc_WORKBOOKS(self, value: WORKBOOK_DATA_LIST) -> None:
-        """DC_Binding: Set the list of workbooks in the DC."""
-        self.DC.dc_WORKBOOKS = value
+    def dc_WORKBOOK(self) -> WORKBOOK_OBJECT:
+        """Return the current workbook in focus in the DC."""
+        if not self.dc_VALID: return None
+        return self.DC.dc_WORKBOOK
+    @dc_WORKBOOK.setter
+    def dc_WORKBOOK(self, value: WORKBOOK_OBJECT) -> None:
+        """Set the current workbook in focus in the DC."""
+        if not self.dc_VALID: return None
+        if not isinstance(value, object):
+            raise TypeError(f"dc_WORKBOOK must be an object, "
+                            f"not a type: '{type(value).__name__}'")
+        self.DC.dc_WORKBOOK = value
 
     @property
     def dc_WORKBOOK_DATA_COLLECTION(self) -> WORKBOOK_DATA_COLLECTION:
@@ -266,6 +268,18 @@ class BudManDataContext_Binding(BudManDataContext_Base):
         if self.DC.dc_FI_KEY is None:
             return None
         self.DC.dc_WORKBOOK_DATA_COLLECTION = value
+
+    @property
+    def dc_WORKBOOKS(self) -> WORKBOOK_DATA_LIST:
+        """DC_Binding: Return the list of workbooks in the DC.
+        This is a List of tuples, where each tuple contains the workbook name
+        and its absolute path.
+        """
+        return self.DC.dc_WORKBOOKS
+    @dc_WORKBOOKS.setter
+    def dc_WORKBOOKS(self, value: WORKBOOK_DATA_LIST) -> None:
+        """DC_Binding: Set the list of workbooks in the DC."""
+        self.DC.dc_WORKBOOKS = value
 
     @property
     def dc_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_COLLECTION:

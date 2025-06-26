@@ -175,14 +175,14 @@ class BudManDataContext_Base(ABC):
 
     @property
     @abstractmethod
-    def dc_WB_ALL_WORKBOOKS(self) -> bool:
+    def dc_ALL_WBS(self) -> bool:
         """True indicates all workbooks in the DC are selected.
         False indicate that ALL selection is not in effect.
         """
         pass
-    @dc_WB_ALL_WORKBOOKS.setter
+    @dc_ALL_WBS.setter
     @abstractmethod
-    def dc_WB_ALL_WORKBOOKS(self, value: bool) -> None:
+    def dc_ALL_WBS(self, value: bool) -> None:
         """Set the WB_NAME workbook name."""
         pass
 
@@ -211,6 +211,17 @@ class BudManDataContext_Base(ABC):
     @abstractmethod
     def dc_BDM_STORE(self, value: str) -> None:
         """Set the BDM_STORE jsonc definition."""
+        pass
+
+    @property
+    @abstractmethod
+    def dc_WORKBOOK(self) -> WORKBOOK_OBJECT:
+        """Return the current workbook in focus in the DC."""
+        pass
+    @dc_WORKBOOK.setter
+    @abstractmethod
+    def dc_WORKBOOK(self, value: WORKBOOK_OBJECT) -> None:
+        """Set the current workbook in focus in the DC."""
         pass
 
     @property

@@ -28,13 +28,14 @@ from openpyxl.worksheet.worksheet import Worksheet
 from openpyxl.cell.cell import Cell
 
 # local modules and packages
-from budman_namespace import *
+from budman_namespace.design_language_namespace import *
+from budman_namespace.bdm_workbook_class import BDMWorkbook
 from .workflow_utils import (
     map_category, category_map_count, check_register_map,
     category_histogram, clear_category_histogram, get_category_histogram,
     generate_hash_key,
     split_budget_category)
-from budget_domain_model import (BudgetDomainModel)
+from budman_data_context import BudManDataContext_Base
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -479,7 +480,8 @@ def year_month_str(date:object) -> str:
 #endregion year_month_str() function
 # ---------------------------------------------------------------------------- +
 #region map_budget_category() function
-def map_budget_category(sheet:Worksheet,src,dst) -> str:
+def process_budget_category(wb_object:WORKBOOK_OBJECT,
+                            bdm_DC : BudManDataContext_Base) -> BUDMAN_RESULT:
     """Map a src column to budget category putting result in dst column.
     
     The sheet has banking transaction data in rows and columns. 
@@ -495,32 +497,64 @@ def map_budget_category(sheet:Worksheet,src,dst) -> str:
     """
     try:
         # Validate the input parameters.
-        _ = p3u.is_str_or_none("src", src, raise_error=True)
-        _ = p3u.is_str_or_none("dst", dst, raise_error=True)
-        if not check_sheet_columns(sheet, add_columns=False):
-            logger.error(f"Sheet '{sheet.title}' cannot be mapped due to "
-                         f"missing required columns.")
-            return
+        _ = p3u.is_not_obj_of_type("wb_object", wb_object, BDMWorkbook,
+                                   raise_error=True)
+        _ = p3u.is_not_obj_of_type("bdm_DC", bdm_DC, BudManDataContext_Base,
+                                   raise_error=True)
+        bdm_wb : BDMWorkbook = wb_object
+        success : bool = False
+        if bdm_wb.wb_type != WB_TYPE_TRANSACTIONS:
+            # This is not a transactions workbook, no action taken.
+            m = (f"Workbook '{bdm_wb.wb_id}' is not wb_type: "
+                 f"'{WB_TYPE_TRANSACTIONS}', no action taken.")
+            logger.error(m)
+            return False, m
+        # Model-Aware: For the FI currently in the focus of the DC, we need
+        # some FI-specific info, the name of the transaction workbook 
+        # column used to map budget categories, the source.
+        src = bdm_DC.dc_FI_OBJECT[FI_TRANSACTION_DESCRIPTION_COLUMN]
+        if not p3u.is_non_empty_str("src", src):
+            m = f"Source column name '{str(src)}' is not valid."
+            logger.error(m)
+            return False, m
+        if not bdm_wb.wb_loaded:
+            # Load the workbook from the data context.
+            m = f"Workbook '{bdm_wb.wb_id}' is not loaded, no action taken."
+            logger.error(m)
+            return False, m
+        wb : Workbook = bdm_DC.dc_LOADED_WORKBOOKS[bdm_wb.wb_id]
+        if not p3u.is_not_obj_of_type("wb", wb, Workbook):
+            m = f"Error accessing wb_content for workbook: '{bdm_wb.wb_id}'."
+            logger.error(m)
+            return False, m
+        ws : Worksheet = wb.active  # Get the active worksheet.
+        if not check_sheet_columns(ws, add_columns=False):
+            m = (f"Sheet '{ws.title}' cannot be mapped due to "
+                    f"missing required columns.")
+            logger.error(m)
+            return False, m
         rules_count = category_map_count()
-        logger.info(f"Applying '{rules_count}' budget category mappings "
-                    f"to {sheet.max_row-1} rows in sheet: '{sheet.title}' ")
-        # transactions = WORKSHEET_data(sheet)
+        logger.info(f"Task: Apply '{rules_count}' budget category mapping rules "
+                    f"to {ws.max_row-1} rows in workbook: '{bdm_wb.wb_id}' "
+                    f"worksheet: '{ws.title}'")
         # A row is a tuple of the Cell objects in the row. Tuples are 0-based
         # hdr is a list, also 0-based. So, using the index(name) will 
         # give the cell from a row tuple matching the column name in hdr.
-        hdr = [cell.value for cell in sheet[1]] 
+        hdr = [cell.value for cell in ws[1]] 
 
         if src in hdr:
             src_col_index = hdr.index(src)
         else:
-            logger.error(f"Source column '{src}' not found in header row.")
-            return
+            m = f"Source column '{src}' not found in header row."
+            logger.error(m)
+            return False, m
+        dst = BUDGET_CATEGORY_COL
         if dst in hdr:
             dst_col_index = hdr.index(dst)
         else:
-            logger.error(f"Destination column '{dst}' not found in header row.")
-            return
-        
+            m = f"Destination column '{dst}' not found in header row."
+            logger.error(m)
+            return False, m       
         # TODO: need to refactor this to do replacements by col_name or something.
         # This is specific to the Budget Category mapping, which now is to be
         # split into 3 levels: Level1, Level2, Level3.
@@ -535,14 +569,14 @@ def map_budget_category(sheet:Worksheet,src,dst) -> str:
         year_month_i = col_i(YEAR_MONTH_COL_NAME,hdr)
         acct_name_i = col_i(ACCOUNT_NAME_COL_NAME,hdr)
         acct_code_i = col_i(ACCOUNT_CODE_COL_NAME,hdr)
-        acct_cell : Cell = sheet.cell(row=1, column=acct_name_i + 1)
+        acct_cell : Cell = ws.cell(row=1, column=acct_name_i + 1)
 
         logger.debug(f"Mapping '{src}'({src_col_index}) to "
                     f"'{dst}'({dst_col_index})")
-        num_rows = sheet.max_row # or set a smaller limit
+        num_rows = ws.max_row # or set a smaller limit
         other_count = 0
         ch = get_category_histogram()  # Clear the histogram before processing.
-        for row in sheet.iter_rows(min_row=2):
+        for row in ws.iter_rows(min_row=2):
             # row is a 'tuple' of Cell objects, 0-based index
             row_idx = row[0].row  # Get the row index, the row number, 1-based.
             # Do the mapping from src to dst.
@@ -571,13 +605,14 @@ def map_budget_category(sheet:Worksheet,src,dst) -> str:
                 if abs(transaction.amount) > 100:
                     logger.debug(f"{row_idx:04}:{trans_str}" )
             del transaction  # Clean up the transaction object.
-        m = (f"Mapped rows: '{num_rows}', to '{len(ch)}' Budget Categories, "
-             f"'Other' category count: {ch['Other']}")
+        m = (f"Task Complete: Mapped rows: '{num_rows}', to '{len(ch)}' "
+             f"Budget Categories, 'Other' category count: {ch['Other']}")
         logger.info(m)
-        return m
+        return True, m
     except Exception as e:
-        logger.error(p3u.exc_err_msg(e))
-        raise    
+        m = p3u.exc_err_msg(e)
+        logger.error(m)
+        return False, m    
 #endregion map_budget_category() function
 # ---------------------------------------------------------------------------- +
 #region apply_check_register() function
@@ -644,70 +679,4 @@ def apply_check_register(cr_wb_content:BDM_CHECK_REGISTER, trans_wb_ref:BDM_TRAN
         logger.error(p3u.exc_err_msg(e))
         raise    
 #endregion apply_check_register() function
-# ---------------------------------------------------------------------------- +
-#region def execute_worklow_categorization(bm : BudgetModel, fi_key: str) -> None:
-def execute_worklow_categorization(bm : BudgetDomainModel, fi_key: str, wf_key:str) -> None:
-    """Process categorization wf_key for Financial Institution's 
-    transaction workbooks.
-
-    Execute the categorization wf_key to examine all fi transaction 
-    workbooks presently in the IF (Incoming Folder) for the indicated 
-    FI (Financial Institution). Each workbook file is opened and the 
-    transactions are categorized and saved to the CF (Categorized Folder) 
-    for the indicated FI.
-
-    Args:
-        bm (BudgetModel): The BudgetModel instance to use for processing.
-        fi_key (str): The key for the financial institution.
-    """
-    # TODO: add logs directory to the budget folder.
-    st = p3u.start_timer()
-    wb_name = "BOAChecking2025.xlsx"
-    cp = "Budget Model Categorization:"
-    loaded_workbooks = {}
-    # Execute a workflow for a specific financial institution (fi_key).
-    #   The pattern is to apply a function based on wf_key to each item in 
-    #   the input folder based on fi_key and wf_key.
-    #   Execute steps:
-    #     1: Load the input items from storage.
-    #     2: Apply the workflow function to each input item.
-    #     3: Save the output items to storage. 
-    try:
-        logger.info(f"{cp} Start: workflow: '{wf_key}' for FI('{fi_key}') ...")
-        wb_type = WF_INPUT # input workbooks
-        wb_c = bm.bdm_FI_WF_WORKBOOK_DATA_LIST_count(fi_key, wf_key, wb_type)
-        # if workbooks_dict is None or len(workbooks_dict) == 0:
-        if wb_c is None or wb_c == 0:
-            logger.info(f"{cp}    No workbooks for input.")
-            return
-        logger.info(f"{cp}    {wb_c} workbooks for input.")
-        # Now process each input workbook.
-        # Step 1: Load the workbooks sequentially.
-        for wb_id, wb in bm.bsm_FI_WF_WORKBOOKS_generate(fi_key, wf_key, wb_type):
-            logger.info(f"{cp}    Workbook({wb_name})")
-                
-            # Step 2: Process the workbooks applying the workflow function
-            try: 
-                logger.info(f"{cp}    Workbook({wb_name})")
-                sheet = wb.active
-                # Check for budget category column, add it if not present.
-                check_budget_category(sheet)
-                # Map the 'Original Description' column to the 'Budget Category' column.
-                map_budget_category(sheet, "Original Description", BUDGET_CATEGORY_COL_NAME)
-            except Exception as e:
-                logger.error(f"{cp}    Error processing workbook: {wb_name}: {e}")
-                continue
-
-            # Step 3: Save the output items to output storage.
-            try:
-                bm.bsm_FI_WF_WORKBOOK_save(wb, wb_name, fi_key, wf_key, WF_OUTPUT)
-            except Exception as e:
-                logger.error(f"{cp}    Error saving workbook: {wb_name}: {e}")
-                continue
-        logger.info(f"{cp} Complete: wf_key: '{wf_key}' {p3u.stop_timer(st)}")
-    except Exception as e:
-        m = p3u.exc_err_msg(e)
-        logger.error(m)
-        raise
-#endregion execute_worklow_categorization() function
 # ---------------------------------------------------------------------------- +

@@ -121,6 +121,17 @@ Now, the design needs expansion and refactoring. Here are some notes:
     # A worklow and its tasks run under a wf_key and a wb_type.
 ```
 
+More notes:
+
+ 1. Workflows are processes applied to data objects, each process is a series of tasks. It is python code that defines the process and task implementation, at least at first.
+ 2. Initially, there are three workflows: Intake, Categorization and Budget.
+ 3. Each workflow has up to 3 folders in storage associated with it: Input, Working, and Output.
+ 4. How these folders actually map to the storage service is in the BDM_STORE settings.
+ 5. Command execution methods should validate and marshall the objects needed to invoke the action.
+ 6. Pass the workbook object(s) to the process function indicated in the command input.
+ 7. Keep the specific knowledge of the process out of the command execution method, which should setup the workbook objects, invoke the process function, catch the return status and output and return.
+ 8. Future, have the process invocation be async.
+
 ### Workflow Data Collection Transition Notes
 
 I have evolved this aspect of the BDM several times, but I have converged on a data model that has two parts. Originally, the BDM had __FI_DATA_COLLECTION__ which stored references to __WORKBOOK_ITEMS__ containing bits of information about workbooks in the context of a workflow process. This is workflow-centric, and helps achieve the goal of clean separation of the FI's data as it proceeds through a set of workflow tasks. That is still in the design.
@@ -142,5 +153,7 @@ To keep it simple, and keep an eye on a clean, and simple Dependency Injection p
 | Date       | Description                                                      |
 |------------|------------------------------------------------------------------|
 | 06/17/2025 | Removed bdm_initialize_from_BDM_STORE(self) from budget_domain_model.py|
-|06/17/2025|Modified BDMWorkbook class and WORKBOOK_DATA_COLLECTION to be use the wb_id as the key, not a list index. The wb_index used in layers above BDM, not persisted in BDMWorkbook.|
-|6/19/2025|Making BudManViewModel a subclass of BudManDataContext_Binding finally.|
+| 06/17/2025 |Modified BDMWorkbook class and WORKBOOK_DATA_COLLECTION to be use the wb_id as the key, not a list index. The wb_index used in layers above BDM, not persisted in BDMWorkbook.|
+| 06/19/2025 |Making BudManViewModel a subclass of BudManDataContext_Binding finally.|
+| 06/23/2025 | Implement -all switch for wf cat cmd. Abandoned the wb_ref approach in favor of a simplified wb_index with the UI. Now, workbooks are referred to by their wb_index in commands, not names. |
+| 06/25/2025 |Extending the workflow process model for cleaner separation of concerns. Command execution methods in the ViewModel take the validated command and arguments and dispatch that, in the case of the workflow command, to appropriate functions that implement the process tasks, passing workbooks to them. Keep the knowledge of the process out of the command execution, just validate and invoke the process function/method, etc.|

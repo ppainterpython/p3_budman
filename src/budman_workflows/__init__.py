@@ -30,7 +30,7 @@ from .budget_categorization import (
     check_sheet_schema, 
     check_budget_category, 
     ORIGINAL_DESCRIPTION_COL_NAME, 
-    map_budget_category,
+    process_budget_category,
     apply_check_register
 )
 from .budget_category_mapping import (
@@ -55,7 +55,7 @@ __all__ = [
     "check_sheet_schema",
     "check_budget_category",
     "ORIGINAL_DESCRIPTION_COL_NAME",
-    "map_budget_category",
+    "process_budget_category",
     "apply_check_register",
     # budget_category_mapping.py module
     "category_map",

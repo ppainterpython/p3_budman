@@ -80,10 +80,12 @@ class BudManDataContext(BudManDataContext_Base):
         self._dc_WB_NAME = None     
         self._dc_WB_INDEX : int = -1
         self._dc_WB_REF = None
-        self._dc_WB_ALL_WORKBOOKS : bool = False
+        self._dc_WORKBOOK : WORKBOOK_OBJECT = None # the current workbook in focus
+        self._dc_ALL_WBS : bool = False
         self._dc_BDM_STORE : BDM_STORE = None 
-        self._dc_WORKBOOKS : WORKBOOK_DATA_LIST = None # deprecated, use dc_WORKBOOK_DATA_COLLECTION
+        self._dc_WORKBOOK : WORKBOOK_OBJECT = None 
         self._dc_WORKBOOK_DATA_COLLECTION : WORKBOOK_DATA_COLLECTION = None 
+        self._dc_WORKBOOKS : WORKBOOK_DATA_LIST = None # deprecated, use dc_WORKBOOK_DATA_COLLECTION
         self._dc_LOADED_WORKBOOKS : LOADED_WORKBOOK_COLLECTION = None
         self._dc_EXCEL_WORKBOOKS : DATA_COLLECTION = None
         self._dc_DataContext : DATA_CONTEXT = None 
@@ -245,15 +247,15 @@ class BudManDataContext(BudManDataContext_Base):
         self._dc_WB_REF = value
 
     @property
-    def dc_WB_ALL_WORKBOOKS(self) -> bool:
+    def dc_ALL_WBS(self) -> bool:
         """DC-Only: Return True if the current operation is on all workbooks."""
-        return self._dc_WB_ALL_WORKBOOKS
-    @dc_WB_ALL_WORKBOOKS.setter
-    def dc_WB_ALL_WORKBOOKS(self, value: bool) -> None:
+        return self._dc_ALL_WBS
+    @dc_ALL_WBS.setter
+    def dc_ALL_WBS(self, value: bool) -> None:
         """DC-Only: Set the flag indicating if the current operation is on all workbooks."""
         if not isinstance(value, bool):
             raise TypeError(f"dc_WB_ALL_WORKBOOKS must be a bool, not {type(value).__name__}")
-        self._dc_WB_ALL_WORKBOOKS = value
+        self._dc_ALL_WBS = value
 
     @property
     def dc_BDM_STORE(self) -> str:
@@ -263,6 +265,20 @@ class BudManDataContext(BudManDataContext_Base):
     def dc_BDM_STORE(self, value: str) -> None:
         """DC-Only: Set the BDM_STORE jsonc definition."""
         self._dc_BDM_STORE = value
+
+    @property
+    def dc_WORKBOOK(self) -> WORKBOOK_OBJECT:
+        """Return the current workbook in focus in the DC."""
+        if not self.dc_VALID: return None
+        return self._dc_WORKBOOK
+    @dc_WORKBOOK.setter
+    def dc_WORKBOOK(self, value: WORKBOOK_OBJECT) -> None:
+        """Set the current workbook in focus in the DC."""
+        if not self.dc_VALID: return None
+        if not isinstance(value, object):
+            raise TypeError(f"dc_WORKBOOK_DATA_COLLECTION must be an object, "
+                            f"not a type: '{type(value).__name__}'")
+        self._dc_WORKBOOK = value
 
     @property
     def dc_WORKBOOK_DATA_COLLECTION(self) -> DATA_COLLECTION:
@@ -350,20 +366,8 @@ class BudManDataContext(BudManDataContext_Base):
             self.dc_WF_PURPOSE = bdm_store_dc.get(DC_WF_PURPOSE, None)
             self.dc_WB_TYPE = bdm_store_dc.get(DC_WB_TYPE, None)
             self.dc_CHECK_REGISTERS = bdm_store_dc.get(DC_CHECK_REGISTERS, {})
-            # Just initialize the rest of the DC properties.
-            # Further Model-Aware initialization is done in the subclass.
-            self.dc_FI_OBJECT = None 
-            self.dc_WB_NAME = None
-            self.dc_WB_INDEX : int = -1
-            self.dc_WB_REF = None
-            self.dc_WB_ALL_WORKBOOKS : bool = False
-            self.dc_WORKBOOKS = []
-            self.dc_WORKBOOK_DATA_COLLECTION = dict()
-            self.dc_LOADED_WORKBOOKS = dict()
-            self.dc_EXCEL_WORKBOOKS = dict()
-            self.dc_DataContext = dict()
-            self.dc_LOADED_CHECK_REGISTERS = dict()
-            self.dc_INITIALIZED = True
+            # Further Model-Aware initialization can be done in the subclass.
+            # So, don't change the values here.
             self._initialization_in_progress = False
             return self
         except Exception as e:
@@ -832,17 +836,17 @@ class BudManDataContext(BudManDataContext_Base):
             bool: True if the data context is valid, False otherwise.   
             str: A 'reason' message indicating the reason for invalidity.
         """
+        # If initialization in progress, then act like it is valid, during the
+        # initialization process.
+        if self._initialization_in_progress:
+            m = "Data context initialization in progress."
+            logger.debug(m)
+            return True, m
         if not isinstance(self, BudManDataContext_Base):
             m = "Data context must be an instance of BudManDataContext_Base"
             logger.error(m)
             return False, m
         if not self.dc_INITIALIZED:
-            # If initialization in progress, then act like it is valid, during the
-            # initialization process.
-            if self._initialization_in_progress:
-                m = "Data context initialization in progress."
-                logger.debug(m)
-                return True, m
             m = "Data context is not initialized."
             logger.error(m)
             return False, m

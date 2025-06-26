@@ -133,6 +133,7 @@ class BudManApp(metaclass=BDMSingletonMeta):
             data_context.model = model
             # Next, initialize the data context.
             data_context.dc_initialize() 
+            data_context.dc_INITIALIZED = True
             # Next, bind the data context to the ViewModel.
             view_model.data_context = data_context
             # Next, initialize the ViewModel.
