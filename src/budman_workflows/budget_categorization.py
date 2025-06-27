@@ -31,7 +31,7 @@ from openpyxl.cell.cell import Cell
 from budman_namespace.design_language_namespace import *
 from budman_namespace.bdm_workbook_class import BDMWorkbook
 from .workflow_utils import (
-    map_category, category_map_count, check_register_map,
+    categorize_transaction, map_category, category_map_count, check_register_map,
     category_histogram, clear_category_histogram, get_category_histogram,
     generate_hash_key,
     split_budget_category)
@@ -583,7 +583,7 @@ def process_budget_category(wb_object:WORKBOOK_OBJECT,
             # Do the mapping from src to dst.
             dst_cell = row[dst_col_index]
             src_value = row[src_col_index].value 
-            dst_value = map_category(src_value)
+            dst_value = categorize_transaction(src_value)
             dst_cell.value = dst_value 
             # row[dst_col_index].value = dst_value 
             # Set the additional values for BudMan in the row

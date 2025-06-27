@@ -39,7 +39,7 @@ from typing import Tuple, Any, Union, Dict, Optional
 # third-party modules and packages
 from openpyxl import Workbook
 # local modules and packages
-from src.budman_namespace import (
+from budman_namespace.design_language_namespace import (
     DATA_CONTEXT, WORKBOOK_DATA_LIST, LOADED_WORKBOOK_COLLECTION,
     WORKBOOK_DATA_COLLECTION, WORKFLOW_DATA_COLLECTION,
     BDM_STORE, DATA_COLLECTION, WORKBOOK_OBJECT, BUDMAN_RESULT,

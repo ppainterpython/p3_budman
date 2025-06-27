@@ -47,7 +47,7 @@ from typing import Tuple, Union, Dict, Optional
 from openpyxl import Workbook
 
 # local modules and packages
-from src.budman_namespace.design_language_namespace import (
+from budman_namespace.design_language_namespace import (
     DATA_COLLECTION, WORKBOOK_DATA_LIST, LOADED_WORKBOOK_COLLECTION,
     WORKBOOK_DATA_COLLECTION, WORKBOOK_OBJECT, BUDMAN_RESULT, 
     WORKBOOK_CONTENT

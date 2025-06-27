@@ -218,6 +218,8 @@ from budman_cli_view import budman_cli_parser, budman_cli_view
 # BudMan Command Processor Argument Name Constants
 # argparse converts hyphens '-' to underscores '_', so we use underscores
 CMD_KEY_SUFFIX = "_cmd"
+CMD_NAME = "cmd_name"
+CMD_SUBCMD = "sub_cmd"
 CMD_PARSE_ONLY = "parse_only"
 CMD_VALIDATE_ONLY = "validate_only"
 CMD_WHAT_IF = "what_if"
@@ -451,7 +453,21 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
     and includes arguments. Both the command and the arguments are validated
     before executing the command. The command is a dictionary with a
     command key and a an optional sub-command value. The command key includes
-    the name of the requested action, a verb, e.g., init, show, save, etc. 
+    the name of the requested action, often, but not limited to a verb, 
+    e.g., init, show, save, etc. That part is the cmd_name. So, here are some
+    rules:
+    - A cmd_name is a string of characters (which cannot include '_cmd').
+    - A cmd_key is also a string composed of the cmd_name and the
+      '_cmd' suffix.
+    - A cmd_key becomes an actual 'key' in the cmd dict object with an 
+      Optional[str] value.
+    - A sub-command is given as a value to the cmd_key, but may be None.
+    - A second key in the cmd dict is 'command_name' with the value being the 
+      command name string, e.g., 'init', 'load', 'save', etc.
+    - A third key used in a valid cmd dict object is 'full_cmd_key' with a 
+      string value constructed as" <cmd_key>_<sub_command_value>".
+
+    The command key is a string, which is the name of the command.  
     The characters '_cmd' are appended to the command key. The sub-command 
     value is optional, but most common. It is a noun indicating the type
     of object to be acted upon. The command key is combined with the subcommand
@@ -494,7 +510,7 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
 
     #endregion ViewModelCommandProcessor_Base Properties                       +
     # ------------------------------------------------------------------------ +
-    #region ViewModelCommandProcessor_Base methods                             +
+    #region ViewModelCommandProcessor_Base ABC Interface methods               +
     # ------------------------------------------------------------------------ +
     #region cp_execute_cmd() Command Processor method
     def cp_execute_cmd(self, 
@@ -529,6 +545,7 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             # if cp_validate_cmd() is good, continue.
             validate_only: bool = self.cp_cmd_arg_get(cmd,CMD_VALIDATE_ONLY)
             full_cmd_key = result
+            # TODO: create cp_cmd_func_get(full_cmd_key) with UNKNOWN_cmd()
             func = self.cp_cmd_map.get(full_cmd_key)
             function_name = func.__name__
             if validate_only:
@@ -551,8 +568,8 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
                         validate_all : bool = False) -> Tuple[bool, str]:
         """Validate the cmd object for cmd_key and parameters.
 
-        Extract a valid, known cmd_key to succeed.
-        Consider values to common arguments which can be validated against
+        Extract a valid, known full_cmd_key/cmd_key to succeed.
+        Consider values to common arguments which can be validated with
         the data context.
 
         Arguments:
@@ -570,8 +587,8 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
         my_prefix = f"{self.__class__.__name__}.{self.cp_validate_cmd_object.__name__}: "
         try:
             self.cp_validate_cmd_object(cmd, my_prefix, raise_error = True)
-            # After cp_validate_cmd_object() returns, we know cmd has content
-            # to examine and validate.
+            # After cp_validate_cmd_object() returns, cmd dict has 
+            # content to examine and validate.
             # For a few args, apply the DC values if no value given in the cmd.
             if self.cp_cmd_arg_get(cmd, CMD_FI_KEY) is None:
                 self.cp_cmd_arg_set(cmd, CMD_FI_KEY,
@@ -586,11 +603,14 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             result = "It's all good." 
             if validate_all:
                 all_results = f"Command validation info: \n{P2}cmd: {str(cmd)}\n"
-            # Extract the cmd_key and full_cmd_key from the cmd, or error out.
+            
+            # Validation Step 1: Extract the full_cmd_key/cmd_key  
+            # from the cmd. A full_cmd_key will include the cmd_key and a
+            # possible sub-command value, or full_cmd_key can equal the cmd_key.
             success, full_cmd_key, cmd_key = self.cp_full_cmd_key(cmd)
             if not success:
                 result = f"Error: cmd_key: '{str(cmd_key)}' "
-                result += f"full_cmd_key: '{str(full_cmd_key)}' not in cmd_map."
+                result += f"'{str(full_cmd_key)}' not in cmd_map."
                 if not validate_all:
                     logger.warning(result)
                     return False, result
@@ -681,7 +701,7 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
 
         Test self.initialized property, must be True to proceed.
 
-        Verify the cmd object is a dictionary and not None.
+        Verify the cmd object is a dictionary, not None and not 0 length.
 
         Arguments:
             cmd (Dict): A candidate Command object to validate.
@@ -711,13 +731,19 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
                 if raise_error:
                     raise RuntimeError(m)
                 return False
+            if len(cmd) == 0:
+                m = f"{pfx}Command object is empty, no action taken."
+                logger.error(m)
+                if raise_error:
+                    raise RuntimeError(m)
+                return False
             return True
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
     #endregion cp_validate_cmd_object() Command Processor method
     #region cp_cmd_key() Command Processor method
-    def cp_cmd_key(self, cmd : Dict = None) -> Tuple[bool, str]:
+    def cp_cmd_key(self, cmd : Dict = None) -> BUDMAN_RESULT:
         """Extract a cmd_key is present in the cmd, return it.
 
         A cmd_key is a key in the cmd dictionary that ends with 
@@ -726,7 +752,7 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
         If no cmd_key is found, an error message is returned.
                 
         returns:
-            Tuple[success: bool, result: str: 
+            BUDMAN_RESULT(Tuple[success: bool, result: str]): 
                 success = True: result = cmd_key value that was detected.
                 success = False: result = an error message. No cmd_key detected.
         """
@@ -735,7 +761,7 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             cmd_key = next((key for key in cmd.keys() 
                             if CMD_KEY_SUFFIX in key), None)
             if p3u.str_empty(cmd_key):
-                m = f"No command key found in: {str(cmd)}"
+                m = f"No command key found in cmd: {str(cmd)}"
                 logger.error(m)
                 return False, m
             # Success, return the cmd_key.
@@ -744,6 +770,32 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             logger.error(p3u.exc_err_msg(e))
             raise
     #endregion cp_cmd_key() Command Processor method
+    #region cp_cmd_name() Command Processor method
+    def cp_cmd_name(self, cmd_key : str) -> str:
+        """Extract the command name from the cmd_key.
+
+        The command name is the front portion preceding the CMD_KEY_SUFFIX. 
+        If no command name is found, an error message is returned.
+        
+        returns:
+            BUDMAN_RESULT: The command name if found, else an error message.
+        """
+        try:
+            if p3u.str_empty(cmd_key):
+                m = "cmd_key is empty, no command name found."
+                logger.error(m)
+                return False, m
+            result : str = cmd_key[:-4] if cmd_key.endswith(CMD_KEY_SUFFIX) else cmd_key
+            if len(result) == 0 or result == cmd_key:
+                m = f"No command name found in: {str(cmd_key)}"
+                logger.error(m)
+                return False, m
+            return True, result
+        except Exception as e:
+            m = f"Error extracting command name from cmd_key '{cmd_key}': {p3u.exc_err_msg(e)}"
+            logger.error(m)
+            return False, m
+    #endregion cp_cmd_name() Command Processor method
     #region cp_full_cmd_key() Command Processor method
     def cp_full_cmd_key(self, cmd : Dict = None) -> Tuple[bool, str, str]:
         """Extract a full cmd key with subcommand if included.
@@ -751,18 +803,20 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
         First, check for a cmd_key arg key. If it exists, the subcmd will be
         its value. A full_cmd_key is constructed by combining the cmd_key and
         the sub_cmd value inserting an underscore '_' om between. If no subcmd
-        is found, but a cmd_key is, return the cmd_key as the full_cmd_key.
-        
+        is found, but a cmd_key is, then the cmd_key and the full_cmd_key are
+        the same.
+
+                
         returns:
             Tuple[success: bool, full_cmd_key: str, cmd_key: str|None]: 
                 A tuple of 3 values indicating success or failure. 
                 success = True: 
                     The full_cmd_key exists in the cmd_map.
-                    full_cmd_key, cmd_key values returned.
-                    If full_cmd_key is None, no subcmd was detected.
+                    full_cmd_key, cmd_key values are returned.
+                    If full_cmd_key == cmd_key, no subcmd was detected.
                 success = False: 
                     No match in cmd_map for full_cmd_key.
-                    full_cmd_key, cmd_key values returned.
+                    full_cmd_key, cmd_key values returned, may be the same.
                     If full_cmd_key or cmd_key are None, no values were detected.
                     If success is False, cmd_key is not Null, and full_cmd_key
                     is None, then a cmd_key was detected, but is not in the
@@ -770,6 +824,8 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
                
         """
         try:
+            success : bool = False 
+            full_cmd_key : str = None
             # Extract a cmd key from the cmd, or error out.
             success, result = self.cp_cmd_key(cmd)
             if not success: return False, result, None
@@ -777,7 +833,7 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             # Acquire sub-command key if present.
             sub_cmd = cmd[cmd_key]
             # Construct full_cmd_key from cmd_key and sub_cmd (may be None).
-            # if sub_cmd in None, use cmd_key as full_cmd_key.
+            # If no sub_cmd, use cmd_key as full_cmd_key.
             full_cmd_key = cmd_key + '_' + sub_cmd if p3u.str_notempty(sub_cmd) else cmd_key
             # Validate the full_cmd_key against the command map.
             if full_cmd_key not in self.cp_cmd_map:

@@ -22,8 +22,11 @@ from .workflow_utils import (
     generate_hash_key, 
     split_budget_category, 
     extract_category_tree, 
+    output_category_tree,
+    category_tree_to_csv,
     category_map_count, 
     map_category, 
+    categorize_transaction
 )
 from .budget_categorization import (
     check_sheet_columns, 
@@ -35,6 +38,7 @@ from .budget_categorization import (
 )
 from .budget_category_mapping import (
     category_map, 
+    compiled_category_map,
     check_register_map, 
     category_histogram,
     clear_category_histogram,
@@ -48,8 +52,11 @@ __all__ = [
     "split_budget_category",
     "category_map_count",
     "extract_category_tree",
+    "output_category_tree",
+    "category_tree_to_csv",
     "category_map_count",
     "map_category",
+    "categorize_transaction",
     # budget_categorization.py module
     "check_sheet_columns",
     "check_sheet_schema",
@@ -59,6 +66,7 @@ __all__ = [
     "apply_check_register",
     # budget_category_mapping.py module
     "category_map",
+    "compiled_category_map",
     "check_register_map",
     "category_histogram",
     "clear_category_histogram",

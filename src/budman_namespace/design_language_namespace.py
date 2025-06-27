@@ -156,8 +156,8 @@ BDM_FI_NAMES = ("Bank of America", "Merrill Lynch", "CitiBANK")
 # Supported BM Workflow Names
 #
 BDM_WF_INTAKE = "intake"
-BDM_WF_CATEGORIZATION = "categorization"
-BDM_WF_FINALIZATION = "finalization"
+BDM_WF_CATEGORIZATION = "categorize_transactions"
+BDM_WF_FINALIZATION = "budget"
 VALID_BDM_WORKFLOWS = (BDM_WF_INTAKE, BDM_WF_CATEGORIZATION, BDM_WF_FINALIZATION)
 # ---------------------------------------------------------------------------- +
 #

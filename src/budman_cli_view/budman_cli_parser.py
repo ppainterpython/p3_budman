@@ -62,6 +62,20 @@ class BudManCLIParser():
             title = self.app_cmd_parser_setup.__doc__
             # app subcommands: logging
             subparsers = parser.add_subparsers(title=title, dest="app_cmd")
+
+            # Workflow subcommand: reload
+            reload_parser = subparsers.add_parser(
+                "reload",
+                aliases=["r"], 
+                help="Reload modules.")
+            reload_parser.set_defaults(app_cmd="reload", cmd_name="app")
+            reload_parser.add_argument(
+                "reload_target", nargs="?",
+                action="store", 
+                default='category_map',
+                help="Name of module to reload, or 'all' re-loadable.")
+            self.add_common_args(reload_parser)
+
             # app log [handler-name] [--list] [--level [level-value]] [--rollover]
             log_subcmd_parser = subparsers.add_parser(
                 "log", 

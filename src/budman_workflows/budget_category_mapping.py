@@ -13,6 +13,7 @@
 #region Imports
 # python standard library modules and packages
 from typing import Dict, Any, Optional, Union, List
+import re
 # third-party modules and packages
 import p3logging as p3l, p3_utils as p3u
 
@@ -87,7 +88,7 @@ category_map = {
     # Castle Pines
     r'(?i)\bPedernales_Elec\b': 'Housing.Electricity.Pedernales Electric',
     r'(?i)\bCity\sof\sAustin\b': 'Housing.WaterAndWaste.City of Austin',
-    r'(?i)\bavery\W*.*?\branch\W*.*?\bHOA\W*.*?\bdues\b': 'Housing,HomeOwnersAssociation.Avery Ranch',
+    r'(?i)\bavery\W*.*?\branch\W*.*?\bHOA\W*.*?\bdues\b': 'Housing.HomeOwnersAssociation.Avery Ranch',
     # Housing General
     r'(?i).*GATOR\s*GARAGE\s*DOORS.*': 'Housing.Maintenance.Gator Garage Doors',
     r'(?i)\bFREDERICK\sPEVA\b': 'Housing.Lawn Care.Freddie',
@@ -647,6 +648,10 @@ category_map = {
 #region Checks categorized manually by number - run last
     r'(?i)\bCheck\s*x*\d*\b': 'Banking.Checks to Categorize'
 #endregion Checks categorized manually by number - run last
+}
+compiled_category_map = {
+    re.compile(pattern, re.IGNORECASE): category 
+    for pattern, category in category_map.items()
 }
 #endregion category_map
 # ---------------------------------------------------------------------------- +

@@ -9,8 +9,11 @@ import logging, sys, io
 from pathlib import Path
 # third-party modules and packages
 import p3_utils as p3u, p3logging as p3l
+from treelib import Tree
+
 # local modules and packages
-from budman_workflows.budget_category_mapping import extract_category_tree
+from budman_workflows import (extract_category_tree, output_category_tree, 
+    category_tree_to_csv)
 #endregion Imports
 sys.path.append("./src")
 # ---------------------------------------------------------------------------- +
@@ -62,12 +65,13 @@ if __name__ == "__main__":
         configure_logging(__name__, logtest=False)
         set_log_level('stdout', logging.CRITICAL) 
         level = int(sys.argv[1]) if len(sys.argv) > 1 else 2
+        category_tree_to_csv(level)
         filename = f"level_{level}_categories.txt"
-        output = extract_category_tree(level)
-        with open(filename, 'w', encoding='utf-8') as f:
-            f.write(output) 
-        print(output)
-        print("Categories written to file:", filename)
+        # output = output_category_tree(level)
+        # with open(filename, 'w', encoding='utf-8') as f:
+        #     f.write(output) 
+        # print(output)
+        # print("Categories written to file:", filename)
     except Exception as e:
         m = p3u.exc_err_msg(e)
         logger.error(m)

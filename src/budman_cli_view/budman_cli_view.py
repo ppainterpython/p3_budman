@@ -128,9 +128,30 @@ class BudManCLIView(cmd2.Cmd):
     intro = "\nWelcome to the Budget Manager CLI. Type help or ? to list commands.\n"
     # Class Methods
     @classmethod
-    def create_cmd(cls, opts : argparse.Namespace) -> Dict[str, Any]:
-        """Create a command dictionary from the options."""
-        return _filter_opts(opts)
+    def create_cmd_from_cmd2_argparse(cls, opts : argparse.Namespace) -> Dict[str, Any]:
+        """Create a CommandProcessor cmd dictionary from argparse.Namespace.
+        
+        This method is specific to BudManCLIView which utilizes argparse for 
+        command line argument parsing integrated with cmd2.cmd for command help
+        and execution. It converts the argparse.Namespace object into a
+        dictionary suitable for the command processor to execute, but 
+        independent of the cmd2.cmd structure and argparse specifics.
+
+        A ViewModelCommandProcessor_Binding implementation must provide valid
+        ViewModelCommandProcessor cmd dictionaries to the
+        ViewModelCommandProcessor interface. This method is used to convert
+        the cmd2.cmd arguments into a dictionary that can be used by the
+        ViewModelCommandProcessor_Binding implementation.
+        """
+        if not isinstance(opts, argparse.Namespace):
+            raise TypeError("opts must be an instance of argparse.Namespace.")
+        # Convert to dict, remove two common cmd2 attributes, if present.
+        cmd = vars(opts).copy()
+        cmd.pop('cmd2_statement')
+        cmd.pop('cmd2_handler')
+        # TODO: validate cmd_key, cmd_name attributes in cmd dict.
+
+        return cmd
     #endregion Class variables and methods
     # ------------------------------------------------------------------------ +
     #region    __init__() method
@@ -291,7 +312,7 @@ class BudManCLIView(cmd2.Cmd):
             if self.parse_only or opts.parse_only: 
                 console.print(f"parse-only: '{cmd_line}' {str(_filter_opts(opts))}")
                 return True, CMD_PARSE_ONLY
-            cmd = BudManCLIView.create_cmd(opts)
+            cmd = BudManCLIView.create_cmd_from_cmd2_argparse(opts)
             status, result = self.CP.cp_execute_cmd(cmd)
             console.print(result)
             _log_cli_cmd_complete(self, opts)

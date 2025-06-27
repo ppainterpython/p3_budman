@@ -10,11 +10,18 @@ All people, families, businesses and organizations have a budget, managed or not
 
 Tracking income and expenses over time is critical to the value of a budget. Often, FI's will update account status on a monthly basis, issuing statements, or workbooks in the BudMan narrative. There will be workbooks from each FI, at least for each month, and perhaps separately for each account. Gathering the new input into the budget for user benefit requires processing the workbooks, and hence, a means to manage that processing. BudMan uses __Workflows (WF)__ to handle the processing. A workflow is a series of tasks performed on the workbooks. A task uses input, produces output, and may utilize working copies of data for a time.
 
-## Application Design Patterns: MVVM Model-View-ViewModel, Data Context, Command Processor, Binding and Dependency Injection
+## Application Design Patterns
 
-Managing a budget with an application is the goal. Being a fan of the MVVM Design Pattern, the design framework is structure around the concepts of View (user interaction, ViewModel ("business logic" and application state), and Model (data models, objects, relationships, mapping to storage, etc.) I chose to make it a command line application to handle excel __Workbooks__, doing the tedious stuff and let the user use Excel for the actual user experience regarding the numbers. Hence, the __View__ in our design is a simple command line interface (__CLI__). But, the __View Model__, design not dependent on of that. Also, I include a Data Context and Command Processor patterns, from .NET MVVM.
+Managing a budget with an application is the goal. After 46 years (and counting) as a software creator, I have some favorite design patterns:
 
-Having written a story, the narrative embodied in the design language of an application, it remains to create a technical design to implement the narrative. Several key factors are considered for the design. First, the concept of managing to a budget presents several domains of interest. As I am a fan of domain-driven design, the Budget Domain Model design is a critical influencer. Another influence is applying the MVVM design pattern for software applications.
+1. Design (Model) Driven Design
+2. Model View ViewModel (MVVM) (data context flavor)
+3. Command Processing Interface (lazy binding flavor)
+4. Dependency Injection (lazy binding flavor)
+
+Being a fan of the MVVM Design Pattern, the design framework is structure around the concepts of View (user interaction), ViewModel ("business logic" and application state), and Model (data models, objects, relationships, mapping to storage, etc.) I chose to make it a command line application to handle excel __Workbooks__, doing the tedious stuff and let the user use Excel for the actual user experience regarding the numbers. Hence, the __View__ in our design is a simple command line interface (__CLI__). But, the __View Model__, design not dependent on of that. Also, I include a Data Context and Command Processor patterns, from .NET MVVM.
+
+Having written a story, the narrative embodied in the design language of an application, it remains to create a technical design to implement the narrative. Several key factors are considered for the design. First, the concept of managing to a budget presents several domains of interest. As I am a fan of domain-driven design, the Budget Domain Model design is a critical influencer. So, lets delve into a domain model.
 
 ### Budget Domain Model (BDM)
 
@@ -26,13 +33,7 @@ Workflows process files with tasks in a sequence. A general view is a task knows
 
 In our design language, files are Data Files (DF) and WorkBooks (WB) with another type designation of DF_TYPE or WB_TYPE (synonyms). This type maps to the input, working, output state concept. A __DATA_COLLECTION__ is a set of lists of files/workbooks (__WORKBOOK_DATA_LIST__ or __FILE_LIST__).
 
-### MVVM Command Pattern Technical Design
-
-Our MVVM design includes a sub-pattern for Command Processing (CP) as well as a Data Context (DC). Early on, I learned the .NET MVVM framework and that has no doubt influenced my thinking as I design one in python.
-
-View -> ViewDataContext(bindings for CP, DC) -> ViewModel(bindings for CP, DC) -> uber-DC -> Model
-
-The ViewModel CP methods to execute individual cmds should use the DC_interface plus a model-specific interface to simplify the model_interface for use in the context of the DC_interface. Cmds take action on data, hence, the DC has to involve mapping cmd actions in the ViewModel to an abstraction that will ultimately access the Model and do real work on real data.
+### Model View ViewModel (MVVM)
 
 ### Model Technical Design
 
@@ -93,6 +94,20 @@ DC is initialized with a reference to the BudgetDomainModel BudgetDomainWorkingD
 #### Data Context Object Types
 
 The concept of __Workbook__ is expanding. Need to change __WB_TYPE__ to __WF_PURPOSE__, to model the intended use by a __Workflow__ of a __Workbook__ and the __Folder__ containing it both in the __BDM__ and __BSM__. So __WB_TYPE__ is redefined to cover excel workbooks and csv workbooks of differing types. We have the most common case of a workbook in excel holding financial transaction data, typically downloaded from an institution. But these begin life as .csv files and become .xlsx files, one aspect of the type. The other is that now we have the __Check Register__ workbook, which is a csv file.
+
+### Command Processing Interface
+
+A Command Processing (CP) pattern is quite common, after all, every computer ever built had a command interface. Years ago, I learned the .NET MVVM framework and followed the evolution of the Command interfaces. Parsing what action to take, whether from a GUI button click or a typed in command line is a repetitious problem area. So, this particular approach will be familiar.
+
+Notes:
+
+1. cmd_name, cmd_key, full_cmd_key, sub-cmd concept, cmd args.
+
+View -> ViewDataContext(bindings for CP, DC) -> ViewModel(bindings for CP, DC) -> uber-DC -> Model
+
+The ViewModel CP methods to execute individual cmds should use the DC_interface plus a model-specific interface to simplify the model_interface for use in the context of the DC_interface. Cmds take action on data, hence, the DC has to involve mapping cmd actions in the ViewModel to an abstraction that will ultimately access the Model and do real work on real data.
+
+## BudMan Application Technical Design
 
 ### Workflow Processing Technical Design
 

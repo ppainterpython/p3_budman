@@ -1,0 +1,37 @@
+Budget Category List(level 1) 2025-06-26 10:31:27 AM
+
+Budget
+├── Auto
+├── Banking
+├── Clothing
+├── Connectivity
+├── Consumable Goods
+├── Credit Cards
+├── Crypto
+├── Dental
+├── Donation
+├── Entertainment
+├── Finance
+├── Groceries
+├── Health and Wellbeing
+├── Hobby
+├── Housing
+├── Housing,HomeOwnersAssociation
+├── Housing-GrapeCove
+├── Income
+├── Insurance
+├── Investment
+├── Medical
+├── Misc
+├── Mortgage
+├── Organizations
+├── Pets
+├── Professional and Historical Organizations
+├── Shopping
+├── Subscription
+├── Taxes
+├── Temp
+├── Travel
+├── Unknown
+└── Work-related
+

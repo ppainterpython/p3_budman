@@ -1,0 +1,252 @@
+Budget Category List(level 2) 2025-06-26 10:35:45 AM
+
+Budget
+├── Auto
+│   ├── Body Shop
+│   ├── Carwash
+│   ├── Fees
+│   ├── Gasoline
+│   ├── Insurance
+│   ├── Loan
+│   ├── Maintenance
+│   ├── Registration Fee
+│   ├── Tires
+│   └── Tolls
+├── Banking
+│   ├── ATM
+│   ├── Adjustment
+│   ├── Apple Cash
+│   ├── Checks to Categorize
+│   ├── Crypto
+│   ├── Foreign Transaction Fee
+│   ├── Fraud Dispute
+│   ├── Interest
+│   ├── Late Fee
+│   ├── Laura Painter
+│   ├── Merrill
+│   ├── Mobile Deposit
+│   ├── Overdraft Protection
+│   ├── Payment
+│   ├── Preferred Rewards
+│   ├── TNB Financial
+│   ├── Transaction
+│   ├── Transaction Fee
+│   └── Transfer
+├── Clothing
+│   ├── Apparel
+│   ├── Hats
+│   └── Shoes
+├── Connectivity
+│   ├── AT&T U-Verse
+│   ├── Cellular
+│   ├── Interent
+│   └── Internet
+├── Consumable Goods
+│   ├── Door Dash
+│   ├── Favor
+│   ├── Groceries
+│   ├── Liquor
+│   └── Restaurants
+├── Credit Cards
+│   ├── Band of America
+│   ├── Bank of America
+│   ├── Chase
+│   └── Synchrony Bank
+├── Crypto
+│   └── Transfer
+├── Dental
+│   └── Lann
+├── Donation
+│   ├── Charity
+│   ├── GoFundMe
+│   └── Politics
+├── Entertainment
+│   ├── Concerts
+│   ├── Misc
+│   ├── Museums
+│   ├── Streaming
+│   ├── Theater
+│   └── Typhoon Texas
+├── Finance
+│   └── Experian
+├── Groceries
+│   └── Detergent Maria Oyestas
+├── Health and Wellbeing
+│   ├── 23AndMe
+│   ├── 23andMe
+│   ├── Athleta
+│   ├── Cycling
+│   ├── Equipment
+│   ├── Hair Care
+│   ├── Life Coach
+│   ├── LiveWello
+│   ├── Massage
+│   ├── NutriSense
+│   ├── Personal Trainer
+│   ├── Running
+│   ├── Supplements
+│   ├── Swimming
+│   └── Tennis
+├── Hobby
+│   ├── Artwork
+│   └── Photography
+├── Housing
+│   ├── Dry Cleaning
+│   ├── Electricity
+│   ├── HVAC
+│   ├── Improvements
+│   ├── Lawn Care
+│   ├── Maid Service
+│   ├── Maintenance
+│   ├── Misc
+│   ├── Mortgage
+│   ├── Pest Control
+│   ├── Security
+│   ├── Storage Unit
+│   └── WaterAndWaste
+├── Housing,HomeOwnersAssociation
+│   └── Avery Ranch
+├── Housing-GrapeCove
+│   ├── Electric
+│   ├── HVAC
+│   ├── Improvements
+│   ├── Lawn Care
+│   ├── Maintenance
+│   ├── Natural Gas
+│   └── WaterAndWaste
+├── Income
+│   ├── Bank Reward
+│   ├── Consulting
+│   ├── HP Inc
+│   ├── Inheritance
+│   ├── Interest
+│   └── TWC
+├── Insurance
+│   ├── Cobra Medical
+│   ├── Principal Life Insurance
+│   ├── State Farm
+│   └── Texas Law
+├── Investment
+│   ├── Fidelity
+│   ├── Foris USA
+│   └── Transfer
+├── Medical
+│   ├── Adelman
+│   ├── Audiology
+│   ├── BSW Health
+│   ├── Bio-T
+│   ├── CareNow
+│   ├── Chiropractor
+│   ├── Dermatology
+│   ├── Eye Doctor
+│   ├── Lab Work
+│   ├── Labs
+│   ├── Misc
+│   ├── Oncology Doctor
+│   ├── Pharmacy
+│   ├── Physical Therapy
+│   ├── Radiology
+│   ├── Reimbursement
+│   ├── Rheumatology
+│   ├── TheraBody
+│   └── Theraputic
+├── Misc
+│   └── Reimbursement
+├── Mortgage
+│   └── Hogge
+├── Organizations
+│   ├── DRT
+│   └── IEEE
+├── Pets
+│   ├── Boarding
+│   ├── Dog Food
+│   ├── Grooming
+│   ├── Misc
+│   └── Veterinary
+├── Professional and Historical Organizations
+│   └── DAR
+├── Shopping
+│   ├── 7-Eleven
+│   ├── Amazon
+│   ├── Amazon Digital
+│   ├── Amazon Marketplace
+│   ├── Amazon Prime
+│   ├── Amazon Retail
+│   ├── Apple
+│   ├── At Home
+│   ├── Barnes & Noble
+│   ├── Bass Pro
+│   ├── Circle K
+│   ├── Convenience Stores
+│   ├── ConvenienceStore
+│   ├── Costco
+│   ├── Etsy
+│   ├── FastSpring
+│   ├── Firearms
+│   ├── James Avery
+│   ├── Jewelry
+│   ├── Michaels
+│   ├── Microsoft
+│   ├── Misc
+│   ├── PayPal
+│   ├── SaddleBack Leather
+│   ├── Shipping
+│   └── Walgreens
+├── Subscription
+│   ├── Application
+│   ├── Content
+│   ├── Patreon
+│   ├── Software
+│   ├── Storage
+│   ├── TeamViewer
+│   └── Zoom
+├── Taxes
+│   ├── Federal
+│   └── Williamson County
+├── Temp
+│   ├── Blackmail
+│   ├── Chat Fraud
+│   ├── Chat Site
+│   ├── Fraud Search
+│   ├── Massage
+│   └── Vape
+├── Travel
+│   ├── Alaska Airlines
+│   ├── Clear
+│   ├── ColoradoTripJanuary2025
+│   ├── Expedia
+│   ├── Food
+│   ├── Luggage
+│   ├── NewYorkMarch2024
+│   ├── Parking
+│   ├── Passport Services
+│   ├── Transportation
+│   ├── Trip Insurance
+│   └── United Airlines
+├── Unknown
+│   ├── AAAA EMBROI
+│   ├── ATGPay
+│   ├── BIR JV LLP
+│   ├── BuyGoods
+│   ├── DIGISTORE
+│   ├── DJO-CMF
+│   ├── FFNHELP
+│   ├── GEDMATCH
+│   ├── HomeSense
+│   ├── Lagosec
+│   ├── P334C0CC1F
+│   ├── P3501FEAFA
+│   ├── PADDLE-COM
+│   ├── PayPal
+│   ├── PressNet
+│   ├── Pxxxxx2100
+│   ├── VirtualChargesDotCom
+│   └── Wise Inc
+└── Work-related
+    ├── ECU Recruiting
+    ├── Linked In
+    ├── OTTER-AI
+    ├── Software
+    ├── Training
+    └── VisualMind
+
