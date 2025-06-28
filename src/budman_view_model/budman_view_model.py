@@ -215,39 +215,81 @@ from budman_cli_view import budman_cli_parser, budman_cli_view
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
-# BudMan Command Processor Argument Name Constants
+#region Global Constants for ViewModelCommandProcessor
+# BudMan Command Processor Argument Name Constants. Arguments are placed in
+# the command dictionary as key/value pairs. The keys are used to identify
+# the command line arguments but also include values placed in the cmd object
+# prior to cp_execute_cmd() being called, depending on the parsing activity
+# of a View interface that is constructing the cmd object. 
 # argparse converts hyphens '-' to underscores '_', so we use underscores
-CMD_KEY_SUFFIX = "_cmd"
-CMD_NAME = "cmd_name"
-CMD_SUBCMD = "sub_cmd"
-CMD_PARSE_ONLY = "parse_only"
-CMD_VALIDATE_ONLY = "validate_only"
-CMD_WHAT_IF = "what_if"
-CMD_FI_KEY = "fi_key"
-CMD_WF_KEY = "wf_key"
-CMD_WF_PURPOSE = "wf_purpose"
-CMD_WB_TYPE = "wb_type"
-CMD_WB_NAME = "wb_name"
-CMD_WB_INDEX = "wb_index"
-CMD_ALL_WBS = "all_wbs"
-CMD_WB_REF = "wb_ref"
-CMD_WB_INFO = "wb_info"
-CMD_CHECK_REGISTER = "check_register"
-CMD_WF_TASK = "wf_task"
-CMD_TASK_ARGS = "task_args"
-CMD_TASK_NAME = "task_name"
-CMD_HANDLER_NAME = "handler_name"
-CMD_LIST_SWITCH = "list_switch" 
-CMD_LEVEL_VALUE = "level_value"
-CMD_ROLLOVER_SWITCH = "rollover_switch"
-BUDMAN_VALID_CMD_ARGS = (CMD_PARSE_ONLY, CMD_VALIDATE_ONLY,
-                        CMD_WHAT_IF, CMD_FI_KEY, CMD_WF_KEY,CMD_WF_PURPOSE,
-                        CMD_WB_TYPE, CMD_WB_NAME, CMD_WB_REF,CMD_WB_INFO,
-                        CMD_CHECK_REGISTER,CMD_HANDLER_NAME,CMD_LIST_SWITCH,
-                        CMD_LEVEL_VALUE, CMD_ROLLOVER_SWITCH,CMD_WB_INDEX, 
-                        CMD_ALL_WBS)
+#
+# List of cmd 'key' (CK_) string constants, use like cmd[CK_NAME]
+# cmd 'key' values are CV_
+#
+# All cmd obj required attributes
+CK_CMD_KEY = "cmd_key"
+"""A string identifier for a known cmd, used to bind to an execution function."""
+CK_SUBCMD_KEY = "subcmd_key"
+"""The string identifier for a known subcmd, can be used with cmd_key to bind exec func."""
+CK_CMD_NAME = "cmd_name"
+"""The cmd object key defining the command name."""
+CK_SUBCMD_NAME = "subcmd_name"
+"""The string identifier for a known subcmd, can be used with cmd_key to bind exec func."""
+CK_CMD_EXEC_FUNC = "cmd_exec_func"
+"""The cmd object key assigned the command execution function callable value."""
+# Known CK_CMD_NAME values for the BudManViewModel.
+CV_INIT_CMD = "init"
+CV_LOAD_CMD = "load"
+CV_SAVE_CMD = "save"
+CV_SHOW_CMD = "show"
+CV_CHANGE_CMD = "change"
+CV_WORKFLOW_CMD = "workflow"
+CV_APP_CMD = "app"
+# Common argument attribute keys, for any cmd
+CK_PARSE_ONLY = "parse_only"
+CK_VALIDATE_ONLY = "validate_only"
+CK_WHAT_IF = "what_if"
+# Essential Data Context attributes, with cross-cutting scope over cmds
+CK_FI_KEY = "fi_key"
+CK_WF_KEY = "wf_key"
+CK_WF_PURPOSE = "wf_purpose"
+CK_WB_TYPE = "wb_type"
+CK_WB_NAME = "wb_name"
+CK_WB_INDEX = "wb_index"
+CK_ALL_WBS = "all_wbs"
+CK_WB_REF = "wb_ref"
+CK_WB_INFO = "wb_info"
+CK_WF_TASK = "wf_task"
+# Task CK_SUBCMD_NAME subcmd_name
+CV_TASK_SUBCMD = "task"
+CK_TASK_ARGS = "task_args"
+CK_TASK_NAME = "task_name"
+# Log CK_SUBCMD_NAME subcmd_name
+CV_LOG_SUBCMD = "log"
+CK_HANDLER_NAME = "handler_name"
+CK_LIST_SWITCH = "list_switch" 
+CK_LEVEL_VALUE = "level_value"
+CK_ROLLOVER_SWITCH = "rollover_switch"
+# Reload CK_SUBCMD_NAME subcmd_name
+CV_RELOAD_SUBCMD = "reload"
+CK_RELOAD_TARGET = "reload_target"
+# deprecated
+CK_CHECK_REGISTER = "check_register"
 
+BUDMAN_VALID_CK_ATTRS = (CK_CMD_KEY, CK_CMD_NAME, CK_SUBCMD_KEY, CK_SUBCMD_NAME, 
+                        CK_CMD_EXEC_FUNC,
+                        CK_PARSE_ONLY, CK_VALIDATE_ONLY, CK_WHAT_IF, 
+                        CK_FI_KEY, CK_WF_KEY,CK_WF_PURPOSE,
+                        CK_WB_TYPE, CK_WB_NAME, CK_WB_REF,CK_WB_INFO,
+                        CK_CHECK_REGISTER,CK_HANDLER_NAME,CK_LIST_SWITCH,
+                        CK_LEVEL_VALUE, CK_ROLLOVER_SWITCH,CK_WB_INDEX, 
+                        CK_ALL_WBS, CK_RELOAD_TARGET)
+
+CMD_KEY_SUFFIX = "_cmd"
+#endregion Global Constants for ViewModelCommandProcessor
+#region Global Variables
 logger = logging.getLogger(__name__)
+#endregion Global Variables
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
@@ -425,14 +467,13 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
                 "load_cmd_workbooks": self.WORKBOOKS_load_cmd,
                 "save_cmd_workbooks": self.WORKBOOKS_save_cmd,
                 "load_cmd_check_register": self.CHECK_REGISTER_load_cmd,
-                "change_cmd": self.CHANGE_cmd,
                 "change_cmd_workbooks": self.CHANGE_cmd,
                 "workflow_cmd_categorization": self.WORKFLOW_categorization_cmd,
-                "workflow_cmd_reload": self.WORKFLOW_reload_cmd,
                 "workflow_cmd_apply": self.WORKFLOW_apply_cmd,
                 "workflow_cmd_check": self.WORKFLOW_check_cmd,
                 "workflow_cmd_task": self.WORKFLOW_task_cmd,
-                "app_cmd_log_subcmd": self.APP_cmd
+                "change_cmd": self.CHANGE_cmd,
+                "app_cmd": self.APP_cmd,
             }
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
@@ -460,12 +501,23 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
     - A cmd_key is also a string composed of the cmd_name and the
       '_cmd' suffix.
     - A cmd_key becomes an actual 'key' in the cmd dict object with an 
-      Optional[str] value.
+      Optional[str] value. It is one identifier to use for binding to an
+      execution function in the cmd_map.
     - A sub-command is given as a value to the cmd_key, but may be None.
     - A second key in the cmd dict is 'command_name' with the value being the 
       command name string, e.g., 'init', 'load', 'save', etc.
-    - A third key used in a valid cmd dict object is 'full_cmd_key' with a 
-      string value constructed as" <cmd_key>_<sub_command_value>".
+    - A third key used in a valid cmd dict object is 'subcmd_key' with a 
+      string value constructed as" <cmd_key>_<subcmd_name>".
+
+      Examples:
+      - cli:  init fin_inst -> cmd_key = init_cmd, subcmd_key = init_cmd_fin_inst  
+      - cli:  workflow categorization 2 -> cmd_key = workflow_cmd, subcmd_key = workflow_cmd_categorization   
+      - cli:  app log rollover -> cmd_key = app_cmd, subcmd_key = app_cmd_log_subcmd
+
+    When binding to an execution function, the subcmd_key is searched first, and
+    used when present. If no subcmd_key binding exists in the cmd_map, then
+    the cmd_key is sought and used. If no cmd_key binding found, then the cmd 
+    is auto-bound to the UNKNOWN_cmd() exec function.
 
     The command key is a string, which is the name of the command.  
     The characters '_cmd' are appended to the command key. The sub-command 
@@ -543,17 +595,16 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             success, result = self.cp_validate_cmd(cmd)
             if not success: return success, result
             # if cp_validate_cmd() is good, continue.
-            validate_only: bool = self.cp_cmd_arg_get(cmd,CMD_VALIDATE_ONLY)
-            full_cmd_key = result
-            # TODO: create cp_cmd_func_get(full_cmd_key) with UNKNOWN_cmd()
-            func = self.cp_cmd_map.get(full_cmd_key)
-            function_name = func.__name__
+            validate_only: bool = self.cp_cmd_attr_get(cmd,CK_VALIDATE_ONLY)
             if validate_only:
                 result = f"vo-command: {function_name}({str(cmd)})"
                 logger.info(result)
                 return True, result
+            exec_func: Callable = cmd[CK_CMD_EXEC_FUNC]
+            function_name = exec_func.__name__
             logger.info(f"Executing command: {function_name}({str(cmd)})")
-            status, result = self.cp_cmd_map.get(full_cmd_key)(cmd)
+            status, result = exec_func(cmd)
+            # status, result = self.cp_cmd_map.get(full_cmd_key)(cmd)
             logger.info(f"Complete Command: [{p3u.stop_timer(st)}] {(status, str(result))}")
             return status, result
         except Exception as e:
@@ -565,7 +616,7 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
     #endregion cp_execute_cmd() Command Processor method
     #region cp_validate_cmd() Command Processor method
     def cp_validate_cmd(self, cmd : Dict = None,
-                        validate_all : bool = False) -> Tuple[bool, str]:
+                        validate_all : bool = False) -> BUDMAN_RESULT:
         """Validate the cmd object for cmd_key and parameters.
 
         Extract a valid, known full_cmd_key/cmd_key to succeed.
@@ -584,45 +635,31 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
                 True returns the full cmd_key value as result.
                 False, the message will contain an error message.
         """
-        my_prefix = f"{self.__class__.__name__}.{self.cp_validate_cmd_object.__name__}: "
         try:
-            self.cp_validate_cmd_object(cmd, my_prefix, raise_error = True)
+            self.cp_validate_cmd_object(cmd, raise_error = True)
             # After cp_validate_cmd_object() returns, cmd dict has 
             # content to examine and validate.
             # For a few args, apply the DC values if no value given in the cmd.
-            if self.cp_cmd_arg_get(cmd, CMD_FI_KEY) is None:
-                self.cp_cmd_arg_set(cmd, CMD_FI_KEY,
+            if self.cp_cmd_attr_get(cmd, CK_FI_KEY) is None:
+                self.cp_cmd_attr_set(cmd, CK_FI_KEY,
                                     self.dc_FI_KEY)
-            if self.cp_cmd_arg_get(cmd, CMD_WF_KEY) is None:
-                self.cp_cmd_arg_set(cmd, CMD_WF_KEY,
+            if self.cp_cmd_attr_get(cmd, CK_WF_KEY) is None:
+                self.cp_cmd_attr_set(cmd, CK_WF_KEY,
                                     self.dc_WF_KEY)
-            validate_all: bool = self.cp_cmd_arg_get(cmd,CMD_VALIDATE_ONLY)
+            validate_all: bool = self.cp_cmd_attr_get(cmd,CK_VALIDATE_ONLY)
             # If validate_all, then don't return a result until all cmd args 
             # are validated.
             all_results : str = "All Results:\n" if validate_all else ""
             result = "It's all good." 
             if validate_all:
                 all_results = f"Command validation info: \n{P2}cmd: {str(cmd)}\n"
-            
-            # Validation Step 1: Extract the full_cmd_key/cmd_key  
-            # from the cmd. A full_cmd_key will include the cmd_key and a
-            # possible sub-command value, or full_cmd_key can equal the cmd_key.
-            success, full_cmd_key, cmd_key = self.cp_full_cmd_key(cmd)
-            if not success:
-                result = f"Error: cmd_key: '{str(cmd_key)}' "
-                result += f"'{str(full_cmd_key)}' not in cmd_map."
-                if not validate_all:
-                    logger.warning(result)
-                    return False, result
-                else:
-                    # accumulate msgs, validate all cmd args
-                    success = False
+            success:bool = True
             # Validate the cmd arguments.
             for key, value in cmd.items():
-                if key == cmd_key: 
+                if key == cmd[CK_CMD_KEY]: 
                     continue
-                elif key == CMD_WB_INDEX:
-                    if cmd[CMD_ALL_WBS] and value == -1:
+                elif key == CK_WB_INDEX:
+                    if cmd[CK_ALL_WBS] and value == -1:
                         # If all_wbs is True, then wb_index is not used.
                         continue
                     elif not self.dc_WB_INDEX_validate(value):
@@ -630,15 +667,15 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
                         success = False 
                         logger.error(result)
                     continue
-                elif key == CMD_FI_KEY:
+                elif key == CK_FI_KEY:
                     if not self.dc_FI_KEY_validate(value):
                         result = f"Invalid fi_key value: '{value}'."
                         success = False 
                         logger.error(result)
                     continue
-                elif key == CMD_WB_NAME: 
+                elif key == CK_WB_NAME: 
                     continue
-                elif key == CMD_WF_KEY:
+                elif key == CK_WF_KEY:
                     if not self.dc_WF_KEY_validate(value):
                         result = f"Invalid wf_key value: '{value}'."
                         success = False 
@@ -648,29 +685,29 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
                                     f" Defaulting to {BDM_WF_CATEGORIZATION}.")
                         cmd[key] = BDM_WF_CATEGORIZATION
                     continue
-                elif key == CMD_WB_REF:
+                elif key == CK_WB_REF:
                     if not self.dc_WB_REF_validate(value):
                         result = f"Invalid wb_ref level: '{value}'."
                         success = False 
                         logger.error(result)
-                elif key == CMD_WB_INFO:
+                elif key == CK_WB_INFO:
                     if not self.BMVM_cmd_WB_INFO_LEVEL_validate(value):
                         result = f"Invalid wb_info level: '{value}'."
                         success = False 
                         logger.error(result)
-                elif key == CMD_PARSE_ONLY: 
-                    po = cmd.get(CMD_PARSE_ONLY, False)
+                elif key == CK_PARSE_ONLY: 
+                    po = cmd.get(CK_PARSE_ONLY, False)
                     continue
-                elif key == CMD_VALIDATE_ONLY: 
-                    vo = cmd.get(CMD_VALIDATE_ONLY, False)
+                elif key == CK_VALIDATE_ONLY: 
+                    vo = cmd.get(CK_VALIDATE_ONLY, False)
                     continue
-                elif key == CMD_WHAT_IF: 
-                    what_if = cmd.get(CMD_WHAT_IF, False)
+                elif key == CK_WHAT_IF: 
+                    what_if = cmd.get(CK_WHAT_IF, False)
                     continue
-                elif key == CMD_CHECK_REGISTER:
+                elif key == CK_CHECK_REGISTER:
                     continue
                 else:
-                    if key not in BUDMAN_VALID_CMD_ARGS:
+                    if key not in BUDMAN_VALID_CK_ATTRS:
                         result = f"Unchecked argument key: '{key}': '{value}'."
                         logger.debug(result)
                 # If not validate_all and success is False, return. Else, 
@@ -683,19 +720,21 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
                     all_results += f"{P2}{result}\n"
             # Argument check is complete
             if success:
-                logger.info(f"Command validated - full_cmd_key: '{full_cmd_key}' cmd: {str(cmd)}")
-                return success, full_cmd_key # The happy path return 
+                m = (f"Command validated - cmd_key: '{cmd[CK_CMD_KEY]}' "
+                            f"subcmd_key: {str(cmd[CK_SUBCMD_KEY])}")
+                logger.info(m)
+                return success, m # The happy path return 
             if validate_all:
                 return success, all_results
             return success, result
         except Exception as e:
-            logger.error(p3u.exc_err_msg(e))
-            raise
+            m = f"Error validating command: {str(cmd)}: {p3u.exc_err_msg(e)}"
+            logger.error(m)
+            return False, m
     #endregion cp_validate_cmd() Command Processor method
     #region cp_validate_cmd_object() Command Processor method
     def cp_validate_cmd_object(self, 
                                cmd : Dict = None,
-                               prefix: str = None,
                                raise_error:bool=False) -> bool:
         """Validate Command Processor is initialized and the cmd object is valid.
 
@@ -715,61 +754,80 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             RuntimeError: If raise_error is True, a RunTimeError is raised 
             with an error message.
         """
-        my_prefix = f"{self.__class__.__name__}.{self.cp_validate_cmd_object.__name__}: "
-        pfx = prefix if prefix else my_prefix
+        # Primary Concern: Validate the cmd object is ready for parameter
+        # validation. The current validation rules are:
+        # 1. CommandProcessor is initialized, i.e., self.initialized is True.
+        # 2. cmd is a dictionary, not None and not empty.
+        # 3. cmd dictionary contains mandatory CK_CMD_KEY. There may be an 
+        #    optional CK_SUBCMD_KEY, but it is not required.
         try:
+            pfx = f"{self.__class__.__name__}.{self.cp_validate_cmd_object.__name__}: "
+            logger.debug(f"Before Validating cmd object: {str(cmd)}")
             if not self.initialized:
-                m = f"{pfx} Command Processor is not initialized."
+                m = f"Command Processor is not initialized."
                 logger.error(m)
                 if raise_error:
                     raise RuntimeError(m)
                 return False
             if p3u.is_not_obj_of_type("cmd",cmd,dict,pfx):
                 cmd_type = type(cmd).__name__
-                m = f"{pfx}Invalid cmd object type: '{cmd_type}', no action taken."
+                m = f"Invalid cmd object type: '{cmd_type}', no action taken."
                 logger.error(m)
                 if raise_error:
                     raise RuntimeError(m)
                 return False
             if len(cmd) == 0:
-                m = f"{pfx}Command object is empty, no action taken."
+                m = f"Command object is empty, no action taken."
                 logger.error(m)
                 if raise_error:
                     raise RuntimeError(m)
                 return False
+            # Examine the cmd object for the required cmd values.
+            # If necessary, try transitioning from the old cmd_key approach to 
+            # the current one.
+            success : bool = False
+            cmd_exec_func : Callable = None
+            # Check for the current cmd keys.
+            cmd_key:str = cmd.get(CK_CMD_KEY, None)
+            cmd_name:str = cmd.get(CK_CMD_NAME, None)
+            subcmd_name:str = cmd.get(CK_SUBCMD_NAME, None)
+            subcmd_key:str = cmd.get(CK_SUBCMD_KEY, None)
+            # Bind the command execution function, using subcmd_key first,
+            # then cmd_key, then the UNKNOWN_cmd function.
+            if subcmd_key:
+                cmd_exec_func = self.cp_exec_func_binding(subcmd_key, None)
+            if cmd_key and cmd_exec_func is None:
+                cmd_exec_func = self.cp_exec_func_binding(cmd_key, self.UNKNOWN_cmd)
+            # Add it to the cmd object.
+            cmd[CK_CMD_EXEC_FUNC] = cmd_exec_func
             return True
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
     #endregion cp_validate_cmd_object() Command Processor method
-    #region cp_cmd_key() Command Processor method
-    def cp_cmd_key(self, cmd : Dict = None) -> BUDMAN_RESULT:
-        """Extract a cmd_key is present in the cmd, return it.
+    #region cp_exec_func_binding() Command Processor method
+    def cp_exec_func_binding(self, cmd_key : str, default:Callable) -> Callable:
+        """Get the command function for a given command key.
 
-        A cmd_key is a key in the cmd dictionary that ends with 
-        CMD_ARG_CMD_KEY_SUFFIX, which is typically set to "_cmd". If an 
-        arg key matches this suffix, it is considered a command key.
-        If no cmd_key is found, an error message is returned.
-                
-        returns:
-            BUDMAN_RESULT(Tuple[success: bool, result: str]): 
-                success = True: result = cmd_key value that was detected.
-                success = False: result = an error message. No cmd_key detected.
+        This method retrieves the command function from the command map
+        using the provided command key. If the command key is not found,
+        it returns a function that handles unknown command cmd objects.
+
+        Arguments:
+            cmd_key (str): The command key to look up in the command map.
+
+        Returns:
+            Callable: The function associated with the command key, or an 
+            UNKNOWN_cmd function if the key is not found.
         """
-        try:
-            # Check if the cmd contains a valid cmd_key.
-            cmd_key = next((key for key in cmd.keys() 
-                            if CMD_KEY_SUFFIX in key), None)
-            if p3u.str_empty(cmd_key):
-                m = f"No command key found in cmd: {str(cmd)}"
-                logger.error(m)
-                return False, m
-            # Success, return the cmd_key.
-            return True, cmd_key
-        except Exception as e:
-            logger.error(p3u.exc_err_msg(e))
-            raise
-    #endregion cp_cmd_key() Command Processor method
+        if not p3u.str_notempty(cmd_key):
+            raise ValueError("cmd_key must be a non-empty string.")
+        exec_func : Callable = self.cp_cmd_map.get(cmd_key, None)
+        if exec_func is None:
+            # If no exec_func found, use the default UNKNOWN_cmd function.
+            exec_func = default if default else None
+        return exec_func
+    #endregion cp_exec_func_binding() Command Processor method
     #region cp_cmd_name() Command Processor method
     def cp_cmd_name(self, cmd_key : str) -> str:
         """Extract the command name from the cmd_key.
@@ -796,88 +854,51 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             logger.error(m)
             return False, m
     #endregion cp_cmd_name() Command Processor method
-    #region cp_full_cmd_key() Command Processor method
-    def cp_full_cmd_key(self, cmd : Dict = None) -> Tuple[bool, str, str]:
-        """Extract a full cmd key with subcommand if included.
-
-        First, check for a cmd_key arg key. If it exists, the subcmd will be
-        its value. A full_cmd_key is constructed by combining the cmd_key and
-        the sub_cmd value inserting an underscore '_' om between. If no subcmd
-        is found, but a cmd_key is, then the cmd_key and the full_cmd_key are
-        the same.
-
-                
-        returns:
-            Tuple[success: bool, full_cmd_key: str, cmd_key: str|None]: 
-                A tuple of 3 values indicating success or failure. 
-                success = True: 
-                    The full_cmd_key exists in the cmd_map.
-                    full_cmd_key, cmd_key values are returned.
-                    If full_cmd_key == cmd_key, no subcmd was detected.
-                success = False: 
-                    No match in cmd_map for full_cmd_key.
-                    full_cmd_key, cmd_key values returned, may be the same.
-                    If full_cmd_key or cmd_key are None, no values were detected.
-                    If success is False, cmd_key is not Null, and full_cmd_key
-                    is None, then a cmd_key was detected, but is not in the
-                    cmd_map.
-               
-        """
-        try:
-            success : bool = False 
-            full_cmd_key : str = None
-            # Extract a cmd key from the cmd, or error out.
-            success, result = self.cp_cmd_key(cmd)
-            if not success: return False, result, None
-            cmd_key = result
-            # Acquire sub-command key if present.
-            sub_cmd = cmd[cmd_key]
-            # Construct full_cmd_key from cmd_key and sub_cmd (may be None).
-            # If no sub_cmd, use cmd_key as full_cmd_key.
-            full_cmd_key = cmd_key + '_' + sub_cmd if p3u.str_notempty(sub_cmd) else cmd_key
-            # Validate the full_cmd_key against the command map.
-            if full_cmd_key not in self.cp_cmd_map:
-                m = f"Command key '{full_cmd_key}' not found in the command map."
-                logger.error(m)
-                success = False
-            return success, full_cmd_key, cmd_key
-        except Exception as e:
-            logger.error(p3u.exc_err_msg(e))
-            raise
-    #endregion cp_full_cmd_key() Command Processor method
-    #region cp_cmd_arg_get() Command Processor method
-    def cp_cmd_arg_get(self, cmd: Dict,
-                       arg_name: str, default_value: Any = None) -> Any:
-        """Get a command argument value from the cmd dictionary."""                  
+    #region cp_cmd_attr_get() Command Processor method
+    def cp_cmd_attr_get(self, cmd: Dict,
+                       key_name: str, default_value: Any = None) -> Any:
+        """Use cmd attr key_name to get value or return default."""                  
         if not isinstance(cmd, dict):
             raise TypeError("cmd must be a dictionary.")    
-        if not isinstance(arg_name, str):
+        if not isinstance(key_name, str):
             raise TypeError("arg_name must be a string.")
-        if arg_name not in cmd:
+        if key_name not in cmd:
             return default_value
-        value = cmd.get(arg_name, default_value)
+        value = cmd.get(key_name, default_value)
         if value is None:
             return default_value
         return value
-    #endregion cp_cmd_arg_get() Command Processor method
-    #region cp_cmd_arg_set() Command Processor method
-    def cp_cmd_arg_set(self, cmd: Dict,
+    #endregion cp_cmd_attr_get() Command Processor method
+    #region cp_cmd_attr_set() Command Processor method
+    def cp_cmd_attr_set(self, cmd: Dict,
                        arg_name: str, value: Any) -> None:
         """Set a command argument value in the cmd dictionary."""
         if not isinstance(cmd, dict):
             raise TypeError("cmd must be a dictionary.")
         if not isinstance(arg_name, str):
             raise TypeError("arg_name must be a string.")
-        if arg_name not in BUDMAN_VALID_CMD_ARGS:
+        if arg_name not in BUDMAN_VALID_CK_ATTRS:
             raise ValueError(f"Command argument '{arg_name}' is not a valid "
                              f"BudMan command argument. Valid arguments are: "
-                             f"{BUDMAN_VALID_CMD_ARGS}")
+                             f"{BUDMAN_VALID_CK_ATTRS}")
         if not isinstance(value, (str, int, float, bool)):
             raise TypeError(f"Command argument '{arg_name}' must be a string, "
                             f"int, float, or bool, not {type(value)}.")
         # Set the value in the cmd dictionary.
         cmd[arg_name] = value
-    #endregion cp_cmd_arg_set() Command Processor method
+    #endregion cp_cmd_attr_set() Command Processor method
+    #region cp_cmd_attr_get_set() Command Processor method
+    def cp_cmd_attr_get_set(self, cmd: Dict,
+                       key_name: str, default_value: Any = None) -> Any:
+        """Use cmd attr key_name to get value or set to default and return."""                  
+        if not isinstance(cmd, dict):
+            raise TypeError("cmd must be a dictionary.")    
+        if not isinstance(key_name, str):
+            raise TypeError("arg_name must be a string.")
+        if key_name not in cmd:
+            cmd[key_name] = default_value
+        return cmd[key_name]
+    #endregion cp_cmd_attr_get_set() Command Processor method
     #region BMVM_cmd_WB_INFO_LEVEL_validate() Command Processor method
     def BMVM_cmd_WB_INFO_LEVEL_validate(self, info_level) -> bool:
         """Return True if info_level is a valid value."""
@@ -952,11 +973,11 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
                 m = f"Invalid cmd object, no action taken."
                 logger.error(m)
                 raise RuntimeError(f"{pfx}{m}")
-            fi_key = cmd.get(CMD_FI_KEY, None)
-            wf_key = cmd.get(CMD_WF_KEY, BDM_WF_CATEGORIZATION)
-            wf_purpose = cmd.get(CMD_WF_PURPOSE, WF_WORKING)
-            wb_type = cmd.get(CMD_WB_TYPE, WF_WORKING)
-            wb_name = cmd.get(CMD_WB_NAME, None)
+            fi_key = cmd.get(CK_FI_KEY, None)
+            wf_key = cmd.get(CK_WF_KEY, BDM_WF_CATEGORIZATION)
+            wf_purpose = cmd.get(CK_WF_PURPOSE, WF_WORKING)
+            wb_type = cmd.get(CK_WB_TYPE, WF_WORKING)
+            wb_name = cmd.get(CK_WB_NAME, None)
             # TODO: Enable defaults for fi_key, wf_key, wb_type, wb_name in
             # settings.toml
             logger.info(f"Start: {str(cmd)}")
@@ -1131,11 +1152,11 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
         """
         try:
             logger.debug(f"Start: ...")
-            wb_ref = self.cp_cmd_arg_get(cmd, WB_REF, self.dc_WB_REF)
-            fi_key = self.cp_cmd_arg_get(cmd, FI_KEY, self.dc_FI_KEY)
-            wf_key = self.cp_cmd_arg_get(cmd, WF_KEY, self.dc_WF_KEY)
-            wf_purpose = self.cp_cmd_arg_get(cmd, WF_PURPOSE, self.dc_WF_PURPOSE)
-            wb_type = self.cp_cmd_arg_get(cmd, WB_TYPE, self.dc_WB_TYPE)
+            wb_ref = self.cp_cmd_attr_get(cmd, WB_REF, self.dc_WB_REF)
+            fi_key = self.cp_cmd_attr_get(cmd, FI_KEY, self.dc_FI_KEY)
+            wf_key = self.cp_cmd_attr_get(cmd, WF_KEY, self.dc_WF_KEY)
+            wf_purpose = self.cp_cmd_attr_get(cmd, WF_PURPOSE, self.dc_WF_PURPOSE)
+            wb_type = self.cp_cmd_attr_get(cmd, WB_TYPE, self.dc_WB_TYPE)
             all_wbs, wb_index, wb_name = self.dc_WB_REF_resolve(wb_ref)
             # Check for an invalid wb_ref value.
             if BudManViewModel.wb_ref_not_valid(all_wbs, wb_index, wb_name):
@@ -1185,9 +1206,9 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             st = p3u.start_timer()
             logger.debug(f"Start: ...")
             wb : Optional[WORKBOOK_OBJECT] = None
-            wb_index : int = self.cp_cmd_arg_get(cmd, CMD_WB_INDEX, self.dc_WB_INDEX)
-            all_wbs : bool = self.cp_cmd_arg_get(cmd, CMD_ALL_WBS, self.dc_ALL_WBS)
-            wb_ref : str = self.cp_cmd_arg_get(cmd, WB_REF, self.dc_WB_REF)
+            wb_index : int = self.cp_cmd_attr_get(cmd, CK_WB_INDEX, self.dc_WB_INDEX)
+            all_wbs : bool = self.cp_cmd_attr_get(cmd, CK_ALL_WBS, self.dc_ALL_WBS)
+            wb_ref : str = self.cp_cmd_attr_get(cmd, WB_REF, self.dc_WB_REF)
 
             wb_count = len(self.dc_WORKBOOK_DATA_COLLECTION)
             r = f"Budget Manager Workbooks({wb_count}):\n"
@@ -1242,9 +1263,9 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             logger.debug(f"Start: {str(cmd)}")
             # Get the command arguments.
             wb : Optional[WORKBOOK_OBJECT] = None
-            wb_index : int = self.cp_cmd_arg_get(cmd, CMD_WB_INDEX, self.dc_WB_INDEX)
-            all_wbs : bool = self.cp_cmd_arg_get(cmd, CMD_ALL_WBS, self.dc_ALL_WBS)
-            # CMD_WB_INDEX/CMD_ALL_WBS are already validated.
+            wb_index : int = self.cp_cmd_attr_get(cmd, CK_WB_INDEX, self.dc_WB_INDEX)
+            all_wbs : bool = self.cp_cmd_attr_get(cmd, CK_ALL_WBS, self.dc_ALL_WBS)
+            # CK_WB_INDEX/CK_ALL_WBS are already validated.
             if all_wbs:
                 # Put all the LOADED_WORKBOOK_COLLECTION from the DC to storage.
                 lwbl = self.dc_LOADED_WORKBOOKS
@@ -1328,11 +1349,11 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
         """
         try:
             logger.info(f"Start: ...")
-            wb_ref = self.cp_cmd_arg_get(cmd, CMD_WB_REF, self.dc_WB_REF)
-            fi_key = self.cp_cmd_arg_get(cmd, CMD_FI_KEY, self.dc_FI_KEY)
-            wf_key = self.cp_cmd_arg_get(cmd, CMD_WF_KEY, self.dc_WF_KEY)
-            wf_purpose = self.cp_cmd_arg_get(cmd, CMD_WF_PURPOSE, self.dc_WF_PURPOSE)
-            wb_type = self.cp_cmd_arg_get(cmd, CMD_WB_TYPE, self.dc_WF_KEY)
+            wb_ref = self.cp_cmd_attr_get(cmd, CK_WB_REF, self.dc_WB_REF)
+            fi_key = self.cp_cmd_attr_get(cmd, CK_FI_KEY, self.dc_FI_KEY)
+            wf_key = self.cp_cmd_attr_get(cmd, CK_WF_KEY, self.dc_WF_KEY)
+            wf_purpose = self.cp_cmd_attr_get(cmd, CK_WF_PURPOSE, self.dc_WF_PURPOSE)
+            wb_type = self.cp_cmd_attr_get(cmd, CK_WB_TYPE, self.dc_WF_KEY)
             wb_count = len(self.dc_CHECK_REGISTERS)
             r = f"Budget Manager Loaded Check Register ({wb_count}):\n"
             # A check register workbook is a .csv file.
@@ -1385,13 +1406,13 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
         """
         try:
             logger.info(f"Start: ...")
-            validate_only = self.cp_cmd_arg_get(cmd, CMD_VALIDATE_ONLY, None)
-            what_if = self.cp_cmd_arg_get(cmd, CMD_WHAT_IF, None)
-            fi_key = self.cp_cmd_arg_get(cmd, CMD_FI_KEY, self.dc_FI_KEY)
-            wf_key = self.cp_cmd_arg_get(cmd, CMD_WF_KEY, self.dc_WF_KEY)
-            wb_ref = self.cp_cmd_arg_get(cmd, CMD_WB_REF, self.dc_WB_REF)
-            wb_type = self.cp_cmd_arg_get(cmd, CMD_WB_TYPE, self.dc_WB_TYPE)
-            wf_purpose = self.cp_cmd_arg_get(cmd, CMD_WF_PURPOSE, None)
+            validate_only = self.cp_cmd_attr_get(cmd, CK_VALIDATE_ONLY, None)
+            what_if = self.cp_cmd_attr_get(cmd, CK_WHAT_IF, None)
+            fi_key = self.cp_cmd_attr_get(cmd, CK_FI_KEY, self.dc_FI_KEY)
+            wf_key = self.cp_cmd_attr_get(cmd, CK_WF_KEY, self.dc_WF_KEY)
+            wb_ref = self.cp_cmd_attr_get(cmd, CK_WB_REF, self.dc_WB_REF)
+            wb_type = self.cp_cmd_attr_get(cmd, CK_WB_TYPE, self.dc_WB_TYPE)
+            wf_purpose = self.cp_cmd_attr_get(cmd, CK_WF_PURPOSE, None)
             all_wbs, wb_index, wb_name = self.dc_WB_REF_resolve(wb_ref)
             # Verify LOADED_WORKBOOKS to process.
             wdc = self.dc_WORKBOOK_DATA_COLLECTION
@@ -1413,7 +1434,7 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
     #endregion CHANGE_cmd() method
     # ------------------------------------------------------------------------ +
     #region APP_cmd() command > wf cat 2
-    def APP_cmd(self, cmd : Dict) -> Tuple[bool, str]:
+    def APP_cmd(self, cmd : Dict) -> BUDMAN_RESULT:
         """View or change app settings.
 
         The APP_cmd command can use a variety of other command line arguments.
@@ -1434,12 +1455,30 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
         """
         try:
             logger.info(f"Start: ...")
-            validate_only = self.cp_cmd_arg_get(cmd, CMD_VALIDATE_ONLY, None)
-            what_if = self.cp_cmd_arg_get(cmd, CMD_WHAT_IF, None)
-            handler_name = self.cp_cmd_arg_get(cmd, CMD_HANDLER_NAME, None)
-            list_switch = self.cp_cmd_arg_get(cmd, CMD_LIST_SWITCH, False)
-            level_value = self.cp_cmd_arg_get(cmd, CMD_LEVEL_VALUE, None)
-            rollover_switch = self.cp_cmd_arg_get(cmd, CMD_ROLLOVER_SWITCH, False)
+            subcmd_name = cmd[CK_SUBCMD_NAME]
+            if subcmd_name == CV_LOG_SUBCMD:
+                # Show the current log level.
+                return True, "App Log cmd."
+            elif subcmd_name == CV_RELOAD_SUBCMD:
+                try:
+                    reload_target = self.cp_cmd_attr_get(cmd, RELOAD_TARGET, None)
+                    if reload_target is None:
+                        m = f"reload_target is None, no action taken."
+                        logger.error(m)
+                        return False, m
+                    if reload_target == CATEGORY_MAP:
+                        cmc = category_map_count()
+                        r = f"Workflow reload: '{reload_target}' rule count = {cmc}\n"
+                        logger.debug(r)
+                        importlib.reload(budget_category_mapping)
+                        importlib.reload(budman_cli_parser)
+                        importlib.reload(budman_cli_view)
+                    return True, r
+                except Exception as e:
+                    logger.error(p3u.exc_err_msg(e))
+                    raise
+            else:
+                return False, f"Unknown app subcmd: {subcmd_name}"
             return True, ""
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
@@ -1478,8 +1517,8 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             lwbc :LOADED_WORKBOOK_COLLECTION = None
             bdm_wb : Optional[BDMWorkbook] = None
             wb_content : Optional[WORKBOOK_CONTENT] = None
-            wb_index : int = self.cp_cmd_arg_get(cmd, CMD_WB_INDEX, self.dc_WB_INDEX)
-            all_wbs : bool = self.cp_cmd_arg_get(cmd, CMD_ALL_WBS, self.dc_ALL_WBS)
+            wb_index : int = self.cp_cmd_attr_get(cmd, CK_WB_INDEX, self.dc_WB_INDEX)
+            all_wbs : bool = self.cp_cmd_attr_get(cmd, CK_ALL_WBS, self.dc_ALL_WBS)
             # wb_index and all_wbs are validated already. 
             # Choose either all_wbs or a specific workbook designated by 
             # wb_index to be processed. This applies to loaded workbooks only, 
@@ -1570,14 +1609,14 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
         try:
             logger.info(f"Start: ...")
             # capture cmd args
-            validate_only = self.cp_cmd_arg_get(cmd, CMD_VALIDATE_ONLY, None)
-            what_if = self.cp_cmd_arg_get(cmd, CMD_WHAT_IF, None)
-            fi_key = self.cp_cmd_arg_get(cmd, CMD_FI_KEY, self.dc_FI_KEY)
-            wf_key = self.cp_cmd_arg_get(cmd, CMD_WF_KEY, self.dc_WF_KEY)
-            wb_ref = self.cp_cmd_arg_get(cmd, CMD_WB_REF, self.dc_WB_REF)
-            wb_type = self.cp_cmd_arg_get(cmd, CMD_WB_TYPE, self.dc_WB_TYPE)
-            wf_purpose = self.cp_cmd_arg_get(cmd, CMD_WF_PURPOSE, None)
-            cr_wb_ref = self.cp_cmd_arg_get(cmd, CMD_CHECK_REGISTER, None)
+            validate_only = self.cp_cmd_attr_get(cmd, CK_VALIDATE_ONLY, None)
+            what_if = self.cp_cmd_attr_get(cmd, CK_WHAT_IF, None)
+            fi_key = self.cp_cmd_attr_get(cmd, CK_FI_KEY, self.dc_FI_KEY)
+            wf_key = self.cp_cmd_attr_get(cmd, CK_WF_KEY, self.dc_WF_KEY)
+            wb_ref = self.cp_cmd_attr_get(cmd, CK_WB_REF, self.dc_WB_REF)
+            wb_type = self.cp_cmd_attr_get(cmd, CK_WB_TYPE, self.dc_WB_TYPE)
+            wf_purpose = self.cp_cmd_attr_get(cmd, CK_WF_PURPOSE, None)
+            cr_wb_ref = self.cp_cmd_attr_get(cmd, CK_CHECK_REGISTER, None)
             # Needs a check_register (cr) and a transaction workbook (wb).
             success, cr_wb, cr_content = self.get_workbook(cr_wb_ref)
             if not success:
@@ -1621,15 +1660,15 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
         """
         try:
             logger.info(f"Start: ...")
-            validate_only = self.cp_cmd_arg_get(cmd, CMD_VALIDATE_ONLY, None)
-            what_if = self.cp_cmd_arg_get(cmd, CMD_WHAT_IF, None)
-            fi_key = self.cp_cmd_arg_get(cmd, CMD_FI_KEY, self.dc_FI_KEY)
-            wf_key = self.cp_cmd_arg_get(cmd, CMD_WF_KEY, self.dc_WF_KEY)
-            wb_ref = self.cp_cmd_arg_get(cmd, CMD_WB_REF, self.dc_WB_REF)
-            wb_type = self.cp_cmd_arg_get(cmd, CMD_WB_TYPE, self.dc_WB_TYPE)
-            wf_purpose = self.cp_cmd_arg_get(cmd, CMD_WF_PURPOSE, self.dc_WF_PURPOSE)
-            task_name = self.cp_cmd_arg_get(cmd, CMD_TASK_NAME, None)
-            task_args = self.cp_cmd_arg_get(cmd, CMD_TASK_ARGS, None)
+            validate_only = self.cp_cmd_attr_get(cmd, CK_VALIDATE_ONLY, None)
+            what_if = self.cp_cmd_attr_get(cmd, CK_WHAT_IF, None)
+            fi_key = self.cp_cmd_attr_get(cmd, CK_FI_KEY, self.dc_FI_KEY)
+            wf_key = self.cp_cmd_attr_get(cmd, CK_WF_KEY, self.dc_WF_KEY)
+            wb_ref = self.cp_cmd_attr_get(cmd, CK_WB_REF, self.dc_WB_REF)
+            wb_type = self.cp_cmd_attr_get(cmd, CK_WB_TYPE, self.dc_WB_TYPE)
+            wf_purpose = self.cp_cmd_attr_get(cmd, CK_WF_PURPOSE, self.dc_WF_PURPOSE)
+            task_name = self.cp_cmd_attr_get(cmd, CK_TASK_NAME, None)
+            task_args = self.cp_cmd_attr_get(cmd, CK_TASK_ARGS, None)
 
             return True, ""
         except Exception as e:
@@ -1721,30 +1760,37 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             RuntimeError: A description of the
             root error is contained in the exception message.
         """
+    #endregion WORKFLOW_reload_cmd() method
+    # ------------------------------------------------------------------------ +
+    #region UNKNOWN_cmd() command > wf cat 2
+    def UNKNOWN_cmd(self, cmd : Dict) -> BUDMAN_RESULT:
+        """A cmd received that is not found in the current cmd map.
+
+        A CHANGE_cmd command uses the wb_ref arg parameter.
+
+        Arguments:
+            cmd (Dict): A BudManCommand object. 
+
+        Returns:
+            BUDMAN_RESULT:Tuple[success : bool, result : Any]: 
+            success: False, Result: message about the cmd object content.
+            
+        Raises:
+            RuntimeError: A description of the
+            root error is contained in the exception message.
+        """
         try:
-            pfx = f"{self.__class__.__name__}.{self.FI_init_cmd.__name__}: "
-            if p3u.is_not_obj_of_type("cmd",cmd,dict,pfx):
-                m = f"Invalid cmd object, no action taken."
-                logger.error(m)
-                raise RuntimeError(f"{pfx}{m}")
             logger.info(f"Start: ...")
-            reload_target = self.cp_cmd_arg_get(cmd, RELOAD_TARGET, None)
-            if reload_target is None:
-                m = f"reload_target is None, no action taken."
-                logger.error(m)
-                raise RuntimeError(f"{pfx}{m}")
-            if reload_target == CATEGORY_MAP:
-                cmc = category_map_count()
-                r = f"Workflow reload: '{reload_target}' rule count = {cmc}\n"
-                logger.debug(r)
-                importlib.reload(budget_category_mapping)
-                importlib.reload(budman_cli_parser)
-                importlib.reload(budman_cli_view)
-            return True, r
+            func_name = self.UNKNOWN_cmd.__name__
+            result = f"{func_name}(): Received unknown cmd object: {str(cmd)})"
+            logger.warning(result)
+            return False, result
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
-    #endregion WORKFLOW_reload_cmd() method
+    #endregion CHANGE_cmd() method
+    # ------------------------------------------------------------------------ +
+ 
     # ------------------------------------------------------------------------ +
     #region    helper methods for command execution
     # ------------------------------------------------------------------------ +
@@ -1853,14 +1899,14 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             bool: 
         """
         # Get the command arguments.
-        wb_index : int = self.cp_cmd_arg_get(cmd, CMD_WB_INDEX, self.dc_WB_INDEX)
-        all_wbs : bool = self.cp_cmd_arg_get(cmd, CMD_ALL_WBS, self.dc_ALL_WBS)
-        wb_ref : str = self.cp_cmd_arg_get(cmd, WB_REF, self.dc_WB_REF)
+        wb_index : int = self.cp_cmd_attr_get(cmd, CK_WB_INDEX, self.dc_WB_INDEX)
+        all_wbs : bool = self.cp_cmd_attr_get(cmd, CK_ALL_WBS, self.dc_ALL_WBS)
+        wb_ref : str = self.cp_cmd_attr_get(cmd, WB_REF, self.dc_WB_REF)
         # Get the command arguments.
-        fi_key = cmd.get(CMD_FI_KEY, None)
-        wf_key = cmd.get(CMD_WF_KEY, BDM_WF_CATEGORIZATION)
-        wf_purpose = cmd.get(CMD_WF_PURPOSE, WF_INPUT)
-        wb_type = cmd.get(CMD_WB_TYPE, WB_TYPE_TRANSACTIONS)
+        fi_key = cmd.get(CK_FI_KEY, None)
+        wf_key = cmd.get(CK_WF_KEY, BDM_WF_CATEGORIZATION)
+        wf_purpose = cmd.get(CK_WF_PURPOSE, WF_INPUT)
+        wb_type = cmd.get(CK_WB_TYPE, WB_TYPE_TRANSACTIONS)
         wb_name = cmd.get("wb_name", None)
         if fi_key != self.dc_FI_KEY:
             logger.warning(f"fi_key: arg '{fi_key}' differs from "

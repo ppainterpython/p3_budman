@@ -318,38 +318,3 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
     # ------------------------------------------------------------------------ +
     #endregion BudManDataContext (Interface) Property/Method Overrides.
     # ======================================================================== +
-
-    # ======================================================================== +
-    #region    BDMWD Interface concrete implementation.
-    # ------------------------------------------------------------------------ +
-    #region    BDMWorkingDataBaseInterface BDMWD DC-aware Interface.
-    def bdmwd_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_COLLECTION:
-        """Model-Aware: Return the LOADED_WORKBOOK_COLLECTION from the BDMWD."""
-        # Ask the model for the bdmwd_LOADED_WORKBOOKS.
-        return self.dc_LOADED_WORKBOOKS
-    def bdmwd_LOADED_WORKBOOKS_count(self) -> int:
-        """Return total count of BDMWD_LOADED_WORKBOOKS dictionary."""
-        return len(self.dc_LOADED_WORKBOOKS)
-    #endregion BDMWorkingDataBaseInterface BDMWD DC-aware Interface.
-    # ------------------------------------------------------------------------ +
-    #region    BDMWorkingData Interface BDMWD Model-aware(fi,wf,wb) Interface.
-    # ------------------------------------------------------------------------ +
-    def bdmwd_WORKBOOKS(self) -> WORKBOOK_DATA_LIST:
-        """Model-Aware: Return the WORKBOOK_DATA_LIST from the BDMWD."""
-        # Ask the model for the bdmwd_WORKBOOKS.
-        return self.model.bdmwd_WORKBOOKS_get()
-    def bdmwd_FI_WORKBOOKS_load(self, 
-                                fi_key: str, 
-                                wf_key : str, 
-                                wb_type : str) -> LOADED_WORKBOOK_COLLECTION:
-        """Model-Aware: Load WORKBOOKS for the FI,WF,WB."""
-        lwbs = self.model.bdmwd_FI_WORKBOOKS_load(fi_key, wf_key, wb_type)
-        self.dc_LOADED_WORKBOOKS = lwbs
-        return 
-    #endregion BDMWorkingData Interface BDMWD Interface.
-    # ------------------------------------------------------------------------ +
-    #endregion BDMWD Interface concrete implementation.
-    # ======================================================================== +
-
-
-
