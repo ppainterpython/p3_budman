@@ -562,20 +562,6 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
             logger.error(m)
             raise ValueError(m)
 
-    # def bdm_FI_WORKBOOK_COLLECTION_merge(self, fi_key:str, source:DATA_COLLECTION) -> DATA_COLLECTION:
-    #     """Merge the source FI_WORKBOOK_COLLECTION. Soft merge for existing workbooks."""
-    #     try:
-    #         if self.bdm_FI_WORKBOOK_COLLECTION(fi_key) is None:
-    #             self.bdm_FI_WORKBOOK_COLLECTION_set(fi_key, source)
-    #             return source
-            
-    #         self.bdm_FI_OBJECT(fi_key)[FI_WORKBOOK_COLLECTION] = value
-    #         return
-    #     except Exception as e:
-    #         m = f"Error setting FI_WORKBOOK_COLLECTION for fi_key '{fi_key}': {p3u.exc_err_msg(e)}"
-    #         logger.error(m)
-    #         raise ValueError(m)
-
     def bdm_FI_KEY_validate(self, fi_key:str) -> bool:
         """Validate the financial institution key."""
         if fi_key not in self.bdm_fi_collection and fi_key != ALL_KEY:

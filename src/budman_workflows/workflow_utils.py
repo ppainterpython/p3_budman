@@ -159,17 +159,25 @@ def extract_category_tree(level:int=2) -> Tree:
 #endregion extract_category_tree()
 # ---------------------------------------------------------------------------- +
 #region output_category_tree()
-def output_category_tree(level:int=2):
+def output_category_tree(level:int=2,cat_list:list[str]=[]) -> str:
     """Extract and output the category tree from the category_map."""
     try:
         now = dt.now()
         now_str = now.strftime("%Y-%m-%d %I:%M:%S %p")
         tree : Tree = extract_category_tree(level)
+        original_stdout = sys.stdout  # Save the original stdout
         buffer = io.StringIO()
         sys.stdout = buffer  # Redirect stdout to capture tree output
-        print(f"Budget Category List(level {level}) {now_str}\n")
-        tree.show()
-        sys.stdout = sys.__stdout__  # Reset stdout
+        if len(cat_list) == 0:
+            print(f"Budget Category List(level {level}) {now_str}\n")
+            tree.show()
+        else: 
+            # Show only the categories in the cat_list
+            for cat in cat_list:
+                if tree.contains(cat):
+                    print(f"Budget Category Item('{cat}') {now_str}\n")
+                    tree.show(cat)
+        sys.stdout = original_stdout  # Reset stdout
         output = buffer.getvalue()
         return output
     except Exception as e:

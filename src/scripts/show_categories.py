@@ -65,16 +65,18 @@ if __name__ == "__main__":
         configure_logging(__name__, logtest=False)
         set_log_level('stdout', logging.CRITICAL) 
         level = int(sys.argv[1]) if len(sys.argv) > 1 else 2
-        category_tree_to_csv(level)
+        # category_tree_to_csv(level)
         filename = f"level_{level}_categories.txt"
-        # output = output_category_tree(level)
-        # with open(filename, 'w', encoding='utf-8') as f:
-        #     f.write(output) 
-        # print(output)
-        # print("Categories written to file:", filename)
+        output = output_category_tree(level)
+        with open(filename, 'w', encoding='utf-8') as f:
+            f.write(output) 
+        print("Start Output")
+        print(output)
+        print("Categories written to file:", filename)
     except Exception as e:
         m = p3u.exc_err_msg(e)
         logger.error(m)
+        print(m)
     # bdm = bdms.bsm_BDM_STORE_url_load(bdms_url)
     print("Complete.")
     logger.info(f"Complete.")

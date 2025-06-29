@@ -18,7 +18,7 @@ from budman_namespace import (
     )
 from budget_storage_model import bsm_BDM_STORE_url_get, bsm_BDM_STORE_url_put
 from budman_namespace.bdm_workbook_class import BDMWorkbook
-from budman_workflows.budget_category_mapping import extract_category_tree
+# from budman_workflows.budget_category_mapping import extract_category_tree
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -88,9 +88,9 @@ def bdm_tree():
                 wf_folders[WF_INPUT] = wf_obj[WF_INPUT_FOLDER]
                 wf_folders[WF_WORKING] = wf_obj[WF_WORKING_FOLDER]
                 wf_folders[WF_OUTPUT] = wf_obj[WF_OUTPUT_FOLDER]
-                for wb_type, tuple_list in data_obj.items():
-                    f = wf_folders[wb_type]
-                    tm = wf_obj[WF_PURPOSE_FOLDER_MAP][wb_type]
+                for wf_purpose, tuple_list in data_obj.items():
+                    f = wf_folders[wf_purpose]
+                    tm = wf_obj[WF_PURPOSE_FOLDER_MAP][wf_purpose]
                     print(f"  '{f}' [{wf_key}]'{tm}' ")
                     for tup in tuple_list:
                         print(f"     '{tup[0]}' wb_path: {tup[1]}")
@@ -164,13 +164,13 @@ if __name__ == "__main__":
     cr_url = "file:///C:/Users/ppain/OneDrive/budget/boa/data/new/CheckRegister_ToDate20250609.csv"
     try:
         configure_logging(__name__, logtest=False)
-        wb_path = p3u.verify_url_file_path(cr_url, test=False)
-        bdms = bsm_BDM_STORE_url_get(wb_url)
-        bdm_store_change(bdms)
-        bsm_BDM_STORE_url_put(bdms, wb_url)
-        
-        
-        logger.info(f"wb_path: '{wb_path}' url:'{wb_url}'")
+
+        bdm_tree()
+        # wb_path = p3u.verify_url_file_path(cr_url, test=False)
+        # bdms = bsm_BDM_STORE_url_get(wb_url)
+        # bdm_store_change(bdms)
+        # bsm_BDM_STORE_url_put(bdms, wb_url)
+        # logger.info(f"wb_path: '{wb_path}' url:'{wb_url}'")
 
     except Exception as e:
         m = p3u.exc_err_msg(e)

@@ -1,4 +1,4 @@
-Budget Category List(level 2) 2025-06-26 10:35:45 AM
+Budget Category List(level 2) 2025-06-28 12:00:35 PM
 
 Budget
 ├── Auto
@@ -6,10 +6,7 @@ Budget
 │   ├── Carwash
 │   ├── Fees
 │   ├── Gasoline
-│   ├── Insurance
-│   ├── Loan
 │   ├── Maintenance
-│   ├── Registration Fee
 │   ├── Tires
 │   └── Tolls
 ├── Banking
@@ -36,11 +33,6 @@ Budget
 │   ├── Apparel
 │   ├── Hats
 │   └── Shoes
-├── Connectivity
-│   ├── AT&T U-Verse
-│   ├── Cellular
-│   ├── Interent
-│   └── Internet
 ├── Consumable Goods
 │   ├── Door Dash
 │   ├── Favor
@@ -91,29 +83,14 @@ Budget
 │   ├── Artwork
 │   └── Photography
 ├── Housing
-│   ├── Dry Cleaning
-│   ├── Electricity
-│   ├── HVAC
-│   ├── Improvements
-│   ├── Lawn Care
-│   ├── Maid Service
+│   ├── HomeOwnersAssociation
 │   ├── Maintenance
-│   ├── Misc
 │   ├── Mortgage
-│   ├── Pest Control
-│   ├── Security
-│   ├── Storage Unit
-│   └── WaterAndWaste
-├── Housing,HomeOwnersAssociation
-│   └── Avery Ranch
-├── Housing-GrapeCove
-│   ├── Electric
-│   ├── HVAC
-│   ├── Improvements
-│   ├── Lawn Care
+│   ├── Property Taxes
+│   └── Utilities
+├── Housing-2
 │   ├── Maintenance
-│   ├── Natural Gas
-│   └── WaterAndWaste
+│   └── Utilities
 ├── Income
 │   ├── Bank Reward
 │   ├── Consulting
@@ -122,6 +99,7 @@ Budget
 │   ├── Interest
 │   └── TWC
 ├── Insurance
+│   ├── Auto Insurance
 │   ├── Cobra Medical
 │   ├── Principal Life Insurance
 │   ├── State Farm
@@ -152,11 +130,16 @@ Budget
 │   └── Theraputic
 ├── Misc
 │   └── Reimbursement
-├── Mortgage
-│   └── Hogge
+├── New Projects
+│   ├── Home Improvements
+│   └── Selling Grape Cove
 ├── Organizations
 │   ├── DRT
 │   └── IEEE
+├── Personal Lifestyle
+│   ├── Dry Cleaning
+│   ├── Home Decor
+│   └── Storage Unit
 ├── Pets
 │   ├── Boarding
 │   ├── Dog Food
@@ -201,8 +184,7 @@ Budget
 │   ├── TeamViewer
 │   └── Zoom
 ├── Taxes
-│   ├── Federal
-│   └── Williamson County
+│   └── Federal
 ├── Temp
 │   ├── Blackmail
 │   ├── Chat Fraud
@@ -210,6 +192,10 @@ Budget
 │   ├── Fraud Search
 │   ├── Massage
 │   └── Vape
+├── Transportation
+│   ├── Auto
+│   ├── Fees
+│   └── Tolls
 ├── Travel
 │   ├── Alaska Airlines
 │   ├── Clear

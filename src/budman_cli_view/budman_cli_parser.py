@@ -196,61 +196,86 @@ class BudManCLIParser():
         try:
             parser = self.show_cmd
             # show subcommands: datacontext, workbooks, fin_inst, workflows, and workbooks
-            self.show_cmd_subparsers = self.show_cmd.add_subparsers()
-            self.show_datacontext_subcmd_parser = self.show_cmd_subparsers.add_parser(
+            subparsers = self.show_cmd.add_subparsers()
+
+            # Show Categories subcommand
+            categories_subcmd_parser = subparsers.add_parser(
+                "BUDGET_CATEGORIES",
+                aliases=["cat", "budget_categories"],
+                help="Show the Budget Categories.")
+            categories_subcmd_parser.set_defaults(
+                show_cmd="BUDGET_CATEGORIES", # old way
+                cmd_key="show_cmd",   # new way
+                cmd_name="show", 
+                subcmd_name="BUDGET_CATEGORIES",
+                subcmd_key="show_cmd_BUDGET_CATEGORIES")
+            categories_subcmd_parser.add_argument(
+                "-i", "--include", nargs="*",
+                action='extend', 
+                default= [],
+                help="List of categgories to include, default is all.") 
+            self.add_common_args(categories_subcmd_parser)
+
+            # show DataContext subcommand
+            datacontext_subcmd_parser = subparsers.add_parser(
                 "DATA_CONTEXT",
                 aliases=["dc", "DC"],
                 help="Show the data context information.")
-            self.show_datacontext_subcmd_parser.set_defaults(
-                show_cmd="DATA_CONTEXT",
+            datacontext_subcmd_parser.set_defaults(
+                show_cmd="DATA_CONTEXT", # old way
                 cmd_key="show_cmd",   # new way
                 cmd_name="show", 
                 subcmd_name="DATA_CONTEXT",
                 subcmd_key="show_cmd_DATA_CONTEXT")
+            self.add_common_args(datacontext_subcmd_parser)
 
-            # subcommand show fi_inst [fi_key] [-wf [wf_key]] [-wb [wb_name]]
-            self.show_fi_subcmd_parser = self.show_cmd_subparsers.add_parser(
+            # show Financial Institution subcommand [fi_key] [-wf [wf_key]] [-wb [wb_name]]
+            fi_subcmd_parser = subparsers.add_parser(
                 "fin_inst",
                 aliases=["fi", "FI", "financial_institutions"], 
                 help="Show Financial Institution information.")
-            self.show_fi_subcmd_parser.set_defaults(
+            fi_subcmd_parser.set_defaults(
                 show_cmd="fin_inst",
                 cmd_key="show_cmd",   # new way
                 cmd_name="show", 
                 subcmd_name="fin_inst",
                 subcmd_key="show_cmd_fin_inst")
-            self.show_fi_subcmd_parser.add_argument(
+            fi_subcmd_parser.add_argument(
                 "fi_key", nargs="?", 
                 default= "all",
                 help="FI key value.") 
+            self.add_common_args(fi_subcmd_parser)
+
             # show workflows subcommand
-            self.show_wf_subcmd_parser  = self.show_cmd_subparsers.add_parser(
+            wf_subcmd_parser  = subparsers.add_parser(
                 "workflows",
                 aliases=["wf", "WF"], 
                 help="Show Workflow information.")
-            self.show_wf_subcmd_parser.set_defaults(show_cmd="workflows")
-            self.show_wf_subcmd_parser.add_argument(
+            wf_subcmd_parser.set_defaults(show_cmd="workflows")
+            wf_subcmd_parser.add_argument(
                 "wf_key", nargs="?", 
                 action="store", 
                 default = None,
                 help="Workflow key value.")
+            self.add_common_args(wf_subcmd_parser)
+
             # show workbooks subcommand
-            self.show_wb_subcmd_parser  = self.show_cmd_subparsers.add_parser(
+            wb_subcmd_parser  = subparsers.add_parser(
                 "workbooks",
                 aliases=["wb", "WB"], 
                 help="Show workbook information.")
-            self.show_wb_subcmd_parser.set_defaults(
+            wb_subcmd_parser.set_defaults(
                 show_cmd="workbooks",
                 cmd_key="show_cmd",   # new way
                 cmd_name="show", 
                 subcmd_name="workbooks",
                 subcmd_key="show_cmd_workbooks")
-            self.show_wb_subcmd_parser.add_argument(
+            wb_subcmd_parser.add_argument(
                 "wb_ref", nargs="?", 
                 action="store", 
                 default='all',
                 help="Workbook reference, name or number from show workbooks.")
-            self.show_wb_subcmd_parser.add_argument(
+            wb_subcmd_parser.add_argument(
                 "-i", "--info", 
                 nargs="?", 
                 required=False, 
@@ -259,12 +284,7 @@ class BudManCLIParser():
                 const = 'info', 
                 default = 'info',  # info | verbose
                 help="Show additional information about the workbook.")
-
-            for subparser in [self.show_wb_subcmd_parser, 
-                              self.show_wf_subcmd_parser,
-                              self.show_fi_subcmd_parser,
-                              self.show_datacontext_subcmd_parser]:
-                self.add_common_args(subparser)
+            self.add_common_args(wb_subcmd_parser)
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise

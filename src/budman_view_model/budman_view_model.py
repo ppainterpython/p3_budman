@@ -200,7 +200,7 @@ from budman_namespace.bdm_workbook_class import BDMWorkbook
 from budman_workflows import (
     category_map_count, check_sheet_columns,
     check_sheet_schema,process_budget_category,
-    apply_check_register, get_category_histogram
+    apply_check_register, get_category_histogram, output_category_tree
     )
 from budman_workflows import budget_category_mapping
 
@@ -260,6 +260,9 @@ CK_ALL_WBS = "all_wbs"
 CK_WB_REF = "wb_ref"
 CK_WB_INFO = "wb_info"
 CK_WF_TASK = "wf_task"
+# subcmd_name BUDGET_CATEGORIES constants
+CV_BUDGET_CATEGORIES_SUBCMD = "BUDGET_CATEGORIES"
+CK_INCLUDE = "include"
 # Task CK_SUBCMD_NAME subcmd_name
 CV_TASK_SUBCMD = "task"
 CK_TASK_ARGS = "task_args"
@@ -472,6 +475,7 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
                 "workflow_cmd_apply": self.WORKFLOW_apply_cmd,
                 "workflow_cmd_check": self.WORKFLOW_check_cmd,
                 "workflow_cmd_task": self.WORKFLOW_task_cmd,
+                "show_cmd": self.SHOW_cmd,
                 "change_cmd": self.CHANGE_cmd,
                 "app_cmd": self.APP_cmd,
             }
@@ -595,13 +599,13 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             success, result = self.cp_validate_cmd(cmd)
             if not success: return success, result
             # if cp_validate_cmd() is good, continue.
+            exec_func: Callable = cmd[CK_CMD_EXEC_FUNC]
+            function_name = exec_func.__name__
             validate_only: bool = self.cp_cmd_attr_get(cmd,CK_VALIDATE_ONLY)
             if validate_only:
                 result = f"vo-command: {function_name}({str(cmd)})"
                 logger.info(result)
                 return True, result
-            exec_func: Callable = cmd[CK_CMD_EXEC_FUNC]
-            function_name = exec_func.__name__
             logger.info(f"Executing command: {function_name}({str(cmd)})")
             status, result = exec_func(cmd)
             # status, result = self.cp_cmd_map.get(full_cmd_key)(cmd)
@@ -1100,6 +1104,9 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
         try:
             st = p3u.start_timer()
             logger.debug(f"Start: ...")
+            result = output_category_tree()
+            # Gather the current content of the DATA_CONTEXT.
+            logger.info(f"Complete: {p3u.stop_timer(st)}")
             # Gather the current content of the DATA_CONTEXT.
             bs = self.dc_BDM_STORE
             bs_str = p3u.first_n(str(bs))
@@ -1125,9 +1132,50 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             return True, result
         except Exception as e:
-            logger.error(p3u.exc_err_msg(e))
-            raise
+            m = f"Error showing Data Context: {p3u.exc_err_msg(e)}"
+            logger.error(m)
+            return False, m
     #endregion DATA_CONTEXT_show_cmd() method
+    # ------------------------------------------------------------------------ +
+    #region SHOW_cmd() command > show dc
+    def SHOW_cmd(self, cmd : Dict) -> BUDMAN_RESULT:
+        """Show requested info from Budget Manager Data Context.
+
+        Arguments:
+            cmd (Dict): A valid BudMan View Model Command object. 
+    
+        Required cmd object attributes:
+            cmd_key: 'show_cmd' 
+        Optional cmd object attributes:
+            cmd_name: 'show'
+            subcmd_name: CV_BUDGET_CATEGORIES_SUBCMD
+            subcmd_key: 'show_cmd_BUDGET_CATEGORIES'
+            CK_INCLUDE: A list of budget categories to include, len()==0 means All. 
+
+        Returns:
+            Tuple[success : bool, result : Any]: The outcome of the command 
+            execution. If success is True, result contains result of the 
+            command, if False, a description of the error.
+            
+        Raises:
+            RuntimeError: A description of the
+            root error is contained in the exception message.
+        """
+        try:
+            st = p3u.start_timer()
+            logger.debug(f"Start: ...")
+            if cmd[CK_SUBCMD_NAME] == CV_BUDGET_CATEGORIES_SUBCMD:
+                # Show the budget categories.
+                include_categories = self.cp_cmd_attr_get(cmd,CK_INCLUDE)
+                result = output_category_tree(cat_list=include_categories)
+            logger.info(f"Complete: {p3u.stop_timer(st)}")
+            return True, result
+        except Exception as e:
+            m = (f"Error executing cmd: {cmd[CK_CMD_NAME]} {cmd[CK_SUBCMD_NAME]}: "
+                 f"{p3u.exc_err_msg(e)}")
+            logger.error(m)
+            return False, m
+    #endregion SHOW_cmd() method
     # ------------------------------------------------------------------------ +
     #region WORKBOOKS_show_cmd() command > show wb 2
     def WORKBOOKS_show_cmd(self, cmd : Dict) -> Tuple[bool, str]:

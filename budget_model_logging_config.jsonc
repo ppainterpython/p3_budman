@@ -50,6 +50,7 @@
         "file": {
             "class": "logging.handlers.RotatingFileHandler",
             "level": "DEBUG",
+            "encoding": "utf-8",
             "formatter": "module_or_class",
             "filename": "logs/p3_budget_model.log",
             "maxBytes": 52428800, // 5MB

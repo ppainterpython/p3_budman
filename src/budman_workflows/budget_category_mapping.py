@@ -34,17 +34,17 @@ import p3logging as p3l, p3_utils as p3u
 check_register_map = {
     'Unknown': 'Banking.Checks to Categorize',
     'Nicole Smith': 'Health and Wellbeing.Hair Care.Nicole Smith',
-    'Landmark Roofing and Construction': 'Housing.Improvements.Landmark Roofing',
-    'Tejas Chapter DRT': 'Organizations.DRT.Tejas Chapter',
-    'Maria Oyestas': 'Housing.Maid Service.Maria Oyestas',
+    'Landmark Roofing and Construction': 'New Projects.Home Improvements.Roofing',
+    'Tejas Chapter DRT': 'Personal Lifestyle.Professional:Historical Orgs.DRT', #.Tejas Chapter',
+    'Maria Oyestas': 'Housing.Maintenance.House Cleaning', #.Maria Oyestas',
     'Passport Services': 'Travel.Passport Services.Check 2883',
     'APQT': 'Medical.Physical Therapy.APQT',
     'Detergent Maria Oyestas': 'Groceries.Detergent Maria Oyestas',
-    'Colonel George Moffett Chapter DAR': 'Professional and Historical Organizations.DAR.Colonel George Moffett Chapter',
+    'Colonel George Moffett Chapter DAR': 'Personal Lifestyle.Professional:Historical Orgs.DAR', #.Colonel George Moffett Chapter',
     'Hannah Painter': 'Misc.Reimbursement.Hannah Painter',
     'Laura Painter': 'Banking.Laura Painter',
-    'Lawn Sprinkler': 'Housing.Lawn Care.Sprinkler Maintenance',
-    'HVAC Grape Cove Unknown': 'Housing.HVAC.Unknown',
+    'Lawn Sprinkler': 'Housing.Maintenance.Irrigation System',
+    'HVAC Grape Cove Unknown': 'Housing.Maintenance.HVAC',
 }
 #endregion check_register_map
 # ---------------------------------------------------------------------------- +
@@ -57,59 +57,108 @@ check_register_map = {
 # In the pattern, (?i) is used to make the pattern case-insensitive. To match
 # case, remove that flag.
 # TODO: How to use data to train an LLM or ML model to do this?
+#region Budget Structure Notes
+#
+#  Essential Spending Categories:
+#  L1: Housing - a place to live, primary residence, mortgage, rent, etc.
+#      L2: Mortgage
+#      L2: Utilities  - Services to keep the home running.
+#          L3: Electricity
+#          L3: Water and Waste
+#          L3: Natural Gas
+#          L3: Internet
+#          L3: Phone
+#          L3: Home Security
+#      L2: Property Taxes
+#      L2: Home Owners Association (HOA)
+#      L2: Maintenance - Services to keep the home in good repair.
+#          L2: HVAC
+#          L3: Lawn Care
+#          L3: House Cleaning
+#          L3: Irrigation System
+#  L1: Food
+#      L2: Groceries
+#      L2: Dining Out
+#      L2: Meal Delivery
+#  L1: Transportation
+#      L2: Auto
+#          L3: Gasoline
+#          L3: Maintenance
+#      L2: Tolls
+#      L2: Fees
+#          L3: Driver License
+#          L3: Registration Fee
+#  L1: Medical Expenses
+#  L1: Personal Care
+#      L2: Hair Care
+#      L2: Clothing
+#  L1: Insurance
+#      L2: Medical Insurance
+#      L2: Drug Insurance
+#      L2: Dental Insurance
+#      L2: Vision Insurance
+#      L2: Life Insurance
+#      L2: Auto Insurance
+#      L2: Home Insurance
+#
+# Non-Essential Spending Categories: (no-cost options)
+#  L1: Personal Lifestyle
+#      L2: Storage Unit
+#      L2: Dry Cleaning
+#      L2: Home Decor
+#  L1: Recreation, Entertainment, and Liesure
+#  L1: New Projects
+#      L2: Home Improvements
+#
+#endregion Budget Structure Notes
 category_map = {
-#region Donations
-    r'(?i).*WATERSTONE.*': 'Donation.Charity.GCR',
-    r'(?i)\bPioneers\s*USA.*': 'Donation.Charity.Pioneers',
-    r'(?i)\bCAMPUS\s\bCRUSADE\b': 'Donation.Charity.Campus Crusade',
-    r'(?i)\bTUNNELTOTOWERS\b': 'Donation.Charity.Tunnel to Towers',
-    r'(?i)\bFOCUS\sON\sTHE\sFAMILY\b': 'Donation.Charity.Focus on the Family',
-    r'(?i)\bPioneers\sBlueChe\b': 'Donation.Charity.Pioneers',
-    r'(?i)\bST\sJUDE\b': 'Donation.Charity.St Jude',
-    r'(?i)\bWorld\s*Vision\s*Inc\b': 'Donation.Charity.World Vision',
-    r'(?i)\bDAYSTAR\s*TELEVISION': 'Donation.Charity.DayStar',
-    r'(?i)\bI*D*:*GOFUNDME\sJOHN\sW.*': 'Donation.GoFundMe.John Wick',
-    r'(?i)\bWINRED\*\s*NRSC\b': 'Donation.Politics.Republican Party',
-    r'(?i)\bWINRED\*\s*': 'Donation.Politics.Republican Party',
-#endregion Donations
-#region Housing, Utilities etc.
-    # Grape Cove
-    r'(?i)\.*OMNT\s*SENT.*CASH\s*APP*JONATHAN.*': 'Housing-GrapeCove.Lawn Care.Jonathan',
-    r'(?i)\.*IT\'CLEANING\s*TIME!.*': 'Housing-GrapeCove.Maintenance.Cleaning',
-    r'(?i)\.*SOLEIL\s*FLOORS.*': 'Housing-GrapeCove.Improvements.Soleil Floors',
-    r'(?i)\bReliant\sEnergy\b': 'Housing-GrapeCove.Electric.Reliant Energy',
-    r'(?i)\bONE\sGAS\b': 'Housing-GrapeCove.Natural Gas.One Gas',
-    r'(?i)\bATMOS\sENERGY\b': 'Housing-GrapeCove.Natural Gas.Atmos Energy',
-    r'(?i)\bService\sExperts\b': 'Housing-GrapeCove.HVAC.Service Experts',
-    r'(?i)\bBrushy\sCreek\sMUD\b': 'Housing-GrapeCove.WaterAndWaste.Brushy Creek MUD',
-    r'(?i).*BCMUD\s*REC.*': 'Housing-GrapeCove.WaterAndWaste.Brushy Creek MUD',
-    r'(?i)\bCULLIGAN\b': 'Housing-GrapeCove.Maintenance.Culligan',
-    r'(?i)\bCULLINGAN\b': 'Housing-GrapeCove.Maintenance.Culligan',
-    # Castle Pines
-    r'(?i)\bPedernales_Elec\b': 'Housing.Electricity.Pedernales Electric',
-    r'(?i)\bCity\sof\sAustin\b': 'Housing.WaterAndWaste.City of Austin',
-    r'(?i)\bavery\W*.*?\branch\W*.*?\bHOA\W*.*?\bdues\b': 'Housing.HomeOwnersAssociation.Avery Ranch',
+#region Essential Spending Categories
+#region L1: Housing - Essential - A roof overhead, a place to live.
+    # L1: Housing2 Grape Cove
+    r'(?i)\.*OMNT\s*SENT.*CASH\s*APP*JONATHAN.*': 'Housing-2.Maintenance.Lawn Care', #.Jonathan',
+    r'(?i)\.*IT\'CLEANING\s*TIME!.*': 'Housing-2.Maintenance.House Cleaning',
+    r'(?i)\bReliant\sEnergy\b': 'Housing-2.Utilities.Electricity', #.Reliant Energy',
+    r'(?i)\bATMOS\sENERGY\b': 'Housing-2.Utilities.Natural Gas', #.Atmos Energy',
+    r'(?i)\bService\sExperts\b': 'Housing-2.Maintenance.HVAC', #.Service Experts',
+    r'(?i)\bBrushy\sCreek\sMUD\b': 'Housing-2.Utilities.WaterAndWaste', #.Brushy Creek MUD',
+    r'(?i).*BCMUD\s*REC.*': 'Housing-2.Utilities.WaterAndWaste', #.Brushy Creek MUD',
+    r'(?i)\bCULLIGAN\b': 'Housing-2.Maintenance.Water Softener', #.Culligan',
+    r'(?i)\bCULLINGAN\b': 'Housing-2.Maintenance.Water Softener', #.Culligan',
+    r'(?i)\bAT\&T\sU-Verse\b': 'Housing-2.Utilities.Internet', # Connectivity.AT&T U-Verse',
+    # L1: Housing - Castle Pines
+    #region Utilities
+    r'(?i)\bPedernales_Elec\b': 'Housing.Utilities.Electricity', #.Pedernales Electric',
+    r'(?i)\bCity\sof\sAustin\b': 'Housing.Utilities.WaterAndWaste', #.City of Austin',
+    r'(?i)\bONE\sGAS\b': 'Housing.Utilities.Natural Gas', #.One Gas', # Castle Pines
+    r'(?i)\bGoogle\sFIBER\b': 'Housing.Utilities.Internet', # .Google Fiber',
+    r'(?i)\bGOOGLE\s\*FIBER\b': 'Housing.Utilities.Internet', # .Google Fiber',
+    r'(?i)\bGoogle\s*\*FIBER\b': 'Housing.Utilities.Internet', # .Google Fiber',
+    r'(?i)\bAT\&T.*': 'Housing.Utilities.Phone', # .Cellular.AT&T',
+    r'(?i)\bATT\b': 'Housing.Utilities.Phone', # .Cellular.AT&T',
+    r'(?i)\bVZ\sWIRELESS\sVE': 'Housing.Utilities.Phone', # ',
+    r'(?i)\bRING\sBASIC\sPLAN\b': 'Housing.Utilities.Home Security', #.Ring',
+    r'(?i)\bRING\s*YEARLY\s*PLAN.*': 'Housing.Utilities.Home Security', #.Ring',
+    #endregion Utilities
+    #region Maintenance
+    r'(?i).*GATOR\s*GARAGE\s*DOORS.*': 'Housing.Maintenance.Home Repair', #.Gator Garage Doors',
+    r'(?i)\bFREDERICK\sPEVA\b': 'Housing.Maintenance.Lawn Care', #.Freddie',
+    r'(?i)\bTRUGREEN\b': 'Housing.Maintenance.Lawn Care', #.TruGreen',
+    r'(?i).*HARBOR\s*FREIGHT.*': 'Housing.Maintenance.Materials', #.Harbor Freight',
+    r'(?i)\bTHE\sHOME\sDEPOT\b': 'Housing.Maintenance.Materials', #.Home Depot',
+    r"(?i)\bLOWE'?s\b": 'Housing.Maintenance.Materials', #.Lowes',
+    r'(?i)\bCASHWAY\sBLDG\sMATERIALS\b': 'Housing.Maintenance.Materials', #.Cashway Building Materials',
+    r'(?i)\bFSP\*ABC\sHOME\s&\sCOMMERCIAL': 'Housing.Maintenance.Pest Control', #.ABC Pest Control',
+    r'(?i)\bSTRAND\sBROTHERS\sSERVICE\b': 'Housing.Maintenance.HVAC', #.Strand Brothers',
+    r'(?i)\bWHITTLESEY\sLANDSCAPE-11\s': 'Housing.Maintenance.Lawn Care', #.Whittlesey Landscape',
+    r'(?i)\bTHE\sGRASS\sOUTLET': 'Housing.Maintenance.Lawn Care', #.Grass Outlet',
+    #endregion Maintenance
     # Housing General
-    r'(?i).*GATOR\s*GARAGE\s*DOORS.*': 'Housing.Maintenance.Gator Garage Doors',
-    r'(?i)\bFREDERICK\sPEVA\b': 'Housing.Lawn Care.Freddie',
-    r'(?i)\bTRUGREEN\b': 'Housing.Lawn Care.TruGreen',
-    r'(?i).*HARBOR\s*FREIGHT.*': 'Housing.Maintenance.Harbor Freight',
-    r'(?i)\bTHE\sHOME\sDEPOT\b': 'Housing.Maintenance.Home Depot',
-    r'(?i).*TDS\s*LANDFILL.*': 'Housing.Misc.TDS Landfill',
-    r"(?i)\bLOWE'?s\b": 'Housing.Maintenance.Lowes',
-    r'(?i)\bCASHWAY\sBLDG\sMATERIALS\b': 'Housing.Maintenance.Cashway Building Materials',
-    r'(?i)\bRIGHTSPACE\sSTORAGE\b': 'Housing.Storage Unit.RightSpace Storage',
-    r'(?i)\bFSP\*ABC\sHOME\s&\sCOMMERCIAL': 'Housing.Pest Control.ABC Pest Control',
-    r'(?i)\bRING\sBASIC\sPLAN\b': 'Housing.Security.Ring',
-    r'(?i)\bSTRAND\sBROTHERS\sSERVICE\b': 'Housing.HVAC.Strand Brothers',
-    r'(?i)\bWHITTLESEY\sLANDSCAPE-11\s': 'Housing.Lawn Care.Whittlesey Landscape',
-    r'(?i)\bTHE\sGRASS\sOUTLET': 'Housing.Lawn Care.Grass Outlet',
-    r'(?i)\bJack\sBrown\sCleaners': 'Housing.Dry Cleaning.Jack Brown Cleaners',
-    r'(?i)\bRING\s*YEARLY\s*PLAN.*': 'Housing.Security.Ring',
-    r'(?i)\bFRAMEITEASY\.COM*': 'Housing.Maintenance.Frame It Easy',
-#endregion Housing, Utilities etc.
+    r'(?i)\bTRANSFER\s*PAUL\s*B\s*PAINTER\s*LAURA:john\s*hogge\b': 'Housing.Mortgage.Hogge',
+    r'(?i)\bTRANSFER\s*PAUL\s*B\s*PAINTER:john\s*hogge\b': 'Housing.Mortgage.Hogge',
+    r'(?i)\bavery\W*.*?\branch\W*.*?\bHOA\W*.*?\bdues\b': 'Housing.HomeOwnersAssociation.Avery Ranch',
+#endregion L1: Housing - Essential - A roof overhead, a place to live.
 #region Auto
-    r'(?i)\bWILLIAMSON\s*VEHREG.*': 'Auto.Registration Fee.Williamson County Vehicle Registration',
+    r'(?i)\bWILLIAMSON\s*VEHREG.*': 'Auto.Fees.Registration Fee', #Williamson County Vehicle Registration',
     r'(?i)\bJIFFY\s*LUBE.*': 'Auto.Maintenance.Jiffy lube',
     r'(?i)\bCALIBER\s*COLLISION.*': 'Auto.Body Shop.Caliber Collision',
     r'(?i)\bBRAKES\s*PLUS.*': 'Auto.Maintenance.Brakes Plus',
@@ -118,160 +167,23 @@ category_map = {
     r'(?i)\bROUND\s*ROCK\s*HONDA\b': 'Auto.Maintenance.Honda Ridgeline',
     r'(?i)\bDISCOUNT-TIRE-CO\b': 'Auto.Tires',
     r"(?i)\bO'REILLY\b": "Auto.Maintenance.O'Reilly",
-    r'(?i)\bCHEVRON\b': 'Auto.Gasoline.Chevron',
-    r'(?i)\bSUNOCO\b': 'Auto.Gasoline.Sunoco',
-    r'(?i)\bTEXACO\b': 'Auto.Gasoline.Texaco',
-    r'(?i)\bEXXON\b': 'Auto.Gasoline.Exxon',
+    r'(?i)\bCHEVRON\b': 'Transportation.Auto.Gasoline', #.Chevron',
+    r'(?i)\bSUNOCO\b': 'Transportation.Auto.Gasoline', #.Sunoco',
+    r'(?i)\bTEXACO\b': 'Transportation.Auto.Gasoline', #.Texaco',
+    r'(?i)\bEXXON\b': 'Transportation.Auto.Gasoline', #.Exxon',
     r'(?i)\bGO\s\bCARWASH\b': 'Auto.Carwash.Go Carwash',
-    r'(?i)\bHCTRA\sEFT\b': 'Auto.Tolls.HCTRA',
-    r'(?i)\bdoxoPLUS\b': 'Auto.Tolls.DoxoPlus',
-    r'(?i)\bRMA\sTOLL\b': 'Auto.Tolls.RMA',
-    r'(?i)\bNTTA.*': 'Auto.Tolls.NTTA',
-    r'(?i)\bTXTAG.*': 'Auto.Tolls.TxTag',
-    r'(?i).*TXDPS\s*DRIVER\s*LICENSE.*': 'Auto.Fees.Driver License',
-    r'(?i)\bWELLS\s*FARGO\s*AUTO': 'Auto.Loan.Mini Cooper',
-    r'(?i)\bSHELL\s*SERVICE\s*': 'Auto.Gasoline.Shell Service',
-    r'(?i)\bCHECKCARD.*CEFCO.*': 'Auto.Gasoline.CEFCO',
-    r'(?i)\bAAA\s*TX.*': 'Auto.Insurance.AAA Texas',
+    r'(?i)\bHCTRA\sEFT\b': 'Transportation.Tolls.HCTRA',
+    r'(?i)\bdoxoPLUS\b': 'Transportation.Tolls.DoxoPlus',
+    r'(?i)\bRMA\sTOLL\b': 'Transportation.Tolls.RMA',
+    r'(?i)\bNTTA.*': 'Transportation.Tolls.NTTA',
+    r'(?i)\bTXTAG.*': 'Transportation.Tolls.TxTag',
+    r'(?i).*TXDPS\s*DRIVER\s*LICENSE.*': 'Transportation.Fees.Driver License',
+    r'(?i)\bWELLS\s*FARGO\s*AUTO': 'Transportation.Auto.Loan', #.Mini Cooper',
+    r'(?i)\bSHELL\s*SERVICE\s*': 'Auto.Gasoline', #.Shell Service',
+    r'(?i)\bCHECKCARD.*CEFCO.*': 'Auto.Gasoline', #.CEFCO',
+    r'(?i)\bAAA\s*TX.*': 'Insurance.Auto Insurance.AAA Texas',
 #endregion Auto
-#region Insurance
-    r'(?i)\bPRINCIPAL-CCA\b': 'Insurance.Principal Life Insurance',
-    r'(?i)\bHP\s*\bDES:INS\sPREM\b': 'Insurance.Cobra Medical',
-    r'(?i)\bSWHP\s*\bDES:HEALTH\s*INS\s': 'Insurance.Cobra Medical',
-    r'(?i)\bState\s\bFARM\b': 'Insurance.State Farm',
-    r'(?i)\bTexas\s*Law\b': 'Insurance.Texas Law',
-#endregion Insurance
-#region Medical
-    r'(?i).*FLEXBUDDY.*': 'Medical.Theraputic.FlexBuddy',
-    r'(?i).*ZENSAH\s*COMPRESSIO.*': 'Medical.Theraputic.Zensah Compression',
-    r'(?i).*THERAICERX.*': 'Medical.Theraputic.TheraIceRx',
-    r'(?i).*CARENOW.*': 'Medical.CareNow',
-    r'(?i)\bGEORGETOWN\sOB-GYN\b': 'Medical.Bio-T',
-    r'(?i)\bQDI\*QUEST\sDIAGNOSTICS\b': 'Medical.Labs',
-    r'(?i)\bHAROLD\sF\sADELMAN\sMD\b': 'Medical.Adelman',
-    r'(?i)\bBSWHealth.*\b': 'Medical.BSW Health',
-    r'(?i)\bJOHN\sF\sLANN\sDDS\b': 'Dental.Lann',
-    r'(?i)\bCVS/PHARM\b': 'Medical.Pharmacy.CVS',
-    r'(?i)\bCAREMARK\sMAIL\b': 'Medical.Pharmacy.CVS',
-    r'(?i)\bWWW\.CAREMARK\.COM\b': 'Medical.Pharmacy.CVS',
-    r'(?i)\bCVS.*PHARMACY\b': 'Medical.Pharmacy.CVS',
-    r'(?i)\bMINUTECLINIC\b': 'Medical.Pharmacy.CVS Minute Clinic',
-    r'(?i)\bNORTHWEST\s*HILLS\s*EYE\b': 'Medical.Eye Doctor.Northwest Hills Eye Care',
-    r'(?i)\bWWW\.NWHILLSEYECARE\.COM.*': 'Medical.Eye Doctor.Northwest Hills Eye Care',
-    r'(?i)\bLONE\s*STAR\s*ONCOLOGY\b': 'Medical.Oncology Doctor',
-    r'(?i)\bBACKBONE\s*WELLNESS.*': 'Medical.Chiropractor',
-    r'(?i)\bQuest\s*Diagnostic\s': 'Medical.Lab Work',
-    r'(?i)\bLABORATORY\s*CORPORATION\s': 'Medical.Lab Work',
-    r'(?i).*YSA\s*REIMB\b': 'Medical.Reimbursement',
-    r'(?i)\bASSOCIATES\s*OF\s*AUDIOLOGY\b': 'Medical.Audiology',
-    r'(?i)\bTEXAS\s*SPINE\s*AND\s*SPORTS\b': 'Medical.Physical Therapy',
-    r'(?i)\bTHERABODY\b': 'Medical.TheraBody',
-    r'(?i).*DERM\s*PARTNERS.*': 'Medical.Dermatology',
-    r'(?i)\bWWW\.BODYSPEC\.COM\b': 'Medical.Misc.BodySpec',
-    r'(?i).*TEXAN\s*EYE.*': 'Medical.Eye Doctor.Texan Eye',
-    r'(?i)\bCENTRAL\s*TEXAS\s*RHEUMATO.*': 'Medical.Rheumatology.Olga',
-    r'(?i).*TOUCHSTONE\s*IMAGING.*': 'Medical.Radiology.Touchstone Imaging',
-    r'(?i).*AUSTIN\s*RADIOLOGICAL.*': 'Medical.Radiology.Austin Radiological',
-#endregion Medical
-#region Health, Wellbeing, Hobbies, Coaching, Sports
-    r'(?i)\b23ANDME.*': 'Health and Wellbeing.23AndMe',
-    r'(?i)\bLIVEWELLO.*': 'Health and Wellbeing.LiveWello',
-    r'(?i)\bNUTRISENSE.*': 'Health and Wellbeing.NutriSense',
-    r'(?i)\bHand\s*Stone\s*Spa.*': 'Health and Wellbeing.Massage',
-    r'(?i)\bDicks\s*Sporting\s*Goods.*': 'Health and Wellbeing.Equipment',
-    r'(?i)\bV\s*SHRED.*': 'Health and Wellbeing.Supplements.V Shred',
-    r'(?i)\bPELOTON.*': 'Health and Wellbeing.Running.Peloton',
-    r'(?i).*SWIMOUTLET.*': 'Health and Wellbeing.Swimming.Equipment',
-    r'(?i).*UNDERWATER\s*AUDIO.*': 'Health and Wellbeing.Swimming.Underwater Audio',
-    r'(?i)\bPRECISION\s*CAMERA.*': 'Hobby.Photography.Precision Camera',
-    r'(?i)\bID:23ANDME\s*INC\b': 'Health and Wellbeing.23andMe',
-    r'(?i)\bFINLEYS\sAVERY\sRANCH\b': 'Health and Wellbeing.Hair Care.Finleys Barbershop Avery Ranch',
-    r'(?i)\bCATHY\s\bDUNFORD\b': 'Health and Wellbeing.Life Coach.Cathy Dunford',
-    r'(?i)\bSNICOLA\s\bMCKERLIE\b': 'Health and Wellbeing.Personal Trainer.Nicola McKerlie',
-    r'(?i)\bNEW\s*TECH\s*TENNIS': 'Health and Wellbeing.Tennis.Equipment',
-    r'(?i)\bPLAYITAGAINSPORTS.*': 'Health and Wellbeing.Tennis.Equipment',
-    r'(?i)\bSPINFIRE.*': 'Health and Wellbeing.Tennis.Equipment',
-    r'(?i)\bTHE\s*TENNIS\s*SHO.*': 'Health and Wellbeing.Tennis.Equipment',
-    r'(?i).*ATHLETA.*': 'Health and Wellbeing.Athleta',
-    r'(?i)\bJERRY\'S\s*ARTARAMA.*': 'Hobby.Artwork.Jerrys Artarama',
-    r'(?i).*FLEET\s*FEET.*': 'Health and Wellbeing.Equipment.Fleet Feet',
-    r'(?i)\bTHE\s*PEDDLER\s*BICYCLE.*': 'Health and Wellbeing.Cycling.The Peddler Bicycle Shop',
-    r'(?i)\bTrek\s*Bicycle\s*Parmer.*': 'Health and Wellbeing.Cycling.Trek Bicycle Shop',
-    r'(?i).*ELLIPTIGO.*': 'Health and Wellbeing.Cycling.Elliptigo',
-#endregion Health, Wellbeing, Hobbies, Coaching
-#region Connectivity - Internet, Cell Phone
-    r'(?i)\bAT\&T\sU-Verse\b': 'Connectivity.AT&T U-Verse',
-    r'(?i)\bGoogle\sFIBER\b': 'Connectivity.Internet.Google Fiber',
-    r'(?i)\bGOOGLE\s\*FIBER\b': 'Connectivity.Interent.Google Fiber',
-    r'(?i)\bGoogle\s*\*FIBER\b': 'Connectivity.Internet.Google Fiber',
-    r'(?i)\bAT\&T.*': 'Connectivity.Cellular.AT&T',
-    r'(?i)\bATT\b': 'Connectivity.Cellular.AT&T',
-    r'(?i)\bVZ\sWIRELESS\sVE': 'Connectivity.Cellular.Verizon',
-#endregion Connectivity - Internet, Cell Phone
-#region Online Service Subscriptions
-    r'(?i).*EXPRESSVPN\.COM.*': 'Subscription.Application.Express VPN',
-    r'(?i).*MUSESCORE.*': 'Subscription.Content.Sheet Music',
-    r'(?i).*CEREBRUM\s*IQ.*': 'Subscription.Application.Creberum IQ',
-    r'(?i).*MINDJET\s*COREL.*': 'Subscription.Software.MindJet',
-    r'(?i).*PHOTO\s*ERASER\s*APP.*': 'Subscription.Software.Photo Eraser',
-    r'(?i).*OPENAI.*': 'Subscription.Content.OpenAI',
-    r'(?i)\bA\s*MEDIUM\s*CORPORATION.*': 'Subscription.Content.Medium',
-    r'(?i)\bFS.*stardock.*': 'Subscription.Software.Stardock',
-    r'(?i)\bID:ANCESTO*RYCOM\b': 'Subscription.Content.Ancestry-com',
-    r'(?i).*TEAMVIEWER.*': 'Subscription.TeamViewer',
-    r'(?i)\bID:ADOBE\sINC\b': 'Subscription.Software.Adobe',
-    r'(?i)\bID:ANGIES\sLIST\b': 'Subscription.Application.Angies List',
-    r'(?i)\bID:GITHUB\sINC\b': 'Subscription.Application.GitHub',
-    r'(?i)\bGITKRAKEN\sSOFTWARE\b': 'Subscription.Application.Gitkraken Crypto',
-    r'(?i)\bID:PATREON\s*MEMBER\b': 'Subscription.Patreon',
-    r'(?i)\bID:DROPBOX\b': 'Subscription.Storage.DropBox',
-    r'(?i)\bwikimedia\b': 'Subscription.Content.WikiPedia',
-    r'(?i)\bPAYPAL\b.*ID:CLEVERBRIDG': 'Subscription.Software',
-    r'(?i)\bCHECKCARD\b.*APPLE\sCOM\sBILL': 'Subscription.Storage.Apple',
-    r'(?i)\bDREAMSTIME\.COM.*': 'Subscription.Application.Dreamstime',
-    r'(?i)\bLEGALNATURE\b': 'Subscription.Application.Legal Nature',
-    r'(?i).*Classmates\.com.*': 'Subscription.Application.Classmates',
-    r'(?i).*POSTMAN\s*BASIC\s*.*': 'Subscription.Application.Postman',
-    r'(?i).*MCONVERTER\.EU.*': 'Subscription.Software.MConverter',
-    r'(?i)\bSP\s*ROAD\s*ID.*': 'Subscription.Application.Road ID',
-    r'(?i).*CODE\s*MAGAZINE.*': 'Subscription.Content.CODE Magazine',
-
-#endregion Online Service Subscriptions
-#region Entertainment - Streaming, Concerts, Theater
-    r'(?i)\bMUSEUM\s*OF\s*ILLUSION.*': 'Entertainment.Museums.Museum of Illusion',
-    r'(?i)\bMOI\s*AUSTIN.*': 'Entertainment.Museums.Museum of Illusion',
-    r'(?i)\bBALLET\s*AUSTIN.*': 'Entertainment.Theater.Austin Ballet',
-    r'(?i)\bGoogle\s*Play\s*Books.*': 'Entertainment.Streaming.Google Play Books',
-    r'(?i)\bSXM\*SIRIUSXM\.COM/ACCT\b': 'Entertainment.Streaming.SiriusXM',
-    r'(?i)\bCINEMARK\b': 'Entertainment.Theater.Cinemark',
-    r'(?i)\bAudible\*.*\b': 'Entertainment.Streaming.Audible',
-    r'(?i)\bSLING\.COM\b': 'Entertainment.Streaming.SlingTV',
-    r'(?i)\bID:HULU\b': 'Entertainment.Streaming.Hulu',
-    r'(?i)\bPrime\s\bVideo\b': 'Entertainment.Streaming.Amazon Prime Video',
-    r'(?i)\bTHIRTEEN\b': 'Entertainment.Streaming.Thirteen',
-    r'(?i)\bID:NETFLIX\.COM\b': 'Entertainment.Streaming.Netflix',
-    r'(?i)\bSUNDANCE\s*NOW.*': 'Entertainment.Streaming.Sundance Now',
-    r'(?i)\bKindle\b.*Svcs.*': 'Entertainment.Streaming.Kindle',
-    r'(?i)\bGOOGLE.*YouTubePremium.*': 'Entertainment.Streaming.YouTube Premium',
-    r'(?i)\bDisney.*Plus.*': 'Entertainment.Streaming.Disney Plus',
-    r'(?i)\bSPOTIFY\b': 'Entertainment.Streaming.Spotify',
-    r'(?i).*DIRECTV?.*STREAM\b': 'Entertainment.Streaming.DirectTV Stream',
-    r'(?i).*DIRECTV\s*SERVICE.*': 'Entertainment.Streaming.DirectTV Service',
-    r'(?i).*BRIT\s*FLOYD.*': 'Entertainment.Concerts.Brit Floyd',
-    r'(?i)\bWWW\.MUBI\.COM\b': 'Entertainment.Streaming.MUBI TV',
-    r'(?i)\bGO\s*TICKETS.*': 'Entertainment.Concerts.Go Tickets',
-    r'(?i)\bSTUBHUB.*': 'Entertainment.Concerts.StubHub',
-    r'(?i)\bMOODY\s*CENTER.*': 'Entertainment.Concerts.Moody Center',
-    r'(?i).*TYPHOON\s*TEXAS.*': 'Entertainment.Typhoon Texas',
-    r'(?i)\bTM.*TICKETMASTER.*': 'Entertainment.Concerts.Ticketmaster',
-    r'(?i)\bTM.*BARRY\s*MANILOW.*': 'Entertainment.Concerts.Barry Manilow',
-    r'(?i)\bTM.*EAGLES\s*LIVE\s*AT\s*SPH.*': 'Entertainment.Concerts.The Eagles Live at the Sphere',
-    r'(?i).*INDIGO\s*PLAY': 'Entertainment.Misc.Indigo Play',
-    r'(?i)\bTM.*EAGLES\s*LIVE\s*AT\s*SPH.*': 'Entertainment.Concerts.The Eagles Live at the Sphere',
-    r'(?i)\bTM.*EAGLES.*': 'Entertainment.Concerts.The Eagles',
-    r'(?i)\bTM.*KACEY\s*MUSGRAVES.*': 'Entertainment.Concerts.The Eagles',
-#endregion Entertainment - Streaming, Concerts, Theater
-#region Consumable Goods: Groceries, Restaurants, Door Dash, Eating Out, Snacks
+#region Food: Groceries, Restaurants, Meal Delivery
     r'(?i).*WHOLEFDS.*': 'Consumable Goods.Groceries.Whole Foods',
     r'(?i).*DOLLAR\s*TREE.*': 'Consumable Goods.Groceries.Dollar Tree',
     r'(?i).*WAL-MART.*': 'Consumable Goods.Groceries.Walmart',
@@ -374,6 +286,160 @@ category_map = {
     r'(?i)\bFAVOR\s*MCDONALDS.*': 'Consumable Goods.Favor.McDonalds',
     r'(?i)\bFAVOR\s*SLAPBOX\s*PIZZ.*': 'Consumable Goods.Favor.Slapbox Pizza',
 #endregion Restaurants, Door Dash, Eating Out, Snacks
+#region Insurance
+    r'(?i)\bPRINCIPAL-CCA\b': 'Insurance.Life Insurance.Principal Life Insurance',
+    r'(?i)\bHP\s*\bDES:INS\sPREM\b': 'Insurance.Medical Insurance.Cobra Medical',
+    r'(?i)\bSWHP\s*\bDES:HEALTH\s*INS\s': 'Insurance.Medical Insurance.Cobra Medical',
+    r'(?i)\bState\s\bFARM\b': 'Insurance.Auto and Home.State Farm',
+    r'(?i)\bTexas\s*Law\b': 'Insurance.Personal Liability.Texas Law',
+#endregion Insurance
+#region Medical
+    r'(?i).*FLEXBUDDY.*': 'Medical.Theraputic.FlexBuddy',
+    r'(?i).*ZENSAH\s*COMPRESSIO.*': 'Medical.Theraputic.Zensah Compression',
+    r'(?i).*THERAICERX.*': 'Medical.Theraputic.TheraIceRx',
+    r'(?i).*CARENOW.*': 'Medical.CareNow',
+    r'(?i)\bGEORGETOWN\sOB-GYN\b': 'Medical.Bio-T',
+    r'(?i)\bQDI\*QUEST\sDIAGNOSTICS\b': 'Medical.Labs',
+    r'(?i)\bHAROLD\sF\sADELMAN\sMD\b': 'Medical.Adelman',
+    r'(?i)\bBSWHealth.*\b': 'Medical.BSW Health',
+    r'(?i)\bJOHN\sF\sLANN\sDDS\b': 'Dental.Lann',
+    r'(?i)\bCVS/PHARM\b': 'Medical.Pharmacy.CVS',
+    r'(?i)\bCAREMARK\sMAIL\b': 'Medical.Pharmacy.CVS',
+    r'(?i)\bWWW\.CAREMARK\.COM\b': 'Medical.Pharmacy.CVS',
+    r'(?i)\bCVS.*PHARMACY\b': 'Medical.Pharmacy.CVS',
+    r'(?i)\bMINUTECLINIC\b': 'Medical.Pharmacy.CVS Minute Clinic',
+    r'(?i)\bNORTHWEST\s*HILLS\s*EYE\b': 'Medical.Eye Doctor.Northwest Hills Eye Care',
+    r'(?i)\bWWW\.NWHILLSEYECARE\.COM.*': 'Medical.Eye Doctor.Northwest Hills Eye Care',
+    r'(?i)\bLONE\s*STAR\s*ONCOLOGY\b': 'Medical.Oncology Doctor',
+    r'(?i)\bBACKBONE\s*WELLNESS.*': 'Medical.Chiropractor',
+    r'(?i)\bQuest\s*Diagnostic\s': 'Medical.Lab Work',
+    r'(?i)\bLABORATORY\s*CORPORATION\s': 'Medical.Lab Work',
+    r'(?i).*YSA\s*REIMB\b': 'Medical.Reimbursement',
+    r'(?i)\bASSOCIATES\s*OF\s*AUDIOLOGY\b': 'Medical.Audiology',
+    r'(?i)\bTEXAS\s*SPINE\s*AND\s*SPORTS\b': 'Medical.Physical Therapy',
+    r'(?i)\bTHERABODY\b': 'Medical.TheraBody',
+    r'(?i).*DERM\s*PARTNERS.*': 'Medical.Dermatology',
+    r'(?i)\bWWW\.BODYSPEC\.COM\b': 'Medical.Misc.BodySpec',
+    r'(?i).*TEXAN\s*EYE.*': 'Medical.Eye Doctor.Texan Eye',
+    r'(?i)\bCENTRAL\s*TEXAS\s*RHEUMATO.*': 'Medical.Rheumatology.Olga',
+    r'(?i).*TOUCHSTONE\s*IMAGING.*': 'Medical.Radiology.Touchstone Imaging',
+    r'(?i).*AUSTIN\s*RADIOLOGICAL.*': 'Medical.Radiology.Austin Radiological',
+#endregion Medical
+#region Health, Wellbeing, Hobbies, Coaching, Sports
+    r'(?i)\b23ANDME.*': 'Health and Wellbeing.23AndMe',
+    r'(?i)\bLIVEWELLO.*': 'Health and Wellbeing.LiveWello',
+    r'(?i)\bNUTRISENSE.*': 'Health and Wellbeing.NutriSense',
+    r'(?i)\bHand\s*Stone\s*Spa.*': 'Health and Wellbeing.Massage',
+    r'(?i)\bDicks\s*Sporting\s*Goods.*': 'Health and Wellbeing.Equipment',
+    r'(?i)\bV\s*SHRED.*': 'Health and Wellbeing.Supplements.V Shred',
+    r'(?i)\bPELOTON.*': 'Health and Wellbeing.Running.Peloton',
+    r'(?i).*SWIMOUTLET.*': 'Health and Wellbeing.Swimming.Equipment',
+    r'(?i).*UNDERWATER\s*AUDIO.*': 'Health and Wellbeing.Swimming.Underwater Audio',
+    r'(?i)\bPRECISION\s*CAMERA.*': 'Hobby.Photography.Precision Camera',
+    r'(?i)\bID:23ANDME\s*INC\b': 'Health and Wellbeing.23andMe',
+    r'(?i)\bFINLEYS\sAVERY\sRANCH\b': 'Health and Wellbeing.Hair Care.Finleys Barbershop Avery Ranch',
+    r'(?i)\bCATHY\s\bDUNFORD\b': 'Health and Wellbeing.Life Coach.Cathy Dunford',
+    r'(?i)\bSNICOLA\s\bMCKERLIE\b': 'Health and Wellbeing.Personal Trainer.Nicola McKerlie',
+    r'(?i)\bNEW\s*TECH\s*TENNIS': 'Health and Wellbeing.Tennis.Equipment',
+    r'(?i)\bPLAYITAGAINSPORTS.*': 'Health and Wellbeing.Tennis.Equipment',
+    r'(?i)\bSPINFIRE.*': 'Health and Wellbeing.Tennis.Equipment',
+    r'(?i)\bTHE\s*TENNIS\s*SHO.*': 'Health and Wellbeing.Tennis.Equipment',
+    r'(?i).*ATHLETA.*': 'Health and Wellbeing.Athleta',
+    r'(?i)\bJERRY\'S\s*ARTARAMA.*': 'Hobby.Artwork.Jerrys Artarama',
+    r'(?i).*FLEET\s*FEET.*': 'Health and Wellbeing.Equipment.Fleet Feet',
+    r'(?i)\bTHE\s*PEDDLER\s*BICYCLE.*': 'Health and Wellbeing.Cycling.The Peddler Bicycle Shop',
+    r'(?i)\bTrek\s*Bicycle\s*Parmer.*': 'Health and Wellbeing.Cycling.Trek Bicycle Shop',
+    r'(?i).*ELLIPTIGO.*': 'Health and Wellbeing.Cycling.Elliptigo',
+#endregion Health, Wellbeing, Hobbies, Coaching
+#region Personal Lifestyle
+    r'(?i)\bJack\sBrown\sCleaners': 'Personal Lifestyle.Dry Cleaning', #.Jack Brown Cleaners',
+    r'(?i)\bRIGHTSPACE\sSTORAGE\b': 'Personal Lifestyle.Storage Unit', #.RightSpace Storage',
+    r'(?i)\bFRAMEITEASY\.COM*': 'Personal Lifestyle.Home Decor', #.Frame It Easy',
+    #region Donations
+    r'(?i).*WATERSTONE.*': 'Personal Lifestyle.Donation.Charity', # .GCR',
+    r'(?i)\bPioneers\s*USA.*': 'Personal Lifestyle.Donation.Charity', # .Pioneers',
+    r'(?i)\bCAMPUS\s\bCRUSADE\b': 'Personal Lifestyle.Donation.Charity', # .Campus Crusade',
+    r'(?i)\bTUNNELTOTOWERS\b': 'Personal Lifestyle.Donation.Charity', # .Tunnel to Towers',
+    r'(?i)\bFOCUS\sON\sTHE\sFAMILY\b': 'Personal Lifestyle.Donation.Charity', # .Focus on the Family',
+    r'(?i)\bPioneers\sBlueChe\b': 'Personal Lifestyle.Donation.Charity', # .Pioneers',
+    r'(?i)\bST\sJUDE\b': 'Personal Lifestyle.Donation.Charity',  #.St Jude',
+    r'(?i)\bWorld\s*Vision\s*Inc\b': 'Personal Lifestyle.Donation.Charity', # .World Vision',
+    r'(?i)\bDAYSTAR\s*TELEVISION': 'Personal Lifestyle.Donation.Charity', # .DayStar',
+    r'(?i)\bI*D*:*GOFUNDME\sJOHN\sW.*': 'Personal Lifestyle.Donation', # .GoFundMe.John Wick',
+    r'(?i)\bWINRED\*\s*NRSC\b': 'Personal Lifestyle.Donation.Politics', # .Republican Party',
+    r'(?i)\bWINRED\*\s*': 'Personal Lifestyle.Donation.Politics', # .Republican Party',
+    #endregion Donations
+#endregion Personal Lifestyle
+#endregion Essential Spending Categories
+#region Non-Essential Spending Categories
+#region New Projects
+    r'(?i).*TDS\s*LANDFILL.*': 'New Projects.Selling Grape Cove.Expenses',  #.TDS Landfill',
+    r'(?i)\.*SOLEIL\s*FLOORS.*': 'New Projects.Home Improvements.Flooring', #Soleil Floors',
+
+#endregion New Projects
+#region Online Service Subscriptions
+    r'(?i).*EXPRESSVPN\.COM.*': 'Subscription.Application.Express VPN',
+    r'(?i).*MUSESCORE.*': 'Subscription.Content.Sheet Music',
+    r'(?i).*CEREBRUM\s*IQ.*': 'Subscription.Application.Creberum IQ',
+    r'(?i).*MINDJET\s*COREL.*': 'Subscription.Software.MindJet',
+    r'(?i).*PHOTO\s*ERASER\s*APP.*': 'Subscription.Software.Photo Eraser',
+    r'(?i).*OPENAI.*': 'Subscription.Content.OpenAI',
+    r'(?i)\bA\s*MEDIUM\s*CORPORATION.*': 'Subscription.Content.Medium',
+    r'(?i)\bFS.*stardock.*': 'Subscription.Software.Stardock',
+    r'(?i)\bID:ANCESTO*RYCOM\b': 'Subscription.Content.Ancestry-com',
+    r'(?i).*TEAMVIEWER.*': 'Subscription.TeamViewer',
+    r'(?i)\bID:ADOBE\sINC\b': 'Subscription.Software.Adobe',
+    r'(?i)\bID:ANGIES\sLIST\b': 'Subscription.Application.Angies List',
+    r'(?i)\bID:GITHUB\sINC\b': 'Subscription.Application.GitHub',
+    r'(?i)\bGITKRAKEN\sSOFTWARE\b': 'Subscription.Application.Gitkraken Crypto',
+    r'(?i)\bID:PATREON\s*MEMBER\b': 'Subscription.Patreon',
+    r'(?i)\bID:DROPBOX\b': 'Subscription.Storage.DropBox',
+    r'(?i)\bwikimedia\b': 'Subscription.Content.WikiPedia',
+    r'(?i)\bPAYPAL\b.*ID:CLEVERBRIDG': 'Subscription.Software',
+    r'(?i)\bCHECKCARD\b.*APPLE\sCOM\sBILL': 'Subscription.Storage.Apple',
+    r'(?i)\bDREAMSTIME\.COM.*': 'Subscription.Application.Dreamstime',
+    r'(?i)\bLEGALNATURE\b': 'Subscription.Application.Legal Nature',
+    r'(?i).*Classmates\.com.*': 'Subscription.Application.Classmates',
+    r'(?i).*POSTMAN\s*BASIC\s*.*': 'Subscription.Application.Postman',
+    r'(?i).*MCONVERTER\.EU.*': 'Subscription.Software.MConverter',
+    r'(?i)\bSP\s*ROAD\s*ID.*': 'Subscription.Application.Road ID',
+    r'(?i).*CODE\s*MAGAZINE.*': 'Subscription.Content.CODE Magazine',
+
+#endregion Online Service Subscriptions
+#region Entertainment - Streaming, Concerts, Theater
+    r'(?i)\bMUSEUM\s*OF\s*ILLUSION.*': 'Entertainment.Museums.Museum of Illusion',
+    r'(?i)\bMOI\s*AUSTIN.*': 'Entertainment.Museums.Museum of Illusion',
+    r'(?i)\bBALLET\s*AUSTIN.*': 'Entertainment.Theater.Austin Ballet',
+    r'(?i)\bGoogle\s*Play\s*Books.*': 'Entertainment.Streaming.Google Play Books',
+    r'(?i)\bSXM\*SIRIUSXM\.COM/ACCT\b': 'Entertainment.Streaming.SiriusXM',
+    r'(?i)\bCINEMARK\b': 'Entertainment.Theater.Cinemark',
+    r'(?i)\bAudible\*.*\b': 'Entertainment.Streaming.Audible',
+    r'(?i)\bSLING\.COM\b': 'Entertainment.Streaming.SlingTV',
+    r'(?i)\bID:HULU\b': 'Entertainment.Streaming.Hulu',
+    r'(?i)\bPrime\s\bVideo\b': 'Entertainment.Streaming.Amazon Prime Video',
+    r'(?i)\bTHIRTEEN\b': 'Entertainment.Streaming.Thirteen',
+    r'(?i)\bID:NETFLIX\.COM\b': 'Entertainment.Streaming.Netflix',
+    r'(?i)\bSUNDANCE\s*NOW.*': 'Entertainment.Streaming.Sundance Now',
+    r'(?i)\bKindle\b.*Svcs.*': 'Entertainment.Streaming.Kindle',
+    r'(?i)\bGOOGLE.*YouTubePremium.*': 'Entertainment.Streaming.YouTube Premium',
+    r'(?i)\bDisney.*Plus.*': 'Entertainment.Streaming.Disney Plus',
+    r'(?i)\bSPOTIFY\b': 'Entertainment.Streaming.Spotify',
+    r'(?i).*DIRECTV?.*STREAM\b': 'Entertainment.Streaming.DirectTV Stream',
+    r'(?i).*DIRECTV\s*SERVICE.*': 'Entertainment.Streaming.DirectTV Service',
+    r'(?i).*BRIT\s*FLOYD.*': 'Entertainment.Concerts.Brit Floyd',
+    r'(?i)\bWWW\.MUBI\.COM\b': 'Entertainment.Streaming.MUBI TV',
+    r'(?i)\bGO\s*TICKETS.*': 'Entertainment.Concerts.Go Tickets',
+    r'(?i)\bSTUBHUB.*': 'Entertainment.Concerts.StubHub',
+    r'(?i)\bMOODY\s*CENTER.*': 'Entertainment.Concerts.Moody Center',
+    r'(?i).*TYPHOON\s*TEXAS.*': 'Entertainment.Typhoon Texas',
+    r'(?i)\bTM.*TICKETMASTER.*': 'Entertainment.Concerts.Ticketmaster',
+    r'(?i)\bTM.*BARRY\s*MANILOW.*': 'Entertainment.Concerts.Barry Manilow',
+    r'(?i)\bTM.*EAGLES\s*LIVE\s*AT\s*SPH.*': 'Entertainment.Concerts.The Eagles Live at the Sphere',
+    r'(?i).*INDIGO\s*PLAY': 'Entertainment.Misc.Indigo Play',
+    r'(?i)\bTM.*EAGLES\s*LIVE\s*AT\s*SPH.*': 'Entertainment.Concerts.The Eagles Live at the Sphere',
+    r'(?i)\bTM.*EAGLES.*': 'Entertainment.Concerts.The Eagles',
+    r'(?i)\bTM.*KACEY\s*MUSGRAVES.*': 'Entertainment.Concerts.The Eagles',
+#endregion Entertainment - Streaming, Concerts, Theater
 #region Shopping - Amazon, Apple, Clothing, etc.
     r'(?i).*APOLLA\s*PERFORM.*': 'Clothing.Apparel.Apolla Performance',
     r'(?i).*DILLARDS.*': 'Clothing.Apparel.Dillards',
@@ -482,7 +548,7 @@ category_map = {
     r'(?i)\bMUD\s*PUPPIES\b': 'Pets.Grooming',
 #endregion Pets
 #region Professional and Historical Organizations
-    r'(?i)\bID:INSTITUTEEL\b': 'Organizations.IEEE',
+    r'(?i)\bID:INSTITUTEEL\b': 'Personal Lifestyle.Professional:Historical Orgs.IEEE',
 #endregion Professional and Historical Organizations
 #region Work-related Expenses
     r'(?i)\bRHEINWERK\/SAP\s*PRESS.*\b': 'Work-related.Training.SAP',
@@ -534,15 +600,11 @@ category_map = {
     # Taxes
     r'(?i)\bIRS\s': 'Taxes.Federal',
     r'(?i)\bINTUIT\s': 'Taxes.Federal',
-    r'(?i)\bWILLIAMSON\s*COUNT\s*DES:EPAYMENT\b': 'Taxes.Williamson County',  
-    r'(?i)\bPMT\*WILCO\sTAX\b': 'Taxes.Williamson County',
-    r'(?i)\.*WILLIAMSON\s*COUNT.*': 'Taxes.Williamson County',
+    r'(?i)\bWILLIAMSON\s*COUNT\s*DES:EPAYMENT\b': 'Housing.Property Taxes.Williamson County',  
+    r'(?i)\bPMT\*WILCO\sTAX\b': 'Housing.Property Taxes.Williamson County',
+    r'(?i)\.*WILLIAMSON\s*COUNT.*': 'Housing.Property Taxes.Williamson County',
 
 #endregion Banking, Finance and Taxes 
-#region Mortgage
-    r'(?i)\bTRANSFER\s*PAUL\s*B\s*PAINTER\s*LAURA:john\s*hogge\b': 'Mortgage.Hogge',
-    r'(?i)\bTRANSFER\s*PAUL\s*B\s*PAINTER:john\s*hogge\b': 'Housing.Mortgage.Hogge',
-#endregion Mortgage
 #region Merrill Lynch transactions
     r'(?i)\bINTEREST:\s': 'Banking.Merrill',
     r'(?i)\bReinvestment\s*Program\s*': 'Banking.Merrill',
@@ -648,6 +710,7 @@ category_map = {
 #region Checks categorized manually by number - run last
     r'(?i)\bCheck\s*x*\d*\b': 'Banking.Checks to Categorize'
 #endregion Checks categorized manually by number - run last
+#endregion Non-Essential Spending Categories
 }
 compiled_category_map = {
     re.compile(pattern, re.IGNORECASE): category 
