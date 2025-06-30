@@ -26,7 +26,7 @@ declarations are contained in that one class, separate from the View code.
 # ---------------------------------------------------------------------------- +
 #region Imports
 # python standard library modules and packages
-import logging, os, getpass, time, copy
+import logging, os, sys, getpass, time, copy
 from pathlib import Path
 from typing import List, Type, Generator, Dict, Tuple, Any, Optional, Union, Callable
 # third-party modules and packages
@@ -329,6 +329,21 @@ class BudManCLIView(cmd2.Cmd):
     #region ViewModelCommandProcessor Interface Command Execution Methods
     # ------------------------------------------------------------------------ +
     #
+    # ------------------------------------------------------------------------ +
+    #region restart command - restart the application.
+    def do_restart(self, args):
+        """Restart the Budget Manager CLI application."""
+        try:
+            logger.info(f"BizEVENT: Restarting the application.")
+            # Restart the application.
+            python = sys.executable
+            os.execl(python, python, *sys.argv)
+            return 
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion restart command - restart the application.
+    # ------------------------------------------------------------------------ +
     #region init command - initialize aspects of the BudgetModel application.
     @cmd2.with_argparser(init_cmd_parser()) # This decorator links cmd2 with argparse.
     def do_init(self, opts):

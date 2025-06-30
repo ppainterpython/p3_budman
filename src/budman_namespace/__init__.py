@@ -142,8 +142,8 @@ __all__ = [
     # New Workbook Type constants
     "WB_TYPE_BDM_STORE",
     "WB_TYPE_BDM_CONFIG",
-    "WB_TYPE_CHECK_REGISTER",
-    "WB_TYPE_TRANSACTIONS",
+    "WB_TYPE_TXN_REGISTER",
+    "WB_TYPE_EXCEL_TXNS",
     "WB_TYPE_BUDGET",
     "VALID_WB_TYPE_VALUES",
     "WB_URL",

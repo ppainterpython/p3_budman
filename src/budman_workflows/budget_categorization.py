@@ -503,10 +503,10 @@ def process_budget_category(wb_object:WORKBOOK_OBJECT,
                                    raise_error=True)
         bdm_wb : BDMWorkbook = wb_object
         success : bool = False
-        if bdm_wb.wb_type != WB_TYPE_TRANSACTIONS:
+        if bdm_wb.wb_type != WB_TYPE_EXCEL_TXNS:
             # This is not a transactions workbook, no action taken.
             m = (f"Workbook '{bdm_wb.wb_id}' is not wb_type: "
-                 f"'{WB_TYPE_TRANSACTIONS}', no action taken.")
+                 f"'{WB_TYPE_EXCEL_TXNS}', no action taken.")
             logger.error(m)
             return False, m
         # Model-Aware: For the FI currently in the focus of the DC, we need

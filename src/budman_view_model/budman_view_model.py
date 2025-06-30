@@ -185,7 +185,7 @@
 # ---------------------------------------------------------------------------- +
 #region Imports
 # python standard library modules and packages
-import logging, sys, getpass, time, copy, importlib
+import logging, os, sys, getpass, time, copy, importlib
 from pathlib import Path
 from typing import List, Type, Optional, Dict, Tuple, Any, Callable
 # third-party modules and packages
@@ -262,7 +262,8 @@ CK_WB_INFO = "wb_info"
 CK_WF_TASK = "wf_task"
 # subcmd_name BUDGET_CATEGORIES constants
 CV_BUDGET_CATEGORIES_SUBCMD = "BUDGET_CATEGORIES"
-CK_INCLUDE = "include"
+CK_CAT_LIST = "cat_list"
+CK_LEVEL = "level"
 # Task CK_SUBCMD_NAME subcmd_name
 CV_TASK_SUBCMD = "task"
 CK_TASK_ARGS = "task_args"
@@ -1150,7 +1151,7 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             cmd_name: 'show'
             subcmd_name: CV_BUDGET_CATEGORIES_SUBCMD
             subcmd_key: 'show_cmd_BUDGET_CATEGORIES'
-            CK_INCLUDE: A list of budget categories to include, len()==0 means All. 
+            CK_CAT_LIST: A list of budget categories to include, len()==0 means All. 
 
         Returns:
             Tuple[success : bool, result : Any]: The outcome of the command 
@@ -1166,8 +1167,9 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             logger.debug(f"Start: ...")
             if cmd[CK_SUBCMD_NAME] == CV_BUDGET_CATEGORIES_SUBCMD:
                 # Show the budget categories.
-                include_categories = self.cp_cmd_attr_get(cmd,CK_INCLUDE)
-                result = output_category_tree(cat_list=include_categories)
+                cat_list = self.cp_cmd_attr_get(cmd,CK_CAT_LIST, [])
+                tree_level = self.cp_cmd_attr_get(cmd, CK_LEVEL, 2)
+                result = output_category_tree(level=tree_level,cat_list=cat_list)
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             return True, result
         except Exception as e:
@@ -1602,7 +1604,7 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
                     # load the check register here
                     # check_register_dict = csv_DATA_COLLECTION_url_get(wb_url)
                     # apply_check_register(ws)
-                if bdm_wb.wb_type == WB_TYPE_TRANSACTIONS:
+                if bdm_wb.wb_type == WB_TYPE_EXCEL_TXNS:
                     m = (f"{P2}Task: process_budget_category() " 
                          f"wb_index: {wb_index:>2} wb_id: '{wb_id:<40}', ")
                     logger.debug(m)
@@ -1954,7 +1956,7 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
         fi_key = cmd.get(CK_FI_KEY, None)
         wf_key = cmd.get(CK_WF_KEY, BDM_WF_CATEGORIZATION)
         wf_purpose = cmd.get(CK_WF_PURPOSE, WF_INPUT)
-        wb_type = cmd.get(CK_WB_TYPE, WB_TYPE_TRANSACTIONS)
+        wb_type = cmd.get(CK_WB_TYPE, WB_TYPE_EXCEL_TXNS)
         wb_name = cmd.get("wb_name", None)
         if fi_key != self.dc_FI_KEY:
             logger.warning(f"fi_key: arg '{fi_key}' differs from "

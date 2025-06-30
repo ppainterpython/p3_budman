@@ -15,7 +15,7 @@ import cmd2, argparse
 from cmd2 import (Cmd2ArgumentParser, with_argparser)
 # local modules and packages
 from budman_namespace.design_language_namespace import (
-    WB_TYPE_TRANSACTIONS, WB_TYPE_BUDGET, WB_TYPE_CHECK_REGISTER,
+    WB_TYPE_EXCEL_TXNS, WB_TYPE_BUDGET, WB_TYPE_TXN_REGISTER,
     WB_TYPE_BDM_STORE, WB_TYPE_BDM_CONFIG, VALID_WB_TYPE_VALUES)
                               
 #endregion Imports
@@ -210,10 +210,18 @@ class BudManCLIParser():
                 subcmd_name="BUDGET_CATEGORIES",
                 subcmd_key="show_cmd_BUDGET_CATEGORIES")
             categories_subcmd_parser.add_argument(
-                "-i", "--include", nargs="*",
+                "cat_list", nargs="*",
+                # "-i", "--include", nargs="*",
                 action='extend', 
                 default= [],
-                help="List of categgories to include, default is all.") 
+                help="List of categories to include, default is all.") 
+            categories_subcmd_parser.add_argument(
+                "-l", "--level",nargs="?",
+                # "-i", "--include", nargs="*",
+                action='store',
+                type=int,
+                default=2, 
+                help="Level to display in category hierarchy, max 3.") 
             self.add_common_args(categories_subcmd_parser)
 
             # show DataContext subcommand

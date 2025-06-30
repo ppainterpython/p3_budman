@@ -21,6 +21,22 @@
             }
         },
         {
+            "name": "Py: File External$ Terminal",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "externalTerminal",
+            "justMyCode": false,  // Allows stepping into third-party or library code
+            "env": {
+                "PYTHONPATH": "${workspaceFolder};${workspaceFolder}/src"
+            },
+            "autoReload": {
+                "enable": true,  // Enable auto-reload
+                "onChange": true,  // Reload on file changes
+                "onSave": true  // Reload on file save
+            }
+        },
+        {
             "name": "Py: File just my code",
             "type": "debugpy",
             "request": "launch",

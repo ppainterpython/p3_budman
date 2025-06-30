@@ -29,13 +29,15 @@ from openpyxl.worksheet.worksheet import Worksheet
 from openpyxl.cell.cell import Cell
 from treelib import Tree
 
-
 # local modules and packages
 from budman_namespace import *
-from .budget_category_mapping import (compiled_category_map, category_map, 
-                                      check_register_map, 
-                                      category_histogram, clear_category_histogram,
-                                      get_category_histogram)
+from budget_storage_model import bsm_WORKBOOK_content_url_put
+from .budget_category_mapping import (
+    compiled_category_map, category_map, 
+    check_register_map, 
+    category_histogram, clear_category_histogram,
+    get_category_histogram,
+    BDMTXNCategory)
 from budget_domain_model import (BudgetDomainModel)
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -259,4 +261,43 @@ def categorize_transaction(description):
         logger.error(p3u.exc_err_msg(categorize_transaction, e))
         raise
 #endregion categorize_transaction() function
+# ---------------------------------------------------------------------------- +
+#region txn_category_url_save() function
+def txn_category_url_save(cat_url: str) -> None:
+    """Save transaction categories to a URL.
+
+    Args:
+        cat_data (dict): The transaction category data to save.
+        cat_url (str): The URL to save the data to.
+    """
+    try:
+        p3u.is_non_empty_str("cat_url", cat_url, raise_error=True)
+        cat_url = "file:///C:/Users/ppain/OneDrive/budget/boa/data/new/All_TXN_Categories.txn_categories.json"
+        # Verify the URL file path.
+        tc_path = p3u.verify_url_file_path(cat_url, test=False)
+        # Save the category data to the URL.
+        cat_data = {
+            "name": "all_categories",
+            "categories": {}
+        }
+        for cat in category_map.values():
+            l1, l2, l3 = split_budget_category(cat)
+            cat_id = generate_hash_key(cat, length=8)
+            bdm_tc = BDMTXNCategory(
+                cat_id=cat_id,
+                full_cat=cat,
+                level1=l1,
+                level2=l2,
+                level3=l3,
+                description=f"Level 1 Category: {l1}",
+                payee=None
+            )
+            cat_data["categories"][cat_id] = bdm_tc
+            # print(f"category: '{cat_id}': '{repr(bdm_tc )}'")
+        bsm_WORKBOOK_content_url_put(cat_data, cat_url)
+        logger.info(f"Saved transaction categories to: {cat_url}")
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion txn_category_url_save() function
 # ---------------------------------------------------------------------------- +

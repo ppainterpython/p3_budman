@@ -42,7 +42,8 @@ from .budget_category_mapping import (
     check_register_map, 
     category_histogram,
     clear_category_histogram,
-    get_category_histogram
+    get_category_histogram,
+    BDMTXNCategory
 )
 
 # symbols for "from budman_model import *"
@@ -70,5 +71,6 @@ __all__ = [
     "check_register_map",
     "category_histogram",
     "clear_category_histogram",
-    "get_category_histogram"
+    "get_category_histogram",
+    "BDMTXNCategory"
 ]

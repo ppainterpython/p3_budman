@@ -24,7 +24,7 @@ from budman_data_context import BudManDataContext
 from p3_mvvm import Model_Base, Model_Binding
 from budget_storage_model import (bsm_WORKBOOK_content_url_get, 
                                   bsm_WB_URL_verify,
-                                    bsm_WORKBOOK_url_put)
+                                    bsm_WORKBOOK_content_url_put)
 
 #endregion imports
 # ---------------------------------------------------------------------------- +
@@ -305,7 +305,7 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
                 logger.error(m)
                 return False, m
             # Save the workbook content using the BSM.
-            bsm_WORKBOOK_url_put(wb_content, wb.wb_url)
+            bsm_WORKBOOK_content_url_put(wb_content, wb.wb_url)
             # Update the dc_LOADED_WORKBOOKS with the saved content.
             self.dc_LOADED_WORKBOOKS[wb.wb_id] = wb_content
             wb.wb_loaded = True

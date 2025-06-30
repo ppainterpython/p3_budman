@@ -81,8 +81,8 @@ from budget_storage_model import (
     bsm_verify_folder, 
     bsm_get_workbook_names,
     bsm_get_workbook_names2,
-    bsm_WORKBOOK_file_load,
-    bsm_WORKBOOK_file_save,
+    bsm_WORKBOOK_content_file_load,
+    bsm_WORKBOOK_content_file_save,
     )                              
 from p3_mvvm.model_base_ABC import Model_Base
 from budman_namespace.bdm_workbook_class import BDMWorkbook
@@ -721,7 +721,7 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
             def_fi = VALID_FI_KEYS[0]
             def_wf = BDM_WF_CATEGORIZATION
             def_wfp = WF_WORKING
-            def_wbt = WB_TYPE_TRANSACTIONS
+            def_wbt = WB_TYPE_EXCEL_TXNS
             # Initialize the budget model working data.
             self.bdm_working_data = {}
             self.set_BDM_WORKING_DATA(BDMWD_INITIALIZED, False)
@@ -1515,7 +1515,7 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
             m = f"BDM: Loading FI_KEY('{fi_key}') WF_KEY('{wf_key}') "
             m += f"workbook('{workbook_name}'): abs_path: '{str(wbap)}'"
             logger.debug(m)
-            wb = bsm_WORKBOOK_file_load(wbap)
+            wb = bsm_WORKBOOK_content_file_load(wbap)
             return wb
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
@@ -1792,7 +1792,7 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
                 m = f"Workbook '{wb_name}' not found in BDMWD_WORKBOOKS."
                 logger.error(m)
                 raise ValueError(m)
-            wb = bsm_WORKBOOK_file_load(wb_ap)
+            wb = bsm_WORKBOOK_content_file_load(wb_ap)
             self.bdmwd_LOADED_WORKBOOKS_add(wb_name, wb)
             logger.debug(f"{d} loaded wb: '{wb_name}' from '{wb_ap}'")
             return wb
@@ -1831,7 +1831,7 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
                 m = f"Workbook '{wb_name}' not found in BDMWD_WORKBOOKS."
                 logger.error(m)
                 raise ValueError(m)
-            wb = bsm_WORKBOOK_file_save(wb,wb_ap)
+            wb = bsm_WORKBOOK_content_file_save(wb,wb_ap)
             logger.debug(f"{d} saved wb: '{wb_name}' to '{wb_ap}'")
             return wb
         except Exception as e:
