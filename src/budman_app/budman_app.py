@@ -10,7 +10,6 @@
 # python standard libraries packages and modules 
 import atexit, pathlib, time, logging, inspect, logging.config  #, logging.handlers
 # third-party  packages and module libraries
-from dynaconf import Dynaconf
 import p3logging as p3l
 from p3_utils import exc_err_msg, dscr, start_timer, stop_timer
 # local packages and module libraries
@@ -33,25 +32,73 @@ class BudManApp(metaclass=BDMSingletonMeta):
     """BudManApp: The main application class for the Budget Manager."""
     # ------------------------------------------------------------------------ +
     # region Class Properties    
-    def __init__(self, app_settings : Dynaconf = None, start_time:float=time.time()) -> None:
+    def __init__(self, app_settings : BudManSettings = None, start_time:float=time.time()) -> None:
         """BudManApp__init__()."""
-        self._settings : Dynaconf = app_settings
-        self._cli_view: object = None  # type: ignore
-        self._app_name: str = None
-        self._start_time: float = start_time
+        self._settings : BudManSettings = app_settings
+        self._cli_view : object = None  # type: ignore
+        self._view_model : object = None  # type: ignore
+        self._model : object = None  # type: ignore
+        self._data_context : object = None  # type: ignore
+        self._command_processor : object = None  # type: ignore
+        self._app_name : str = None
+        self._start_time : float = start_time
         d = dscr(self)
         logger.debug(f"{d}.__init__() completed ...")
     # ------------------------------------------------------------------------ +
     @property
-    def settings(self) -> Dynaconf:
+    def settings(self) -> BudManSettings:
         """Return the application settings."""
         return self._settings
     @settings.setter
-    def settings(self, settings: Dynaconf) -> None:
+    def settings(self, settings: BudManSettings) -> None:
         """Set the application settings."""
-        if not isinstance(settings, Dynaconf):
-            raise TypeError("settings must be a Dynaconf instance")
+        if not isinstance(settings, BudManSettings):
+            raise TypeError("settings must be a BudManSettings instance")
         self._settings = settings
+
+    @property
+    def view_model(self) -> object:
+        """Return the view mode."""
+        return self._view_mode
+    @view_model.setter
+    def view_model(self, view_model: object) -> None:
+        """Set the view mode."""
+        if not isinstance(view_model, object):
+            raise TypeError("view_mode must be an object")
+        self._view_mode = view_model
+
+    @property
+    def model(self) -> object:
+        """Return the model."""
+        return self._model
+    @model.setter
+    def model(self, model: object) -> None:
+        """Set the model."""
+        if not isinstance(model, object):
+            raise TypeError("model must be an object")
+        self._model = model
+
+    @property
+    def DC(self) -> object:
+        """Return the data context."""
+        return self._data_context
+    @DC.setter
+    def DC(self, data_context: object) -> None:
+        """Set the data context."""
+        if not isinstance(data_context, object):
+            raise TypeError("data_context must be an object")
+        self._data_context = data_context
+
+    @property
+    def CP(self) -> object:
+        """Return the command processor."""
+        return self._command_processor
+    @CP.setter
+    def CP(self, command_processor: object) -> None:
+        """Set the command processor."""
+        if not isinstance(command_processor, object):
+            raise TypeError("command_processor must be an object")
+        self._command_processor = command_processor
 
     @property
     def app_name(self) -> str:
@@ -109,6 +156,49 @@ class BudManApp(metaclass=BDMSingletonMeta):
             raise
     #endregion budman_app_exit_handler() function
     # ------------------------------------------------------------------------ +
+    #region budman_app_service() function
+    def budman_app_service(self, bdms_url : str = None, testmode : bool = False):
+        """Assemble the application for startup. Do Dependency Injection.
+                
+        Args:
+            bdms_url (str): Optional, the URL to BDM_STORE to load at startup.
+            testmode (bool): If True, run in test mode.
+        """
+        try:
+            logger.debug(f"Started: bdms_url = '{bdms_url}'...")
+            # In our MVVM pattern design, the app_service is the ViewModel,
+            # data context and command processor.
+            # Create the ViewModel, Model, DataContext and CommandProcessor,
+            # independently, and then bind them together.
+            # Start by creating the ViewModel.
+            self.view_model = BudManViewModel(bdms_url, self.settings)
+            # Next, create a model. In our case, we use the ViewModel for that.
+            self.model = self.view_model.initialize_model(bdms_url)
+            # Next, bind the model to the ViewModel.
+            self.view_model.model = self.model
+            # Next, create the Data Context for the ViewModel.
+            self.DC : BDMWorkingData = BDMWorkingData()
+            # Next, bind the model to the data context.
+            self.DC.model = self.model
+            # Next, initialize the data context.
+            self.DC.dc_initialize() 
+            self.DC.dc_INITIALIZED = True
+            # Next, bind the data context to the ViewModel.
+            self.view_model.DC = self.DC
+            # Next, initialize the ViewModel.
+            self.view_model.initialize()
+            # Next, create the CommandProcessor_Binding object.
+            cli_cp = BudManCLICommandProcessor_Binding()
+            # Next, bind the view_model as the CommandProcessor_Base.
+            cli_cp.CP = self.view_model.cp_execute_cmd 
+            logger.debug(f"Complete:")
+            return self
+        except Exception as e:
+            m = exc_err_msg(e)
+            logger.error(m)
+            raise
+    #endregion budman_app_service() function
+    # ------------------------------------------------------------------------ +
     #region budman_app_setup() function
     def budman_app_setup(self, bdms_url : str = None, testmode : bool = False):
         """Assemble the application for startup. Do Dependency Injection.
@@ -119,32 +209,11 @@ class BudManApp(metaclass=BDMSingletonMeta):
         """
         try:
             logger.debug(f"Started: bdms_url = '{bdms_url}'...")
-            # In our MVVM pattern design, create the ViewModel, Model, and view
-            # independently, and then bind them together.
-            # Start by creating the ViewModel.
-            view_model = BudManViewModel(bdms_url, self.settings)
-            # Next, create a model. In our case, we use the ViewModel for that.
-            model = view_model.initialize_model(bdms_url)
-            # Next, bind the model to the ViewModel.
-            view_model.model = model
-            # Next, create the Data Context for the ViewModel.
-            data_context : BDMWorkingData = BDMWorkingData()
-            # Next, bind the model to the data context.
-            data_context.model = model
-            # Next, initialize the data context.
-            data_context.dc_initialize() 
-            data_context.dc_INITIALIZED = True
-            # Next, bind the data context to the ViewModel.
-            view_model.data_context = data_context
-            # Next, initialize the ViewModel.
-            view_model.initialize()
-            # Next, create the CommandProcessor_Binding object.
-            cli_cp = BudManCLICommandProcessor_Binding()
-            # Next, bind the view_model as the CommandProcessor_Base.
-            cli_cp.CP = view_model.cp_execute_cmd 
-            # cli_cp.initialize(cp=view_model.cp_execute_cmd) 
+            # In our MVVM pattern design, the app_service is the ViewModel,
+            # data context and command processor.
+            _ = self.budman_app_service(bdms_url, testmode)
             # Next, create and initialize the view and bind the CommandProcessor.
-            self.cli_view = BudManCLIView(cli_cp,self.app_name,self.settings)
+            self.cli_view = BudManCLIView(self.CP,self.app_name,self.settings)
             self.cli_view.initialize() 
             # Register exit handler
             atexit.register(self.budman_app_exit_handler)

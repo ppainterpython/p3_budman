@@ -21,6 +21,7 @@
 import re, pathlib as Path, logging, io, sys, time, hashlib, datetime
 import csv
 from datetime import datetime as dt
+from typing import Dict, List, Optional, Union
 
 # third-party modules and packages
 import p3logging as p3l, p3_utils as p3u
@@ -32,12 +33,13 @@ from treelib import Tree
 # local modules and packages
 from budman_namespace import *
 from budget_storage_model import bsm_WORKBOOK_content_url_put
+from .txn_category import BDMTXNCategory, BDMTXNCategoryManager
 from .budget_category_mapping import (
-    compiled_category_map, category_map, 
+    compiled_category_map, get_category_map, 
     check_register_map, 
     category_histogram, clear_category_histogram,
-    get_category_histogram,
-    BDMTXNCategory)
+    get_category_histogram, get_compiled_category_map,
+    )
 from budget_domain_model import (BudgetDomainModel)
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -123,12 +125,14 @@ def dot(n1:str=None, n2:str=None, n3:str=None) -> str:
 def extract_category_tree(level:int=2) -> Tree:
     """Extract the category tree from the category_map."""
     try:
+        global check_register_map
         now = dt.now()
         now_str = now.strftime("%Y-%m-%d %I:%M:%S %p")
         tree = Tree()
         bct = tree.create_node("Budget", "root")  # Root node
-        filter_list = ["Darkside"]        
-        combined_category_map = {**category_map, **check_register_map}
+        filter_list = ["Darkside"]
+        cat_map = get_category_map()
+        combined_category_map = {**cat_map, **check_register_map}
         for _, category in combined_category_map.items():
             l1, l2, l3 = split_budget_category(category)
             if l1 in filter_list:
@@ -219,36 +223,44 @@ def category_tree_to_csv(level:int=2):
 # ---------------------------------------------------------------------------- +
 #region category_map_count() function
 def category_map_count():
-    return len(category_map)
+    return len(get_category_map())
+
+def clear_category_map():
+    global category_map
+    old_map = category_map
+    del category_map
+    category_map = {}
+    logger.info(f"Cleared category_map, old map had {len(old_map)} items.")
+    del old_map
+    return    
 #endregion category_map_count() function
 # ---------------------------------------------------------------------------- +
-#region map_category() function
-def map_category(src_str) -> str:
-    """Map a transaction description to a budget category."""
-    # Run the src_str through the category_map to find a match.
-    try:
-        global category_histogram
-        ch = get_category_histogram()
-        for pattern, category in category_map.items():
-            if re.search(pattern, str(src_str), re.IGNORECASE):
-                return ch.count(category)
-        return ch.count('Other')  # Default category if no match is found
-    except re.PatternError as e:
-        logger.error(p3u.exc_err_sg(e))
-        logger.error(f'Pattern error: category_map dict: ' 
-                     f'{{ \"{e.pattern}\": \"{category}\" }}')
-        raise
-    except Exception as e:
-        logger.error(p3u.exc_err_msg(e))
-        raise
+#region map_category() function deprecated
+# def map_category(src_str) -> str:
+#     """Map a transaction description to a budget category."""
+#     # Run the src_str through the category_map to find a match.
+#     try:
+#         global category_histogram
+#         ch = get_category_histogram()
+#         for pattern, category in category_map.items():
+#             if re.search(pattern, str(src_str), re.IGNORECASE):
+#                 return ch.count(category)
+#         return ch.count('Other')  # Default category if no match is found
+#     except re.PatternError as e:
+#         logger.error(p3u.exc_err_sg(e))
+#         logger.error(f'Pattern error: category_map dict: ' 
+#                      f'{{ \"{e.pattern}\": \"{category}\" }}')
+#         raise
+#     except Exception as e:
+#         logger.error(p3u.exc_err_msg(e))
+#         raise
 #endregion map_category() function
 # ---------------------------------------------------------------------------- +
 #region categorize_transaction() function
 def categorize_transaction(description):
     try:
-        global category_histogram
-        ch = get_category_histogram()
-        for pattern, category in compiled_category_map.items():
+        ccm : Dict[re.Pattern, str] = get_compiled_category_map()
+        for pattern, category in ccm.items():
             if pattern.search(description):
                 return category
         return 'Other'  # Default category if no match is found

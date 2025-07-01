@@ -25,7 +25,7 @@ from .workflow_utils import (
     output_category_tree,
     category_tree_to_csv,
     category_map_count, 
-    map_category, 
+    clear_category_map,
     categorize_transaction
 )
 from .budget_categorization import (
@@ -36,18 +36,35 @@ from .budget_categorization import (
     process_budget_category,
     apply_check_register
 )
+from .txn_category import (
+    BDMTXNCategory,
+    BDMTXNCategoryManager
+)
 from .budget_category_mapping import (
+    check_register_map, 
+    compile_category_map,
     category_map, 
     compiled_category_map,
-    check_register_map, 
+    clear_category_map,
+    get_category_map,
+    set_category_map,
+    clear_compiled_category_map,
+    get_compiled_category_map,
+    set_compiled_category_map,
+    clear_check_register_map,
+    get_check_register_map,
+    set_check_register_map,
+    CategoryCounter,
     category_histogram,
-    clear_category_histogram,
     get_category_histogram,
-    BDMTXNCategory
+    clear_category_histogram
 )
 
 # symbols for "from budman_model import *"
 __all__ = [
+    # txn_category.py module
+    "BDMTXNCategory",
+    "BDMTXNCategoryManager",
     # workflow_utils.py module
     "generate_hash_key",
     "split_budget_category",
@@ -56,7 +73,7 @@ __all__ = [
     "output_category_tree",
     "category_tree_to_csv",
     "category_map_count",
-    "map_category",
+    "clear_category_map",
     "categorize_transaction",
     # budget_categorization.py module
     "check_sheet_columns",
@@ -66,11 +83,20 @@ __all__ = [
     "process_budget_category",
     "apply_check_register",
     # budget_category_mapping.py module
+    "check_register_map",
+    "compile_category_map",
     "category_map",
     "compiled_category_map",
-    "check_register_map",
+    "clear_category_map",
+    "get_category_map",
+    "set_category_map",
+    "clear_compiled_category_map",
+    "get_compiled_category_map",
+    "set_compiled_category_map",
+    "clear_check_register_map",
+    "get_check_register_map",
+    "set_check_register_map",
     "category_histogram",
     "clear_category_histogram",
     "get_category_histogram",
-    "BDMTXNCategory"
 ]

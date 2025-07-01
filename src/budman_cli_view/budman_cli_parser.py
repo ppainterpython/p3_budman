@@ -118,14 +118,16 @@ class BudManCLIParser():
             parser = self.change_cmd
             parser.prog = app_name
             title = f"Change SubCommands"
-            # change subcommands: wb_type, wb_ref
-            subparsers = parser.add_subparsers(title=title, dest="change_cmd")
-            # subcommand init workbooks [wb_name] [-fi [fi_key] [-wf [wf_key]]
-            wb_type_subcmd_parser = subparsers.add_parser(
-                "wb_ref", 
-                aliases=["wb", "workbooks"], 
-                help="Workbook reference wb_name, wb_index, or 'all'.")
-            wb_type_subcmd_parser.set_defaults(change_cmd="workbooks")
+            # change subcommands: workbook, wb_ref
+            subparsers = parser.add_subparsers()
+            # change workbooks subcommand
+            wb_type_subcmd_parser = self.add_WORKBOOKS_subparser(subparsers)
+            wb_type_subcmd_parser.set_defaults(
+                change_cmd="workbooks", # old way
+                cmd_key="change_cmd",   # new way
+                cmd_name="change", 
+                subcmd_name="wb_type",
+                subcmd_key="change_cmd_wb_type")
             wb_type_choices = VALID_WB_TYPE_VALUES
             wb_type_subcmd_parser.add_argument(
                 "-t", "--wb_type",nargs="?", dest="wb_type", 
@@ -309,11 +311,12 @@ class BudManCLIParser():
                 "BDM_STORE",
                 aliases=["store", "bms", "budget_manager_store","BDM_STORE"], 
                 help="Load the Budget Manager Store file.")
-            bm_store_subcmd_parser.set_defaults(load_cmd="BDM_STORE",
-                                        cmd_key="load_cmd",   # new way
-                                        cmd_name="load", 
-                                        subcmd_name="BDM_STORE",
-                                        subcmd_key="load_cmd_BDM_STORE")
+            bm_store_subcmd_parser.set_defaults(
+                load_cmd="BDM_STORE", # old way
+                cmd_key="load_cmd",   # new way
+                cmd_name="load", 
+                subcmd_name="BDM_STORE",
+                subcmd_key="load_cmd_BDM_STORE")
 
             # WORKBOOK subcommand (wb_index | -all) [fi_key]
             wb_subcmd_parser  = subparsers.add_parser(
@@ -565,25 +568,18 @@ class BudManCLIParser():
                 "workbooks",
                 aliases=["wb", "WB"], 
                 help="Select workbooks for.")
-            wb_subcmd_parser.set_defaults(load_cmd="workbooks")
-            group = wb_subcmd_parser.add_mutually_exclusive_group(required=True)
-            group.add_argument(
-                "wb_index", nargs="?",
-                type=int, 
-                default = -1,
-                help=f"Workbook index: number associated in the workbook list, 0-based.")
-            group.add_argument(
-                "-all", dest="all_wbs", 
-                action = "store_true",
-                help="All workbooks switch.") 
-            wb_subcmd_parser.add_argument(
-                "-fi", nargs="?", dest="fi_key", 
-                default= None,
-                help="FI key value.") 
-            wb_subcmd_parser.add_argument(
-                "-wf", nargs="?", dest="wf_key", 
-                default= None,
-                help="WF key value.") 
+            self.add_wb_index_argument(wb_subcmd_parser)
+            # # wb_subcmd_parser.set_defaults(load_cmd="workbooks")
+            # group = wb_subcmd_parser.add_mutually_exclusive_group(required=True)
+            # group.add_argument(
+            #     "wb_index", nargs="?",
+            #     type=int, 
+            #     default = -1,
+            #     help=f"Workbook index: number associated in the workbook list, 0-based.")
+            # group.add_argument(
+            #     "-all", dest="all_wbs", 
+            #     action = "store_true",
+            #     help="All workbooks switch.") 
             return wb_subcmd_parser
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))

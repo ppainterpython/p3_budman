@@ -31,7 +31,7 @@ from openpyxl.cell.cell import Cell
 from budman_namespace.design_language_namespace import *
 from budman_namespace.bdm_workbook_class import BDMWorkbook
 from .workflow_utils import (
-    categorize_transaction, map_category, category_map_count, check_register_map,
+    categorize_transaction, category_map_count, check_register_map,
     category_histogram, clear_category_histogram, get_category_histogram,
     generate_hash_key,
     split_budget_category)
@@ -148,6 +148,7 @@ BUDMAN_REQUIRED_COLUMNS = [
 ]
 
 #endregion Globals and Constants
+# ---------------------------------------------------------------------------- +
 #region dataclasses
 TRANS_PARAMETERS = ["tid", "date", "description", "currency",
                     "account_code", "amount", "category",

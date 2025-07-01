@@ -12,7 +12,6 @@
 # ---------------------------------------------------------------------------- +
 #region Imports
 # python standard library modules and packages
-from dataclasses import dataclass, asdict, field
 from typing import Dict, Any, Optional, Union, List
 import re
 # third-party modules and packages
@@ -26,33 +25,6 @@ import p3logging as p3l, p3_utils as p3u
 #logger = logging.getLogger(__name__)
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
-#region BDMTXNCategory class (@dataclass)
-@dataclass
-class BDMTXNCategory:
-    """ BDMTXNCategory is a dataclass that represents a transaction category.
-    
-    Attributes:
-        level1 (str): The first level of the category hierarchy.
-        level2 (str): The second level of the category hierarchy.
-        level3 (str): The third level of the category hierarchy.
-        description (str): A description of the category.
-    """
-    cat_id: str = field(default="")
-    full_cat: str = field(default="")
-    level1: str = field(default="")
-    level2: str = field(default="")
-    level3: str = field(default="")
-    payee: str = field(default="")
-    description: str = field(default="")
-    essential: bool = field(default=False)
-    
-    def __post_init__(self):
-        """Post-initialization to ensure levels are trimmed."""
-        self.level1 = self.level1.strip()
-        self.level2 = self.level2.strip()
-        self.level3 = self.level3.strip()
-#endregion BDMTXNCategory
-# ---------------------------------------------------------------------------- +
 #region check_register_map
 # Map a CheckRegister .csv 'Pay-To' field to a Budget Category
 # Append 'Check: nnnnn' to level3
@@ -60,17 +32,17 @@ class BDMTXNCategory:
 # replace the desciption with the key value appended with ' - Check: nnnnn' and
 # set the Budget_Category.
 check_register_map = {
-    'Unknown': 'Banking.Checks to Categorize',
-    'Nicole Smith': 'Personal Lifestyle.Hair Care.Nicole Smith',
+    'Unknown': 'Financial.Checks to Categorize',
+    'Nicole Smith': 'Lifestyle.Hair Care.Nicole Smith',
     'Landmark Roofing and Construction': 'New Projects.Home Improvements.Roofing',
-    'Tejas Chapter DRT': 'Personal Lifestyle.Professional:Historical Orgs.DRT', #.Tejas Chapter',
+    'Tejas Chapter DRT': 'Lifestyle.Professional:Historical Orgs.DRT', #.Tejas Chapter',
     'Maria Oyestas': 'Housing.Maintenance.House Cleaning', #.Maria Oyestas',
-    'Passport Services': 'Travel.Passport Services.Check 2883',
+    'Passport Services': 'Lifestyle.Travel.Passport Services', #.Check 2883',
     'APQT': 'Medical.Physical Therapy.APQT',
-    'Detergent Maria Oyestas': 'Groceries.Detergent Maria Oyestas',
-    'Colonel George Moffett Chapter DAR': 'Personal Lifestyle.Professional:Historical Orgs.DAR', #.Colonel George Moffett Chapter',
-    'Hannah Painter': 'Misc.Reimbursement.Hannah Painter',
-    'Laura Painter': 'Banking.Laura Painter',
+    'Detergent Maria Oyestas': 'Food.Groceries.Detergent Maria Oyestas',
+    'Colonel George Moffett Chapter DAR': 'Lifestyle.Professional:Historical Orgs.DAR', #.Colonel George Moffett Chapter',
+    'Hannah Painter': 'Financial.Reimbursement.Hannah Painter',
+    'Laura Painter': 'Financial.Reimbursement.Laura Painter',
     'Lawn Sprinkler': 'Housing.Maintenance.Irrigation System',
     'HVAC Grape Cove Unknown': 'Housing.Maintenance.HVAC',
 }
@@ -139,8 +111,26 @@ check_register_map = {
 #      L2: Home Improvements
 #
 #endregion Budget Structure Notes
+def compile_category_map(cat_map:Dict[str,str]) -> Dict[re.Pattern, str]:
+    """Return the category map."""
+    ret = {re.compile(pattern, re.IGNORECASE): category 
+        for pattern, category in cat_map.items()}
+    return ret
+
 category_map = {
 #region Essential Spending Categories
+#region L1: Income - Essential
+    r'(?i)\bInterest\sEarned\b': 'Income.Interest',
+    r'(?i)\bGerson\sLehrman\sG\b': 'Income.Consulting.GL Group',
+    r'(?i)\bHP\sINC*?\bPAYROLL\b': 'Income.HP Inc',
+    r'(?i)\bHP\sINC\.\s*\bDES:PAYROLL\b': 'Income.HP Inc',
+    r'(?i)\bTWC-BENEFITS\b': 'Income.TWC',
+    r'(?i)\bBank\s*of\s*America.*CASHREWARD': 'Income.Bank Reward',
+    r'(?i)\bZelle\s*payment\s*from\s*JOHN\s*PAINTER': 'Income.Inheritance.John Painter',
+    # Taxes
+    r'(?i)\bIRS\s': 'Financial.Taxes.Federal',
+    r'(?i)\bINTUIT\s': 'Financial.Taxes.Federal',
+#endregion L1: Income - Essential
 #region L1: Housing - Essential: A roof overhead, a place to live.
     # L1: Housing2 Grape Cove
     r'(?i)\.*OMNT\s*SENT.*CASH\s*APP*JONATHAN.*': 'Housing-2.Maintenance.Lawn Care', #.Jonathan',
@@ -154,6 +144,9 @@ category_map = {
     r'(?i)\bCULLINGAN\b': 'Housing-2.Maintenance.Water Softener', #.Culligan',
     r'(?i)\bAT\&T\sU-Verse\b': 'Housing-2.Utilities.Internet', # Connectivity.AT&T U-Verse',
     # L1: Housing - Castle Pines
+    r'(?i)\bWILLIAMSON\s*COUNT\s*DES:EPAYMENT\b': 'Housing.Property Taxes.Williamson County',  
+    r'(?i)\bPMT\*WILCO\sTAX\b': 'Housing.Property Taxes.Williamson County',
+    r'(?i)\.*WILLIAMSON\s*COUNT.*': 'Housing.Property Taxes.Williamson County',
     #region Utilities
     r'(?i)\bPedernales_Elec\b': 'Housing.Utilities.Electricity', #.Pedernales Electric',
     r'(?i)\bCity\sof\sAustin\b': 'Housing.Utilities.WaterAndWaste', #.City of Austin',
@@ -211,6 +204,7 @@ category_map = {
     r'(?i)\bCHECKCARD.*CEFCO.*': 'Transportation.Auto.Gasoline', #.CEFCO',
 #endregion L1: Transportation: Auto, Tolls, Fees
 #region L1: Food - Essential: Groceries, Restaurants, Meal Delivery
+    r'(?i).*COSTCO.*': 'Food.Groceries.Costco',
     r'(?i).*WHOLEFDS.*': 'Food.Groceries.Whole Foods',
     r'(?i).*DOLLAR\s*TREE.*': 'Food.Groceries.Dollar Tree',
     r'(?i).*WAL-MART.*': 'Food.Groceries.Walmart',
@@ -357,229 +351,271 @@ category_map = {
 #endregion L1: Medical
 #endregion Essential Spending Categories
 #region Non-Essential Spending Categories
-#region Personal Lifestyle - Non-Essential
+#region L1: Personal Lifestyle - Non-Essential
     #region Donations
-    r'(?i).*WATERSTONE.*': 'Personal Lifestyle.Donation.Charity', # .GCR',
-    r'(?i)\bPioneers\s*USA.*': 'Personal Lifestyle.Donation.Charity', # .Pioneers',
-    r'(?i)\bCAMPUS\s\bCRUSADE\b': 'Personal Lifestyle.Donation.Charity', # .Campus Crusade',
-    r'(?i)\bTUNNELTOTOWERS\b': 'Personal Lifestyle.Donation.Charity', # .Tunnel to Towers',
-    r'(?i)\bFOCUS\sON\sTHE\sFAMILY\b': 'Personal Lifestyle.Donation.Charity', # .Focus on the Family',
-    r'(?i)\bPioneers\sBlueChe\b': 'Personal Lifestyle.Donation.Charity', # .Pioneers',
-    r'(?i)\bST\sJUDE\b': 'Personal Lifestyle.Donation.Charity',  #.St Jude',
-    r'(?i)\bWorld\s*Vision\s*Inc\b': 'Personal Lifestyle.Donation.Charity', # .World Vision',
-    r'(?i)\bDAYSTAR\s*TELEVISION': 'Personal Lifestyle.Donation.Charity', # .DayStar',
-    r'(?i)\bI*D*:*GOFUNDME\sJOHN\sW.*': 'Personal Lifestyle.Donation', # .GoFundMe.John Wick',
-    r'(?i)\bWINRED\*\s*NRSC\b': 'Personal Lifestyle.Donation.Politics', # .Republican Party',
-    r'(?i)\bWINRED\*\s*': 'Personal Lifestyle.Donation.Politics', # .Republican Party',
+    r'(?i).*WATERSTONE.*': 'Lifestyle.Donation.Charity', # .GCR',
+    r'(?i)\bPioneers\s*USA.*': 'Lifestyle.Donation.Charity', # .Pioneers',
+    r'(?i)\bCAMPUS\s\bCRUSADE\b': 'Lifestyle.Donation.Charity', # .Campus Crusade',
+    r'(?i)\bTUNNELTOTOWERS\b': 'Lifestyle.Donation.Charity', # .Tunnel to Towers',
+    r'(?i)\bFOCUS\sON\sTHE\sFAMILY\b': 'Lifestyle.Donation.Charity', # .Focus on the Family',
+    r'(?i)\bPioneers\sBlueChe\b': 'Lifestyle.Donation.Charity', # .Pioneers',
+    r'(?i)\bST\sJUDE\b': 'Lifestyle.Donation.Charity',  #.St Jude',
+    r'(?i)\bWorld\s*Vision\s*Inc\b': 'Lifestyle.Donation.Charity', # .World Vision',
+    r'(?i)\bDAYSTAR\s*TELEVISION': 'Lifestyle.Donation.Charity', # .DayStar',
+    r'(?i)\bI*D*:*GOFUNDME\sJOHN\sW.*': 'Lifestyle.Donation', # .GoFundMe.John Wick',
+    r'(?i)\bWINRED\*\s*NRSC\b': 'Lifestyle.Donation.Politics', # .Republican Party',
+    r'(?i)\bWINRED\*\s*': 'Lifestyle.Donation.Politics', # .Republican Party',
     #endregion Donations
     #region Fitness and Wellbeing
-    r'(?i)\bID:23ANDME\s*INC\b': 'Personal Lifestyle.Fitness and Wellbeing.23andMe',
-    r'(?i)\b23ANDME.*': 'Personal Lifestyle.Fitness and Wellbeing.23AndMe',
-    r'(?i)\bLIVEWELLO.*': 'Personal Lifestyle.Fitness and Wellbeing.LiveWello',
-    r'(?i)\bNUTRISENSE.*': 'Personal Lifestyle.Fitness and Wellbeing.NutriSense',
-    r'(?i)\bHand\s*Stone\s*Spa.*': 'Personal Lifestyle.Fitness and Wellbeing.Massage',
-    r'(?i)\bDicks\s*Sporting\s*Goods.*': 'Personal Lifestyle.Fitness and Wellbeing.Equipment',
-    r'(?i)\bV\s*SHRED.*': 'Personal Lifestyle.Fitness and Wellbeing.Supplements', #.V Shred',
-    r'(?i)\bPELOTON.*': 'Personal Lifestyle.Fitness and Wellbeing.Equipment', #.Peloton',
-    r'(?i).*SWIMOUTLET.*': 'Personal Lifestyle.Fitness and Wellbeing.Equipment', # swimming
-    r'(?i).*UNDERWATER\s*AUDIO.*': 'Personal Lifestyle.Fitness and Wellbeing.Equipment', #Swimming.Underwater Audio',
-    r'(?i)\bFINLEYS\sAVERY\sRANCH\b': 'Personal Lifestyle.Hair Care.Finleys Barbershop Avery Ranch',
-    r'(?i)\bCATHY\s\bDUNFORD\b': 'Personal Lifestyle.Fitness and Wellbeing.Life Coach', #.Cathy Dunford',
-    r'(?i)\bSNICOLA\s\bMCKERLIE\b': 'Personal Lifestyle.Fitness and Wellbeing.Personal Trainer', #.Nicola McKerlie',
-    r'(?i)\bNEW\s*TECH\s*TENNIS': 'Personal Lifestyle.Fitness and Wellbeing.Equipment', #Tennis.Equipment',
-    r'(?i)\bPLAYITAGAINSPORTS.*': 'Personal Lifestyle.Fitness and Wellbeing.Equipment', #Tennis.Equipment',
-    r'(?i)\bSPINFIRE.*': 'Personal Lifestyle.Fitness and Wellbeing.Equipment', #Tennis.Equipment',
-    r'(?i)\bTHE\s*TENNIS\s*SHO.*': 'Personal Lifestyle.Fitness and Wellbeing.Equipment', #Tennis.Equipment',
-    r'(?i).*ATHLETA.*': 'Personal Lifestyle.Fitness and Wellbeing.Athleta',
-    r'(?i).*FLEET\s*FEET.*': 'Personal Lifestyle.Fitness and Wellbeing.Equipment', #.Fleet Feet',
-    r'(?i)\bTHE\s*PEDDLER\s*BICYCLE.*': 'Personal Lifestyle.Fitness and Wellbeing.Equipment', #Cycling.The Peddler Bicycle Shop',
-    r'(?i)\bTrek\s*Bicycle\s*Parmer.*': 'Personal Lifestyle.Fitness and Wellbeing.Equipment', #Cycling.Trek Bicycle Shop',
-    r'(?i).*ELLIPTIGO.*': 'Personal Lifestyle.Fitness and Wellbeing.Equipment', #Cycling.Elliptigo',
+    r'(?i)\bID:23ANDME\s*INC\b': 'Lifestyle.Fitness and Wellbeing.23andMe',
+    r'(?i)\b23ANDME.*': 'Lifestyle.Fitness and Wellbeing.23AndMe',
+    r'(?i)\bLIVEWELLO.*': 'Lifestyle.Fitness and Wellbeing.LiveWello',
+    r'(?i)\bNUTRISENSE.*': 'Lifestyle.Fitness and Wellbeing.NutriSense',
+    r'(?i)\bHand\s*Stone\s*Spa.*': 'Lifestyle.Fitness and Wellbeing.Massage',
+    r'(?i)\bDicks\s*Sporting\s*Goods.*': 'Lifestyle.Fitness and Wellbeing.Equipment',
+    r'(?i)\bV\s*SHRED.*': 'Lifestyle.Fitness and Wellbeing.Supplements', #.V Shred',
+    r'(?i)\bPELOTON.*': 'Lifestyle.Fitness and Wellbeing.Equipment', #.Peloton',
+    r'(?i).*SWIMOUTLET.*': 'Lifestyle.Fitness and Wellbeing.Equipment', # swimming
+    r'(?i).*UNDERWATER\s*AUDIO.*': 'Lifestyle.Fitness and Wellbeing.Equipment', #Swimming.Underwater Audio',
+    r'(?i)\bFINLEYS\sAVERY\sRANCH\b': 'Lifestyle.Hair Care.Finleys Barbershop Avery Ranch',
+    r'(?i)\bCATHY\s\bDUNFORD\b': 'Lifestyle.Fitness and Wellbeing.Life Coach', #.Cathy Dunford',
+    r'(?i)\bSNICOLA\s\bMCKERLIE\b': 'Lifestyle.Fitness and Wellbeing.Personal Trainer', #.Nicola McKerlie',
+    r'(?i)\bNEW\s*TECH\s*TENNIS': 'Lifestyle.Fitness and Wellbeing.Equipment', #Tennis.Equipment',
+    r'(?i)\bPLAYITAGAINSPORTS.*': 'Lifestyle.Fitness and Wellbeing.Equipment', #Tennis.Equipment',
+    r'(?i)\bSPINFIRE.*': 'Lifestyle.Fitness and Wellbeing.Equipment', #Tennis.Equipment',
+    r'(?i)\bTHE\s*TENNIS\s*SHO.*': 'Lifestyle.Fitness and Wellbeing.Equipment', #Tennis.Equipment',
+    r'(?i).*ATHLETA.*': 'Lifestyle.Fitness and Wellbeing.Athleta',
+    r'(?i).*FLEET\s*FEET.*': 'Lifestyle.Fitness and Wellbeing.Equipment', #.Fleet Feet',
+    r'(?i)\bTHE\s*PEDDLER\s*BICYCLE.*': 'Lifestyle.Fitness and Wellbeing.Equipment', #Cycling.The Peddler Bicycle Shop',
+    r'(?i)\bTrek\s*Bicycle\s*Parmer.*': 'Lifestyle.Fitness and Wellbeing.Equipment', #Cycling.Trek Bicycle Shop',
+    r'(?i).*ELLIPTIGO.*': 'Lifestyle.Fitness and Wellbeing.Equipment', #Cycling.Elliptigo',
     #endregion Fitness and Wellbeing
-    # Hobby
-    r'(?i)\bPRECISION\s*CAMERA.*': 'Personal Lifestyle.Hobby.Photography', #.Precision Camera',
-    r'(?i)\bJERRY\'S\s*ARTARAMA.*': 'Hobby.Artwork.Jerrys Artarama',
-    r'(?i)\bID:INSTITUTEEL\b': 'Personal Lifestyle.Professional:Historical Orgs.IEEE',
-    # Dry Cleaning
-    r'(?i)\bJack\sBrown\sCleaners': 'Personal Lifestyle.Dry Cleaning', #.Jack Brown Cleaners',
-    # Storage Unit
-    r'(?i)\bRIGHTSPACE\sSTORAGE\b': 'Personal Lifestyle.Storage Unit', #.RightSpace Storage',
-    # Home Decor
-    r'(?i)\bFRAMEITEASY\.COM*': 'Personal Lifestyle.Home Decor', #.Frame It Easy',
-    # Pets
-    r'(?i).*PETSMART.*': 'Pets.Misc.PetSmart',
-    r'(?i)\bPETSUITES\sGREAT\sOAKS\b': 'Pets.Boarding',
-    r'(?i)\bMUD\s*PUPPIES\b': 'Pets.Grooming',
+    #region Clothing
+    r'(?i).*APOLLA\s*PERFORM.*': 'Lifestyle.Clothing.Apparel', #.Apolla Performance',
+    r'(?i).*DILLARDS.*': 'Lifestyle.Clothing.Apparel', #.Dillards',
+    r'(?i).*ALPAKA\s*GEAR.*': 'Lifestyle.Clothing.Apparel', #.Alpaka Gear',
+    r'(?i).*KURU\s*FOOTWEAR.*': 'Lifestyle.Clothing.Shoes', #.Kuru Footwear',
+    r'(?i).*VANS.*': 'Lifestyle.Clothing.Shoes', #.Vans',
+    r'(?i).*LEVI\'S\s*OUTLET.*': 'Lifestyle.Clothing.Apparel', #.Levi\'s Outlet',
+    r'(?i)\bJ\.\s*CREW\s*FACTOR\b': 'Lifestyle.Clothing.Apparel', #.J Crew',
+    r'(?i)\bSP\s*PEAKDESIGN\b': 'Lifestyle.Clothing.Apparel', #.Peak Design',
+    r'(?i)\bCrocs.*': 'Lifestyle.Clothing.Shoes', #.Crocs',
+    r'(?i).*THE\s*HAT\s*PEOPLE.*': 'Lifestyle.Clothing.Hats', #.The Hat People',
+    r'(?i).*DULUTH\s*TRADING': 'Lifestyle.Clothing.Apparel', #.Duluth Trading Company',
+    r'(?i).*DUCKFEET\s*USA.*': 'Lifestyle.Clothing.Shoes', #.Duckfeet USA',
+    r'(?i).*KOHLS\.COM.*': 'Lifestyle.Clothing.Apparel', #.Kohls',
+    r'(?i).*COMFORT\s*SHOE\s*STORES.*': 'Lifestyle.Clothing.Shoes', #.Comfort Shoe Stores',
+    r'(?i)\bID:RUNNINGWARE\b': 'Lifestyle.Clothing.Shoes', #.Running Warehouse',
+    #endregion Clothing
     #region Online Services
-    r'(?i).*EXPRESSVPN\.COM.*': 'Personal Lifestyle.Online Subscription.Application', #.Express VPN',
-    r'(?i).*MUSESCORE.*': 'Personal Lifestyle.Online Subscription.Content', #.Sheet Music',
-    r'(?i).*CEREBRUM\s*IQ.*': 'Personal Lifestyle.Online Subscription.Application', #.Creberum IQ',
-    r'(?i).*MINDJET\s*COREL.*': 'Personal Lifestyle.Online Subscription.Software', #.MindJet',
-    r'(?i).*PHOTO\s*ERASER\s*APP.*': 'Personal Lifestyle.Online Subscription.Software', #.Photo Eraser',
-    r'(?i).*OPENAI.*': 'Personal Lifestyle.Online Subscription.Content', #.OpenAI',
-    r'(?i)\bA\s*MEDIUM\s*CORPORATION.*': 'Personal Lifestyle.Online Subscription.Content', #.Medium',
-    r'(?i)\bFS.*stardock.*': 'Personal Lifestyle.Online Subscription.Software', #.Stardock',
-    r'(?i)\bID:ANCESTO*RYCOM\b': 'Personal Lifestyle.Online Subscription.Content', #.Ancestry-com',
-    r'(?i).*TEAMVIEWER.*': 'Personal Lifestyle.Online Subscription.Application', #.TeamViewer',
-    r'(?i)\bID:ADOBE\sINC\b': 'Personal Lifestyle.Online Subscription.Software', #.Adobe',
-    r'(?i)\bID:ANGIES\sLIST\b': 'Personal Lifestyle.Online Subscription.Application', #.Angies List',
-    r'(?i)\bID:GITHUB\sINC\b': 'Personal Lifestyle.Online Subscription.Application', #.GitHub',
-    r'(?i)\bGITKRAKEN\sSOFTWARE\b': 'Personal Lifestyle.Online Subscription.Application', #.Gitkraken Crypto',
-    r'(?i)\bID:PATREON\s*MEMBER\b': 'Personal Lifestyle.Online Subscription.Patreon',
-    r'(?i)\bID:DROPBOX\b': 'Personal Lifestyle.Online Subscription.Storage', #.DropBox',
-    r'(?i)\bwikimedia\b': 'Personal Lifestyle.Online Subscription.Content', #.WikiPedia',
-    r'(?i)\bPAYPAL\b.*ID:CLEVERBRIDG': 'Personal Lifestyle.Online Subscription.Software',
-    r'(?i)\bCHECKCARD\b.*APPLE\sCOM\sBILL': 'Personal Lifestyle.Online Subscription.Storage', #.Apple',
-    r'(?i)\bDREAMSTIME\.COM.*': 'Personal Lifestyle.Online Subscription.Application', #.Dreamstime',
-    r'(?i)\bLEGALNATURE\b': 'Personal Lifestyle.Online Subscription.Application', #.Legal Nature',
-    r'(?i).*Classmates\.com.*': 'Personal Lifestyle.Online Subscription.Application', #.Classmates',
-    r'(?i).*POSTMAN\s*BASIC\s*.*': 'Personal Lifestyle.Online Subscription.Application', #.Postman',
-    r'(?i).*MCONVERTER\.EU.*': 'Personal Lifestyle.Online Subscription.Software', #.MConverter',
-    r'(?i)\bSP\s*ROAD\s*ID.*': 'Personal Lifestyle.Online Subscription.Application', #.Road ID',
-    r'(?i).*CODE\s*MAGAZINE.*': 'Personal Lifestyle.Online Subscription.Content', #.CODE Magazine',
+    r'(?i).*EXPRESSVPN\.COM.*': 'Lifestyle.Online Subscription.Application', #.Express VPN',
+    r'(?i).*MUSESCORE.*': 'Lifestyle.Online Subscription.Content', #.Sheet Music',
+    r'(?i).*CEREBRUM\s*IQ.*': 'Lifestyle.Online Subscription.Application', #.Creberum IQ',
+    r'(?i).*MINDJET\s*COREL.*': 'Lifestyle.Online Subscription.Software', #.MindJet',
+    r'(?i).*PHOTO\s*ERASER\s*APP.*': 'Lifestyle.Online Subscription.Software', #.Photo Eraser',
+    r'(?i).*OPENAI.*': 'Lifestyle.Online Subscription.Content', #.OpenAI',
+    r'(?i)\bA\s*MEDIUM\s*CORPORATION.*': 'Lifestyle.Online Subscription.Content', #.Medium',
+    r'(?i)\bFS.*stardock.*': 'Lifestyle.Online Subscription.Software', #.Stardock',
+    r'(?i)\bID:ANCESTO*RYCOM\b': 'Lifestyle.Online Subscription.Content', #.Ancestry-com',
+    r'(?i).*TEAMVIEWER.*': 'Lifestyle.Online Subscription.Application', #.TeamViewer',
+    r'(?i)\bID:ADOBE\sINC\b': 'Lifestyle.Online Subscription.Software', #.Adobe',
+    r'(?i)\bID:ANGIES\sLIST\b': 'Lifestyle.Online Subscription.Application', #.Angies List',
+    r'(?i)\bID:GITHUB\sINC\b': 'Lifestyle.Online Subscription.Application', #.GitHub',
+    r'(?i)\bGITKRAKEN\sSOFTWARE\b': 'Lifestyle.Online Subscription.Application', #.Gitkraken Crypto',
+    r'(?i)\bID:PATREON\s*MEMBER\b': 'Lifestyle.Online Subscription.Patreon',
+    r'(?i)\bID:DROPBOX\b': 'Lifestyle.Online Subscription.Storage', #.DropBox',
+    r'(?i)\bwikimedia\b': 'Lifestyle.Online Subscription.Content', #.WikiPedia',
+    r'(?i)\bPAYPAL\b.*ID:CLEVERBRIDG': 'Lifestyle.Online Subscription.Software',
+    r'(?i)\bCHECKCARD\b.*APPLE\sCOM\sBILL': 'Lifestyle.Online Subscription.Storage', #.Apple',
+    r'(?i)\bDREAMSTIME\.COM.*': 'Lifestyle.Online Subscription.Application', #.Dreamstime',
+    r'(?i)\bLEGALNATURE\b': 'Lifestyle.Online Subscription.Application', #.Legal Nature',
+    r'(?i).*Classmates\.com.*': 'Lifestyle.Online Subscription.Application', #.Classmates',
+    r'(?i).*POSTMAN\s*BASIC\s*.*': 'Lifestyle.Online Subscription.Application', #.Postman',
+    r'(?i).*MCONVERTER\.EU.*': 'Lifestyle.Online Subscription.Software', #.MConverter',
+    r'(?i)\bSP\s*ROAD\s*ID.*': 'Lifestyle.Online Subscription.Application', #.Road ID',
+    r'(?i).*CODE\s*MAGAZINE.*': 'Lifestyle.Online Subscription.Content', #.CODE Magazine',
     #endregion Online Services
+    #region Travel - General
+    r'(?i)\bCLEAR.*clearme\.com.*': 'Lifestyle.Travel.Clear',
+    r'(?i).*AUSTIN\s*AIRPORT.*': 'Lifestyle.Travel.Food', #.Austin Airport',
+    r'(?i).*UNITED\s*CLUB.*': 'Lifestyle.Travel.Food', #.United Club',
+    r'(?i).*LAZ\s*PARKING.*': 'Lifestyle.Travel.Parking',
+    r'(?i)\bUNITED.*UNITED\.COM\b': 'Lifestyle.Travel.United Airlines',
+    r'(?i)\bUNITED.*': 'Lifestyle.Travel.United Airlines',
+    r'(?i).*ALASKA\s*AIR.*': 'Lifestyle.Travel.Alaska Airlines',
+    r'(?i)\bEXPEDIA\b': 'Lifestyle.Travel.Expedia',
+    r'(?i).*WANDRD.*': 'Lifestyle.Travel.Luggage', #.Wandrd',
+    r'(?i)\bALLIANZ\s*EVENT\s*INS.*': 'Lifestyle.Travel.Trip Insurance',
+    r'(?i)\bLYFT.*RIDE.*': 'Lifestyle.Travel.Transportation', #.Lyft',
+    #endregion Travel - General
+    #region Travel - Specific Trips
+    r'(?i)\bGUNNISON\s*CO\b': 'Lifestyle.Travel.ColoradoTripJanuary2025',
+    r'(?i)\bIRVING\s*TX\b': 'Lifestyle.Travel.ColoradoTripJanuary2025',
+    r'(?i)\bEARLY\s*TX\b': 'Lifestyle.Travel.ColoradoTripJanuary2025',
+    r'(?i)\bSAGUACHE\s*CO\b': 'Lifestyle.Travel.ColoradoTripJanuary2025',
+    r'(?i)\bSNYDER\s*TX\b': 'Lifestyle.Travel.ColoradoTripJanuary2025',
+    r'(?i)\bRATON\s*NM\b': 'Lifestyle.Travel.ColoradoTripJanuary2025',
+    r'(?i)\bDALLAS\s*TX\b': 'Lifestyle.Travel.ColoradoTripJanuary2025',
+    r'(?i)\bPOST\s*TX\b': 'Lifestyle.Travel.ColoradoTripJanuary2025',
+    r'(?i)\bCAMPO\s*TX\b': 'Lifestyle.Travel.ColoradoTripJanuary2025',
+    r'(?i)\bCAMPO\s*CO\b': 'Lifestyle.Travel.ColoradoTripJanuary2025',
+    r'(?i)\bCHEYENNE\s*WELLCO\b': 'Lifestyle.Travel.ColoradoTripJanuary2025',
+    r'(?i)\bDUMAS\s*TX\b': 'Lifestyle.Travel.ColoradoTripJanuary2025',
+    r'(?i)\bLAKE\s*CITY\s*CO\b': 'Lifestyle.Travel.ColoradoTripJanuary2025',
+    r'(?i)\bBARYSHNIKOV\s*ARTS\s*CENTER\b': 'Lifestyle.Travel.NewYorkMarch2024',
+    r'(?i)\bSTATUE\s*CRUISES.*': 'Lifestyle.Travel.NewYorkMarch2024',
+    r'(?i)\b911\s*MEMORIAL.*': 'Lifestyle.Travel.NewYorkMarch2024',
+    r'(?i)\bNEW\s*YORK\s*NY': 'Lifestyle.Travel.NewYorkMarch2024',
+    r'(?i)\bQUEENS\s*NY': 'Lifestyle.Travel.NewYorkMarch2024',
+    r'(?i).*FLUSHING\s*NY': 'Lifestyle.Travel.NewYorkMarch2024',
+    r'(?i)\bLONG\s*ISLAND.*NY': 'Lifestyle.Travel.NewYorkMarch2024',
+    r'(?i)\bLGA\s*BROOKLYN\s*DINER': 'Lifestyle.Travel.NewYorkMarch2024',
+    r'(?i)\bUBER\s*TRIP': 'Lifestyle.Travel.NewYorkMarch2024',
+    r'(?i)\bEAST\s*ELMHURST.*NY': 'Lifestyle.Travel.NewYorkMarch2024',
+#endregion Travel - Specific Trips
+    #region other Personal Lifestyle
+    # Hobby
+    r'(?i)\bPRECISION\s*CAMERA.*': 'Lifestyle.Hobby.Photography', #.Precision Camera',
+    r'(?i)\bJERRY\'S\s*ARTARAMA.*': 'Lifestyle.Hobby.Artwork', #.Jerrys Artarama',
+    r'(?i)\bID:INSTITUTEEL\b': 'Lifestyle.Professional:Historical Orgs.IEEE',
+    # Dry Cleaning
+    r'(?i)\bJack\sBrown\sCleaners': 'Lifestyle.Dry Cleaning', #.Jack Brown Cleaners',
+    # Storage Unit
+    r'(?i)\bRIGHTSPACE\sSTORAGE\b': 'Lifestyle.Storage Unit', #.RightSpace Storage',
+    # Home Decor
+    r'(?i)\bFRAMEITEASY\.COM*': 'Lifestyle.Home Decor', #.Frame It Easy',
+    # Pets
+    r'(?i).*PETSMART.*': 'Lifestyle.Pets.Misc', #.PetSmart',
+    r'(?i)\bPETSUITES\sGREAT\sOAKS\b': 'Lifestyle.Pets.Boarding',
+    r'(?i)\bMUD\s*PUPPIES\b': 'Lifestyle.Pets.Grooming',
+    # Miscellaneous
+    r'(?i)\bMARDEL\b': 'Lifestyle.Shopping.Misc', #.Mardel',
+    r'(?i)\bBUC-EE\'S\b': 'Lifestyle.Shopping.Misc', #.Buc-ees',
+    r'(?i).*SADDLEBACK.*': 'Lifestyle.Shopping.SaddleBack Leather',
+    r'(?i)\bID:FASTSPRING\b': 'Lifestyle.Shopping', #.FastSpring',
+    r'(?i)\bMICROSOFT\b': 'Lifestyle.Shopping.Microsoft',    
+    r'(?i)\bETSY,\sINC\.': 'Lifestyle.Shopping.Etsy',
+    r'(?i)\bBARNES\s&\sNOBLE\b': 'Lifestyle.Shopping.Barnes & Noble',
+    r'(?i)\bBASS\sPRO\sSTORE\b': 'Lifestyle.Shopping.Bass Pro',
+    r'(?i)\bAT\sHOME\b': 'Lifestyle.Shopping.At Home',
+    #endregion other Personal Lifestyle
+    #region Shopping - Amazon, Apple, Clothing, etc.
+    r'(?i)\bID:UNDERWATER\sUNDE\b': 'Lifestyle.Shopping.Apple',
+    r'(?i)\bID:LAGOSEC\sINC\b': 'Lifestyle.Unknown.Lagosec',
+    r'(?i)\bAMAZON\s.*?\bPRIME\b': 'Lifestyle.Shopping.Amazon Prime',
+    r'(?i)\bAMAZON\sRETA\*\s\b': 'Lifestyle.Shopping.Amazon Retail',
+    r'(?i)\bAMAZON\s\bMKTPL\*.*\b': 'Lifestyle.Shopping.Amazon Marketplace',
+    r'(?i)\bAMAZON\.com\*.*\b': 'Lifestyle.Shopping.Amazon',
+    r'(?i)\bAMAZON\s(MARKETPLA\s|MKTPLACE\s)\b': 'Lifestyle.Shopping.Amazon Marketplace',
+    r'(?i)\bAMAZON\s\b(DIGITAL|DIGI).*?\b(LINKEDIN|LINKWA)\b': 'Lifestyle.Shopping.Amazon Digital',
+    r'(?i)\bAMAZON\s\b(DIGITAL|DIGI).*': 'Lifestyle.Shopping.Amazon Digital',
+    r'(?i)\bAMAZON\s': 'Lifestyle.Shopping.Amazon',
+    r'(?i)\bAMZN\s*Mktp': 'Lifestyle.Shopping.Amazon Marketplace',
+    r'(?i).*AMAZON.*': 'Lifestyle.Shopping.Amazon',
+    r'(?i)\b.*APPLE\.COM.*\b': 'Lifestyle.Shopping.Apple',
+    r'(?i)\bCIRCLE\sK\b': 'Lifestyle.Shopping.Circle K',
+    r'(?i)\b7-ELEVEN\b': 'Lifestyle.Shopping.7-Eleven',
+    r'(?i)\bMICHAELS\sSTORES\b': 'Lifestyle.Shopping.Michaels',
+    r'(?i)\bWALGREENS\s*(STORE)*\b': 'Lifestyle.Shopping.Walgreens',
+    r'(?i)\bPAYPAL\s*(STORE)*\b': 'Lifestyle.Shopping.Walgreens',
+    r'(?i)\bPAYPAL\s': 'Lifestyle.Shopping.PayPal',
+    r'(?i)\bSMART\sSTOP': 'Lifestyle.Shopping.Misc',
+    r'(?i)\bSPEEDY\sSTOP': 'Lifestyle.Shopping.Misc',
+    r'(?i)\bJames\s*Avery.*': 'Lifestyle.Shopping.James Avery',
+    r'(?i)\bFEDEX.*': 'Lifestyle.Shopping.Shipping', #.FedEx',
+    r'(?i)\bPALMETTO\s*STATE\s*ARMORY.*': 'Lifestyle.Shopping.Firearms', #.Palmetto State Armory',
+    r'(?i)\bBEST\s*BUY.*': 'Lifestyle.Shopping.Best Buy',
+    r'(?i)\bSAND\s*CLOUD\s*TOWELS.*': 'Lifestyle.Shopping.Misc', #.Sand Cloud Towels',
+    r'(?i)\bSHELL\s*OIL\s*': 'Lifestyle.Shopping.ConvenienceStore', #.Shell Oil',
+    r'(?i).*CPAYNESBOOK': 'Lifestyle.Shopping.Misc', #.Charles Paynes Book',
+    r'(?i)\bREI\.COM.*': 'Lifestyle.Shopping.Misc', #.REI',
+    r'(?i)\bREI.*': 'Lifestyle.Shopping.Misc', #.REI',
+    r'(?i).*POST\s*OFFICE\s*AT\s*RIGHTSPA.*': 'Lifestyle.Shopping.Shipping', #.RightSpace',
+    r'(?i).*WHOLE\s*EARTH\s*PROVISION*': 'Lifestyle.Shopping.Misc', #Whole Earth Provision',
+    #endregion Shopping - Amazon, Apple, etc.
+    #region Shopping - Misc. for review.
+    r'(?i).*THP\s*NEA\s*ONLINE.*': 'Lifestyle.Shopping.Misc', #.THP NEA Online',
+    r'(?i).*TST\*STILES\s*SWITCH.*': 'Lifestyle.Shopping.Misc', #.Stiles Switch',
+    r'(?i).*ORNAMENT\s*SHOP.*': 'Lifestyle.Shopping.Misc', #.Ornament Shop',
+    r'(?i).*RUSSELL\s*CELLULAR.*': 'Lifestyle.Shopping.Misc', #.Russell Cellular',
+    r'(?i).*TST\*AUSTINS.*': 'Lifestyle.Shopping.Misc', #.TST Austins',
+    r'(?i).*Redbud\s*Elementar.*': 'Lifestyle.Shopping.Misc', #.Redbud Elementary School',
+    r'(?i).*PEOPLECERT.*': 'Lifestyle.Shopping.Misc', #.PeopleCert',
+    r'(?i).*PARTY\s*CITY.*': 'Lifestyle.Shopping.Misc', #.Party City',
+    r'(?i).*AMERICAN\s*EXPRESS.*': 'Lifestyle.Shopping.Misc', #.American Express',
+    r'(?i).*Staples.*': 'Lifestyle.Shopping.Misc', #.Staples',
+    r'(?i).*54TH\s*STREET.*': 'Lifestyle.Shopping.Misc', #.54TH Street',
+    r'(?i).*CEFCO.*': 'Lifestyle.Shopping.Convenience Stores', #.Cefco',
+    r'(?i).*GODAVARI\s*AUSTIN.*': 'Lifestyle.Shopping.Misc', #.Godavari Austin',
+    r'(?i).*GATEWAY\s*EXPRES.*': 'Lifestyle.Shopping.Misc', #.Gateway Express',
+    r'(?i).*KLIPSTA.*': 'Lifestyle.Shopping.Misc', #.Klipsta',
+    r'(?i).*PLUM\s*SPA.*': 'Lifestyle.Shopping.Misc', #.Plum Spa',
+    r'(?i).*CANTEEN\s*10.*': 'Lifestyle.Shopping.Misc', #.Canteen 10',
+    r'(?i).*SHOP\.TSHELLZ\.COM.*': 'Lifestyle.Shopping.Misc', #.Shop TSHELLZ Com',
+    r'(?i).*AUSTIN-BERGSTROM.*': 'Lifestyle.Shopping.Misc', #.Austin Bergstrom',
+    r'(?i).*TEXAS\s*GIFT.*': 'Lifestyle.Shopping.Misc', #.Texas Gift Outlet',
+    r'(?i).*STROLEE\s*CARTS.*': 'Lifestyle.Shopping.Misc', #.Strolee Carts',
+    r'(?i)\bSP\s*PAPERLIKE.*': 'Lifestyle.Shopping.Misc', #.PAPERLIKE',
+    r'(?i).*OOFOS.*': 'Lifestyle.Shopping.Misc', #.OOFOS',
+    r'(?i).*TERRA\s*TOYS.*': 'Lifestyle.Shopping.Misc', #.Terra Toys',
+    r'(?i).*THE\s*UPS\s*STORE.*': 'Lifestyle.Shopping.Misc', #.The UPS Store',
+    r'(?i).*SUNBUSTERS\s*WINDOW\s*TINT.*': 'Lifestyle.Shopping.Misc', #.Sunbusters Window Tint',
+    r'(?i)\bGWCTX.*': 'Lifestyle.Shopping.Misc', #.GWCTX',
+    r'(?i)\bL*S*\s*SOUTHERN\s*LEISURE.*': 'Lifestyle.Shopping.Misc', #.Southern Leisure',
+    r'(?i)\bCEDAR\s*PARK\s*JEWELRY.*': 'Lifestyle.Shopping.Jewelry', #.Cedar Park Jewelry',
+    r'(?i)\bCarts\s*Chairs\s*SmarteCarte.*': 'Lifestyle.Shopping.Misc', #.SmarteCarte',
+    r'(?i)\bOFFERINGTREE.*': 'Lifestyle.Shopping.Misc', #.OfferingTree',
+    r'(?i)\bMOMENT.*': 'Lifestyle.Shopping.Misc', #.Moment',
+    r'(?i)\bS*P*\s*SHIFTCAM.*': 'Lifestyle.Shopping.Misc', #.ShiftCam',
+    r'(?i)\bSIX\s*MILLION\s*VOICES.*': 'Lifestyle.Shopping.Misc', #.Six Million Voices',
+    r'(?i)\bSP\s*SANDMARC.*': 'Lifestyle.Shopping.Misc', #.SandMarc',
+    r'(?i)\bSP\s*PEN\s*TIPS.*': 'Lifestyle.Shopping.Misc', #.Groningen',
+    r'(?i)\bRMCF.*': 'Lifestyle.Shopping.Misc', #.RMCF',
+    r'(?i)\bS*P*\s*ONDO\s*INC.*': 'Lifestyle.Shopping.Misc', #.Ondo',
+    r'(?i)\bS*P*\s*CADENCE*': 'Lifestyle.Shopping.Misc', #.Ondo',
+    #endregion Shopping - Misc. for review.
 #endregion Personal Lifestyle
-#region Entertainment - Streaming, Concerts, Theater
-    r'(?i)\bMUSEUM\s*OF\s*ILLUSION.*': 'Entertainment.Museums.Museum of Illusion',
-    r'(?i)\bMOI\s*AUSTIN.*': 'Entertainment.Museums.Museum of Illusion',
-    r'(?i)\bBALLET\s*AUSTIN.*': 'Entertainment.Theater.Austin Ballet',
-    r'(?i)\bGoogle\s*Play\s*Books.*': 'Entertainment.Streaming.Google Play Books',
-    r'(?i)\bSXM\*SIRIUSXM\.COM/ACCT\b': 'Entertainment.Streaming.SiriusXM',
-    r'(?i)\bCINEMARK\b': 'Entertainment.Theater.Cinemark',
-    r'(?i)\bAudible\*.*\b': 'Entertainment.Streaming.Audible',
-    r'(?i)\bSLING\.COM\b': 'Entertainment.Streaming.SlingTV',
-    r'(?i)\bID:HULU\b': 'Entertainment.Streaming.Hulu',
-    r'(?i)\bPrime\s\bVideo\b': 'Entertainment.Streaming.Amazon Prime Video',
-    r'(?i)\bTHIRTEEN\b': 'Entertainment.Streaming.Thirteen',
-    r'(?i)\bID:NETFLIX\.COM\b': 'Entertainment.Streaming.Netflix',
-    r'(?i)\bSUNDANCE\s*NOW.*': 'Entertainment.Streaming.Sundance Now',
-    r'(?i)\bKindle\b.*Svcs.*': 'Entertainment.Streaming.Kindle',
-    r'(?i)\bGOOGLE.*YouTubePremium.*': 'Entertainment.Streaming.YouTube Premium',
-    r'(?i)\bDisney.*Plus.*': 'Entertainment.Streaming.Disney Plus',
-    r'(?i)\bSPOTIFY\b': 'Entertainment.Streaming.Spotify',
-    r'(?i).*DIRECTV?.*STREAM\b': 'Entertainment.Streaming.DirectTV Stream',
-    r'(?i).*DIRECTV\s*SERVICE.*': 'Entertainment.Streaming.DirectTV Service',
-    r'(?i).*BRIT\s*FLOYD.*': 'Entertainment.Concerts.Brit Floyd',
-    r'(?i)\bWWW\.MUBI\.COM\b': 'Entertainment.Streaming.MUBI TV',
-    r'(?i)\bGO\s*TICKETS.*': 'Entertainment.Concerts.Go Tickets',
-    r'(?i)\bSTUBHUB.*': 'Entertainment.Concerts.StubHub',
-    r'(?i)\bMOODY\s*CENTER.*': 'Entertainment.Concerts.Moody Center',
-    r'(?i).*TYPHOON\s*TEXAS.*': 'Entertainment.Typhoon Texas',
-    r'(?i)\bTM.*TICKETMASTER.*': 'Entertainment.Concerts.Ticketmaster',
-    r'(?i)\bTM.*BARRY\s*MANILOW.*': 'Entertainment.Concerts.Barry Manilow',
-    r'(?i)\bTM.*EAGLES\s*LIVE\s*AT\s*SPH.*': 'Entertainment.Concerts.The Eagles Live at the Sphere',
-    r'(?i).*INDIGO\s*PLAY': 'Entertainment.Misc.Indigo Play',
-    r'(?i)\bTM.*EAGLES\s*LIVE\s*AT\s*SPH.*': 'Entertainment.Concerts.The Eagles Live at the Sphere',
-    r'(?i)\bTM.*EAGLES.*': 'Entertainment.Concerts.The Eagles',
-    r'(?i)\bTM.*KACEY\s*MUSGRAVES.*': 'Entertainment.Concerts.The Eagles',
-#endregion Entertainment - Streaming, Concerts, Theater
-#region Shopping - Amazon, Apple, Clothing, etc.
-    r'(?i).*APOLLA\s*PERFORM.*': 'Clothing.Apparel.Apolla Performance',
-    r'(?i).*DILLARDS.*': 'Clothing.Apparel.Dillards',
-    r'(?i).*ALPAKA\s*GEAR.*': 'Clothing.Apparel.Alpaka Gear',
-    r'(?i).*KURU\s*FOOTWEAR.*': 'Clothing.Shoes.Kuru Footwear',
-    r'(?i).*VANS.*': 'Clothing.Shoes.Vans',
-    r'(?i).*LEVI\'S\s*OUTLET.*': 'Clothing.Apparel.Levi\'s Outlet',
-    r'(?i)\bJ\.\s*CREW\s*FACTOR\b': 'Clothing.Apparel.J Crew',
-    r'(?i)\bSP\s*PEAKDESIGN\b': 'Clothing.Apparel.Peak Design',
-    r'(?i)\bCrocs.*': 'Clothing.Shoes.Crocs',
-    r'(?i).*THE\s*HAT\s*PEOPLE.*': 'Clothing.Hats.The Hat People',
-    r'(?i).*DULUTH\s*TRADING': 'Clothing.Apparel.Duluth Trading Company',
-    r'(?i).*DUCKFEET\s*USA.*': 'Clothing.Shoes.Duckfeet USA',
-    r'(?i).*KOHLS\.COM.*': 'Clothing.Apparel.Kohls',
-    r'(?i).*COMFORT\s*SHOE\s*STORES.*': 'Clothing.Shoes.Comfort Shoe Stores',
-    r'(?i)\bID:RUNNINGWARE\b': 'Clothing.Shoes.Running Warehouse',
-    r'(?i)\bMARDEL\b': 'Shopping.Misc.Mardel',
-    r'(?i)\bBUC-EE\'S\b': 'Shopping.Misc.Buc-ees',
-    r'(?i).*SADDLEBACK.*': 'Shopping.SaddleBack Leather',
-    r'(?i)\bID:UNDERWATER\sUNDE\b': 'Shopping.Apple',
-    r'(?i)\bID:LAGOSEC\sINC\b': 'Unknown.Lagosec',
-    r'(?i)\bID:FASTSPRING\b': 'Shopping.FastSpring',
-    r'(?i)\bMICROSOFT\b': 'Shopping.Microsoft',    
-    r'(?i)\bETSY,\sINC\.': 'Shopping.Etsy',
-    r'(?i)\bBARNES\s&\sNOBLE\b': 'Shopping.Barnes & Noble',
-    r'(?i)\bBASS\sPRO\sSTORE\b': 'Shopping.Bass Pro',
-    r'(?i)\bAT\sHOME\b': 'Shopping.At Home',
-    r'(?i)\bAMAZON\s.*?\bPRIME\b': 'Shopping.Amazon Prime',
-    r'(?i)\bAMAZON\sRETA\*\s\b': 'Shopping.Amazon Retail',
-    r'(?i)\bAMAZON\s\bMKTPL\*.*\b': 'Shopping.Amazon Marketplace',
-    r'(?i)\bAMAZON\.com\*.*\b': 'Shopping.Amazon',
-    r'(?i)\bAMAZON\s(MARKETPLA\s|MKTPLACE\s)\b': 'Shopping.Amazon Marketplace',
-    r'(?i)\bAMAZON\s\b(DIGITAL|DIGI).*?\b(LINKEDIN|LINKWA)\b': 'Shopping.Amazon Digital',
-    r'(?i)\bAMAZON\s\b(DIGITAL|DIGI).*': 'Shopping.Amazon Digital',
-    r'(?i)\bAMAZON\s': 'Shopping.Amazon',
-    r'(?i)\bAMZN\s*Mktp': 'Shopping.Amazon Marketplace',
-    r'(?i).*AMAZON.*': 'Shopping.Amazon',
-    r'(?i)\b.*APPLE\.COM.*\b': 'Shopping.Apple',
-    r'(?i)\bCIRCLE\sK\b': 'Shopping.Circle K',
-    r'(?i)\b7-ELEVEN\b': 'Shopping.7-Eleven',
-    r'(?i)\bMICHAELS\sSTORES\b': 'Shopping.Michaels',
-    r'(?i)\bWALGREENS\s*(STORE)*\b': 'Shopping.Walgreens',
-    r'(?i)\bPAYPAL\s*(STORE)*\b': 'Shopping.Walgreens',
-    r'(?i)\bPAYPAL\s': 'Shopping.PayPal',
-    r'(?i)\bSMART\sSTOP': 'Shopping.Misc',
-    r'(?i)\bSPEEDY\sSTOP': 'Shopping.Misc',
-    r'(?i).*COSTCO.*': 'Shopping.Costco',
-    r'(?i)\bJames\s*Avery.*': 'Shopping.James Avery',
-    r'(?i)\bFEDEX.*': 'Shopping.Shipping.FedEx',
-    r'(?i)\bPALMETTO\s*STATE\s*ARMORY.*': 'Shopping.Firearms.Palmetto State Armory',
-    r'(?i)\bBEST\s*BUY.*': 'Shopping.Misc.Best Buy',
-    r'(?i)\bSAND\s*CLOUD\s*TOWELS.*': 'Shopping.Misc.Sand Cloud Towels',
-    r'(?i)\bSHELL\s*OIL\s*': 'Shopping.ConvenienceStore.Shell Oil',
-    r'(?i).*CPAYNESBOOK': 'Shopping.Misc.Charles Paynes Book',
-    r'(?i)\bREI\.COM.*': 'Shopping.Misc.REI',
-    r'(?i)\bREI.*': 'Shopping.Misc.REI',
-    r'(?i).*POST\s*OFFICE\s*AT\s*RIGHTSPA.*': 'Shopping.Shipping.RightSpace',
-    r'(?i).*WHOLE\s*EARTH\s*PROVISION*': 'Shopping.Misc.Whole Earth Provision',
-#endregion Shopping - Amazon, Apple, etc.
-#region Shopping - Misc. for review.
-    r'(?i).*THP\s*NEA\s*ONLINE.*': 'Shopping.Misc.THP NEA Online',
-    r'(?i).*TST\*STILES\s*SWITCH.*': 'Shopping.Misc.Stiles Switch',
-    r'(?i).*ORNAMENT\s*SHOP.*': 'Shopping.Misc.Ornament Shop',
-    r'(?i).*RUSSELL\s*CELLULAR.*': 'Shopping.Misc.Russell Cellular',
-    r'(?i).*TST\*AUSTINS.*': 'Shopping.Misc.TST Austins',
-    r'(?i).*Redbud\s*Elementar.*': 'Shopping.Misc.Redbud Elementary School',
-    r'(?i).*PEOPLECERT.*': 'Shopping.Misc.PeopleCert',
-    r'(?i).*PARTY\s*CITY.*': 'Shopping.Misc.Party City',
-    r'(?i).*AMERICAN\s*EXPRESS.*': 'Shopping.Misc.American Express',
-    r'(?i).*Staples.*': 'Shopping.Misc.Staples',
-    r'(?i).*54TH\s*STREET.*': 'Shopping.Misc.54TH Street',
-    r'(?i).*CEFCO.*': 'Shopping.Convenience Stores.Cefco',
-    r'(?i).*GODAVARI\s*AUSTIN.*': 'Shopping.Misc.Godavari Austin',
-    r'(?i).*GATEWAY\s*EXPRES.*': 'Shopping.Misc.Gateway Express',
-    r'(?i).*KLIPSTA.*': 'Shopping.Misc.Klipsta',
-    r'(?i).*PLUM\s*SPA.*': 'Shopping.Misc.Plum Spa',
-    r'(?i).*CANTEEN\s*10.*': 'Shopping.Misc.Canteen 10',
-    r'(?i).*SHOP\.TSHELLZ\.COM.*': 'Shopping.Misc.Shop TSHELLZ Com',
-    r'(?i).*AUSTIN-BERGSTROM.*': 'Shopping.Misc.Austin Bergstrom',
-    r'(?i).*TEXAS\s*GIFT.*': 'Shopping.Misc.Texas Gift Outlet',
-    r'(?i).*STROLEE\s*CARTS.*': 'Shopping.Misc.Strolee Carts',
-    r'(?i)\bSP\s*PAPERLIKE.*': 'Shopping.Misc.PAPERLIKE',
-    r'(?i).*OOFOS.*': 'Shopping.Misc.OOFOS',
-    r'(?i).*TERRA\s*TOYS.*': 'Shopping.Misc.Terra Toys',
-    r'(?i).*THE\s*UPS\s*STORE.*': 'Shopping.Misc.The UPS Store',
-    r'(?i).*SUNBUSTERS\s*WINDOW\s*TINT.*': 'Shopping.Misc.Sunbusters Window Tint',
-    r'(?i)\bGWCTX.*': 'Shopping.Misc.GWCTX',
-    r'(?i)\bL*S*\s*SOUTHERN\s*LEISURE.*': 'Shopping.Misc.Southern Leisure',
-    r'(?i)\bCEDAR\s*PARK\s*JEWELRY.*': 'Shopping.Jewelry.Cedar Park Jewelry',
-    r'(?i)\bCarts\s*Chairs\s*SmarteCarte.*': 'Shopping.Misc.SmarteCarte',
-    r'(?i)\bOFFERINGTREE.*': 'Shopping.Misc.OfferingTree',
-    r'(?i)\bMOMENT.*': 'Shopping.Misc.Moment',
-    r'(?i)\bS*P*\s*SHIFTCAM.*': 'Shopping.Misc.ShiftCam',
-    r'(?i)\bSIX\s*MILLION\s*VOICES.*': 'Shopping.Misc.Six Million Voices',
-    r'(?i)\bSP\s*SANDMARC.*': 'Shopping.Misc.SandMarc',
-    r'(?i)\bSP\s*PEN\s*TIPS.*': 'Shopping.Misc.Groningen',
-    r'(?i)\bRMCF.*': 'Shopping.Misc.RMCF',
-    r'(?i)\bS*P*\s*ONDO\s*INC.*': 'Shopping.Misc.Ondo',
-    r'(?i)\bS*P*\s*CADENCE*': 'Shopping.Misc.Ondo',
-#endregion Shopping - Misc. for review.
-#region New Projects - Non-Essential
+#region L1: Recreation and Entertainment - Non-Essential: Streaming, Concerts, Theater
+    r'(?i)\bMUSEUM\s*OF\s*ILLUSION.*': 'RecAndEnt.Museums.Museum of Illusion',
+    r'(?i)\bMOI\s*AUSTIN.*': 'RecAndEnt.Museums.Museum of Illusion',
+    r'(?i)\bBALLET\s*AUSTIN.*': 'RecAndEnt.Theater.Austin Ballet',
+    r'(?i)\bGoogle\s*Play\s*Books.*': 'RecAndEnt.Streaming.Google Play Books',
+    r'(?i)\bSXM\*SIRIUSXM\.COM/ACCT\b': 'RecAndEnt.Streaming.SiriusXM',
+    r'(?i)\bCINEMARK\b': 'RecAndEnt.Theater.Cinemark',
+    r'(?i)\bAudible\*.*\b': 'RecAndEnt.Streaming.Audible',
+    r'(?i)\bSLING\.COM\b': 'RecAndEnt.Streaming.SlingTV',
+    r'(?i)\bID:HULU\b': 'RecAndEnt.Streaming.Hulu',
+    r'(?i)\bPrime\s\bVideo\b': 'RecAndEnt.Streaming.Amazon Prime Video',
+    r'(?i)\bTHIRTEEN\b': 'RecAndEnt.Streaming.Thirteen',
+    r'(?i)\bID:NETFLIX\.COM\b': 'RecAndEnt.Streaming.Netflix',
+    r'(?i)\bSUNDANCE\s*NOW.*': 'RecAndEnt.Streaming.Sundance Now',
+    r'(?i)\bKindle\b.*Svcs.*': 'RecAndEnt.Streaming.Kindle',
+    r'(?i)\bGOOGLE.*YouTubePremium.*': 'RecAndEnt.Streaming.YouTube Premium',
+    r'(?i)\bDisney.*Plus.*': 'RecAndEnt.Streaming.Disney Plus',
+    r'(?i)\bSPOTIFY\b': 'RecAndEnt.Streaming.Spotify',
+    r'(?i).*DIRECTV?.*STREAM\b': 'RecAndEnt.Streaming.DirectTV Stream',
+    r'(?i).*DIRECTV\s*SERVICE.*': 'RecAndEnt.Streaming.DirectTV Service',
+    r'(?i).*BRIT\s*FLOYD.*': 'RecAndEnt.Concerts.Brit Floyd',
+    r'(?i)\bWWW\.MUBI\.COM\b': 'RecAndEnt.Streaming.MUBI TV',
+    r'(?i)\bGO\s*TICKETS.*': 'RecAndEnt.Concerts.Go Tickets',
+    r'(?i)\bSTUBHUB.*': 'RecAndEnt.Concerts.StubHub',
+    r'(?i)\bMOODY\s*CENTER.*': 'RecAndEnt.Concerts.Moody Center',
+    r'(?i).*TYPHOON\s*TEXAS.*': 'RecAndEnt.Typhoon Texas',
+    r'(?i)\bTM.*TICKETMASTER.*': 'RecAndEnt.Concerts.Ticketmaster',
+    r'(?i)\bTM.*BARRY\s*MANILOW.*': 'RecAndEnt.Concerts.Barry Manilow',
+    r'(?i)\bTM.*EAGLES\s*LIVE\s*AT\s*SPH.*': 'RecAndEnt.Concerts.The Eagles Live at the Sphere',
+    r'(?i).*INDIGO\s*PLAY': 'RecAndEnt.Misc.Indigo Play',
+    r'(?i)\bTM.*EAGLES\s*LIVE\s*AT\s*SPH.*': 'RecAndEnt.Concerts.The Eagles Live at the Sphere',
+    r'(?i)\bTM.*EAGLES.*': 'RecAndEnt.Concerts.The Eagles',
+    r'(?i)\bTM.*KACEY\s*MUSGRAVES.*': 'RecAndEnt.Concerts.The Eagles',
+#endregion L1: Recreation and Entertainment - Non-Essential: Streaming, Concerts, Theater
+#region L1: New Projects - Non-Essential
     r'(?i).*TDS\s*LANDFILL.*': 'New Projects.Selling Grape Cove.Expenses',  #.TDS Landfill',
     r'(?i)\.*SOLEIL\s*FLOORS.*': 'New Projects.Home Improvements.Flooring', #Soleil Floors',
 #endregion New Projects
-#region Work-related Expenses
+#region L1: Work-related - Non-Essential 
     r'(?i)\bRHEINWERK\/SAP\s*PRESS.*\b': 'Work-related.Training.SAP',
-    r'(?i)\b.*ZOOMCOMM.*\b': 'Personal Lifestyle.Online Subscription.Zoom',
+    r'(?i)\b.*ZOOMCOMM.*\b': 'Lifestyle.Online Subscription.Zoom',
     r'(?i)\bVISUALMIND\s*APP\b': 'Work-related.VisualMind',
     r'(?i)\bEXECUTIVE\sCAREER\sUPGRA\b': 'Work-related.ECU Recruiting',
     r'(?i)\bOTTER\.AI\b': 'Work-related.OTTER-AI',
@@ -589,119 +625,67 @@ category_map = {
     r'(?i)esferas\.io': 'Work-related.ECU Recruiting',
     r'(?i)JetBrains': 'Work-related.Software.JetBrains',
     r'(?i)Varsity\s*TUTORS': 'Work-related.Training.Varsity Tutors',
-#endregion Work-related Expenses
-#region Income
-    r'(?i)\bInterest\sEarned\b': 'Income.Interest',
-    r'(?i)\bGerson\sLehrman\sG\b': 'Income.Consulting.GL Group',
-    r'(?i)\bHP\sINC*?\bPAYROLL\b': 'Income.HP Inc',
-    r'(?i)\bHP\sINC\.\s*\bDES:PAYROLL\b': 'Income.HP Inc',
-    r'(?i)\bTWC-BENEFITS\b': 'Income.TWC.',
-    r'(?i)\bBank\s*of\s*America.*CASHREWARD': 'Income.Bank Reward',
-    r'(?i)\bZelle\s*payment\s*from\s*JOHN\s*PAINTER': 'Income.Inheritance.John Painter',
-#endregion Income
-#region Banking, Finance and Taxes 
-    r'(?i)\bOVERDRAFT\s*PROTECTION.*': 'Banking.Overdraft Protection',
-    r'(?i)\bPMNT\s*SENT.*APPLE\s*CASH\s*SENT\s*MONEY.*': 'Banking.Apple Cash',
-    r'(?i)\bBANK\s*-\s*TRANSACTION\s*FEE.*': 'Banking.Transaction Fee',
-    r'(?i)\bBANK\s*OF\s*AMERICA.*': 'Banking.Crypto',
-    r'(?i)\bBOFA\s*FIN\s*CTR.*': 'Banking.Transaction',
-    r'(?i)\bBKOFAMERICA.*': 'Banking.Transaction',
-    r'(?i)\bTNB\s*FINANCIAL.*': 'Banking.TNB Financial',
-    r'(?i)\bAdjustment\/Correction.*': 'Banking.Adjustment',
-    r'(?i)\bOnline\s*(Banking)*\s*payment.*from\s*SAV.*': 'Banking.Payment.From Savings 0196',
-    r'(?i)\bOnline\s*Banking\s*transfer.*from\s*SAV.*': 'Banking.Transfer.From Savings 0196',
-    r'(?i)\bPMNT\s*SENT.*CASH\s*APP.*ROBIN\s*PAINTER.*': 'Banking.Transfer.Robin Painter',
-    r'(?i)\bOnline\s*Banking\s*Transfer.*Painter,\s*ROBIN.*': 'Banking.Transfer.Robin Painter',
-    r'(?i)\bOnline\s*Banking\s*Transfer.*Painter,\s*JUSTIN.*': 'Banking.Transfer.Justin Painter',
-    r'(?i)\bPreferred\s*Rewards.*\b': 'Banking.Preferred Rewards',
-    r'(?i)\bLATE\sFEE\sFOR\sPAYMENT\sDUE\b': 'Banking.Late Fee',
-    r'(?i)\bINTEREST\sCHARGED\sON\sPURCHASES\b': 'Banking.Interest',
-    r'(?i)\bFRAUD\sDISPUTE\b': 'Banking.Fraud Dispute',
-    r'(?i)\bGB\sREVERS(AL|ED)\b': 'Banking.Fraud Dispute',
-    r'(?i)\bFOREIGN\sTRANSACTION\sFEE\b': 'Banking.Foreign Transaction Fee',
-    r'(?i)\bExperian\*\sCredit\sReport\b': 'Finance.Experian',
-    r'(?i)\bBKOFAMERICA\sATM.*\bWITHDRWL\b': 'Banking.ATM',
-    r'(?i)\bBKOFAMERICA\sMOBILE.*\bDEPOSIT\b': 'Banking.Mobile Deposit',
-    r'(?i)\bMobile\s*transfer\s*to\s*CHK.*': 'Banking.Transfer.To Checking',
-    r'(?i)\bWIRE\s*TYPE:WIRE\s*OUT.*': 'Crypto.Transfer.To CryptoCom',
-    # Taxes
-    r'(?i)\bIRS\s': 'Taxes.Federal',
-    r'(?i)\bINTUIT\s': 'Taxes.Federal',
-    r'(?i)\bWILLIAMSON\s*COUNT\s*DES:EPAYMENT\b': 'Housing.Property Taxes.Williamson County',  
-    r'(?i)\bPMT\*WILCO\sTAX\b': 'Housing.Property Taxes.Williamson County',
-    r'(?i)\.*WILLIAMSON\s*COUNT.*': 'Housing.Property Taxes.Williamson County',
-
-#endregion Banking, Finance and Taxes 
-#region Merrill Lynch transactions
-    r'(?i)\bINTEREST:\s': 'Banking.Merrill',
-    r'(?i)\bReinvestment\s*Program\s*': 'Banking.Merrill',
-    r'(?i).*DIVIDEND:\s.*': 'Banking.Merrill',
-    r'(?i)\bSALE:\s': 'Banking.Merrill',
-    r'(?i)\bRETURN\s*OF\s*CAPITAL:\s': 'Banking.Merrill',
-    r'(?i)\bBANK\sINTEREST:\sML\sBANK\s': 'Banking.Merrill',
-    r'(?i)\bPURCHASE:\s': 'Banking.Merrill',
-    r'(?i)\bREINVESTMENT\s*SHARE\(S\):': 'Banking.Merrill',
-    r'(?i)\bAdvisory\s*Program\s*Fee\s*INV.*': 'Banking.Merrill.Advisory Fee',
-#endregion Merrill Lynch transactions
-#region Credit Card Payments
-    r'(?i)\bSYNCHRONY\sBANK\b': 'Credit Cards.Synchrony Bank',
-    r'(?i)\bOnline\sBanking\spayment\sto\sCRD\b': 'Credit Cards.Bank of America',
-    r'(?i)\bOnline\spayment\sfrom\sCHK\s1391\b': 'Credit Cards.Bank of America',
-    r'(?i)\bPayment\s-\sTHANK\sYOU\b': 'Credit Cards.Bank of America',
-    r'(?i)\bVisa\sBank\sOf\sAmerica\sBill\sPayment\b': 'Credit Cards.Bank of America',
-    r'(?i)\bOnline\sBanking\sTRANSFER\sTO\sCRD\b': 'Credit Cards.Bank of America',
-    r'(?i)\bCHASE\sCREDIT\sCRD\b': 'Credit Cards.Chase',
-    r'(?i)\bBANK\sOF\sAMERICA\sCREDIT\sCARD\b': 'Credit Cards.Band of America',
-#endregion Credit Card Payments
-#region Transfers
-    r'(?i)\bForis\sUSA\sINC\sCF\b': 'Investment.Foris USA',
-    r'(?i)\bFID\sBKG\sSVC\sLLC\b': 'Investment.Fidelity',
-    r'(?i)\bWIRE\s*TYPE:BOOK.*': 'Investment.Fidelity',
-    r'(?i)\bWIRE\s*TYPE:WIRE\s*IN.*': 'Investment.Fidelity',
-    r'(?i)\bAgent\sAssisted\stransfer\sfrom\b': 'Investment.Transfer',
-    r'(?i)\bMobile\sTransfer\sfrom\sCHK\b': 'Investment.Transfer',    
-    r'(?i)\bOnline\sTRANSFER\sTO\sCHK\b': 'Investment.Transfer',
-    r'(?i)\bOnline\sBanking\sTRANSFER\sTO\sSAV\b': 'Investment.Transfer.ToSavings',
-    r'(?i)\bOnline\sBanking\sTRANSFER\sTO\sINV\b': 'Investment.Transfer.ToInvestments',
-#endregion Transfers
-#region Travel - General
-    r'(?i)\bCLEAR.*clearme\.com.*': 'Travel.Clear',
-    r'(?i).*AUSTIN\s*AIRPORT.*': 'Travel.Food.Austin Airport',
-    r'(?i).*UNITED\s*CLUB.*': 'Travel.Food.United Club',
-    r'(?i).*LAZ\s*PARKING.*': 'Travel.Parking',
-    r'(?i)\bUNITED.*UNITED\.COM\b': 'Travel.United Airlines',
-    r'(?i)\bUNITED.*': 'Travel.United Airlines',
-    r'(?i).*ALASKA\s*AIR.*': 'Travel.Alaska Airlines',
-    r'(?i)\bEXPEDIA\b': 'Travel.Expedia',
-    r'(?i).*WANDRD.*': 'Travel.Luggage.Wandrd',
-    r'(?i)\bALLIANZ\s*EVENT\s*INS.*': 'Travel.Trip Insurance',
-    r'(?i)\bLYFT.*RIDE.*': 'Travel.Transportation.Lyft',
-#endregion Travel - General
-#region Travel - Specific Trips
-    r'(?i)\bGUNNISON\s*CO\b': 'Travel.ColoradoTripJanuary2025',
-    r'(?i)\bIRVING\s*TX\b': 'Travel.ColoradoTripJanuary2025',
-    r'(?i)\bEARLY\s*TX\b': 'Travel.ColoradoTripJanuary2025',
-    r'(?i)\bSAGUACHE\s*CO\b': 'Travel.ColoradoTripJanuary2025',
-    r'(?i)\bSNYDER\s*TX\b': 'Travel.ColoradoTripJanuary2025',
-    r'(?i)\bRATON\s*NM\b': 'Travel.ColoradoTripJanuary2025',
-    r'(?i)\bDALLAS\s*TX\b': 'Travel.ColoradoTripJanuary2025',
-    r'(?i)\bPOST\s*TX\b': 'Travel.ColoradoTripJanuary2025',
-    r'(?i)\bCAMPO\s*TX\b': 'Travel.ColoradoTripJanuary2025',
-    r'(?i)\bCAMPO\s*CO\b': 'Travel.ColoradoTripJanuary2025',
-    r'(?i)\bCHEYENNE\s*WELLCO\b': 'Travel.ColoradoTripJanuary2025',
-    r'(?i)\bDUMAS\s*TX\b': 'Travel.ColoradoTripJanuary2025',
-    r'(?i)\bLAKE\s*CITY\s*CO\b': 'Travel.ColoradoTripJanuary2025',
-    r'(?i)\bBARYSHNIKOV\s*ARTS\s*CENTER\b': 'Travel.NewYorkMarch2024',
-    r'(?i)\bSTATUE\s*CRUISES.*': 'Travel.NewYorkMarch2024',
-    r'(?i)\b911\s*MEMORIAL.*': 'Travel.NewYorkMarch2024',
-    r'(?i)\bNEW\s*YORK\s*NY': 'Travel.NewYorkMarch2024',
-    r'(?i)\bQUEENS\s*NY': 'Travel.NewYorkMarch2024',
-    r'(?i).*FLUSHING\s*NY': 'Travel.NewYorkMarch2024',
-    r'(?i)\bLONG\s*ISLAND.*NY': 'Travel.NewYorkMarch2024',
-    r'(?i)\bLGA\s*BROOKLYN\s*DINER': 'Travel.NewYorkMarch2024',
-    r'(?i)\bUBER\s*TRIP': 'Travel.NewYorkMarch2024',
-    r'(?i)\bEAST\s*ELMHURST.*NY': 'Travel.NewYorkMarch2024',
-#endregion Travel - Specific Trips
+#endregion L1: Work-related - Non-Essential 
+#region L1: Financial
+    #region Banking 
+    r'(?i)\bOVERDRAFT\s*PROTECTION.*': 'Financial.Overdraft Protection',
+    r'(?i)\bPMNT\s*SENT.*APPLE\s*CASH\s*SENT\s*MONEY.*': 'Financial.Apple Cash',
+    r'(?i)\bBANK\s*-\s*TRANSACTION\s*FEE.*': 'Financial.Transaction Fee',
+    r'(?i)\bBANK\s*OF\s*AMERICA.*': 'Financial.Crypto',
+    r'(?i)\bBOFA\s*FIN\s*CTR.*': 'Financial.Transaction',
+    r'(?i)\bBKOFAMERICA.*': 'Financial.Transaction',
+    r'(?i)\bTNB\s*FINANCIAL.*': 'Financial.TNB Financial',
+    r'(?i)\bAdjustment\/Correction.*': 'Financial.Adjustment',
+    r'(?i)\bOnline\s*(Banking)*\s*payment.*from\s*SAV.*': 'Financial.Payment.From Savings 0196',
+    r'(?i)\bOnline\s*Banking\s*transfer.*from\s*SAV.*': 'Financial.Transfer.From Savings 0196',
+    r'(?i)\bPMNT\s*SENT.*CASH\s*APP.*ROBIN\s*PAINTER.*': 'Financial.Transfer.Robin Painter',
+    r'(?i)\bOnline\s*Banking\s*Transfer.*Painter,\s*ROBIN.*': 'Financial.Transfer.Robin Painter',
+    r'(?i)\bOnline\s*Banking\s*Transfer.*Painter,\s*JUSTIN.*': 'Financial.Transfer.Justin Painter',
+    r'(?i)\bPreferred\s*Rewards.*\b': 'Financial.Preferred Rewards',
+    r'(?i)\bLATE\sFEE\sFOR\sPAYMENT\sDUE\b': 'Financial.Late Fee',
+    r'(?i)\bINTEREST\sCHARGED\sON\sPURCHASES\b': 'Financial.Interest',
+    r'(?i)\bFRAUD\sDISPUTE\b': 'Financial.Fraud Dispute',
+    r'(?i)\bGB\sREVERS(AL|ED)\b': 'Financial.Fraud Dispute',
+    r'(?i)\bFOREIGN\sTRANSACTION\sFEE\b': 'Financial.Foreign Transaction Fee',
+    r'(?i)\bExperian\*\sCredit\sReport\b': 'Financial.Experian',
+    r'(?i)\bBKOFAMERICA\sATM.*\bWITHDRWL\b': 'Financial.ATM',
+    r'(?i)\bBKOFAMERICA\sMOBILE.*\bDEPOSIT\b': 'Financial.Mobile Deposit',
+    r'(?i)\bMobile\s*transfer\s*to\s*CHK.*': 'Financial.Transfer.To Checking',
+    r'(?i)\bWIRE\s*TYPE:WIRE\s*OUT.*': 'Financial.Crypto.Transfer', #.To CryptoCom',
+    #endregion Banking 
+    #region Merrill Lynch transactions
+    r'(?i)\bINTEREST:\s': 'Financial.Merrill',
+    r'(?i)\bReinvestment\s*Program\s*': 'Financial.Merrill',
+    r'(?i).*DIVIDEND:\s.*': 'Financial.Merrill',
+    r'(?i)\bSALE:\s': 'Financial.Merrill',
+    r'(?i)\bRETURN\s*OF\s*CAPITAL:\s': 'Financial.Merrill',
+    r'(?i)\bBANK\sINTEREST:\sML\sBANK\s': 'Financial.Merrill',
+    r'(?i)\bPURCHASE:\s': 'Financial.Merrill',
+    r'(?i)\bREINVESTMENT\s*SHARE\(S\):': 'Financial.Merrill',
+    r'(?i)\bAdvisory\s*Program\s*Fee\s*INV.*': 'Financial.Merrill.Advisory Fee',
+    #endregion Merrill Lynch transactions
+    #region Credit Card Payments
+    r'(?i)\bSYNCHRONY\sBANK\b': 'Financial.Credit Cards.Synchrony Bank',
+    r'(?i)\bOnline\sBanking\spayment\sto\sCRD\b': 'Financial.Credit Cards.Bank of America',
+    r'(?i)\bOnline\spayment\sfrom\sCHK\s1391\b': 'Financial.Credit Cards.Bank of America',
+    r'(?i)\bPayment\s-\sTHANK\sYOU\b': 'Financial.Credit Cards.Bank of America',
+    r'(?i)\bVisa\sBank\sOf\sAmerica\sBill\sPayment\b': 'Financial.Credit Cards.Bank of America',
+    r'(?i)\bOnline\sBanking\sTRANSFER\sTO\sCRD\b': 'Financial.Credit Cards.Bank of America',
+    r'(?i)\bCHASE\sCREDIT\sCRD\b': 'Financial.Credit Cards.Chase',
+    r'(?i)\bBANK\sOF\sAMERICA\sCREDIT\sCARD\b': 'Financial.Credit Cards.Band of America',
+    #endregion Credit Card Payments
+    #region Credit Card Payments
+    r'(?i)\bForis\sUSA\sINC\sCF\b': 'Financial.Transfers.Foris USA',
+    r'(?i)\bFID\sBKG\sSVC\sLLC\b': 'Financial.Transfers.Fidelity',
+    r'(?i)\bWIRE\s*TYPE:BOOK.*': 'Financial.Transfers.Fidelity',
+    r'(?i)\bWIRE\s*TYPE:WIRE\s*IN.*': 'Financial.Transfers.Fidelity',
+    r'(?i)\bAgent\sAssisted\stransfer\sfrom\b': 'Financial.Transfers',
+    r'(?i)\bMobile\sTransfer\sfrom\sCHK\b': 'Financial.Transfers',    
+    r'(?i)\bOnline\sTRANSFER\sTO\sCHK\b': 'Financial.Transfers',
+    r'(?i)\bOnline\sBanking\sTRANSFER\sTO\sSAV\b': 'Financial.Transfers.ToSavings',
+    r'(?i)\bOnline\sBanking\sTRANSFER\sTO\sINV\b': 'Financial.Investment.Transfer', #.ToInvestments',
+    #endregion Credit Card Payments
+#endregion L1: Financial
 #region Unknowns, one-offs (applied last)
     r'(?i)\bHOMESENSE.*': 'Unknown.HomeSense',
     r'(?i)\bPRESSNET.*': 'Unknown.PressNet',
@@ -719,30 +703,86 @@ category_map = {
     r'(?i)\bWISE\s*US\s*INC\b': 'Unknown.Wise Inc.',
     r'(?i)\bPAYPAL\s*DES:TRANSFER\s*ID:x*\d*\s*\b': 'Unknown.PayPal',
     r'(?i)\bFIT\s*ROUND\s*LAKE-RURAL': 'Unknown',
-    r'(?i)\bAPPLE\s*STORE.*08\/27.*': 'Temp.Blackmail.Apple Gift Card',
-    r'(?i)\bAPPLE\s*STORE.*08\/29.*': 'Temp.Blackmail.Apple Gift Card',
+    r'(?i)\bAPPLE\s*STORE.*08\/27.*': 'Unknown.Blackmail.Apple Gift Card',
+    r'(?i)\bAPPLE\s*STORE.*08\/29.*': 'Unknown.Blackmail.Apple Gift Card',
     r'(?i).*FFNHELP\.COM.*': 'Unknown.FFNHELP.COM',
     r'(?i).*GEDMATCH.*': 'Unknown.GEDMATCH',
     r'(?i).*DJO-CMF.*': 'Unknown.DJO-CMF',
-    r'(?i)\bSNIFFIES.*': 'Temp.Chat Site',
-    r'(?i).*VTSUP\.COM.*AMSTERDAM.*': 'Temp.Chat Site',
-    r'(?i).*SRFBM\.COM.*PERNIK.*': 'Temp.Chat Site',
-    r'(?i)\bZelle\s*payment\s*to.*Thomas\s*Wikstrom.*': 'Temp.Chat Fraud',
-    r'(?i).*BeenVerified.*': 'Temp.Fraud Search.BeenVerified-com',
-    r'(?i).*REVERSEPHONE.*': 'Temp.Fraud Search.ReversePhone-com',
-    r'(?i).*SOCIALCATFISH.*': 'Temp.Fraud Search.SocialCatfish-com',
-    r'(?i).*.*CASH\s*APP\*AMIE.*': 'Temp.Massage',
-    r'(?i)\b7-ELEVEN\s.*?MOBILE\sPURCHASE\b': 'Temp.Vape',
+    r'(?i)\bSNIFFIES.*': 'Unknown.Chat Site',
+    r'(?i).*VTSUP\.COM.*AMSTERDAM.*': 'Unknown.Chat Site',
+    r'(?i).*SRFBM\.COM.*PERNIK.*': 'Unknown.Chat Site',
+    r'(?i)\bZelle\s*payment\s*to.*Thomas\s*Wikstrom.*': 'Unknown.Chat Fraud',
+    r'(?i).*BeenVerified.*': 'Unknown.Fraud Search.BeenVerified-com',
+    r'(?i).*REVERSEPHONE.*': 'Unknown.Fraud Search.ReversePhone-com',
+    r'(?i).*SOCIALCATFISH.*': 'Unknown.Fraud Search.SocialCatfish-com',
+    r'(?i).*.*CASH\s*APP\*AMIE.*': 'Unknown.Temp.Massage',
+    r'(?i)\b7-ELEVEN\s.*?MOBILE\sPURCHASE\b': 'Unknown.Temp.Vape',
 #endregion Unknowns, one-offs (applied last)
 #region Checks categorized manually by number - run last
-    r'(?i)\bCheck\s*x*\d*\b': 'Banking.Checks to Categorize'
+    r'(?i)\bCheck\s*x*\d*\b': 'Financial.Checks to Categorize'
 #endregion Checks categorized manually by number - run last
 #endregion Non-Essential Spending Categories
 }
-compiled_category_map = {
-    re.compile(pattern, re.IGNORECASE): category 
-    for pattern, category in category_map.items()
-}
+
+compiled_category_map = compile_category_map(category_map)
+# {
+#     re.compile(pattern, re.IGNORECASE): category 
+#             for pattern, category in category_map.items()
+# }
+
+def clear_category_map() -> Dict[str, str]:
+    """Clear the category map."""
+    global category_map
+    if category_map is not None:
+        del category_map
+    category_map = {}
+
+def get_category_map() -> Dict[str, str]:
+    """Return the category map."""
+    global category_map
+    return category_map
+
+def set_category_map(cat_map:Dict[str, str]) -> None:
+    """Set the category map."""
+    global category_map
+    clear_category_map()
+    category_map = cat_map
+
+def clear_compiled_category_map() -> Dict[str, str]:
+    """Clear the compiled category map."""
+    global category_map
+    del category_map
+    category_map = {}
+
+def get_compiled_category_map() -> Dict[str, str]:
+    """Return the compiled category map."""
+    global compiled_category_map
+    return compiled_category_map
+
+def set_compiled_category_map(compiled_cat_map:Dict[re.Pattern, str]) -> None:
+    """Set the compiled category map."""
+    global compiled_category_map
+    clear_compiled_category_map()
+    compiled_category_map = compiled_cat_map
+
+def clear_check_register_map() -> Dict[str, str]:
+    """Clear the check_register map."""
+    global check_register_map
+    if check_register_map is not None:
+        del check_register_map
+    check_register_map = {}
+
+def get_check_register_map() -> Dict[str, str]:
+    """Return the check register map."""
+    global check_register_map
+    return check_register_map
+
+def set_check_register_map(cr_map:Dict[str,str]) -> None:
+    """Set the check register map."""
+    global check_register_map
+    clear_check_register_map()
+    check_register_map = cr_map
+
 #endregion category_map
 # ---------------------------------------------------------------------------- +
 #region category_histogram
@@ -766,6 +806,8 @@ def get_category_histogram() -> CategoryCounter:
 def clear_category_histogram():
     """Clear the category histogram."""
     global category_histogram
+    if category_histogram is not None:
+        del category_histogram
     category_histogram = CategoryCounter()
     return category_histogram
 #endregion category_histogram

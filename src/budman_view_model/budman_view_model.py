@@ -190,7 +190,6 @@ from pathlib import Path
 from typing import List, Type, Optional, Dict, Tuple, Any, Callable
 # third-party modules and packages
 import p3_utils as p3u, pyjson5, p3logging as p3l
-from dynaconf import Dynaconf
 from openpyxl import Workbook, load_workbook
 # local modules and packages
 from p3_mvvm import (Model_Base, Model_Binding)
@@ -198,9 +197,10 @@ from budman_settings import *
 from budman_namespace.design_language_namespace import *
 from budman_namespace.bdm_workbook_class import BDMWorkbook
 from budman_workflows import (
-    category_map_count, check_sheet_columns,
+    category_map_count, get_category_map, clear_category_map, 
+    compile_category_map, set_compiled_category_map, clear_compiled_category_map,
     check_sheet_schema,process_budget_category,
-    apply_check_register, get_category_histogram, output_category_tree
+    apply_check_register, output_category_tree
     )
 from budman_workflows import budget_category_mapping
 
@@ -331,7 +331,7 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
     #                                                                          +
     # ------------------------------------------------------------------------ +
     #region    BudManViewModel Class __init__() constructor method             +
-    def __init__(self, bdms_url : str = None, settings : Dynaconf = None) -> None:
+    def __init__(self, bdms_url : str = None, settings : BudManSettings = None) -> None:
         super().__init__()
         self._bdm_store_url : str = bdms_url
         self._settings = settings
@@ -363,14 +363,14 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
         self._bdm_store_url = url
 
     @property
-    def settings(self) -> Dynaconf:
+    def settings(self) -> BudManSettings:
         """Return the application settings."""
         return self._settings
     @settings.setter
-    def settings(self, settings: Dynaconf) -> None:
+    def settings(self, settings: BudManSettings) -> None:
         """Set the application settings."""
-        if not isinstance(settings, Dynaconf):
-            raise TypeError("settings must be a Dynaconf instance")
+        if not isinstance(settings, BudManSettings):
+            raise TypeError("settings must be a BudManSettings instance")
         self._settings = settings
 
     @property
@@ -1456,28 +1456,17 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
         """
         try:
             logger.info(f"Start: ...")
-            validate_only = self.cp_cmd_attr_get(cmd, CK_VALIDATE_ONLY, None)
-            what_if = self.cp_cmd_attr_get(cmd, CK_WHAT_IF, None)
-            fi_key = self.cp_cmd_attr_get(cmd, CK_FI_KEY, self.dc_FI_KEY)
-            wf_key = self.cp_cmd_attr_get(cmd, CK_WF_KEY, self.dc_WF_KEY)
-            wb_ref = self.cp_cmd_attr_get(cmd, CK_WB_REF, self.dc_WB_REF)
-            wb_type = self.cp_cmd_attr_get(cmd, CK_WB_TYPE, self.dc_WB_TYPE)
-            wf_purpose = self.cp_cmd_attr_get(cmd, CK_WF_PURPOSE, None)
-            all_wbs, wb_index, wb_name = self.dc_WB_REF_resolve(wb_ref)
-            # Verify LOADED_WORKBOOKS to process.
-            wdc = self.dc_WORKBOOK_DATA_COLLECTION
-            wb = self.dc_WORKBOOK_by_index(wb_index)
-            if (wb):
-                wb_name = wb.wb_name
-                wb_loaded = wb.loaded
-                wb_content = wb.content
-                # Process the change workbook command.
-                if wb_type is not None:
-                    wb.wb_type = wb_type
-            if what_if:
-                return True, f"what_if: apply_check_register(cr_wb_ref, transaction_wb_ref)"
-            # apply_check_register(ws)
-            return True, ""
+            if cmd[CK_SUBCMD_NAME] == CK_WB_TYPE:
+                wb_index : int = self.cp_cmd_attr_get(cmd, CK_WB_INDEX, self.dc_WB_INDEX)
+                wb_type = self.cp_cmd_attr_get(cmd, CK_WB_TYPE, self.dc_WB_TYPE)
+                wb = self.dc_WORKBOOK_by_index(wb_index)
+                if (wb):
+                    # Process the change workbook command.
+                    if wb_type is not None:
+                        wb.wb_type = wb_type
+                        result = (f"Changed workbook type to: '{wb_type}' for "
+                                  f"wb_index: {wb_index:>2} wb_id: '{wb.wb_id}'")
+                        return True, result
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
@@ -1520,9 +1509,14 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
                         cmc = category_map_count()
                         r = f"Workflow reload: '{reload_target}' rule count = {cmc}\n"
                         logger.debug(r)
+                        clear_category_map()
+                        clear_compiled_category_map()
                         importlib.reload(budget_category_mapping)
                         importlib.reload(budman_cli_parser)
                         importlib.reload(budman_cli_view)
+                        cm = get_category_map()
+                        ccm = compile_category_map(cm)
+                        set_compiled_category_map(ccm)
                     return True, r
                 except Exception as e:
                     logger.error(p3u.exc_err_msg(e))

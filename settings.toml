@@ -19,6 +19,9 @@ default_workflow = "categorization"
 default_workflow_purpose = "wf_working" 
 default_workbook_type = "transactions"
 
+[category_catalog]
+boa = "All_TXN_Categories.txn_categories.json"
+
 # [logging] Table
 [logging]
 default_handler = "daily"

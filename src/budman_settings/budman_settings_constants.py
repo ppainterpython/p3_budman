@@ -28,6 +28,9 @@ BUDMAN_DEFAULT_WORKFLOW = "budman.default_workflow"
 BUDMAN_DEFAULT_WORKFLOW_PURPOSE = "budman.default_workflow_purpose"
 BUDMAN_DEFAULT_WORKBOOK_TYPE = "budman.default_workbook_type"
 
+# [category_catalog] Table
+CATEGORY_CATALOG = "category_catalog"
+
 # [logging] Table
 LOGGING_DEFAULT_HANDLER = "logging.default_handler"
 LOGGING_DEFAULT_LEVEL = "logging.default_level"

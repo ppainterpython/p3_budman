@@ -307,9 +307,9 @@ class BudManCLIView(cmd2.Cmd):
         try:
             st = p3u.start_timer()
             _log_cli_cmd_execute(self, opts)
-            parse_only : bool = self.parse_only or opts.parse_only
+            parse_only : bool = self.parse_only or getattr(opts,'parse_only', False)
             cmd_line = f"{self.current_cmd} {opts.cmd2_statement.get()}"
-            if self.parse_only or opts.parse_only: 
+            if parse_only: 
                 console.print(f"parse-only: '{cmd_line}' {str(_filter_opts(opts))}")
                 return True, CMD_PARSE_ONLY
             cmd = BudManCLIView.create_cmd_from_cmd2_argparse(opts)

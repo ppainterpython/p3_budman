@@ -11,7 +11,6 @@ Copyright (c) 2025 Paul Painter
 # python standard library modules and packages
 import sys, logging
 from pathlib import Path
-from dynaconf import Dynaconf
 import p3logging as p3l
 from p3_utils import exc_err_msg, dscr, start_timer, stop_timer
 from budman_settings.budman_settings_constants import *
@@ -78,9 +77,8 @@ def main(bdms_url : str = None):
         bdms_url (str): Optional, the URL to BDM_STORE to load at startup.
     """
     try:
-        # TODO: modify to use BudManSettings() for user_settings, not app.
         # Define a set of folders to search for it, auto-load.
-        BudManMain_settings : Dynaconf = BudManSettings().settings
+        BudManMain_settings : BudManSettings = BudManSettings().settings
         if BudManMain_settings is None:
                 raise ValueError("BudMan Settings not configured.")
         app_name = BudManMain_settings.get(APP_NAME, "BudManApp")

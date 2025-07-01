@@ -294,14 +294,14 @@ def bsm_WORKBOOK_content_url_get(wb_url : str) -> Any:
         wb_abs_path = bsm_WB_URL_verify_file_scheme(wb_url, test=True)
         wb_filetype = wb_abs_path.suffix.lower()
         # Dispatch based on WB_TYPE.
-        wb_type = bsm_WB_TYPE(wb_url)
-        if wb_type == WB_TYPE_TXN_CATEGORIES:
-            # If the workbook type is TXN_CATEGORIES, load it as a JSON file.
-            logger.debug(f"Loading workbook as TXN_CATEGORIES from file: '{wb_abs_path}'")
-            with open(wb_abs_path, "r") as f:
-                wb_content = json5.decode(f.read(),10)
-            return wb_content
-
+        wb_type = bsm_WB_TYPE(wb_url,wb_filetype)
+        if wb_type != WB_TYPE_UNKNOWN:
+            if wb_type == WB_TYPE_TXN_CATEGORIES:
+                # If the workbook type is TXN_CATEGORIES, load it as a JSON file.
+                logger.debug(f"Loading workbook as TXN_CATEGORIES from file: '{wb_abs_path}'")
+                with open(wb_abs_path, "r") as f:
+                    wb_content = json5.decode(f.read(),10)
+                return wb_content
         # Dispatch based on filetype.
         if wb_filetype not in [WB_FILETYPE_XLSX, WB_FILETYPE_CSV]:
             # If the filetype is not supported, raise an error.
