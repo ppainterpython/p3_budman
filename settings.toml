@@ -24,6 +24,6 @@ boa = "All_TXN_Categories.txn_categories.json"
 
 # [logging] Table
 [logging]
-default_handler = "daily"
+default_handler = "file"
 default_level = "DEBUG"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
 config_filename = "budget_model_logging_config.jsonc"  # logging config file

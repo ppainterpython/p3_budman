@@ -199,7 +199,7 @@ from budman_namespace.bdm_workbook_class import BDMWorkbook
 from budman_workflows import (
     category_map_count, get_category_map, clear_category_map, 
     compile_category_map, set_compiled_category_map, clear_compiled_category_map,
-    check_sheet_schema,process_budget_category,
+    check_sheet_schema, process_budget_category,
     apply_check_register, output_category_tree
     )
 from budman_workflows import budget_category_mapping
@@ -1410,8 +1410,8 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             all_wbs, wb_index, wb_name = self.dc_WB_REF_resolve(wb_ref)
             if all_wbs:
                 lwbl = self.DC.bdmwd_FI_WORKBOOKS_load(fi_key, wf_key, wb_type)
-                self.DC.dc_WB_REF = ALL_KEY # Set the wb_ref in the DC.
-                self.DC.dc_WB_NAME = None   # Set the wb_name in the DC.
+                self.dc_WB_REF = ALL_KEY # Set the wb_ref in the DC.
+                self.dc_WB_NAME = None   # Set the wb_name in the DC.
                 for wb_name in list(lwbl.keys()):
                     wb_index = self.dc_WORKBOOK_index(wb_name)
                     r += f"{P2}wb_index: {wb_index:>2} wb_name: '{wb_name:<40}'\n"
@@ -1571,12 +1571,8 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
                 # If all_wbs, process all loaded workbooks.
                 lwbc = self.dc_LOADED_WORKBOOKS
             else:
-                # wb_index is already validated.
+                # wb_index is already validated by cp_validate_cmd().
                 bdm_wb = self.dc_WORKBOOK_by_index(wb_index)
-                if bdm_wb is None:
-                    m = f"wb_index '{wb_index}' is not valid."
-                    logger.error(m)
-                    return False, m
                 wb_id = bdm_wb.wb_id
                 bdm_wb.wb_loaded = wb_id in self.dc_LOADED_WORKBOOKS
                 if not bdm_wb.wb_loaded:

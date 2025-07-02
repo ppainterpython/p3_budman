@@ -1,6 +1,7 @@
 #------------------------------------------------------------------------------+
 # txn_cats.py - a place to fool around with experiments, not a dependent.
 #------------------------------------------------------------------------------+
+#region Imports
 import logging, re
 from pathlib import Path
 from typing import Dict
@@ -92,7 +93,6 @@ def extract_txn_categories(all_cats_url: str) -> None:
                 logger.warning(f"Duplicate category ID '{cat_id}' found for "
                                f"category '{cat}'. Overwriting existing entry.")
             cat_data["categories"][cat_id] = bdm_tc
-            # print(f"category: '{cat_id}': '{repr(bdm_tc )}'")
         bsm_WORKBOOK_content_url_put(cat_data, all_cats_url)
         cnt = len(cat_data["categories"])
         logger.info(f"Extracted '{cnt}' categories from budget_category_mapping "
@@ -101,6 +101,7 @@ def extract_txn_categories(all_cats_url: str) -> None:
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
+#endregion extract_txn_categories() method
 # ------------------------------------------------------------------------ +
 #region __main__() method
 if __name__ == "__main__":
@@ -116,8 +117,11 @@ if __name__ == "__main__":
         cat_data : Dict[str, Dict] = extract_txn_categories(all_cats_url)
 
         catman = BDMTXNCategoryManager(settings)
-        catman.load_catalog("boa")
-
+        catman.WB_TYPE_TXN_CATEGORIES_url_get("boa")
+        bsm_WORKBOOK_content_url_put(catman.catalog["boa"], 
+                                     all_cats_url,
+                                     bdm.WB_TYPE_TXN_CATEGORIES)
+        logger.info(f"Transaction categories extracted and saved to: {all_cats_url}")
 
         # filename : str = settings.config["category_catalog"]["boa"]
         # fi_folder : Path = settings.FI_FOLDER_abs_path("boa") 

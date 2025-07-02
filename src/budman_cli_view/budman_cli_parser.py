@@ -147,6 +147,7 @@ class BudManCLIParser():
             title = f"Init SubCommands"
             # init subcommands: workbooks, and fin_inst
             subparsers = parser.add_subparsers(title=title, dest="init_cmd")
+
             # subcommand init workbooks [wb_name] [-fi [fi_key] [-wf [wf_key]]
             wb_subcmd_parser = subparsers.add_parser(
                 "workbooks", 
@@ -158,15 +159,8 @@ class BudManCLIParser():
                 action="store", 
                 default=None,
                 help="Workbook name.")
-            wb_subcmd_parser.add_argument(
-                "-fi", nargs="?", dest="fi_key", 
-                default = None,
-                help="FI key value.")
-            wb_subcmd_parser.add_argument(
-                "-wf", nargs="?", dest="wf_key", 
-                action="store", 
-                default='all',
-                help="Workflow key value.")
+            self.add_common_args(wb_subcmd_parser)
+
             # subcommand init fin_int [fi_key] [-wf [wf_key]] [-wb [wb_name]]
             fi_subcmd_parser = subparsers.add_parser(
                 "fin_inst",
@@ -187,8 +181,7 @@ class BudManCLIParser():
                 action="store", 
                 default='all',
                 help="Workbook name.")
-            for subparser in [fi_subcmd_parser, wb_subcmd_parser]:
-                self.add_common_args(subparser)
+            self.add_common_args(fi_subcmd_parser)
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise
@@ -328,24 +321,8 @@ class BudManCLIParser():
                                         cmd_name="load", 
                                         subcmd_name="workbooks",
                                         subcmd_key="load_cmd_workbooks")
-            group = wb_subcmd_parser.add_mutually_exclusive_group(required=True)
-            group.add_argument(
-                "wb_index", nargs="?",
-                type=int, 
-                default = -1,
-                help=f"Workbook index: number associated in the workbook list, 0-based.")
-            group.add_argument(
-                "-all", dest="all_wbs", 
-                action = "store_true",
-                help="All workbooks switch.") 
-            wb_subcmd_parser.add_argument(
-                "-fi", nargs="?", dest="fi_key", 
-                default= None,
-                help="FI key value.") 
-            wb_subcmd_parser.add_argument(
-                "-wf", nargs="?", dest="wf_key", 
-                default= None,
-                help="WF key value.") 
+            self.add_wb_index_argument(wb_subcmd_parser)
+            
             # subcommand load check_register [wb_url]
             check_register_subcmd_parser = subparsers.add_parser(
                 "check_register",

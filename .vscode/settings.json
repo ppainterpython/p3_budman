@@ -7,10 +7,15 @@
     "python.testing.pytestEnabled": true,
     "python.REPL.enableREPLSmartSend": false,
     "jupyter.interactiveWindow.textEditor.executeSelection": true,
-    "python.analysis.extraPaths": [
-        "${workspaceFolder}/src"
+    "cSpell.ignorePaths": [
+        ".*\\.pyi",
+        ".*\\.json",
+        ".*\\.jsonc",
+        ".git",
+        ".vscode",
+        "vscode-extension",
+        "src/budman_workflows/budget_category_mapping.py"
     ],
-    "python.analysis.reportExtraTelemetry": true,
     "cSpell.words": [
         "addopts",
         "anyio",
@@ -119,8 +124,5 @@
         "webcolors",
         "webencodings",
         "xmlfile"
-    ],
-    "python.analysis.exclude": [
-        "**/.VSCodeCounter"
     ]
 }

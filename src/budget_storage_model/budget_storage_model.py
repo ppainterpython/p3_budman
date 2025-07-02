@@ -280,7 +280,7 @@ def bsm_WB_TYPE(wb_url : str, wb_filetype:str) -> Any:
 #endregion bsm_WB_TYPE(wb_url : str = None) -> Any
 # ---------------------------------------------------------------------------- +
 #region    bsm_WORKBOOK_content_url_get(wb_url : str = None) -> Any
-def bsm_WORKBOOK_content_url_get(wb_url : str) -> Any:
+def bsm_WORKBOOK_content_url_get(wb_url : str, wb_type=WB_TYPE_UNKNOWN) -> Any:
     """Load workbook content from a storage URL.
 
     Args:
@@ -294,7 +294,9 @@ def bsm_WORKBOOK_content_url_get(wb_url : str) -> Any:
         wb_abs_path = bsm_WB_URL_verify_file_scheme(wb_url, test=True)
         wb_filetype = wb_abs_path.suffix.lower()
         # Dispatch based on WB_TYPE.
-        wb_type = bsm_WB_TYPE(wb_url,wb_filetype)
+        if wb_type == WB_TYPE_UNKNOWN:
+            # If the WB_TYPE is unknown, determine it from the URL.
+            wb_type = bsm_WB_TYPE(wb_url, wb_filetype)
         if wb_type != WB_TYPE_UNKNOWN:
             if wb_type == WB_TYPE_TXN_CATEGORIES:
                 # If the workbook type is TXN_CATEGORIES, load it as a JSON file.
@@ -324,7 +326,8 @@ def bsm_WORKBOOK_content_url_get(wb_url : str) -> Any:
 #endregion bsm_WORKBOOK_content_url_get(wb_url : str = None) -> Any
 # ---------------------------------------------------------------------------- +
 #region    bsm_WORKBOOK_content_url_put(wb:Any, wb_url : str = None) -> Any
-def bsm_WORKBOOK_content_url_put(wb_content:Any, wb_url : str = None) -> None:
+def bsm_WORKBOOK_content_url_put(wb_content:Any, wb_url : str = None,
+                                 wb_type=WB_TYPE_UNKNOWN) -> None:
     """Put a workbook content to a storage URL.
 
     Args:
@@ -339,14 +342,16 @@ def bsm_WORKBOOK_content_url_put(wb_content:Any, wb_url : str = None) -> None:
         wb_abs_path = bsm_WB_URL_verify_file_scheme(wb_url, test=False)
         wb_filetype = wb_abs_path.suffix.lower()
         # Dispatch based on WB_TYPE.
-        wb_type = bsm_WB_TYPE(wb_url,wb_filetype)
-        if wb_type == WB_TYPE_TXN_CATEGORIES:
-            # If the workbook type is TXN_CATEGORIES, save it as a JSON file.
-            logger.info(f"Saving workbook as TXN_CATEGORIES to file: '{wb_abs_path}'")
-            with open(wb_abs_path, "w") as f:
-                jsonc_content = json5.encode(wb_content)
-                f.write(jsonc_content)
-            return
+        if wb_type == WB_TYPE_UNKNOWN:
+            wb_type = bsm_WB_TYPE(wb_url,wb_filetype)
+        if wb_type != WB_TYPE_UNKNOWN:
+            if wb_type == WB_TYPE_TXN_CATEGORIES:
+                # If the workbook type is TXN_CATEGORIES, save it as a JSON file.
+                logger.info(f"Saving workbook as TXN_CATEGORIES to file: '{wb_abs_path}'")
+                with open(wb_abs_path, "w") as f:
+                    jsonc_content = json5.encode(wb_content)
+                    f.write(jsonc_content)
+                return
         
         # Dispatch based on filetype.
         if wb_filetype not in [WB_FILETYPE_XLSX, WB_FILETYPE_CSV]:

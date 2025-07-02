@@ -1,5 +1,6 @@
 {
   "typeCheckingMode": "off",
-  "exclude": ["**/site-packages", "**/venv", "**/.venv", "~/venvs"],
-  "include": ["src", "p3_budman"]
+  "exclude": ["**/site-packages", "**/venv", "**/.venv", "~/venvs",
+    "**/__pycache__", "**/.VSCodeCounter", "**/.vscode-test"],
+  "include": ["./src", "./p3_budman"]
 }

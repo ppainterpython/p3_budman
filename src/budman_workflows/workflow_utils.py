@@ -257,9 +257,11 @@ def clear_category_map():
 #endregion map_category() function
 # ---------------------------------------------------------------------------- +
 #region categorize_transaction() function
-def categorize_transaction(description):
+def categorize_transaction(description : str, ccm : Dict[re.Pattern, str]) -> str:
+    """Use the provided compiled category map to map the description to a category."""
     try:
-        ccm : Dict[re.Pattern, str] = get_compiled_category_map()
+        p3u.is_non_empty_str("description", description, raise_error=True)
+        p3u.is_non_empty_dict("ccm", ccm, raise_error=True)
         for pattern, category in ccm.items():
             if pattern.search(description):
                 return category
@@ -270,7 +272,7 @@ def categorize_transaction(description):
                      f'{{ \"{e.pattern}\": \"{category}\" }}')
         raise
     except Exception as e:
-        logger.error(p3u.exc_err_msg(categorize_transaction, e))
+        logger.error(p3u.exc_err_msg(e))
         raise
 #endregion categorize_transaction() function
 # ---------------------------------------------------------------------------- +

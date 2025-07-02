@@ -410,11 +410,13 @@ class BudManDataContext(BudManDataContext_Base):
     def dc_WB_INDEX_validate(self, wb_index: int) -> bool:
         """DC-Only: Validate the provided wb_index.
 
+        Test is wb_index matches a workbook present in wdc. 
+
         Args:
             wb_index (int): The index of the workbook to validate.
 
         Returns:
-            bool: True if valid, False otherwise.
+            bool: True if wb_index is in range and has a workbook object.
         """
         if not self.dc_VALID: return False
         if not isinstance(wb_index, int):
@@ -429,8 +431,8 @@ class BudManDataContext(BudManDataContext_Base):
                 m = (f"Workbook index out of range: {wb_index}")
                 logger.error(m)
                 return False
-            wb = list(self.dc_WORKBOOK_DATA_COLLECTION.values())[wb_index]
-            if wb is None:
+            bdm_wb = list(self.dc_WORKBOOK_DATA_COLLECTION.values())[wb_index]
+            if bdm_wb is None:
                 m = (f"No workbook with index '{wb_index}' found in dc_WORKBOOK_DATA_COLLECTION.")
                 logger.error(m)
                 return False
@@ -546,7 +548,7 @@ class BudManDataContext(BudManDataContext_Base):
         return isinstance(wb, object)
 
     def dc_WORKBOOK_loaded(self, wb_id: str) -> bool:
-        """Indicates whether the workbook with wb_id is loaded."""
+        """DC-Only: Indicates whether the workbook with wb_id is loaded."""
         if not self.dc_VALID: return False
         if (not self.dc_INITIALIZED or not self.dc_WB_ID_validate(wb_id)):
             return False

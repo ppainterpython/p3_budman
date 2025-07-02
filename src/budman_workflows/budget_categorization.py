@@ -33,8 +33,9 @@ from budman_namespace.bdm_workbook_class import BDMWorkbook
 from .workflow_utils import (
     categorize_transaction, category_map_count, check_register_map,
     category_histogram, clear_category_histogram, get_category_histogram,
-    generate_hash_key,
-    split_budget_category)
+    generate_hash_key, split_budget_category
+)
+from .txn_category import BDMTXNCategoryManager
 from budman_data_context import BudManDataContext_Base
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -480,10 +481,10 @@ def year_month_str(date:object) -> str:
         raise
 #endregion year_month_str() function
 # ---------------------------------------------------------------------------- +
-#region map_budget_category() function
-def process_budget_category(wb_object:WORKBOOK_OBJECT,
+#region process_budget_category() function
+def process_budget_category(bdm_wb:BDMWorkbook,
                             bdm_DC : BudManDataContext_Base) -> BUDMAN_RESULT:
-    """Map a src column to budget category putting result in dst column.
+    """Process budget categorization for the workbook.
     
     The sheet has banking transaction data in rows and columns. 
     Column 'src' has the text presumed to be about the transaction.
@@ -498,16 +499,31 @@ def process_budget_category(wb_object:WORKBOOK_OBJECT,
     """
     try:
         # Validate the input parameters.
-        _ = p3u.is_not_obj_of_type("wb_object", wb_object, BDMWorkbook,
+        _ = p3u.is_not_obj_of_type("wb_object", bdm_wb, BDMWorkbook,
                                    raise_error=True)
         _ = p3u.is_not_obj_of_type("bdm_DC", bdm_DC, BudManDataContext_Base,
                                    raise_error=True)
-        bdm_wb : BDMWorkbook = wb_object
         success : bool = False
         if bdm_wb.wb_type != WB_TYPE_EXCEL_TXNS:
             # This is not a transactions workbook, no action taken.
             m = (f"Workbook '{bdm_wb.wb_id}' is not wb_type: "
                  f"'{WB_TYPE_EXCEL_TXNS}', no action taken.")
+            logger.error(m)
+            return False, m
+        # Access the category manager for the FI in the data context.
+        # Obtain the compiled category map (ccm) for the FI by FI_KEY.
+        catman : BDMTXNCategoryManager = bdm_DC.WF_CATEGORY_MANAGER
+        if bdm_wb.fi_key not in catman.catalog:
+            # No WB_TYPE_TXN_CATEGORIES dictionary for this FI, no action taken.
+            m = (f"WB_TYPE_TXN_CATEGORIES dictionary not found for FI '{bdm_wb.fi_key}', "
+                 f"no action taken.")
+            logger.error(m)
+            return False, m
+        ccm : Dict[str, re.Pattern] = catman.ccm[bdm_wb.fi_key]
+        if not ccm:
+            # No compiled category map for this FI, no action taken.
+            m = (f"Compiled category map not found for FI '{bdm_wb.fi_key}', "
+                 f"no action taken.")
             logger.error(m)
             return False, m
         # Model-Aware: For the FI currently in the focus of the DC, we need
@@ -523,12 +539,12 @@ def process_budget_category(wb_object:WORKBOOK_OBJECT,
             m = f"Workbook '{bdm_wb.wb_id}' is not loaded, no action taken."
             logger.error(m)
             return False, m
-        wb : Workbook = bdm_DC.dc_LOADED_WORKBOOKS[bdm_wb.wb_id]
-        if p3u.is_not_obj_of_type("wb", wb, Workbook):
+        wb_content : Workbook = bdm_DC.dc_LOADED_WORKBOOKS[bdm_wb.wb_id]
+        if p3u.is_not_obj_of_type("wb", wb_content, Workbook):
             m = f"Error accessing wb_content for workbook: '{bdm_wb.wb_id}'."
             logger.error(m)
             return False, m
-        ws : Worksheet = wb.active  # Get the active worksheet.
+        ws : Worksheet = wb_content.active  # Get the active worksheet.
         if not check_sheet_columns(ws, add_columns=False):
             m = (f"Sheet '{ws.title}' cannot be mapped due to "
                     f"missing required columns.")
@@ -584,12 +600,12 @@ def process_budget_category(wb_object:WORKBOOK_OBJECT,
             # Do the mapping from src to dst.
             dst_cell = row[dst_col_index]
             src_value = row[src_col_index].value 
-            dst_value = categorize_transaction(src_value)
+            dst_value = categorize_transaction(src_value, ccm)
             dst_cell.value = dst_value 
             # row[dst_col_index].value = dst_value 
             # Set the additional values for BudMan in the row
             date_val = row[date_i].value
-            year_month : str = year_month_str(date_val) if date_val else None
+            year_month: str = year_month_str(date_val) if date_val else None
             row[year_month_i].value = year_month
             l1, l2, l3 = split_budget_category(dst_value)
             row[l1_i].value = l1 if l1_i != -1 else None
@@ -619,7 +635,7 @@ def process_budget_category(wb_object:WORKBOOK_OBJECT,
         m = p3u.exc_err_msg(e)
         logger.error(m)
         return False, m    
-#endregion map_budget_category() function
+#endregion process_budget_category() function
 # ---------------------------------------------------------------------------- +
 #region apply_check_register() function
 def apply_check_register(cr_wb_content:BDM_CHECK_REGISTER, trans_wb_ref:BDM_TRANSACTION_WORKBOOK) -> None:

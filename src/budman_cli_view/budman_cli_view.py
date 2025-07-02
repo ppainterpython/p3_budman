@@ -35,14 +35,15 @@ import p3_utils as p3u, pyjson5, p3logging as p3l
 import cmd2, argparse
 from cmd2 import (Cmd2ArgumentParser, with_argparser)
 # local modules and packages
-from budman_namespace.design_language_namespace import *
+import budman_namespace as bdm
 from budman_settings import *
 from budman_cli_view import BudManCLIParser
+from budman_data_context import BudManDataContext_Binding
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
 logger = logging.getLogger(__name__)
-console = Console(force_terminal=True,width=BUDMAN_WIDTH, highlight=True,
+console = Console(force_terminal=True,width=bdm.BUDMAN_WIDTH, highlight=True,
                   soft_wrap=False)
 
 BMCLI_SYSTEM_EXIT_WARNING = "Not exiting due to SystemExit"
@@ -100,26 +101,50 @@ def _show_args_only(cli_view : "BudManCLIView", opts) -> bool:
 
 #endregion Configure the CLI parser 
 # ---------------------------------------------------------------------------- +
-class BudManCLIView(cmd2.Cmd):
+class BudManCLIView(cmd2.Cmd, BudManDataContext_Binding):
     # ======================================================================== +
     #region BudManCLIView class intrinsics
     """An MVVM View class for BudMan implementing a command line interface.
     
     Operates under MVVM pattern, as a View concerned with all users interaction. 
-    Also, the Command Processor pattern is applied to parse user input into 
-    well-formed "command" objects to be executed downstream. This view has not
-    Command Execution methods to accomplish actual work on actual data. It 
-    handles defining commands, initializing command and argument parsing, and 
-    then submitting command objects to a Command Processor through binding.
+    This View implements a command line interface (CLI) for the Budget Manager
+    application. So, user's are typing in commands, which are parsed, validated
+    and then executed either locally in the View or downstream in the View_Model.
+
+    A Command Processor pattern is utilized to execute the commands. The View's
+    responsibility is to accept, validate and parse the cli input into
+    well-formed "command" objects to be executed downstream. 
+    
+    This view has is based on the cmd2.Cmd class, which runs a cmd loop to
+    accept user input, and parse the input into commands with valid argument
+    lists. Part of the cmd2.Cmd design is to execute the commands it parses by 
+    calling a function named do_<command_name>(). Our design utilizes this 
+    feature to initiate command execution. 
+
+    If a command is very local, and can be executed completely in the View
+    object, then the code for that command will reside in its "do_<command_name>()" 
+    method. Most often, the Command Processor pattern is used to encode the 
+    Command Object and submit it for execution to a Command Processor, which
+    is linked to the View through binding.
+
+    A Command Processor has a defined interface to accept the command objects 
+    and is responsible for executing them in the appropriate context. This 
+    View implements the ViewModelCommandProcessor_Base interface, which is a
+    contract for command processing in the application. Command Processor 
+    interface methods are prefixed with "cp_".
+
     At app-setup time (Dependency Injection), the view is bound to objects
     providing the ViewModelCommandProcessor_Base and ViewModelDataContext_Base
-    interfaces (abstract base class - ABC). Those objects provide those 
-    services. As a client of those service providers, this View implements the
-    ViewModelCommandProcessor_Binding interface, and the 
-    ViewModelDataContext_Binding interface. The _Binding implementations are
-    Concrete classes serving as the client-sdk to the concrete service objects.
-    Using cmd2 package which embeds the argparse package. Cmd2 handles the
-    command structure and argparse handles the argument lists for each command.
+    interfaces (abstract base class - ABC). There are two techniques available.
+    First, a concrete implementation of the DCorCP_Base interface can be applied
+    directly in a class. Second, a class providing such a concrete 
+    implementation could be subclassed (inherited). Or third, a class 
+    implementing a client _Binding to a concrete class can be used. This view
+    adopts the third technique, using implementations of the
+    ViewModelCommandProcessor_Binding and ViewModelDataContext_Binding 
+    interfaces. The _Binding implementations are concrete, either inline or  
+    subclassing concrete classes serving as the client-sdk to the concrete 
+    service objects.
     TODO: Use ABC for ViewModelCommandProcessor interface.
     """
     # ------------------------------------------------------------------------ +
@@ -272,6 +297,8 @@ class BudManCLIView(cmd2.Cmd):
 
     # ======================================================================== +
     #region ViewModelCommandProcessor_Binding implementation
+    # TODO: Create ViewModelCommandProcessor_Binding class so BudManCLIView
+    # can inherit it.
     # ======================================================================== +
     #                                                                          +
     # ------------------------------------------------------------------------ +

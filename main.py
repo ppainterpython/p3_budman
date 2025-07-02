@@ -5,6 +5,8 @@
 Author: Paul Painter
 Copyright (c) 2025 Paul Painter
 """
+import time
+app_start_time : float = time.time()  # Start time for the application
 #endregion main.py (at project root) DudMan main entry point.
 # ---------------------------------------------------------------------------- +
 #region Imports
@@ -20,7 +22,6 @@ from src.budman_app.budman_app import BudManApp
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
 logger = logging.getLogger(__name__)
-app_start_time : float = start_timer()
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
@@ -71,24 +72,28 @@ def configure_logging(logger_name : str, logtest : bool = True) -> None:
 """
 #endregion backlog - main todo list
 # ---------------------------------------------------------------------------- +
-def main(bdms_url : str = None):
+def main(bdms_url : str = None, start_time:float = start_timer()) -> None:
     """Main entry point for the Budget Manager application.
     Args:
         bdms_url (str): Optional, the URL to BDM_STORE to load at startup.
+        start_time (float): Optional, the start time for the application.
     """
     try:
+        msg = f"Started: {stop_timer(start_time)}"
         # Define a set of folders to search for it, auto-load.
-        BudManMain_settings : BudManSettings = BudManSettings().settings
+        BudManMain_settings : BudManSettings = BudManSettings()
         if BudManMain_settings is None:
                 raise ValueError("BudMan Settings not configured.")
         app_name = BudManMain_settings.get(APP_NAME, "BudManApp")
         configure_logging(app_name, logtest=False)
+        logger.debug(msg)
+        logger.debug(f"Settings and logger configured: {stop_timer(start_time)}")
         fs = ""  # from settings 
         if bdms_url is None:
             bdms_url = BudManMain_settings[BDM_STORE_URL]
             fs ="(from settings) "
         logger.info(f"BizEVENT: Started {app_name} User BDM_STORE {fs}bdms_url = '{bdms_url}'...")
-        app = BudManApp(BudManMain_settings)
+        app = BudManApp(BudManMain_settings,start_time)
         logger.debug(f"{dscr(app)} created. ...")
         app.run(bdms_url)  # Start the application
         logger.debug(f"Complete:")
@@ -98,7 +103,7 @@ def main(bdms_url : str = None):
 
 if __name__ == "__main__":
     bdms_url = None #"file:///C:/Users/ppain/OneDrive/budget/p3_budget_manager_ca063e8b.jsonc"
-    main(bdms_url)
+    main(bdms_url,start_time=app_start_time)
     logger.info(f"BizEVENT: {Path(__file__).name} completed successfully "
                 f"in {stop_timer(app_start_time)} seconds.")
     exit(0)

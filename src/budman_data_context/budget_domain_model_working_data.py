@@ -25,6 +25,7 @@ from p3_mvvm import Model_Base, Model_Binding
 from budget_storage_model import (bsm_WORKBOOK_content_url_get, 
                                   bsm_WB_URL_verify,
                                     bsm_WORKBOOK_content_url_put)
+from budman_workflows.txn_category import BDMTXNCategoryManager
 
 #endregion imports
 # ---------------------------------------------------------------------------- +
@@ -63,6 +64,7 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
         super().__init__(*args, dc_id=dc_id)
         self._model : MODEL_OBJECT = model
         self._dc_id = self.__class__.__name__ if not self._dc_id else None
+        self._WF_CATEGORY_MANAGER : Optional[object] = None
     #endregion __init__() method init during BDMWorkingData constructor.
     # ------------------------------------------------------------------------ +
     #endregion    BDMWorkingData class intrinsics
@@ -106,6 +108,21 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
                             f"not a type: '{type(value).__name__}'")
         self._dc_WORKBOOK = value
 
+    @property
+    def WF_CATEGORY_MANAGER(self) -> Optional[object]:
+        """Return the current category manager in the DC.
+
+        This is a property to register and share a reference to
+        the WORKFLOW CATEGORY MANAGER service, which is needed
+        by some workflow command processor implementations. It does not 
+        impact the DC state but will reference values in the DC.
+        """
+        return self._WF_CATEGORY_MANAGER
+    @WF_CATEGORY_MANAGER.setter
+    def WF_CATEGORY_MANAGER(self, value: Optional[object]) -> None:
+        """Set the current category manager in the DC."""
+        self._WF_CATEGORY_MANAGER = value
+
     #endregion BudManDataContext(BudManDataContext_Base) Property Overrides.
     # ------------------------------------------------------------------------ +
     #region    BudManDataContext(BudManDataContext_Base) Method Model-Aware Overrides.
@@ -148,6 +165,10 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
                         wbc = self.model.bdm_FI_WORKBOOK_DATA_COLLECTION(self.dc_FI_KEY)
                         self.dc_WORKBOOK_DATA_COLLECTION = wbc
                         self.dc_FI_OBJECT = fi_object
+                        if self.WF_CATEGORY_MANAGER is not None:
+                            # Load the WB_TYPE_TXN_CATEGORIES for the FI.
+                            wfm : BDMTXNCategoryManager = self.WF_CATEGORY_MANAGER
+                            wfm.WB_TYPE_TXN_CATEGORIES_url_get(self.dc_FI_KEY)
             except Exception as e:
                 m = f"{p3u.exc_err_msg(e)}"
                 logger.error(m)
@@ -157,6 +178,25 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
             logger.error(p3u.exc_err_msg(e))
             raise
 
+    def dc_WB_INDEX_validate(self, wb_index:int) -> bool:
+        """Model-Aware: Validate the workbook index.
+        
+        Args:
+            wb_index (int): The workbook index to validate.
+        Returns:
+            bool: True if the index is valid, False otherwise.
+        """
+        try:
+            if not super().dc_WB_INDEX_validate(wb_index): return False
+            # Also check the bdm_wb.wb_loaded property value.
+            bdm_wb : BDMWorkbook = list(self.dc_WORKBOOK_DATA_COLLECTION.values())[wb_index]
+            bdm_wb.wb_loaded = bdm_wb.wb_id in self.dc_LOADED_WORKBOOKS
+            return True
+        except Exception as e:
+            m = f"Error validating wb_index: {p3u.exc_err_msg(e)}"
+            logger.error(m)
+            return False, m
+        
     def dc_WORKBOOK_validate(self, wb : WORKBOOK_OBJECT) -> bool:
         """Model-Aware: Validate the type of WORKBOOK_OBJECT.
         Abstract: sub-class hook to test specialized WORKBOOK_OBJECT types.

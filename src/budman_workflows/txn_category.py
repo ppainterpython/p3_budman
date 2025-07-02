@@ -71,24 +71,55 @@ class BDMTXNCategory:
 # ---------------------------------------------------------------------------- +
 #region BDMTXNCategoryManager class intrinsics
 class BDMTXNCategoryManager:
-    """BDMTXNCategoryManager a class to manage transaction categories.
+    #region BDMTXNCategoryManager class doc string
+    """BDMTXNCategoryManager: manage transaction categories definition and use.
     
     Manages a catalog of transaction category sets, based on different financial
-    institution requirements.
+    institution requirements. 
 
     Attributes:
-        settings (bdms.BudManSettings): The settings for the BDMTXNCategoryManager
+        settings (bdms.BudManSettings): App settings.
+        config (Dict[str, Any]): The config part user session settings.
         catalog (Dict[str, Dict[str, BDMTXNCategory]]): The catalog of 
             transaction categories, the FI_KEY is the key.
+        ccm (Dict[str, Dict[re.Pattern, str]]): Compiled category maps for FIs.
+
+    In storage, each financial institution designated by an fi_key, has 
+    workbooks with the definitions of budget category rules and other metadata. 
+    The 'catalog' attribute is a dictionary holding 
+    WB_TYPE_TXN_CATEGORIES wb_content for an FI with the following structure:
+    
+        # example with 'citibank' as fi_key:
+
+        catalog = {
+        "boa": {
+            "name": "All_TXN_Categories.txn_categories.json",
+            "categories": {
+                "cat_id1": BDMTXNCategory.to_dict(),
+                "cat_id2": BDMTXNCategory.to_dict(),
+                },
+        "citibank": {
+            "name": "All_TXN_Categories.txn_categories.json",
+            "categories": {
+                "cat_id1": BDMTXNCategory.to_dict(),
+                "cat_id2": BDMTXNCategory.to_dict(),
+                }
+        }
+
+    
     """
+    #endregion BDMTXNCategoryManager class doc string
+    # ------------------------------------------------------------------------ +
+    #region BDMTXNCategoryManager class __init__()
     def __init__(self, settings:bdms.BudManSettings):
         """Initialize the BDMTXNCategoryManager with settings."""
         self._settings: bdms.BudManSettings = settings
-        self._config: Dict[str, Any] = settings.config
+        # self._config: Dict[str, Any] = settings.config
         self._catalog: Dict[str, Dict[str, BDMTXNCategory]] = {}
         """Catalog of transaction categories, keyed by financial institution."""
-        self._ccm: Dict[str, Dict[re.Pattern, str]] = {}
+        self._ccp: Dict[str, Dict[re.Pattern, str]] = {}
         """Compiled category maps for FI's."""
+    #endregion BDMTXNCategoryManager class __init__()
     # ------------------------------------------------------------------------ +
     #region class properties
     @property
@@ -99,15 +130,6 @@ class BDMTXNCategoryManager:
     def settings(self, value: bdms.BudManSettings):
         """Set the settings for the BDMTXNCategoryManager."""
         self._settings = value
-
-    @property
-    def config(self) -> Dict[str, Any]:
-        """Get the configuration for the BDMTXNCategoryManager."""
-        return self._config
-    @config.setter
-    def config(self, value: Dict[str, Any]):
-        """Set the configuration for the BDMTXNCategoryManager."""
-        self._config = value
 
     @property
     def catalog(self) -> Dict[str, Dict[str, BDMTXNCategory]]:
@@ -121,29 +143,24 @@ class BDMTXNCategoryManager:
     @property
     def ccm(self) -> Dict[str, Dict[re.Pattern, str]]:
         """Get the compiled category maps for financial institutions."""
-        return self._ccm
+        return self._ccp
     @ccm.setter
     def ccm(self, value: Dict[str, Dict[re.Pattern, str]]):
         """Set the compiled category maps for financial institutions."""
-        self._ccm = value
+        self._ccp = value
     #endregion class properties
     # ------------------------------------------------------------------------ +
-    #endregion BDMTXNCategoryManager class intrinsics
-    # ------------------------------------------------------------------------ +
+#endregion BDMTXNCategoryManager class intrinsics
+# ---------------------------------------------------------------------------- +
 
     # ------------------------------------------------------------------------ +
     #region BDMTXNCategoryManager methods
     # ------------------------------------------------------------------------ +
-    def load_catalog(self, fi_key: str) -> None:
+    def WB_TYPE_TXN_CATEGORIES_url_get(self, fi_key: str) -> None:
         """Load the transaction category catalog for a given financial institution.
 
         Load the content from the WB_TYPE_TXN_CATEGORIES workbook for the given
         financial institution (FI), computing its url from settings.
-        A WB_TYPE_TXN_CATEGORIES workbook is structured as:
-        {
-             "name": "e.g., all_categories",
-             "categories": {BDMTXNCategory.to_dict() for each category}
-        }
         Also compiles the category map for the financial institution.
 
         Args:
@@ -151,14 +168,9 @@ class BDMTXNCategoryManager:
         """
         try:
             # Load the catalog for an FI
-            filename : str = self.config[bdms.CATEGORY_CATALOG][fi_key]
-            fi_folder : Path = self.settings.FI_FOLDER_abs_path(fi_key) 
-            cat_path = fi_folder / filename
-            cat_url = cat_path.as_uri()
-            if not cat_path.exists():
-                raise FileNotFoundError(f"Transaction Categories file not "
-                                        f"found: {cat_path}")
-            txn_cat_content: Dict = bsm_WORKBOOK_content_url_get(cat_url)
+            cat_url = self.WB_TYPE_TXN_CATEGORIES_url(fi_key)
+            txn_cat_content: Dict = bsm_WORKBOOK_content_url_get(
+                cat_url, bdl.WB_TYPE_TXN_CATEGORIES)
             if (not isinstance(txn_cat_content, dict) or 
                 'categories' not in txn_cat_content or
                  not isinstance(txn_cat_content['categories'], dict) or 
@@ -169,15 +181,15 @@ class BDMTXNCategoryManager:
                 cat_id: BDMTXNCategory(**data) 
                     for cat_id, data in cat_dict.items()
             }
-            ccm = self.get_compiled_category_map(cat_data)
-            self.catalog[fi_key] = cat_data
+            ccm = self.WB_TYPE_TXN_CATEGORIES_compile(cat_data)
+            self.catalog[fi_key] = txn_cat_content
             self.ccm[fi_key] = ccm
-            logger.info(f"Loaded {len(self._catalog[fi_key])} categories for {fi_key}.")
+            logger.info(f"Loaded {len(self.catalog[fi_key])} categories for {fi_key}.")
         except Exception as e:
             logger.error(f"Error loading catalog fi_key: '{fi_key}' {e}")
             raise
 
-    def get_compiled_category_map(self, cat_data: Dict[str, BDMTXNCategory]) -> Dict[str, Dict[re.Pattern, str]]:
+    def WB_TYPE_TXN_CATEGORIES_compile(self, cat_data: Dict[str, BDMTXNCategory]) -> Dict[str, Dict[re.Pattern, str]]:
         """Get the compiled category map from the category data.
         
         Args:
@@ -188,7 +200,28 @@ class BDMTXNCategoryManager:
         """
         ccm = {}
         for cat_id, bdm_tc in cat_data.items():
-            pattern = re.compile(bdm_tc.pattern)
-            ccm[pattern] = bdm_tc.full_cat
+            compiled_pattern = re.compile(bdm_tc.pattern)
+            ccm[compiled_pattern] = bdm_tc.full_cat
         return ccm
+    
+    def WB_TYPE_TXN_CATEGORIES_url(self, fi_key: str) -> str:
+        """Get the URL for the transaction categories workbook for a given FI.
+
+        Args:
+            fi_key (str): The key for the financial institution.
+        
+        Returns:
+            str: The URL for the transaction categories workbook.
+        """
+        try:
+            filename = self.settings[bdms.CATEGORY_CATALOG][fi_key]
+            fi_folder = self.settings.FI_FOLDER_abs_path(fi_key)
+            cat_path = fi_folder / filename
+            if not cat_path.exists():
+                raise FileNotFoundError(f"Transaction Categories file not "
+                                        f"found: {cat_path}")
+            return cat_path.as_uri()
+        except KeyError as e:
+            logger.error(f"Transaction categories file not found for FI key: {fi_key}")
+            raise e
     #region BDMTXNCategoryManager methods

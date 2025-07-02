@@ -319,6 +319,22 @@ class BudManDataContext_Binding(BudManDataContext_Base):
     def dc_LOADED_CHECK_REGISTERS(self, value: DATA_COLLECTION) -> None:
         """DC_Binding: Set the check register data collection."""
         self.DC.dc_CHECK_REGISTERS = value
+
+    @property
+    def WF_CATEGORY_MANAGER(self) -> Optional[object]:
+        """Return the current category manager in the DC.
+
+        This is a property to register and share a reference to
+        the WORKFLOW CATEGORY MANAGER service, which is needed
+        by some workflow command processor implementations. It does not 
+        impact the DC state but will reference values in the DC.
+        """
+        return self.DC.WF_CATEGORY_MANAGER
+    @WF_CATEGORY_MANAGER.setter
+    def WF_CATEGORY_MANAGER(self, value: Optional[object]) -> None:
+        """Set the current category manager in the DC."""
+        self.DC.WF_CATEGORY_MANAGER = value
+
     #endregion BudManDataContext_Base Properties (concrete)
     # ------------------------------------------------------------------------ +
     #region BudManDataContext_Base Methods (concrete)
