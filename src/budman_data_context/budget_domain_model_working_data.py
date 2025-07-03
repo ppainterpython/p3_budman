@@ -323,7 +323,7 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
                         f"from url '{wb.wb_url}'.")
             return True, wb_content
         except Exception as e:
-            m = f"Error loading wb_index '{wb_index}': {p3u.exc_err_msg(e)}"
+            m = f"Error loading wb_id '{wb.wb_id}': {p3u.exc_err_msg(e)}"
             logger.error(m)
             return False, m
         

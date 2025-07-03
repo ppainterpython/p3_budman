@@ -756,20 +756,17 @@ class BudManDataContext(BudManDataContext_Base):
         return None
     #endregion WORKBOOK_CONTENT storage-related methods
 
-    def dc_WORKBOOK_remove(self, wb_name: str) -> None:
-        """DC-Only: Remove the specified workbook by name."""
-        wb_path = Path(wb_name)
-        if not wb_path.exists():
-            logger.error(f"Workbook '{wb_name}' does not exist.")
-            return None
+    def dc_WORKBOOK_remove(self, wb_index: str) -> WORKBOOK_OBJECT:
+        """DC-Only: Remove the specified workbook by index."""
         try:
-            wb_path.unlink()  # Remove the file
-            # Remove from loaded workbooks if it exists
-            self.dc_LOADED_WORKBOOKS = [
-                (name, wb) for name, wb in self.dc_LOADED_WORKBOOKS if name != wb_name
-            ]
+            bdm_wb = self.dc_WORKBOOK_by_index(wb_index)
+            if bdm_wb is None:
+                logger.error(f"Workbook with index '{wb_index}' not found.")
+                return None
+            del self.dc_WORKBOOK_DATA_COLLECTION[bdm_wb.wb_id]
+            return bdm_wb
         except Exception as e:
-            logger.error(f"Failed to remove workbook '{wb_name}': {e}")
+            logger.error(f"Failed to remove workbook '{wb_index}': {e}")
             raise
         return None
 

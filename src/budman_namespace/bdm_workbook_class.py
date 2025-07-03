@@ -97,8 +97,16 @@ class BDMWorkbook:
         #{P2}{FI_WORKBOOK_DATA_COLLECTION}: {wdc_count}\n"
         #{P4}{WB_INDEX:8}{P2}{WB_ID:50}{P2}wb_loaded{P2}{WB_CONTENT:30}{P2}{WB_TYPE:15}{P2}{WB_TYPE:15}{P2}{WF_KEY:15}{P2}{WF_PURPOSE:10}{P2}\n
         #
+        check = self.check_url()
+        wb_status: str = "found"
+        if not check:
+            wb_status = "not found"
+        elif self.wb_loaded:
+            wb_status = "loaded"
+        else:
+            wb_status = "unloaded"
         s = f"{P6}{str(wb_index):>2}{P6}{str(self.wb_id):50}{P2}"
-        s += f"{str(self.wb_type):14}{P2}{str(self.wb_loaded):^9}"
+        s += f"{str(self.wb_type):14}{P2}{str(wb_status):^9}"
         s += f"{P2}{wb_content:30}{P2}"
         return s
     #endregion display_str
@@ -110,6 +118,21 @@ class BDMWorkbook:
         s += f"{str(self.wb_type):15}{P2}"
         return s
     #endregion display_brief_str
+    # ------------------------------------------------------------------------ +
+    #region check_url()
+    def check_url(self) -> bool:
+        """ Check if the workbook URL is valid. """
+        try:
+            if not self.wb_url:
+                return False
+            wb_path = Path().from_uri(self.wb_url)
+            if not wb_path.exists():
+                return False
+            return True
+        except Exception as e:
+            logger.error(f"Error checking URL '{self.wb_url}': {p3u.exc_err_msg(e)}")
+            return False
+    #endregion check_url
     # ------------------------------------------------------------------------ +
     #endregion BDMWorkbook instance methods
     # ------------------------------------------------------------------------ +
