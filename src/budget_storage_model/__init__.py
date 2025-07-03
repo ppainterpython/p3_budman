@@ -28,7 +28,7 @@ from .budget_storage_model import (
 from .csv_data_collection import (
     csv_DATA_COLLECTION_url_get,
     csv_DATA_COLLECTION_url_put,
-    csv_DATA_COLLECTION_file_load,
+    csv_DATA_LIST_file_load,
     csv_DATA_COLLECTION_file_save,
 )
 
@@ -52,6 +52,6 @@ __all__ = [
     "bsm_WORKBOOK_content_file_save",
     "csv_DATA_COLLECTION_url_get",
     "csv_DATA_COLLECTION_url_put",
-    "csv_DATA_COLLECTION_file_load",
+    "csv_DATA_LIST_file_load",
     "csv_DATA_COLLECTION_file_save",
 ]

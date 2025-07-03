@@ -257,7 +257,7 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
             logger.error(m)
             return False, m
 
-    def dc_WORKBOOK_content_put(self,wb_content:WORKBOOK_CONTENT, wb : BDMWorkbook) -> BUDMAN_RESULT:
+    def dc_WORKBOOK_content_put(self,wb_content:WORKBOOK_CONTENT, bdm_wb : BDMWorkbook) -> BUDMAN_RESULT:
         """Model-Aware: Put the workbook content into dc_LOADED_WORKBOOKS,
         replacing previous content if present. Then, save the content. 
 
@@ -272,36 +272,36 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
             # Model-Aware World
             success : bool = False
             result : BDMWorkbook | str = None
-            if not self.dc_WORKBOOK_validate(wb):
-                m = f"Invalid workbook object: {wb!r}"
+            if not self.dc_WORKBOOK_validate(bdm_wb):
+                m = f"Invalid workbook object: {bdm_wb!r}"
                 logger.error(m)
                 return False, m
             # Check if the workbook is loaded in dc_LOADED_WORKBOOKS.
             if wb_content is None:
-                m = f"Workbook content for '{wb.wb_id}' is None."
+                m = f"Workbook content for '{bdm_wb.wb_id}' is None."
                 logger.error(m)
                 return False, m
-            success, result = self.dc_WORKBOOK_save(wb_content, wb)
-            wb.wb_loaded = wb.wb_id in self.dc_LOADED_WORKBOOKS
-            if wb.wb_loaded :
+            success, result = self.dc_WORKBOOK_save(wb_content, bdm_wb)
+            bdm_wb.wb_loaded = bdm_wb.wb_id in self.dc_LOADED_WORKBOOKS
+            if bdm_wb.wb_loaded :
                 # Retrieve the workbook content from dc_LOADED_WORKBOOKS.
-                wb_content = self.dc_LOADED_WORKBOOKS[wb.wb_id]
+                wb_content = self.dc_LOADED_WORKBOOKS[bdm_wb.wb_id]
                 if wb_content is None:
-                    m = f"Workbook content for '{wb.wb_id}' is not loaded."
+                    m = f"Workbook content for '{bdm_wb.wb_id}' is not loaded."
                     logger.error(m)
                     return False, m
                 return True, result
             else:
-                m = f"Workbook '{wb.wb_id}' is not loaded after saving."
+                m = f"Workbook '{bdm_wb.wb_id}' is not loaded after saving."
                 logger.error(m)
                 return False, m
         except Exception as e:
-            m = f"Error loading workbook '{wb.wb_id}': {p3u.exc_err_msg(e)}"
+            m = f"Error loading workbook '{bdm_wb.wb_id}': {p3u.exc_err_msg(e)}"
             logger.error(m)
             return False, m
 
     def dc_WORKBOOK_load(self, wb : BDMWorkbook) -> BUDMAN_RESULT:
-        """Model-aware: Load the workbook indicated by wb."""
+        """Model-aware: Load the workbook bdm_wb with BSM service."""
         try:
             # Model-Aware World
             success : bool = False
