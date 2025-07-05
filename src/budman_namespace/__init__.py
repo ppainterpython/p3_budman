@@ -61,7 +61,6 @@ __all__ = [
     "WF_PURPOSE", 
     "WB_TYPE",
     "WB_NAME",
-    "WB_REF",
     "WB_INFO",
     "WB_URL",
     "WB_ID",

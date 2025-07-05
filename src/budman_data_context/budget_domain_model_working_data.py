@@ -22,9 +22,9 @@ from budman_namespace.design_language_namespace import *
 from budman_namespace.bdm_workbook_class import BDMWorkbook
 from budman_data_context import BudManDataContext
 from p3_mvvm import Model_Base, Model_Binding
-from budget_storage_model import (bsm_WORKBOOK_content_url_get, 
+from budget_storage_model import (bsm_WORKBOOK_content_get, 
                                   bsm_WB_URL_verify,
-                                    bsm_WORKBOOK_content_url_put)
+                                    bsm_WORKBOOK_content_put)
 from budman_workflows.txn_category import BDMTXNCategoryManager
 
 #endregion imports
@@ -197,23 +197,27 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
             logger.error(m)
             return False, m
         
-    def dc_WORKBOOK_validate(self, wb : WORKBOOK_OBJECT) -> bool:
+    def dc_WORKBOOK_validate(self, bdm_wb : WORKBOOK_OBJECT) -> bool:
         """Model-Aware: Validate the type of WORKBOOK_OBJECT.
         Abstract: sub-class hook to test specialized WORKBOOK_OBJECT types.
         DC-ONLY: check builtin type: 'object'.
         Model-Aware: validate type: BDMWorkbook class.
         """
         try:
-            if not isinstance(wb, BDMWorkbook):
-                m = (f"wb must be type: 'BDMWorkbook', "
-                     f"not type: {type(wb).__name__}.")
+            if not isinstance(bdm_wb, BDMWorkbook):
+                m = (f"bdm_wb must be type: 'BDMWorkbook', "
+                     f"not type: {type(bdm_wb).__name__}.")
+                logger.error(m)
+                return False
+            if not self.dc_WB_ID_validate(bdm_wb.wb_id):
+                m = f"Invalid workbook ID: {bdm_wb.wb_id}"
                 logger.error(m)
                 return False
             return True
         except Exception as e:
             m = f"Error validating workbook: {p3u.exc_err_msg(e)}"
             logger.error(m)
-            return False, m
+            return False
         
     def dc_WORKBOOK_content_get(self, wb : BDMWorkbook, load:bool = True) -> BUDMAN_RESULT:
         """Model-Aware: Get the workbook content from dc_LOADED_WORKBOOKS 
@@ -251,7 +255,7 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
                 wb.wb_loaded = True
                 return True, wb_content
             # load is True, so we need to load the workbook content.
-            return self.dc_WORKBOOK_load(wb)
+            return self.dc_WORKBOOK_content_load(wb)
         except Exception as e:
             m = f"Error loading workbook '{wb.wb_id}': {p3u.exc_err_msg(e)}"
             logger.error(m)
@@ -281,7 +285,7 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
                 m = f"Workbook content for '{bdm_wb.wb_id}' is None."
                 logger.error(m)
                 return False, m
-            success, result = self.dc_WORKBOOK_save(wb_content, bdm_wb)
+            success, result = self.dc_WORKBOOK_content_save(wb_content, bdm_wb)
             bdm_wb.wb_loaded = bdm_wb.wb_id in self.dc_LOADED_WORKBOOKS
             if bdm_wb.wb_loaded :
                 # Retrieve the workbook content from dc_LOADED_WORKBOOKS.
@@ -300,39 +304,36 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
             logger.error(m)
             return False, m
 
-    def dc_WORKBOOK_load(self, wb : BDMWorkbook) -> BUDMAN_RESULT:
+    def dc_WORKBOOK_content_load(self, bdm_wb : BDMWorkbook) -> BUDMAN_RESULT:
         """Model-aware: Load the workbook bdm_wb with BSM service."""
         try:
             # Model-Aware World
             success : bool = False
             result : BDMWorkbook | str = None
-            if not self.dc_WORKBOOK_validate(wb):
-                m = f"Invalid workbook object: {wb!r}"
+            if not self.dc_WORKBOOK_validate(bdm_wb):
+                m = f"Invalid workbook object: {bdm_wb!r}"
                 logger.error(m)
                 return False, m
             # Model-aware: Get the workbook content object with the BSM.
-            wb_content = bsm_WORKBOOK_content_url_get(wb.wb_url)
-            # Add to the loaded workbooks collection.
-            self.dc_LOADED_WORKBOOKS[wb.wb_id] = wb_content
-            wb_index = self.dc_WORKBOOK_index(wb.wb_id)
-            self.dc_WB_INDEX = wb_index  # Set the wb_ref in the DC.
-            self.dc_WB_NAME = wb.wb_name  # Set the wb_name in the DC.
-            self.dc_WB_REF = wb.wb_id
-            wb.wb_loaded = True
-            logger.info(f"Loaded workbook '{wb.wb_id}' "
-                        f"from url '{wb.wb_url}'.")
+            wb_content = bsm_WORKBOOK_content_get(bdm_wb)
+            # Add/update to the loaded workbooks collection.
+            bdm_wb.wb_loaded = True
+            self.dc_LOADED_WORKBOOKS[bdm_wb.wb_id] = wb_content
+            self.dc_WORKBOOK = bdm_wb  # Update workbook-related DC info.
+            logger.info(f"Loaded workbook '{bdm_wb.wb_id}' "
+                        f"from url '{bdm_wb.wb_url}'.")
             return True, wb_content
         except Exception as e:
-            m = f"Error loading wb_id '{wb.wb_id}': {p3u.exc_err_msg(e)}"
+            m = f"Error loading wb_id '{bdm_wb.wb_id}': {p3u.exc_err_msg(e)}"
             logger.error(m)
             return False, m
         
-    def dc_WORKBOOK_save(self, wb_content: WORKBOOK_CONTENT, wb : BDMWorkbook) -> BUDMAN_RESULT:
-        """Model-Aware: Save the workbook content to the BDM_STORE.
+    def dc_WORKBOOK_content_save(self, wb_content: WORKBOOK_CONTENT, bdm_wb : BDMWorkbook) -> BUDMAN_RESULT:
+        """Model-Aware: Save the workbook content to storage.
 
         Args:
             wb_content (WORKBOOK_CONTENT): The content to save.
-            wb (BDMWorkbook): The workbook object to save content for.
+            bdm_wb (BDMWorkbook): The workbook object to save content for.
         Returns:
             BUDMAN_RESULT: Tuple[success:bool, result: Optional[msg:str]]
         """
@@ -340,18 +341,18 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
             # Model-Aware World
             success : bool = False
             result : BDMWorkbook | str = None
-            if not self.dc_WORKBOOK_validate(wb):
-                m = f"Invalid workbook object: {wb!r}"
+            if not self.dc_WORKBOOK_validate(bdm_wb):
+                m = f"Invalid workbook object: {bdm_wb!r}"
                 logger.error(m)
                 return False, m
             # Save the workbook content using the BSM.
-            bsm_WORKBOOK_content_url_put(wb_content, wb.wb_url)
+            bsm_WORKBOOK_content_put(wb_content, bdm_wb)
             # Update the dc_LOADED_WORKBOOKS with the saved content.
-            self.dc_LOADED_WORKBOOKS[wb.wb_id] = wb_content
-            wb.wb_loaded = True
-            return True, f"Workbook '{wb.wb_id}' saved successfully."
+            self.dc_LOADED_WORKBOOKS[bdm_wb.wb_id] = wb_content
+            bdm_wb.wb_loaded = True
+            return True, f"Workbook '{bdm_wb.wb_id}' saved successfully."
         except Exception as e:
-            m = f"Error saving workbook '{wb.wb_id}': {p3u.exc_err_msg(e)}"
+            m = f"Error saving workbook '{bdm_wb.wb_id}': {p3u.exc_err_msg(e)}"
             logger.error(m)
             return False, m
     #endregion BudManDataContext Method Overrides.

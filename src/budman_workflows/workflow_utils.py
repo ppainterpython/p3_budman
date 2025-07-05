@@ -32,7 +32,7 @@ from treelib import Tree
 
 # local modules and packages
 from budman_namespace import *
-from budget_storage_model import bsm_WORKBOOK_content_url_put
+from budget_storage_model import bsm_WORKBOOK_content_put
 from .txn_category import BDMTXNCategory, BDMTXNCategoryManager
 from .budget_category_mapping import (
     compiled_category_map, get_category_map, 
@@ -308,7 +308,7 @@ def txn_category_url_save(cat_url: str) -> None:
             )
             cat_data["categories"][cat_id] = bdm_tc
             # print(f"category: '{cat_id}': '{repr(bdm_tc )}'")
-        bsm_WORKBOOK_content_url_put(cat_data, cat_url)
+        bsm_WORKBOOK_content_put(cat_data, cat_url)
         logger.info(f"Saved transaction categories to: {cat_url}")
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))

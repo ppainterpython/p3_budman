@@ -73,10 +73,9 @@ WF_KEY = "wf_key"
 WF_PURPOSE = "wf_purpose" 
 WB_TYPE = "wb_type"
 WB_NAME = "wb_name"
-WB_REF = "wb_ref"
+WB_ID = "wb_id"
 WB_INFO = "wb_info"
 WB_URL = "wb_url" 
-WB_ID = "wb_id"  
 WB_INDEX = "wb_index" 
 WB_CONTENT = "wb_content" 
 # ---------------------------------------------------------------------------- +
@@ -213,19 +212,19 @@ VALID_WORKFLOW_DATA_COLLECTION_ATTR_KEYS = (WF_INPUT, WF_WORKING, WF_OUTPUT)
 # NEW Workbook Type Constants. These define the types of workbooks that
 # might be stored in a storage system, such as a file system or a database.
 # These symbols navigate the transition from the BDM to the BSM.
-WB_TYPE_BDM_STORE = "bdm_store"
-WB_TYPE_BDM_CONFIG = "bdm_config"
-WB_TYPE_TXN_REGISTER = "txn_register"
-WB_TYPE_EXCEL_TXNS = "excel_txns"
-WB_TYPE_CSV_TXNS = "csv_txns"
-WB_TYPE_TXN_CATEGORIES = "txn_categories"
-WB_TYPE_BUDGET = "budget"
-WB_TYPE_UNKNOWN = "unknown_type"
+WB_TYPE_BDM_STORE = ".bdm_store"
+WB_TYPE_BDM_CONFIG = ".bdm_config"
+WB_TYPE_TXN_REGISTER = ".txn_register"
+WB_TYPE_EXCEL_TXNS = ".excel_txns"
+WB_TYPE_CSV_TXNS = ".csv_txns"
+WB_TYPE_TXN_CATEGORIES = ".txn_categories"
+WB_TYPE_BUDGET = ".budget"
+WB_TYPE_UNKNOWN = ".unknown_type"
 VALID_WB_TYPE_VALUES = (
     WB_TYPE_BDM_STORE, WB_TYPE_BDM_CONFIG,
     WB_TYPE_TXN_REGISTER, WB_TYPE_EXCEL_TXNS,
     WB_TYPE_CSV_TXNS, WB_TYPE_BUDGET, WB_TYPE_TXN_CATEGORIES,
-    WB_TYPE_UNKNOWN
+    # WB_TYPE_UNKNOWN
     )
 WB_URL = "wb_url"  
 # Workbook Filetype Constants

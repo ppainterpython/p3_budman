@@ -128,6 +128,22 @@ class BudManDataContext_Base(ABC):
 
     @property
     @abstractmethod
+    def dc_WB_ID(self) -> str:
+        """Return the current WB_REF workbook reference.
+        
+        Current means the wb_ref for the last operation on a named or referenced
+        workbook. The other data in the DC is updated in a similar fashion.
+        After an operation on 'all' workbooks, the dc_WB_REF is set to 'all'.
+        """
+        pass
+    @dc_WB_ID.setter
+    @abstractmethod
+    def dc_WB_ID(self, value: str) -> None:
+        """Set the WB_REF workbook reference."""
+        pass
+
+    @property
+    @abstractmethod
     def dc_WB_TYPE(self) -> str:
         """Return the current WB_TYPE (workbook type).
         Current means that the other data in the DC is for this workbook type. 
@@ -184,22 +200,6 @@ class BudManDataContext_Base(ABC):
     @abstractmethod
     def dc_ALL_WBS(self, value: bool) -> None:
         """Set the WB_NAME workbook name."""
-        pass
-
-    @property
-    @abstractmethod
-    def dc_WB_REF(self) -> str:
-        """Return the current WB_REF workbook reference.
-        
-        Current means the wb_ref for the last operation on a named or referenced
-        workbook. The other data in the DC is updated in a similar fashion.
-        After an operation on 'all' workbooks, the dc_WB_REF is set to 'all'.
-        """
-        pass
-    @dc_WB_REF.setter
-    @abstractmethod
-    def dc_WB_REF(self, value: str) -> None:
-        """Set the WB_REF workbook reference."""
         pass
 
     @property
@@ -432,7 +432,7 @@ class BudManDataContext_Base(ABC):
         pass
 
     @abstractmethod
-    def dc_WORKBOOK_load(self, wb: WORKBOOK_OBJECT) -> BUDMAN_RESULT:
+    def dc_WORKBOOK_content_load(self, wb: WORKBOOK_OBJECT) -> BUDMAN_RESULT:
         """Abstract: Load workbook's content for storage, add to dc_LOADED_WORKBOOKS.
            Returns:
                 BUDMAN_RESULT: a Tuple[success: bool, result: Any].
@@ -444,7 +444,7 @@ class BudManDataContext_Base(ABC):
         pass
 
     @abstractmethod
-    def dc_WORKBOOK_save(self,wb_content:WORKBOOK_CONTENT, wb: WORKBOOK_OBJECT) -> BUDMAN_RESULT:
+    def dc_WORKBOOK_content_save(self,wb_content:WORKBOOK_CONTENT, wb: WORKBOOK_OBJECT) -> BUDMAN_RESULT:
         """Abstract: Save the specified workbook's content to storage."""
         pass
     #endregion WORKBOOK_CONTENT storage-related methods

@@ -511,7 +511,7 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
             raise
     #endregion BDM bdm_initialize(self, bsm_init, ...) 
     # ------------------------------------------------------------------------ +
-        #region    BDM FI_OBJECT methods
+    #region    BDM FI_OBJECT methods
     def bdm_FI_OBJECT(self, fi_key:str) -> FI_OBJECT:
         """Return the FI_OBJECT for fi_key."""
         self.bdm_FI_KEY_validate(fi_key)
@@ -627,8 +627,6 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
             logger.error(m)
             raise ValueError(m)
         return len(wf_wbl)
-    # TODO: add bsm_WB_REF_validate() method to validate the
-    #       WORKBOOK_DATA_LIST wb_ref values, e.g., Path objects, str, etc.
     #endregion BDM FI_WF_OBJECT WORKFLOW_DATA_COLLECTION methods
     # ------------------------------------------------------------------------ +
     #region    BDM WF_OBJECT Dict attribute getter methods

@@ -9,13 +9,14 @@
 # python standard library modules and packages
 from dataclasses import dataclass, asdict, field
 import logging
+from urllib.parse import urlparse, unquote
 from pathlib import Path
 from typing import Any, Optional, Union, List
 # third-party modules and packages
 import p3_utils as p3u, pyjson5, p3logging as p3l
 from openpyxl import Workbook, load_workbook
 # local modules and packages
-
+import budman_namespace.design_language_namespace as bdm
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -118,6 +119,22 @@ class BDMWorkbook:
         s += f"{str(self.wb_type):15}{P2}"
         return s
     #endregion display_brief_str
+    # ------------------------------------------------------------------------ +
+    #region abs_path()
+    def abs_path(self) -> Optional[Path]:
+        """ Return abs_path of wb_url. """
+        try:
+            if not self.wb_url:
+                return None
+            parsed_url = urlparse(self.wb_url)
+            if parsed_url.scheme != "file":
+                raise ValueError(f"URL scheme is not 'file': {parsed_url.scheme}")
+            file_path = Path.from_uri(self.wb_url)
+            return file_path
+        except Exception as e:
+            logger.error(f"Error checking URL '{self.wb_url}': {p3u.exc_err_msg(e)}")
+            return False
+    #endregion check_url
     # ------------------------------------------------------------------------ +
     #region check_url()
     def check_url(self) -> bool:

@@ -178,6 +178,15 @@ class BudManDataContext_Binding(BudManDataContext_Base):
         self.DC.dc_WF_PURPOSE = value
 
     @property
+    def dc_WB_ID(self) -> str:
+        """DC_Binding: Return the current WB_REF workbook reference value."""
+        return self.DC.dc_WB_ID
+    @dc_WB_ID.setter
+    def dc_WB_ID(self, value: str) -> None:
+        """DC_Binding: Set the WB_REF workbook reference value."""
+        self.DC.dc_WB_ID = value
+
+    @property
     def dc_WB_TYPE(self) -> str:
         """DC_Binding: Return the current WB_TYPE (workbook type).
         Current means that the other data in the DC is for this workbook type. 
@@ -207,15 +216,6 @@ class BudManDataContext_Binding(BudManDataContext_Base):
     def dc_WB_INDEX(self, value: int) -> None:
         """DC_Binding: Set the WB_NAME workbook name."""
         self.DC.dc_WB_INDEX = value
-
-    @property
-    def dc_WB_REF(self) -> str:
-        """DC_Binding: Return the current WB_REF workbook reference value."""
-        return self.DC.dc_WB_REF
-    @dc_WB_REF.setter
-    def dc_WB_REF(self, value: str) -> None:
-        """DC_Binding: Set the WB_REF workbook reference value."""
-        self.DC.dc_WB_REF = value
 
     @property
     def dc_ALL_WBS(self) -> bool:
@@ -460,7 +460,7 @@ class BudManDataContext_Binding(BudManDataContext_Base):
         """
         return self.DC.dc_WORKBOOK_content_put(wb_content, wb)
 
-    def dc_WORKBOOK_load(self, wb_index: str) -> BUDMAN_RESULT:
+    def dc_WORKBOOK_content_load(self, wb_index: str) -> BUDMAN_RESULT:
         """DC_Binding: Load the specified workbook by wb_index into dc_LOADED_WORKBOOKS.
            Returns:
                 BUDMAN_RESULT: a Tuple[success: bool, result: Any].
@@ -469,11 +469,11 @@ class BudManDataContext_Binding(BudManDataContext_Base):
                 dc_LOADED_WORKBOOKS collection.
                 success = False, result is a string describing the error.
         """
-        return self.DC.dc_WORKBOOK_load(wb_index)
+        return self.DC.dc_WORKBOOK_content_load(wb_index)
 
-    def dc_WORKBOOK_save(self, wb_name: str, wb: Workbook) -> BUDMAN_RESULT:
+    def dc_WORKBOOK_content_save(self, wb_name: str, wb: Workbook) -> BUDMAN_RESULT:
         """DC_Binding: Save the specified workbook by name."""
-        return self.DC.dc_WORKBOOK_save(wb_name, wb)
+        return self.DC.dc_WORKBOOK_content_save(wb_name, wb)
     #endregion WORKBOOK_CONTENT storage-related methods
 
     def dc_WORKBOOK_remove(self, wb_name: str) -> None:

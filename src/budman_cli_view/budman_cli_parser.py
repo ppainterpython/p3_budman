@@ -472,12 +472,25 @@ class BudManCLIParser():
                 subcmd_name=cp.CV_INTAKE_SUBCMD_NAME,
                 subcmd_key=cp.CV_INTAKE_SUBCMD_KEY)
             self.add_wb_index_argument(intake_parser)
-            intake_parser.add_argument(
-                "--load_workbook","-l", "-load", 
-                action="store_true", 
-                help="Load the workbook if not yet loaded.")
+            self.add_load_workbook_argument(intake_parser)
+            self.add_fix_argument(intake_parser)
             self.add_common_args(intake_parser)
             
+            # Workflow 'check' subcommand
+            check_parser = subparsers.add_parser(
+                "check",
+                aliases=["ch"], 
+                help="Check some aspect of the workflow data or processing.")
+            check_parser.set_defaults(
+                cmd_key=cp.CV_WORKFLOW_CMD_KEY,   # new way
+                cmd_name=cp.CV_WORKFLOW_CMD_NAME, 
+                subcmd_name=cp.CV_CHECK_SUBCMD_NAME,
+                subcmd_key=cp.CV_CHECK_SUBCMD_KEY)
+            self.add_wb_index_argument(check_parser)
+            self.add_load_workbook_argument(check_parser)
+            self.add_fix_argument(check_parser)
+            self.add_common_args(check_parser)
+
             # Workflow task sub-command: task
             task_parser = subparsers.add_parser(
                 "task",
@@ -502,27 +515,6 @@ class BudManCLIParser():
                 help="List of arguments to pass to the workflow task."
             )
             self.add_wb_index_argument(task_parser)
-
-            # task 'check' subcommand
-            check_parser = subparsers.add_parser(
-                "check",
-                aliases=["ch"], 
-                help="Check some aspect of the workflow data or processing.")
-            check_parser.set_defaults(
-                workflow_cmd="check",
-                cmd_key="workflow_cmd",   # new way
-                cmd_name="workflow", 
-                subcmd_name="check",
-                subcmd_key="workflow_cmd_check")
-            check_parser.add_argument(
-                "wb_ref", nargs="?",
-                action="store", 
-                default='all',
-                help="Workbook reference, name or number of a loaded workbook.")
-            check_parser.add_argument(
-                "-f", dest="fix", action="store_true",
-                help="switch to fix issues found by check cmd.") 
-            self.add_common_args(check_parser)
 
             # workflow 'apply' subcommand
             apply_parser = subparsers.add_parser(
@@ -595,6 +587,30 @@ class BudManCLIParser():
                 "-all", dest="all_wbs", 
                 action = "store_true",
                 help="All workbooks switch.") 
+            return
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise
+
+    def add_load_workbook_argument(self, parser) -> None:
+        """Add a --load_workbook argument.""" 
+        try:
+            parser.add_argument(
+                "--load_workbook","-l", "-load", 
+                action="store_true", 
+                help="Load the workbook if not yet loaded.")
+            return
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise
+
+    def add_fix_argument(self, parser) -> None:
+        """Add a --fix_switch argument.""" 
+        try:
+            parser.add_argument(
+                "--fix_switch", "-fix", 
+                action="store_true", 
+                help="Fix the any fixable issues.")
             return
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))

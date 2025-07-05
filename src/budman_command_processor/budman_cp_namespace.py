@@ -51,6 +51,8 @@ CV_APP_CMD = "app"
 CV_CATEGORIZATION_SUBCMD = "categorization"
 CV_INTAKE_SUBCMD_NAME = "intake"
 CV_INTAKE_SUBCMD_KEY = CV_WORKFLOW_CMD_KEY + "_" + CV_INTAKE_SUBCMD_NAME
+CV_CHECK_SUBCMD_NAME = "check"
+CV_CHECK_SUBCMD_KEY = CV_WORKFLOW_CMD_KEY + "_" + CV_CHECK_SUBCMD_NAME
 CV_DELETE_SUBCMD = "delete"
 CV_RELOAD_SUBCMD = "reload"
 CV_LOG_SUBCMD = "log"
@@ -61,11 +63,14 @@ CV_TASK_SUBCMD = "task"
 CK_PARSE_ONLY = "parse_only"
 CK_VALIDATE_ONLY = "validate_only"
 CK_WHAT_IF = "what_if"
+CK_LOAD_WORKBOOK = "load_workbook"
+CK_FIX_SWITCH = "fix_switch"
 
 # Essential Data Context attributes, with cross-cutting scope over cmds
 CK_FI_KEY = "fi_key"
 CK_WF_KEY = "wf_key"
 CK_WF_PURPOSE = "wf_purpose"
+CK_WB_ID = "wb_id"
 CK_WB_TYPE = "wb_type"
 CK_WB_NAME = "wb_name"
 CK_WB_INDEX = "wb_index"

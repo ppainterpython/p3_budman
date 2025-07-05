@@ -18,6 +18,9 @@ __name__ = "budman_workflows"
 __description__ = "Budget Manager (BudMan) Workflow process implementation."
 __license__ = "MIT"
 
+from .budget_intake import (
+    process_txn_intake
+)
 from .workflow_utils import (
     generate_hash_key, 
     split_budget_category, 
@@ -31,7 +34,6 @@ from .workflow_utils import (
 from .budget_categorization import (
     check_sheet_columns, 
     check_sheet_schema, 
-    check_budget_category, 
     ORIGINAL_DESCRIPTION_COL_NAME, 
     process_budget_category,
     apply_check_register
@@ -78,7 +80,6 @@ __all__ = [
     # budget_categorization.py module
     "check_sheet_columns",
     "check_sheet_schema",
-    "check_budget_category",
     "ORIGINAL_DESCRIPTION_COL_NAME",
     "process_budget_category",
     "apply_check_register",

@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------- +
-#region p3_budget_categorization.py module
+#region budget_categorization.py module
 """ Financial Budget Workflow: "categorization" of transaction workbooks.
 
     Workflow: categorization
@@ -14,7 +14,7 @@
 
     TODO: Consider xlwings package for Excel integration.
 """
-#endregion p3_execl_budget.p3_banking_transactions budget_transactions.py module
+#endregion budget_categorization.py module
 # ---------------------------------------------------------------------------- +
 #region Imports
 # python standard library modules and packages
@@ -246,7 +246,7 @@ def check_sheet_schema(wb: Workbook, correct: bool = False) -> bool:
     """Check that the sheet is ready to process transactions.
     
     Steps to check the active sheet of an excel workbook for BudMan processing:
-    1. SHould be just 1 worksheet, the active worksheet.
+    1. Should be just 1 worksheet, the active worksheet.
     2. Title must be 'TransactionData'. BOA_SHEET_NAME
     3. Column names must match spelling an order from BOA_WB_COLUMNS.
     Args:
@@ -308,52 +308,6 @@ def check_sheet_schema(wb: Workbook, correct: bool = False) -> bool:
         logger.error(p3u.exc_err_msg(e))
         raise
 #endregion check_sheet_schema() function
-# ---------------------------------------------------------------------------- +
-#region check_budget_category() function
-def check_budget_category(sheet:Worksheet,add_columns : bool = True) -> bool:
-    """Check that the sheet is ready to process budget category.
-    
-    BudMan uses the following columns in transactions workbooks. The columns are
-    added if not present:
-    1. 'Budget Category' - str: the budget category for the transaction. It is a str
-        with up to 3 dotted levels of budget categories, e.g. "Housing.Improvements.Flooring".
-    2. Account Code - str: the short-name of the FI account for the transaction.
-    3. 'Level1' - str: the first level of the budget category, e.g. "Housing".
-    4. 'Level2' - str: the second level of the budget category, e.g. "Improvements".
-    5. 'Level3' - str: the third level of the budget category, e.g. "Flooring".
-    6. DebitOrCredit - str: 'D' for debit, 'C' for credit.
-    7. YearMonth - str: encoded version of date in format 'YYYY-MM-mmm', e.g. '2025-01-Jan'.
-
-    Args:
-        sheet (openpyxl.worksheet): The worksheet to map.
-    """
-    try:
-        logger.info("Check worksheet for budget category columns.")
-        # Index row 1 as the header row, it has the column names
-        col_names = {}
-        for cnum, cell in enumerate(sheet[1], start=1):
-            col_names[cell.value] = cnum
-        logger.debug(f"Column names in sheet('{sheet.title}'): {list(col_names.keys())}")
-        # Is BUDGET_CATEGORY_COL_NAME in the sheet?
-        if BUDGET_CATEGORY_COL_NAME in col_names:
-            logger.info(f"Column '{BUDGET_CATEGORY_COL_NAME}' already exists in sheet.")
-        elif add_columns:
-            # Add the BUDGET_CATEGORY_COL_NAME, LEVEL_1_COL, LEVEL_2_COL, and 
-            # LEVEL_3_COL columns to the sheet.
-            i = sheet.max_column + 1
-            sheet.insert_cols(i)
-            sheet.cell(row=1, column=i).value = BUDGET_CATEGORY_COL_NAME
-            col_names[BUDGET_CATEGORY_COL_NAME] = i  # Update the col_names dict.
-            # Set the column width to 20.
-            sheet.column_dimensions[sheet.cell(row=1, column=i).column_letter].width = 20
-            logger.info(f"Adding column '{BUDGET_CATEGORY_COL_NAME}' at index = {i}, "
-                        f"column_letter = '{sheet.cell(row=1, column=i).column_letter}'")
-            logger.info(f"Completed checks for budget category.")
-        return True
-    except Exception as e:
-        logger.error(p3u.exc_err_msg(e))
-        raise    
-#endregion check_budget_category() function
 # ---------------------------------------------------------------------------- +
 #region WORKSHEET_data(ws:Worksheet) -> List[TransactionData]
 def WORKSHEET_data(ws:Worksheet, just_values:bool=False) -> list[TransactionData]:
@@ -472,7 +426,7 @@ def year_month_str(date:object) -> str:
     """
     try:
         if isinstance(date, str):
-            date = datetime.datetime.strptime(date, "%Y-%m-%d").date()
+            date = datetime.datetime.strptime(date, "%m/%d/%Y").date()
         elif not isinstance(date, datetime.date):
             raise TypeError(f"Expected 'date' to be a date object or a str, got {type(date)}")
         return date.strftime("%Y-%m-%b")

@@ -16,8 +16,8 @@ from budman_workflows.txn_category import (
 from budman_workflows import (generate_hash_key,split_budget_category)
 from budman_workflows.budget_category_mapping import get_category_map
 from budget_storage_model import (
-    bsm_WORKBOOK_content_url_get,
-    bsm_WORKBOOK_content_url_put
+    bsm_WORKBOOK_content_get,
+    bsm_WORKBOOK_content_put
 )
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -93,7 +93,7 @@ def extract_txn_categories(all_cats_url: str) -> None:
                 logger.warning(f"Duplicate category ID '{cat_id}' found for "
                                f"category '{cat}'. Overwriting existing entry.")
             cat_data["categories"][cat_id] = bdm_tc
-        bsm_WORKBOOK_content_url_put(cat_data, all_cats_url)
+        bsm_WORKBOOK_content_put(cat_data, all_cats_url)
         cnt = len(cat_data["categories"])
         logger.info(f"Extracted '{cnt}' categories from budget_category_mapping "
                     f"module, saved to : '{all_cats_url}'")
@@ -118,7 +118,7 @@ if __name__ == "__main__":
 
         catman = BDMTXNCategoryManager(settings)
         catman.WB_TYPE_TXN_CATEGORIES_url_get("boa")
-        bsm_WORKBOOK_content_url_put(catman.catalog["boa"], 
+        bsm_WORKBOOK_content_put(catman.catalog["boa"], 
                                      all_cats_url,
                                      bdm.WB_TYPE_TXN_CATEGORIES)
         logger.info(f"Transaction categories extracted and saved to: {all_cats_url}")

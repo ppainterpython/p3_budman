@@ -14,7 +14,6 @@
 
     No dependencies to other application layers.
 
-    # TODO: switch verbs to put/get from save/load, consistent with URL usage.
     # TODO: move back to std lib json module, jsonc
 """
 #endregion budget_storage_model.py module
@@ -24,7 +23,7 @@
 import csv, logging, os, time
 from pathlib import Path
 from urllib.parse import urlparse, unquote
-from typing import Dict, Any
+from typing import List, Dict, Any
 
 # third-party modules and packages
 import p3_utils as p3u, pyjson5, p3logging as p3l
@@ -61,30 +60,30 @@ def csv_DATA_COLLECTION_url_get(csv_url : str = None) -> bdm.DATA_COLLECTION:
         raise
 #endregion csv_DATA_COLLECTION_get_url() function
 # ---------------------------------------------------------------------------- +
-#region    csv_DATA_COLLECTION_put_url() function
-def csv_DATA_COLLECTION_url_put(csv_dict:dict, csv_url : str = None) -> None:
-    """Put a DATA_COLLECTION object to a URL in storage.
-    
-    A csv dictionary is stored to the csv_url. Parse the URL and decide
-    how to load the DATA_COLLECTION object based on the URL scheme. Decode the
+#region    csv_DATA_LIST_url_put() function
+def csv_DATA_LIST_url_put(csv_list: list, csv_url: str = None) -> None:
+    """Put a DATA_LIST object to a URL in storage.
+
+    A csv list is stored to the csv_url. Parse the URL and decide
+    how to load the DATA_LIST object based on the URL scheme. Decode the
     json content and return it as a dictionary.
 
     Args:
-        csv_dict (dict): The DATA_COLLECTION object to save.
-        csv_url (str): The URL to the DATA_COLLECTION object to load.
+        csv_list (list): The DATA_LIST object to save.
+        csv_url (str): The URL to the DATA_LIST object to load.
     """
     try:
         st = p3u.start_timer()
-        logger.debug(f"Get DATA_COLLECTION from  url: '{csv_url}'")
+        logger.debug(f"Get DATA_LIST from  url: '{csv_url}'")
         # only support file:// scheme for now.
         csv_path = p3u.verify_url_file_path(csv_url, test=True)
-        csv_DATA_COLLECTION_file_save(csv_dict, csv_path)
+        csv_DATA_LIST_file_save(csv_list, csv_path)
         logger.debug(f"Complete csv_path: {csv_path} {p3u.stop_timer(st)}")
         return
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
-#endregion csv_DATA_COLLECTION_get_url() function
+#endregion csv_DATA_LIST_url_put() function
 # ---------------------------------------------------------------------------- +
 #region    csv_DATA_LIST_file_load() function
 def csv_DATA_LIST_file_load(csv_path : Path) -> bdm.DATA_LIST:
@@ -118,40 +117,40 @@ def csv_DATA_LIST_file_load(csv_path : Path) -> bdm.DATA_LIST:
         raise
 #endregion csv_DATA_LIST_file_load() function
 # ---------------------------------------------------------------------------- +
-#region    csv_DATA_COLLECTION_file_save() function
-def csv_DATA_COLLECTION_file_save(cvs_dict: Dict[str, Dict[str, Any]], csv_path : Path = None) -> None:
-    """Load a DATA_COLLECTION from a csv file at the given Path."""
+#region    csv_DATA_LIST_file_save() function
+def csv_DATA_LIST_file_save(csv_content: List[Dict[str, Any]], csv_path : Path = None) -> None:
+    """Load a DATA_LIST from a csv file at the given Path."""
     try:
         st = p3u.start_timer()
-        logger.debug(f"Loading DATA_COLLECTION from  file: '{csv_path}'")
+        logger.debug(f"Loading DATA_LIST from  file: '{csv_path}'")
         p3u.verify_file_path_for_save(csv_path)
         # Only hand csv files here.
         if csv_path.suffix != bdm.WB_FILETYPE_CSV:
             m = f"csv_path filetype is not supported: {csv_path.suffix}"
             logger.error(m)
             raise ValueError(m)
-        # Extract the fieldnames from the first row of the wb_dict.
+        # Extract the fieldnames from the first row of the cvs_content.
         try:
-            first_record = next(iter(cvs_dict.values()))
-        except StopIteration:
-            m = "The wb_dict is empty, cannot determine fieldnames."
+            first_record = csv_content[0]
+        except IndexError:
+            m = "The cvs_content is empty, cannot determine fieldnames."
             logger.error(m)
             raise ValueError(m)
         fieldnames = list(first_record.keys())
 
         # Make a backup copy of the csv file if it exists.
         if csv_path.exists():
-            p3u.copy_backup(csv_path, "backup")
+            p3u.copy_backup(csv_path, Path("backup"))
         with open(csv_path, "w", newline="") as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames, extrasaction='ignore')
             writer.writeheader()
-            for row in cvs_dict.values():
+            for row in csv_content:
                 writer.writerow(row)
-        logger.info(f"BizEVENT: Save DATA_COLLECTION to csv  file: '{csv_path}'")
+        logger.info(f"BizEVENT: Save DATA_LIST to csv  file: '{csv_path}'")
         logger.debug(f"Complete {p3u.stop_timer(st)}")
         return
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
-#endregion bsm_BDM_STORE_file_save() function
+#endregion csv_DATA_LIST_file_save() function
 # ---------------------------------------------------------------------------- +

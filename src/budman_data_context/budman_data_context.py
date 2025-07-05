@@ -51,7 +51,7 @@ from budman_namespace.design_language_namespace import (
     VALID_WF_PURPOSE_VALUES, VALID_WB_TYPE_VALUES,
     DATA_CONTEXT, WORKBOOK_DATA_LIST, LOADED_WORKBOOK_COLLECTION,
     WORKBOOK_DATA_COLLECTION, WORKBOOK_OBJECT,
-    BDM_STORE, DATA_COLLECTION, ALL_KEY, FI_KEY, WF_KEY, WB_ID, WB_REF, WB_NAME,
+    BDM_STORE, DATA_COLLECTION, ALL_KEY, FI_KEY, WF_KEY, WB_ID, WB_NAME,
     WB_TYPE, WF_PURPOSE, WB_INDEX, WB_URL, BUDMAN_RESULT, WORKBOOK_CONTENT,
     BDM_DATA_CONTEXT, DC_FI_KEY, DC_WF_KEY, DC_WF_PURPOSE, DC_WB_TYPE,
     DC_CHECK_REGISTERS)
@@ -72,19 +72,19 @@ class BudManDataContext(BudManDataContext_Base):
         self._initialization_in_progress = True
         self._dc_id :str = dc_id if dc_id else self.__class__.__name__
         self._dc_initialized = False 
-        self._dc_FI_OBJECT : FI_OBJECT = None 
-        self._dc_FI_KEY = None       
-        self._dc_WF_KEY = None       
-        self._dc_WF_PURPOSE = None
-        self._dc_WB_TYPE = None      
-        self._dc_WB_NAME = None     
+        self._dc_FI_OBJECT : Optional[FI_OBJECT] = None 
+        self._dc_FI_KEY : Optional[str] = None       
+        self._dc_WF_KEY : Optional[str] = None       
+        self._dc_WF_PURPOSE : Optional[str] = None
+        self._dc_WB_TYPE : Optional[str] = None      
+        self._dc_WB_NAME : Optional[str] = None     
         self._dc_WB_INDEX : int = -1
-        self._dc_WB_REF = None
-        self._dc_WORKBOOK : WORKBOOK_OBJECT = None # the current workbook in focus
+        self._dc_WB_ID : Optional[str] = None
+        self._dc_WORKBOOK : Optional[WORKBOOK_OBJECT] = None # the current workbook in focus
         self._dc_ALL_WBS : bool = False
-        self._dc_BDM_STORE : BDM_STORE = None 
-        self._dc_WORKBOOK : WORKBOOK_OBJECT = None 
-        self._dc_WORKBOOK_DATA_COLLECTION : WORKBOOK_DATA_COLLECTION = dict() 
+        self._dc_BDM_STORE : BDM_STORE = None
+        self._dc_WORKBOOK : Optional[WORKBOOK_OBJECT] = None
+        self._dc_WORKBOOK_DATA_COLLECTION : WORKBOOK_DATA_COLLECTION = dict()
         self._dc_WORKBOOKS : WORKBOOK_DATA_LIST = list() # deprecated, use dc_WORKBOOK_DATA_COLLECTION
         self._dc_LOADED_WORKBOOKS : LOADED_WORKBOOK_COLLECTION = dict()
         self._dc_EXCEL_WORKBOOKS : DATA_COLLECTION = dict()
@@ -193,6 +193,20 @@ class BudManDataContext(BudManDataContext_Base):
         self._dc_WF_PURPOSE = value
 
     @property
+    def dc_WB_ID(self) -> str:
+        """DC-Only: Return the current WB_ID workbook reference.
+        
+        Current means the wb_id for the last operation on a named or referenced
+        workbook. The other data in the DC is updated in a similar fashion.
+        After an operation on 'all' workbooks, the dc_WB_ID is set to 'all'.
+        """
+        return self._dc_WB_ID
+    @dc_WB_ID.setter
+    def dc_WB_ID(self, value: str) -> None:
+        """DC-Only: Set the WB_ID workbook reference."""
+        self._dc_WB_ID = value
+
+    @property
     def dc_WB_TYPE(self) -> str:
         """DC-Only: Return the current WB_TYPE (workbook type) .
         Current means that the other data in the DC is for this workbook type. 
@@ -236,20 +250,6 @@ class BudManDataContext(BudManDataContext_Base):
         self._dc_WB_INDEX = value
 
     @property
-    def dc_WB_REF(self) -> str:
-        """DC-Only: Return the current WB_REF workbook reference.
-        
-        Current means the wb_ref for the last operation on a named or referenced
-        workbook. The other data in the DC is updated in a similar fashion.
-        After an operation on 'all' workbooks, the dc_WB_REF is set to 'all'.
-        """
-        return self._dc_WB_REF
-    @dc_WB_REF.setter
-    def dc_WB_REF(self, value: str) -> None:
-        """DC-Only: Set the WB_REF workbook reference."""
-        self._dc_WB_REF = value
-
-    @property
     def dc_ALL_WBS(self) -> bool:
         """DC-Only: Return True if the current operation is on all workbooks."""
         return self._dc_ALL_WBS
@@ -278,10 +278,13 @@ class BudManDataContext(BudManDataContext_Base):
     def dc_WORKBOOK(self, value: WORKBOOK_OBJECT) -> None:
         """Set the current workbook in focus in the DC."""
         if not self.dc_VALID: return None
-        if not isinstance(value, object):
-            raise TypeError(f"dc_WORKBOOK_DATA_COLLECTION must be an object, "
+        if not self.dc_WORKBOOK_validate(value):
+            raise TypeError(f"dc_WORKBOOK must be a valid WORKBOOK_OBJECT, "
                             f"not a type: '{type(value).__name__}'")
         self._dc_WORKBOOK = value
+        self.dc_WB_INDEX = self.dc_WORKBOOK_index(value.wb_id)
+        self.dc_WB_NAME = value.wb_name  # Set the wb_name in the DC.
+        self.dc_WB_ID = value.wb_id
 
     @property
     def dc_WORKBOOK_DATA_COLLECTION(self) -> DATA_COLLECTION:
@@ -708,7 +711,7 @@ class BudManDataContext(BudManDataContext_Base):
             logger.error(m)
             return False, m
         
-    def dc_WORKBOOK_load(self, wb_content:WORKBOOK_CONTENT, wb: WORKBOOK_OBJECT) -> BUDMAN_RESULT:
+    def dc_WORKBOOK_content_load(self, wb_content:WORKBOOK_CONTENT, wb: WORKBOOK_OBJECT) -> BUDMAN_RESULT:
         """DC-Only: Load the specified workbook content by returning it from 
            dc_LOADED_WORKBOOKS property if present.
            Returns:
@@ -736,7 +739,7 @@ class BudManDataContext(BudManDataContext_Base):
                 return False, f"Workbook with id '{wb_id}' is not loaded."
             # Add settings in DC for the workbook. 
             wb_name = str(getattr(wb, WB_NAME, None))
-            self.dc_WB_REF = str(self.dc_WORKBOOK_index(wb_id))
+            self.dc_WB_ID = str(self.dc_WORKBOOK_index(wb_id))
             self._dc_WB_NAME = wb_name  
             self.dc_LOADED_WORKBOOKS[wb_id] 
             return True, None
@@ -745,7 +748,7 @@ class BudManDataContext(BudManDataContext_Base):
             logger.error(m)
             raise ValueError(f"Error loading workbook id: '{wb!r}': {e}")
 
-    def dc_WORKBOOK_save(self, wb_index: str, wb: Workbook) -> BUDMAN_RESULT:
+    def dc_WORKBOOK_content_save(self, wb_index: str, wb: Workbook) -> BUDMAN_RESULT:
         """DC-Only: Save the specified workbook content by name."""
         wb_path = Path(wb_index)
         try:

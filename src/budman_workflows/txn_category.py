@@ -23,10 +23,11 @@ from treelib import Tree
 
 # local modules and packages
 import budman_namespace.design_language_namespace as bdl
+from budman_namespace.bdm_workbook_class import BDMWorkbook
 import budman_settings as bdms
 from budget_storage_model import (
-    bsm_WORKBOOK_content_url_get,
-    bsm_WORKBOOK_content_url_put
+    bsm_WORKBOOK_content_get,
+    bsm_WORKBOOK_content_put
 )
 from .budget_category_mapping import (
     compiled_category_map, get_category_map, 
@@ -169,9 +170,13 @@ class BDMTXNCategoryManager:
         try:
             # Load the catalog for an FI
             cat_url = self.WB_TYPE_TXN_CATEGORIES_url(fi_key)
-            txn_cat_content: Dict = bsm_WORKBOOK_content_url_get(
-                cat_url, bdl.WB_TYPE_TXN_CATEGORIES)
-            if (not isinstance(txn_cat_content, dict) or 
+            bdm_wb : BDMWorkbook = BDMWorkbook(
+                wb_type=bdl.WB_TYPE_TXN_CATEGORIES,
+                wb_url=cat_url,
+                fi_key=fi_key
+            )
+            txn_cat_content: Dict = bsm_WORKBOOK_content_get(bdm_wb)
+            if (not isinstance(txn_cat_content, dict) or
                 'categories' not in txn_cat_content or
                  not isinstance(txn_cat_content['categories'], dict) or 
                  len(txn_cat_content['categories']) == 0):
