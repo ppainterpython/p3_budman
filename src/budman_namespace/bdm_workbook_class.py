@@ -11,7 +11,7 @@ from dataclasses import dataclass, asdict, field
 import logging
 from urllib.parse import urlparse, unquote
 from pathlib import Path
-from typing import Any, Optional, Union, List
+from typing import Any, Optional, Union, List, Dict
 # third-party modules and packages
 import p3_utils as p3u, pyjson5, p3logging as p3l
 from openpyxl import Workbook, load_workbook
@@ -48,7 +48,7 @@ class BDMWorkbook:
     wb_name : str = None
     wb_filename : str = None
     wb_filetype : str = None #Optional[str] = "not_set"
-    wb_type : str = field(default="not-set")
+    wb_type : str = field(default=bdm.WB_TYPE_UNKNOWN)
     wb_url : str = None
     fi_key: str = None
     wf_key: str = None
@@ -56,6 +56,7 @@ class BDMWorkbook:
     wf_folder_id: str = None
     wf_folder: str = None
     wb_loaded : bool = False
+    wb_content: Union[Workbook, Dict, str] = None
     #endregion dataclass object attributes
     # ------------------------------------------------------------------------ +
     #region internal methods: __repr__
@@ -66,6 +67,12 @@ class BDMWorkbook:
                 f"wb_type={self.wb_type!r}, "
                 f"wb_loaded={self.wb_loaded}>")
     #endregion internal methods: __repr__
+    # ------------------------------------------------------------------------ +
+    #region internal methods: to_dict(self)
+    def to_dict(self) -> dict[str, Any]:
+        """Convert the BDMWorkbook instance to a dictionary."""
+        return asdict(self)
+    #endregion internal methods: to_dict(self)
     # ------------------------------------------------------------------------ +
     #region BDMWorkbook properties
     @property
@@ -91,26 +98,78 @@ class BDMWorkbook:
     # ------------------------------------------------------------------------ +
     #region BDMWorkbook instance methods
     # ------------------------------------------------------------------------ +
-    #region display_str
-    def display_str(self, wb_index:int=-1,wb_content:str="not loaded") -> str:
-        """ Return a string representation of the BDMWorkbook object. """
+    #region determine_wb_type
+    def determine_wb_type(self, wb_index:int=-1) -> str:
+        """ Determine the wb_type based on the filename or set unknown. """
+        abs_path: Path = self.abs_path()
+        if abs_path is None:
+            logger.error(f"BDMWorkbook: {self.wb_id} has no abs_path.")
+            self.wb_type = bdm.WB_TYPE_UNKNOWN
+            return self.wb_type
+        fn = abs_path.stem
+        for tn in bdm.VALID_WB_TYPE_VALUES:
+            if tn in fn.lower():
+                self.wb_type = tn
+                return self.wb_type
+        self.wb_type = bdm.WB_TYPE_UNKNOWN
+        logger.warning(f"BDMWorkbook: {self.wb_id} has unknown wb_type")
+        return self.wb_type
+    #endregion determine_wb_type
+    # ------------------------------------------------------------------------ +
+    #region wb_index_display_str
+    def wb_index_display_str(self, wb_index:int=-1) -> str:
+        """ Return an indexed string representation of the BDMWorkbook object. """
         # Test output layout
         #{P2}{FI_WORKBOOK_DATA_COLLECTION}: {wdc_count}\n"
-        #{P4}{WB_INDEX:8}{P2}{WB_ID:50}{P2}wb_loaded{P2}{WB_CONTENT:30}{P2}{WB_TYPE:15}{P2}{WB_TYPE:15}{P2}{WF_KEY:15}{P2}{WF_PURPOSE:10}{P2}\n
+        #{P4}{WB_INDEX:8}{P2}{WB_ID:50}{P2}{WB_CONTENT:30}{P2}{WB_TYPE:15}{P2}{WB_TYPE:15}{P2}{WF_KEY:15}{P2}{WF_PURPOSE:10}{P2}\n
         #
         check = self.check_url()
         wb_status: str = "found"
         if not check:
             wb_status = "not found"
         elif self.wb_loaded:
-            wb_status = "loaded"
+            wb_status = self.get_wb_content_repr()
         else:
             wb_status = "unloaded"
-        s = f"{P6}{str(wb_index):>2}{P6}{str(self.wb_id):50}{P2}"
-        s += f"{str(self.wb_type):15}{P2}{str(wb_status):^9}"
-        s += f"{P2}{wb_content:30}{P2}"
+        wb_info = self.wb_info_display_str()
+        s = f"{P6}{str(wb_index):>2}{P6}{str(wb_info):150}"
         return s
-    #endregion display_str
+    #endregion wb_index_display_str
+    # ------------------------------------------------------------------------ +
+    #region wb_info_display_str
+    def wb_info_display_str(self) -> str:
+        """ Return a string representation of basic BDMWorkbook info. """
+        # format: {WB_ID:50}{P2}{WB_CONTENT:30}{P2}{WB_TYPE:15}{P2}{WB_TYPE:15}{P2}{WF_KEY:15}{P2}{WF_PURPOSE:10}{P2}\n
+        check = self.check_url()
+        wb_status: str = "found"
+        if not check:
+            wb_status = "not found"
+        elif self.wb_loaded:
+            wb_status = self.get_wb_content_repr()
+        else:
+            wb_status = "unloaded"
+        s = f"{str(self.wb_id):50}{P2}{str(self.wb_type):15}{P2}{wb_status:30}{P2}"
+        return s
+    #endregion wb_info_display_str
+    # ------------------------------------------------------------------------ +
+    #region get_wb_content_repr() method
+    def get_wb_content_repr(self) -> str: 
+        """Return a display string representation fo the wb_content."""
+        try:
+            if self.wb_content is None:
+                return "n/a"
+            d = p3u.dscr(self.wb_content)
+            if isinstance(self.wb_content, Workbook):
+                return f"{self.wb_content!r}"
+            elif isinstance(self.wb_content, dict):
+                return f"{d}[{len(self.wb_content)} items]"
+            else:
+                return f"{d}"
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            return False, m, None
+    #endregion get_wb_content_repr() method
     # ------------------------------------------------------------------------ +
     #region display_brief_str
     def display_brief_str(self, wb_index:int=-1) -> str:

@@ -264,6 +264,7 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
         self._BDM_STORE_loaded : bool = False
         self._budget_domain_model : BudgetDomainModel = None
         self._cmd_map : Dict[str, Callable] = None
+        self._shutdown : bool = False
     #endregion __init__() constructor method
     # ------------------------------------------------------------------------ +
     #region    BudManViewModel Class Properties     
@@ -347,6 +348,31 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             raise
     #endregion BudManViewModel Class initialize() method                       +
     # ------------------------------------------------------------------------ +
+    #region    BudManViewModel Class shutdown() method                          +
+    def shutdown(self) -> None:
+        """Shutdown the command view_model."""
+        try:
+            st = p3u.start_timer()
+            logger.info(f"Shutdown Start: ...")
+            if self._shutdown:
+                logger.debug(f"shutdown already complete.")
+                return None
+            # Save the BDM_STORE file with the BSM.
+            # Get a Dict of the BudgetModel to store.
+            bdm_dict = BDMConfig.BDM_STORE_dehydrate(self.budget_domain_model)
+            # budget_model_dict = self.budget_domain_model.to_dict()
+            # Save the BDM_STORE file.
+            bdm_url = self.dc_BDM_STORE[BDM_URL]
+            bsm_BDM_STORE_url_put(bdm_dict, bdm_url)
+            logger.info(f"Saved BDM_STORE url: {bdm_url}")
+            logger.info(f"Shutdown Complete: {p3u.stop_timer(st)}")
+            self._shutdown = True
+            return None
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion BudManViewModel Class shutdown() method                       +
+    # ------------------------------------------------------------------------ +
     #region    BudManViewModel Class initialize_model() method                   +
     def initialize_model(self, bdms_url : str) -> BudgetDomainModel:
         """Create a model using the bdms_url location for a valid BDM_STORE.
@@ -358,7 +384,7 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             # if a bdms_url is provided, load the BDM_STORE file.
             if p3u.str_notempty(self.bdms_url):
                 # Load the BDM_STORE file from the URL.
-                bdmc : BDMConfig= BDMConfig.BDM_STORE_url_load(self.bdms_url)
+                bdmc : BDMConfig= BDMConfig.BDM_STORE_url_get(self.bdms_url)
                 if bdmc is None:
                     m = f"Failed to load BDM_STORE from URL: {self.bdms_url}"
                     logger.error(m)
@@ -962,13 +988,14 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             logger.info(f"Start: ...")
             # Save the BDM_STORE file with the BSM.
             # Get a Dict of the BudgetModel to store.
-            budget_model_dict = self.budget_domain_model.to_dict()
+            bdm_dict = BDMConfig.BDM_STORE_dehydrate(self.budget_domain_model)
+            # budget_model_dict = self.budget_domain_model.to_dict()
             # Save the BDM_STORE file.
             bdm_url = self.dc_BDM_STORE[BDM_URL]
-            bsm_BDM_STORE_url_put(budget_model_dict, bdm_url)
+            bsm_BDM_STORE_url_put(bdm_dict, bdm_url)
             logger.info(f"Saved BDM_STORE url: {bdm_url}")
             logger.info(f"Complete: {p3u.stop_timer(st)}")
-            return True, budget_model_dict
+            return True, bdm_dict
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
@@ -1030,18 +1057,9 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
         try:
             st = p3u.start_timer()
             logger.debug(f"Start: ...")
-            result = output_category_tree()
-            # Gather the current content of the DATA_CONTEXT.
-            logger.info(f"Complete: {p3u.stop_timer(st)}")
             # Gather the current content of the DATA_CONTEXT.
             bs = self.dc_BDM_STORE
             bs_str = p3u.first_n(str(bs))
-            # Be workbook-centric is this view of the DC
-            wdc = self.dc_WORKBOOK_DATA_COLLECTION
-            wdc_count = len(wdc) if wdc else 0
-            lwbc = self.dc_LOADED_WORKBOOKS
-            lwbc_count = len(lwbc) if lwbc else 0
-    
             # Prepare the Command output result
             result = f"Budget Manager Data Context:\n"
             result += f"{P2}{DC_BDM_STORE}: {bs_str}\n"
@@ -1815,31 +1833,19 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             wdc = self.dc_WORKBOOK_DATA_COLLECTION
             wdc_count = len(wdc) if wdc else 0
             lwbc = self.dc_LOADED_WORKBOOKS
-            lwbc_count = len(lwbc) if lwbc else 0
 
             # Prepare the output result
             result = f"{P2}{FI_WORKBOOK_DATA_COLLECTION}: {wdc_count}\n"
             result += f"{P4}{WB_INDEX:6}{P2}{WB_ID:50}{P2}"
-            result += f"{WB_TYPE:15}{P2}wb_loaded{P2}{WB_CONTENT:30}"
+            result += f"{WB_TYPE:15}{P2}{WB_CONTENT:30}"
             # print(result)
             result += "\n"
             wb : BDMWorkbook = None
             if wdc_count > 0:
                 for i, wb in enumerate(wdc.values()):
                     wb.wb_loaded = wb.wb_id in lwbc
-                    wb_content = lwbc[wb.wb_id] if wb.wb_loaded else None
-                    wb_c_str = self.get_wb_content_repr(wb_content)
-                    r = f"{wb.display_str(i,wb_c_str)}"
-                    # print(r)
+                    r = f"{wb.wb_index_display_str(i)}"
                     result += r + "\n"
-            # if lwbc_count > 0:
-            #     result += f"{P2}{DC_LOADED_WORKBOOKS}: {lwbc_count}\n"
-            #     wdcl = list(wdc.keys())
-            #     for wb_id in list(lwbc.keys()):
-            #         wb = self.dc_WORKBOOK_DATA_COLLECTION[wb_id]
-            #         i = wdcl.index(wb_id) if wb_id in wdcl else -1
-            #         result += (f"{wdc[wb.wb_id].display_brief_str(i)}  "
-            #                    f"{wb_c_str}\n")
             logger.info(f"Complete:")
             return True, result
         except Exception as e:
@@ -1847,25 +1853,6 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             logger.error(m)
             return False, m
     #endregion get_workbook_data_collection_info_str() method
-    # ------------------------------------------------------------------------ +
-    #region get_wb_content_repr() method
-    def get_wb_content_repr(self, wb_content:Any) -> str: 
-        """Return a display string representation fo the wb_content."""
-        try:
-            if wb_content is None:
-                return "n/a"
-            d = p3u.dscr(wb_content)
-            if isinstance(wb_content, Workbook):
-                return f"({wb_content!r})"
-            elif isinstance(wb_content, dict):
-                return f"{d}[{len(wb_content)} items]"
-            else:
-                return f"{d}"
-        except Exception as e:
-            m = p3u.exc_err_msg(e)
-            logger.error(m)
-            return False, m, None
-    #endregion get_wb_content_repr() method
     # ------------------------------------------------------------------------ +
     #region    wb_ref_not_valid() method
     def recon_cmd_args_to_DC(self, cmd: dict) -> bool:

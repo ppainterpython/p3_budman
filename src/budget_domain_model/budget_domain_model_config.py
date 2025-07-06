@@ -34,6 +34,7 @@ from budman_namespace.bdm_singleton_meta import BDMSingletonMeta
 from budman_namespace.design_language_namespace import *
 from budget_storage_model import *
 from budman_namespace.bdm_workbook_class import BDMWorkbook 
+from budget_domain_model.budget_domain_model import BudgetDomainModel
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -285,9 +286,62 @@ class BDMConfig(metaclass=BDMSingletonMeta):
             raise
     #endregion BDM_STORE_rehydrate() created BDMConfig from a loaded BDM_STORE url.
     # ------------------------------------------------------------------------ +
-    #region BDM_STORE_url_load() create BDM_CONFIG from a loaded BDM_STORE url.
+    #region BDM_STORE_dehydrate() remove non-serializable objects.
     @classmethod
-    def BDM_STORE_url_load(cls, bdm_url : str) -> BDM_CONFIG:
+    def BDM_STORE_dehydrate(cls, model : BudgetDomainModel) -> None:
+        """Create a BDM_STORE dict from a BudgetDomainModel instance.
+        Remove non-serializable objects from the resulting BDM_STORE."""
+        try:
+            logger.debug("Start:  ...")
+
+            _ = p3u.is_not_obj_of_type("model", model, BudgetDomainModel, 
+                                       raise_error=True)    
+            bdm_store: BDM_STORE = model.to_dict()
+            # Traverse the BDM_STORE and remove non-serializable objects.
+            # Replace objects with known non-serializable attributes with a
+            # dict copy with the non-serializable attributes set to None.
+            if (BDM_FI_COLLECTION in bdm_store and
+                bdm_store[BDM_FI_COLLECTION] is not None and
+                isinstance(bdm_store[BDM_FI_COLLECTION], dict) and 
+                len(bdm_store[BDM_FI_COLLECTION]) > 0):
+                for fi_key, fi_object in bdm_store[BDM_FI_COLLECTION].items():
+                    if not isinstance(fi_object, dict):
+                        continue
+                    if (FI_WORKBOOK_DATA_COLLECTION not in fi_object or
+                        fi_object[FI_WORKBOOK_DATA_COLLECTION] is None or
+                        not isinstance(fi_object[FI_WORKBOOK_DATA_COLLECTION], dict) or
+                        len(fi_object[FI_WORKBOOK_DATA_COLLECTION]) == 0):
+                        continue
+                    for wb_id, bdm_wb in fi_object[FI_WORKBOOK_DATA_COLLECTION].items():
+                        if isinstance(bdm_wb, BDMWorkbook):
+                            # Convert the BDMWorkbook object to a dict.
+                            # Don't modify the BDMWorkbook objects
+                            bdm_wb_dict = bdm_wb.to_dict()
+                        elif isinstance(bdm_wb, dict):
+                            bdm_wb_dict = bdm_wb
+                        else:
+                            continue
+                        # A bdm_wb dict may have an object for wb_content
+                        if bdm_wb_dict[WB_CONTENT] is not None:
+                            # Never serialize the wb_content, so set it to None.
+                            wbc_type = type(bdm_wb_dict[WB_CONTENT]).__name__
+                            logger.debug(f" Dehydrating BDMWorkbook({wb_id}): "
+                                         f"wb_content type: '{wbc_type}'")
+                            bdm_wb_dict[WB_CONTENT] = None
+                            bdm_wb_dict[WB_LOADED] = False 
+                            # Replace the bdm_wb in fi_object[FI_WORKBOOK_DATA_COLLECTION]
+                            fi_object[FI_WORKBOOK_DATA_COLLECTION][wb_id] = bdm_wb_dict
+            logger.debug(f"Complete:")   
+            return bdm_store
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise
+    #endregion BDM_STORE_dehydrate() created BDMConfig from a loaded BDM_STORE url.
+    # ------------------------------------------------------------------------ +
+    #region BDM_STORE_url_get() create BDM_CONFIG from a loaded BDM_STORE url.
+    @classmethod
+    def BDM_STORE_url_get(cls, bdm_url : str) -> BDM_CONFIG:
         """Configure this BDMConfig object from loading a BDM_STORE url."""
         try:
             logger.debug("Start:  ...")
@@ -306,7 +360,7 @@ class BDMConfig(metaclass=BDMSingletonMeta):
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
-    #endregion BDM_STORE_url_load() created BDM_CONFIG from a loaded BDM_STORE url.
+    #endregion BDM_STORE_url_get() created BDM_CONFIG from a loaded BDM_STORE url.
     # ------------------------------------------------------------------------ +
     #region BDMConfig class constructor __init__()
     def __init__(self, bdm_config : Dict) -> None:

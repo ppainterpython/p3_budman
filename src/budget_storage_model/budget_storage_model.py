@@ -477,6 +477,7 @@ def bsm_verify_folder(ap: Path, create:bool=True, raise_errors:bool=True) -> boo
             if create:
                 logger.info(f"BizEVENT: Creating folder: '{str(ap)}'")
                 ap.mkdir(parents=True, exist_ok=True)
+                return True
             else:
                 raise ValueError(m)
     except Exception as e:

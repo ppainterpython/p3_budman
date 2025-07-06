@@ -500,7 +500,7 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
 
             if bsm_init:
                 self.bsm_initialize(create_missing_folders, raise_errors)
-                all_workbooks = self.bsm_WORKBOOKS_discover()
+                _, _ = self.bsm_WORKBOOKS_discover()
             self.bdm_working_data = self.bdm_BDM_WORKING_DATA_initialize()
             self.bdm_initialized = True
             logger.debug(f"Complete: {p3u.stop_timer(st)}")   
@@ -747,6 +747,7 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
 
     # ======================================================================== +
     #region    BSM - Budget Storage Model methods
+    #region    BSM Design Notes
     """ Budget model Storage Model (BSM) Documentation.
 
     All BDM data is stored in the filesystem by the BSM. BSM works with Path 
@@ -811,6 +812,7 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
              fi_value = dict of info about the FI.
         wf - workflow
     """
+    #endregion BSM Design Notes
     # ======================================================================== +
     #region bsm_initialize() method
     def bsm_initialize(self, 
@@ -951,7 +953,8 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
                 raise ValueError(m)
             # Resolve the BDM_FOLDER path.
             bf_ap = self.bsm_BDM_FOLDER_abs_path()
-            bsm_verify_folder(bf_ap, create_missing_folders, raise_errors)
+            if bsm_verify_folder(bf_ap, create_missing_folders, raise_errors):
+                wb_paths = bsm_get_workbook_names2(bf_ap)
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
@@ -1038,43 +1041,57 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
         """Resolve the FI_FOLDER path and create it if it does not exist."""
         fi_ap = self.bsm_FI_FOLDER_abs_path(fi_key)
         logger.debug(f"FI_KEY('{fi_key}') Checking FI_FOLDER('{fi_ap}')")
-        bsm_verify_folder(fi_ap, create_missing_folders, raise_errors)
+        if bsm_verify_folder(fi_ap, create_missing_folders, raise_errors):
+            wb_paths = bsm_get_workbook_names2(fi_ap)
     #endregion FI_DATA FI_FOLDER Path methods
     # ------------------------------------------------------------------------ +   
     #region bsm_WORKBOOKS_discover() method
-    def bsm_WORKBOOKS_discover(self) -> Dict[str, DATA_COLLECTION]:
+    def bsm_WORKBOOKS_discover(self) -> Tuple[WORKBOOK_DATA_COLLECTION, str]:
         """Discover WORKBOOKS for all FI's in the BDM."""
         try:
-            logger.debug("Start:")
             all_wbc = {}
+            wbc: WORKBOOK_DATA_COLLECTION = None
+            fi_msg:str = ""
+            r_msg: str = f"Start: WORKBOOK storage discovery"
+            logger.debug(r_msg)
             if len(self.bdm_fi_collection) == 0:
                 m = f"No FI's to discover."
                 logger.debug(m)
-                return
+                r_msg += f"{P2}{m}"
+                return None, r_msg
             for fi_key in self.bdm_fi_collection.keys():
                 # Discover WORKBOOKS for each FI.
                 logger.debug(f"Discover WORKBOOKS for FI_KEY('{fi_key}')")
-                wbc = self.bsm_FI_WORKFLOW_DATA_COLLECTION_discover(fi_key)
+                wbc, fi_msg = self.bsm_FI_WORKFLOW_DATA_COLLECTION_discover(fi_key)
+                r_msg += f"{fi_msg}\n"
                 all_wbc[fi_key] = wbc
             # Now have scanned all of the BDM storage to capture all BDMWorkbooks
             # as a Dict[fi_key, BDMWorkbook] return the combined collection.
-            logger.debug("Complete:")
-            return all_wbc
+            m = f"Complete: WORKBOOK storage discovery"
+            logger.debug(m)
+            r_msg += f"{m}\n"
+            return all_wbc, r_msg
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
-            raise
+            r_msg += f"{m}\n"
+            return all_wbc, r_msg
     #endregion bsm_WORKBOOKS_discover() method
     # ------------------------------------------------------------------------ +   
     #region bsm_FI_WORKFLOW_DATA_COLLECTION_discover() method
-    def bsm_FI_WORKFLOW_DATA_COLLECTION_discover(self, fi_key:str) -> WORKBOOK_DATA_COLLECTION:
-        """Discover all WORKBOOKS for the FI. Return a DATA_COLLECTION of BDMWorkbook objects."""
+    def bsm_FI_WORKFLOW_DATA_COLLECTION_discover(self, fi_key:str) -> Tuple[WORKBOOK_DATA_COLLECTION, str]:
+        """Discover all actual WORKBOOKS in storage for the FI. Return a 
+        WORKBOOK_DATA_COLLECTION of BDMWorkbook objects, an inventory of
+        what is actually in storage.
+        """
         try:
-            logger.debug(f"Start: FI_KEY('{fi_key}') discover WORKBOOKS")
+            r_msg: str = f"{P2}Start: FI_KEY('{fi_key}') WORKBOOK storage discovery"
+            logger.debug(r_msg)
             if self.bdm_FI_WORKFLOW_DATA_COLLECTION_count(fi_key) == 0:
                 m = f"FI_KEY('{fi_key}') has no workflow data."
                 logger.debug(m)
-                return
+                r_msg += f"{P4}{m}\n"
+                return None, r_msg
             # Traverse the FI_OBJECT's FI_WORKFLOW_DATA_COLLECTION structure, 
             # compile a list of WORKBOOKS as BDMWorkbook objects with populated
             # metadata. Then reconcile list with the FI_WORKBOOK_DATA_COLLECTION.
@@ -1087,37 +1104,44 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
                     if folder_id is None or len(folder_id) == 0:
                         m = f"wb_data_collection('{fi_key}', '{wf_key}') has no '{wf_purpose}' wb_data_list."
                         logger.debug(m)
+                        r_msg += f"{P4}{m}\n"
                         continue
                     wf_folder = self.bdm_WF_FOLDER(wf_key, folder_id)
                     if wf_folder is None or len(wf_folder) == 0:
                         m = f"wb_data_collection('{fi_key}', '{wf_key}') has no '{wf_purpose}' wf_folder."
                         logger.debug(m)
+                        r_msg += f"{P4}{m}\n"
                         continue
                     wb_paths = []
                     id = f"('{fi_key}', '{wf_key}', '{wf_purpose}', '{folder_id}')"
                     folder_abs_path = self.bsm_WF_FOLDER_abs_path(fi_key, wf_key, folder_id)
                     if folder_abs_path is None: 
-                        m = f"'{id}' wf_folder path  is None.",
+                        m = f"'{id}' wf_folder path is None.",
                         logger.debug(m)
+                        r_msg += f"{P4}{m}\n"
                         continue
                     if not folder_abs_path.exists():
                         m = f"'{id}' path does not exist: {folder_abs_path}"
                         logger.debug(m)
+                        r_msg += f"{P4}{m}\n"
                         continue
                     # This is where the bsm scans a folder for actual workbook files.
                     wb_paths = bsm_get_workbook_names2(folder_abs_path)
                     if len(wb_paths) == 0:
                         m = f"'{id}' path has no workbooks: {folder_abs_path}"
                         logger.debug(m)
+                        r_msg += f"{P4}{m}\n"
                         continue
-                    logger.debug(f"'{id}' found {len(wb_paths)} workbooks: {folder_abs_path}")
+                    m = f"'{id}' found {len(wb_paths)} workbooks: {folder_abs_path}"
+                    logger.debug(m)
+                    r_msg += f"{P4}{m}\n"
                     for wb_path in wb_paths:
                         # Create a BDMWorkbook object for each workbook.
                         wb_filename = wb_path.stem
                         wb_filetype = wb_path.suffix.lower()
                         wb_name = wb_path.name
                         wb_url = wb_path.as_uri()
-                        wb = BDMWorkbook(
+                        bdm_wb = BDMWorkbook(
                             wb_name = wb_name, 
                             wb_filename =  wb_filename,
                             wb_filetype = wb_filetype,
@@ -1127,22 +1151,32 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
                             wf_purpose = wf_purpose,
                             wf_folder_id = folder_id,
                             wf_folder = wf_folder,
-                            wb_loaded = False
+                            wb_loaded = False,
+                            wb_content = None
                             )
-                        wb_id = wb.wb_id
-                        wb_collection[wb_id] = wb
+                        wb_id = bdm_wb.wb_id
+                        bdm_wb.determine_wb_type() 
+                        wb_collection[wb_id] = bdm_wb
+                        m = bdm_wb.wb_info_display_str()
+                        logger.debug(f"Collected workbook: {m}")
+                        r_msg += f"{P6}workbook: {m}\n"
             # Now have scanned all of the BSM storage to capture all BDMWorkbooks
             # from the FI_WORKFLOW_DATA_COLLECTION structure mapped to storage.
             # Now reconcile the list of BDMWorkbook objects with the 
             # FI_WORKBOOK_DATA_COLLECTION.
-            logger.debug(f"FI_KEY('{fi_key}') discovered {len(wb_collection)} workbooks.")
+            m = f"FI_KEY('{fi_key}') discovered {len(wb_collection)} workbooks."
+            logger.debug(m)
+            r_msg += f"{P4}{m}\n"
             self.bsm_FI_WORKBOOK_DATA_COLLECTION_reconcile(fi_key, wb_collection)
-            logger.debug(f"Complete:")
-            return wb_collection
+            m = f"Complete: FI_KEY('{fi_key}') WORKBOOK storage discovery"
+            logger.debug(m)
+            r_msg += f"{P2}{m}\n"
+            return wb_collection, r_msg
         except Exception as e:
                 m = p3u.exc_err_msg(e)
                 logger.error(m)
-                raise
+                r_msg += f"{P2}{m}\n"
+                return wb_collection, r_msg
     #endregion bsm_FI_WORKFLOW_DATA_COLLECTION_discover() method
     # ------------------------------------------------------------------------ + 
     #region bsm_FI_WORKBOOK_DATA_COLLECTION_reconcile() method

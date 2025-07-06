@@ -67,17 +67,22 @@ PATH = "_path"
 ABS_PATH = "_abs" + PATH
 WORKBOOKS = "_workbooks"
 # ---------------------------------------------------------------------------- +
-# Attribute key name constants
+# DC and BDMWorkbook Attribute key name constants
+WB_INDEX = "wb_index" 
+WB_ID = "wb_id"
+WB_NAME = "wb_name"
+WB_FILENAME = "wb_filename"
+WB_FILETYPE = "wb_filetype"
+WB_TYPE = "wb_type"
+WB_URL = "wb_url" 
 FI_KEY = "fi_key"
 WF_KEY = "wf_key"
 WF_PURPOSE = "wf_purpose" 
-WB_TYPE = "wb_type"
-WB_NAME = "wb_name"
-WB_ID = "wb_id"
-WB_INFO = "wb_info"
-WB_URL = "wb_url" 
-WB_INDEX = "wb_index" 
+WF_FOLDER_ID = "wf_folder_id" 
+WF_FOLDER = "wf_folder"
+WB_LOADED = "wb_loaded" 
 WB_CONTENT = "wb_content" 
+WB_INFO = "wb_info"
 # ---------------------------------------------------------------------------- +
 # Attribute value constants
 WB_INFO_LEVEL_INFO = "info"

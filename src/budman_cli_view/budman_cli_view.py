@@ -371,7 +371,7 @@ class BudManCLIView(cmd2.Cmd, BudManDataContext_Binding):
             raise
     #endregion restart command - restart the application.
     # ------------------------------------------------------------------------ +
-    #region init command - initialize aspects of the BudgetModel application.
+    #region do_init command - initialize aspects of the BudgetModel application.
     @cmd2.with_argparser(init_cmd_parser()) # This decorator links cmd2 with argparse.
     def do_init(self, opts):
         """Initialize aspects of the Data Context for the Budget Manager application."""
@@ -379,9 +379,9 @@ class BudManCLIView(cmd2.Cmd, BudManDataContext_Binding):
             status, result = self.cp_execute_cmd(opts)
         except Exception as e:
             self.pexcept(e)
-    #endregion init command - initialize aspects of the BudgetModel application.
+    #endregion do_init command - initialize aspects of the BudgetModel application.
     # ------------------------------------------------------------------------ +
-    #region init command - initialize aspects of the BudgetModel application.
+    #region do_change command - change attributes of workbooks and other objects.
     @cmd2.with_argparser(change_cmd_parser()) # This decorator links cmd2 with argparse.
     def do_change(self, opts):
         """Change (ch) attributes of workbooks and other objects in the Data Context for the Budget Manager application."""
@@ -389,9 +389,9 @@ class BudManCLIView(cmd2.Cmd, BudManDataContext_Binding):
             status, result = self.cp_execute_cmd(opts)
         except Exception as e:
             self.pexcept(e)
-    #endregion init command - initialize aspects of the BudgetModel application.
+    #endregion do_change command - change attributes of workbooks and other objects.
     # ------------------------------------------------------------------------ +
-    #region Show command - workbooks, status, etc.
+    #region do_show command - workbooks, status, etc.
     @cmd2.with_argparser(show_cmd_parser())
     def do_show(self, opts):
         """Show information from the Budget Manager application.
@@ -405,9 +405,9 @@ class BudManCLIView(cmd2.Cmd, BudManDataContext_Binding):
             status, result = self.cp_execute_cmd(opts)
         except Exception as e:
             self.pexcept(e)
-    #endregion Show command
+    #endregion do_show command
     # ------------------------------------------------------------------------ +
-    #region Load command - load workbooks
+    #region do_load command - load workbooks
     @cmd2.with_argparser(load_cmd_parser())
     def do_load(self, opts):
         """Load specified data objects in the Budget Manager application.
@@ -421,9 +421,9 @@ class BudManCLIView(cmd2.Cmd, BudManDataContext_Binding):
             status, result = self.cp_execute_cmd(opts)
         except Exception as e:
             self.pexcept(e)
-    #endregion Load command - load workbooks
+    #endregion do_load command - load workbooks
     # ------------------------------------------------------------------------ +
-    #region Save command - save workbooks
+    #region do_save command - save workbooks
     @cmd2.with_argparser(save_cmd_parser())
     def do_save(self, opts):
         """Save specified data objects in the Budget Manager application.
@@ -437,9 +437,9 @@ class BudManCLIView(cmd2.Cmd, BudManDataContext_Binding):
             status, result = self.cp_execute_cmd(opts)
         except Exception as e:
             self.pexcept(e)
-    #endregion Save command - save workbooks
-    # ------------------------------------------------------------------------ +    
-    #region Val command - workbooks, status, etc.
+    #endregion do_save command - save workbooks
+    # ------------------------------------------------------------------------ +
+    #region do_val command - workbooks, status, etc.
     @cmd2.with_argparser(val_cmd_parser())
     def do_val(self, opts):
         """Val command to get and set values in Budget Manager application.
@@ -465,7 +465,7 @@ class BudManCLIView(cmd2.Cmd, BudManDataContext_Binding):
             self.pwarning(BMCLI_SYSTEM_EXIT_WARNING)
         except Exception as e:
             self.pexcept(e)
-    #endregion Val command
+    #endregion do_val command
     # ------------------------------------------------------------------------ +
     #region val_subcommand() method
     def val_subcommand(self, opts) -> None:
@@ -497,7 +497,7 @@ class BudManCLIView(cmd2.Cmd, BudManDataContext_Binding):
             raise
     #endregion val_subcommand() method
     # ------------------------------------------------------------------------ +
-    #region workflow command
+    #region do_workflow command
     @with_argparser(workflow_cmd_parser())
     def do_workflow(self, opts):
         """Apply a workflow to Budget Manager data.
@@ -517,9 +517,9 @@ class BudManCLIView(cmd2.Cmd, BudManDataContext_Binding):
             status, result = self.cp_execute_cmd(opts)
         except Exception as e:
             self.pexcept(e)
-    #endregion workflow command
+    #endregion do_workflow command
     # ------------------------------------------------------------------------ +
-    #region app command
+    #region do_app command
     @with_argparser(app_cmd_parser())
     def do_app(self, opts):
         """View and adjust app settings and features.
@@ -534,9 +534,9 @@ class BudManCLIView(cmd2.Cmd, BudManDataContext_Binding):
             status, result = self.cp_execute_cmd(opts)
         except Exception as e:
             self.pexcept(e)
-    #endregion app command
+    #endregion do_app command
     # ------------------------------------------------------------------------ +
-    #region exit and quit commands
+    #region do_exit and quit commands
     def do_exit(self, args):
         """Exit the Budget Manager CLI."""
         # if _log_cli_cmd_execute(self, args): return
@@ -549,7 +549,7 @@ class BudManCLIView(cmd2.Cmd, BudManDataContext_Binding):
         self.poutput("Quitting BudgetModel CLI.")
         # _log_cli_cmd_complete(self, args)
         return True 
-    #endregion exit and quit commands
+    #endregion do_exit and quit commands
     # ------------------------------------------------------------------------ +    
     #endregion ViewModelCommandProcessor Command Execution Methods
     # ------------------------------------------------------------------------ +

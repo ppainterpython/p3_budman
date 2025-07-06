@@ -317,6 +317,7 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
             # Model-aware: Get the workbook content object with the BSM.
             wb_content = bsm_WORKBOOK_content_get(bdm_wb)
             # Add/update to the loaded workbooks collection.
+            bdm_wb.wb_content = wb_content
             bdm_wb.wb_loaded = True
             self.dc_LOADED_WORKBOOKS[bdm_wb.wb_id] = wb_content
             self.dc_WORKBOOK = bdm_wb  # Update workbook-related DC info.
