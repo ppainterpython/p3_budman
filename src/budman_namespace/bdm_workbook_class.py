@@ -107,7 +107,7 @@ class BDMWorkbook:
         else:
             wb_status = "unloaded"
         s = f"{P6}{str(wb_index):>2}{P6}{str(self.wb_id):50}{P2}"
-        s += f"{str(self.wb_type):14}{P2}{str(wb_status):^9}"
+        s += f"{str(self.wb_type):15}{P2}{str(wb_status):^9}"
         s += f"{P2}{wb_content:30}{P2}"
         return s
     #endregion display_str

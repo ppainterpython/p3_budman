@@ -42,7 +42,7 @@ from openpyxl import Workbook, load_workbook
 import budman_namespace.design_language_namespace as bdm
 from budman_namespace.bdm_workbook_class import BDMWorkbook
 from budget_storage_model.csv_data_collection import (
-    csv_DATA_COLLECTION_url_get, csv_DATA_LIST_url_put,
+    csv_DATA_LIST_url_get, csv_DATA_LIST_url_put,
     csv_DATA_LIST_file_load, csv_DATA_LIST_file_save
     )
 #endregion Imports

@@ -1820,7 +1820,7 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             # Prepare the output result
             result = f"{P2}{FI_WORKBOOK_DATA_COLLECTION}: {wdc_count}\n"
             result += f"{P4}{WB_INDEX:6}{P2}{WB_ID:50}{P2}"
-            result += f"{WB_TYPE:14}{P2}wb_loaded{P2}{WB_CONTENT:30}"
+            result += f"{WB_TYPE:15}{P2}wb_loaded{P2}{WB_CONTENT:30}"
             # print(result)
             result += "\n"
             wb : BDMWorkbook = None

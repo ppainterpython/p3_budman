@@ -36,20 +36,20 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
-#region    csv_DATA_COLLECTION_get_url() function
-def csv_DATA_COLLECTION_url_get(csv_url : str = None) -> bdm.DATA_COLLECTION:
-    """Get a DATA_COLLECTION object from a URL to a csv file in storage.
-    
+#region    csv_DATA_LIST_get_url() function
+def csv_DATA_LIST_url_get(csv_url : str = None) -> bdm.DATA_LIST:
+    """Get a DATA_LIST object from a URL to a csv file in storage.
+
     A csv dictionary is read in from the csv_url. Parse the URL and decide
-    how to load the DATA_COLLECTION object based on the URL scheme. Decode the
+    how to load the DATA_LIST object based on the URL scheme. Decode the
     json content and return it as a dictionary.
 
     Args:
-        csv_url (str): The URL to the DATA_COLLECTION object to load.
+        csv_url (str): The URL to the DATA_LIST object to load.
     """
     try:
         st = p3u.start_timer()
-        logger.debug(f"Get DATA_COLLECTION from  url: '{csv_url}'")
+        logger.debug(f"Get DATA_LIST from  url: '{csv_url}'")
         # only support file:// scheme for now.
         csv_path = p3u.verify_url_file_path(csv_url, test=True)
         result = csv_DATA_LIST_file_load(csv_path)
@@ -58,7 +58,7 @@ def csv_DATA_COLLECTION_url_get(csv_url : str = None) -> bdm.DATA_COLLECTION:
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
-#endregion csv_DATA_COLLECTION_get_url() function
+#endregion csv_DATA_LIST_get_url() function
 # ---------------------------------------------------------------------------- +
 #region    csv_DATA_LIST_url_put() function
 def csv_DATA_LIST_url_put(csv_list: list, csv_url: str = None) -> None:

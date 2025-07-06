@@ -327,7 +327,6 @@ category_map = {
     r'(?i)\bBSWHealth.*\b': 'Medical.BSW Health',
     r'(?i)\bJOHN\sF\sLANN\sDDS\b': 'Medical.Dental.Lann',
     r'(?i)\bWALGREENS\s*(STORE)*\b': 'Medical.Pharmacy.Walgreens',
-    r'(?i)\bPAYPAL\s*(STORE)*\b': 'Medical.Pharmacy.Walgreens',
     r'(?i)\bCVS/PHARM\b': 'Medical.Pharmacy.CVS',
     r'(?i)\bCAREMARK\sMAIL\b': 'Medical.Pharmacy.CVS',
     r'(?i)\bWWW\.CAREMARK\.COM\b': 'Medical.Pharmacy.CVS',
@@ -427,7 +426,6 @@ category_map = {
     r'(?i)\bID:PATREON\s*MEMBER\b': 'Lifestyle.Online Subscription.Patreon',
     r'(?i)\bID:DROPBOX\b': 'Lifestyle.Online Subscription.Storage', #.DropBox',
     r'(?i)\bwikimedia\b': 'Lifestyle.Online Subscription.Content', #.WikiPedia',
-    r'(?i)\bPAYPAL\b.*ID:CLEVERBRIDG': 'Lifestyle.Online Subscription.Software',
     r'(?i)\bCHECKCARD\b.*APPLE\sCOM\sBILL': 'Lifestyle.Online Subscription.Storage', #.Apple',
     r'(?i)\bDREAMSTIME\.COM.*': 'Lifestyle.Online Subscription.Application', #.Dreamstime',
     r'(?i)\bLEGALNATURE\b': 'Lifestyle.Online Subscription.Application', #.Legal Nature',
@@ -474,7 +472,7 @@ category_map = {
     r'(?i)\bLGA\s*BROOKLYN\s*DINER': 'Lifestyle.Travel.NewYorkMarch2024',
     r'(?i)\bUBER\s*TRIP': 'Lifestyle.Travel.NewYorkMarch2024',
     r'(?i)\bEAST\s*ELMHURST.*NY': 'Lifestyle.Travel.NewYorkMarch2024',
-#endregion Travel - Specific Trips
+    #endregion Travel - Specific Trips
     #region other Personal Lifestyle
     # Hobby
     r'(?i)\bPRECISION\s*CAMERA.*': 'Lifestyle.Hobby.Photography', #.Precision Camera',
@@ -502,6 +500,10 @@ category_map = {
     r'(?i)\bAT\sHOME\b': 'Lifestyle.Shopping.At Home',
     #endregion other Personal Lifestyle
     #region Shopping - Amazon, Apple, Clothing, etc.
+    r'(?im)^\bPAYPAL.*?ID:(?P<pay_to>\w+)': 'Lifestyle.Shopping.PayPal',
+    r'(?i)\bPAYPAL\s': 'Lifestyle.Shopping.PayPal',
+    r'(?i)\bPAYPAL\s*DES:TRANSFER\s*ID:x*\d*\s*\b': 'Unknown.PayPal',
+    r'(?i)\bPAYPAL\s\*AAAA\s*EMBROI.*': 'Unknown.AAAA EMBROI',
     r'(?i)\bID:UNDERWATER\sUNDE\b': 'Lifestyle.Shopping.Apple',
     r'(?i)\bID:LAGOSEC\sINC\b': 'Lifestyle.Unknown.Lagosec',
     r'(?i)\bAMAZON\s.*?\bPRIME\b': 'Lifestyle.Shopping.Amazon Prime',
@@ -518,7 +520,6 @@ category_map = {
     r'(?i)\bCIRCLE\sK\b': 'Lifestyle.Shopping.Circle K',
     r'(?i)\b7-ELEVEN\b': 'Lifestyle.Shopping.7-Eleven',
     r'(?i)\bMICHAELS\sSTORES\b': 'Lifestyle.Shopping.Michaels',
-    r'(?i)\bPAYPAL\s': 'Lifestyle.Shopping.PayPal',
     r'(?i)\bSMART\sSTOP': 'Lifestyle.Shopping.Misc',
     r'(?i)\bSPEEDY\sSTOP': 'Lifestyle.Shopping.Misc',
     r'(?i)\bJames\s*Avery.*': 'Lifestyle.Shopping.James Avery',
@@ -690,7 +691,6 @@ category_map = {
     r'(?i)\bHOMESENSE.*': 'Unknown.HomeSense',
     r'(?i)\bPRESSNET.*': 'Unknown.PressNet',
     r'(?i)\bBUYGOODS.*': 'Unknown.BuyGoods',
-    r'(?i)\bPAYPAL\s\*AAAA\s*EMBROI.*': 'Unknown.AAAA EMBROI',
     r'(?i)\bID:DIGISTORE\d\d\b': 'Unknown.DIGISTORE',
     r'(?i).*VIRTUALCHARGES\.COM.*': 'Unknown.VirtualChargesDotCom',
     r'(?i)\bDIGISTORE\d\d\sINC\.': 'Unknown.DIGISTORE',
@@ -701,7 +701,6 @@ category_map = {
     r'(?i)\bPADDLE\.COM\b': 'Unknown.PADDLE-COM',
     r'(?i)\bATGPay\sonline\b': 'Unknown.ATGPay',
     r'(?i)\bWISE\s*US\s*INC\b': 'Unknown.Wise Inc.',
-    r'(?i)\bPAYPAL\s*DES:TRANSFER\s*ID:x*\d*\s*\b': 'Unknown.PayPal',
     r'(?i)\bFIT\s*ROUND\s*LAKE-RURAL': 'Unknown',
     r'(?i)\bAPPLE\s*STORE.*08\/27.*': 'Unknown.Blackmail.Apple Gift Card',
     r'(?i)\bAPPLE\s*STORE.*08\/29.*': 'Unknown.Blackmail.Apple Gift Card',

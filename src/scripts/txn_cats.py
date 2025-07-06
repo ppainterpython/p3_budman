@@ -2,7 +2,7 @@
 # txn_cats.py - a place to fool around with experiments, not a dependent.
 #------------------------------------------------------------------------------+
 #region Imports
-import logging, re
+import logging, re, sys, csv
 from pathlib import Path
 from typing import Dict
 # third-party modules and packages
@@ -17,7 +17,8 @@ from budman_workflows import (generate_hash_key,split_budget_category)
 from budman_workflows.budget_category_mapping import get_category_map
 from budget_storage_model import (
     bsm_WORKBOOK_content_get,
-    bsm_WORKBOOK_content_put
+    bsm_WORKBOOK_content_put,
+    csv_DATA_LIST_url_get, csv_DATA_LIST_file_load
 )
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -103,10 +104,7 @@ def extract_txn_categories(all_cats_url: str) -> None:
         raise
 #endregion extract_txn_categories() method
 # ------------------------------------------------------------------------ +
-#region __main__() method
-if __name__ == "__main__":
-    wb_url = "file:///C:/Users/ppain/OneDrive/budget/p3_budget_manager_ca063e8b.jsonc"
-    cr_url = "file:///C:/Users/ppain/OneDrive/budget/boa/data/new/CheckRegister_ToDate20250609.csv"
+def save_txn_categories():
     all_cats_url = "file:///C:/Users/ppain/OneDrive/budget/boa/All_TXN_Categories.txn_categories.json"
     try:
         settings = bdms.BudManSettings()
@@ -122,7 +120,110 @@ if __name__ == "__main__":
                                      all_cats_url,
                                      bdm.WB_TYPE_TXN_CATEGORIES)
         logger.info(f"Transaction categories extracted and saved to: {all_cats_url}")
+    except Exception as e:
+        m = p3u.exc_err_msg(e)
+        logger.error(m)
+    # bdm = bdms.bsm_BDM_STORE_url_load(bdms_url)
+    logger.info(f"Complete.")
+def test_regex(file_path, pattern, show_matches=False):
+    try:
+        with open(file_path, 'r') as file:
+            lines = file.readlines()
+        
+        regex = re.compile(pattern)
+        matches = []
+        
+        for line in lines:
+            match = regex.search(line)
+            if match:
+                pay_to = match.group(1) if match.groups() else None
+                matches.append(line.strip())
+        
+        print(f"Total lines in file: {len(lines)}")
+        print(f"Lines matching the pattern: {len(matches)}")
+        
+        if show_matches and matches:
+            print("\nMatching lines:")
+            for match in matches:  
+                print(match)
+        
+    except FileNotFoundError:
+        print(f"Error: File '{file_path}' not found.")
+    except re.error as e:
+        print(f"Error in regex pattern: {e}")
 
+def extract_column_from_csv(file_path:Path, column_name:str, output_path:Path,
+                            append=True):
+    try:
+        csv_data = csv_DATA_LIST_file_load(file_path)
+        mode = 'a' if append else 'w'
+        with open(descriptions_file, mode, encoding='utf-8') as f:
+            for txn in csv_data:
+                desc = txn.get(orig_desc, 'what?')
+                f.write(f"{desc}\n")
+    except FileNotFoundError:
+        print(f"Error: File '{file_path}' not found.")
+    except Exception as e:
+        print(f"Error extracting column: {e}")
+
+#region __main__() method
+if __name__ == "__main__":
+    wb_url = "file:///C:/Users/ppain/OneDrive/budget/p3_budget_manager_ca063e8b.jsonc"
+    cr_url = "file:///C:/Users/ppain/OneDrive/budget/boa/data/new/CheckRegister_ToDate20250609.csv"
+    june_2025_url = "file:///C:/Users/ppain/OneDrive/budget/boa/raw_data/boa/June2025_ALL.csv"
+    all_cats_url = "file:///C:/Users/ppain/OneDrive/budget/boa/All_TXN_Categories.txn_categories.json"
+
+    folder_path ='C:\\Users\\ppain\\OneDrive\\budget\\boa\\raw_data\\boa\\'
+    june_2025_path = folder_path + "June2025_ALL.csv"
+    may_2025_path = folder_path + "May2025_ALL.csv"
+    april_2025_path = folder_path + "April2025_ALL.csv"
+    Q1_2025_path = folder_path + "BOA2025.csv"
+    all_2024_path = folder_path + "BOA2024.csv"
+    all_2023_path = folder_path + "BOA2023.csv"
+    descriptions_file_path = folder_path + "All.txn_descriptions.txt"
+    try:
+        settings = bdms.BudManSettings()
+        configure_logging(__name__, logtest=False)
+
+        orig_desc = 'Original Description'
+        descriptions_file = Path(descriptions_file_path)
+        if descriptions_file.exists():
+            logger.info(f"Removing existing file: {descriptions_file}")
+            descriptions_file.unlink()  # Remove the file if it exists
+
+        for path_str in [june_2025_path, may_2025_path, april_2025_path,
+                  Q1_2025_path, all_2024_path, all_2023_path]:
+            path = Path(path_str)
+            if not path.exists():
+                logger.warning(f"Path does not exist: {path}")
+                continue
+            logger.info(f"Extracting '{orig_desc}' from: {path}")
+            # Extract the original description column from the csv file.
+            extract_column_from_csv(path, orig_desc, descriptions_file)
+        # extract_column_from_csv(june_2025_path, orig_desc, descriptions_file)
+
+        test_regex(
+            file_path=descriptions_file,
+            pattern=r"(?im)^\bPAYPAL.*?ID:(\w+)",
+            show_matches=True
+        )
+
+
+        logger.info(f"Done.")
+
+
+    except Exception as e:
+        m = p3u.exc_err_msg(e)
+        logger.error(m)
+    # bdm = bdms.bsm_BDM_STORE_url_load(bdms_url)
+    logger.info(f"Complete.")
+
+exit(0)
+#endregion __main__() method
+
+
+#region attic
+# ---------------------------------------------------------------------------- +
         # filename : str = settings.config["category_catalog"]["boa"]
         # fi_folder : Path = settings.FI_FOLDER_abs_path("boa") 
         # cat_path = fi_folder / filename
@@ -151,18 +252,6 @@ if __name__ == "__main__":
         # len2 = len(cat_data2)
         # if len(cat_data2["categories"]) == len(cat_data["categories"]):
         #     logger.info(f"All categories read successfully: {len(cat_data2)}")
-
-    except Exception as e:
-        m = p3u.exc_err_msg(e)
-        logger.error(m)
-    # bdm = bdms.bsm_BDM_STORE_url_load(bdms_url)
-    logger.info(f"Complete.")
-
-exit(0)
-#endregion __main__() method
-
-
-#region attic
 # ---------------------------------------------------------------------------- +
 #     wb_url = "file:///C:/Users/ppain/OneDrive/budget/p3_budget_manager_ca063e8b.jsonc"
 #     cr_url = "file:///C:/Users/ppain/OneDrive/budget/boa/data/new/CheckRegister_ToDate20250609.csv"
