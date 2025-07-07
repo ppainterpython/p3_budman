@@ -896,8 +896,8 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
             # Resolve FI_FOLDER path.
             self.bsm_FI_FOLDER_resolve(fi_key, 
                                         create_missing_folders, raise_errors)
-            # Resolve WF_FOLDER paths for the workflows.
-            self.bsm_WF_FOLDER_resolve(fi_key, 
+            # Resolve FI_WORKFLOW_DATA_FOLDER paths for the workflows.
+            self.bsm_FI_WORKFLOW_DATA_FOLDERS_resolve(fi_key, 
                                         create_missing_folders, raise_errors)
             # Resolve the FI_DATA collection, refresh actual
             # data from folders in BSM.
@@ -1238,16 +1238,38 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
                 raise
     #endregion bsm_FI_DATA_COLLECTION_resolve() method
     # ------------------------------------------------------------------------ + 
-    #region WF_OBJECT WF_FOLDER Path methods
-    """WF_FOLDER path name element for a folder path name for a workflow.
+    #region FI_WORKFLOW_DATA_FOLDERS Path methods
+    """An FI_WORKFLOW_DATA_FOLDER is located as the child of an FI_FOLDER as 
+    specified in the BDM_STORE file. Each FI will have data folders configured
+    for applicable workflow processes. Each workflow process can have up to 
+    three folders, one for each WF_PURPOSE: WF_INPUT, WF_WORKING, and WF_OUTPUT.
+    Workflow settings in the BDM_STORE map the workflow and purpose to actual
+    folder name elements in the storage system.
 
     Budget Manager uses the folder pattern to contain data used by a workflow
     for a financial institution. Each FI has a folder under the root
-    BDM_FOLDER. Configuration specifies a WF_FOLDER for each workflow, which
-    is the name of a folder under the FI_FOLDER. These Path methods are used
-    to combine the BDM_FOLDER, FI_FOLDER and WF_FOLDER name elements into
-    actual Path objects for use in the BSM.
+    BDM_FOLDER. 
     """
+    def bsm_FI_WORKFLOW_DATA_FOLDERS_resolve(self, fi_key:str, 
+                              create_missing_folders:bool=True, 
+                              raise_errors:bool=True) -> None:
+        """Resolve any FI_WORKFLOW_DATA_FOLDERS for the fi_key, create if 
+        requested."""
+        try:
+            logger.debug(f"FI_KEY('{fi_key}') FI_WORKFLOW_DATA_FOLDER.")
+            for wf_key, wf_object in self.bdm_wf_collection.items():
+                # Resolve the WF_FOLDER path elements.
+                for f_id in WF_FOLDER_PATH_ELEMENTS:
+                    wf_in_p = self.bsm_WF_FOLDER_path(fi_key, wf_key, f_id)
+                    if wf_in_p is not None:
+                        logger.debug(f"FI_KEY('{fi_key}') WF_KEY('{wf_key}') "
+                                    f"Checking WF_FOLDER('{f_id}')")
+                        bsm_verify_folder(wf_in_p, create_missing_folders, 
+                                         raise_errors)
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise
     def bsm_WF_FOLDER_path_str(self, fi_key : str, wf_key : str,
                                folder_id : str) -> str:
         """str version of the WF_FOLDER value for fi_key/wf_key/folder_id."""
@@ -1274,25 +1296,6 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
         """str of self.bsm_wf_folder_abs_path()."""
         p = self.bsm_WF_FOLDER_abs_path(fi_key, wf_key, folder_id)
         return str(p) if p is not None else None
-    def bsm_WF_FOLDER_resolve(self, fi_key:str, 
-                              create_missing_folders:bool=True, 
-                              raise_errors:bool=True) -> None:
-        """Resolve any WF-related folders for the fi_key, create if requested."""
-        try:
-            logger.debug(f"FI_KEY('{fi_key}') scan all WF_FOLDERs.")
-            for wf_key, wf_object in self.bdm_wf_collection.items():
-                # Resolve the WF_FOLDER path elements.
-                for f_id in WF_FOLDER_PATH_ELEMENTS:
-                    wf_in_p = self.bsm_WF_FOLDER_path(fi_key, wf_key, f_id)
-                    if wf_in_p is not None:
-                        logger.debug(f"FI_KEY('{fi_key}') WF_KEY('{wf_key}') "
-                                    f"Checking WF_FOLDER('{f_id}')")
-                        bsm_verify_folder(wf_in_p, create_missing_folders, 
-                                         raise_errors)
-        except Exception as e:
-            m = p3u.exc_err_msg(e)
-            logger.error(m)
-            raise
     #endregion WF_OBJECT WF_FOLDER Path methods
     # ------------------------------------------------------------------------ +
     #region WORKFLOW_DATA_COLLECTION aka WF_DATA_OBJECT (WF_DO) pseudo-property methods
@@ -1308,8 +1311,7 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
     concern actual access to data in the storage system. 3 workflow purposes
     are defined for each workflow and have corresponding folders mapped to them.
     The WF_PURPOSE_FOLDER_MAP contains the mapping of workflow_purpose to
-    workflow_folder, used to map to actual folder paths in a storage system. 
-    
+    workflow_folder, used to map to actual folder paths in a storage system.
     """
     def bsm_WORKFLOW_DATA_COLLECTION_resolve(self, wb_data_collection: WF_DATA_OBJECT,
                                    fi_key : str, wf_key : str):

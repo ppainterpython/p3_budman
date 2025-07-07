@@ -284,25 +284,15 @@ class BudManCLIParser():
                 aliases=["wb", "WB"], 
                 help="Show workbook information.")
             wb_subcmd_parser.set_defaults(
-                show_cmd="workbooks",
                 cmd_key="show_cmd",   # new way
                 cmd_name="show", 
                 subcmd_name="workbooks",
                 subcmd_key="show_cmd_workbooks")
+            # self.add_wb_index_argument(wb_subcmd_parser)
             wb_subcmd_parser.add_argument(
-                "wb_ref", nargs="?", 
-                action="store", 
-                default='all',
-                help="Workbook reference, name or number from show workbooks.")
-            wb_subcmd_parser.add_argument(
-                "-i", "--info", 
-                nargs="?", 
-                required=False, 
-                dest="wb_info",
-                action="store",
-                const = 'info', 
-                default = 'info',  # info | verbose
-                help="Show additional information about the workbook.")
+                "-t", "--bdm_tree", 
+                action="store_true",
+                help="Show the BDM tree hierarchy.")
             self.add_common_args(wb_subcmd_parser)
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))

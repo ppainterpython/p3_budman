@@ -29,7 +29,9 @@ from .workflow_utils import (
     category_tree_to_csv,
     category_map_count, 
     clear_category_map,
-    categorize_transaction
+    categorize_transaction,
+    extract_bdm_tree,
+    output_bdm_tree
 )
 from .budget_categorization import (
     check_sheet_columns, 
@@ -77,6 +79,8 @@ __all__ = [
     "category_map_count",
     "clear_category_map",
     "categorize_transaction",
+    "extract_bdm_tree",
+    "output_bdm_tree",
     # budget_categorization.py module
     "check_sheet_columns",
     "check_sheet_schema",

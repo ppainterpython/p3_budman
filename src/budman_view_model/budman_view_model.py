@@ -203,7 +203,7 @@ from budman_workflows import (
     category_map_count, get_category_map, clear_category_map, 
     compile_category_map, set_compiled_category_map, clear_compiled_category_map,
     check_sheet_schema, check_sheet_columns, process_budget_category,
-    apply_check_register, output_category_tree,
+    apply_check_register, output_category_tree, output_bdm_tree,
     process_txn_intake
     )
 from budman_workflows import budget_category_mapping
@@ -1145,24 +1145,8 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
         """
         try:
             logger.debug(f"Start: ...")
-            # wb_index : int = self.cp_cmd_attr_get(cmd, cp.CK_WB_INDEX, self.dc_WB_INDEX)
-            # all_wbs : bool = self.cp_cmd_attr_get(cmd, cp.CK_ALL_WBS, self.dc_ALL_WBS)
-            # wb_id : str = self.cp_cmd_attr_get(cmd, cp.WB_ID, self.dc_WB_ID)
-            # # Check for an invalid wb_id value.
-            # wb_count = len(self.dc_WORKBOOK_DATA_COLLECTION)
-            # result = f"Budget Manager Workbooks({wb_count}):\n"
-            # # Now either all_wbs or a specific workbook is to be loaded.
-            # if all_wbs:
-            #     success, wdc_result = self.get_workbook_data_collection_info_str()
-            #     result += wdc_result
-            # else:
-            #     wb : BDMWorkbook = None
-            #     success, wb, _ = self.get_workbook(wb_id, load=False) 
-            #     if not success:
-            #         return False, f"Error getting workbook '{wb_id}': {wb}"
-            #     l = "Yes" if wb.wb_loaded else "No "
-            #     result += f"{P2}{wb_index:>2} {l} {wb.wb_name} '{wb.wb_url}'\n"
-            return True, "result"
+            result = output_bdm_tree()
+            return True, result
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)

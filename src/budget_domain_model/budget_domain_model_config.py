@@ -79,30 +79,30 @@ class BDMConfig(metaclass=BDMSingletonMeta):
                 FI_NAME: "Bank of America",
                 FI_TYPE: "bank",
                 FI_FOLDER: "boa",
-                FI_WORKFLOW_DATA_COLLECTION: 
-                { # FI_WORKFLOW_DATA_COLLECTION Dict[WF_KEY: WORKFLOW_DATA_COLLECTION]
-                     BDM_WF_CATEGORIZATION:  # WF_KEY: 
-                     {  # WORKFLOW_DATA_COLLECTION Dict[WF_PURPOSE: WORKBOOK_DATA_LIST]
-                        WF_INPUT: # WF_PURPOSE: WF_INPUT  (input data objects) 
-                        [  # WORKBOOK_DATA_LIST: List[WORKBOOK_ITEMS], WORKBOOK_ITEM: Tuple[WB_NAME, WB_URL]
-                            ( "input_prefix_wb_name_1", "wb_url_1" ),
-                            ( "input_prefix_wb_name_2", "wb_url_2" ),
-                            ( "input_prefix_wb_name_3", "wb_url_3" )
-                        ], 
-                        WF_WORKING: # WF_PURPOSE: WF_WORKING  (working data objects) 
-                        [ # WORKBOOK_DATA_LIST: List[WORKBOOK_ITEMS], WORKBOOK_ITEM: Tuple[WB_NAME, WB_URL]
-                            ( "wb_name_1", "wb_url_1" ),
-                            ( "wb_name_2", "wb_url_2" ),
-                            ( "wb_name_3", "wb_url_3" )
-                        ], 
-                        WF_OUTPUT: # WF_PURPOSE: WF_OUTPUT  (output data objects) 
-                        [  # WORKBOOK_DATA_LIST: List[WORKBOOK_ITEMS], WORKBOOK_ITEM: Tuple[WB_NAME, WB_URL]
-                            ( "output_prefix_wb_name_1", "wb_url_4" ),
-                            ( "output_prefix_wb_name_2", "wb_url_5" ),
-                            ( "output_prefix_wb_name_3", "wb_url_6" )
-                        ]
-                    }
-                },
+                # FI_WORKFLOW_DATA_COLLECTION: 
+                # { # FI_WORKFLOW_DATA_COLLECTION Dict[WF_KEY: WORKFLOW_DATA_COLLECTION]
+                #      BDM_WF_CATEGORIZATION:  # WF_KEY: 
+                #      {  # WORKFLOW_DATA_COLLECTION Dict[WF_PURPOSE: WORKBOOK_DATA_LIST]
+                #         WF_INPUT: # WF_PURPOSE: WF_INPUT  (input data objects) 
+                #         [  # WORKBOOK_DATA_LIST: List[WORKBOOK_ITEMS], WORKBOOK_ITEM: Tuple[WB_NAME, WB_URL]
+                #             ( "input_prefix_wb_name_1", "wb_url_1" ),
+                #             ( "input_prefix_wb_name_2", "wb_url_2" ),
+                #             ( "input_prefix_wb_name_3", "wb_url_3" )
+                #         ], 
+                #         WF_WORKING: # WF_PURPOSE: WF_WORKING  (working data objects) 
+                #         [ # WORKBOOK_DATA_LIST: List[WORKBOOK_ITEMS], WORKBOOK_ITEM: Tuple[WB_NAME, WB_URL]
+                #             ( "wb_name_1", "wb_url_1" ),
+                #             ( "wb_name_2", "wb_url_2" ),
+                #             ( "wb_name_3", "wb_url_3" )
+                #         ], 
+                #         WF_OUTPUT: # WF_PURPOSE: WF_OUTPUT  (output data objects) 
+                #         [  # WORKBOOK_DATA_LIST: List[WORKBOOK_ITEMS], WORKBOOK_ITEM: Tuple[WB_NAME, WB_URL]
+                #             ( "output_prefix_wb_name_1", "wb_url_4" ),
+                #             ( "output_prefix_wb_name_2", "wb_url_5" ),
+                #             ( "output_prefix_wb_name_3", "wb_url_6" )
+                #         ]
+                #     }
+                # },
                 FI_WORKBOOK_DATA_COLLECTION: 
                     {  # FI_WORKBOOK_DATA_COLLECTION: Dict[WB_INDEX: WORKBOOK_OBJECT]
                         0: {}
@@ -114,7 +114,11 @@ class BDMConfig(metaclass=BDMSingletonMeta):
                 FI_NAME: "Merrill Lynch",
                 FI_TYPE: "brokerage",
                 FI_FOLDER: "merrill",
-                FI_WORKFLOW_DATA_COLLECTION: None,
+                # FI_WORKFLOW_DATA_COLLECTION: None,
+                FI_WORKBOOK_DATA_COLLECTION: 
+                    {  # FI_WORKBOOK_DATA_COLLECTION: Dict[WB_INDEX: WORKBOOK_OBJECT]
+                        0: {}
+                },
             },
         },
         BDM_WF_COLLECTION: {
