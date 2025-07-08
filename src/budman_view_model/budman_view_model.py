@@ -953,7 +953,7 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
                 logger.error(m)
                 raise RuntimeError(f"{pfx}{m}")
             # Load the workbooks for the FI,WF specified in the DC.
-            lwbl = self.DC.bdmwd_FI_WORKBOOKS_load(fi_key, wf_key, wb_type)
+            # lwbl = self.DC.bdmwd_FI_WORKBOOKS_load(fi_key, wf_key, wb_type)
             # Set last values of FI_init_cmd in the DC.
             self.dc_FI_KEY = fi_key
             self.dc_WF_KEY = wf_key
@@ -1196,8 +1196,8 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
                 if not success:
                     return False, result
                 # Cmd output string
-                r_str = self.get_wb_content_repr(result)
-                r = f"{P2}Loaded wb_index: {wb_index:>2} wb_id: '{bdm_wb.wb_id:<40}' {r_str}\n"
+                r_str = bdm_wb.wb_index_display_str(wb_index)
+                r = f"{P2}Loaded {r_str}\n"
                 logger.debug(f"Complete Command: 'Load' {p3u.stop_timer(st)}")   
                 return success, r
             if all_wbs:
@@ -1213,8 +1213,8 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
                     # Retrieve the workbook content from dc_LOADED_WORKBOOKS.
                     success, result = self.dc_WORKBOOK_content_get(bdm_wb) 
                     # Cmd output string
-                    r_str = self.get_wb_content_repr(result)
-                    r = f"{P2}Loaded wb_index: {wb_index:>2} wb_id: '{bdm_wb.wb_id:<40}' {r_str}\n"
+                    r_str = bdm_wb.wb_index_display_str(wb_index)
+                    r = f"{P2}Loaded {r_str}\n"
                 logger.debug(f"Complete Command: 'Load' {p3u.stop_timer(st)}")   
                 return True, r
         except Exception as e:
@@ -1264,8 +1264,8 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
                         logger.error(f"Failed to save wb_id: '{wb_id}': {result}")
                         r += f"{P2}Error wb_index: {wb_index:>2} wb_id: '{wb_id:<40}' Reason:{m}\n"
                         continue
-                    r_str = self.get_wb_content_repr(wb_content)
-                    r += f"{P2}Saved wb_index: {wb_index:>2} wb_id: '{wb_id:<40}' wb_content: {result!r}\n"
+                    r_str = bdm_wb.wb_index_display_str(wb_index)
+                    r += f"{P2}Saved {result!r}\n"
                 # Save the workbooks for the specified FI, WF, and WB-type.
                 logger.info(f"Complete Command: 'Save' {p3u.stop_timer(st)}")   
                 return True, r
@@ -1289,8 +1289,8 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
                     logger.error(f"Failed to save workbook wb_id: '{wb_id}': {result}")
                     return False, result
                 # Cmd output string
-                r_str = self.get_wb_content_repr(wb_content)
-                r = f"{P2}Saved wb_index: {wb_index:>2} wb_id: '{bdm_wb.wb_id:<40}' {r_str}\n"
+                r_str = bdm_wb.wb_index_display_str(wb_index)
+                r = f"{P2}Saved {r_str}\n"
                 logger.debug(f"Complete Command: 'Save' {p3u.stop_timer(st)}")   
                 return success, r
             # Resolve with current DC values.
@@ -1433,14 +1433,16 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             root error is contained in the exception message.
         """
         try:
-            logger.info(f"Start: ...")
+            r_msg: str = "Start:"
+            m:Optional[str] = None
+            logger.debug(r_msg)
             success: bool = False
             result: Any = None
             subcmd_name = cmd[cp.CK_SUBCMD_NAME]
             if subcmd_name == cp.CV_LOG_SUBCMD:
                 # Show the current log level.
                 return True, "App Log cmd."
-            elif subcmd_name == cp.CV_RELOAD_SUBCMD:
+            elif subcmd_name == cp.CV_RELOAD_SUBCMD_NAME:
                 try:
                     reload_target = self.cp_cmd_attr_get(cmd, cp.CK_RELOAD_TARGET, None)
                     if reload_target is None:
@@ -1449,8 +1451,9 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
                         return False, m
                     if reload_target == CATEGORY_MAP:
                         cmc = category_map_count()
-                        r = f"Workflow reload: '{reload_target}' rule count = {cmc}\n"
-                        logger.debug(r)
+                        m = f"Workflow reload: '{reload_target}' rule count = {cmc}\n"
+                        logger.debug(m)
+                        r_msg += f"\n{m}"
                         clear_category_map()
                         clear_compiled_category_map()
                         importlib.reload(budget_category_mapping)
@@ -1459,7 +1462,11 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
                         cm = get_category_map()
                         ccm = compile_category_map(cm)
                         set_compiled_category_map(ccm)
-                    return True, r
+                    if reload_target == FI_WORKBOOK_DATA_COLLECTION:
+                        wdc: WORKBOOK_DATA_COLLECTION = None
+                        wdc, m = self.model.bsm_FI_WORKBOOK_DATA_COLLECTION_resolve(self.dc_FI_KEY)
+                        return True, m
+                    return True, r_msg
                 except Exception as e:
                     m = f"Error reloading target: {reload_target}: {p3u.exc_err_msg(e)}"
                     logger.error(m)

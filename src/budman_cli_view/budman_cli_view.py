@@ -34,6 +34,7 @@ from rich.console import Console
 import p3_utils as p3u, pyjson5, p3logging as p3l
 import cmd2, argparse
 from cmd2 import (Cmd2ArgumentParser, with_argparser)
+from cmd2 import (Bg,Fg, style, ansi)
 # local modules and packages
 import budman_namespace as bdm
 from budman_settings import *
@@ -191,7 +192,9 @@ class BudManCLIView(cmd2.Cmd, BudManDataContext_Binding):
         self._settings : BudManSettings = settings if settings else BudManSettings()
         self._parse_only :bool = False
         self._current_cmd :Optional[str] = None
+        # cmd2.Cmd initialization
         cmd2.Cmd.__init__(self, shortcuts=shortcuts)
+        self.allow_style = ansi.AllowStyle.TERMINAL
         self.register_precmd_hook(self.precmd_hook)
         self.register_postcmd_hook(self.postcmd_hook)
         # super().__init__()

@@ -313,7 +313,7 @@ def bsm_WORKBOOK_content_get(bdm_wb:BDMWorkbook) -> Any:
             return csv_data_list
         if bdm_wb.wb_type == bdm.WB_TYPE_UNKNOWN:
             # If the WB_TYPE is unknown, attempt to suss it from the URL.
-            wb_type = bsm_WB_TYPE(bdm_wb.wb_url, bdm_wb_filetype)
+            wb_type = bsm_WB_TYPE(bdm_wb.wb_url, bdm_wb.wb_filetype)
 
         # Attempt to dispatch based on filetype.
         bdm_wb_filetype = bdm_wb_abs_path.suffix.lower()

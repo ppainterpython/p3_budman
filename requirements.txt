@@ -87,10 +87,10 @@ notebook_shim==0.2.4
 numpy==2.2.4
 openpyxl==3.1.5
 overrides==7.7.0
--e git+https://github.com/ppainterpython/p3_budman.git@9eab7b0f92a272a24ac662eee17f1cb7001e21be#egg=p3_budget_model
+-e git+https://github.com/ppainterpython/p3_budman.git@3dffd52710b3566cd621d30f76223fb6d2ab14f5#egg=p3_budget_model
 p3_exel_budget==0.0.0
--e git+https://github.com/ppainterpython/p3_utils.git@03ff5dab54c6477b3dc07af13b5aca139ad9e0a0#egg=p3_utils
--e git+https://github.com/ppainterpython/p3logging.git@6bc9658e5077f4d644799090afdecaba889983dd#egg=p3logging
+-e git+https://github.com/ppainterpython/p3_utils.git@31586947bbc6e655717477d21605b5bfb7f847f3#egg=p3_utils
+-e git+https://github.com/ppainterpython/p3logging.git@6f7fe9ad9b48fdf42bb24ea2029cb1a72a793190#egg=p3logging
 packaging==24.2
 pandas==2.2.3
 pandocfilters==1.5.1

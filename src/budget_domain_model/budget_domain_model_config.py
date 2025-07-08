@@ -79,30 +79,6 @@ class BDMConfig(metaclass=BDMSingletonMeta):
                 FI_NAME: "Bank of America",
                 FI_TYPE: "bank",
                 FI_FOLDER: "boa",
-                # FI_WORKFLOW_DATA_COLLECTION: 
-                # { # FI_WORKFLOW_DATA_COLLECTION Dict[WF_KEY: WORKFLOW_DATA_COLLECTION]
-                #      BDM_WF_CATEGORIZATION:  # WF_KEY: 
-                #      {  # WORKFLOW_DATA_COLLECTION Dict[WF_PURPOSE: WORKBOOK_DATA_LIST]
-                #         WF_INPUT: # WF_PURPOSE: WF_INPUT  (input data objects) 
-                #         [  # WORKBOOK_DATA_LIST: List[WORKBOOK_ITEMS], WORKBOOK_ITEM: Tuple[WB_NAME, WB_URL]
-                #             ( "input_prefix_wb_name_1", "wb_url_1" ),
-                #             ( "input_prefix_wb_name_2", "wb_url_2" ),
-                #             ( "input_prefix_wb_name_3", "wb_url_3" )
-                #         ], 
-                #         WF_WORKING: # WF_PURPOSE: WF_WORKING  (working data objects) 
-                #         [ # WORKBOOK_DATA_LIST: List[WORKBOOK_ITEMS], WORKBOOK_ITEM: Tuple[WB_NAME, WB_URL]
-                #             ( "wb_name_1", "wb_url_1" ),
-                #             ( "wb_name_2", "wb_url_2" ),
-                #             ( "wb_name_3", "wb_url_3" )
-                #         ], 
-                #         WF_OUTPUT: # WF_PURPOSE: WF_OUTPUT  (output data objects) 
-                #         [  # WORKBOOK_DATA_LIST: List[WORKBOOK_ITEMS], WORKBOOK_ITEM: Tuple[WB_NAME, WB_URL]
-                #             ( "output_prefix_wb_name_1", "wb_url_4" ),
-                #             ( "output_prefix_wb_name_2", "wb_url_5" ),
-                #             ( "output_prefix_wb_name_3", "wb_url_6" )
-                #         ]
-                #     }
-                # },
                 FI_WORKBOOK_DATA_COLLECTION: 
                     {  # FI_WORKBOOK_DATA_COLLECTION: Dict[WB_INDEX: WORKBOOK_OBJECT]
                         0: {}
@@ -278,6 +254,20 @@ class BDMConfig(metaclass=BDMSingletonMeta):
                     for wb_id, wb_data in fi_object[FI_WORKBOOK_DATA_COLLECTION].items():
                         if not isinstance(wb_data, dict):
                             continue
+                        # Check if the wb_data.wb_url still exists. If not,
+                        # remove it from the collection.
+                        if (WB_URL in wb_data and
+                            wb_data[WB_URL] is not None and
+                            isinstance(wb_data[WB_URL], str)):
+                            wb_url = wb_data[WB_URL]
+                            try:
+                                _ = p3u.verify_url_file_path(wb_url)
+                            except Exception as e:
+                                m = p3u.exc_err_msg(e)
+                                logger.error(f"Error verifying WORKBOOK URL '{wb_url}': {m}")
+                                logger.error(f"Left out of collection: "
+                                             f"FI_KEY('{fi_key}') wb_id('{wb_id}')")
+                                continue
                         # Convert the WORKBOOK_ITEM to a WORKBOOK_OBJECT.
                         wb_object = BDMWorkbook(**wb_data)
                         # Replace the DATA_OBJECT with the WORKBOOK_OBJECT.
@@ -563,59 +553,3 @@ class BDMConfig(metaclass=BDMSingletonMeta):
 
     #endregion BudgetDomainModel (BDM) compatible properties
     # ------------------------------------------------------------------------ +
-    #region log_BMT_info()
-    @staticmethod
-    def log_BDM_CONFIG_info(bmt : "BDMConfig") -> None:
-        """Log the BDMConfig class information."""
-        try:
-            logger.debug("Start:  ...")
-            logger.debug(f"{P2}BDM_INITIALIZED('{BDM_INITIALIZED}'): "
-                         f"{bmt.bdm_initialized}")
-            logger.debug(f"{P2}BDM_FOLDER('{BDM_FOLDER}'): '{bmt.bdm_url}'")
-            logger.debug(f"{P2}BDM_URL('{BDM_URL}): '{bmt.bdm_url}' ")
-            logger.debug(f"{P2}BDM_WORKFLOWS('{BDM_WF_COLLECTION}'): "
-                         f" '{bmt.bdm_wf_collection}'")
-            # Enumerate Financial Institutions (FI)
-            fi_c = len(bmt.bdm_fi_collection)  # financial institutions count
-            logger.debug(f"{P2}BDM_FI('{BDM_FI_COLLECTION}')({fi_c})")
-            for fi_key, fi_object in bmt.bdm_fi_collection.items():
-                logger.debug(f"{P4}Financial Institution: "
-                         f"{fi_key}:{fi_object[FI_NAME]}:"
-                         f"{fi_object[FI_TYPE]}: '{fi_object[FI_FOLDER]}'")
-            # Enumerate Workflows in the budget model
-            c = len(bmt.bdm_wf_collection)
-            logger.debug(
-                f"{P2}BDM_WF_COLLECTION['{BDM_WF_COLLECTION}']({c}): "
-                f"{str(list(bmt.bdm_wf_collection.keys()))}")
-            for wf_key, wf_object in bmt.bdm_wf_collection.items():
-                logger.debug(f"{P4}Workflow:({wf_key}:{wf_object[WF_NAME]}: ")
-                logger.debug(f"{P6}WF_INPUT_FOLDER: '{bmt.wf_object[WF_INPUT_FOLDER]}'")
-                logger.debug(f"{P6}WF_WORKING_FOLDER: '{bmt.wf_object[WF_WORKING_FOLDER]}'")
-                logger.debug(f"{P6}WF_OUTPUT_FOLDER: '{bmt.wf_object[WF_OUTPUT_FOLDER]}'")
-                logger.debug(f"{P6}WF_PREFIX_IN: '{bmt.wf_object[WF_PREFIX_IN]}' "
-                            f"WF_PREFIX_OUT: '{bmt.wf_object[WF_PREFIX_OUT]}'")
-                logger.debug(f"{P6}WB_TYPE_FOLDER_MAP: {str(bmt.wf_object[WF_PURPOSE_FOLDER_MAP])}")
-            # Enumerate Budget Model Options
-            bmo_c = len(bmt.bdm_options)
-            logger.debug(f"{P2}BDM_OPTION('{BDM_OPTIONS}')({bmo_c})")
-            for opt_key, opt in bmt.bdm_options.items():
-                logger.debug(f"{P4}Option('{opt_key}') = '{opt}'")
-
-            # "And the rest. Here on Gilligan's Isle..."
-            logger.debug(f"{P2}BDM_CREATED_DATE({BDM_CREATED_DATE}'): "
-                         f"{bmt.bdm_created_date}")
-            logger.debug(f"{P2}BDM_LAST_MODIFIED_DATE({BDM_LAST_MODIFIED_DATE}'): "
-                            f"{bmt.bdm_last_modified_date}")
-            logger.debug(f"{P2}BDM_LAST_MODIFIED_BY({BDM_LAST_MODIFIED_BY}'): "
-                            f"{bmt.bdm_last_modified_by}")
-            logger.debug(f"{P2}BDM_WORKING_DATA({BDM_WORKING_DATA}'): "
-                            f"{bmt.bdm_working_data}")
-            logger.debug(f"Complete:")   
-        except Exception as e:
-            m = p3u.exc_err_msg(e)
-            logger.error(m)
-            raise
-
-    #endregion log_BMT_info()
-    # ------------------------------------------------------------------------ +
-# ---------------------------------------------------------------------------- +

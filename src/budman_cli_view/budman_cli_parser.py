@@ -59,8 +59,7 @@ class BudManCLIParser():
             parser = self.app_cmd
             parser.prog = app_name
             title = self.app_cmd_parser_setup.__doc__
-            # app subcommands: reload logging
-            subparsers = parser.add_subparsers() #title=title, dest="app_cmd")
+            subparsers = parser.add_subparsers(title=title) #, dest="app_cmd")
 
             # app delete subcommand
             delete_parser = subparsers.add_parser(
@@ -81,20 +80,22 @@ class BudManCLIParser():
 
             # app reload subcommand
             reload_parser = subparsers.add_parser(
-                "reload",
+                cp.CV_RELOAD_SUBCMD_NAME,
                 aliases=["r"], 
-                help="Reload modules.")
-            self.add_common_args(reload_parser)
-            reload_parser.set_defaults(app_cmd="reload",    # old way
-                                       cmd_key="app_cmd",   # new way
-                                       cmd_name="app", 
-                                       subcmd_name="reload",
-                                       subcmd_key="app_cmd_reload")
+                help="Reload objects like modules and data.")
+            reload_parser.set_defaults(
+                cmd_key=cp.CV_APP_CMD_KEY,   # new way
+                cmd_name=cp.CV_APP_CMD_NAME, 
+                subcmd_name=cp.CV_RELOAD_SUBCMD_NAME,
+                subcmd_key=cp.CV_RELOAD_SUBCMD_KEY)
             reload_parser.add_argument(
-                "reload_target", nargs="?",
+                cp.CK_RELOAD_TARGET, 
+                nargs="?",
                 action="store", 
-                default='category_map',
-                help="Name of module to reload, or 'all' re-loadable.")
+                choices=[bdm.CATEGORY_MAP, bdm.FI_WORKBOOK_DATA_COLLECTION],
+                default=bdm.CATEGORY_MAP,
+                help="Name of object to reload, pick from choices.")
+            self.add_common_args(reload_parser)
 
             # app log [handler-name] [--list] [--level [level-value]] [--rollover]
             log_subcmd_parser = subparsers.add_parser(

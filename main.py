@@ -22,6 +22,7 @@ from src.budman_app.budman_app import BudManApp
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
 logger = logging.getLogger(__name__)
+sys.stdout.reconfigure(encoding='utf-8')  # Ensure stdout uses UTF-8 encoding
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
