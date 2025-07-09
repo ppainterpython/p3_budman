@@ -404,3 +404,55 @@ def output_bdm_tree() -> str:
         logger.error(m)
 #endregion outout_bdm_tree() function
 # ------------------------------------------------------------------------ +
+#region extract_txn_categories() method
+def extract_txn_categories(all_cats_url: str) -> dict:
+    """Extract transaction categories from the category_map in 
+    the budget_category_mapping.py module and return them as a dict.
+    , save to a WB_TYPE_TXN_CATEGORIES workbook.
+
+    This function is being used to refactor away from the global 
+    category_map dictionary and to use a file-based approach.
+
+    Args:
+        wb_url (str): The URL of the workbook.
+        cr_url (str): The URL of the check register.
+    """
+    try:
+        # Create a WB_TYPE_TXN_CATEGORIES workbook's in memory content
+        # from the category_map definition in the module now.
+        tc_path = p3u.verify_url_file_path(all_cats_url, test=False)
+        cat_data = {
+            "name": tc_path.stem,
+            "categories": {}
+        }
+
+        c_map = {}
+        category_map: Dict[str, str] = get_category_map()
+        for pattern, cat in category_map.items():
+            l1, l2, l3 = split_budget_category(cat)
+            cat_id = generate_hash_key(str(pattern), length=8)
+            bdm_tc = BDMTXNCategory(
+                cat_id=cat_id,
+                full_cat=cat,
+                level1=l1,
+                level2=l2,
+                level3=l3,
+                description=f"Level 1 Category: {l1}",
+                pattern=pattern,
+                essential=False,  # Default to False, can be set later
+                payee=None
+            )
+            if cat_id in cat_data["categories"]:
+                logger.warning(f"Duplicate category ID '{cat_id}' found for "
+                               f"category '{cat}'. Overwriting existing entry.")
+            cat_data["categories"][cat_id] = bdm_tc
+        bsm_WORKBOOK_content_put(cat_data, all_cats_url)
+        cnt = len(cat_data["categories"])
+        logger.info(f"Extracted '{cnt}' categories from budget_category_mapping "
+                    f"module, saved to : '{all_cats_url}'")
+        return cat_data
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion extract_txn_categories() method
+# ------------------------------------------------------------------------ +

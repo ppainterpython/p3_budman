@@ -446,10 +446,6 @@ class BudManCLIParser():
                 "--load_workbook","-l", "-load", 
                 action="store_true", 
                 help="Load the workbook if not yet loaded.")
-            categorization_parser.add_argument(
-                "--check-register","-cr",  
-                action="store_true", 
-                help="Specified workbook is type: Check Register.")
             self.add_common_args(categorization_parser)
             
             # workflow intake subcommand
@@ -509,20 +505,19 @@ class BudManCLIParser():
 
             # workflow 'apply' subcommand
             apply_parser = subparsers.add_parser(
-                "apply",
+                cp.CV_APPLY_SUBCMD_NAME,
                 aliases=["a"], 
-                help="Task: Apply some operation to workbooks.")
+                help="Task: Apply some operation with workbooks.")
             apply_parser.set_defaults(
-                workflow_cmd="apply",
-                cmd_key="workflow_cmd",   # new way
-                cmd_name="workflow", 
-                subcmd_name="apply",
-                subcmd_key="workflow_cmd_apply")
+                cmd_key=cp.CV_APPLY_SUBCMD_KEY,   # new way
+                cmd_name=cp.CV_APPLY_SUBCMD_NAME, 
+                subcmd_name=cp.CV_APPLY_SUBCMD_NAME,
+                subcmd_key=cp.CV_APPLY_SUBCMD_KEY)
             apply_parser.add_argument(
-                "-wr","--wb_ref", nargs="?",
-                action="store", dest='wb_ref', 
+                "-cm", "--category_map", nargs="?",
+                action="store", 
                 default=None,
-                help="Workbook reference, wb_index, wb_name or 'all' workbooks.")
+                help="apply the category_map to update the txn_categories.")
             apply_parser.add_argument(
                 "-cr", "--check_register", nargs="?",
                 action="store", 

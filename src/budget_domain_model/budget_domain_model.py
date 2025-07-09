@@ -135,7 +135,7 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
         setattr(self, BDM_CREATED_DATE, p3u.now_iso_date_string()) 
         setattr(self, BDM_LAST_MODIFIED_DATE, self._created_date)
         setattr(self, BDM_LAST_MODIFIED_BY, getpass.getuser())
-        setattr(self, BDM_WORKING_DATA, {})  
+        # setattr(self, BDM_WORKING_DATA, {})  
         setattr(self, BDM_DATA_CONTEXT, {})  
         logger.debug("Complete:")
     #endregion BudgetDomainModel class constructor __init__()
@@ -158,7 +158,7 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
             BDM_LAST_MODIFIED_DATE: self.bdm_last_modified_date,
             BDM_LAST_MODIFIED_BY: self.bdm_last_modified_by,
             BDM_DATA_CONTEXT: self.bdm_data_context,
-            BDM_WORKING_DATA: self.bdm_working_data
+            # BDM_WORKING_DATA: self.bdm_working_data
         }
         return ret
     def __repr__(self) -> str:
@@ -175,7 +175,7 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
         ret += f"'{BDM_CREATED_DATE}': '{self.bdm_created_date}', "
         ret += f"'{BDM_LAST_MODIFIED_DATE}': '{self.bdm_last_modified_date}', "
         ret += f"'{BDM_LAST_MODIFIED_BY}': '{self.bdm_last_modified_by}', "
-        ret += f"'{BDM_WORKING_DATA}': '{self.bdm_working_data}' }} "
+        # ret += f"'{BDM_WORKING_DATA}': '{self.bdm_working_data}' }} "
         return ret
     def __str__(self) -> str:
         ''' Return a str representation of the BudgetDomainModel object '''
@@ -191,7 +191,7 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
         ret += f"{BDM_CREATED_DATE} = '{self.bdm_created_date}', "
         ret += f"{BDM_LAST_MODIFIED_DATE} = '{self.bdm_last_modified_date}', "
         ret += f"{BDM_LAST_MODIFIED_BY} = '{self.bdm_last_modified_by}', "
-        ret += f"{BDM_WORKING_DATA} = {self.bdm_working_data}"
+        # ret += f"{BDM_WORKING_DATA} = {self.bdm_working_data}"
         return ret
     #endregion BudgetDomainModel internal class methods
     # ------------------------------------------------------------------------ +
@@ -317,16 +317,16 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
         """Set the last modified by."""
         self._last_modified_by = value
     
-    @property
-    def bdm_working_data(self) -> BDM_WORKING_DATA_OBJECT:
-        """The budget domain model working data."""
-        self._wd = {} if self._wd is None else self._wd
-        return self._wd
-    @bdm_working_data.setter
-    def bdm_working_data(self, value: BDM_WORKING_DATA_OBJECT) -> None:
-        """Set the budget domain model working data."""
-        self._wd = {} if self._wd is None else self._wd
-        self._wd = value
+    # @property
+    # def bdm_working_data(self) -> BDM_WORKING_DATA_OBJECT:
+    #     """The budget domain model working data."""
+    #     self._wd = {} if self._wd is None else self._wd
+    #     return self._wd
+    # @bdm_working_data.setter
+    # def bdm_working_data(self, value: BDM_WORKING_DATA_OBJECT) -> None:
+    #     """Set the budget domain model working data."""
+    #     self._wd = {} if self._wd is None else self._wd
+    #     self._wd = value
 
     @property
     def bdm_data_context(self) -> DATA_CONTEXT:
@@ -498,7 +498,7 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
             setattr(self, BDM_CREATED_DATE, bdm_config[BDM_CREATED_DATE]) 
             setattr(self, BDM_LAST_MODIFIED_DATE, bdm_config[BDM_LAST_MODIFIED_DATE])
             setattr(self, BDM_LAST_MODIFIED_BY, bdm_config[BDM_LAST_MODIFIED_BY])
-            setattr(self, BDM_WORKING_DATA, {})
+            # setattr(self, BDM_WORKING_DATA, {})
             setattr(self, BDM_DATA_CONTEXT, bdm_config[BDM_DATA_CONTEXT])
 
             if bsm_init:
@@ -706,7 +706,7 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
              fi_value = dict of info about the FI.
         wf - workflow
 
-    A WORKFLOW_DATA_COLLECTION(Dict) is a DATA_OBJECT(Dict) with key/value pairs specific
+    A WORKBOOK_DATA_COLLECTION(Dict) is a DATA_OBJECT(Dict) with key/value pairs specific
     to data for a workflow. A wb_data_collection is retrieved with the 
     bdm_FI_WF_DATA_OBJECT() method which could return other types of 
     DATA_OBJECTs in the future. These methods are BSM-related.
@@ -741,13 +741,6 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
         no longer present in the BSM. The BSM may discover a workbook in the
         filesystem which is not referenced in the BDM. 
 
-        TODO: Re-visit the options needed to control the behavior of the BSM
-        when it encounters a workbook in the filesystem which is not referenced
-        in the BDM. The BSM should be able to add that workbook to the BDM
-        and update the BDM to reflect that. The BSM should also be able to
-        remove a workbook from the BDM if it is no longer present in the
-        filesystem. The BDM_STORE should be updated to reflect these changes.
-
         Args:
             create_missing_folders (bool): Create missing folders if True.
             raise_errors (bool): Raise errors if True.
@@ -776,7 +769,6 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
         Raise a ValueError if the bm_folder property is not set or is not
         usable as part of a valid path string.
         """
-        # TODO: expand and resolve flags?
         if self.bdm_folder is None or len(self.bdm_folder) == 0:
             m = f"Budget folder path is not set. "
             m += f"Set the BDM_FOLDER('{BDM_FOLDER}') property to valid path value."
@@ -827,7 +819,6 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
         Raise a ValueError if the BDM_URL property is not set or is not
         usable as part of a valid path string.
         """
-        # TODO: expand and resolve flags?
         if self.bdm_url is None or not isinstance(self.bdm_url,str) or len(self.bdm_url) == 0:
             m = f"BDM_URL value is not set to a non-zero length str. "
             m += f"Set the BDM_URL('{BDM_URL}') property to valid path str."
@@ -953,8 +944,6 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
             # based on the BDM_WF_COLLECTION or configured workflows,
             # compile a list of WORKBOOKS as BDMWorkbook objects with populated
             # metadata. Then reconcile list with the FI_WORKBOOK_DATA_COLLECTION.
-            # In progress refactoring in favor of the FI_WORKBOOK_DATA_COLLECTION 
-            # to eliminate the FI_WORKFLOW_DATA_COLLECTION.
             for wf_key, wf_object in self.bdm_wf_collection.items():
                 wf_name = wf_object[WF_NAME]
 
@@ -1025,7 +1014,7 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
                         logger.debug(f"Collected workbook: {m}")
                         r_msg += f"{P6}workbook: {m}\n"
             # Now have scanned all of the BSM storage to capture all BDMWorkbooks
-            # from the FI_WORKFLOW_DATA_COLLECTION structure mapped to storage.
+            # from the FI_WORKFLOW structure mapped to storage.
             # Now reconcile the list of BDMWorkbook objects with the 
             # FI_WORKBOOK_DATA_COLLECTION.
             m = f"FI_KEY('{fi_key}') discovered {len(wb_collection)} workbooks."
@@ -1063,7 +1052,7 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
                 m = f"FI_KEY('{fi_key}') has no workflow data."
                 logger.debug(m)
                 return
-            # Enumerate the discoverd WORKFLOW_DATA_COLLECTION (disc_wdc),
+            # Enumerate the discoverd WORKBOOK_DATA_COLLECTION (disc_wdc),
             # and test the FI WORKBOOK_DATA_COLLECTION for the presence of each
             # discovered BDMWorkbook. If the BDMWorkbook is not present, add it.
             added : List[str] = []

@@ -421,7 +421,6 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
                 "show_cmd_workbooks": self.WORKBOOKS_show_cmd,
                 "load_cmd_workbooks": self.WORKBOOKS_load_cmd,
                 "save_cmd_workbooks": self.WORKBOOKS_save_cmd,
-                "load_cmd_check_register": self.CHECK_REGISTER_load_cmd,
                 "change_cmd_workbooks": self.CHANGE_cmd,
                 "workflow_cmd_categorization": self.WORKFLOW_categorization_cmd,
                 "workflow_cmd_apply": self.WORKFLOW_apply_cmd,
@@ -1300,65 +1299,6 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             raise
     #endregion WORKBOOKS_save_cmd() command method
     # ------------------------------------------------------------------------ +
-    #region CHECK_REGISTER_load_cmd() command > load wb 0
-    def CHECK_REGISTER_load_cmd(self, cmd : Dict) -> Tuple[bool, str]:
-        """Model-aware: Load one or more CHECK_REGISTER .csv files in the DC.
-
-        A load_cmd_check_register command will use the wb_ref value in the cmd. 
-        Value is a number or a wb_name.
-
-        Arguments:
-            cmd (Dict): A valid BudMan View Model Command object. For this
-            command, must contain load_cmd = 'check_register' resulting in
-            a full command key of 'load_cmd_check_register'.
-
-        Returns:
-            Tuple[success : bool, result : Any]: The outcome of the command 
-            execution. If success is True, result contains result of the 
-            command, if False, a description of the error.
-            
-        Raises:
-            RuntimeError: A description of the
-            root error is contained in the exception message.
-        """
-        try:
-            logger.info(f"Start: ...")
-            wb_index : int = self.cp_cmd_attr_get(cmd, cp.CK_WB_INDEX, self.dc_WB_INDEX)
-            all_wbs : bool = self.cp_cmd_attr_get(cmd, cp.CK_ALL_WBS, self.dc_ALL_WBS)
-            wb_id : str = self.cp_cmd_attr_get(cmd, cp.WB_ID, self.dc_WB_ID)
-            fi_key = self.cp_cmd_attr_get(cmd, cp.CK_FI_KEY, self.dc_FI_KEY)
-            wf_key = self.cp_cmd_attr_get(cmd, cp.CK_WF_KEY, self.dc_WF_KEY)
-            wf_purpose = self.cp_cmd_attr_get(cmd, cp.CK_WF_PURPOSE, self.dc_WF_PURPOSE)
-            wb_type = self.cp_cmd_attr_get(cmd, cp.CK_WB_TYPE, self.dc_WF_KEY)
-            wb_count = len(self.dc_CHECK_REGISTERS)
-            r = f"Budget Manager Loaded Check Register ({wb_count}):\n"
-            # A check register workbook is a .csv file.
-            # if all_wbs:
-            #     lwbl = self.DC.bdmwd_FI_WORKBOOKS_load(fi_key, wf_key, wb_type)
-            #     self.dc_WB_ID = ALL_KEY # Set the wb_id in the DC.
-            #     self.dc_WB_NAME = None   # Set the wb_name in the DC.
-            #     for wb_name in list(lwbl.keys()):
-            #         wb_index = self.dc_WORKBOOK_index(wb_id)
-            #         r += f"{P2}wb_index: {wb_index:>2} wb_name: '{wb_name:<40}'\n"
-            # else:
-            #     cr_data = self.dc_CHECK_REGISTER_load(wb_name, wb_id)
-            #     if cr_data is None:
-            #         m = f"Failed to load Check Register data from '{wb_id}'."
-            #         logger.error(m)
-            #         return False, m
-            #     # Add it to the WORKBOOKS list.
-            #     # self.dc_WORKBOOK_DATA_COLLECTION((wb_name, wb_ref))
-            #     # Add to LOADED_WORKBOOKS_COLLECTION.
-            #     self.dc_LOADED_WORKBOOKS[wb_name] = cr_data
-            #     r += f"{P2}wb_index: {wb_index:>2} wb_name: '{wb_name:<40}'\n"
-            #     self.dc_WB_ID = str(wb_index)  # Set the wb_ref in the DC.
-            #     self._dc_WB_NAME = wb_name  # Set the wb_name in the DC.
-            return True, r
-        except Exception as e:
-            logger.error(p3u.exc_err_msg(e))
-            raise
-    #endregion CHECK_REGISTER_load_cmd() method
-    # ------------------------------------------------------------------------ +
     #region CHANGE_cmd() command > wf cat 2
     def CHANGE_cmd(self, cmd : Dict) -> Tuple[bool, str]:
         """Change aspects of the Data Context.
@@ -1457,8 +1397,8 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
                         clear_category_map()
                         clear_compiled_category_map()
                         importlib.reload(budget_category_mapping)
-                        importlib.reload(budman_cli_parser)
-                        importlib.reload(budman_cli_view)
+                        # importlib.reload(budman_cli_parser)
+                        # importlib.reload(budman_cli_view)
                         cm = get_category_map()
                         ccm = compile_category_map(cm)
                         set_compiled_category_map(ccm)
@@ -1620,29 +1560,15 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
         """
         try:
             logger.info(f"Start: ...")
-            # # capture cmd args
-            # validate_only = self.cp_cmd_attr_get(cmd, cp.CK_VALIDATE_ONLY, None)
-            # what_if = self.cp_cmd_attr_get(cmd, cp.CK_WHAT_IF, None)
-            # fi_key = self.cp_cmd_attr_get(cmd, cp.CK_FI_KEY, self.dc_FI_KEY)
-            # wf_key = self.cp_cmd_attr_get(cmd, cp.CK_WF_KEY, self.dc_WF_KEY)
-            # wb_ref = self.cp_cmd_attr_get(cmd, cp.CK_WB_REF, self.dc_WB_ID)
-            # wb_type = self.cp_cmd_attr_get(cmd, cp.CK_WB_TYPE, self.dc_WB_TYPE)
-            # wf_purpose = self.cp_cmd_attr_get(cmd, cp.CK_WF_PURPOSE, None)
-            # cr_wb_ref = self.cp_cmd_attr_get(cmd, cp.CK_CHECK_REGISTER, None)
-            # # Needs a check_register (cr) and a transaction workbook (wb).
-            # success, cr_wb, cr_content = self.get_workbook(cr_wb_ref)
-            # if not success:
-            #     m = f"Failed to load check register '{cr_wb_ref}' - {cr_content}"
-            #     logger.error(m)
-            #     return False, m
-            # success, wb, wb_content = self.get_workbook(wb_ref)
-            # if not success:
-            #     m = f"Failed to load transaction workbook '{wb_ref}' - {wb_content}"
-            #     logger.error(m)
-            #     return False, m
-            # logger.debug(f"cr_wb_name: {cr_wb.wb_name}, wb_name: {wb.wb_name}, ")
-            # # Ready to apply the check register to the workbook.
-            # apply_check_register(cr_content, wb_content)
+            r_msg: str = "Start:"
+            m:Optional[str] = None
+            logger.debug(r_msg)
+            success: bool = False
+            result: Any = None
+            subcmd_name = cmd[cp.CK_SUBCMD_NAME]
+            if subcmd_name == cp.CV_APPLY_SUBCMD_NAME:
+                # Update the txn_categories by apply the category_map.
+                return True, "Applied category_map to txn_categories."
             return True, ""
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))

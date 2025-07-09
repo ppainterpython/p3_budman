@@ -168,7 +168,7 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
                         if self.WF_CATEGORY_MANAGER is not None:
                             # Load the WB_TYPE_TXN_CATEGORIES for the FI.
                             wfm : BDMTXNCategoryManager = self.WF_CATEGORY_MANAGER
-                            wfm.WB_TYPE_TXN_CATEGORIES_url_get(self.dc_FI_KEY)
+                            wfm.FI_WB_TYPE_TXN_CATEGORIES_url_get(self.dc_FI_KEY)
             except Exception as e:
                 m = f"{p3u.exc_err_msg(e)}"
                 logger.error(m)

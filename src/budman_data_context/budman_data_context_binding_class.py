@@ -48,7 +48,7 @@ from openpyxl import Workbook
 
 # local modules and packages
 from budman_namespace.design_language_namespace import (
-    DATA_COLLECTION, WORKBOOK_DATA_LIST, LOADED_WORKBOOK_COLLECTION,
+    DATA_COLLECTION, LOADED_WORKBOOK_COLLECTION,
     WORKBOOK_DATA_COLLECTION, WORKBOOK_OBJECT, BUDMAN_RESULT, 
     WORKBOOK_CONTENT
     )
@@ -261,25 +261,13 @@ class BudManDataContext_Binding(BudManDataContext_Base):
             return None
         return self.DC.dc_WORKBOOK_DATA_COLLECTION
     @dc_WORKBOOK_DATA_COLLECTION.setter
-    def dc_WORKBOOK_DATA_COLLECTION(self, value: WORKBOOK_DATA_LIST) -> None:
+    def dc_WORKBOOK_DATA_COLLECTION(self, value: WORKBOOK_DATA_COLLECTION) -> None:
         """DC_Binding: Set the WORKBOOK_DATA_COLLECTION of workbooks in the DC.
         Depends on the value of dc_FI_KEY, returning the 
         FI_WORKBOOK_DATA_COLLECTION for that fi_key."""
         if self.DC.dc_FI_KEY is None:
             return None
         self.DC.dc_WORKBOOK_DATA_COLLECTION = value
-
-    @property
-    def dc_WORKBOOKS(self) -> WORKBOOK_DATA_LIST:
-        """DC_Binding: Return the list of workbooks in the DC.
-        This is a List of tuples, where each tuple contains the workbook name
-        and its absolute path.
-        """
-        return self.DC.dc_WORKBOOKS
-    @dc_WORKBOOKS.setter
-    def dc_WORKBOOKS(self, value: WORKBOOK_DATA_LIST) -> None:
-        """DC_Binding: Set the list of workbooks in the DC."""
-        self.DC.dc_WORKBOOKS = value
 
     @property
     def dc_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_COLLECTION:
@@ -292,33 +280,6 @@ class BudManDataContext_Binding(BudManDataContext_Base):
     def dc_LOADED_WORKBOOKS(self, value: LOADED_WORKBOOK_COLLECTION) -> None:
         """DC_Binding: Set the list of loaded workbooks in the DC."""
         self.DC.dc_LOADED_WORKBOOKS = value
-
-    @property
-    def dc_EXCEL_WORKBOOKS(self) -> DATA_COLLECTION:
-        """DC_Binding: Return the collection of workbooks currently open in Excel."""
-        return self.DC.dc_EXCEL_WORKBOOKS
-    @dc_EXCEL_WORKBOOKS.setter
-    def dc_EXCEL_WORKBOOKS(self, value: DATA_COLLECTION) -> None:
-        """DC_Binding: Set the collection of workbooks currently open in Excel."""
-        self.DC.dc_EXCEL_WORKBOOKS = value
-
-    @property 
-    def dc_CHECK_REGISTERS(self) -> DATA_COLLECTION:
-        """DC_Binding: Return the check register data collection."""
-        return self.DC.dc_CHECK_REGISTERS
-    @dc_CHECK_REGISTERS.setter
-    def dc_CHECK_REGISTERS(self, value: DATA_COLLECTION) -> None:
-        """DC_Binding: Set the check register data collection."""
-        self.DC.dc_CHECK_REGISTERS = value
-
-    @property 
-    def dc_LOADED_CHECK_REGISTERS(self) -> DATA_COLLECTION:
-        """DC_Binding: Return the check register data collection."""
-        return self.DC.dc_CHECK_REGISTERS
-    @dc_LOADED_CHECK_REGISTERS.setter
-    def dc_LOADED_CHECK_REGISTERS(self, value: DATA_COLLECTION) -> None:
-        """DC_Binding: Set the check register data collection."""
-        self.DC.dc_CHECK_REGISTERS = value
 
     @property
     def WF_CATEGORY_MANAGER(self) -> Optional[object]:
@@ -414,7 +375,7 @@ class BudManDataContext_Binding(BudManDataContext_Base):
         Args:
             wb_name (str): The name of the workbook to find.
         Returns:
-            int: The index of the workbook in the WORKBOOK_DATA_LIST, or -1 if not found.
+            int: The index of the workbook in the WORKBOOK_DATA_COLLECTION, or -1 if not found.
         """
         return self.DC.dc_WORKBOOK_index(wb_id)
 
@@ -498,27 +459,5 @@ class BudManDataContext_Binding(BudManDataContext_Base):
         """DC_Binding: Save the BDM_STORE to the specified file path."""
         return self.DC.dc_BDM_STORE_save(file_path)
     
-    def dc_CHECK_REGISTER_name(self, wb_index: int) -> str:
-        """DC_Binding: Return wb_name for wb_index or None if does not exist."""
-        return self.DC.dc_CHECK_REGISTER_name(wb_index)
-    
-    def dc_CHECK_REGISTER_index(self, wb_name: str = None) -> int:  
-        """DC_Binding: Return the index of a check register based on wb_name.
-        
-        Args:
-            wb_name (str): The name of the check register to find.
-        Returns:
-            int: The index of the check register in the dc_CHECK_REGISTERS, or -1 if not found.
-        """
-        return self.DC.dc_CHECK_REGISTER_index(wb_name)
-    
-    def dc_CHECK_REGISTER_load(self, wb_name: str, wb_ref:str) -> DATA_COLLECTION:
-        """DC_Binding: Load the specified check register by name."""
-        return self.DC.dc_CHECK_REGISTER_load(wb_name, wb_ref)
-
-    def dc_CHECK_REGISTER_add(self, wb_name: str, wb_ref: str, wb: DATA_COLLECTION) -> None:
-        """DC_Binding: Add a new loaded workbook to the data context."""
-        return self.DC.dc_CHECK_REGISTER_add(wb_name, wb_ref, wb)    
-
     #endregion BudManDataContext_Base Methods (concrete)
     # ------------------------------------------------------------------------ +

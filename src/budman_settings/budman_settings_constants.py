@@ -11,15 +11,15 @@ THIS_APP_COPYRIGHT = "2025 Paul Painter"
 # ---------------------------------------------------------------------------- +
 # BUDMAN_SETTINGS property name constants used in settings.toml configuration file
 BUDMAN_SETTINGS = "settings.toml"
-APP_NAME = "app_name"
  
 # Settings file keyname constants
 
 # root level
 SHORT_APP_NAME = "short_app_name"
-BUDMAN_FOLDER = "budman.folder" 
+APP_NAME = "app_name"
 
 # [budman] Table
+BDM_FOLDER = "budman.folder" 
 BDM_STORE_FILENAME = "budman.store_filename" 
 BDM_STORE_FILETYPE = "budman.store_filetype"
 BDM_STORE_URL = "budman.store_url"  
@@ -30,6 +30,8 @@ BUDMAN_DEFAULT_WORKBOOK_TYPE = "budman.default_workbook_type"
 
 # [category_catalog] Table
 CATEGORY_CATALOG = "category_catalog"
+TXN_CATEGORIES_FILENAME = "txn_categories_filename"
+CATEGORY_MAP_FILENAME = "category_map_filename"
 
 # [logging] Table
 LOGGING_DEFAULT_HANDLER = "logging.default_handler"

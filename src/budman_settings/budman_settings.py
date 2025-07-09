@@ -39,7 +39,7 @@ class BudManSettings(Dynaconf,metaclass=BDMSingletonMeta):
             budman_store_filename_value = self[BDM_STORE_FILENAME]
             budman_store_filetype_value = self[BDM_STORE_FILETYPE]
             budman_store_full_filename = f"{budman_store_filename_value}{budman_store_filetype_value}"
-            budman_folder = self[BUDMAN_FOLDER]
+            budman_folder = self[BDM_FOLDER]
             budman_folder_abs_path = Path(budman_folder).expanduser().resolve()
             budman_store_abs_path = budman_folder_abs_path / budman_store_full_filename
             return budman_store_abs_path
@@ -52,7 +52,7 @@ class BudManSettings(Dynaconf,metaclass=BDMSingletonMeta):
     def BUDMAN_FOLDER_abs_path(self) -> Path:
         """Return the absolute path to the BUDMAN_FOLDER file."""
         try:
-            budman_folder = self[BUDMAN_FOLDER]
+            budman_folder = self[BDM_FOLDER]
             budman_folder_abs_path = Path(budman_folder).expanduser().resolve()
             return budman_folder_abs_path
         except Exception as e:
@@ -64,7 +64,7 @@ class BudManSettings(Dynaconf,metaclass=BDMSingletonMeta):
     def FI_FOLDER_abs_path(self, fi_key:str) -> Path:
         """Return the absolute path to the FI_FOLDER."""
         try:
-            budman_folder = self[BUDMAN_FOLDER]
+            budman_folder = self[BDM_FOLDER]
             budman_folder_abs_path = Path(budman_folder).expanduser().resolve()
             fi_folder = budman_folder_abs_path / fi_key
             fi_folder_abs_path = Path(fi_folder).resolve()
@@ -73,19 +73,4 @@ class BudManSettings(Dynaconf,metaclass=BDMSingletonMeta):
             logger.error(exc_err_msg(e))
             raise
     #endregion FI_FOLDER_abs_path()
-    # ------------------------------------------------------------------------ +
-    #region    configure_settings() function
-    def configure_settings(self) -> None:
-        """Setup the application settings."""
-        try:
-            # Configure settings
-            self._config = BudManApp_settings = Dynaconf(
-                    envvar_prefix="DYNACONF",
-                    settings_files=[BUDMAN_SETTINGS, '.secrets.toml'],
-                )
-            return self
-        except Exception as e:
-            print(exc_err_msg(e))
-            raise
-    #endregion configure_settings() function
     # ------------------------------------------------------------------------ +

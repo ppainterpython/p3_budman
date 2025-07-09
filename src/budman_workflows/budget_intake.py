@@ -126,9 +126,9 @@ def convert_csv_txns_to_excel_txns(csv_txns: BDMWorkbook) -> Union[bool, str]:
         Union[bool, str]: True if successful, or an error message if failed.
     """
     try:
-        if not csv_txns or not isinstance(csv_txns, list):
+        if not csv_txns or not isinstance(csv_txns, BDMWorkbook):
             return False, "No transactions to convert or invalid data format."
-        
+        csv_path: Path = csv_txns.abs_path()
         excel_filename: str = csv_path.stem + bdm.WB_TYPE_EXCEL_TXNS + bdm.WB_FILETYPE_XLSX
         excel_path: Path.Path = csv_path.parent / excel_filename
         
@@ -149,7 +149,7 @@ def convert_csv_txns_to_excel_txns(csv_txns: BDMWorkbook) -> Union[bool, str]:
         return False, str(e)
 #endregion convert_csv_txns_to_excel_txns() function
 # ---------------------------------------------------------------------------- +
-#region process_txn_intake() function
+#region check_schema_intake() function
 def check_schema_intake(cmd: Dict[str, Any], bdm_DC: BudManDataContext_Base) -> bdm.BUDMAN_RESULT:
     """Check the schema of an intake workbook.
 
@@ -214,5 +214,5 @@ def check_schema_intake(cmd: Dict[str, Any], bdm_DC: BudManDataContext_Base) -> 
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
-#endregion process_txn_intake() function
+#endregion check_schema_intake() function
 # ---------------------------------------------------------------------------- +

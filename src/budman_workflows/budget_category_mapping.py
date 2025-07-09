@@ -724,10 +724,6 @@ category_map = {
 }
 
 compiled_category_map = compile_category_map(category_map)
-# {
-#     re.compile(pattern, re.IGNORECASE): category 
-#             for pattern, category in category_map.items()
-# }
 
 def clear_category_map() -> Dict[str, str]:
     """Clear the category map."""

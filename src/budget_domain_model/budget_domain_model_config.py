@@ -90,7 +90,6 @@ class BDMConfig(metaclass=BDMSingletonMeta):
                 FI_NAME: "Merrill Lynch",
                 FI_TYPE: "brokerage",
                 FI_FOLDER: "merrill",
-                # FI_WORKFLOW_DATA_COLLECTION: None,
                 FI_WORKBOOK_DATA_COLLECTION: 
                     {  # FI_WORKBOOK_DATA_COLLECTION: Dict[WB_INDEX: WORKBOOK_OBJECT]
                         0: {}
@@ -156,13 +155,12 @@ class BDMConfig(metaclass=BDMSingletonMeta):
         BDM_CREATED_DATE: None,
         BDM_LAST_MODIFIED_DATE: None,
         BDM_LAST_MODIFIED_BY: None,
-        BDM_WORKING_DATA: {},
+        # BDM_WORKING_DATA: {},
         BDM_DATA_CONTEXT: {
             DC_FI_KEY: "boa",  # Financial Institution Key
             DC_WF_KEY: BDM_WF_CATEGORIZATION,  # Workflow Key
             DC_WF_PURPOSE: WF_WORKING,
-            DC_WB_TYPE: WF_WORKING,
-            DC_CHECK_REGISTERS: None    # Workbook Type
+            DC_WB_TYPE: WF_WORKING
         }
     }
     bdm_store_default_values = {
@@ -179,7 +177,7 @@ class BDMConfig(metaclass=BDMSingletonMeta):
         BDM_CREATED_DATE: bdm_store_config[BDM_CREATED_DATE],
         BDM_LAST_MODIFIED_DATE: bdm_store_config[BDM_LAST_MODIFIED_DATE],
         BDM_LAST_MODIFIED_BY: bdm_store_config[BDM_LAST_MODIFIED_BY],
-        BDM_WORKING_DATA: {},
+        # BDM_WORKING_DATA: {},
         BDM_DATA_CONTEXT: bdm_store_config[BDM_DATA_CONTEXT]
     }
     #endregion BDMConfig dictionary
@@ -392,7 +390,7 @@ class BDMConfig(metaclass=BDMSingletonMeta):
             setattr(self, BDM_CREATED_DATE, bdm_config[BDM_CREATED_DATE]) 
             setattr(self, BDM_LAST_MODIFIED_DATE, bdm_config[BDM_LAST_MODIFIED_DATE])
             setattr(self, BDM_LAST_MODIFIED_BY, bdm_config[BDM_LAST_MODIFIED_BY])
-            setattr(self, BDM_WORKING_DATA, {})  
+            # setattr(self, BDM_WORKING_DATA, {})  
             # Complete the BDMConfig instance initialization.
             self.bdm_initialized = True
             logger.debug(f"Complete: {p3u.stop_timer(st)}")   
@@ -524,16 +522,16 @@ class BDMConfig(metaclass=BDMSingletonMeta):
         """Set the last modified by."""
         self._last_modified_by = value
     
-    @property
-    def bdm_working_data(self) -> BDM_WORKING_DATA_OBJECT:
-        """The budget domain model working data."""
-        self._wd = {} if self._wd is None else self._wd
-        return self._wd
-    @bdm_working_data.setter
-    def bdm_working_data(self, value: BDM_WORKING_DATA_OBJECT) -> None:
-        """Set the budget domain model working data."""
-        self._wd = {} if self._wd is None else self._wd
-        self._wd = value
+    # @property
+    # def bdm_working_data(self) -> BDM_WORKING_DATA_OBJECT:
+    #     """The budget domain model working data."""
+    #     self._wd = {} if self._wd is None else self._wd
+    #     return self._wd
+    # @bdm_working_data.setter
+    # def bdm_working_data(self, value: BDM_WORKING_DATA_OBJECT) -> None:
+    #     """Set the budget domain model working data."""
+    #     self._wd = {} if self._wd is None else self._wd
+    #     self._wd = value
 
     @property
     def data_context(self) -> DATA_CONTEXT:

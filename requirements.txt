@@ -87,7 +87,7 @@ notebook_shim==0.2.4
 numpy==2.2.4
 openpyxl==3.1.5
 overrides==7.7.0
--e git+https://github.com/ppainterpython/p3_budman.git@3dffd52710b3566cd621d30f76223fb6d2ab14f5#egg=p3_budget_model
+-e git+https://github.com/ppainterpython/p3_budman.git@aa11cee9f56681c5b4c491e23403dbb68b011ef1#egg=p3_budget_model
 p3_exel_budget==0.0.0
 -e git+https://github.com/ppainterpython/p3_utils.git@31586947bbc6e655717477d21605b5bfb7f847f3#egg=p3_utils
 -e git+https://github.com/ppainterpython/p3logging.git@6f7fe9ad9b48fdf42bb24ea2029cb1a72a793190#egg=p3logging
@@ -143,6 +143,7 @@ stdlib-list==0.11.1
 tach==0.29.0
 terminado==0.18.1
 tinycss2==1.4.0
+toml==0.10.2
 tomli==2.2.1
 tomli_w==1.2.0
 tornado==6.4.2

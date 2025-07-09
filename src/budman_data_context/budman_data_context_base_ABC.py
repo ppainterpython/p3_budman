@@ -40,8 +40,8 @@ from typing import Tuple, Any, Union, Dict, Optional
 from openpyxl import Workbook
 # local modules and packages
 from budman_namespace.design_language_namespace import (
-    DATA_CONTEXT, WORKBOOK_DATA_LIST, LOADED_WORKBOOK_COLLECTION,
-    WORKBOOK_DATA_COLLECTION, WORKFLOW_DATA_COLLECTION,
+    DATA_CONTEXT, LOADED_WORKBOOK_COLLECTION,
+    WORKBOOK_DATA_COLLECTION,
     BDM_STORE, DATA_COLLECTION, WORKBOOK_OBJECT, BUDMAN_RESULT,
     WORKBOOK_CONTENT)
 #endregion Imports
@@ -246,17 +246,6 @@ class BudManDataContext_Base(ABC):
 
     @property
     @abstractmethod
-    def dc_WORKBOOKS(self) -> WORKBOOK_DATA_LIST:
-        """Return the list of workbooks in the DC."""
-        pass
-    @dc_WORKBOOKS.setter
-    @abstractmethod
-    def dc_WORKBOOKS(self, value: WORKBOOK_DATA_LIST) -> None:
-        """Set the list of workbooks in the DC."""
-        pass
-
-    @property
-    @abstractmethod
     def dc_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_COLLECTION:
         """Return the list of workbooks currently loaded in the DC.
         Loaded means a file is loaded into memory and is available."""
@@ -266,17 +255,6 @@ class BudManDataContext_Base(ABC):
     def dc_LOADED_WORKBOOKS(self, value: LOADED_WORKBOOK_COLLECTION) -> None:
         """Set the list of workbooks currently loaded in the DC.
         Loaded means a file is loaded into memory and is available."""
-        pass
-
-    @property
-    @abstractmethod
-    def dc_EXCEL_WORKBOOKS(self) -> DATA_COLLECTION:
-        """Return the collection of workbooks currently open in Excel."""
-        pass
-    @dc_EXCEL_WORKBOOKS.setter
-    @abstractmethod
-    def dc_EXCEL_WORKBOOKS(self, value: LOADED_WORKBOOK_COLLECTION) -> None:
-        """Set the collection of workbooks currently open in Excel."""
         pass
     #endregion BudManDataContext_Base Properties (abstract)
     # ------------------------------------------------------------------------ +
@@ -375,7 +353,7 @@ class BudManDataContext_Base(ABC):
         Args:
             wb_id (str): The wb_id of the workbook to index.
         Returns:
-            int: The index of the workbook in the WORKBOOK_DATA_LIST, or -1 if not found.
+            int: The index of the workbook in the WORKBOOK_DATA_COLLECTION, or -1 if not found.
         """
         pass
 

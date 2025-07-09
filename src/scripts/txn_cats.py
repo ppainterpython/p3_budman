@@ -53,7 +53,7 @@ def configure_logging(logger_name : str = __name__, logtest : bool = False) -> N
 #endregion configure_logging() function
 # ------------------------------------------------------------------------ +
 #region extract_txn_categories() method
-def extract_txn_categories(all_cats_url: str) -> None:
+def extract_txn_categories(all_cats_url: str) -> dict:
     """Extract transaction categories from the budget_category_mapping.py 
     module, save to a WB_TYPE_TXN_CATEGORIES workbook.
 
@@ -85,10 +85,11 @@ def extract_txn_categories(all_cats_url: str) -> None:
                 level1=l1,
                 level2=l2,
                 level3=l3,
+                payee=None,
                 description=f"Level 1 Category: {l1}",
+                essential=False, 
                 pattern=pattern,
-                essential=False,  # Default to False, can be set later
-                payee=None
+                total=0
             )
             if cat_id in cat_data["categories"]:
                 logger.warning(f"Duplicate category ID '{cat_id}' found for "
@@ -115,7 +116,7 @@ def save_txn_categories():
         cat_data : Dict[str, Dict] = extract_txn_categories(all_cats_url)
 
         catman = BDMTXNCategoryManager(settings)
-        catman.WB_TYPE_TXN_CATEGORIES_url_get("boa")
+        catman.FI_WB_TYPE_TXN_CATEGORIES_url_get("boa")
         bsm_WORKBOOK_content_put(catman.catalog["boa"], 
                                      all_cats_url,
                                      bdm.WB_TYPE_TXN_CATEGORIES)
@@ -125,6 +126,7 @@ def save_txn_categories():
         logger.error(m)
     # bdm = bdms.bsm_BDM_STORE_url_load(bdms_url)
     logger.info(f"Complete.")
+
 def test_regex(file_path, pattern, show_matches=False):
     try:
         with open(file_path, 'r') as file:

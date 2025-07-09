@@ -57,19 +57,8 @@ def configure_logging(logger_name : str, logtest : bool = True) -> None:
     TODO: refactor WORKBOOKS and LOADED_WORKBOOKS in a single DATA_COLLECTION
     with objects storing the WB_INFO such as loaded, in excel, abs_path, wb_name
 
-    TODO: Convert the WORKBOOK_DATA_LIST to DATA_COLLECTION from DATA_TUPLE_LIST. And
-    refine the FI_WF, WF_DATA_OBJECT, FI_DATA naming to just DATA_OBJECT. 
-    DATA_OBJECTs are association with an fi_key, wf_key, and wb_type.
-
-    TODO: Change BudManDataContext to use BDM_STORE if loaded to respond
-
     TODO: handle the same WB_NAME being in several wf folders.
 
-    TODO: Consider making BudManDataContext have a binding for Model and 
-    ViewModel objects. As a concrete implementation, it provides model and 
-    view_model properties. Consider some of the dc_methods conditionally
-    forwarding calls onto the model or view_model properties, if the methods
-    are available on those objects.
 """
 #endregion backlog - main todo list
 # ---------------------------------------------------------------------------- +
