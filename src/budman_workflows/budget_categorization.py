@@ -33,7 +33,6 @@ from budman_namespace.bdm_workbook_class import BDMWorkbook
 from .workflow_utils import (
     categorize_transaction, category_map_count, check_register_map,
     category_histogram, clear_category_histogram, get_category_histogram,
-    generate_hash_key, split_budget_category
 )
 from .txn_category import BDMTXNCategoryManager
 from budman_data_context import BudManDataContext_Base
@@ -371,7 +370,7 @@ def WORKSHEET_row_data(row:tuple,hdr:list=BUDMAN_WB_COLUMNS) -> TransactionData:
         t_amt_str = str(row_dict[AMOUNT_COL_NAME])
         t_acct_str = row_dict[ACCOUNT_NAME_COL_NAME]
         t_all_str = t_date_str + t_desc + t_currency + t_amt_str + t_acct_str
-        t_id = generate_hash_key(t_all_str) 
+        t_id = p3u.gen_hash_key(t_all_str) 
 
         transaction = TransactionData(
             tid=t_id,
@@ -561,7 +560,7 @@ def process_budget_category(bdm_wb:BDMWorkbook,
             date_val = row[date_i].value
             year_month: str = year_month_str(date_val) if date_val else None
             row[year_month_i].value = year_month
-            l1, l2, l3 = split_budget_category(dst_value)
+            l1, l2, l3 = p3u.split_parts(dst_value)
             row[l1_i].value = l1 if l1_i != -1 else None
             row[l2_i].value = l2 if l2_i != -1 else None
             row[l3_i].value = l3 if l3_i != -1 else None

@@ -19,7 +19,7 @@ SHORT_APP_NAME = "short_app_name"
 APP_NAME = "app_name"
 
 # [budman] Table
-BDM_FOLDER = "budman.folder" 
+BDM_FOLDER = "budman.bdm_folder" 
 BDM_STORE_FILENAME = "budman.store_filename" 
 BDM_STORE_FILETYPE = "budman.store_filetype"
 BDM_STORE_URL = "budman.store_url"  
@@ -30,8 +30,8 @@ BUDMAN_DEFAULT_WORKBOOK_TYPE = "budman.default_workbook_type"
 
 # [category_catalog] Table
 CATEGORY_CATALOG = "category_catalog"
-TXN_CATEGORIES_FILENAME = "txn_categories_filename"
-CATEGORY_MAP_FILENAME = "category_map_filename"
+TXN_CATEGORIES_FULL_FILENAME = "txn_categories_full_filename"
+CATEGORY_MAP_FULL_FILENAME = "category_map_full_filename"
 
 # [logging] Table
 LOGGING_DEFAULT_HANDLER = "logging.default_handler"

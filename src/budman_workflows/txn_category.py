@@ -27,11 +27,9 @@ import budman_namespace.design_language_namespace as bdm
 from budman_namespace.bdm_workbook_class import BDMWorkbook
 import budman_settings as bdms
 from budget_storage_model import (
-    bsm_WORKBOOK_content_get,
-    bsm_WORKBOOK_content_put
+    bsm_BDM_WORKBOOK_content_load,
+    bsm_BDM_WORKBOOK_content_put
 )
-from .workflow_utils import (split_budget_category, generate_hash_key)
-from budget_domain_model import (BudgetDomainModel)
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -122,7 +120,7 @@ class BDMTXNCategoryManager:
         """App settings for configuration information."""
         self._catalog: Dict[str, Dict[str, BDMTXNCategory]] = {}
         """Catalog of transaction categories, keyed by financial institution."""
-        self._ccp: Dict[str, Dict[re.Pattern, str]] = {}
+        self._ccm: Dict[str, Dict[re.Pattern, str]] = {}
         """Compiled category maps for FI's."""
     #endregion BDMTXNCategoryManager class __init__()
     # ------------------------------------------------------------------------ +
@@ -148,11 +146,11 @@ class BDMTXNCategoryManager:
     @property
     def ccm(self) -> Dict[str, Dict[re.Pattern, str]]:
         """Get the compiled category maps for financial institutions."""
-        return self._ccp
+        return self._ccm
     @ccm.setter
     def ccm(self, value: Dict[str, Dict[re.Pattern, str]]):
         """Set the compiled category maps for financial institutions."""
-        self._ccp = value
+        self._ccm = value
     #endregion class properties
     # ------------------------------------------------------------------------ +
 #endregion BDMTXNCategoryManager class intrinsics
@@ -179,22 +177,13 @@ class BDMTXNCategoryManager:
             cat_map: bdm.DATA_OBJECT = self.FI_CATEGORY_MAP_file_load(fi_key)
             txn_cat_content = self.FI_WB_TYPE_TXN_CATEGORIES(fi_key, cat_map)
 
-
-            cat_dict: Dict[str, Any] = txn_cat_content['categories']
-            cat_data : Dict[str, BDMTXNCategory] = {
-                cat_id: BDMTXNCategory(**data) 
-                    for cat_id, data in cat_dict.items()
-            }
-            ccm = self.WB_TYPE_TXN_CATEGORIES_compile(cat_data)
-            self.catalog[fi_key] = txn_cat_content
-            self.ccm[fi_key] = ccm
-            logger.info(f"Loaded {len(self.catalog[fi_key])} categories for {fi_key}.")
+            self.FI_WB_TYPE_TXN_CATEGORIES_add(fi_key, txn_cat_content)
         except Exception as e:
-            logger.error(f"Error loading catalog fi_key: '{fi_key}' {e}")
+            logger.error(f"Error updating CATEGORY_MAP for FI_KEY('{fi_key}') {e}")
             raise
     #endregion FI_WB_TYPE_TXN_CATEGORIES_update_CATEGORY_MAP()
     # ------------------------------------------------------------------------ +
-    #region FI_WB_TYPE_TXN_CATEGORIES_url_get()
+    #region FI_WB_TYPE_TXN_CATEGORIES_add()
     def FI_WB_TYPE_TXN_CATEGORIES_add(self, fi_key: str, 
                                       txn_cat_content: bdm.DATA_OBJECT) -> None:
         """Add the WB_TYPE_TXN_CATEGORIES workbook to the catalog for the FI.
@@ -213,11 +202,11 @@ class BDMTXNCategoryManager:
                  not isinstance(txn_cat_content['categories'], dict) or 
                  len(txn_cat_content['categories']) == 0):
                 raise TypeError(f"Expected a non-empty dictionary from {txn_cat_content}")
-            cat_dict: Dict[str, Any] = txn_cat_content['categories']
-            cat_data : Dict[str, BDMTXNCategory] = {
-                cat_id: BDMTXNCategory(**data) 
-                    for cat_id, data in cat_dict.items()
-            }
+            cat_data: Dict[str, Any] = txn_cat_content['categories']
+            # cat_data : Dict[str, BDMTXNCategory] = {
+            #     cat_id: BDMTXNCategory(**data) 
+            #         for cat_id, data in cat_dict.items()
+            # }
             ccm = self.WB_TYPE_TXN_CATEGORIES_compile(cat_data)
             self.catalog[fi_key] = txn_cat_content
             self.ccm[fi_key] = ccm
@@ -225,11 +214,11 @@ class BDMTXNCategoryManager:
         except Exception as e:
             logger.error(f"Error loading catalog fi_key: '{fi_key}' {e}")
             raise
-    #endregion FI_WB_TYPE_TXN_CATEGORIES_url_get()
+    #endregion FI_WB_TYPE_TXN_CATEGORIES_add()
     # ------------------------------------------------------------------------ +
-    #region FI_WB_TYPE_TXN_CATEGORIES_url_get()
-    def FI_WB_TYPE_TXN_CATEGORIES_url_get(self, fi_key: str) -> None:
-        """Load the transaction category catalog for a given financial institution.
+    #region FI_WB_TYPE_TXN_CATEGORIES_file_load()
+    def FI_WB_TYPE_TXN_CATEGORIES_file_load(self, fi_key: str) -> None:
+        """Load the WB_TYPE_TXN_CATEGORIES workbook content for an FI.
 
         Load the content from the WB_TYPE_TXN_CATEGORIES workbook for the given
         financial institution (FI), configuring its url from settings.
@@ -247,17 +236,25 @@ class BDMTXNCategoryManager:
                 wb_url=cat_url,
                 fi_key=fi_key
             )
-            txn_cat_content: Dict = bsm_WORKBOOK_content_get(bdm_wb)
-            if (not isinstance(txn_cat_content, dict) or
-                'categories' not in txn_cat_content or
-                 not isinstance(txn_cat_content['categories'], dict) or 
-                 len(txn_cat_content['categories']) == 0):
+            txn_cat_content_json: Dict = bsm_BDM_WORKBOOK_content_load(bdm_wb)
+            if (not isinstance(txn_cat_content_json, dict) or
+                'categories' not in txn_cat_content_json or
+                 not isinstance(txn_cat_content_json['categories'], dict) or 
+                 len(txn_cat_content_json['categories']) == 0):
                 raise TypeError(f"Expected a non-empty dictionary from {cat_url}")
-            self.FI_WB_TYPE_TXN_CATEGORIES_add(fi_key, txn_cat_content)
+            cat_dict: Dict[str, Any] = txn_cat_content_json['categories']
+            cat_data : Dict[str, BDMTXNCategory] = {
+                cat_id: BDMTXNCategory(**data) 
+                    for cat_id, data in cat_dict.items()
+            }
+            ccm = self.WB_TYPE_TXN_CATEGORIES_compile(cat_data)
+            self.catalog[fi_key] = cat_data
+            self.ccm[fi_key] = ccm
+            logger.info(f"Loaded {len(self.catalog[fi_key])} categories for {fi_key}.")
         except Exception as e:
             logger.error(f"Error loading catalog fi_key: '{fi_key}' {e}")
             raise
-    #endregion FI_WB_TYPE_TXN_CATEGORIES_url_get()
+    #endregion FI_WB_TYPE_TXN_CATEGORIES_file_load()
     # ------------------------------------------------------------------------ +
     #region FI_WB_TYPE_TXN_CATEGORIES_url()
     def FI_WB_TYPE_TXN_CATEGORIES_url(self, fi_key: str) -> str:
@@ -298,7 +295,7 @@ class BDMTXNCategoryManager:
         """
         try:
             self.valid_state()  # Ensure the manager is in a valid state
-            txn_cat_filename = self.settings[bdms.CATEGORY_CATALOG][fi_key][bdms.TXN_CATEGORIES_FILENAME]
+            txn_cat_filename = self.settings[bdms.CATEGORY_CATALOG][fi_key][bdms.TXN_CATEGORIES_FULL_FILENAME]
             fi_folder = self.settings.FI_FOLDER_abs_path(fi_key)
             txn_cat_path = fi_folder / txn_cat_filename
             if not txn_cat_path.exists():
@@ -362,9 +359,10 @@ class BDMTXNCategoryManager:
                 "name": txn_cat_path.stem,
                 "categories": {}
             }
-            for pattern, cat in cat_map.items():
-                l1, l2, l3 = split_budget_category(cat)
-                cat_id = generate_hash_key(str(pattern), length=8)
+            category_map: bdm.DATA_OBJECT = cat_map['category_map']
+            for pattern, cat in category_map.items():
+                l1, l2, l3 = p3u.split_parts(cat)
+                cat_id = p3u.gen_hash_key(str(pattern), length=8)
                 bdm_tc = BDMTXNCategory(
                     cat_id=cat_id,
                     full_cat=cat,
@@ -402,7 +400,7 @@ class BDMTXNCategoryManager:
             if (not isinstance(cat_map_dict, dict) or
                  len(cat_map_dict) == 0):
                 raise TypeError(f"Expected a non-empty dictionary from {cat_map_abs_path}")
-            logger.info(f"BizEvent: Loaded CATEGORY_MAP for FI_KEY('{fi_key}'), "
+            logger.info(f"BizEVENT: Loaded CATEGORY_MAP for FI_KEY('{fi_key}'), "
                         f"len='{len(cat_map_dict)}', abs_Path='{cat_map_abs_path}'")
             return cat_map_dict
         except Exception as e:
@@ -445,7 +443,7 @@ class BDMTXNCategoryManager:
         """
         try:
             self.valid_state()  # Ensure the manager is in a valid state
-            cat_map_filename = self.settings[bdms.CATEGORY_CATALOG][fi_key][bdms.CATEGORY_MAP_FILENAME]
+            cat_map_filename = self.settings[bdms.CATEGORY_CATALOG][fi_key][bdms.CATEGORY_MAP_FULL_FILENAME]
             fi_folder: Path = self.settings.FI_FOLDER_abs_path(fi_key)
             cat_map_path: Path= fi_folder / cat_map_filename
             if not cat_map_path.exists():

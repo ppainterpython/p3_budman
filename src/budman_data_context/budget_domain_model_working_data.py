@@ -22,9 +22,9 @@ from budman_namespace.design_language_namespace import *
 from budman_namespace.bdm_workbook_class import BDMWorkbook
 from budman_data_context import BudManDataContext
 from p3_mvvm import Model_Base, Model_Binding
-from budget_storage_model import (bsm_WORKBOOK_content_get, 
+from budget_storage_model import (bsm_BDM_WORKBOOK_content_load, 
                                   bsm_WB_URL_verify,
-                                    bsm_WORKBOOK_content_put)
+                                    bsm_BDM_WORKBOOK_content_put)
 from budman_workflows.txn_category import BDMTXNCategoryManager
 
 #endregion imports
@@ -168,7 +168,7 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
                         if self.WF_CATEGORY_MANAGER is not None:
                             # Load the WB_TYPE_TXN_CATEGORIES for the FI.
                             wfm : BDMTXNCategoryManager = self.WF_CATEGORY_MANAGER
-                            wfm.FI_WB_TYPE_TXN_CATEGORIES_url_get(self.dc_FI_KEY)
+                            wfm.FI_WB_TYPE_TXN_CATEGORIES_file_load(self.dc_FI_KEY)
             except Exception as e:
                 m = f"{p3u.exc_err_msg(e)}"
                 logger.error(m)
@@ -315,7 +315,7 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
                 logger.error(m)
                 return False, m
             # Model-aware: Get the workbook content object with the BSM.
-            wb_content = bsm_WORKBOOK_content_get(bdm_wb)
+            wb_content = bsm_BDM_WORKBOOK_content_load(bdm_wb)
             # Add/update to the loaded workbooks collection.
             bdm_wb.wb_content = wb_content
             bdm_wb.wb_loaded = True
@@ -347,7 +347,7 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
                 logger.error(m)
                 return False, m
             # Save the workbook content using the BSM.
-            bsm_WORKBOOK_content_put(wb_content, bdm_wb)
+            bsm_BDM_WORKBOOK_content_put(wb_content, bdm_wb)
             # Update the dc_LOADED_WORKBOOKS with the saved content.
             self.dc_LOADED_WORKBOOKS[bdm_wb.wb_id] = wb_content
             bdm_wb.wb_loaded = True

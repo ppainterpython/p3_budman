@@ -33,7 +33,6 @@ from budman_namespace.bdm_workbook_class import BDMWorkbook
 from .workflow_utils import (
     categorize_transaction, category_map_count, check_register_map,
     category_histogram, clear_category_histogram, get_category_histogram,
-    generate_hash_key, split_budget_category
 )
 from .txn_category import BDMTXNCategoryManager
 from budman_data_context import BudManDataContext_Base

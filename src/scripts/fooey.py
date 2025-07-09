@@ -9,7 +9,7 @@ from typing import Dict
 import p3_utils as p3u, p3logging as p3l
 # local modules and packages
 from budman_namespace import *
-from budget_storage_model import bsm_WORKBOOK_content_put
+from budget_storage_model import bsm_BDM_WORKBOOK_content_put
 from budman_workflows import *
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -57,8 +57,8 @@ if __name__ == "__main__":
 
 
         for cat in category_map.values():
-            l1, l2, l3 = split_budget_category(cat)
-            cat_id = generate_hash_key(cat, length=8)
+            l1, l2, l3 = p3u.split_parts(cat)
+            cat_id = p3u.gen_hash_key(cat, length=8)
             bdm_tc = BDMTXNCategory(
                 cat_id=cat_id,
                 full_cat=cat,
@@ -70,7 +70,7 @@ if __name__ == "__main__":
             )
             cat_data["categories"][cat_id] = bdm_tc
             # print(f"category: '{cat_id}': '{repr(bdm_tc )}'")
-        bsm_WORKBOOK_content_put(cat_data, all_cats_url)
+        bsm_BDM_WORKBOOK_content_put(cat_data, all_cats_url)
         logger.info(f"Saved all categories to: {all_cats_url}")
 
 

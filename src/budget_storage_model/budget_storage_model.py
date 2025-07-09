@@ -1,25 +1,43 @@
 # ---------------------------------------------------------------------------- +
-#region    budget_storage_model.py module\
-""" Implements data storage for Budget Domain Model.
+#region    budget_storage_model.py module
+""" Implements Budget Domain Storage Model (BSM).
 
     Need to update: filetypes and wb_types
 
-    BSM knows about BDMWorkbook, from the design language namespace. The
-    bdm_wb: BDMWorkbook is the basic unit of storage. Workbooks are stored in
-    files in folders in a storage service, like the local file system of AWS S3.
+    In the BDM, the basic unit of storage is the BDM_WORKBOOK, which is a
+    data file in a storage system, contained in folders (directories). The
+    BSM translates the Domain Model view of BDM_WORKBOOKS to the underlying
+    storage service specifications. The local file system and various cloud 
+    storage services are where the mapping will go. BSM depends on the 
+    BDMWorkbook class, from the design language namespace. BDMWorkbook
+    holds metadata about the workbook. It has a wb_url attribute that links it
+    to the storage service.
 
-    Keep it simple, use a JSONC file to load/save the budget domain model 
-    DATA_OBJECTs from/to storage. The BDM_STORE object is a dictionary in 
-    memory and a json file in storage. Use a URL to reference it from other 
-    layers of application. Initially, the file scheme is supported for 
-    local files, but later it may be extended to support other storage services.
+    A BDM_WORKBOOK has a wb_type, wb_filename and wb_filetype, which influences
+    the implementation to load/save its content from/to storage.
+    There are no dependencies to other application functional layers. However,
+     it does include the design language namespace module for constants and 
+    type definitions, as a convenience for the application developer.
 
-    BSM only depends on the dict to json mapping, not detailed content structure
-    is used beyond that for validation. BSM is not BDM-aware.
+    BSM presents a layered interface. 
+    
+    First, there is access to workbook storage via the BDM_WORKBOOK itself, 
+    which contains the wb_url, wb_type etc. From that information, the secondary
+    layers are used to route the request. This first layer has a method naming
+    convention like: BDM_WORKBOOK_content_load() and BDM_WORKBOOK_content_save().
+    A critical design constraint for layer one is that the caller bears the
+    responsibility to ensure the BDM_WORKBOOK is valid and accounted for in the
+    higher layers of the application.
 
-    No dependencies to other application layers. However, it does include
-    the budman_namespace module for constants and type definitions, as a
-    convenience for the application developer.
+    Second, there is a wb_url get/put layer which uses the actual content data
+    in conjunction with the wb_type as arguments to route the request. This
+    second layer has a method naming convention like:
+    BDM_WORKBOOK_content_url_get() and BDM_WORKBOOK_content_url_put().
+
+    Third, there is the layer to support a given storage service. Presently, 
+    the BSM is supporting the local file system only. So absolute pathnames are
+    used to read/write files. This third layer has a method naming convention
+    like: excel_WORKBOOK_file_load() and excel_WORKBOOK_file_save().
 
     June 15, 2025 - Happy Father's Day!
     
@@ -51,6 +69,152 @@ from budget_storage_model.csv_data_collection import (
 logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
+# ---------------------------------------------------------------------------- +
+#                                                                              +
+#region Layer 1 - BDM_WORKBOOK storage methods
+#                                                                              +
+# ---------------------------------------------------------------------------- +
+#region    bsm_BDM_WORKBOOK_content_load(wb_url : str = None) -> Any
+def bsm_BDM_WORKBOOK_content_load(bdm_wb:BDMWorkbook) -> Any:
+    """Load the BDM_WORKBOOK content from its storage service.
+
+    A BDMWorkbook has content, stored elsewhere, and metadata kept in the
+    BDM_STORE.
+
+    Args:
+        bdm_wb (BDMWorkbook): The workbook object to load content for.
+
+    Returns:
+        Any: The loaded workbook content object.
+    """
+    try:
+        st: float = p3u.start_timer()
+        p3u.is_not_obj_of_type("bdm_wb", bdm_wb, BDMWorkbook, raise_error=True)
+        logger.debug(f"Start: load WB_ID('{bdm_wb.wb_id}') ")
+        wb_content: Any = None
+        m: str = ""
+        wb_type: str = bdm_wb.wb_type
+        if (wb_type == bdm.WB_TYPE_UNKNOWN or
+            wb_type not in bdm.VALID_WB_TYPE_VALUES):
+            m = f"Invalid workbook type: {wb_type}, unable to load."
+            logger.warning(m)
+            raise ValueError(m)
+        bdm_wb_abs_path = bsm_WB_URL_verify_file_scheme(bdm_wb.wb_url, test=True)
+        # Happy path is to have bdm_wb.wb_type set and valid.
+        if bdm_wb.wb_type == bdm.WB_TYPE_TXN_CATEGORIES:
+            # If the workbook type is WB_TYPE_TXN_CATEGORIES, load a JSON file.
+            # TODO: need function to use WB_FILETYPE_MAP to validate WB_FILETYPE_JSON
+            logger.debug(f"Loading workbook content as WB_TYPE_TXN_CATEGORIES "
+                         f"from file: '{bdm_wb_abs_path}'")
+            with open(bdm_wb_abs_path, "r") as f:
+                wb_content = json5.decode(f.read(),10)
+        elif bdm_wb.wb_type == bdm.WB_TYPE_CSV_TXNS:
+            # If the workbook type is WB_TYPE_CSV_TXNS, load it as a CSV file.
+            logger.debug(f"Loading workbook content as WB_TYPE_CSV_TXNS from "
+                         f"file: '{bdm_wb_abs_path}'")
+            wb_content = csv_DATA_LIST_file_load(bdm_wb_abs_path)
+        elif bdm_wb.wb_type == bdm.WB_TYPE_CATEGORY_MAP:
+            # If the workbook type is WB_TYPE_CATEGORY_MAP, load it as a TOML file.
+            logger.debug(f"Loading workbook content as WB_TYPE_CATEGORY_MAP from "
+                         f"file: '{bdm_wb_abs_path}'")
+            with open(bdm_wb_abs_path, "r") as f:
+                wb_content = toml.load(f)
+        if bdm_wb.wb_type == bdm.WB_TYPE_UNKNOWN:
+            # If the WB_TYPE is unknown, attempt to suss it from the URL.
+            wb_type = bsm_WB_TYPE(bdm_wb.wb_url, bdm_wb.wb_filetype)
+            if wb_type == bdm.WB_TYPE_CSV_TXNS:
+                # If the filetype is CSV, load it as a CSV file.
+                logger.debug(f"Loading workbook as CSV from file: '{bdm_wb_abs_path}'")
+                wb_content = csv_DATA_LIST_file_load(bdm_wb_abs_path)
+                bdm_wb.wb_type = wb_type
+            elif wb_type == bdm.WB_TYPE_TXN_CATEGORIES:
+                # If the filetype is XLSX, load it as an Excel workbook.
+                logger.debug(f"Loading excel workbook from file: '{bdm_wb_abs_path}'")
+                wb_content = bsm_WORKBOOK_content_file_load(bdm_wb_abs_path)
+                bdm_wb.wb_type = wb_type
+            elif wb_type == bdm.WB_TYPE_CATEGORY_MAP:
+                # If the filetype is TOML, load it as a TOML file.
+                logger.debug(f"Loading workbook content as WB_TYPE_CATEGORY_MAP from "
+                                f"file: '{bdm_wb_abs_path}'")
+                with open(bdm_wb_abs_path, "r") as f:
+                    wb_content = toml.load(f)
+                bdm_wb.wb_type = wb_type
+        bdm_wb.wb_content = wb_content
+        bdm_wb.wb_loaded = True
+        logger.debug(f"Complete: {p3u.stop_timer(st)}")
+        return wb_content
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion bsm_BDM_WORKBOOK_content_load(wb_url : str = None) -> Any
+# ---------------------------------------------------------------------------- +
+#region    bsm_BDM_WORKBOOK_content_put(wb:Any, wb_url : str = None) -> Any
+def bsm_BDM_WORKBOOK_content_put(wb_content:Any, bdm_wb:BDMWorkbook) -> None:
+    """Put a BDM_WORKBOOK's content to its storage service.
+
+    Args:
+        wb_content (Any): The workbook to save.
+        bdm_wb (BDMWorkbook): The BDMWorkbook object containing metadata 
+        about the workbook.
+
+    Returns:
+        Any: The loaded workbook object.
+    """
+    try:
+        p3u.is_not_obj_of_type("bdm_wb", bdm_wb, BDMWorkbook, raise_error=True)
+        wb_abs_path = bsm_WB_URL_verify_file_scheme(bdm_wb.wb_url, test=False)
+        # Dispatch based on WB_TYPE.
+        if bdm_wb.wb_type == bdm.WB_TYPE_TXN_CATEGORIES:
+            # If the workbook type is TXN_CATEGORIES, save it as a JSON file.
+            logger.info(f"Saving workbook as TXN_CATEGORIES to file: '{wb_abs_path}'")
+            with open(wb_abs_path, "w") as f:
+                jsonc_content = json5.encode(wb_content)
+                f.write(jsonc_content)
+            return
+        elif bdm_wb.wb_type == bdm.WB_TYPE_CSV_TXNS:
+            # If the workbook type is CSV_TXNS, save it as a CSV file.
+            logger.info(f"Saving workbook as CSV_TXNS to file: '{wb_abs_path}'")
+            csv_DATA_LIST_file_save(wb_content, wb_abs_path)
+            return
+        if bdm_wb.wb_type == bdm.WB_TYPE_UNKNOWN:
+            wb_type = bsm_WB_TYPE(bdm_wb.wb_url,wb_filetype)
+        
+        # Dispatch based on filetype.
+        wb_filetype = wb_abs_path.suffix.lower()
+        if wb_filetype not in [bdm.WB_FILETYPE_XLSX, bdm.WB_FILETYPE_CSV]:
+            # If the filetype is not supported, raise an error.
+            m = f"Unsupported workbook filetype: {wb_filetype} in file: {wb_abs_path}"
+            logger.error(m)
+            raise ValueError(m)
+        if wb_filetype == bdm.WB_FILETYPE_CSV:
+            # If the filetype is CSV, load it as a CSV file.
+            logger.info(f"Loading workbook as CSV from file: '{wb_abs_path}'")
+            csv_DATA_LIST_url_put(wb_content, bdm_wb.wb_url)
+            return
+        if wb_filetype == bdm.WB_FILETYPE_XLSX:
+            # If the filetype is XLSX, load it as an Excel workbook.
+            logger.info(f"Loading workbook as XLSX from file: '{wb_abs_path}'")
+            wb_content = bsm_WORKBOOK_content_file_save(wb_content,wb_abs_path)
+            return
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion bsm_BDM_WORKBOOK_content_put(wb_url : str = None) -> Any
+# ---------------------------------------------------------------------------- +
+#                                                                              +
+#endregion Layer 1 - BDM_WORKBOOK storage methods
+#                                                                              +
+# ---------------------------------------------------------------------------- +
+
+# ---------------------------------------------------------------------------- +
+#                                                                              +
+#region Layer 2 - WB_URL storage methods
+# ---------------------------------------------------------------------------- +
+# ---------------------------------------------------------------------------- +
+#endregion Layer 2 - WB_URL storage methods
+#                                                                              +
+# ---------------------------------------------------------------------------- +
+
 # ---------------------------------------------------------------------------- +
 #region    BDM_STORE methods
 # ---------------------------------------------------------------------------- +
@@ -279,125 +443,6 @@ def bsm_WB_TYPE(wb_url : str, wb_filetype:str) -> Any:
         logger.error(p3u.exc_err_msg(e))
         raise
 #endregion bsm_WB_TYPE(wb_url : str = None) -> Any
-# ---------------------------------------------------------------------------- +
-#region    bsm_WORKBOOK_content_url_get(wb_url : str = None) -> Any
-def bsm_WORKBOOK_content_get(bdm_wb:BDMWorkbook) -> Any:
-    """Load workbook content from a storage URL.
-
-    Steer the request to a more specific getter, depending on the wb_type.
-
-    A BDMWorkbook has content, stored elsewhere, and metadata kept in the
-    BDM_STORE.
-
-    Args:
-        bdm_wb (BDMWorkbook): The workbook object to load content for.
-
-    Returns:
-        Any: The loaded workbook content object.
-    """
-    try:
-        p3u.is_not_obj_of_type("bdm_wb", bdm_wb, BDMWorkbook, raise_error=True)
-        bdm_wb_abs_path = bsm_WB_URL_verify_file_scheme(bdm_wb.wb_url, test=True)
-        # Happy path is to have bdm_wb.wb_type set and valid.
-        wb_content: Any = None
-        wb_type: str = bdm.WB_TYPE_UNKNOWN
-        if bdm_wb.wb_type == bdm.WB_TYPE_TXN_CATEGORIES:
-            # If the workbook type is WB_TYPE_TXN_CATEGORIES, load a JSON file.
-            # TODO: need function to use WB_FILETYPE_MAP to validate WB_FILETYPE_JSON
-            logger.debug(f"Loading workbook content as WB_TYPE_TXN_CATEGORIES "
-                         f"from file: '{bdm_wb_abs_path}'")
-            with open(bdm_wb_abs_path, "r") as f:
-                wb_content = json5.decode(f.read(),10)
-        elif bdm_wb.wb_type == bdm.WB_TYPE_CSV_TXNS:
-            # If the workbook type is WB_TYPE_CSV_TXNS, load it as a CSV file.
-            logger.debug(f"Loading workbook content as WB_TYPE_CSV_TXNS from "
-                         f"file: '{bdm_wb_abs_path}'")
-            wb_content = csv_DATA_LIST_file_load(bdm_wb_abs_path)
-        elif bdm_wb.wb_type == bdm.WB_TYPE_CATEGORY_MAP:
-            # If the workbook type is WB_TYPE_CATEGORY_MAP, load it as a TOML file.
-            logger.debug(f"Loading workbook content as WB_TYPE_CATEGORY_MAP from "
-                         f"file: '{bdm_wb_abs_path}'")
-            with open(bdm_wb_abs_path, "r") as f:
-                wb_content = toml.load(f)
-        if bdm_wb.wb_type == bdm.WB_TYPE_UNKNOWN:
-            # If the WB_TYPE is unknown, attempt to suss it from the URL.
-            wb_type = bsm_WB_TYPE(bdm_wb.wb_url, bdm_wb.wb_filetype)
-            if wb_type == bdm.WB_TYPE_CSV_TXNS:
-                # If the filetype is CSV, load it as a CSV file.
-                logger.debug(f"Loading workbook as CSV from file: '{bdm_wb_abs_path}'")
-                wb_content = csv_DATA_LIST_file_load(bdm_wb_abs_path)
-                bdm_wb.wb_type = wb_type
-            elif wb_type == bdm.WB_TYPE_TXN_CATEGORIES:
-                # If the filetype is XLSX, load it as an Excel workbook.
-                logger.debug(f"Loading excel workbook from file: '{bdm_wb_abs_path}'")
-                wb_content = bsm_WORKBOOK_content_file_load(bdm_wb_abs_path)
-                bdm_wb.wb_type = wb_type
-            elif wb_type == bdm.WB_TYPE_CATEGORY_MAP:
-                # If the filetype is TOML, load it as a TOML file.
-                logger.debug(f"Loading workbook content as WB_TYPE_CATEGORY_MAP from "
-                                f"file: '{bdm_wb_abs_path}'")
-                with open(bdm_wb_abs_path, "r") as f:
-                    wb_content = toml.load(f)
-                bdm_wb.wb_type = wb_type
-        bdm_wb.wb_content = wb_content
-        bdm_wb.wb_loaded = True
-        return wb_content
-    except Exception as e:
-        logger.error(p3u.exc_err_msg(e))
-        raise
-#endregion bsm_WORKBOOK_content_url_get(wb_url : str = None) -> Any
-# ---------------------------------------------------------------------------- +
-#region    bsm_WORKBOOK_content_url_put(wb:Any, wb_url : str = None) -> Any
-def bsm_WORKBOOK_content_put(wb_content:Any, bdm_wb:BDMWorkbook) -> None:
-    """Put a workbook content to its storage URL.
-
-    Args:
-        wb_content (Any): The workbook to save.
-        wb_url (str): The URL to the workbook to load.
-    
-    Returns:
-        Any: The loaded workbook object.
-    """
-    try:
-        p3u.is_not_obj_of_type("bdm_wb", bdm_wb, BDMWorkbook, raise_error=True)
-        wb_abs_path = bsm_WB_URL_verify_file_scheme(bdm_wb.wb_url, test=False)
-        # Dispatch based on WB_TYPE.
-        if bdm_wb.wb_type == bdm.WB_TYPE_TXN_CATEGORIES:
-            # If the workbook type is TXN_CATEGORIES, save it as a JSON file.
-            logger.info(f"Saving workbook as TXN_CATEGORIES to file: '{wb_abs_path}'")
-            with open(wb_abs_path, "w") as f:
-                jsonc_content = json5.encode(wb_content)
-                f.write(jsonc_content)
-            return
-        elif bdm_wb.wb_type == bdm.WB_TYPE_CSV_TXNS:
-            # If the workbook type is CSV_TXNS, save it as a CSV file.
-            logger.info(f"Saving workbook as CSV_TXNS to file: '{wb_abs_path}'")
-            csv_DATA_LIST_file_save(wb_content, wb_abs_path)
-            return
-        if bdm_wb.wb_type == bdm.WB_TYPE_UNKNOWN:
-            wb_type = bsm_WB_TYPE(bdm_wb.wb_url,wb_filetype)
-        
-        # Dispatch based on filetype.
-        wb_filetype = wb_abs_path.suffix.lower()
-        if wb_filetype not in [bdm.WB_FILETYPE_XLSX, bdm.WB_FILETYPE_CSV]:
-            # If the filetype is not supported, raise an error.
-            m = f"Unsupported workbook filetype: {wb_filetype} in file: {wb_abs_path}"
-            logger.error(m)
-            raise ValueError(m)
-        if wb_filetype == bdm.WB_FILETYPE_CSV:
-            # If the filetype is CSV, load it as a CSV file.
-            logger.info(f"Loading workbook as CSV from file: '{wb_abs_path}'")
-            csv_DATA_LIST_url_put(wb_content, bdm_wb.wb_url)
-            return
-        if wb_filetype == bdm.WB_FILETYPE_XLSX:
-            # If the filetype is XLSX, load it as an Excel workbook.
-            logger.info(f"Loading workbook as XLSX from file: '{wb_abs_path}'")
-            wb_content = bsm_WORKBOOK_content_file_save(wb_content,wb_abs_path)
-            return
-    except Exception as e:
-        logger.error(p3u.exc_err_msg(e))
-        raise
-#endregion bsm_WORKBOOK_content_url_put(wb_url : str = None) -> Any
 # ---------------------------------------------------------------------------- +
 #region    bsm_WORKBOOK_content_file_load(wb_abs_path : str = None) -> Any
 def bsm_WORKBOOK_content_file_load(wb_path:Path) -> Workbook:

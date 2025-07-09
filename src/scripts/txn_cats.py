@@ -2,9 +2,11 @@
 # txn_cats.py - a place to fool around with experiments, not a dependent.
 #------------------------------------------------------------------------------+
 #region Imports
-import logging, re, sys, csv
+from pprint import pprint
+import logging, re, sys, csv, cmd2
+from cmd2 import (Bg, Fg, ansi, Cmd2ArgumentParser, with_argparser)
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Optional
 # third-party modules and packages
 import p3_utils as p3u, p3logging as p3l
 # local modules and packages
@@ -13,12 +15,12 @@ import budman_settings as bdms
 from budman_workflows.txn_category import (
     BDMTXNCategory, BDMTXNCategoryManager
 )
-from budman_workflows import (generate_hash_key,split_budget_category)
 from budman_workflows.budget_category_mapping import get_category_map
 from budget_storage_model import (
-    bsm_WORKBOOK_content_get,
-    bsm_WORKBOOK_content_put,
-    csv_DATA_LIST_url_get, csv_DATA_LIST_file_load
+    bsm_BDM_WORKBOOK_content_load,
+    bsm_BDM_WORKBOOK_content_put,
+    csv_DATA_LIST_url_get, 
+    csv_DATA_LIST_file_load
 )
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -26,34 +28,129 @@ from budget_storage_model import (
 logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
-# ------------------------------------------------------------------------ +
-#region configure_logging() method
-def configure_logging(logger_name : str = __name__, logtest : bool = False) -> None:
-    """Setup the application logger."""
-    try:
-        # Configure logging
-        log_config_file = "budget_model_logging_config.jsonc"
-        _ = p3l.setup_logging(
-            logger_name = logger_name,
-            config_file = log_config_file
-            )
-        p3l.set_log_flag(p3l.LOG_FLAG_PRINT_CONFIG_ERRORS, True)
-        logger = logging.getLogger(logger_name)
-        logger.propagate = True
-        logger.setLevel(logging.DEBUG)
-        prog = Path(__file__).name
-        logger.info(f"+ {60 * '-'} +")
-        logger.info(f"+ running {prog}({logger_name}) ...")
-        logger.info(f"+ {60 * '-'} +")
-        if(logtest): 
-            p3l.quick_logging_test(logger_name, log_config_file, reload = False)
-    except Exception as e:
-        logger.error(p3u.exc_err_msg(e))
-        raise
-#endregion configure_logging() function
-# ------------------------------------------------------------------------ +
-#region extract_txn_categories() method
-def extract_txn_categories(all_cats_url: str) -> dict:
+# ---------------------------------------------------------------------------- +
+#region argparse definitions
+base_parser = cmd2.Cmd2ArgumentParser()
+base_subparsers = base_parser.add_subparsers()
+
+parser_catalog = base_subparsers.add_parser(
+    "catalog",
+    aliases=["cat"], 
+    help="Manage transaction categories catalog.")
+parser_catalog.add_argument(
+    "-i", "--init",
+    action="store_true",
+    help="Initialize Catalog Manager."
+)
+parser_catalog.add_argument(
+    "fi_key", 
+    nargs="?",
+    action="store",
+    default='boa',
+    help="fi_key to initialize."
+)
+parser_catalog.add_argument(
+    "-l", "--list",
+    action="store_true",
+    help="List all transaction categories."
+)
+
+#endregion argparse definitions
+# ---------------------------------------------------------------------------- +
+#region CmdLineApp class
+class CmdLineApp(cmd2.Cmd):
+    """Transaction Categories Command Line Application."""
+    #region CmdLineApp Class intrinsics
+    def __init__(self,settings:bdms.BudManSettings):
+        super().__init__(allow_cli_args=False, persistent_history_file="txn_cats_history.txt")
+        self.allow_style = ansi.AllowStyle.TERMINAL
+        self.settings = settings if settings else bdms.BudManSettings()
+        self._catman: BDMTXNCategoryManager = BDMTXNCategoryManager(self.settings)
+    
+    @property
+    def catman(self) -> BDMTXNCategoryManager:
+        """Get the BDMTXNCategoryManager instance."""
+        return self._catman
+    @catman.setter
+    def catman(self, value: Optional[BDMTXNCategoryManager]) -> None:
+        """Set the BDMTXNCategoryManager instance."""
+        self._catman = value
+    #endregion CmdLineApp Class intrinsics
+    # ------------------------------------------------------------------------ +
+    #region do_catalog()
+    @cmd2.with_argparser(parser_catalog)
+    def do_catalog(self, args: str) -> None:
+        """Manage transaction categories catalog."""
+        try:
+            self.check_catalog() # raise error if no catman configured.
+            init_flag = args.init
+            list_flag = args.list
+            if init_flag:
+                self.catman = BDMTXNCategoryManager(self.settings)
+                self.catman.FI_WB_TYPE_TXN_CATEGORIES_file_load(args.fi_key)
+            if list_flag:
+                if not self.catman:
+                    self.poutput("Transaction Category Manager is not initialized.")
+                cat_data = self.catman.catalog
+                if not cat_data:
+                    self.poutput("No transaction categories found.")
+                self.display_catman()
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            self.poutput(f"Error: {m}")
+
+    do_cat = do_catalog
+    #endregion do_catalog()
+    # ------------------------------------------------------------------------ +
+    #region do_update() method
+    def do_update(self, statement) -> None:
+        """Update transaction categories."""
+        try:
+            self.check_catalog()
+            self.catman.FI_WB_TYPE_TXN_CATEGORIES_update_CATEGORY_MAP('boa')
+
+            self.poutput(f"Updated transaction categories.")
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            self.poutput(f"Error: {m}")
+    #endregion do_update() method
+    # ------------------------------------------------------------------------ +
+    #region do_foo() method
+    def do_foo(self, statement) -> None:
+        """Manage foo."""
+        try:
+            self.check_catalog()
+            self.poutput(f"foo {statement}")
+            self.poutput(f"foo {statement!r}")
+            pprint(self.catman)
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            self.poutput(f"Error: {m}")
+    #endregion do_foo() method
+    # ------------------------------------------------------------------------ +
+    #region display_catman() method
+    def display_catman(self) -> None:
+        """Display a summary of the Category Manager content."""
+        self.check_catalog()
+        cat_man_len = len(self.catman.catalog)
+        ccp_len = len(self.catman.ccm)
+        for fi_key, cat_data in self.catman.catalog.items():
+            self.poutput(f"FI Key: {fi_key}, Categories: {len(cat_data)}")
+    #endregion display_catman() method
+    # ------------------------------------------------------------------------ +
+    #region check_catalog() method
+    def check_catalog(self) -> None:
+        """If catalog is empty, raise error. """
+        if self.catman is None:
+            raise ValueError("Transaction Category Manager is not initialized.")
+    #endregion check_catalog() method
+#endregion CmdLineApp class
+# ---------------------------------------------------------------------------- +
+#region extract_txn_categories2() method
+def extract_txn_categories2(all_cats_url: str) -> dict:
     """Extract transaction categories from the budget_category_mapping.py 
     module, save to a WB_TYPE_TXN_CATEGORIES workbook.
 
@@ -65,7 +162,7 @@ def extract_txn_categories(all_cats_url: str) -> dict:
         cr_url (str): The URL of the check register.
     """
     try:
-        # Create a WB_TYPE_TXN_CATEGORIES workbook's in memory content
+        # Create a WB_TYPE_TXN_CATEGORIES workbook's content in memory
         # from the category_map definition in the module now.
         tc_path = p3u.verify_url_file_path(all_cats_url, test=False)
         cat_data = {
@@ -76,9 +173,9 @@ def extract_txn_categories(all_cats_url: str) -> dict:
         c_map = {}
         category_map: Dict[str, str] = get_category_map()
         for pattern, cat in category_map.items():
-            l1, l2, l3 = split_budget_category(cat)
+            l1, l2, l3 = p3u.split_parts(cat)
             # if l1 not in ["Housing", "Housing-2", "Food"]: continue
-            cat_id = generate_hash_key(str(pattern), length=8)
+            cat_id = p3u.gen_hash_key(str(pattern), length=8)
             bdm_tc = BDMTXNCategory(
                 cat_id=cat_id,
                 full_cat=cat,
@@ -95,7 +192,7 @@ def extract_txn_categories(all_cats_url: str) -> dict:
                 logger.warning(f"Duplicate category ID '{cat_id}' found for "
                                f"category '{cat}'. Overwriting existing entry.")
             cat_data["categories"][cat_id] = bdm_tc
-        bsm_WORKBOOK_content_put(cat_data, all_cats_url)
+        bsm_BDM_WORKBOOK_content_put(cat_data, all_cats_url)
         cnt = len(cat_data["categories"])
         logger.info(f"Extracted '{cnt}' categories from budget_category_mapping "
                     f"module, saved to : '{all_cats_url}'")
@@ -103,8 +200,8 @@ def extract_txn_categories(all_cats_url: str) -> dict:
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
-#endregion extract_txn_categories() method
-# ------------------------------------------------------------------------ +
+#endregion extract_txn_categories2() method
+# -------------------------------------------------------------------------- +
 def save_txn_categories():
     all_cats_url = "file:///C:/Users/ppain/OneDrive/budget/boa/All_TXN_Categories.txn_categories.json"
     try:
@@ -116,8 +213,8 @@ def save_txn_categories():
         cat_data : Dict[str, Dict] = extract_txn_categories(all_cats_url)
 
         catman = BDMTXNCategoryManager(settings)
-        catman.FI_WB_TYPE_TXN_CATEGORIES_url_get("boa")
-        bsm_WORKBOOK_content_put(catman.catalog["boa"], 
+        catman.FI_WB_TYPE_TXN_CATEGORIES_file_load("boa")
+        bsm_BDM_WORKBOOK_content_put(catman.catalog["boa"], 
                                      all_cats_url,
                                      bdm.WB_TYPE_TXN_CATEGORIES)
         logger.info(f"Transaction categories extracted and saved to: {all_cats_url}")
@@ -157,6 +254,10 @@ def test_regex(file_path, pattern, show_matches=False):
 def extract_column_from_csv(file_path:Path, column_name:str, output_path:Path,
                             append=True):
     try:
+        folder_path ='C:\\Users\\ppain\\OneDrive\\budget\\boa\\raw_data\\boa\\'
+        descriptions_file_path = folder_path + "All.txn_descriptions.txt"
+        orig_desc = 'Original Description'
+        descriptions_file = Path(descriptions_file_path)
         csv_data = csv_DATA_LIST_file_load(file_path)
         mode = 'a' if append else 'w'
         with open(descriptions_file, mode, encoding='utf-8') as f:
@@ -168,8 +269,35 @@ def extract_column_from_csv(file_path:Path, column_name:str, output_path:Path,
     except Exception as e:
         print(f"Error extracting column: {e}")
 
-#region __main__() method
-if __name__ == "__main__":
+# ------------------------------------------------------------------------ +
+#region configure_logging() method
+def configure_logging(logger_name : str = __name__, logtest : bool = False) -> None:
+    """Setup the application logger."""
+    try:
+        # Configure logging
+        log_config_file = "budget_model_logging_config.jsonc"
+        _ = p3l.setup_logging(
+            logger_name = logger_name,
+            config_file = log_config_file
+            )
+        p3l.set_log_flag(p3l.LOG_FLAG_PRINT_CONFIG_ERRORS, True)
+        logger = logging.getLogger(logger_name)
+        logger.propagate = True
+        logger.setLevel(logging.DEBUG)
+        prog = Path(__file__).name
+        logger.info(f"+ {60 * '-'} +")
+        logger.info(f"+ running {prog}({logger_name}) ...")
+        logger.info(f"+ {60 * '-'} +")
+        if(logtest): 
+            p3l.quick_logging_test(logger_name, log_config_file, reload = False)
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion configure_logging() function
+# ------------------------------------------------------------------------ +
+#region extract_descriptions() method
+def extract_descriptions(file_path: Path) -> list[str]:
+    """Extract transaction descriptions from a CSV file."""
     wb_url = "file:///C:/Users/ppain/OneDrive/budget/p3_budget_manager_ca063e8b.jsonc"
     cr_url = "file:///C:/Users/ppain/OneDrive/budget/boa/data/new/CheckRegister_ToDate20250609.csv"
     june_2025_url = "file:///C:/Users/ppain/OneDrive/budget/boa/raw_data/boa/June2025_ALL.csv"
@@ -220,6 +348,19 @@ if __name__ == "__main__":
     # bdm = bdms.bsm_BDM_STORE_url_load(bdms_url)
     logger.info(f"Complete.")
 
+#endregion extract_descriptions() method
+# ---------------------------------------------------------------------------- +
+#region __main__() method
+if __name__ == "__main__":
+    try:
+        settings = bdms.BudManSettings()
+        configure_logging(__name__, logtest=False)
+
+        app = CmdLineApp(settings)
+        sys.exit(app.cmdloop())
+    except Exception as e:
+        m = p3u.exc_err_msg(e)
+        logger.error(m)
 exit(0)
 #endregion __main__() method
 
