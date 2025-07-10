@@ -77,7 +77,8 @@ WF_FOLDER_ID = "wf_folder_id"
 WF_FOLDER = "wf_folder"
 WB_LOADED = "wb_loaded" 
 WB_CONTENT = "wb_content" 
-WB_INFO = "wb_info"
+WB_CATEGORY_COLLECTION = "wb_category_collection"
+WB_CATEGORY_COUNT = "wb_category_count"
 # ---------------------------------------------------------------------------- +
 # Attribute value constants
 WB_INFO_LEVEL_INFO = "info"

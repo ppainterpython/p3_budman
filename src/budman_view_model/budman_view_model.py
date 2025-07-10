@@ -922,12 +922,11 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
         """
         try:
             # TODO: prefix of the command, like "init FI boa" 
-            pfx = f"{self.__class__.__name__}.{self.FI_init_cmd.__name__}: "
             result = "no result"
-            if p3u.is_not_obj_of_type("cmd",cmd,dict,pfx):
+            if p3u.is_not_obj_of_type("cmd",cmd,dict):
                 m = f"Invalid cmd object, no action taken."
                 logger.error(m)
-                raise RuntimeError(f"{pfx}{m}")
+                raise RuntimeError(f"{m}")
             fi_key = cmd.get(cp.CK_FI_KEY, None)
             wf_key = cmd.get(cp.CK_WF_KEY, BDM_WF_CATEGORIZATION)
             wf_purpose = cmd.get(cp.CK_WF_PURPOSE, WF_WORKING)
@@ -936,13 +935,13 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             # TODO: Enable defaults for fi_key, wf_key, wb_type, wb_name in
             # settings.toml
             logger.info(f"Start: {str(cmd)}")
-            if not p3u.is_non_empty_str("fi_key",fi_key,pfx):
+            if not p3u.is_non_empty_str("fi_key",fi_key):
                 m = f"fi_key is None, no action taken."
                 logger.error(m)
-                raise RuntimeError(f"{pfx}{m}")
+                raise RuntimeError(f"{m}")
             # Check for 'all'
             if fi_key == "all":
-                raise NotImplementedError(f"{pfx}fi_key 'all' not implemented.")
+                raise NotImplementedError(f"fi_key 'all' not implemented.")
             # Check if valid fi_key            
             try:
                 _ = self.dc_FI_KEY_validate(fi_key)
@@ -950,7 +949,7 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             except ValueError as e:
                 m = f"ValueError({str(e)})"
                 logger.error(m)
-                raise RuntimeError(f"{pfx}{m}")
+                raise RuntimeError(f"{m}")
             # Load the workbooks for the FI,WF specified in the DC.
             # lwbl = self.DC.bdmwd_FI_WORKBOOKS_load(fi_key, wf_key, wb_type)
             # Set last values of FI_init_cmd in the DC.

@@ -44,7 +44,7 @@ from .budget_category_mapping import (
     category_histogram, clear_category_histogram,
     get_category_histogram, get_compiled_category_map,
     )
-from budget_domain_model import (BudgetDomainModel)
+# from budget_domain_model import (BudgetDomainModel)
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -338,10 +338,9 @@ def output_bdm_tree() -> str:
 #endregion outout_bdm_tree() function
 # ------------------------------------------------------------------------ +
 #region extract_txn_categories() method
-def extract_txn_categories(all_cats_url: str) -> dict:
+def extract_txn_categories() -> bdm.DATA_OBJECT:
     """Extract transaction categories from the category_map in 
     the budget_category_mapping.py module and return them as a dict.
-    , save to a WB_TYPE_TXN_CATEGORIES workbook.
 
     This function is being used to refactor away from the global 
     category_map dictionary and to use a file-based approach.
@@ -353,9 +352,9 @@ def extract_txn_categories(all_cats_url: str) -> dict:
     try:
         # Create a WB_TYPE_TXN_CATEGORIES workbook's in memory content
         # from the category_map definition in the module now.
-        tc_path = p3u.verify_url_file_path(all_cats_url, test=False)
+        # tc_path = p3u.verify_url_file_path(all_cats_url, test=False)
         cat_data = {
-            "name": tc_path.stem,
+            "name": "un_set", #tc_path.stem,
             "categories": {}
         }
 
@@ -379,10 +378,10 @@ def extract_txn_categories(all_cats_url: str) -> dict:
                 logger.warning(f"Duplicate category ID '{cat_id}' found for "
                                f"category '{cat}'. Overwriting existing entry.")
             cat_data["categories"][cat_id] = bdm_tc
-        bsm_BDM_WORKBOOK_content_put(cat_data, all_cats_url)
+        # bsm_BDM_WORKBOOK_content_put(cat_data, all_cats_url)
         cnt = len(cat_data["categories"])
         logger.info(f"Extracted '{cnt}' categories from budget_category_mapping "
-                    f"module, saved to : '{all_cats_url}'")
+                    f"module, count is: '{cnt}' rules.")
         return cat_data
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))

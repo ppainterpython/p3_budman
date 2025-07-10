@@ -57,10 +57,11 @@ __all__ = [
     "WF_PURPOSE", 
     "WB_TYPE",
     "WB_NAME",
-    "WB_INFO",
     "WB_URL",
     "WB_ID",
     "WB_CONTENT",
+    "WB_CATEGORY_COLLECTION",
+    "WB_CATEGORY_COUNT",
     # Attribute value constants
     "WB_INFO_LEVEL_INFO",
     "WB_INFO_LEVEL_VERBOSE",

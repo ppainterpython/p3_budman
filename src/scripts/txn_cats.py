@@ -3,7 +3,7 @@
 #------------------------------------------------------------------------------+
 #region Imports
 from pprint import pprint
-import logging, re, sys, csv, cmd2
+import logging, re, sys, csv, cmd2, toml
 from cmd2 import (Bg, Fg, ansi, Cmd2ArgumentParser, with_argparser)
 from pathlib import Path
 from typing import Dict, Optional
@@ -16,6 +16,11 @@ from budman_workflows.txn_category import (
     BDMTXNCategory, BDMTXNCategoryManager
 )
 from budman_workflows.budget_category_mapping import get_category_map
+from budman_workflows.workflow_utils import (
+    extract_txn_categories,
+    output_bdm_tree,
+    output_category_tree
+)
 from budget_storage_model import (
     bsm_BDM_WORKBOOK_content_load,
     bsm_BDM_WORKBOOK_content_put,
@@ -87,7 +92,7 @@ class CmdLineApp(cmd2.Cmd):
             list_flag = args.list
             if init_flag:
                 self.catman = BDMTXNCategoryManager(self.settings)
-                self.catman.FI_WB_TYPE_TXN_CATEGORIES_file_load(args.fi_key)
+                self.catman.FI_TXN_CATEGORIES_WORKBOOK_file_load(args.fi_key)
             if list_flag:
                 if not self.catman:
                     self.poutput("Transaction Category Manager is not initialized.")
@@ -116,6 +121,20 @@ class CmdLineApp(cmd2.Cmd):
             logger.error(m)
             self.poutput(f"Error: {m}")
     #endregion do_update() method
+    # ------------------------------------------------------------------------ +
+    #region do_extract() method
+    def do_extract(self, statement) -> None:
+        """Extract transaction categories."""
+        try:
+            self.check_catalog()
+            save_category_map(fi_key='boa', test=True)
+            # category_map: bdm.DATA_OBJECT = extract_txn_categories()
+            self.poutput(f"Extracted category_map.")
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            self.poutput(f"Error: {m}")
+    #endregion do_extract() method
     # ------------------------------------------------------------------------ +
     #region do_foo() method
     def do_foo(self, statement) -> None:
@@ -206,14 +225,13 @@ def save_txn_categories():
     all_cats_url = "file:///C:/Users/ppain/OneDrive/budget/boa/All_TXN_Categories.txn_categories.json"
     try:
         settings = bdms.BudManSettings()
-        configure_logging(__name__, logtest=False)
-
+        category_map = get_category_map()
         # Extract transaction categories from the budget_category_mapping.py
         # module, save to a WB_TYPE_TXN_CATEGORIES workbook.
-        cat_data : Dict[str, Dict] = extract_txn_categories(all_cats_url)
+        cat_data : Dict[str, Dict] = extract_txn_categories2(all_cats_url)
 
         catman = BDMTXNCategoryManager(settings)
-        catman.FI_WB_TYPE_TXN_CATEGORIES_file_load("boa")
+        catman.FI_TXN_CATEGORIES_WORKBOOK_file_load("boa")
         bsm_BDM_WORKBOOK_content_put(catman.catalog["boa"], 
                                      all_cats_url,
                                      bdm.WB_TYPE_TXN_CATEGORIES)
@@ -222,6 +240,29 @@ def save_txn_categories():
         m = p3u.exc_err_msg(e)
         logger.error(m)
     # bdm = bdms.bsm_BDM_STORE_url_load(bdms_url)
+    logger.info(f"Complete.")
+
+def save_category_map(fi_key:str='boa',test:bool=False):
+    try:
+        p3u.is_non_empty_str("fi_key", fi_key, save_category_map, "fi_key must be a non-empty string.")
+        settings = bdms.BudManSettings()
+        category_map = get_category_map()
+        cat_map_filename = settings[bdms.CATEGORY_CATALOG][fi_key][bdms.CATEGORY_MAP_FULL_FILENAME]
+        if test:
+            cat_map_filename = "test_" + cat_map_filename
+        fi_folder: Path = settings.FI_FOLDER_abs_path(fi_key)
+        cat_map_path: Path = fi_folder / cat_map_filename
+        with open(cat_map_path, 'w', encoding='utf-8') as f:
+            toml.dump(category_map, f)
+        # Now test reading it back in.
+        cat_map_in = toml.load(cat_map_path)
+        # bsm_BDM_WORKBOOK_content_put(catman.catalog["boa"], 
+        #                              all_cats_url,
+        #                              bdm.WB_TYPE_TXN_CATEGORIES)
+        logger.info(f"Transaction categories extracted and saved to: {cat_map_path}")
+    except Exception as e:
+        m = p3u.exc_err_msg(e)
+        logger.error(m)
     logger.info(f"Complete.")
 
 def test_regex(file_path, pattern, show_matches=False):
