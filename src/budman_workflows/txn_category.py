@@ -27,8 +27,8 @@ import budman_namespace.design_language_namespace as bdm
 from budman_namespace.bdm_workbook_class import BDMWorkbook
 import budman_settings as bdms
 from budget_storage_model import (
-    bsm_BDM_WORKBOOK_content_load,
-    bsm_BDM_WORKBOOK_content_put
+    bsm_WORKBOOK_CONTENT_url_get,
+    bsm_WORKBOOK_CONTENT_url_put
 )
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -174,11 +174,13 @@ class BDMTXNCategoryManager:
         try:
             self.valid_state()  # Ensure the manager is in a valid state
             # Load the catalog for an FI
-            cat_map: bdm.DATA_OBJECT = self.FI_CATEGORY_MAP_file_load(fi_key)
-            # Construct a new 
-            txn_cat_content = self.FI_TXN_CATEGORIES_WORKBOOK(fi_key, cat_map)
-
-            self.FI_TXN_CATEGORIES_WORKBOOK_add(fi_key, txn_cat_content)
+            cat_map_wb: bdm.CATEGORY_MAP_WORKBOOK = None
+            cat_map_wb = self.FI_CATEGORY_MAP_WORKBOOK_load(fi_key)
+            # Construct a new TXN_CATEGORIES_WORKBOOK
+            txn_categories_wb: bdm.TXN_CATEGORIES_WORKBOOK = None
+            txn_categories_wb = self.FI_TXN_CATEGORIES_WORKBOOK(fi_key, cat_map_wb)
+            self.FI_TXN_CATEGORIES_WORKBOOK_save(fi_key, txn_categories_wb)
+            # self.FI_TXN_CATEGORIES_WORKBOOK_add(fi_key, txn_categories_wb)
         except Exception as e:
             logger.error(f"Error updating CATEGORY_MAP for FI_KEY('{fi_key}') {e}")
             raise
@@ -186,7 +188,7 @@ class BDMTXNCategoryManager:
     # ------------------------------------------------------------------------ +
     #region FI_TXN_CATEGORIES_WORKBOOK_add()
     def FI_TXN_CATEGORIES_WORKBOOK_add(self, fi_key: str, 
-                                      txn_cat_content: bdm.DATA_OBJECT) -> None:
+                    txn_categories_wb: bdm.TXN_CATEGORIES_WORKBOOK) -> None:
         """Add the WB_TYPE_TXN_CATEGORIES workbook to the catalog for the FI.
 
         Add the content from the WB_TYPE_TXN_CATEGORIES workbook for the given
@@ -198,18 +200,14 @@ class BDMTXNCategoryManager:
         """
         try:
             self.valid_state()  # Ensure the manager is in a valid state
-            if (not isinstance(txn_cat_content, dict) or
-                bdm.WB_CATEGORY_COLLECTION not in txn_cat_content or
-                 not isinstance(txn_cat_content[bdm.WB_CATEGORY_COLLECTION], dict) or
-                 len(txn_cat_content[bdm.WB_CATEGORY_COLLECTION]) == 0):
-                raise TypeError(f"Expected a non-empty dictionary from {txn_cat_content}")
-            cat_data: Dict[str, Any] = txn_cat_content[bdm.WB_CATEGORY_COLLECTION]
-            # cat_data : Dict[str, BDMTXNCategory] = {
-            #     cat_id: BDMTXNCategory(**data) 
-            #         for cat_id, data in cat_dict.items()
-            # }
+            if (not isinstance(txn_categories_wb, dict) or
+                bdm.WB_CATEGORY_COLLECTION not in txn_categories_wb or
+                 not isinstance(txn_categories_wb[bdm.WB_CATEGORY_COLLECTION], dict) or
+                 len(txn_categories_wb[bdm.WB_CATEGORY_COLLECTION]) == 0):
+                raise TypeError(f"Expected a non-empty dictionary from {txn_categories_wb}")
+            cat_data: Dict[str, Any] = txn_categories_wb[bdm.WB_CATEGORY_COLLECTION]
             ccm = self.WB_TYPE_TXN_CATEGORIES_compile(cat_data)
-            self.catalog[fi_key] = txn_cat_content
+            self.catalog[fi_key] = txn_categories_wb
             self.ccm[fi_key] = ccm
             logger.info(f"Loaded {len(self.catalog[fi_key])} categories for {fi_key}.")
         except Exception as e:
@@ -217,8 +215,9 @@ class BDMTXNCategoryManager:
             raise
     #endregion FI_TXN_CATEGORIES_WORKBOOK_add()
     # ------------------------------------------------------------------------ +
-    #region FI_TXN_CATEGORIES_WORKBOOK_file_load()
-    def FI_TXN_CATEGORIES_WORKBOOK_file_load(self, fi_key: str) -> None:
+    #region FI_TXN_CATEGORIES_WORKBOOK_load()
+    def FI_TXN_CATEGORIES_WORKBOOK_load(self, 
+                fi_key: str,) -> None:
         """Load the WB_TYPE_TXN_CATEGORIES workbook content for an FI.
 
         Load the content from the WB_TYPE_TXN_CATEGORIES workbook for the given
@@ -231,13 +230,11 @@ class BDMTXNCategoryManager:
         try:
             self.valid_state()  # Ensure the manager is in a valid state
             # Load the catalog for an FI
-            cat_url = self.FI_TXN_CATEGORIES_WORKBOOK_url(fi_key)
-            bdm_wb : BDMWorkbook = BDMWorkbook(
-                wb_type=bdm.WB_TYPE_TXN_CATEGORIES,
-                wb_url=cat_url,
-                fi_key=fi_key
-            )
-            txn_cat_wb_content: Dict = bsm_BDM_WORKBOOK_content_load(bdm_wb)
+            test_txn_cat_wb_url = "file:///C:/Users/ppain/OneDrive/budget/boa/TEST_All_TXN_Categories.txn_categories.json"
+            cat_url = test_txn_cat_wb_url #self.FI_TXN_CATEGORIES_WORKBOOK_url(fi_key)
+            txn_cat_wb_content: bdm.TXN_CATEGORIES_WORKBOOK = None
+            txn_cat_wb_content = bsm_WORKBOOK_CONTENT_url_get(cat_url,
+                                        wb_type=bdm.WB_TYPE_TXN_CATEGORIES,)
             if (not isinstance(txn_cat_wb_content, dict) or
                 bdm.WB_CATEGORY_COLLECTION not in txn_cat_wb_content or
                  not isinstance(txn_cat_wb_content[bdm.WB_CATEGORY_COLLECTION], dict) or
@@ -252,11 +249,53 @@ class BDMTXNCategoryManager:
             ccm = self.WB_TYPE_TXN_CATEGORIES_compile(cat_collection)
             self.catalog[fi_key] = cat_collection
             self.ccm[fi_key] = ccm
-            logger.info(f"Loaded {len(self.catalog[fi_key])} categories for {fi_key}.")
+            count = txn_cat_wb_content.get(bdm.WB_CATEGORY_COUNT, 0)
+            logger.debug(f"Loaded '{count}' categories for FI_KEY('{fi_key}').")
         except Exception as e:
             logger.error(f"Error loading catalog fi_key: '{fi_key}' {e}")
             raise
-    #endregion FI_TXN_CATEGORIES_WORKBOOK_file_load()
+    #endregion FI_TXN_CATEGORIES_WORKBOOK_load()
+    # ------------------------------------------------------------------------ +
+    #region FI_TXN_CATEGORIES_WORKBOOK_save()
+    def FI_TXN_CATEGORIES_WORKBOOK_save(self, 
+                fi_key: str,
+                txn_cat_wb_input: Optional[bdm.TXN_CATEGORIES_WORKBOOK]=None) -> None:
+        """Save the WB_TYPE_TXN_CATEGORIES workbook content for an FI.
+
+        Save the content from the WB_TYPE_TXN_CATEGORIES workbook for the given
+        financial institution (FI), configuring its url from settings.
+        Also compiles the category map for the financial institution.
+
+        Args:
+            fi_key (str): The key for the financial institution.
+            txn_cat_wb_input (Optional[bdm.TXN_CATEGORIES_WORKBOOK]): 
+                If provided, save this workbook. If not, extract from catalog.
+        """
+        try:
+            test_txn_cat_wb_url = "file:///C:/Users/ppain/OneDrive/budget/boa/TEST_All_TXN_Categories.txn_categories.json"
+            self.valid_state()  # Ensure the manager is in a valid state
+            # Load the catalog for an FI
+            txn_cat_wb_content: bdm.TXN_CATEGORIES_WORKBOOK = None
+            txn_cat_wb_url = test_txn_cat_wb_url #self.FI_TXN_CATEGORIES_WORKBOOK_url(fi_key)
+            if txn_cat_wb_input is not None:
+                # If input is provided, use it directly.
+                txn_cat_wb_content = txn_cat_wb_input
+            else:
+                # Otherwise, load from the catalog.
+                if fi_key not in self.catalog:
+                    raise KeyError(f"FI_KEY '{fi_key}' not found in catalog.")
+                cat_collection = self.catalog[fi_key]
+                txn_cat_wb_content = self.FI_TXN_CATEGORIES_WORKBOOK(fi_key, 
+                                                                cat_collection)
+            bsm_WORKBOOK_CONTENT_url_put(txn_cat_wb_content,txn_cat_wb_url,
+                                        wb_type=bdm.WB_TYPE_TXN_CATEGORIES)
+            count = txn_cat_wb_content.get(bdm.WB_CATEGORY_COUNT, 0)
+            logger.debug(f"Saved TXN_CATEGORIES_WORKBOOK ({count}) "
+                         f"for FI_KEY('{fi_key}').")
+        except Exception as e:
+            logger.error(f"Error loading catalog fi_key: '{fi_key}' {e}")
+            raise
+    #endregion FI_TXN_CATEGORIES_WORKBOOK_save()
     # ------------------------------------------------------------------------ +
     #region FI_TXN_CATEGORIES_WORKBOOK_url()
     def FI_TXN_CATEGORIES_WORKBOOK_url(self, fi_key: str) -> str:
@@ -336,7 +375,8 @@ class BDMTXNCategoryManager:
     #endregion WB_TYPE_TXN_CATEGORIES_compile()
     # ------------------------------------------------------------------------ +
     #region FI_TXN_CATEGORIES_WORKBOOK()
-    def FI_TXN_CATEGORIES_WORKBOOK(self, fi_key: str, category_map: bdm.DATA_OBJECT) -> bdm.DATA_OBJECT:
+    def FI_TXN_CATEGORIES_WORKBOOK(self, fi_key: str, 
+        category_map: bdm.CATEGORY_MAP_WORKBOOK) -> bdm.TXN_CATEGORIES_WORKBOOK:
         """Constructor for TXN_CATEGORIES_WORKBOOK wb_content dictionary for an FI.
         
         Args:
@@ -377,6 +417,8 @@ class BDMTXNCategoryManager:
                     payee=None
                 )
                 txn_cat_wb_content[bdm.WB_CATEGORY_COLLECTION][cat_id] = bdm_tc
+            c = len(txn_cat_wb_content[bdm.WB_CATEGORY_COLLECTION]) 
+            txn_cat_wb_content[bdm.WB_CATEGORY_COUNT] = c
             return txn_cat_wb_content
         except Exception as e:
             logger.error(f"Error compiling transaction categories: {e}")
@@ -384,7 +426,7 @@ class BDMTXNCategoryManager:
     #endregion FI_TXN_CATEGORIES_WORKBOOK()
     # ------------------------------------------------------------------------ +
     #region CATEGORY_MAP_file_load()
-    def FI_CATEGORY_MAP_file_load(self, fi_key: str) -> bdm.DATA_OBJECT:
+    def FI_CATEGORY_MAP_WORKBOOK_load(self, fi_key: str) -> bdm.CATEGORY_MAP_WORKBOOK:
         """Load the CATEGORY_MAP file for an FI ( financial institution).
 
         Load the content from the CATEGORY_MAP workbook for the given
@@ -396,23 +438,25 @@ class BDMTXNCategoryManager:
         """
         try:
             self.valid_state()  # Ensure the manager is in a valid state
-            # Load the category_map for an FI
-            cat_map_abs_path = self.CATEGORY_MAP_abs_path(fi_key)
-            cat_map_dict: bdm.DATA_OBJECT = toml.load(cat_map_abs_path)
-            if (not isinstance(cat_map_dict, dict) or
-                 len(cat_map_dict) == 0):
-                raise TypeError(f"Expected a non-empty dictionary from {cat_map_abs_path}")
+            # Load the category_map_workbook for an FI
+            cat_map_workbook: bdm.CATEGORY_MAP_WORKBOOK = None
+            cat_map_wb_url = self.CATEGORY_MAP_WORKBOOK_url(fi_key)
+            cat_map_workbook = bsm_WORKBOOK_CONTENT_url_get(cat_map_wb_url,
+                                                    bdm.WB_TYPE_CATEGORY_MAP,)
+            if (not isinstance(cat_map_workbook, dict) or
+                 len(cat_map_workbook) == 0):
+                raise TypeError(f"Expected a non-empty dictionary from {cat_map_wb_url}")
             logger.info(f"BizEVENT: Loaded CATEGORY_MAP for FI_KEY('{fi_key}'), "
-                        f"len='{len(cat_map_dict)}', abs_Path='{cat_map_abs_path}'")
-            return cat_map_dict
+                        f"len='{len(cat_map_workbook)}', abs_Path='{cat_map_wb_url}'")
+            return cat_map_workbook
         except Exception as e:
             logger.error(f"Error loading catalog fi_key: '{fi_key}' {e}")
             raise
     #endregion CATEGORY_MAP_file_load()
     # ------------------------------------------------------------------------ +
-    #region CATEGORY_MAP_url()
-    def CATEGORY_MAP_url(self, fi_key: str) -> str:
-        """Get the URL for the CATEGORY_MAP workbook for a given FI.
+    #region CATEGORY_MAP_WORKBOOK_url()
+    def CATEGORY_MAP_WORKBOOK_url(self, fi_key: str) -> str:
+        """Get the URL for the CATEGORY_MAP_WORKBOOK for a given FI.
 
         Args:
             fi_key (str): The key for the financial institution.
@@ -422,7 +466,7 @@ class BDMTXNCategoryManager:
         """
         try:
             self.valid_state()  # Ensure the manager is in a valid state
-            cat_map_path: Path = self.CATEGORY_MAP_abs_path(fi_key)
+            cat_map_path: Path = self.CATEGORY_MAP_WORKBOOK_abs_path(fi_key)
             return cat_map_path.as_uri()
         except KeyError as e:
             logger.error(f"Category Map file not found for FI key: {fi_key}")
@@ -431,11 +475,11 @@ class BDMTXNCategoryManager:
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
-    #endregion CATEGORY_MAP_url()
+    #endregion CATEGORY_MAP_WORKBOOK_url()
     # ------------------------------------------------------------------------ +
-    #region CATEGORY_MAP_abs_path()
-    def CATEGORY_MAP_abs_path(self, fi_key: str) -> Path:
-        """Get the absolute path for the CATEGORY_MAP workbook for a given FI.
+    #region CATEGORY_MAP_WORKBOOK_abs_path()
+    def CATEGORY_MAP_WORKBOOK_abs_path(self, fi_key: str) -> Path:
+        """Get the absolute path for the CATEGORY_MAP_WORKBOOK for a given FI.
 
         Args:
             fi_key (str): The key for the financial institution.
@@ -453,13 +497,13 @@ class BDMTXNCategoryManager:
                                         f"found: {cat_map_path}")
             return cat_map_path
         except KeyError as e:
-            logger.error(f"Category Map file not found for FI key: {fi_key}")
+            logger.error(f"CATEGORY_MAP_WORKBOOK file not found for FI key: {fi_key}")
             raise e
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
-    #endregion CATEGORY_MAP_abs_path()
+    #endregion CATEGORY_MAP_WORKBOOK_abs_path()
     # ------------------------------------------------------------------------ +
     #region valid_state()
     def valid_state(self) -> None:

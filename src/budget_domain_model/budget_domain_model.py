@@ -81,8 +81,6 @@ from budget_storage_model import (
     bsm_verify_folder, 
     bsm_get_workbook_names,
     bsm_get_workbook_names2,
-    bsm_WORKBOOK_content_file_load,
-    bsm_WORKBOOK_content_file_save,
     )                              
 from p3_mvvm.model_base_ABC import Model_Base
 from budman_namespace.bdm_workbook_class import BDMWorkbook

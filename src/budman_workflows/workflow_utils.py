@@ -35,7 +35,7 @@ from budman_settings import *
 import budman_namespace as bdm
 from budget_storage_model import (
     bsm_BDM_STORE_url_get,
-    bsm_BDM_WORKBOOK_content_put
+    bsm_WORKBOOK_CONTENT_url_put
 )
 from .txn_category import BDMTXNCategory, BDMTXNCategoryManager
 from .budget_category_mapping import (
@@ -245,7 +245,7 @@ def txn_category_url_save(cat_url: str) -> None:
             )
             cat_data["categories"][cat_id] = bdm_tc
             # print(f"category: '{cat_id}': '{repr(bdm_tc )}'")
-        bsm_BDM_WORKBOOK_content_put(cat_data, cat_url)
+        bsm_WORKBOOK_CONTENT_url_put(cat_data, cat_url,bdm.WB_TYPE_TXN_CATEGORIES)
         logger.info(f"Saved transaction categories to: {cat_url}")
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
@@ -354,8 +354,9 @@ def extract_txn_categories() -> bdm.DATA_OBJECT:
         # from the category_map definition in the module now.
         # tc_path = p3u.verify_url_file_path(all_cats_url, test=False)
         cat_data = {
-            "name": "un_set", #tc_path.stem,
-            "categories": {}
+            bdm.WB_NAME: "un_set", #tc_path.stem,
+            bdm.WB_CATEGORY_COUNT: 0,
+            bdm.WB_CATEGORY_COLLECTION: {}
         }
 
         c_map = {}

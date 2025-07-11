@@ -10,8 +10,10 @@
 
 # third-party modules and packages
 from typing import Dict, List, Tuple, Any, Type, TYPE_CHECKING
+import openpyxl
 from openpyxl import Workbook
-from openpyxl.worksheet.worksheet import Worksheet as Worksheet
+import openpyxl.worksheet.worksheet
+from openpyxl.worksheet.worksheet import Worksheet #as Worksheet
 # local modules and packages
 
 #endregion Imports
@@ -22,6 +24,7 @@ DATA_OBJECT = Dict[str, Any]
 DATA_TUPLE = Tuple[str, DATA_OBJECT]  # A tuple of (key, value) for data objects
 DATA_COLLECTION = Dict[str, DATA_OBJECT] 
 DATA_LIST = List[DATA_OBJECT] 
+type DATA_MAP = Dict[str, str]
 # BUDMAN data type constants
 type WORKBOOK_ID = str
 type BUDMAN_RESULT = tuple[bool, Any]  # A tuple of (success, message or data)
@@ -35,8 +38,13 @@ DATA_CONTEXT = DATA_OBJECT
 BDM_STORE = DATA_OBJECT
 BDM_CONFIG = DATA_OBJECT
 BDM_CHECK_REGISTER = DATA_OBJECT
-BDM_TRANSACTION_WORKBOOK = Workbook
-BDM_TRANSACTION_WORKSHEET = Worksheet
+# WORKBOOK type related types
+type CATEGORY_MAP_WORKBOOK = DATA_MAP # a mapping dict
+type TXN_CATEGORIES_WORKBOOK = DATA_OBJECT
+type TXN_REGISTER_WORKBOOK = DATA_OBJECT
+type EXCEL_TXNS_WORKBOOK = openpyxl.Workbook
+type EXCEL_TXNS_WORKSHEET = openpyxl.worksheet.worksheet.Worksheet
+type TXN_CATEGORY_COLLECTION = DATA_COLLECTION
 
 # MODEL_OBJECT : Type[object] = object()
 BDMO_OBJECT = DATA_OBJECT
@@ -53,11 +61,10 @@ WF_DATA_COLLECTION = DATA_COLLECTION
 WF_DATA_OBJECT = DATA_OBJECT  # a DATA_OBJECT for a specific FI,WF
 BDM_WORKING_DATA_OBJECT = DATA_OBJECT
 # ---------------------------------------------------------------------------- +
-# Valid data store file types for the Budget Storage Model (BSM).
+# Budget Storage Model (BSM) constants
+BSM_SUPPORTED_URL_SCHEMES = ("file") #, "http", "https")
 VALID_BSM_BDM_STORE_FILETYPES = (".json", ".jsonc")
 BSM_DATA_COLLECTION_CSV_STORE_FILETYPES = (".csv",".txt")
-# ---------------------------------------------------------------------------- +
-# Budget Model Filesystem Path default constants 
 PATH = "_path"
 ABS_PATH = "_abs" + PATH
 WORKBOOKS = "_workbooks"

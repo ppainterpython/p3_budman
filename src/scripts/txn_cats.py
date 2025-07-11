@@ -22,8 +22,8 @@ from budman_workflows.workflow_utils import (
     output_category_tree
 )
 from budget_storage_model import (
-    bsm_BDM_WORKBOOK_content_load,
-    bsm_BDM_WORKBOOK_content_put,
+    bsm_BDM_WORKBOOK_load,
+    bsm_WORKBOOK_CONTENT_url_put,
     csv_DATA_LIST_url_get, 
     csv_DATA_LIST_file_load
 )
@@ -92,7 +92,7 @@ class CmdLineApp(cmd2.Cmd):
             list_flag = args.list
             if init_flag:
                 self.catman = BDMTXNCategoryManager(self.settings)
-                self.catman.FI_TXN_CATEGORIES_WORKBOOK_file_load(args.fi_key)
+                self.catman.FI_TXN_CATEGORIES_WORKBOOK_load(args.fi_key)
             if list_flag:
                 if not self.catman:
                     self.poutput("Transaction Category Manager is not initialized.")
@@ -127,7 +127,7 @@ class CmdLineApp(cmd2.Cmd):
         """Extract transaction categories."""
         try:
             self.check_catalog()
-            save_category_map(fi_key='boa', test=True)
+            save_category_map(fi_key=u'boa', test=True)
             # category_map: bdm.DATA_OBJECT = extract_txn_categories()
             self.poutput(f"Extracted category_map.")
         except Exception as e:
@@ -169,24 +169,22 @@ class CmdLineApp(cmd2.Cmd):
 #endregion CmdLineApp class
 # ---------------------------------------------------------------------------- +
 #region extract_txn_categories2() method
-def extract_txn_categories2(all_cats_url: str) -> dict:
+def extract_txn_categories2(txn_cat_wb_url: str) -> dict:
     """Extract transaction categories from the budget_category_mapping.py 
-    module, save to a WB_TYPE_TXN_CATEGORIES workbook.
-
-    This function is being used to refactor away from the global 
-    category_map dictionary and to use a file-based approach.
+    module, save to a TXN_CATEGORIES_WORKBOOK.
 
     Args:
-        wb_url (str): The URL of the workbook.
-        cr_url (str): The URL of the check register.
+        txn_cat_wb_url (str): The URL of the TXN_CATEGORIES_WORKBOOK.
     """
     try:
         # Create a WB_TYPE_TXN_CATEGORIES workbook's content in memory
         # from the category_map definition in the module now.
-        tc_path = p3u.verify_url_file_path(all_cats_url, test=False)
+        txn_cat_wb_path = p3u.verify_url_file_path(txn_cat_wb_url, test=False)
+        # Construct a TXN_CATEGORIES_WORKBOOK content dict.
         cat_data = {
-            "name": tc_path.stem,
-            "categories": {}
+            bdm.WB_NAME: txn_cat_wb_path.stem,
+            bdm.WB_CATEGORY_COUNT: 0,
+            bdm.WB_CATEGORY_COLLECTION: {}
         }
 
         c_map = {}
@@ -207,14 +205,14 @@ def extract_txn_categories2(all_cats_url: str) -> dict:
                 pattern=pattern,
                 total=0
             )
-            if cat_id in cat_data["categories"]:
+            if cat_id in cat_data[bdm.WB_CATEGORY_COLLECTION]:
                 logger.warning(f"Duplicate category ID '{cat_id}' found for "
                                f"category '{cat}'. Overwriting existing entry.")
-            cat_data["categories"][cat_id] = bdm_tc
-        bsm_BDM_WORKBOOK_content_put(cat_data, all_cats_url)
-        cnt = len(cat_data["categories"])
+            cat_data[bdm.WB_CATEGORY_COLLECTION][cat_id] = bdm_tc
+        bsm_WORKBOOK_CONTENT_url_put(cat_data, txn_cat_wb_url,bdm.WB_TYPE_TXN_CATEGORIES)
+        cnt = len(cat_data[bdm.WB_CATEGORY_COLLECTION])
         logger.info(f"Extracted '{cnt}' categories from budget_category_mapping "
-                    f"module, saved to : '{all_cats_url}'")
+                    f"module, saved to : '{txn_cat_wb_url}'")
         return cat_data
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
@@ -222,20 +220,20 @@ def extract_txn_categories2(all_cats_url: str) -> dict:
 #endregion extract_txn_categories2() method
 # -------------------------------------------------------------------------- +
 def save_txn_categories():
-    all_cats_url = "file:///C:/Users/ppain/OneDrive/budget/boa/All_TXN_Categories.txn_categories.json"
+    txn_cat_wb_url = "file:///C:/Users/ppain/OneDrive/budget/boa/All_TXN_Categories.txn_categories.json"
     try:
         settings = bdms.BudManSettings()
         category_map = get_category_map()
         # Extract transaction categories from the budget_category_mapping.py
         # module, save to a WB_TYPE_TXN_CATEGORIES workbook.
-        cat_data : Dict[str, Dict] = extract_txn_categories2(all_cats_url)
+        cat_data : Dict[str, Dict] = extract_txn_categories2(txn_cat_wb_url)
 
         catman = BDMTXNCategoryManager(settings)
-        catman.FI_TXN_CATEGORIES_WORKBOOK_file_load("boa")
-        bsm_BDM_WORKBOOK_content_put(catman.catalog["boa"], 
-                                     all_cats_url,
+        catman.FI_TXN_CATEGORIES_WORKBOOK_load("boa")
+        bsm_WORKBOOK_CONTENT_url_put(catman.catalog["boa"], 
+                                     txn_cat_wb_url,
                                      bdm.WB_TYPE_TXN_CATEGORIES)
-        logger.info(f"Transaction categories extracted and saved to: {all_cats_url}")
+        logger.info(f"Transaction categories extracted and saved to: {txn_cat_wb_url}")
     except Exception as e:
         m = p3u.exc_err_msg(e)
         logger.error(m)

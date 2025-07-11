@@ -56,7 +56,7 @@ class BDMWorkbook:
     wf_folder_id: str = None
     wf_folder: str = None
     wb_loaded : bool = False
-    wb_content: Union[Workbook, Dict, str] = None
+    wb_content: bdm.WORKBOOK_CONTENT = None
     #endregion dataclass object attributes
     # ------------------------------------------------------------------------ +
     #region internal methods: __repr__

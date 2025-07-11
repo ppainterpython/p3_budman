@@ -591,7 +591,7 @@ def process_budget_category(bdm_wb:BDMWorkbook,
 #endregion process_budget_category() function
 # ---------------------------------------------------------------------------- +
 #region apply_check_register() function
-def apply_check_register(cr_wb_content:BDM_CHECK_REGISTER, trans_wb_ref:BDM_TRANSACTION_WORKBOOK) -> None:
+def apply_check_register(cr_wb_content:BDM_CHECK_REGISTER, trans_wb_ref:EXCEL_TXNS_WORKBOOK) -> None:
     """Apply the check transactions to the worksheet.
     
     The sheet has banking transaction data in rows and columns. 
