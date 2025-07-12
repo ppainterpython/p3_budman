@@ -85,7 +85,7 @@ logger = logging.getLogger(__name__)
 """
 #endregion BSM Layer 1 Design Notes
 # ---------------------------------------------------------------------------- +
-#region    bsm_BDM_WORKBOOK_load(wb_url : str = None) -> Any
+#region    bsm_BDM_WORKBOOK_load() 
 def bsm_BDM_WORKBOOK_load(bdm_wb:BDMWorkbook) -> bdm.WORKBOOK_CONTENT:
     """Load the BDM_WORKBOOK content from its storage service.
 
@@ -110,9 +110,9 @@ def bsm_BDM_WORKBOOK_load(bdm_wb:BDMWorkbook) -> bdm.WORKBOOK_CONTENT:
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
-#endregion bsm_BDM_WORKBOOK_load(wb_url : str = None) -> Any
+#endregion bsm_BDM_WORKBOOK_load()
 # ---------------------------------------------------------------------------- +
-#region    bsm_BDM_WORKBOOK_content_save(wb:Any, wb_url : str = None) -> Any
+#region    bsm_BDM_WORKBOOK_save()
 def bsm_BDM_WORKBOOK_save(bdm_wb:BDMWorkbook) -> None:
     """
     Save the BDM_WORKBOOK content to its storage service.
@@ -129,57 +129,7 @@ def bsm_BDM_WORKBOOK_save(bdm_wb:BDMWorkbook) -> None:
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
-# def bsm_BDM_WORKBOOK_content_save(wb_content:Any, bdm_wb:BDMWorkbook) -> None:
-#     """Put a BDM_WORKBOOK's content to its storage service.
-
-#     Args:
-#         wb_content (Any): The workbook to save.
-#         bdm_wb (BDMWorkbook): The BDMWorkbook object containing metadata 
-#         about the workbook.
-
-#     Returns:
-#         Any: The loaded workbook object.
-#     """
-#     try:
-#         p3u.is_not_obj_of_type("bdm_wb", bdm_wb, BDMWorkbook, raise_error=True)
-#         wb_abs_path = bsm_WB_URL_verify_file_scheme(bdm_wb.wb_url, test=False)
-#         # Dispatch based on WB_TYPE.
-#         if bdm_wb.wb_type == bdm.WB_TYPE_TXN_CATEGORIES:
-#             # If the workbook type is TXN_CATEGORIES, save it as a JSON file.
-#             logger.info(f"Saving workbook as TXN_CATEGORIES to file: '{wb_abs_path}'")
-#             with open(wb_abs_path, "w") as f:
-#                 jsonc_content = json5.encode(wb_content)
-#                 f.write(jsonc_content)
-#             return
-#         elif bdm_wb.wb_type == bdm.WB_TYPE_CSV_TXNS:
-#             # If the workbook type is CSV_TXNS, save it as a CSV file.
-#             logger.info(f"Saving workbook as CSV_TXNS to file: '{wb_abs_path}'")
-#             csv_DATA_LIST_file_save(wb_content, wb_abs_path)
-#             return
-#         if bdm_wb.wb_type == bdm.WB_TYPE_UNKNOWN:
-#             wb_type = bsm_WB_TYPE(bdm_wb.wb_url,wb_filetype)
-        
-#         # Dispatch based on filetype.
-#         wb_filetype = wb_abs_path.suffix.lower()
-#         if wb_filetype not in [bdm.WB_FILETYPE_XLSX, bdm.WB_FILETYPE_CSV]:
-#             # If the filetype is not supported, raise an error.
-#             m = f"Unsupported workbook filetype: {wb_filetype} in file: {wb_abs_path}"
-#             logger.error(m)
-#             raise ValueError(m)
-#         if wb_filetype == bdm.WB_FILETYPE_CSV:
-#             # If the filetype is CSV, load it as a CSV file.
-#             logger.info(f"Loading workbook as CSV from file: '{wb_abs_path}'")
-#             csv_DATA_LIST_url_put(wb_content, bdm_wb.wb_url)
-#             return
-#         if wb_filetype == bdm.WB_FILETYPE_XLSX:
-#             # If the filetype is XLSX, load it as an Excel workbook.
-#             logger.info(f"Loading workbook as XLSX from file: '{wb_abs_path}'")
-#             wb_content = bsm_WORKBOOK_CONTENT_file_save(wb_content,wb_abs_path)
-#             return
-#     except Exception as e:
-#         logger.error(p3u.exc_err_msg(e))
-#         raise
-#endregion bsm_BDM_WORKBOOK_content_save(wb_url : str = None) -> Any
+#endregion bsm_BDM_WORKBOOK_save()
 # ---------------------------------------------------------------------------- +
 #                                                                              +
 #endregion Layer 1 - BDM_WORKBOOK storage functions
@@ -397,7 +347,7 @@ def bsm_WORKBOOK_CONTENT_file_save(wb_content:bdm.WORKBOOK_CONTENT,
             # WB_TYPE_EXCEL_TXNS: Save it as an Excel file.
             if wb_content_abs_path.exists():
                 # TODO: settings for backup folder path
-                p3u.copy_backup(wb_content_abs_path, Path("backup"))
+                p3u.copy_backup(wb_content_abs_path, "backup")
             wb_content.save(filename=wb_content_abs_path)
             wbtl = "TXN_EXCEL_WORKBOOK"
         elif wb_type == bdm.WB_TYPE_CSV_TXNS:

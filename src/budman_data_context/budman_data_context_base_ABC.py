@@ -215,12 +215,12 @@ class BudManDataContext_Base(ABC):
 
     @property
     @abstractmethod
-    def dc_WORKBOOK(self) -> WORKBOOK_OBJECT:
+    def dc_BDM_WORKBOOK(self) -> WORKBOOK_OBJECT:
         """Return the current workbook in focus in the DC."""
         pass
-    @dc_WORKBOOK.setter
+    @dc_BDM_WORKBOOK.setter
     @abstractmethod
-    def dc_WORKBOOK(self, value: WORKBOOK_OBJECT) -> None:
+    def dc_BDM_WORKBOOK(self, value: WORKBOOK_OBJECT) -> None:
         """Set the current workbook in focus in the DC."""
         pass
 
@@ -410,20 +410,21 @@ class BudManDataContext_Base(ABC):
         pass
 
     @abstractmethod
-    def dc_WORKBOOK_content_load(self, wb: WORKBOOK_OBJECT) -> BUDMAN_RESULT:
-        """Abstract: Load workbook's content for storage, add to dc_LOADED_WORKBOOKS.
-           Returns:
+    def dc_BDM_WORKBOOK_load(self, bdm_wb: WORKBOOK_OBJECT) -> BUDMAN_RESULT:
+        """ Abstract: Load bdm_wb WORKBOOK_CONTENT from storage, set value 
+            or bdm_wb.wb_content, and set bdm_wb.wb_loaded. Make this bdm_wb
+            the dc_BDM_WORKBOOK, so that the application can use it.
+
+            Returns:
                 BUDMAN_RESULT: a Tuple[success: bool, result: Any].
-                    success = True, result is a message about the loaded 
-                    workbook indicating the workbook is available in the 
-                    dc_LOADED_WORKBOOKS collection.
+                    success = True, result is bdm_wb.wb_content.
                     success = False, result is a string describing the error.
         """
         pass
 
     @abstractmethod
-    def dc_WORKBOOK_content_save(self,wb_content:WORKBOOK_CONTENT, wb: WORKBOOK_OBJECT) -> BUDMAN_RESULT:
-        """Abstract: Save the specified workbook's content to storage."""
+    def dc_BDM_WORKBOOK_save(self,bdm_wb: WORKBOOK_OBJECT) -> BUDMAN_RESULT:
+        """Abstract: Save bdm_wb WORKBOOK_CONTENT to storage."""
         pass
     #endregion WORKBOOK_CONTENT storage-related methods
 

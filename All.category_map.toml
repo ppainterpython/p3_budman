@@ -196,6 +196,7 @@
 '(?i)\\bState\\s\\bFARM\\b' = 'Insurance.Auto and Home.State Farm'
 '(?i)\\bAAA\\s*TX.*' = 'Insurance.Auto Insurance.AAA Texas'
 '(?i)\\bTexas\\s*Law\\b' = 'Insurance.Personal Liability.Texas Law'
+'(?i)\\bHUMANA.*INC\\b' = 'Insurance.Medical.Humana Medicare Supplement'
 #endregion L1: Insurance
 #region L1: Medical - Essential
 '(?i).*FLEXBUDDY.*' = 'Medical.Supplies.FlexBuddy'

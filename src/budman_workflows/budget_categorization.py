@@ -492,12 +492,12 @@ def process_budget_category(bdm_wb:BDMWorkbook,
             m = f"Workbook '{bdm_wb.wb_id}' is not loaded, no action taken."
             logger.error(m)
             return False, m
-        wb_content : Workbook = bdm_DC.dc_LOADED_WORKBOOKS[bdm_wb.wb_id]
-        if p3u.is_not_obj_of_type("wb", wb_content, Workbook):
+        # wb_content : Workbook = bdm_DC.dc_LOADED_WORKBOOKS[bdm_wb.wb_id]
+        if p3u.is_not_obj_of_type("wb", bdm_wb.wb_content, Workbook):
             m = f"Error accessing wb_content for workbook: '{bdm_wb.wb_id}'."
             logger.error(m)
             return False, m
-        ws : Worksheet = wb_content.active  # Get the active worksheet.
+        ws : Worksheet = bdm_wb.wb_content.active  # Get the active worksheet.
         if not check_sheet_columns(ws, add_columns=False):
             m = (f"Sheet '{ws.title}' cannot be mapped due to "
                     f"missing required columns.")
@@ -508,6 +508,17 @@ def process_budget_category(bdm_wb:BDMWorkbook,
         # give the cell from a row tuple matching the column name in hdr.
         hdr = [cell.value for cell in ws[1]] 
 
+        # Open and itialize the Other workbook to hold rows that are not mapped
+        # to a budget category. This is the 'Other' category.
+        other_wb_abs_path_str = "C:/Users/ppain/OneDrive/budget/boa/Other.excel_txns.xlsx"
+        other_wb_path: Path = Path.Path(other_wb_abs_path_str)
+        other_wb: Workbook = load_workbook(other_wb_path)
+        # Clear the other worksheet before processing.
+        clear_worksheet(other_wb, BUDMAN_SHEET_NAME)
+        other_ws: Worksheet = other_wb.active
+        other_ws.append(hdr)
+
+        # Check if the source and destination columns are in the header row.
         if src in hdr:
             src_col_index = hdr.index(src)
         else:
@@ -572,11 +583,14 @@ def process_budget_category(bdm_wb:BDMWorkbook,
             transaction = WORKSHEET_row_data(row,hdr) 
             trans_str = transaction.data_str()
             if dst_value == 'Other':
+                copy_row_to_worksheet(row, other_ws)
                 other_count += 1
                 if abs(transaction.amount) > 100:
                     logger.debug(f"{row_idx:04}:{trans_str}" )
             del transaction  # Clean up the transaction object.
         time_taken = p3u.stop_timer(st)
+        other_wb.save(other_wb_path)  # Save the other workbook with 'Other' category rows.
+        other_wb.close()  # Close the other workbook.
         elapsed : float = time.time() - st
         per_row = elapsed / (num_rows - 1) if num_rows > 1 else 0.0
         m = (f"Task Complete: {time_taken} Mapped '{num_rows}' rows, to "
@@ -587,7 +601,35 @@ def process_budget_category(bdm_wb:BDMWorkbook,
     except Exception as e:
         m = p3u.exc_err_msg(e)
         logger.error(m)
-        return False, m    
+        return False, m
+
+def clear_worksheet(workbook, sheet_name):
+    # Remove the existing worksheet
+    workbook.remove(workbook[sheet_name])
+    # Create a new worksheet with the same name
+    workbook.create_sheet(sheet_name)
+
+def copy_row_to_worksheet(source_row, dest_worksheet):
+    # Get the next available row in the destination worksheet
+    dest_row = dest_worksheet.max_row + 1
+
+    for col, cell in enumerate(source_row, start=1):
+        # Create a new cell in the destination worksheet
+        dest_cell = dest_worksheet.cell(row=dest_row, column=col)
+        
+        # Copy the value
+        dest_cell.value = cell.value
+        
+        # Copy the style
+        if cell.has_style:
+            dest_cell.font = cell.font.copy()
+            dest_cell.border = cell.border.copy()
+            dest_cell.fill = cell.fill.copy()
+            dest_cell.number_format = cell.number_format
+            dest_cell.protection = cell.protection.copy()
+            dest_cell.alignment = cell.alignment.copy()
+
+#
 #endregion process_budget_category() function
 # ---------------------------------------------------------------------------- +
 #region apply_check_register() function

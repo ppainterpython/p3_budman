@@ -93,12 +93,12 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
     # ------------------------------------------------------------------------ +
     #region    BudManDataContext(BudManDataContext_Base) Model-Aware Property Overrides.
     @property
-    def dc_WORKBOOK(self) -> BDMWorkbook:
+    def dc_BDM_WORKBOOK(self) -> BDMWorkbook:
         """Return the current workbook in focus in the DC."""
         if not self.dc_VALID: return None
         return self._dc_WORKBOOK
-    @dc_WORKBOOK.setter
-    def dc_WORKBOOK(self, value: Optional[BDMWorkbook]) -> None:
+    @dc_BDM_WORKBOOK.setter
+    def dc_BDM_WORKBOOK(self, value: Optional[BDMWorkbook]) -> None:
         """Set the current workbook in focus in the DC."""
         if not self.dc_VALID: return None
         if not isinstance(value, BDMWorkbook):
@@ -253,7 +253,7 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
                 wb.wb_loaded = True
                 return True, wb_content
             # load is True, so we need to load the workbook content.
-            return self.dc_WORKBOOK_content_load(wb)
+            return self.dc_BDM_WORKBOOK_load(wb)
         except Exception as e:
             m = f"Error loading workbook '{wb.wb_id}': {p3u.exc_err_msg(e)}"
             logger.error(m)
@@ -283,7 +283,7 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
                 m = f"Workbook content for '{bdm_wb.wb_id}' is None."
                 logger.error(m)
                 return False, m
-            success, result = self.dc_WORKBOOK_content_save(wb_content, bdm_wb)
+            success, result = self.dc_BDM_WORKBOOK_save(wb_content, bdm_wb)
             bdm_wb.wb_loaded = bdm_wb.wb_id in self.dc_LOADED_WORKBOOKS
             if bdm_wb.wb_loaded :
                 # Retrieve the workbook content from dc_LOADED_WORKBOOKS.
@@ -302,7 +302,7 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
             logger.error(m)
             return False, m
 
-    def dc_WORKBOOK_content_load(self, bdm_wb : BDMWorkbook) -> BUDMAN_RESULT:
+    def dc_BDM_WORKBOOK_load(self, bdm_wb : BDMWorkbook) -> BUDMAN_RESULT:
         """Model-aware: Load the workbook bdm_wb with BSM service."""
         try:
             # Model-Aware World
@@ -312,22 +312,20 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
                 m = f"Invalid workbook object: {bdm_wb!r}"
                 logger.error(m)
                 return False, m
-            # Model-aware: Get the workbook content object with the BSM.
-            wb_content = bsm_BDM_WORKBOOK_load(bdm_wb)
+            # Model-aware: Load the bdm_wb WORKBOOK_CONTENT object with the BSM.
+            bsm_BDM_WORKBOOK_load(bdm_wb)
             # Add/update to the loaded workbooks collection.
-            bdm_wb.wb_content = wb_content
-            bdm_wb.wb_loaded = True
-            self.dc_LOADED_WORKBOOKS[bdm_wb.wb_id] = wb_content
-            self.dc_WORKBOOK = bdm_wb  # Update workbook-related DC info.
+            self.dc_LOADED_WORKBOOKS[bdm_wb.wb_id] = bdm_wb.wb_content
+            self.dc_BDM_WORKBOOK = bdm_wb  # Update workbook-related DC info.
             logger.info(f"Loaded workbook '{bdm_wb.wb_id}' "
                         f"from url '{bdm_wb.wb_url}'.")
-            return True, wb_content
+            return True, bdm_wb.wb_content
         except Exception as e:
             m = f"Error loading wb_id '{bdm_wb.wb_id}': {p3u.exc_err_msg(e)}"
             logger.error(m)
             return False, m
         
-    def dc_WORKBOOK_content_save(self, wb_content: WORKBOOK_CONTENT, bdm_wb : BDMWorkbook) -> BUDMAN_RESULT:
+    def dc_BDM_WORKBOOK_save(self, bdm_wb : BDMWorkbook) -> BUDMAN_RESULT:
         """Model-Aware: Save the workbook content to storage.
 
         Args:
@@ -345,9 +343,9 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
                 logger.error(m)
                 return False, m
             # Save the workbook content using the BSM.
-            bsm_BDM_WORKBOOK_save(wb_content, bdm_wb)
+            bsm_BDM_WORKBOOK_save(bdm_wb)
             # Update the dc_LOADED_WORKBOOKS with the saved content.
-            self.dc_LOADED_WORKBOOKS[bdm_wb.wb_id] = wb_content
+            self.dc_LOADED_WORKBOOKS[bdm_wb.wb_id] = bdm_wb.wb_content
             bdm_wb.wb_loaded = True
             return True, f"Workbook '{bdm_wb.wb_id}' saved successfully."
         except Exception as e:

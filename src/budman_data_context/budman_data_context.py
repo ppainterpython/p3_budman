@@ -52,7 +52,8 @@ from budman_namespace.design_language_namespace import (
     DATA_CONTEXT, LOADED_WORKBOOK_COLLECTION,
     WORKBOOK_DATA_COLLECTION, WORKBOOK_OBJECT,
     BDM_STORE, DATA_COLLECTION, ALL_KEY, FI_KEY, WF_KEY, WB_ID, WB_NAME,
-    WB_TYPE, WF_PURPOSE, WB_INDEX, WB_URL, BUDMAN_RESULT, WORKBOOK_CONTENT,
+    WB_TYPE, WF_PURPOSE, WB_INDEX, WB_URL, WB_LOADED, WB_CONTENT,
+    BUDMAN_RESULT, WORKBOOK_CONTENT,
     BDM_DATA_CONTEXT, DC_FI_KEY, DC_WF_KEY, DC_WF_PURPOSE, DC_WB_TYPE
     )
 from budman_data_context.budman_data_context_base_ABC import BudManDataContext_Base
@@ -265,12 +266,12 @@ class BudManDataContext(BudManDataContext_Base):
         self._dc_BDM_STORE = value
 
     @property
-    def dc_WORKBOOK(self) -> WORKBOOK_OBJECT:
+    def dc_BDM_WORKBOOK(self) -> WORKBOOK_OBJECT:
         """Return the current workbook in focus in the DC."""
         if not self.dc_VALID: return None
         return self._dc_WORKBOOK
-    @dc_WORKBOOK.setter
-    def dc_WORKBOOK(self, value: WORKBOOK_OBJECT) -> None:
+    @dc_BDM_WORKBOOK.setter
+    def dc_BDM_WORKBOOK(self, value: WORKBOOK_OBJECT) -> None:
         """Set the current workbook in focus in the DC."""
         if not self.dc_VALID: return None
         if not self.dc_WORKBOOK_validate(value):
@@ -499,13 +500,14 @@ class BudManDataContext(BudManDataContext_Base):
         return True 
 
     def dc_WORKBOOK_validate(self, wb : WORKBOOK_OBJECT) -> bool:
-        """DC-Only: Validate the type of WORKBOOK_OBJECT.
-        Abstract: sub-class hook to test specialized WORKBOOK_OBJECT types.
-        DC-ONLY: check builtin type: 'object'.
-        Model-Aware subclasses should override to validate a specific type.
+        """ DC-Only: Validate the type of WORKBOOK_OBJECT.
+            Abstract: sub-class hook to test specialized WORKBOOK_OBJECT types.
+            DC-ONLY: check builtin type: 'object'. with wb_id attribute.
+            Model-Aware subclasses should override to validate a specific type.
         """
         if not self.dc_VALID: return False
-        return isinstance(wb, object)
+        if not isinstance(wb, object): return False
+        if not hasattr(wb, 'wb_id'): return False
 
     def dc_WORKBOOK_loaded(self, wb_id: str) -> bool:
         """DC-Only: Indicates whether the workbook with wb_id is loaded."""
@@ -668,51 +670,66 @@ class BudManDataContext(BudManDataContext_Base):
             logger.error(m)
             return False, m
         
-    def dc_WORKBOOK_content_load(self, wb_content:WORKBOOK_CONTENT, wb: WORKBOOK_OBJECT) -> BUDMAN_RESULT:
-        """DC-Only: Load the specified workbook content by returning it from 
-           dc_LOADED_WORKBOOKS property if present.
-           Returns:
+    def dc_BDM_WORKBOOK_load(self, bdm_wb: WORKBOOK_OBJECT) -> BUDMAN_RESULT:
+        """ DC-Only: Load bdm_wb WORKBOOK_CONTENT. As DC-ONLY, there is no
+            direct dependency on Model. The application must set the wb_content
+            attribute outside, and set bdm_wb.wb_loaded.
+
+            Abstract: Load bdm_wb WORKBOOK_CONTENT from storage, set value 
+            or bdm_wb.wb_content, and set bdm_wb.wb_loaded. Make this bdm_wb
+            the dc_BDM_WORKBOOK, so that the application can use it.
+
+            Returns:
                 BUDMAN_RESULT: a Tuple[success: bool, result: Any].
-                success = True, result is a message about the loaded workbook
-                indicating the workbook is available in the 
-                dc_LOADED_WORKBOOKS collection.
-                success = False, result is a string describing the error.
+                    success = True, result is bdm_wb.wb_content.
+                    success = False, result is a string describing the error.
         """
         try:
-            # DC-Only World
+            # DC-Only World. Can only detect and return wb_content if it is 
+            # flagged as loaded, return the bdm_wb.wb_content.
             success : bool = False
             result : Any = None
             success, result = self.dc_is_valid()
             if not success: return False, result
-            # self.dc_WORKBOOK_OBJECT
-            if not self.dc_WORKBOOK_validate(wb):
-                raise TypeError(f"wb must be an object, got {type(wb).__name__}")
-            # Check if the workbook is already loaded. But need something to 
-            # look for, maybe wb_id, wb_name, or name?
-            wb_id = str(getattr(wb, WB_ID, None))
-            wb_name = str(getattr(wb, WB_NAME, None))
-            name = str(getattr(wb, 'name', None))
-            if wb_id and wb_id not in self.dc_LOADED_WORKBOOKS:
-                return False, f"Workbook with id '{wb_id}' is not loaded."
-            # Add settings in DC for the workbook. 
-            wb_name = str(getattr(wb, WB_NAME, None))
-            self.dc_WB_ID = str(self.dc_WORKBOOK_index(wb_id))
-            self._dc_WB_NAME = wb_name  
-            self.dc_LOADED_WORKBOOKS[wb_id] 
-            return True, None
+            if not self.dc_WORKBOOK_validate(bdm_wb):
+                raise TypeError(f"Invalid BDM_WORKBOOK object, "
+                                f"type: '{type(bdm_wb).__name__}")
+            # Check if the workbook is already loaded by some app means
+            # outside this DC-Only implementation?
+            wb_id = str(getattr(bdm_wb, WB_ID, None))
+            wb_loaded = getattr(bdm_wb, WB_LOADED, False)
+            wb_content = getattr(bdm_wb, WB_CONTENT, None)
+            if not wb_loaded:
+                return False, f"BDM_WORKBOOK with id '{wb_id}' is not loaded."
+            # Add settings in DC for the workbook.
+            self.dc_BDM_WORKBOOK = bdm_wb
+            self.dc_LOADED_WORKBOOKS[wb_id] = wb_content
+            return True, wb_content
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
-            raise ValueError(f"Error loading workbook id: '{wb!r}': {e}")
+            return False, m
 
-    def dc_WORKBOOK_content_save(self, wb_index: str, wb: Workbook) -> BUDMAN_RESULT:
-        """DC-Only: Save the specified workbook content by name."""
-        wb_path = Path(wb_index)
+    def dc_BDM_WORKBOOK_save(self, bdm_wb: Workbook) -> BUDMAN_RESULT:
+        """ DC-Only: Save bdm_wb WORKBOOK_CONTENT to storage.
+            Abstract: Save bdm_wb WORKBOOK_CONTENT to storage.
+        """
         try:
-            wb.save(wb_path)
+            # DC-Only World. Can only detect and return wb_content if it is 
+            # flagged as loaded, return the bdm_wb.wb_content.
+            success : bool = False
+            result : Any = None
+            success, result = self.dc_is_valid()
+            if not success: return False, result
+            if not self.dc_WORKBOOK_validate(bdm_wb):
+                raise TypeError(f"Invalid BDM_WORKBOOK object, "
+                                f"type: '{type(bdm_wb).__name__}")
+            wb_id = str(getattr(bdm_wb, WB_ID, None))
+            return True, f"BDM_WORKBOOK with id '{wb_id}' save request."
         except Exception as e:
-            logger.error(f"Failed to save workbook '{wb_index}': {e}")
-            raise
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            return False, m
         return None
     #endregion WORKBOOK_CONTENT storage-related methods
 

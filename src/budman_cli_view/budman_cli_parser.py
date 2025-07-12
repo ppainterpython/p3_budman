@@ -445,6 +445,7 @@ class BudManCLIParser():
             categorization_parser.add_argument(
                 "--load_workbook","-l", "-load", 
                 action="store_true", 
+                default=True,
                 help="Load the workbook if not yet loaded.")
             self.add_common_args(categorization_parser)
             
