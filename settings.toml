@@ -20,7 +20,7 @@ default_workflow_purpose = "wf_working"
 default_workbook_type = "transactions"
 
 [category_catalog] # Dict[fi_key, full filename of FI's budget category defs]
-boa = { txn_categories_full_filename = "All_TXN_Categories.txn_categories.json", category_map_full_filename = "All.category_map.toml"}
+boa = { txn_categories_full_filename = "All_TXN_Categories.txn_categories.json", category_map_full_filename = "boa.category_map.py"}
 
 # [logging] Table
 [logging]

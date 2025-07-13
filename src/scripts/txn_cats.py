@@ -6,6 +6,7 @@ from pprint import pprint
 import logging, re, sys, csv, cmd2, toml
 from cmd2 import (Bg, Fg, ansi, Cmd2ArgumentParser, with_argparser)
 from pathlib import Path
+import importlib.util
 from typing import Dict, Optional
 # third-party modules and packages
 import p3_utils as p3u, p3logging as p3l
@@ -136,6 +137,21 @@ class CmdLineApp(cmd2.Cmd):
             self.poutput(f"Error: {m}")
     #endregion do_extract() method
     # ------------------------------------------------------------------------ +
+    #region do_config() method
+    def do_config(self, statement) -> None:
+        """Configure Category Manager."""
+        try:
+            self.check_catalog()
+            mod_name = "boa_category_map"
+            mod_path = self.settings.FI_FOLDER_abs_path('boa') / f"{mod_name}.py"
+            boa = import_module_from_path(mod_name, mod_path)
+            self.poutput(f"Configured {mod_name}.")
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            self.poutput(f"Error: {m}")
+    #endregion do_extract() method
+    # ------------------------------------------------------------------------ +
     #region do_foo() method
     def do_foo(self, statement) -> None:
         """Manage foo."""
@@ -219,6 +235,20 @@ def extract_txn_categories2(txn_cat_wb_url: str) -> dict:
         raise
 #endregion extract_txn_categories2() method
 # -------------------------------------------------------------------------- +
+#region import_module_from_path()
+def import_module_from_path(module_name: str, file_path: str):
+    """Dynamically import a module from a given file path."""
+    file_path = str(Path(file_path).resolve())
+    spec = importlib.util.spec_from_file_location(module_name, file_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Cannot load module {module_name} from {file_path}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
+#endregion import_module_from_path()
+# -------------------------------------------------------------------------- +
+#region vairous functions
 def save_txn_categories():
     txn_cat_wb_url = "file:///C:/Users/ppain/OneDrive/budget/boa/All_TXN_Categories.txn_categories.json"
     try:
@@ -307,7 +337,7 @@ def extract_column_from_csv(file_path:Path, column_name:str, output_path:Path,
         print(f"Error: File '{file_path}' not found.")
     except Exception as e:
         print(f"Error extracting column: {e}")
-
+#endregion vairous functions
 # ------------------------------------------------------------------------ +
 #region configure_logging() method
 def configure_logging(logger_name : str = __name__, logtest : bool = False) -> None:

@@ -1,6 +1,6 @@
 <mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/27.0.9 Chrome/134.0.6998.205 Electron/35.4.0 Safari/537.36" version="27.0.9">
   <diagram id="N458_lr4ttNGEyz7QCCE" name="Page-1">
-    <mxGraphModel dx="5823" dy="9309" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
+    <mxGraphModel dx="5994" dy="9406" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -4027,7 +4027,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="C1SaUKioDoDoB-BUxkxg-1" value="&lt;font color=&quot;#007fff&quot;&gt;&lt;span style=&quot;font-size: 36px;&quot;&gt;budman_workflows&lt;/span&gt;&lt;/font&gt;" style="swimlane;whiteSpace=wrap;html=1;strokeColor=#007FFF;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=12;fontColor=default;fontStyle=1;fillColor=default;startSize=60;" parent="1" vertex="1">
-          <mxGeometry x="-350" y="-60" width="2120" height="1530" as="geometry" />
+          <mxGeometry x="-350" y="-60" width="2260" height="1530" as="geometry" />
         </mxCell>
         <mxCell id="NU_wQNky40eGO1kYDBQr-1" value="&lt;span style=&quot;font-size: 14px;&quot;&gt;budget_category_mapping&lt;/span&gt;&lt;br&gt;&lt;div&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;&amp;lt;&amp;lt;module&amp;gt;&amp;gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;&amp;lt;&amp;lt;budman_workflows&amp;gt;&amp;gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;budget_category_mapping.py&lt;/span&gt;&lt;/div&gt;" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=70;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;strokeColor=#BAC8D3;fontColor=#EEEEEE;fillColor=#09555B;labelBackgroundColor=none;" parent="C1SaUKioDoDoB-BUxkxg-1" vertex="1">
           <mxGeometry x="460" y="114.33999999999997" width="246" height="170" as="geometry">
@@ -4076,7 +4076,7 @@
           <mxGeometry y="190" width="372.75" height="20" as="geometry" />
         </mxCell>
         <mxCell id="C1SaUKioDoDoB-BUxkxg-2" value="&lt;span style=&quot;font-size: 14px;&quot;&gt;BDMTXNCategoryManager&lt;/span&gt;&lt;br&gt;&lt;div&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;&amp;lt;&amp;lt;class&amp;gt;&amp;gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;&amp;lt;&amp;lt;budman_workflows&amp;gt;&amp;gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;txn_category.py&lt;/span&gt;&lt;/div&gt;" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=70;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;strokeColor=#BAC8D3;fontColor=#EEEEEE;fillColor=#09555B;labelBackgroundColor=none;" parent="C1SaUKioDoDoB-BUxkxg-1" vertex="1">
-          <mxGeometry x="770" y="510" width="440" height="260" as="geometry">
+          <mxGeometry x="410" y="510" width="440" height="260" as="geometry">
             <mxRectangle x="430" y="598" width="140" height="30" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
@@ -4108,7 +4108,7 @@
           <mxGeometry y="240" width="440" height="20" as="geometry" />
         </mxCell>
         <mxCell id="C1SaUKioDoDoB-BUxkxg-118" value="&lt;span style=&quot;font-size: 14px;&quot;&gt;BDMTXNCategory&lt;/span&gt;&lt;br&gt;&lt;div&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;&amp;lt;&amp;lt;@dataclasss&amp;gt;&amp;gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;&amp;lt;&amp;lt;budman_workflows&amp;gt;&amp;gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;txn_category.py&lt;/span&gt;&lt;/div&gt;" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=70;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;strokeColor=#BAC8D3;fontColor=#EEEEEE;fillColor=#09555B;labelBackgroundColor=none;points=[[0,0,0,0,0],[0,0,0,0,40],[0,0.5,0,0,0],[0,0.75,0,0,0],[0,1,0,0,0],[0.25,0,0,0,0],[0.25,1,0,0,0],[0.5,0,0,0,0],[0.5,1,0,0,0],[0.75,0,0,0,0],[0.75,1,0,0,0],[1,0,0,0,0],[1,0.25,0,0,0],[1,0.5,0,0,0],[1,0.75,0,0,0],[1,1,0,0,0]];" parent="C1SaUKioDoDoB-BUxkxg-1" vertex="1">
-          <mxGeometry x="1740" y="820" width="220" height="270" as="geometry">
+          <mxGeometry x="1990" y="820" width="220" height="270" as="geometry">
             <mxRectangle x="430" y="598" width="140" height="30" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
@@ -4186,7 +4186,7 @@
           <mxGeometry y="150" width="372.75" height="20" as="geometry" />
         </mxCell>
         <mxCell id="eTxDStyTnEFoylGojgV4-1" value="&lt;font face=&quot;Lucida Console&quot;&gt;&lt;span style=&quot;font-size: 12px;&quot;&gt;CATEGORY_MAP_WORKBOOK&lt;/span&gt;&lt;/font&gt;&lt;div&gt;&lt;font face=&quot;Lucida Console&quot;&gt;&lt;span style=&quot;font-size: 12px; font-weight: normal;&quot;&gt;&amp;lt;&amp;lt;.category_map.toml&amp;gt;&amp;gt;&lt;/span&gt;&lt;/font&gt;&lt;/div&gt;" style="shape=table;startSize=40;container=1;collapsible=1;childLayout=tableLayout;fixedRows=1;rowLines=0;fontStyle=1;align=center;resizeLast=1;html=1;fontSize=10;fillStyle=solid;fillColor=#095B55;points=[[0,0,0,0,0],[0,0,0,0,10],[0,0.5,0,0,0],[0,0.75,0,0,0],[0,1,0,0,0],[0.25,0,0,0,0],[0.25,1,0,0,0],[0.5,0,0,0,0],[0.5,1,0,0,0],[0.75,0,0,0,0],[0.75,1,0,0,0],[1,0,0,0,0],[1,0,0,0,10],[1,0,0,0,50],[1,0.75,0,0,0],[1,1,0,0,0]];swimlaneLine=1;strokeColor=default;" vertex="1" parent="C1SaUKioDoDoB-BUxkxg-1">
-          <mxGeometry x="380" y="920" width="250" height="120" as="geometry">
+          <mxGeometry x="40" y="920" width="250" height="120" as="geometry">
             <mxRectangle x="5120" y="-2240" width="220" height="30" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
@@ -4245,7 +4245,7 @@
         <mxCell id="eTxDStyTnEFoylGojgV4-14" value="&lt;span style=&quot;font-size: 14px;&quot;&gt;&lt;font style=&quot;color: rgb(238, 238, 238);&quot;&gt;BDMTXNCategoryManager Method&lt;/font&gt;&lt;/span&gt;&lt;div&gt;&lt;font color=&quot;#eeeeee&quot;&gt;&lt;span style=&quot;font-size: 14px;&quot;&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;&amp;lt;&amp;lt;class method&amp;gt;&amp;gt;&lt;/span&gt;&lt;br&gt;&lt;/span&gt;&lt;/font&gt;&lt;div&gt;&lt;font face=&quot;Lucida Console&quot;&gt;FI_WB_TYPE_TXN_CATEGORIES_update_CATEGORY_MAP(fi_key)&lt;/font&gt;&lt;/div&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillStyle=solid;strokeColor=default;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=10;fontColor=default;fontStyle=1;fillColor=#095B55;" vertex="1" parent="C1SaUKioDoDoB-BUxkxg-1">
           <mxGeometry x="70" y="1370" width="360" height="67.83" as="geometry" />
         </mxCell>
-        <mxCell id="eTxDStyTnEFoylGojgV4-31" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;dashed=1;strokeColor=default;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=11;fontColor=default;labelBackgroundColor=default;endArrow=classic;" edge="1" parent="C1SaUKioDoDoB-BUxkxg-1" source="eTxDStyTnEFoylGojgV4-29" target="eTxDStyTnEFoylGojgV4-33">
+        <mxCell id="eTxDStyTnEFoylGojgV4-31" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.25;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;dashed=1;strokeColor=default;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=11;fontColor=default;labelBackgroundColor=default;endArrow=classic;" edge="1" parent="C1SaUKioDoDoB-BUxkxg-1" source="eTxDStyTnEFoylGojgV4-29" target="eTxDStyTnEFoylGojgV4-33">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="eTxDStyTnEFoylGojgV4-68" value="task output" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="eTxDStyTnEFoylGojgV4-31">
@@ -4257,7 +4257,7 @@
           <mxGeometry x="1460" y="420" width="465" height="220" as="geometry" />
         </mxCell>
         <mxCell id="eTxDStyTnEFoylGojgV4-33" value="&lt;span style=&quot;font-size: 12px;&quot;&gt;&lt;font&gt;TXN_CATEGORIES_WORKBOOK: DATA_OBJECT&lt;/font&gt;&lt;/span&gt;&lt;div&gt;&lt;span style=&quot;font-size: 12px; font-weight: normal;&quot;&gt;&lt;font&gt;&amp;lt;.txn_categories.json&amp;gt;&amp;gt;&lt;/font&gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;font-size: 12px; font-weight: normal;&quot;&gt;&lt;font&gt;wb_type: WB_TYPE_TXN_CATEGORIES&lt;/font&gt;&lt;/span&gt;&lt;/div&gt;" style="shape=table;startSize=50;container=1;collapsible=1;childLayout=tableLayout;fixedRows=1;rowLines=0;fontStyle=1;align=center;resizeLast=1;html=1;fontSize=10;fillStyle=solid;fillColor=#095B55;points=[[0,0,0,0,0],[0,0,0,0,10],[0,0.5,0,0,0],[0,0.75,0,0,0],[0,1,0,0,0],[0.25,0,0,0,0],[0.25,1,0,0,0],[0.5,0,0,0,0],[0.5,1,0,0,0],[0.75,0,0,0,0],[0.75,1,0,0,0],[1,0,0,0,0],[1,0,0,0,10],[1,0,0,0,50],[1,0.75,0,0,0],[1,1,0,0,0]];swimlaneLine=1;strokeColor=default;fontFamily=Lucida Console;" vertex="1" parent="C1SaUKioDoDoB-BUxkxg-1">
-          <mxGeometry x="875" y="920" width="370" height="130" as="geometry">
+          <mxGeometry x="1160" y="920" width="370" height="130" as="geometry">
             <mxRectangle x="5120" y="-2240" width="220" height="30" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
@@ -4277,7 +4277,7 @@
         <mxCell id="eTxDStyTnEFoylGojgV4-37" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;fillColor=none;collapsible=0;dropTarget=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;top=0;left=0;right=0;bottom=0;fontFamily=Lucida Console;fontSize=8;spacing=0;strokeWidth=1;" vertex="1" parent="eTxDStyTnEFoylGojgV4-33">
           <mxGeometry y="70" width="370" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="eTxDStyTnEFoylGojgV4-38" value="&lt;font&gt;&quot;name&quot;:&lt;/font&gt;" style="shape=partialRectangle;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;editable=1;overflow=hidden;whiteSpace=wrap;html=1;fontSize=8;fontFamily=Lucida Console;strokeWidth=1;align=left;" vertex="1" parent="eTxDStyTnEFoylGojgV4-37">
+        <mxCell id="eTxDStyTnEFoylGojgV4-38" value="&lt;font&gt;WB_NAME:&lt;/font&gt;" style="shape=partialRectangle;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;editable=1;overflow=hidden;whiteSpace=wrap;html=1;fontSize=8;fontFamily=Lucida Console;strokeWidth=1;align=left;" vertex="1" parent="eTxDStyTnEFoylGojgV4-37">
           <mxGeometry width="120" height="20" as="geometry">
             <mxRectangle width="120" height="20" as="alternateBounds" />
           </mxGeometry>
@@ -4290,7 +4290,7 @@
         <mxCell id="eTxDStyTnEFoylGojgV4-40" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;fillColor=none;collapsible=0;dropTarget=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;top=0;left=0;right=0;bottom=0;fontFamily=Lucida Console;fontSize=10;spacing=0;strokeWidth=1;" vertex="1" parent="eTxDStyTnEFoylGojgV4-33">
           <mxGeometry y="90" width="370" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="eTxDStyTnEFoylGojgV4-41" value="&lt;span style=&quot;font-size: 8px;&quot;&gt;&quot;count&quot;:&lt;/span&gt;" style="shape=partialRectangle;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;editable=1;overflow=hidden;whiteSpace=wrap;html=1;fontSize=10;fontFamily=Lucida Console;strokeWidth=1;align=left;" vertex="1" parent="eTxDStyTnEFoylGojgV4-40">
+        <mxCell id="eTxDStyTnEFoylGojgV4-41" value="&lt;span style=&quot;font-size: 8px;&quot;&gt;CATEGORY_COUNT:&lt;/span&gt;" style="shape=partialRectangle;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;editable=1;overflow=hidden;whiteSpace=wrap;html=1;fontSize=10;fontFamily=Lucida Console;strokeWidth=1;align=left;" vertex="1" parent="eTxDStyTnEFoylGojgV4-40">
           <mxGeometry width="120" height="20" as="geometry">
             <mxRectangle width="120" height="20" as="alternateBounds" />
           </mxGeometry>
@@ -4303,7 +4303,7 @@
         <mxCell id="eTxDStyTnEFoylGojgV4-43" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;fillColor=none;collapsible=0;dropTarget=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;top=0;left=0;right=0;bottom=0;fontFamily=Lucida Console;fontSize=10;spacing=0;strokeWidth=1;" vertex="1" parent="eTxDStyTnEFoylGojgV4-33">
           <mxGeometry y="110" width="370" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="eTxDStyTnEFoylGojgV4-44" value="&lt;span style=&quot;font-size: 8px;&quot;&gt;&quot;categories&quot;:&lt;/span&gt;" style="shape=partialRectangle;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;editable=1;overflow=hidden;whiteSpace=wrap;html=1;fontSize=10;fontFamily=Lucida Console;strokeWidth=1;align=left;" vertex="1" parent="eTxDStyTnEFoylGojgV4-43">
+        <mxCell id="eTxDStyTnEFoylGojgV4-44" value="&lt;span style=&quot;font-size: 8px;&quot;&gt;CATEGORY_COLLECTION:&lt;/span&gt;" style="shape=partialRectangle;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;editable=1;overflow=hidden;whiteSpace=wrap;html=1;fontSize=10;fontFamily=Lucida Console;strokeWidth=1;align=left;" vertex="1" parent="eTxDStyTnEFoylGojgV4-43">
           <mxGeometry width="120" height="20" as="geometry">
             <mxRectangle width="120" height="20" as="alternateBounds" />
           </mxGeometry>
@@ -4313,7 +4313,7 @@
             <mxRectangle width="250" height="20" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="eTxDStyTnEFoylGojgV4-48" value="" style="edgeStyle=entityRelationEdgeStyle;fontSize=12;html=1;endArrow=ERoneToMany;rounded=0;exitX=0.994;exitY=0.429;exitDx=0;exitDy=0;entryX=0;entryY=0;entryDx=0;entryDy=10;entryPerimeter=0;exitPerimeter=0;" edge="1" parent="C1SaUKioDoDoB-BUxkxg-1" source="C1SaUKioDoDoB-BUxkxg-11" target="eTxDStyTnEFoylGojgV4-51">
+        <mxCell id="eTxDStyTnEFoylGojgV4-48" value="" style="edgeStyle=entityRelationEdgeStyle;fontSize=12;html=1;endArrow=ERoneToMany;rounded=0;exitX=0.994;exitY=0.429;exitDx=0;exitDy=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;exitPerimeter=0;" edge="1" parent="C1SaUKioDoDoB-BUxkxg-1" source="C1SaUKioDoDoB-BUxkxg-11" target="eTxDStyTnEFoylGojgV4-70">
           <mxGeometry width="100" height="100" relative="1" as="geometry">
             <mxPoint x="1280" y="823" as="sourcePoint" />
             <mxPoint x="1416" y="900" as="targetPoint" />
@@ -4325,7 +4325,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="eTxDStyTnEFoylGojgV4-51" value="&lt;font face=&quot;Lucida Console&quot;&gt;&lt;span style=&quot;font-size: 12px;&quot;&gt;TXN_CATEGORY_COLLECTION&lt;/span&gt;&lt;/font&gt;&lt;div&gt;&lt;font face=&quot;Lucida Console&quot;&gt;&lt;span style=&quot;font-size: 12px;&quot;&gt;&amp;lt;&amp;lt;Dict&amp;gt;&amp;gt;&lt;/span&gt;&lt;/font&gt;&lt;/div&gt;" style="shape=table;startSize=50;container=1;collapsible=1;childLayout=tableLayout;fixedRows=1;rowLines=0;fontStyle=1;align=center;resizeLast=1;html=1;fontSize=10;fillStyle=solid;fillColor=#095B55;points=[[0,0,0,0,0],[0,0,0,0,10],[0,0,0,0,30],[0,0.02,0,0,50],[0,1,0,0,0],[0.25,0,0,0,0],[0.25,1,0,0,0],[0.5,0,0,0,0],[0.5,1,0,0,0],[0.75,0,0,0,0],[0.75,1,0,0,0],[1,0,0,0,0],[1,0,0,0,10],[1,0,0,0,50],[1,0.75,0,0,0],[1,1,0,0,0]];swimlaneLine=1;strokeColor=default;" vertex="1" parent="C1SaUKioDoDoB-BUxkxg-1">
-          <mxGeometry x="1370" y="770" width="270" height="130" as="geometry">
+          <mxGeometry x="1610" y="960" width="270" height="130" as="geometry">
             <mxRectangle x="5120" y="-2240" width="220" height="30" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
@@ -4405,6 +4405,38 @@
             <mxPoint x="1220" y="770" as="sourcePoint" />
             <mxPoint x="1380" y="810" as="targetPoint" />
           </mxGeometry>
+        </mxCell>
+        <mxCell id="eTxDStyTnEFoylGojgV4-70" value="&lt;span style=&quot;font-size: 14px;&quot;&gt;TXNCategoryCatalogItem&lt;/span&gt;&lt;br&gt;&lt;div&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;&amp;lt;&amp;lt;class&amp;gt;&amp;gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;&amp;lt;&amp;lt;budman_workflows&amp;gt;&amp;gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;txn_category.py&lt;/span&gt;&lt;/div&gt;" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=70;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;strokeColor=#BAC8D3;fontColor=#EEEEEE;fillColor=#09555B;labelBackgroundColor=none;" vertex="1" parent="C1SaUKioDoDoB-BUxkxg-1">
+          <mxGeometry x="930" y="520" width="360" height="230" as="geometry">
+            <mxRectangle x="430" y="598" width="140" height="30" as="alternateBounds" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="eTxDStyTnEFoylGojgV4-71" value="&lt;font style=&quot;color: rgb(255, 255, 255);&quot;&gt;Instance Properties&lt;/font&gt;" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontColor=#EEEEEE;labelBackgroundColor=none;" vertex="1" parent="eTxDStyTnEFoylGojgV4-70">
+          <mxGeometry y="70" width="360" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="eTxDStyTnEFoylGojgV4-72" value="&lt;font style=&quot;color: rgb(255, 255, 255);&quot;&gt;+ txn_categories_workbook&amp;nbsp; : TXN_CATEGORIES_WORKBOOK&amp;nbsp;&lt;/font&gt;" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontColor=#EEEEEE;labelBackgroundColor=none;fontSize=10;fontFamily=Lucida Console;" vertex="1" parent="eTxDStyTnEFoylGojgV4-70">
+          <mxGeometry y="90" width="360" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="eTxDStyTnEFoylGojgV4-90" value="&lt;font style=&quot;color: rgb(255, 255, 255);&quot;&gt;+ category_map_workbook_url&amp;nbsp; : str&lt;/font&gt;" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontColor=#EEEEEE;labelBackgroundColor=none;fontSize=10;fontFamily=Lucida Console;" vertex="1" parent="eTxDStyTnEFoylGojgV4-70">
+          <mxGeometry y="110" width="360" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="eTxDStyTnEFoylGojgV4-80" value="&lt;font style=&quot;color: rgb(255, 255, 255);&quot;&gt;+ category_map&amp;nbsp; : Dict[pattern:str, cateegory:str]&amp;nbsp;&lt;/font&gt;" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontColor=#EEEEEE;labelBackgroundColor=none;fontSize=10;fontFamily=Lucida Console;" vertex="1" parent="eTxDStyTnEFoylGojgV4-70">
+          <mxGeometry y="130" width="360" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="eTxDStyTnEFoylGojgV4-73" value="&lt;font style=&quot;color: rgb(255, 255, 255);&quot;&gt;+ category_map_module&amp;nbsp; : types.ModuleType&amp;nbsp;&lt;/font&gt;" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontColor=#EEEEEE;labelBackgroundColor=none;fontSize=10;fontFamily=Lucida Console;" vertex="1" parent="eTxDStyTnEFoylGojgV4-70">
+          <mxGeometry y="150" width="360" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="eTxDStyTnEFoylGojgV4-74" value="&lt;font style=&quot;color: rgb(255, 255, 255);&quot;&gt;+ compiled_category_map : Dict[re:Pattern, category:str]&amp;nbsp;&lt;/font&gt;" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontColor=#EEEEEE;labelBackgroundColor=none;fontSize=10;fontFamily=Lucida Console;" vertex="1" parent="eTxDStyTnEFoylGojgV4-70">
+          <mxGeometry y="170" width="360" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="eTxDStyTnEFoylGojgV4-76" value="&lt;font style=&quot;color: rgb(255, 255, 255);&quot;&gt;Instance Methods&lt;/font&gt;" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontColor=#EEEEEE;labelBackgroundColor=none;" vertex="1" parent="eTxDStyTnEFoylGojgV4-70">
+          <mxGeometry y="190" width="360" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="eTxDStyTnEFoylGojgV4-77" value="&lt;font style=&quot;color: rgb(255, 255, 255);&quot;&gt;+ ???() -&amp;gt; ?&amp;nbsp;&lt;/font&gt;" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontColor=#EEEEEE;labelBackgroundColor=none;fontSize=10;fontFamily=Lucida Console;" vertex="1" parent="eTxDStyTnEFoylGojgV4-70">
+          <mxGeometry y="210" width="360" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="eTxDStyTnEFoylGojgV4-81" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="C1SaUKioDoDoB-BUxkxg-1" source="eTxDStyTnEFoylGojgV4-72" target="eTxDStyTnEFoylGojgV4-33">
+          <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="C1SaUKioDoDoB-BUxkxg-15" value="&lt;font style=&quot;&quot;&gt;Extends&lt;/font&gt;" style="endArrow=block;endSize=16;endFill=0;html=1;rounded=0;strokeColor=#FFFF99;fontColor=default;labelBackgroundColor=none;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.5;exitDx=0;exitDy=0;opacity=50;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=11;elbow=vertical;jumpStyle=arc;" parent="1" source="UlcInfcmmTbVDCgHTE-5-4" target="nZRIWWfzW7rEJoxc0ANi-104" edge="1">
           <mxGeometry x="-0.5456" y="-10" width="160" relative="1" as="geometry">

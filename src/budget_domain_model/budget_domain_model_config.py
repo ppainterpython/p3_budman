@@ -522,17 +522,6 @@ class BDMConfig(metaclass=BDMSingletonMeta):
         """Set the last modified by."""
         self._last_modified_by = value
     
-    # @property
-    # def bdm_working_data(self) -> BDM_WORKING_DATA_OBJECT:
-    #     """The budget domain model working data."""
-    #     self._wd = {} if self._wd is None else self._wd
-    #     return self._wd
-    # @bdm_working_data.setter
-    # def bdm_working_data(self, value: BDM_WORKING_DATA_OBJECT) -> None:
-    #     """Set the budget domain model working data."""
-    #     self._wd = {} if self._wd is None else self._wd
-    #     self._wd = value
-
     @property
     def data_context(self) -> DATA_CONTEXT:
         """The data context for the budget model."""

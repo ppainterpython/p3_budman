@@ -86,6 +86,7 @@ WB_LOADED = "wb_loaded"
 WB_CONTENT = "wb_content" 
 WB_CATEGORY_COLLECTION = "wb_category_collection"
 WB_CATEGORY_COUNT = "wb_category_count"
+WB_CATEGORY_MAP_URL = "wb_category_map_url"  # URL to the category map workbook
 # ---------------------------------------------------------------------------- +
 # Attribute value constants
 WB_INFO_LEVEL_INFO = "info"

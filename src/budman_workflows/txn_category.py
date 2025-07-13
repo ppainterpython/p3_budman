@@ -13,6 +13,7 @@ import csv
 from datetime import datetime as dt
 from typing import Any, Dict, List, Optional, Union
 from dataclasses import dataclass, asdict, field
+from wsgiref import types
 
 # third-party modules and packages
 import toml
@@ -36,6 +37,8 @@ from budget_storage_model import (
 logger = logging.getLogger(__name__)
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
+
+# ---------------------------------------------------------------------------- +
 #region BDMTXNCategory class (@dataclass)
 @dataclass
 class BDMTXNCategory:
@@ -52,7 +55,6 @@ class BDMTXNCategory:
         essential (bool): Whether the category is essential.
         pattern (Optional[re.Pattern]): A regular expression pattern
     """
-    cat_id: str = field(default="")
     full_cat: str = field(default="")
     level1: str = field(default="")
     level2: str = field(default="")
@@ -60,7 +62,6 @@ class BDMTXNCategory:
     payee: str = field(default="")
     description: str = field(default="")
     essential: bool = field(default=False)
-    pattern: Optional[re.Pattern] = field(default=None, repr=False)
     total: int = field(default=0)
     
     def __post_init__(self):
@@ -71,6 +72,91 @@ class BDMTXNCategory:
         self.level3 = self.level3.strip() if self.level3 else ""
         self.payee = self.payee.strip() if self.payee else ""
 #endregion BDMTXNCategory class (@dataclass)
+# ---------------------------------------------------------------------------- +
+
+# ---------------------------------------------------------------------------- +
+#region TXNCatalogItem class
+class TXNCategoryCatalogItem:
+    """Represents a single transaction catalog item for one FI."""
+    def __init__(self, fi_key: str, settings: bdms.BudManSettings,
+                 txn_categories_workbook: bdm.TXN_CATEGORIES_WORKBOOK = None,
+                 category_map_workbook_url: str = None):
+        self._fi_key: str = fi_key
+        self._settings: bdms.BudManSettings = settings
+        self._txn_categories_workbook: bdm.TXN_CATEGORIES_WORKBOOK = txn_categories_workbook
+        self._category_map_workbook_url: str = category_map_workbook_url
+        self._category_map : bdm.CATEGORY_MAP_WORKBOOK = None
+        self._category_map_module : types.ModuleType =  None
+        self._compiled_category_map: Dict[re.Pattern, str] = None
+
+    @property
+    def fi_key(self) -> str:
+        """Get the financial institution key."""
+        return self._fi_key
+
+    @property
+    def txn_categories_workbook(self) -> bdm.TXN_CATEGORIES_WORKBOOK:
+        """Get the transaction categories workbook."""
+        return self._txn_categories_workbook
+    @txn_categories_workbook.setter
+    def txn_categories_workbook(self, value: bdm.TXN_CATEGORIES_WORKBOOK):
+        """Set the transaction categories workbook."""
+        self._txn_categories_workbook = value
+
+    @property
+    def category_map_workbook_url(self) -> str:
+        """Get the URL for the category map workbook."""
+        return self._category_map_workbook_url
+    @category_map_workbook_url.setter
+    def category_map_workbook_url(self, value: str):
+        """Set the URL for the category map workbook."""
+        self._category_map_workbook_url = value
+
+    @property
+    def category_map(self) -> bdm.CATEGORY_MAP_WORKBOOK:
+        """Get the category map."""
+        return self._category_map
+    
+    @property
+    def category_map_module(self) -> types.ModuleType:
+        """Get the category map module."""
+        return self._category_map_module
+    @category_map_module.setter
+    def category_map_module(self, value: types.ModuleType):
+        """Set the category map module."""
+        self._category_map_module = value
+
+    @property
+    def compiled_category_map(self) -> Dict[re.Pattern, str]:
+        """Get the compiled category map."""
+        return self._compiled_category_map
+    @compiled_category_map.setter
+    def compiled_category_map(self, value: Dict[re.Pattern, str]):
+        """Set the compiled category map."""
+        self._compiled_category_map = value
+    # ------------------------------------------------------------------------ +
+    #region CATEGORY_MAP_WORKBOOK methods
+    def CATEGORY_MAP_WORKBOOK_load(self) -> None:
+        """Load the CATEGORY_MAP_WORKBOOK from the URL.
+        
+        A CATEGORY_MAP_WORKBOOK is a python module that must be imported one
+        time and then reloaded subsequently. It contains python code defining
+        the category_map for the FI.
+        """
+        if not self._category_map_workbook_url:
+            raise ValueError("Category map workbook URL is not set.")
+        try:
+            # Convert the url to a abs_pathname, then load or reload the module
+            if not isinstance(self._category_map, dict):
+                raise TypeError(f"Invalid CATEGORY_MAP_WORKBOOK content from: '{self._category_map_workbook_url}'")
+        except Exception as e:
+            logger.error(f"Error loading CATEGORY_MAP_WORKBOOK: {e}")
+            raise
+    #endregion CATEGORY_MAP_WORKBOOK methods
+    # ------------------------------------------------------------------------ +
+#endregion TXNCatalogItem class
+# ---------------------------------------------------------------------------- +
+
 # ---------------------------------------------------------------------------- +
 #region BDMTXNCategoryManager class intrinsics
 class BDMTXNCategoryManager:
@@ -218,28 +304,46 @@ class BDMTXNCategoryManager:
     #region FI_TXN_CATEGORIES_WORKBOOK_load()
     def FI_TXN_CATEGORIES_WORKBOOK_load(self, 
                 fi_key: str,) -> None:
-        """Load the WB_TYPE_TXN_CATEGORIES workbook content for an FI.
+        """Load (or reload)the WB_TYPE_TXN_CATEGORIES workbook content for an FI.
 
         Load the content from the WB_TYPE_TXN_CATEGORIES workbook for the given
-        financial institution (FI), configuring its url from settings.
-        Also compiles the category map for the financial institution.
+        financial institution (FI). Urls from for TXN_CATEGORIES_WORKBOOK
+        and CATEGORY_MAP_WORKBOOK files are based on settings values, configured
+        for each financial institution (fi). Also, load the 
+        CATEGORY_MAP_WORKBOOK file, and compile it. Create a 
+        TXNCategoryCatalogItem populated. Then add or replace it in the 
+        BDMTXNCategoryManager's catalog.
+
+        This method fully (re-) initializes an FI's Category Catalog.
 
         Args:
             fi_key (str): The key for the financial institution.
         """
         try:
             self.valid_state()  # Ensure the manager is in a valid state
-            # Load the catalog for an FI
-            test_txn_cat_wb_url = "file:///C:/Users/ppain/OneDrive/budget/boa/TEST_All_TXN_Categories.txn_categories.json"
-            cat_url = test_txn_cat_wb_url #self.FI_TXN_CATEGORIES_WORKBOOK_url(fi_key)
+            # Load the TXN_CATEGORIES_WORKBOOK file for an FI
+            txn_cat_wb_url = self.FI_TXN_CATEGORIES_WORKBOOK_url(fi_key)
             txn_cat_wb_content: bdm.TXN_CATEGORIES_WORKBOOK = None
-            txn_cat_wb_content = bsm_WORKBOOK_CONTENT_url_get(cat_url,
+            txn_cat_wb_content = bsm_WORKBOOK_CONTENT_url_get(txn_cat_wb_url,
                                         wb_type=bdm.WB_TYPE_TXN_CATEGORIES,)
             if (not isinstance(txn_cat_wb_content, dict) or
                 bdm.WB_CATEGORY_COLLECTION not in txn_cat_wb_content or
                  not isinstance(txn_cat_wb_content[bdm.WB_CATEGORY_COLLECTION], dict) or
                  len(txn_cat_wb_content[bdm.WB_CATEGORY_COLLECTION]) == 0):
-                raise TypeError(f"Expected a non-empty dictionary from {cat_url}")
+                raise TypeError(f"Invalid TXN_CATEGORIES_WORKBOOK content from: '{txn_cat_wb_url}'")
+            # Load the CATEGORY_MAP_WORKBOOK file for an FI.
+            cat_map_wb_url = self.FI_CATEGORY_MAP_WORKBOOK_url(fi_key)
+            # Create a TXNCategoryCatalogItem to hold the content.
+            txn_category_catalog_item_parameters = {
+                "fi_key": fi_key,
+                "settings": self.settings,
+                "txn_categories_workbook": txn_cat_wb_content,
+                "category_map_workbook_url": cat_map_wb_url
+            }
+            txn_category_catalog_item: TXNCategoryCatalogItem = None
+            txn_category_catalog_item = TXNCategoryCatalogItem(**txn_category_catalog_item_parameters)
+            
+
             cat_collection_json: Dict[str, Any] = txn_cat_wb_content[bdm.WB_CATEGORY_COLLECTION]
             # Rehydrate the BDMTXNCategory objects from the json load.
             cat_collection : Dict[str, BDMTXNCategory] = {
