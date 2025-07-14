@@ -345,9 +345,9 @@ def bsm_WORKBOOK_CONTENT_file_save(wb_content:bdm.WORKBOOK_CONTENT,
             wbtl = "TXN_REGISTER_WORKBOOK"
         elif wb_type == bdm.WB_TYPE_EXCEL_TXNS:
             # WB_TYPE_EXCEL_TXNS: Save it as an Excel file.
-            if wb_content_abs_path.exists():
+            # if wb_content_abs_path.exists():
                 # TODO: settings for backup folder path
-                p3u.copy_backup(wb_content_abs_path, "backup")
+                # p3u.copy_backup(wb_content_abs_path, "backup")
             wb_content.save(filename=wb_content_abs_path)
             wbtl = "TXN_EXCEL_WORKBOOK"
         elif wb_type == bdm.WB_TYPE_CSV_TXNS:

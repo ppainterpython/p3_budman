@@ -34,7 +34,7 @@ from .workflow_utils import (
     categorize_transaction, category_map_count, check_register_map,
     category_histogram, clear_category_histogram, get_category_histogram,
 )
-from .txn_category import BDMTXNCategoryManager
+from .txn_category import (BDMTXNCategoryManager, TXNCategoryCatalogItem)
 from budman_data_context import BudManDataContext_Base
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -472,7 +472,14 @@ def process_budget_category(bdm_wb:BDMWorkbook,
                  f"no action taken.")
             logger.error(m)
             return False, m
-        ccm : Dict[str, re.Pattern] = catman.ccm[bdm_wb.fi_key]
+        fi_txn_catalog : TXNCategoryCatalogItem = catman.catalog[bdm_wb.fi_key]
+        if not fi_txn_catalog:
+            # No TXNCategoryCatalogItem for this FI, no action taken.
+            m = (f"TXNCategoryCatalogItem not found for FI '{bdm_wb.fi_key}', "
+                 f"no action taken.")
+            logger.error(m)
+            return False, m
+        ccm : Dict[str, re.Pattern] = fi_txn_catalog.compiled_category_map
         if not ccm:
             # No compiled category map for this FI, no action taken.
             m = (f"Compiled category map not found for FI '{bdm_wb.fi_key}', "
@@ -552,7 +559,7 @@ def process_budget_category(bdm_wb:BDMWorkbook,
                     f"'{dst}'({dst_col_index})")
         num_rows = ws.max_row # or set a smaller limit
         other_count = 0
-        ch = get_category_histogram()  # Clear the histogram before processing.
+        ch = clear_category_histogram()  # Clear the category histogram.
         rules_count = category_map_count()
         logger.info(f"Start Task: Apply '{rules_count}' budget category mapping rules "
                     f"to {ws.max_row-1} rows in workbook: '{bdm_wb.wb_id}' "
@@ -585,17 +592,18 @@ def process_budget_category(bdm_wb:BDMWorkbook,
             if dst_value == 'Other':
                 copy_row_to_worksheet(row, other_ws)
                 other_count += 1
-                if abs(transaction.amount) > 100:
-                    logger.debug(f"{row_idx:04}:{trans_str}" )
+                # if abs(transaction.amount) > 100:
+                logger.debug(f"{row_idx:04}:{trans_str}" )
             del transaction  # Clean up the transaction object.
         time_taken = p3u.stop_timer(st)
         other_wb.save(other_wb_path)  # Save the other workbook with 'Other' category rows.
         other_wb.close()  # Close the other workbook.
         elapsed : float = time.time() - st
         per_row = elapsed / (num_rows - 1) if num_rows > 1 else 0.0
+        ch = get_category_histogram() 
         m = (f"Task Complete: {time_taken} Mapped '{num_rows}' rows, to "
              f"'{len(ch)}' Categories, {per_row:6f} seconds per row, "
-             f"'Other' category count: {ch['Other']}")
+             f"'Other' category count: ({ch['Other']})({other_count})")
         logger.info(m)
         return True, m
     except Exception as e:

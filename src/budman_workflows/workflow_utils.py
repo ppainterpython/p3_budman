@@ -203,7 +203,7 @@ def categorize_transaction(description : str, ccm : Dict[re.Pattern, str]) -> st
         for pattern, category in ccm.items():
             if pattern.search(description):
                 return ch.count(category)
-        return 'Other'  # Default category if no match is found
+        return ch.count('Other')  # Default category if no match is found
     except re.PatternError as e:
         logger.error(p3u.exc_err_msg(e))
         logger.error(f'Pattern error: compiled_category_map dict: ' 

@@ -223,7 +223,7 @@ WB_TYPE_TXN_REGISTER = ".txn_register"
 WB_TYPE_EXCEL_TXNS = ".excel_txns"
 WB_TYPE_CSV_TXNS = ".csv_txns"
 WB_TYPE_TXN_CATEGORIES = ".txn_categories"
-WB_TYPE_CATEGORY_MAP = ".category_map"
+WB_TYPE_CATEGORY_MAP = "_category_map"
 WB_TYPE_BUDGET = ".budget"
 WB_TYPE_UNKNOWN = ".unknown_type"
 VALID_WB_TYPE_VALUES = (
@@ -241,6 +241,7 @@ WB_FILETYPE_JSON = ".json"
 WB_FILETYPE_JSONC = ".jsonc"
 WB_FILETYPE_TEXT = ".txt"
 WB_FILETYPE_TOML = ".toml"
+WB_FILETYPE_PY = ".py"
 # Valid filetypes for workbook types
 WB_FILETYPE_MAP = {
     WB_TYPE_BDM_STORE: WB_FILETYPE_JSONC,
@@ -250,12 +251,12 @@ WB_FILETYPE_MAP = {
     WB_TYPE_CSV_TXNS: WB_FILETYPE_CSV,
     WB_TYPE_BUDGET: WB_FILETYPE_XLSX,
     WB_TYPE_TXN_CATEGORIES: WB_FILETYPE_JSON,
-    WB_TYPE_CATEGORY_MAP: WB_FILETYPE_TOML
+    WB_TYPE_CATEGORY_MAP: WB_FILETYPE_PY
 }
 VALID_WB_FILETYPES = (
     WB_FILETYPE_CSV, WB_FILETYPE_XLSX,
     WB_FILETYPE_JSON, WB_FILETYPE_JSONC, WB_FILETYPE_TEXT,
-    WB_FILETYPE_TOML
+    WB_FILETYPE_TOML, WB_FILETYPE_PY
 )
 # ---------------------------------------------------------------------------- +
 # DATA_CONTEXT "good guy" interface (Dictionary key names)
