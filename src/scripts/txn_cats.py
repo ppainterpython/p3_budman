@@ -14,7 +14,7 @@ import p3_utils as p3u, p3logging as p3l
 import budman_namespace as bdm
 import budman_settings as bdms
 from budman_workflows.txn_category import (
-    BDMTXNCategory, TXNCategoryCatalogItem, BDMTXNCategoryManager
+    BDMTXNCategory, TXNCategoryCatalog, BDMTXNCategoryManager
 )
 from budman_workflows.budget_category_mapping import get_category_map
 from budman_workflows.workflow_utils import (
@@ -97,7 +97,7 @@ class CmdLineApp(cmd2.Cmd):
             if list_flag:
                 if not self.catman:
                     self.poutput("Transaction Category Manager is not initialized.")
-                cat_data = self.catman.catalog
+                cat_data = self.catman.catalogs
                 if not cat_data:
                     self.poutput("No transaction categories found.")
                 self.display_catman()
@@ -143,7 +143,7 @@ class CmdLineApp(cmd2.Cmd):
             self.check_catalog()
             mod_name = "boa_category_map"
             mod_path = self.settings.FI_FOLDER_abs_path('boa') / f"{mod_name}.py"
-            boa = import_module_from_path(mod_name, mod_path)
+            boa = p3u.import_module_from_path(mod_name, mod_path)
             self.poutput(f"Configured {mod_name}.")
         except Exception as e:
             m = p3u.exc_err_msg(e)
@@ -169,9 +169,9 @@ class CmdLineApp(cmd2.Cmd):
     def display_catman(self) -> None:
         """Display a summary of the Category Manager content."""
         self.check_catalog()
-        cat_man_len = len(self.catman.catalog)
+        cat_man_len = len(self.catman.catalogs)
         ccp_len = len(self.catman.ccm)
-        for fi_key, cat_data in self.catman.catalog.items():
+        for fi_key, cat_data in self.catman.catalogs.items():
             self.poutput(f"FI Key: {fi_key}, Categories: {len(cat_data)}")
     #endregion display_catman() method
     # ------------------------------------------------------------------------ +
@@ -228,20 +228,7 @@ def extract_txn_categories2(wb_name: str,
         raise
 #endregion extract_txn_categories2() method
 # -------------------------------------------------------------------------- +
-#region import_module_from_path()
-def import_module_from_path(module_name: str, file_path: str):
-    """Dynamically import a module from a given file path."""
-    file_path = str(Path(file_path).resolve())
-    spec = importlib.util.spec_from_file_location(module_name, file_path)
-    if spec is None or spec.loader is None:
-        raise ImportError(f"Cannot load module {module_name} from {file_path}")
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[module_name] = module
-    spec.loader.exec_module(module)
-    return module
-#endregion import_module_from_path()
-# -------------------------------------------------------------------------- +
-#region vairous functions
+#region various functions
 def TXN_CATEGORIES_WORKBOOK_create():
     """
     Create a WB_TYPE_TXN_CATEGORIES workbook by extracting the categories used
@@ -337,7 +324,7 @@ def extract_column_from_csv(file_path:Path, column_name:str, output_path:Path,
         print(f"Error: File '{file_path}' not found.")
     except Exception as e:
         print(f"Error extracting column: {e}")
-#endregion vairous functions
+#endregion various functions
 # ------------------------------------------------------------------------ +
 #region configure_logging() method
 def configure_logging(logger_name : str = __name__, logtest : bool = False) -> None:

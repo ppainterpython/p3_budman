@@ -200,10 +200,18 @@ def categorize_transaction(description : str, ccm : Dict[re.Pattern, str]) -> st
         p3u.is_non_empty_str("description", description, raise_error=True)
         p3u.is_non_empty_dict("ccm", ccm, raise_error=True)
         ch = get_category_histogram()
+        payee = ""
         for pattern, category in ccm.items():
-            if pattern.search(description):
-                return ch.count(category)
-        return ch.count('Other')  # Default category if no match is found
+            payee = ""
+            m = pattern.search(description)
+            if m:
+                gc = len(m.groups())
+                if gc == 0 or m[1] is None:
+                    return ch.count(category), payee
+                payee = m[1]
+                print(f"Matched pattern: '{pattern.pattern}' with payee: '{payee}'")
+                return ch.count(category), payee
+        return ch.count('Other'), payee  # Default category if no match is found
     except re.PatternError as e:
         logger.error(p3u.exc_err_msg(e))
         logger.error(f'Pattern error: compiled_category_map dict: ' 

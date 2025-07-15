@@ -200,6 +200,7 @@ from budman_settings import *
 from budman_namespace.design_language_namespace import *
 from budman_namespace.bdm_workbook_class import BDMWorkbook
 from budman_workflows import (
+    BDMTXNCategoryManager, TXNCategoryCatalog,
     category_map_count, get_category_map, clear_category_map, 
     compile_category_map, set_compiled_category_map, clear_compiled_category_map,
     check_sheet_schema, check_sheet_columns, process_budget_category,
@@ -1389,18 +1390,32 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
                         logger.error(m)
                         return False, m
                     if reload_target == CATEGORY_MAP:
-                        cmc = category_map_count()
-                        m = f"Workflow reload: '{reload_target}' rule count = {cmc}\n"
-                        logger.debug(m)
-                        r_msg += f"\n{m}"
-                        clear_category_map()
-                        clear_compiled_category_map()
-                        importlib.reload(budget_category_mapping)
-                        # importlib.reload(budman_cli_parser)
-                        # importlib.reload(budman_cli_view)
-                        cm = get_category_map()
-                        ccm = compile_category_map(cm)
-                        set_compiled_category_map(ccm)
+                        catman: BDMTXNCategoryManager = BDMTXNCategoryManager() #self.WF_CATEGORY_MANAGER
+                        category_catalog: TXNCategoryCatalog = None
+                        if catman :
+                            category_catalog = catman.catalogs[self.dc_FI_KEY]
+                            category_catalog.CATEGORY_MAP_WORKBOOK_import()
+                            mod = category_catalog.category_map_module
+                            if mod:
+                                cat_count = len(category_catalog.category_collection)
+                                rule_count = len(category_catalog.category_map)
+                                task = "CATEGORY_MAP_WORKBOOK_import()"
+                                m = (f"{P2}Task: {task:30} {rule_count:>3} "
+                                     f"rules, {cat_count:>3} categories.")
+                                logger.debug(m)
+                                return True, m
+                            else:
+                                return False, "Failed to reload category_map_module"
+                        # cmc = category_map_count()
+                        # m = f"Workflow reload: '{reload_target}' rule count = {cmc}\n"
+                        # logger.debug(m)
+                        # r_msg += f"\n{m}"
+                        # clear_category_map()
+                        # clear_compiled_category_map()
+                        # importlib.reload(budget_category_mapping)
+                        # cm = get_category_map()
+                        # ccm = compile_category_map(cm)
+                        # set_compiled_category_map(ccm)
                     if reload_target == FI_WORKBOOK_DATA_COLLECTION:
                         wdc: WORKBOOK_DATA_COLLECTION = None
                         wdc, m = self.model.bsm_FI_WORKBOOK_DATA_COLLECTION_resolve(self.dc_FI_KEY)
@@ -1690,7 +1705,7 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             if cmd[cp.CK_FIX_SWITCH]:
                 r = f"Task: check_sheet_columns workbook: Workbook: '{bdm_wb.wb_id}' "
                 ws = wb_content.active
-                success = check_sheet_columns(ws)
+                success = check_sheet_columns(ws, add_columns=True)
                 if success: 
                     wb_content.save(bdm_wb_abs_path)
             return success, r

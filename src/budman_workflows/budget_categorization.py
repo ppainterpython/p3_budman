@@ -19,7 +19,7 @@
 #region Imports
 # python standard library modules and packages
 import re, pathlib as Path, logging, time, hashlib, datetime
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 # third-party modules and packages
 import p3logging as p3l, p3_utils as p3u
@@ -34,7 +34,7 @@ from .workflow_utils import (
     categorize_transaction, category_map_count, check_register_map,
     category_histogram, clear_category_histogram, get_category_histogram,
 )
-from .txn_category import (BDMTXNCategoryManager, TXNCategoryCatalogItem)
+from .txn_category import (BDMTXNCategoryManager, TXNCategoryCatalog)
 from budman_data_context import BudManDataContext_Base
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -78,6 +78,8 @@ LEVEL_2_COL_NAME = "Level2"
 LEVEL_3_COL_NAME = "Level3" 
 DEBIT_CREDIT_COL_NAME = "DebitOrCredit"  
 YEAR_MONTH_COL_NAME = "YearMonth"  
+PAYEE_COL_NAME = "Payee"
+ESSENTIAL_COL_NAME = "Essential" 
 
 # BudMan utilizes the following columns from the BOA side:
 DATE_COL_NAME = BOA_DATE_COL_NAME 
@@ -107,7 +109,9 @@ BUDMAN_WB_COLUMNS = [
     LEVEL_2_COL_NAME,
     LEVEL_3_COL_NAME,
     DEBIT_CREDIT_COL_NAME,
-    YEAR_MONTH_COL_NAME
+    YEAR_MONTH_COL_NAME,
+    PAYEE_COL_NAME,
+    ESSENTIAL_COL_NAME
     ]
 
 # Column indices for a list of cells from a row in the BOA workbook.
@@ -129,7 +133,9 @@ BOA_WB_COL_DIMENSIONS = {
     LEVEL_2_COL_NAME: 20,
     LEVEL_3_COL_NAME: 20,
     DEBIT_CREDIT_COL_NAME: 10,
-    YEAR_MONTH_COL_NAME: 20
+    YEAR_MONTH_COL_NAME: 20,
+    PAYEE_COL_NAME: 25,
+    ESSENTIAL_COL_NAME: 10,
 }
 BUDMAN_SHEET_NAME = "TransactionData"
 
@@ -144,7 +150,9 @@ BUDMAN_REQUIRED_COLUMNS = [
     LEVEL_2_COL_NAME, 
     LEVEL_3_COL_NAME,
     DEBIT_CREDIT_COL_NAME,
-    YEAR_MONTH_COL_NAME
+    YEAR_MONTH_COL_NAME,
+    PAYEE_COL_NAME,
+    ESSENTIAL_COL_NAME
 ]
 
 #endregion Globals and Constants
@@ -153,7 +161,7 @@ BUDMAN_REQUIRED_COLUMNS = [
 TRANS_PARAMETERS = ["tid", "date", "description", "currency",
                     "account_code", "amount", "category",
                     "level1", "level2", "level3", 
-                    "debit_credit", "year_month"]
+                    "debit_credit", "year_month", "payee", "essential"]
 @dataclass
 class TransactionData:
     """Data class to hold transaction data."""
@@ -169,12 +177,14 @@ class TransactionData:
     level3: str = None
     debit_credit: str = None  # 'D' for debit, 'C' for credit.
     year_month: str = None  # Formant 'YYYY-MM-mmm' e.g., 2025-01-Jan
-
+    essential: bool = False
+    payee: str = field(default="")
+    
     def data_str(self) -> str:
         """Return a string representation of the transaction data."""
         ret =  f"{self.tid:12}|{self.date.strftime("%m/%d/%Y")}|"
         ret += f"{self.year_month:11}|{self.account_code:26}|" 
-        ret += f"{self.amount:>+12.2f}|{self.debit_credit:1}|" 
+        ret += f"{self.payee:25}|{self.amount:>+12.2f}|{self.debit_credit:1}|" 
         ret += f"({len(self.description):03}){self.description:102}|->" 
         ret += f"|({len(self.category):03})|{self.category:40}|"
         return ret
@@ -197,6 +207,8 @@ def check_sheet_columns(sheet: Worksheet, add_columns: bool = True) -> bool:
     LEVEL_3_COL_NAME - the third level of the budget category.
     DEBIT_CREDIT_COL_NAME - 'D' for debit, 'C' for credit.
     YEAR_MONTH_COL_NAME - trans date in format 'YYYY-MM-mmm', e.g. '2025-01-Jan'.
+    PAYEE - parsed name of the org associated with the transaction
+    ESSENTIAL - True/False the budget category is defined essential.
 
     Args:
         sheet (openpyxl.worksheet): The worksheet to check.
@@ -466,13 +478,13 @@ def process_budget_category(bdm_wb:BDMWorkbook,
         # Access the category manager for the FI in the data context.
         # Obtain the compiled category map (ccm) for the FI by FI_KEY.
         catman : BDMTXNCategoryManager = bdm_DC.WF_CATEGORY_MANAGER
-        if bdm_wb.fi_key not in catman.catalog:
+        if bdm_wb.fi_key not in catman.catalogs:
             # No WB_TYPE_TXN_CATEGORIES dictionary for this FI, no action taken.
             m = (f"WB_TYPE_TXN_CATEGORIES dictionary not found for FI '{bdm_wb.fi_key}', "
                  f"no action taken.")
             logger.error(m)
             return False, m
-        fi_txn_catalog : TXNCategoryCatalogItem = catman.catalog[bdm_wb.fi_key]
+        fi_txn_catalog : TXNCategoryCatalog = catman.catalogs[bdm_wb.fi_key]
         if not fi_txn_catalog:
             # No TXNCategoryCatalogItem for this FI, no action taken.
             m = (f"TXNCategoryCatalogItem not found for FI '{bdm_wb.fi_key}', "
@@ -554,6 +566,8 @@ def process_budget_category(bdm_wb:BDMWorkbook,
         acct_name_i = col_i(ACCOUNT_NAME_COL_NAME,hdr)
         acct_code_i = col_i(ACCOUNT_CODE_COL_NAME,hdr)
         acct_cell : Cell = ws.cell(row=1, column=acct_name_i + 1)
+        payee_i = col_i(PAYEE_COL_NAME,hdr)
+        essential_i = col_i(ESSENTIAL_COL_NAME,hdr)
 
         logger.debug(f"Mapping '{src}'({src_col_index}) to "
                     f"'{dst}'({dst_col_index})")
@@ -571,7 +585,7 @@ def process_budget_category(bdm_wb:BDMWorkbook,
             # Do the mapping from src to dst.
             dst_cell = row[dst_col_index]
             src_value = row[src_col_index].value 
-            dst_value = categorize_transaction(src_value, ccm)
+            dst_value, payee = categorize_transaction(src_value, ccm)
             dst_cell.value = dst_value 
             # row[dst_col_index].value = dst_value 
             # Set the additional values for BudMan in the row
@@ -586,7 +600,10 @@ def process_budget_category(bdm_wb:BDMWorkbook,
             acct_value = row[acct_name_i].value
             t_acct_code = acct_value.split('-')[-1].strip()
             row[acct_code_i].value = t_acct_code if acct_code_i != -1 else None
-
+            if payee is not None:
+                row[payee_i].value = payee if payee_i != -1 else None
+            essential_value = fi_txn_catalog.category_collection[dst_value].essential
+            row[essential_i].value = essential_value if essential_i != -1 else None
             transaction = WORKSHEET_row_data(row,hdr) 
             trans_str = transaction.data_str()
             if dst_value == 'Other':

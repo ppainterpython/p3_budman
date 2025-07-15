@@ -40,7 +40,8 @@ from .budget_categorization import (
 )
 from .txn_category import (
     BDMTXNCategory,
-    BDMTXNCategoryManager
+    BDMTXNCategoryManager,
+    TXNCategoryCatalog
 )
 from .budget_category_mapping import (
     check_register_map, 
@@ -66,6 +67,7 @@ from .budget_category_mapping import (
 __all__ = [
     # txn_category.py module
     "BDMTXNCategory",
+    "TXNCategoryCatalog",
     "BDMTXNCategoryManager",
     # workflow_utils.py module
     "category_map_count",
