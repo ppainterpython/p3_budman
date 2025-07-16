@@ -188,7 +188,7 @@ class TXNCategoryCatalog:
         """
         try:
             # self.valid_state()  # Ensure the manager is in a valid state
-            cat_map_filename = self.settings[bdms.CATEGORY_CATALOG][fi_key][bdms.CATEGORY_MAP_FULL_FILENAME]
+            cat_map_filename = self.settings[bdms.CATEGORY_CATALOG][fi_key][bdms.CATEGORY_MAP_WORKBOOK_FULL_FILENAME]
             fi_folder: Path = self.settings.FI_FOLDER_abs_path(fi_key)
             cat_map_path: Path= fi_folder / cat_map_filename
             if not cat_map_path.exists():
@@ -290,7 +290,7 @@ class BDMTXNCategoryManager(metaclass=BDMSingletonMeta):
     #endregion FI_WB_TYPE_TXN_CATEGORIES_update_CATEGORY_MAP()
     # ------------------------------------------------------------------------ +
     #region FI_TXN_CATEGORIES_WORKBOOK_load()
-    def FI_TXN_CATEGORIES_WORKBOOK_load(self, fi_key: str,) -> None:
+    def FI_TXN_CATEGORIES_WORKBOOK_load(self, fi_key: str,) -> TXNCategoryCatalog:
         """Load (or reload)the WB_TYPE_TXN_CATEGORIES workbook content for an FI.
 
         Load the content from the WB_TYPE_TXN_CATEGORIES workbook for the given
@@ -334,15 +334,14 @@ class BDMTXNCategoryManager(metaclass=BDMSingletonMeta):
             }
             txn_category_catalog: TXNCategoryCatalog = None
             txn_category_catalog = TXNCategoryCatalog(**tcc_params)
-            tcc = txn_category_catalog
             # Load the CATEGORY_MAP_WORKBOOK from the URL.
-            tcc.CATEGORY_MAP_WORKBOOK_import()
-            tcc.category_collection = category_collection
+            txn_category_catalog.CATEGORY_MAP_WORKBOOK_import()
 
             # Add/replace catalog item
-            self.catalogs[fi_key] = tcc
+            self.catalogs[fi_key] = txn_category_catalog
             count = txn_cat_wb_content.get(bdm.WB_CATEGORY_COUNT, 0)
             logger.debug(f"Loaded '{count}' categories for FI_KEY('{fi_key}').")
+            return txn_category_catalog
         except Exception as e:
             logger.error(f"Error loading catalog fi_key: '{fi_key}' {e}")
             raise
@@ -428,7 +427,7 @@ class BDMTXNCategoryManager(metaclass=BDMSingletonMeta):
         """
         try:
             self.valid_state()  # Ensure the manager is in a valid state
-            txn_cat_filename = self.settings[bdms.CATEGORY_CATALOG][fi_key][bdms.TXN_CATEGORIES_FULL_FILENAME]
+            txn_cat_filename = self.settings[bdms.CATEGORY_CATALOG][fi_key][bdms.TXN_CATEGORIES_WORKBOOK_FULL_FILENAME]
             fi_folder = self.settings.FI_FOLDER_abs_path(fi_key)
             txn_cat_path = fi_folder / txn_cat_filename
             if not txn_cat_path.exists():

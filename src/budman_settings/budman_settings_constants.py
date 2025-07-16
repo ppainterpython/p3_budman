@@ -30,8 +30,8 @@ BUDMAN_DEFAULT_WORKBOOK_TYPE = "budman.default_workbook_type"
 
 # [category_catalog] Table
 CATEGORY_CATALOG = "category_catalog"
-TXN_CATEGORIES_FULL_FILENAME = "txn_categories_full_filename"
-CATEGORY_MAP_FULL_FILENAME = "category_map_full_filename"
+TXN_CATEGORIES_WORKBOOK_FULL_FILENAME = "txn_categories_workbook_full_filename"
+CATEGORY_MAP_WORKBOOK_FULL_FILENAME = "category_map_workbook_full_filename"
 
 # [logging] Table
 LOGGING_DEFAULT_HANDLER = "logging.default_handler"

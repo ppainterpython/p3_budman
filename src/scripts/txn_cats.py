@@ -2,7 +2,8 @@
 # txn_cats.py - a place to fool around with experiments, not a dependent.
 #------------------------------------------------------------------------------+
 #region Imports
-from pprint import pprint
+# python standard library modules and packages
+from rich.console import Console
 import logging, re, sys, csv, cmd2, toml
 from cmd2 import (Bg, Fg, ansi, Cmd2ArgumentParser, with_argparser)
 from pathlib import Path
@@ -12,6 +13,7 @@ from typing import Dict, Optional
 import p3_utils as p3u, p3logging as p3l
 # local modules and packages
 import budman_namespace as bdm
+from budman_namespace import (P2, P4, P6)
 import budman_settings as bdms
 from budman_workflows.txn_category import (
     BDMTXNCategory, TXNCategoryCatalog, BDMTXNCategoryManager
@@ -31,7 +33,9 @@ from budget_storage_model import (
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
+console = Console()
 logger = logging.getLogger(__name__)
+budman_settings:bdms.BudManSettings = bdms.BudManSettings()
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
@@ -72,6 +76,9 @@ class CmdLineApp(cmd2.Cmd):
         self.allow_style = ansi.AllowStyle.TERMINAL
         self.settings = settings if settings else bdms.BudManSettings()
         self._catman: BDMTXNCategoryManager = BDMTXNCategoryManager(self.settings)
+        self._fi_key: str = self.settings[bdms.BUDMAN_DEFAULT_FI]
+        self._fi_catalog: TXNCategoryCatalog = None
+
     
     @property
     def catman(self) -> BDMTXNCategoryManager:
@@ -81,6 +88,26 @@ class CmdLineApp(cmd2.Cmd):
     def catman(self, value: Optional[BDMTXNCategoryManager]) -> None:
         """Set the BDMTXNCategoryManager instance."""
         self._catman = value
+
+    @property
+    def fi_key(self) -> str:
+        """Get the financial institution key."""
+        return self._fi_key
+    @fi_key.setter
+    def fi_key(self, value: str) -> None:
+        """Set the financial institution key."""
+        self._fi_key = value
+
+    @property
+    def fi_catalog(self) -> TXNCategoryCatalog:
+        """Get the transaction category catalog for the financial institution."""
+        return self._fi_catalog
+    @fi_catalog.setter
+    def fi_catalog(self, value: TXNCategoryCatalog) -> None:
+        """Set the transaction category catalog for the financial institution."""
+        if value is not None and isinstance(value, TXNCategoryCatalog):
+            self.fi_key = value.fi_key
+        self._fi_catalog = value
     #endregion CmdLineApp Class intrinsics
     # ------------------------------------------------------------------------ +
     #region do_catalog()
@@ -96,15 +123,15 @@ class CmdLineApp(cmd2.Cmd):
                 self.catman.FI_TXN_CATEGORIES_WORKBOOK_load(args.fi_key)
             if list_flag:
                 if not self.catman:
-                    self.poutput("Transaction Category Manager is not initialized.")
+                    console.print("Transaction Category Manager is not initialized.")
                 cat_data = self.catman.catalogs
                 if not cat_data:
-                    self.poutput("No transaction categories found.")
+                    console.print("No transaction catalogs found.")
                 self.display_catman()
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
-            self.poutput(f"Error: {m}")
+            console.print(f"Error: {m}")
 
     do_cat = do_catalog
     #endregion do_catalog()
@@ -116,11 +143,11 @@ class CmdLineApp(cmd2.Cmd):
             self.check_catalog()
             self.catman.FI_WB_TYPE_TXN_CATEGORIES_update_CATEGORY_MAP('boa')
 
-            self.poutput(f"Updated transaction categories.")
+            console.print(f"Updated transaction categories.")
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
-            self.poutput(f"Error: {m}")
+            console.print(f"Error: {m}")
     #endregion do_update() method
     # ------------------------------------------------------------------------ +
     #region do_extract() method
@@ -129,11 +156,11 @@ class CmdLineApp(cmd2.Cmd):
         try:
             self.check_catalog()
             TXN_CATEGORIES_WORKBOOK_create()
-            self.poutput(f"Extracted TXN_CATEGORIES_WORKBOOK.")
+            console.print(f"Extracted TXN_CATEGORIES_WORKBOOK.")
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
-            self.poutput(f"Error: {m}")
+            console.print(f"Error: {m}")
     #endregion do_extract() method
     # ------------------------------------------------------------------------ +
     #region do_config() method
@@ -144,11 +171,11 @@ class CmdLineApp(cmd2.Cmd):
             mod_name = "boa_category_map"
             mod_path = self.settings.FI_FOLDER_abs_path('boa') / f"{mod_name}.py"
             boa = p3u.import_module_from_path(mod_name, mod_path)
-            self.poutput(f"Configured {mod_name}.")
+            console.print(f"Configured {mod_name}.")
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
-            self.poutput(f"Error: {m}")
+            console.print(f"Error: {m}")
     #endregion do_extract() method
     # ------------------------------------------------------------------------ +
     #region do_foo() method
@@ -156,23 +183,24 @@ class CmdLineApp(cmd2.Cmd):
         """Manage foo."""
         try:
             self.check_catalog()
-            self.poutput(f"foo {statement}")
-            self.poutput(f"foo {statement!r}")
-            pprint(self.catman)
+            console.print(f"foo {statement}")
+            console.print(f"foo {statement!r}")
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
-            self.poutput(f"Error: {m}")
+            console.print(f"Error: {m}")
     #endregion do_foo() method
     # ------------------------------------------------------------------------ +
     #region display_catman() method
     def display_catman(self) -> None:
         """Display a summary of the Category Manager content."""
         self.check_catalog()
-        cat_man_len = len(self.catman.catalogs)
-        ccp_len = len(self.catman.ccm)
-        for fi_key, cat_data in self.catman.catalogs.items():
-            self.poutput(f"FI Key: {fi_key}, Categories: {len(cat_data)}")
+        fi_key: str = ""
+        tcc: TXNCategoryCatalog = None
+        for fi_key, tcc in self.catman.catalogs.items():
+            console.print(f"[b]FI Key:[/b] [cyan]{tcc.fi_key}[/cyan]")
+            console.print(f"{P2}[b]Workbook: [/b][cyan]{tcc.txn_categories_workbook[bdm.WB_NAME]}[/cyan], "
+                         f"[b]Categories:[/b] [cyan]{tcc.txn_categories_workbook[bdm.WB_CATEGORY_COUNT]}[/cyan]")
     #endregion display_catman() method
     # ------------------------------------------------------------------------ +
     #region check_catalog() method
@@ -409,15 +437,18 @@ def extract_descriptions(file_path: Path) -> list[str]:
 #region __main__() method
 if __name__ == "__main__":
     try:
-        settings = bdms.BudManSettings()
+        # settings = bdms.BudManSettings()
         configure_logging(__name__, logtest=False)
 
-        app = CmdLineApp(settings)
+        app = CmdLineApp(budman_settings)
         sys.exit(app.cmdloop())
     except Exception as e:
         m = p3u.exc_err_msg(e)
         logger.error(m)
-exit(0)
+        import traceback
+        traceback.print_exc()
+    finally:
+        exit(0)
 #endregion __main__() method
 
 
