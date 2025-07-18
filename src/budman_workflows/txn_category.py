@@ -83,16 +83,41 @@ class TXNCategoryCatalog:
     """Represents a single transaction category catalog for one FI."""
     def __init__(self, fi_key: str, settings: bdms.BudManSettings,
                  txn_categories_workbook: bdm.TXN_CATEGORIES_WORKBOOK = None,
-                 category_collection: bdm.TXN_CATEGORY_COLLECTION = None):
+                 category_collection: bdm.CATEGORY_COLLECTION = None):
         self._fi_key: str = fi_key
         self._settings: bdms.BudManSettings = settings
         self._txn_categories_workbook: bdm.TXN_CATEGORIES_WORKBOOK = txn_categories_workbook
-        self._category_collection: bdm.TXN_CATEGORY_COLLECTION = category_collection
+        self._category_collection: bdm.CATEGORY_COLLECTION = category_collection
         self._category_map : bdm.CATEGORY_MAP_WORKBOOK = None
         self._category_map_module : types.ModuleType =  None
         self._compiled_category_map: Dict[re.Pattern, str] = None
     # ------------------------------------------------------------------------ +
     #region TXNCategoryCatalogItem properties
+    @property
+    def valid(self) -> bool:
+        """Raise error if the TXNCategoryCatalog is not in a valid state."""
+        p3u.is_not_non_empty_str("fi_key property", self.fi_key, raise_error=True)
+        p3u.is_not_obj_of_type("settings property", self.settings, 
+                               bdms.BudManSettings, raise_error=True)
+        p3u.is_not_obj_of_type("txn_categories_workbook property", self.txn_categories_workbook, 
+                               dict, raise_error=True)
+        p3u.is_not_obj_of_type("txn_categories_workbook[bdm.CATEGORY_COLLECTION]", 
+                               self.txn_categories_workbook[bdm.WB_CATEGORY_COLLECTION],
+                               dict, raise_error=True)
+        if self.txn_categories_workbook[bdm.WB_CATEGORY_COUNT] == 0:
+            m = f"No transaction categories found for FI key: {self.fi_key}"
+            logger.error(m)
+            raise ValueError(m)
+        p3u.is_not_obj_of_type("category_collection property", self.category_collection, 
+                               dict, raise_error=True)
+        p3u.is_not_obj_of_type("category_map property", self.category_map, 
+                               dict, raise_error=True)
+        p3u.is_not_obj_of_type("category_map_module property", self.category_map_module, 
+                               types.ModuleType, raise_error=True)
+        p3u.is_not_obj_of_type("compiled_category_map property", self.compiled_category_map, 
+                               dict, raise_error=True)
+        return True
+    
     @property
     def fi_key(self) -> str:
         """Get the financial institution key."""
@@ -113,11 +138,11 @@ class TXNCategoryCatalog:
         self._txn_categories_workbook = value
 
     @property
-    def category_collection(self) -> bdm.TXN_CATEGORY_COLLECTION:
+    def category_collection(self) -> bdm.CATEGORY_COLLECTION:
         """Get the category collection."""
         return self._category_collection 
     @category_collection.setter
-    def category_collection(self, value: bdm.TXN_CATEGORY_COLLECTION):
+    def category_collection(self, value: bdm.CATEGORY_COLLECTION):
         """Set the category collection."""
         self._category_collection = value
 
@@ -140,11 +165,11 @@ class TXNCategoryCatalog:
         self._category_map_module = value
 
     @property
-    def compiled_category_map(self) -> Dict[re.Pattern, str]:
+    def compiled_category_map(self) -> bdm.COMPLIED_CATEGORY_MAP:
         """Get the compiled category map."""
         return self._compiled_category_map
     @compiled_category_map.setter
-    def compiled_category_map(self, value: Dict[re.Pattern, str]):
+    def compiled_category_map(self, value: bdm.COMPLIED_CATEGORY_MAP):
         """Set the compiled category map."""
         self._compiled_category_map = value
     #endregion TXNCategoryCatalogItem properties
@@ -152,6 +177,42 @@ class TXNCategoryCatalog:
     #endregion TXNCategoryCatalog class intrinsics
     # ------------------------------------------------------------------------ +
     #region CATEGORY_MAP_WORKBOOK methods
+    # ------------------------------------------------------------------------ +
+    #region CATEGORY_COLLECTION_create() method
+    def CATEGORY_COLLECTION_create(self, 
+        category_map: bdm.CATEGORY_MAP_WORKBOOK) -> bdm.CATEGORY_COLLECTION :
+        """Construct and return a CATEGORY_COLLECTION from a CATEGORY_MAP_WORKBOOK.
+
+        Args:
+            category_map (bdm.CATEGORY_MAP_WORKBOOK): The category map to extract from.
+        """
+        try:
+            # Construct a CATEGORY_COLLECTION content dict.
+            category_collection: bdm.CATEGORY_COLLECTION = {}
+
+            for cat in category_map.values():
+                l1, l2, l3 = p3u.split_parts(cat)
+                bdm_tc = BDMTXNCategory(
+                    full_cat=cat,
+                    level1=l1,
+                    level2=l2,
+                    level3=l3,
+                    payee=None,
+                    description=f"Level 1 Category: {l1}",
+                    essential=False, 
+                    total=0
+                )
+                if cat not in category_collection:
+                    # Only add a category once, no duplicates. Multiple patterns
+                    # map to the same category.
+                    category_collection[cat] = bdm_tc
+            cnt = len(category_collection)
+            logger.info(f"Extracted '{cnt}' categories from {len(category_map)} patterns.")
+            return category_collection
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion CATEGORY_COLLECTION_create() method
     # ------------------------------------------------------------------------ +
     #region CATEGORY_MAP_WORKBOOK_import()
     def CATEGORY_MAP_WORKBOOK_import(self) -> None:
@@ -262,32 +323,72 @@ class BDMTXNCategoryManager(metaclass=BDMSingletonMeta):
     # ------------------------------------------------------------------------ +
     #region BDMTXNCategoryManager methods
     # ------------------------------------------------------------------------ +
-    #region FI_WB_TYPE_TXN_CATEGORIES_update_CATEGORY_MAP()
-    def FI_WB_TYPE_TXN_CATEGORIES_update_CATEGORY_MAP(self, fi_key: str) -> None:
+    #region FI_TXN_CATEGORIES_WORKBOOK_update()
+    def FI_TXN_CATEGORIES_WORKBOOK_update(self, fi_key: str) -> str:
         """For the fi_key, refresh the transaction category catalog in-memory
         from the category_map.
 
-        Load the content from the WB_TYPE_TXN_CATEGORIES workbook for the given
-        financial institution (FI), configuring its url from settings.
-        Also compiles the category map for the financial institution.
+        Extract the current unique list of categories from the 
+        CATEGORY_MAP_WORKBOOK, and update the TXN_CATEGORIES_WORKBOOK
+        category_collection. A user edits the CATEGORY_MAP_WORKBOOK to add or
+        remove map patterns for categories, remove or change categories etc.
+        Only merge new categories into the TXN_CATEGORIES_WORKBOOK and then
+        remove categories that are no longer in the CATEGORY_MAP_WORKBOOK.
 
         Args:
             fi_key (str): The key for the financial institution.
         """
         try:
             self.valid_state()  # Ensure the manager is in a valid state
-            # Load the catalog for an FI
-            cat_map_wb: bdm.CATEGORY_MAP_WORKBOOK = None
-            cat_map_wb = self.FI_CATEGORY_MAP_WORKBOOK_load(fi_key)
-            # Construct a new TXN_CATEGORIES_WORKBOOK
-            txn_categories_wb: bdm.TXN_CATEGORIES_WORKBOOK = None
-            txn_categories_wb = self.FI_TXN_CATEGORIES_WORKBOOK(fi_key, cat_map_wb)
-            self.FI_TXN_CATEGORIES_WORKBOOK_save(fi_key, txn_categories_wb)
-            # self.FI_TXN_CATEGORIES_WORKBOOK_add(fi_key, txn_categories_wb)
+            if fi_key not in self.catalogs:
+                raise KeyError(f"FI_KEY '{fi_key}' not found in catalog.")
+            tcc: TXNCategoryCatalog = self.catalogs[fi_key]
+            if not tcc or tcc.txn_categories_workbook is None:
+                raise ValueError(f"Invalid TXNCategoryCatalog for FI_KEY '{fi_key}'.")
+            # Load the CATEGORY_MAP_WORKBOOK from the TXNCategoryCatalog
+            tcc.CATEGORY_MAP_WORKBOOK_import() # sets tcc.category_map
+            cm_count = len(tcc.category_map)
+            # Construct a CATEGORY_COLLECTION from the CATEGORY_MAP_WORKBOOK values.
+            category_collection: bdm.CATEGORY_COLLECTION = None
+            category_collection = tcc.CATEGORY_COLLECTION_create(tcc.category_map)
+            if not category_collection:
+                raise ValueError(f"Updated CATEGORY_COLLECTION for FI_KEY '{fi_key}' is None.")
+            cc_count = len(category_collection)
+            msg: str = f"Updating TXN_CATEGORIES_WORKBOOK for FI_KEY: {fi_key}"
+            msg += f"\n  CATEGORY_MAP_WORKBOOK has {cm_count} patterns."
+            msg += f"\n  TXN_CATEGORIES_WORKBOOK has {cc_count} categories."
+            # Now merge any new categories from the CATEGORY_MAP_WORKBOOK into
+            # the TXN_CATEGORIES_WORKBOOK category_collection. Do not modify
+            # any existing categories, just add new ones.
+            txn_cat_wb: bdm.TXN_CATEGORIES_WORKBOOK = tcc.txn_categories_workbook
+            for key, value in category_collection.items():
+                if key not in txn_cat_wb[bdm.WB_CATEGORY_COLLECTION]:
+                    # Add new category to the TXN_CATEGORIES_WORKBOOK
+                    txn_cat_wb[bdm.WB_CATEGORY_COLLECTION][key] = value
+                    m = f"added new category '{key}' to TXN_CATEGORIES_WORKBOOK."
+                    msg += f"\n  {m}"
+                    logger.debug(f"FI_KEY '{fi_key}' {m}")
+            cc_keys : List[str] = list(txn_cat_wb[bdm.WB_CATEGORY_COLLECTION].keys())
+            for key in cc_keys:
+                if key not in category_collection:
+                    # Remove the category from the TXN_CATEGORIES_WORKBOOK
+                    del txn_cat_wb[bdm.WB_CATEGORY_COLLECTION][key]
+                    m = f"removed category '{key}' from TXN_CATEGORIES_WORKBOOK."
+                    msg += f"\n  {m}"
+                    logger.debug(f"FI_KEY '{fi_key}' {m}")
+            # Save the updated TXN_CATEGORIES_WORKBOOK
+            self.FI_TXN_CATEGORIES_WORKBOOK_save(fi_key, txn_cat_wb)
+            cm_count = len(tcc.category_map)
+            cc_count = len(category_collection)
+            msg += f"\n  Updated TXN_CATEGORIES_WORKBOOK saved for FI_KEY: {fi_key}."
+            msg += f"\n  CATEGORY_MAP_WORKBOOK has {cm_count} patterns."
+            msg += f"\n  TXN_CATEGORIES_WORKBOOK has {cc_count} categories."
+            msg += f"\n  TXN_CATEGORIES_WORKBOOK saved to: {self.FI_TXN_CATEGORIES_WORKBOOK_url(fi_key)}"
+            return msg
         except Exception as e:
             logger.error(f"Error updating CATEGORY_MAP for FI_KEY('{fi_key}') {e}")
             raise
-    #endregion FI_WB_TYPE_TXN_CATEGORIES_update_CATEGORY_MAP()
+    #endregion FI_TXN_CATEGORIES_WORKBOOK_update()
     # ------------------------------------------------------------------------ +
     #region FI_TXN_CATEGORIES_WORKBOOK_load()
     def FI_TXN_CATEGORIES_WORKBOOK_load(self, fi_key: str,) -> TXNCategoryCatalog:
@@ -367,7 +468,7 @@ class BDMTXNCategoryManager(metaclass=BDMSingletonMeta):
             self.valid_state()  # Ensure the manager is in a valid state
             # Load the catalog for an FI
             txn_cat_wb_content: bdm.TXN_CATEGORIES_WORKBOOK = None
-            txn_cat_wb_url = test_txn_cat_wb_url #self.FI_TXN_CATEGORIES_WORKBOOK_url(fi_key)
+            txn_cat_wb_url = self.FI_TXN_CATEGORIES_WORKBOOK_url(fi_key)
             if txn_cat_wb_input is not None:
                 # If input is provided, use it directly.
                 txn_cat_wb_content = txn_cat_wb_input
@@ -494,7 +595,7 @@ class BDMTXNCategoryManager(metaclass=BDMSingletonMeta):
             raise
     #endregion FI_TXN_CATEGORIES_WORKBOOK()
     # ------------------------------------------------------------------------ +
-    #region CATEGORY_MAP_file_load()
+    #region FI_CATEGORY_MAP_WORKBOOK_load()
     def FI_CATEGORY_MAP_WORKBOOK_load(self, fi_key: str) -> bdm.CATEGORY_MAP_WORKBOOK:
         """Load the CATEGORY_MAP file for an FI ( financial institution).
 
@@ -521,7 +622,7 @@ class BDMTXNCategoryManager(metaclass=BDMSingletonMeta):
         except Exception as e:
             logger.error(f"Error loading catalog fi_key: '{fi_key}' {e}")
             raise
-    #endregion CATEGORY_MAP_file_load()
+    #endregion FI_CATEGORY_MAP_WORKBOOK_load()
     # ------------------------------------------------------------------------ +
     #region FI_CATEGORY_MAP_WORKBOOK_url()
     def FI_CATEGORY_MAP_WORKBOOK_url(self, fi_key: str) -> str:

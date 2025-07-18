@@ -37,7 +37,11 @@ from budget_storage_model import (
     bsm_BDM_STORE_url_get,
     bsm_WORKBOOK_CONTENT_url_put
 )
-from .txn_category import BDMTXNCategory, BDMTXNCategoryManager
+from .txn_category import (
+    BDMTXNCategoryManager, 
+    TXNCategoryCatalog, 
+    BDMTXNCategory
+) 
 from .budget_category_mapping import (
     compiled_category_map, get_category_map, 
     check_register_map, 
@@ -172,44 +176,32 @@ def clear_category_map():
     return    
 #endregion category_map_count() function
 # ---------------------------------------------------------------------------- +
-#region map_category() function deprecated
-# def map_category(src_str) -> str:
-#     """Map a transaction description to a budget category."""
-#     # Run the src_str through the category_map to find a match.
-#     try:
-#         global category_histogram
-#         ch = get_category_histogram()
-#         for pattern, category in category_map.items():
-#             if re.search(pattern, str(src_str), re.IGNORECASE):
-#                 return ch.count(category)
-#         return ch.count('Other')  # Default category if no match is found
-#     except re.PatternError as e:
-#         logger.error(p3u.exc_err_sg(e))
-#         logger.error(f'Pattern error: category_map dict: ' 
-#                      f'{{ \"{e.pattern}\": \"{category}\" }}')
-#         raise
-#     except Exception as e:
-#         logger.error(p3u.exc_err_msg(e))
-#         raise
-#endregion map_category() function
-# ---------------------------------------------------------------------------- +
 #region categorize_transaction() function
-def categorize_transaction(description : str, ccm : Dict[re.Pattern, str]) -> str:
+def categorize_transaction(description : str, txn_catalog:TXNCategoryCatalog) -> str:
     """Use the provided compiled category map to map the description to a category."""
     try:
         p3u.is_non_empty_str("description", description, raise_error=True)
-        p3u.is_non_empty_dict("ccm", ccm, raise_error=True)
+        p3u.is_not_obj_of_type("txn_catalog", txn_catalog, TXNCategoryCatalog,
+                               raise_error=True)
+        txn_catalog.valid
+        fi_key: str = txn_catalog.fi_key
+        txn_category_collection = txn_catalog.txn_categories_workbook[bdm.WB_CATEGORY_COLLECTION]
+        tcc_keys = list(txn_category_collection.keys())
+        ccm: bdm.COMPLIED_CATEGORY_MAP = txn_catalog.compiled_category_map
         ch = get_category_histogram()
         payee = ""
         for pattern, category in ccm.items():
             payee = ""
             m = pattern.search(description)
             if m:
+                if category not in tcc_keys:
+                    logger.warning(f"Category '{category}' not found in "
+                                   f"transaction category collection for FI key '{fi_key}'.")
                 gc = len(m.groups())
                 if gc == 0 or m[1] is None:
                     return ch.count(category), payee
                 payee = m[1]
-                print(f"Matched pattern: '{pattern.pattern}' with payee: '{payee}'")
+                # print(f"Matched pattern: '{pattern.pattern}' with payee: '{payee}'")
                 return ch.count(category), payee
         return ch.count('Other'), payee  # Default category if no match is found
     except re.PatternError as e:

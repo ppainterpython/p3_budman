@@ -9,6 +9,7 @@
 # python standard library modules and packages
 
 # third-party modules and packages
+import re
 from typing import Dict, List, Tuple, Any, Type, TYPE_CHECKING
 import openpyxl
 from openpyxl import Workbook
@@ -44,7 +45,8 @@ type TXN_CATEGORIES_WORKBOOK = DATA_OBJECT
 type TXN_REGISTER_WORKBOOK = DATA_OBJECT
 type EXCEL_TXNS_WORKBOOK = openpyxl.Workbook
 type EXCEL_TXNS_WORKSHEET = openpyxl.worksheet.worksheet.Worksheet
-type TXN_CATEGORY_COLLECTION = DATA_COLLECTION
+type CATEGORY_COLLECTION = DATA_COLLECTION
+type COMPLIED_CATEGORY_MAP = Dict[re.Pattern, str]
 
 # MODEL_OBJECT : Type[object] = object()
 BDMO_OBJECT = DATA_OBJECT

@@ -585,7 +585,7 @@ def process_budget_category(bdm_wb:BDMWorkbook,
             # Do the mapping from src to dst.
             dst_cell = row[dst_col_index]
             src_value = row[src_col_index].value 
-            dst_value, payee = categorize_transaction(src_value, ccm)
+            dst_value, payee = categorize_transaction(src_value, fi_txn_catalog)
             dst_cell.value = dst_value 
             # row[dst_col_index].value = dst_value 
             # Set the additional values for BudMan in the row
@@ -602,7 +602,11 @@ def process_budget_category(bdm_wb:BDMWorkbook,
             row[acct_code_i].value = t_acct_code if acct_code_i != -1 else None
             if payee is not None:
                 row[payee_i].value = payee if payee_i != -1 else None
-            essential_value = fi_txn_catalog.category_collection[dst_value].essential
+            essential_value = False
+            if dst_value in fi_txn_catalog.category_collection:
+                essential_value = fi_txn_catalog.category_collection[dst_value].essential
+            else:
+                logger.warning(f"'{dst_value}' not found in category collection.")
             row[essential_i].value = essential_value if essential_i != -1 else None
             transaction = WORKSHEET_row_data(row,hdr) 
             trans_str = transaction.data_str()

@@ -4,6 +4,7 @@
 #region Imports
 # python standard library modules and packages
 from rich.console import Console
+from rich.table import Table
 import logging, re, sys, csv, cmd2, toml
 from cmd2 import (Bg, Fg, ansi, Cmd2ArgumentParser, with_argparser)
 from pathlib import Path
@@ -64,6 +65,16 @@ parser_catalog.add_argument(
     action="store_true",
     help="List all transaction categories."
 )
+parser_catalog.add_argument(
+    "-c", "--check",
+    action="store_true",
+    help="Check the integrity of the transaction categories."
+)
+parser_catalog.add_argument(
+    "-a", "--all_shown",
+    action="store_true",
+    help="Show all transaction categories, not just problems."
+)
 
 #endregion argparse definitions
 # ---------------------------------------------------------------------------- +
@@ -72,14 +83,23 @@ class CmdLineApp(cmd2.Cmd):
     """Transaction Categories Command Line Application."""
     #region CmdLineApp Class intrinsics
     def __init__(self,settings:bdms.BudManSettings):
-        super().__init__(allow_cli_args=False, persistent_history_file="txn_cats_history.txt")
-        self.allow_style = ansi.AllowStyle.TERMINAL
         self.settings = settings if settings else bdms.BudManSettings()
         self._catman: BDMTXNCategoryManager = BDMTXNCategoryManager(self.settings)
         self._fi_key: str = self.settings[bdms.BUDMAN_DEFAULT_FI]
         self._fi_catalog: TXNCategoryCatalog = None
-
+        super().__init__(allow_cli_args=False, 
+                         include_ipy=True,
+                         persistent_history_file="txn_cats_history.txt")
+        self.allow_style = ansi.AllowStyle.TERMINAL
+        self._prompt = ansi.style("catman> ", fg=Fg.LIGHT_CYAN, bg=Bg.BLACK)
+        self.intro = ansi.style("catman - Transaction Categories Command Line Application",
+                                fg=Fg.LIGHT_CYAN, bg=Bg.BLACK)
     
+    @property
+    def prompt(self):
+        """Get the command line prompt."""
+        return self._prompt
+
     @property
     def catman(self) -> BDMTXNCategoryManager:
         """Get the BDMTXNCategoryManager instance."""
@@ -110,24 +130,85 @@ class CmdLineApp(cmd2.Cmd):
         self._fi_catalog = value
     #endregion CmdLineApp Class intrinsics
     # ------------------------------------------------------------------------ +
+    #region setup() method
+    def setup(self) -> None:
+        """Set up the command line application."""
+        try:
+            configure_logging(__name__, logtest=False)
+            m = "Setting up 'catman' - the Transaction Categories Command Line Application."
+            logger.info(m)
+            console.print(f"[b][gold3]{m}[/b][/gold3]")
+            p3u.is_not_obj_of_type("catman property",self.catman, 
+                                   BDMTXNCategoryManager, raise_error=True)
+            self.fi_key = self.settings[bdms.BUDMAN_DEFAULT_FI]
+            self.fi_catalog = self.catman.FI_TXN_CATEGORIES_WORKBOOK_load(self.fi_key)
+            if not self.fi_catalog:
+                logger.warning(f"No transaction category catalog found for "
+                               f"default fi_key: {self.fi_key}")
+            return self
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            console.print(f"Error during setup: {m}")
+            raise
+        self.check_catalog()
+    #endregion setup() method
+    # ------------------------------------------------------------------------ +
     #region do_catalog()
     @cmd2.with_argparser(parser_catalog)
     def do_catalog(self, args: str) -> None:
         """Manage transaction categories catalog."""
         try:
-            self.check_catalog() # raise error if no catman configured.
             init_flag = args.init
             list_flag = args.list
+            check_flag = args.check
+            all_flag = args.all_shown
             if init_flag:
+                # Initialize catman to the initial fi_key
                 self.catman = BDMTXNCategoryManager(self.settings)
                 self.catman.FI_TXN_CATEGORIES_WORKBOOK_load(args.fi_key)
+            self.check_catalog() # raise error if no catman configured.
             if list_flag:
+                # List all transaction categories.
                 if not self.catman:
                     console.print("Transaction Category Manager is not initialized.")
                 cat_data = self.catman.catalogs
                 if not cat_data:
                     console.print("No transaction catalogs found.")
                 self.display_catman()
+            if check_flag:
+                tcc: TXNCategoryCatalog = self.catman.catalogs.get(self.fi_key)
+                if not tcc:
+                    console.print(f"No transaction category catalog found for fi_key: {self.fi_key}")
+                else:
+                    console.print(f"Transaction category catalog found for fi_key: {self.fi_key}")
+                tcc.valid
+                console.print(f"Transaction category catalog is valid for fi_key: {self.fi_key}")
+                cat_map: bdm.CATEGORY_MAP_WORKBOOK = tcc.category_map
+                cat_collection = tcc.category_collection
+                cc_keys = list(cat_collection.keys())
+                cm_values = list(cat_map.values())
+                table = Table(title="Transaction Categories")
+                table.add_column(f"CATEGORY_MAP_WORKBOOK ({len(cm_values)})", style="cyan", no_wrap=True)
+                table.add_column("Status", style="magenta")
+                table.add_column(f"TXN_CATEGORIES_WORKBOOK ({len(cc_keys)})", style="cyan", no_wrap=True)
+                for i,cat_id in enumerate(cm_values):
+                    if cat_id in cc_keys:
+                        j = cc_keys.index(cat_id)
+                        if cat_id != cat_collection[cat_id].full_cat:
+                            status = "[white on red]Difference[/white on red]"
+                            table.add_row(f"{i:3} {cat_id}", status, 
+                                          f"{j:3} {cat_collection[cat_id].full_cat}")
+                        else:
+                            if all_flag:
+                                status = "[green]Mapped[/green]"
+                                table.add_row(f"{i:3} {cat_id}", status, 
+                                              f"{j:3} {cat_collection[cat_id].full_cat}")
+                    else:
+                        status = "[red]Unmapped[/red]"
+                        table.add_row(f"{i:3} [red]{cat_id}[/red]", status, "[red]missing[/red]")
+                console.print(table)
+
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
@@ -138,12 +219,11 @@ class CmdLineApp(cmd2.Cmd):
     # ------------------------------------------------------------------------ +
     #region do_update() method
     def do_update(self, statement) -> None:
-        """Update transaction categories."""
+        """Update TXN_CATEGORIES_WORKBOOK for <fi_key>."""
         try:
             self.check_catalog()
-            self.catman.FI_WB_TYPE_TXN_CATEGORIES_update_CATEGORY_MAP('boa')
-
-            console.print(f"Updated transaction categories.")
+            result_msg = self.catman.FI_TXN_CATEGORIES_WORKBOOK_update(self.fi_key)
+            console.print(f"{result_msg}.")
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
@@ -152,10 +232,10 @@ class CmdLineApp(cmd2.Cmd):
     # ------------------------------------------------------------------------ +
     #region do_extract() method
     def do_extract(self, statement) -> None:
-        """Extract transaction categories."""
+        """Update TXN_CATEGORIES_WORKBOOK for <fi_key>."""
         try:
             self.check_catalog()
-            TXN_CATEGORIES_WORKBOOK_create()
+            # TXN_CATEGORIES_WORKBOOK_create()
             console.print(f"Extracted TXN_CATEGORIES_WORKBOOK.")
         except Exception as e:
             m = p3u.exc_err_msg(e)
@@ -167,6 +247,7 @@ class CmdLineApp(cmd2.Cmd):
     def do_config(self, statement) -> None:
         """Configure Category Manager."""
         try:
+            # TODO: make this a cmd to checkout mods to CATEGORY_MAP_WORKBOOK
             self.check_catalog()
             mod_name = "boa_category_map"
             mod_path = self.settings.FI_FOLDER_abs_path('boa') / f"{mod_name}.py"
@@ -197,10 +278,15 @@ class CmdLineApp(cmd2.Cmd):
         self.check_catalog()
         fi_key: str = ""
         tcc: TXNCategoryCatalog = None
+        console.print(f"[b][gold3]BDMTXNCategoryManager[/b][/gold3]")
         for fi_key, tcc in self.catman.catalogs.items():
-            console.print(f"[b]FI Key:[/b] [cyan]{tcc.fi_key}[/cyan]")
-            console.print(f"{P2}[b]Workbook: [/b][cyan]{tcc.txn_categories_workbook[bdm.WB_NAME]}[/cyan], "
-                         f"[b]Categories:[/b] [cyan]{tcc.txn_categories_workbook[bdm.WB_CATEGORY_COUNT]}[/cyan]")
+            map_count = len(tcc.category_map)
+            txn_wb_name = tcc.txn_categories_workbook[bdm.WB_NAME]
+            cat_count = tcc.txn_categories_workbook[bdm.WB_CATEGORY_COUNT]
+            console.print(f"{P2}[b]FI Key:[/b] [bright_cyan]'{fi_key}'[/bright_cyan]")
+            console.print(f"{P4}[b]Workbook: [/b][bright_cyan]{txn_wb_name}[/bright_cyan] "
+                         f"[b]Category Collection:[/b] [bright_cyan]{cat_count}[/bright_cyan] "
+                         f"[b]Category Map Count:[/b] [bright_cyan]{map_count}[/bright_cyan]")
     #endregion display_catman() method
     # ------------------------------------------------------------------------ +
     #region check_catalog() method
@@ -208,106 +294,19 @@ class CmdLineApp(cmd2.Cmd):
         """If catalog is empty, raise error. """
         if self.catman is None:
             raise ValueError("Transaction Category Manager is not initialized.")
+        if not self.catman.catalogs:
+            raise ValueError("Transaction Category Manager has no catalogs.")
+        if p3u.str_empty(self.fi_key):
+            raise ValueError("Transaction Category Manager has no fi_key set.")
+        self.fi_catalog = self.catman.catalogs.get(self.fi_key)
+        if not self.fi_catalog:
+            raise ValueError(f"Transaction Category Manager has no catalog for "
+                             f"fi_key: {self.fi_key}")
     #endregion check_catalog() method
+    # ------------------------------------------------------------------------ +
 #endregion CmdLineApp class
 # ---------------------------------------------------------------------------- +
-#region extract_txn_categories2() method
-def extract_txn_categories2(wb_name: str, 
-                            category_map: bdm.CATEGORY_MAP_WORKBOOK) -> bdm.TXN_CATEGORIES_WORKBOOK:
-    """Extract transaction categories from a provided category_map, return a 
-    TXN_CATEGORIES_WORKBOOK.
-
-    Args:
-        txn_cat_wb_url (str): The URL of the TXN_CATEGORIES_WORKBOOK.
-        category_map (bdm.CATEGORY_MAP_WORKBOOK): The category map to extract from.
-    """
-    try:
-        # Create a TXN_CATEGORIES_WORKBOOK content in memory
-        # from the provided CATEGORY_MAP_WORKBOOK content.
-        # Construct a TXN_CATEGORIES_WORKBOOK content dict.
-        category_collection = {
-            bdm.WB_NAME: wb_name,
-            bdm.WB_CATEGORY_COUNT: 0,
-            bdm.WB_CATEGORY_COLLECTION: {}
-        }
-
-        for cat in category_map.values():
-            l1, l2, l3 = p3u.split_parts(cat)
-            bdm_tc = BDMTXNCategory(
-                full_cat=cat,
-                level1=l1,
-                level2=l2,
-                level3=l3,
-                payee=None,
-                description=f"Level 1 Category: {l1}",
-                essential=False, 
-                total=0
-            )
-            if cat in category_collection[bdm.WB_CATEGORY_COLLECTION]:
-                logger.warning(f"Duplicate category '{cat}' found. "
-                               f"Overwriting existing entry.")
-            category_collection[bdm.WB_CATEGORY_COLLECTION][cat] = bdm_tc
-        cnt = len(category_collection[bdm.WB_CATEGORY_COLLECTION])
-        category_collection[bdm.WB_CATEGORY_COUNT] = cnt
-        logger.info(f"Extracted '{cnt}' categories")
-        return category_collection
-    except Exception as e:
-        logger.error(p3u.exc_err_msg(e))
-        raise
-#endregion extract_txn_categories2() method
-# -------------------------------------------------------------------------- +
 #region various functions
-def TXN_CATEGORIES_WORKBOOK_create():
-    """
-    Create a WB_TYPE_TXN_CATEGORIES workbook by extracting the categories used
-    in a provided CATEGORY_MAP_WORKBOOK.
-    """
-    txn_cat_wb_url = "file:///C:/Users/ppain/OneDrive/budget/boa/All_TXN_Categories.txn_categories.json"
-    try:
-        settings = bdms.BudManSettings()
-        txn_cat_wb_path = p3u.verify_url_file_path(txn_cat_wb_url, test=False)
-        txn_cat_wb_name = txn_cat_wb_path.stem
-        category_map = get_category_map()
-        # Extract transaction categories from the budget_category_mapping.py
-        # module, save to a WB_TYPE_TXN_CATEGORIES workbook.
-        txn_cat_wb : bdm.TXN_CATEGORIES_WORKBOOK = None
-        txn_cat_wb = extract_txn_categories2(txn_cat_wb_name, category_map)
-
-        # catman = BDMTXNCategoryManager(settings)
-        # catman.FI_TXN_CATEGORIES_WORKBOOK_load("boa")
-        bsm_WORKBOOK_CONTENT_url_put(txn_cat_wb, 
-                                     txn_cat_wb_url,
-                                     bdm.WB_TYPE_TXN_CATEGORIES)
-        logger.info(f"Transaction categories extracted and saved to: {txn_cat_wb_url}")
-    except Exception as e:
-        m = p3u.exc_err_msg(e)
-        logger.error(m)
-    # bdm = bdms.bsm_BDM_STORE_url_load(bdms_url)
-    logger.info(f"Complete.")
-
-def save_category_map(fi_key:str='boa',test:bool=False):
-    try:
-        p3u.is_non_empty_str("fi_key", fi_key, save_category_map, "fi_key must be a non-empty string.")
-        settings = bdms.BudManSettings()
-        category_map = get_category_map()
-        cat_map_filename = settings[bdms.CATEGORY_CATALOG][fi_key][bdms.CATEGORY_MAP_FULL_FILENAME]
-        if test:
-            cat_map_filename = "test_" + cat_map_filename
-        fi_folder: Path = settings.FI_FOLDER_abs_path(fi_key)
-        cat_map_path: Path = fi_folder / cat_map_filename
-        with open(cat_map_path, 'w', encoding='utf-8') as f:
-            toml.dump(category_map, f)
-        # Now test reading it back in.
-        cat_map_in = toml.load(cat_map_path)
-        # bsm_BDM_WORKBOOK_content_put(catman.catalog["boa"], 
-        #                              all_cats_url,
-        #                              bdm.WB_TYPE_TXN_CATEGORIES)
-        logger.info(f"Transaction categories extracted and saved to: {cat_map_path}")
-    except Exception as e:
-        m = p3u.exc_err_msg(e)
-        logger.error(m)
-    logger.info(f"Complete.")
-
 def test_regex(file_path, pattern, show_matches=False):
     try:
         with open(file_path, 'r') as file:
@@ -440,7 +439,8 @@ if __name__ == "__main__":
         # settings = bdms.BudManSettings()
         configure_logging(__name__, logtest=False)
 
-        app = CmdLineApp(budman_settings)
+        app = CmdLineApp(budman_settings).setup()
+        app.display_catman()
         sys.exit(app.cmdloop())
     except Exception as e:
         m = p3u.exc_err_msg(e)
