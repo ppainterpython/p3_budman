@@ -80,6 +80,7 @@ DEBIT_CREDIT_COL_NAME = "DebitOrCredit"
 YEAR_MONTH_COL_NAME = "YearMonth"  
 PAYEE_COL_NAME = "Payee"
 ESSENTIAL_COL_NAME = "Essential" 
+RULE_COL_NAME = "Rule"
 
 # BudMan utilizes the following columns from the BOA side:
 DATE_COL_NAME = BOA_DATE_COL_NAME 
@@ -152,7 +153,8 @@ BUDMAN_REQUIRED_COLUMNS = [
     DEBIT_CREDIT_COL_NAME,
     YEAR_MONTH_COL_NAME,
     PAYEE_COL_NAME,
-    ESSENTIAL_COL_NAME
+    ESSENTIAL_COL_NAME,
+    RULE_COL_NAME
 ]
 
 #endregion Globals and Constants
@@ -445,6 +447,130 @@ def year_month_str(date:object) -> str:
         logger.error(p3u.exc_err_msg(e))
         raise
 #endregion year_month_str() function
+# ---------------------------------------------------------------------------- +
+#region validate_budget_categories() function
+def validate_budget_categories(bdm_wb:BDMWorkbook, 
+                               bdm_DC: BudManDataContext_Base) -> BUDMAN_RESULT:
+    """Validate budget categories in the workbook.
+
+    Args:
+        bdm_wb (BDMWorkbook): The budget workbook to validate.
+        bdm_DC (BudManDataContext_Base): The data context for the budget.
+
+    Returns:
+        bool: True if validation is successful, False otherwise.
+    """
+    try:
+        # Validate the input parameters.
+        _ = p3u.is_not_obj_of_type("bdm_wb", bdm_wb, BDMWorkbook, 
+                                   raise_error=True)
+        _ = p3u.is_not_obj_of_type("bdm_DC", bdm_DC, BudManDataContext_Base, 
+                                   raise_error=True)
+
+        # Check if the budget categories are valid.
+        result : str = "Validate Budget Categories."
+        unique_categories: Dict[str, int] = dict()  # To track unique budget categories.
+        if bdm_wb.wb_type != WB_TYPE_EXCEL_TXNS:
+            # This is not a transactions workbook, no action taken.
+            m = (f"Workbook '{bdm_wb.wb_id}' is not wb_type: "
+                 f"'{WB_TYPE_EXCEL_TXNS}', no action taken.")
+            logger.error(m)
+            result += f"\n{P2}{m}"
+            return False, result
+        if not bdm_wb.wb_loaded:
+            # Load the workbook from the data context.
+            m = f"Workbook '{bdm_wb.wb_id}' is not loaded, no action taken."
+            logger.error(m)
+            result += f"\n{P2}{m}"
+            return False, result
+        if p3u.is_not_obj_of_type("wb", bdm_wb.wb_content, Workbook):
+            m = f"Error accessing wb_content for workbook: '{bdm_wb.wb_id}'."
+            logger.error(m)
+            result += f"\n{P2}{m}"
+            return False, result
+        ws : Worksheet = bdm_wb.wb_content.active  # Get the active worksheet.
+        if not check_sheet_columns(ws, add_columns=False):
+            m = (f"Sheet '{ws.title}' cannot be mapped due to "
+                    f"missing required columns.")
+            logger.error(m)
+            result += f"\n{P2}{m}"
+            return False, result
+        # A row is a tuple of the Cell objects in the row. Tuples are 0-based
+        # hdr is a list, also 0-based. So, using the index(name) will 
+        # give the cell from a row tuple matching the column name in hdr.
+        hdr = [cell.value for cell in ws[1]] 
+        # These are values to validate.
+        budget_cat_i = col_i(BUDGET_CATEGORY_COL_NAME,hdr)
+        l1_i = col_i(LEVEL_1_COL_NAME,hdr)
+        l2_i = col_i(LEVEL_2_COL_NAME,hdr)
+        l3_i = col_i(LEVEL_3_COL_NAME,hdr)
+        # Model-Aware: For the FI currently in the focus of the DC, we need
+        # some FI-specific info, the name of the transaction workbook 
+        # column used to map budget categories, the source.
+        txn_desc_col_name = bdm_DC.dc_FI_OBJECT[FI_TRANSACTION_DESCRIPTION_COLUMN]
+        txn_desc_i = col_i(txn_desc_col_name, hdr)
+        errors = 0
+        for row in ws.iter_rows(min_row=2, values_only=True):
+            # Validate the budget category.
+            budget_category = row[budget_cat_i]
+            txn_desc = row[txn_desc_i]
+            if not p3u.is_non_empty_str("budget_category", budget_category):
+                errors += 1
+                # Budget category cannot be empty.
+                m = (f"Row {row.index} has an invalid budget category: '{budget_category}'.")
+                logger.error(m)
+                result += f"\n{P2}{m}"
+                continue
+            unique_categories[budget_category] = unique_categories.get(budget_category, 0) + 1
+            # Validate the levels.
+            level1 = row[l1_i] 
+            level2 = row[l2_i] or ''
+            level3 = row[l3_i] or ''
+            l1, l2, l3 = p3u.split_parts(budget_category)
+            if not p3u.is_non_empty_str("level1", level1):
+                # Level 1 cannot be empty.
+                m = (f"Row {row.index()} has an invalid Level 1: '{level1}' "
+                     f"for budget category: '{budget_category}'.")
+                logger.error(m)
+                result += f"\n{P2}{m}"
+                continue
+            if l1 != level1:
+                m = (f"Row {row.index()} has a Level 1: '{level1}' that does not match "
+                     f"the budget category: '{budget_category}' for description '{txn_desc}'.")
+                logger.error(m)
+                result += f"\n{P2}{m}"
+                continue
+            if l2 != level2:
+                m = (f"Row {row.index()} has a Level 2: '{level2}' that does not match "
+                     f"the budget category: '{budget_category}' for description '{txn_desc}'.")
+                logger.error(m)
+                result += f"\n{P2}{m}"
+                continue
+            if l3 != level3:
+                m = (f"Row {row.index()} has a Level 3: '{level3}' that does not match "
+                     f"the budget category: '{budget_category}' for description '{txn_desc}'.")
+                logger.error(m)
+                result += f"\n{P2}{m}"
+                continue
+        result += f"\n{P2}Workbook validation phase completed. unique categories: {len(unique_categories)} errors: {errors}"
+        catman : BDMTXNCategoryManager = bdm_DC.WF_CATEGORY_MANAGER
+        fi_txn_catalog : TXNCategoryCatalog = catman.catalogs[bdm_wb.fi_key]
+        cat_collection_list = list(fi_txn_catalog.category_collection.keys())
+        for key in unique_categories:
+            if key not in cat_collection_list:
+                errors += 1
+                m = (f"Row {row.index()} has a budget category: '{key}' that is not in the "
+                     f"category collection for FI: '{bdm_wb.fi_key}'.")
+                logger.error(m)
+                result += f"\n{P2}{m}"
+        result += f"\n{P2}Validation with CATEGORY_COLLECTION phase completed. unique categories: {len(unique_categories)} errors: {errors}"
+        return True, result
+    except Exception as e:
+        m = p3u.exc_err_msg(e)
+        result = f"Error validating budget categories: {m}"
+        logger.error(p3u.exc_err_msg(e))
+        return False, result
+#endregion validate_budget_categories() function
 # ---------------------------------------------------------------------------- +
 #region process_budget_category() function
 def process_budget_category(bdm_wb:BDMWorkbook,

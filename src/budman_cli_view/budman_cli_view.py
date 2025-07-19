@@ -36,10 +36,11 @@ import cmd2, argparse
 from cmd2 import (Cmd2ArgumentParser, with_argparser)
 from cmd2 import (Bg,Fg, style, ansi)
 # local modules and packages
+from p3_mvvm import DataContext_Binding
 import budman_namespace as bdm
 from budman_settings import *
 from budman_cli_view import BudManCLIParser
-from budman_data_context import BudManDataContext_Binding
+# from budman_data_context import BudManDataContext_Binding
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -102,7 +103,7 @@ def _show_args_only(cli_view : "BudManCLIView", opts) -> bool:
 
 #endregion Configure the CLI parser 
 # ---------------------------------------------------------------------------- +
-class BudManCLIView(cmd2.Cmd, BudManDataContext_Binding):
+class BudManCLIView(cmd2.Cmd): # , DataContext_Binding):
     # ======================================================================== +
     #region BudManCLIView class intrinsics
     """An MVVM View class for BudMan implementing a command line interface.

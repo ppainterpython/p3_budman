@@ -10,8 +10,9 @@ __license__ = "MIT"
 
 # Budget Model Domain Working Data
 from .budman_cli_parser import ( BudManCLIParser )
-from .budman_cli_view import ( BudManCLIView )
+from .budman_cli_view import ( BudManCLIView, cli_parser )
 __all__ = [
     "BudManCLIParser",
-    "BudManCLIView"
+    "BudManCLIView",
+    "cli_parser"
 ]

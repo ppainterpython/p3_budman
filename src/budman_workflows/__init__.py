@@ -35,6 +35,7 @@ from .budget_categorization import (
     check_sheet_columns, 
     check_sheet_schema, 
     ORIGINAL_DESCRIPTION_COL_NAME, 
+    validate_budget_categories,
     process_budget_category,
     apply_check_register
 )
@@ -83,6 +84,7 @@ __all__ = [
     "check_sheet_columns",
     "check_sheet_schema",
     "ORIGINAL_DESCRIPTION_COL_NAME",
+    "validate_budget_categories",
     "process_budget_category",
     "apply_check_register",
     # budget_category_mapping.py module

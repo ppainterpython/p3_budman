@@ -477,6 +477,10 @@ class BudManCLIParser():
             self.add_wb_index_argument(check_parser)
             self.add_load_workbook_argument(check_parser)
             self.add_fix_argument(check_parser)
+            check_parser.add_argument(
+                f"--{cp.CK_VALIDATE_CATEGORIES}", "-val", "-v", 
+                action="store_true", 
+                help="Validate the budget categories.")
             self.add_common_args(check_parser)
 
             # Workflow task sub-command: task
@@ -559,17 +563,17 @@ class BudManCLIParser():
         """Add a wb_index or all_wbs arguments.""" 
         try:
             group = parser.add_mutually_exclusive_group(required=True)
-            group.add_argument(
-                "wb_index", nargs="?",
-                type=int, 
-                default = -1,
-                help=f"Workbook index: number associated in the workbook list, 0-based.")
             # group.add_argument(
-            #     "wb_list", nargs="*",
-            #     action='extend',
+            #     "wb_index", nargs="?",
             #     type=int, 
-            #     default = [],
-            #     help=f"Workbook index: one or more numbers (spaces, no commas) indexing from the workbook list, 0-based.")
+            #     default = -1,
+            #     help=f"Workbook index: number associated in the workbook list, 0-based.")
+            group.add_argument(
+                "wb_list", nargs="*",
+                action='extend',
+                type=int, 
+                default = [],
+                help=f"Workbook index: one or more numbers (spaces, no commas) indexing from the workbook list, 0-based.")
             group.add_argument(
                 "-all", dest="all_wbs", 
                 action = "store_true",

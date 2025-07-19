@@ -203,7 +203,8 @@ from budman_workflows import (
     BDMTXNCategoryManager, TXNCategoryCatalog,
     category_map_count, get_category_map, clear_category_map, 
     compile_category_map, set_compiled_category_map, clear_compiled_category_map,
-    check_sheet_schema, check_sheet_columns, process_budget_category,
+    check_sheet_schema, check_sheet_columns, 
+    validate_budget_categories, process_budget_category,
     apply_check_register, output_category_tree, output_bdm_tree,
     process_txn_intake
     )
@@ -614,15 +615,26 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             for key, value in cmd.items():
                 if key == cmd[cp.CK_CMD_KEY]: 
                     continue
-                elif key == cp.CK_WB_INDEX:
-                    if cmd[cp.CK_ALL_WBS] and value == -1:
-                        # If all_wbs is True, then wb_index is not used.
+                # elif key == cp.CK_ALL_WBS:
+                #     cmd[cp.CK_WB_INDEX] = -1
+                #     cmd[cp.CK_WB_LIST] = None
+                elif key == cp.CK_WB_LIST:
+                    for wb_index in cmd[cp.CK_WB_LIST]:
+                        if not self.dc_WB_INDEX_validate(wb_index):
+                            result = f"Invalid wb_list value: '{wb_index}'."
+                            success = False 
+                            logger.error(result)
                         continue
-                    elif not self.dc_WB_INDEX_validate(value):
-                        result = f"Invalid wb_index value: '{value}'."
-                        success = False 
-                        logger.error(result)
                     continue
+                # elif key == cp.CK_WB_INDEX:
+                #     if cmd[cp.CK_ALL_WBS] and value == -1:
+                #         # If all_wbs is True, then wb_index is not used.
+                #         continue
+                #     elif not self.dc_WB_INDEX_validate(value):
+                #         result = f"Invalid wb_index value: '{value}'."
+                #         success = False 
+                #         logger.error(result)
+                #     continue
                 elif key == cp.CK_FI_KEY:
                     if not self.dc_FI_KEY_validate(value):
                         result = f"Invalid fi_key value: '{value}'."
@@ -1644,7 +1656,7 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
     #endregion WORKFLOW_intake_cmd() method
     # ------------------------------------------------------------------------ +
     #region WORKFLOW_check() command > wf check 2 
-    def WORKFLOW_check_cmd(self, cmd : Dict) -> Tuple[bool, str]:
+    def WORKFLOW_check_cmd(self, cmd : Dict) -> BUDMAN_RESULT:
         """Apply workflow to one or more WORKBOOKS in the DC.
 
         A WORKFLOW_categorization_cmd command will use the wb_ref value in the cmd. 
@@ -1668,46 +1680,68 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             logger.info(f"Start: ...")
             bdm_wb: BDMWorkbook
             wb_index : int = self.cp_cmd_attr_get(cmd, cp.CK_WB_INDEX, self.dc_WB_INDEX)
+            wb_list : List[int] = cmd.get(cp.CK_WB_LIST, [])
             all_wbs : bool = self.cp_cmd_attr_get(cmd, cp.CK_ALL_WBS, self.dc_ALL_WBS)
+            selected_bdm_wb_list : List[BDMWorkbook] = []
             load:bool = cmd[cp.CK_LOAD_WORKBOOK]
             if all_wbs:
                 # If all_wbs is True, process all workbooks in the data context.
                 return False, "method not implemented for all_wbs=True"
-            bdm_wb = self.dc_WORKBOOK_by_index(wb_index)
-            if bdm_wb is None:
-                m = f"wb_index '{wb_index}' is not valid, no action taken."
-                logger.error(m)
-                return False, m
-            bdm_wb_abs_path = bdm_wb.abs_path()
-            if bdm_wb_abs_path is None:
-                m = f"Workbook path is not valid: {bdm_wb.wb_url}"
-                logger.error(m)
-                return False, m
-            if load and not bdm_wb.wb_loaded:
-                # Load the workbook content if it is not loaded.
-                success, wb_content = self.dc_WORKBOOK_content_get(bdm_wb)
-                if not success:
-                    m = f"Failed to load workbook '{bdm_wb.wb_id}': {wb_content}"
+            if len(wb_list) > 0:
+                for wb_index in wb_list:
+                    bdm_wb = self.dc_WORKBOOK_by_index(wb_index)
+                    selected_bdm_wb_list.append(bdm_wb)
+            else:
+                selected_bdm_wb_list.append(self.dc_WORKBOOK_by_index(wb_index))
+    
+            for bdm_wb in selected_bdm_wb_list:
+                if bdm_wb is None:
+                    m = f"wb_index '{wb_index}' is not valid, no action taken."
+                    logger.error(m)
+                    return False, m 
+                if bdm_wb is None:
+                    m = f"wb_index '{wb_index}' is not valid, no action taken."
                     logger.error(m)
                     return False, m
-                bdm_wb.wb_loaded = True
-                self.dc_LOADED_WORKBOOKS[bdm_wb.wb_id] = wb_content
-            if not bdm_wb.wb_loaded:
-                m = f"wb_name '{bdm_wb.wb_name}' is not loaded, no action taken."
-                logger.error(m)
-                return False, m
-            wb_content = self.dc_LOADED_WORKBOOKS[bdm_wb.wb_id]
-            # Check cmd needs loaded workbooks to check
-            success: bool = check_sheet_schema(wb_content)
-            r = f"Task: check_sheet_schema workbook: Workbook: '{bdm_wb.wb_id}' "
-            if success:
-                return success, r
-            if cmd[cp.CK_FIX_SWITCH]:
-                r = f"Task: check_sheet_columns workbook: Workbook: '{bdm_wb.wb_id}' "
-                ws = wb_content.active
-                success = check_sheet_columns(ws, add_columns=True)
-                if success: 
-                    wb_content.save(bdm_wb_abs_path)
+                bdm_wb_abs_path = bdm_wb.abs_path()
+                if bdm_wb_abs_path is None:
+                    m = f"Workbook path is not valid: {bdm_wb.wb_url}"
+                    logger.error(m)
+                    return False, m
+                if load and not bdm_wb.wb_loaded:
+                    # Load the workbook content if it is not loaded.
+                    success, wb_content = self.dc_WORKBOOK_content_get(bdm_wb)
+                    if not success:
+                        m = f"Failed to load workbook '{bdm_wb.wb_id}': {wb_content}"
+                        logger.error(m)
+                        return False, m
+                    bdm_wb.wb_loaded = True
+                    self.dc_LOADED_WORKBOOKS[bdm_wb.wb_id] = wb_content
+                # Check cmd needs loaded workbooks to check
+                if not bdm_wb.wb_loaded:
+                    m = f"wb_name '{bdm_wb.wb_name}' is not loaded, no action taken."
+                    logger.error(m)
+                    return False, m
+                wb_content = self.dc_LOADED_WORKBOOKS[bdm_wb.wb_id]
+                # By default, check the sheet schema. But other cli switches
+                # can added to check something else.
+                if cmd[cp.CK_VALIDATE_CATEGORIES]:
+                    # Validate the categories in the workbook.
+                    task = "validate_budget_categories()"
+                    m = (f"{P2}Task: {task:30} {bdm_wb.wb_index_display_str(wb_index)}")
+                    logger.debug(m)
+                    success, result = validate_budget_categories(bdm_wb, self.DC)
+                    return success, result
+                success: bool = check_sheet_schema(wb_content)
+                r = f"Task: check_sheet_schema workbook: Workbook: '{bdm_wb.wb_id}' "
+                if success:
+                    return success, r
+                if cmd[cp.CK_FIX_SWITCH]:
+                    r = f"Task: check_sheet_columns workbook: Workbook: '{bdm_wb.wb_id}' "
+                    ws = wb_content.active
+                    success = check_sheet_columns(ws, add_columns=True)
+                    if success: 
+                        wb_content.save(bdm_wb_abs_path)
             return success, r
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))

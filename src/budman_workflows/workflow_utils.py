@@ -33,6 +33,7 @@ from treelib import Tree
 # local modules and packages
 import budman_settings as bdms
 import budman_namespace as bdm
+from budman_data_context import BudManDataContext_Base
 from budget_storage_model import (
     bsm_BDM_STORE_url_get,
     bsm_WORKBOOK_CONTENT_url_put
@@ -280,8 +281,9 @@ def workbook_names(fi_obj:bdm.FI_OBJECT,wf_key:str,wf_folder_id:str,) -> List[st
 #endregion workbook_names() function
 # ------------------------------------------------------------------------ +
 #region extract_bdm_tree() function
-def extract_bdm_tree() -> Tree:
+def extract_bdm_tree(bdm_DC: BudManDataContext_Base) -> Tree:
     try:
+        logger.debug(f"Start.")
         settings = bdms.BudManSettings()
         bdm_store = bsm_BDM_STORE_url_get(settings[bdms.BDM_STORE_URL])
         bdm_store_full_filename = (settings[bdms.BDM_STORE_FILENAME] +
@@ -319,18 +321,19 @@ def extract_bdm_tree() -> Tree:
                 wb_names = workbook_names(fi_obj, wf_key, bdm.WF_OUTPUT_FOLDER)
                 for wb_name in wb_names:
                     tree.create_node(f"{wb_name} (wb_name)", f"{x_key}_output_{wb_name}", parent=f"{x_key}_output")
+        logger.debug(f"Complete.")
         return tree
     except Exception as e:
         m = p3u.exc_err_msg(e)
         logger.error(m)
-    logger.info(f"Complete.")
+        raise
 #endregion extract_bdm_tree() function
 # ------------------------------------------------------------------------ +
 #region outout_bdm_tree() function
-def output_bdm_tree() -> str:
+def output_bdm_tree(bdm_DC: BudManDataContext_Base) -> str:
     """Output the BDM tree to the console."""
     try:
-        tree = extract_bdm_tree()
+        tree = extract_bdm_tree(bdm_DC)
         return tree.show(stdout=False) if tree else "No BDM tree found."
     except Exception as e:
         m = p3u.exc_err_msg(e)

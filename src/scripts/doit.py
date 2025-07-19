@@ -3,10 +3,15 @@
 # python standard library modules and packages
 import sys, logging, toml, re
 from pathlib import Path
+import importlib
 import p3logging as p3l
 from p3_utils import exc_err_msg, dscr, start_timer, stop_timer
 from budman_settings.budman_settings_constants import *
 from budman_settings.budman_settings import BudManSettings
+from budman_cli_view import (BudManCLIView, budman_cli_parser, budman_cli_view, 
+                                budman_cli_view)
+
+from p3_mvvm import CommandProcessor, DataContext
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -54,27 +59,17 @@ def setup() -> BudManSettings:
     except Exception as e:
         print(f"An error occurred: {e}", file=sys.stderr)
 
-def save_category_map(category_map, file_path):
-    # Convert regex objects to strings
-    toml_data = {
-        'category_map': {pattern.pattern: category for pattern, category in category_map.items()}
-    }
-    
-    # Write to TOML file
-    with open(file_path, 'w') as f:
-        toml.dump(toml_data, f)
-
-def load_category_map(file_path):
-    try:
-        # Read the TOML file
-        data = toml.load(file_path)
-
-        # Convert string patterns to regex objects
-        category_map = {re.compile(k): v for k, v in data['category_map'].items()}
-        return category_map
-    except Exception as e:
-        logger.error(exc_err_msg(e))
-        raise
+def view_run(settings: BudManSettings) -> None:
+     """create and run the CLI view."""
+     app_name = settings.get(APP_NAME, "BudManApp")
+     cp: CommandProcessor = CommandProcessor()
+     dc: DataContext = DataContext()
+     view: BudManCLIView = BudManCLIView(cp, app_name, settings)
+     view.initialize()
+     view.cmdloop()
+     del view
+     del budman_cli_view.cli_parser
+     importlib.reload(budman_cli_parser)
 
 def main(bdms_url : str = None) -> None:
     """Main entry point for this script.
@@ -85,13 +80,11 @@ def main(bdms_url : str = None) -> None:
         msg = f"Started: "
         # Define a set of folders to search for it, auto-load.
         settings : BudManSettings = setup()
-        if settings is None:
-                raise ValueError("BudMan Settings not configured.")
-        app_name = settings.get(APP_NAME, "BudManApp")
-        cat_catalog = settings[CATEGORY_CATALOG]
-        bdms_url = settings[BDM_STORE_URL]
 
-        category_map = load_category_map('category_map.toml')
+        while True:
+            view_run(settings)
+            if input("Press Enter to run again or type 'exit' to quit: ").strip().lower() == 'exit':
+                break
         logger.debug(f"Complete:")
     except Exception as e:
         print(f"An error occurred: {e}", file=sys.stderr)

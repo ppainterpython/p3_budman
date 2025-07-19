@@ -349,6 +349,7 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
 
     # ======================================================================== +
     #region    BDM - Budget Domain Model methods
+    # ------------------------------------------------------------------------ +    
     #region BDM Design Notes
     """ Budget Model Domain Model (BDM) Documentation.
 
@@ -639,6 +640,7 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
 
     # ======================================================================== +
     #region    BSM - Budget Storage Model methods
+    # ------------------------------------------------------------------------ +    
     #region    BSM Design Notes
     """ Budget model Storage Model (BSM) Documentation.
 
@@ -1107,7 +1109,7 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
                 fi_key:str, create_missing_folders:bool=True, 
                 raise_errors:bool=True) -> None:
         """Resolve any FI_WORKFLOW_DATA_FOLDERS for the fi_key, create if 
-        requested.
+        requested. Does nothing with the folder content.
         """
         try:
             logger.debug(f"FI_KEY('{fi_key}') FI_WORKFLOW_DATA_FOLDER.")
