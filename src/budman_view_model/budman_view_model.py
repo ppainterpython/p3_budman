@@ -1500,58 +1500,58 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             bdm_wb : Optional[BDMWorkbook] = None
             wb_content : Optional[WORKBOOK_CONTENT] = None
             wb_index : int = self.cp_cmd_attr_get(cmd, cp.CK_WB_INDEX, self.dc_WB_INDEX)
+            wb_list : List[int] = cmd.get(cp.CK_WB_LIST, [])
             all_wbs : bool = self.cp_cmd_attr_get(cmd, cp.CK_ALL_WBS, self.dc_ALL_WBS)
+            selected_bdm_wb_list : List[BDMWorkbook] = []
             load_workbook : bool = self.cp_cmd_attr_get(cmd, cp.CK_LOAD_WORKBOOK, False)
+            log_all : bool = self.cp_cmd_attr_get(cmd, cp.CK_LOG_ALL, False)
             # wb_index and all_wbs are validated already. 
             # Choose either all_wbs or a specific workbook designated by 
             # wb_index to be processed. This applies to loaded workbooks only, 
             # so configure wf_wb_list with the intended workbooks to categorize.
             if all_wbs:
                 # If all_wbs, process all loaded workbooks.
-                lwbc = self.dc_LOADED_WORKBOOKS
+                # lwbc = self.dc_LOADED_WORKBOOKS
+                return False, "method not implemented for all_wbs=True"
+            if len(wb_list) > 0:
+                for wb_index in wb_list:
+                    bdm_wb = self.dc_WORKBOOK_by_index(wb_index)
+                    selected_bdm_wb_list.append(bdm_wb)
             else:
-                # wb_index is already validated by cp_validate_cmd().
-                bdm_wb = self.dc_WORKBOOK_by_index(wb_index)
-                wb_id = bdm_wb.wb_id
-                # bdm_wb.wb_loaded = wb_id in self.dc_LOADED_WORKBOOKS
-                if not bdm_wb.wb_loaded:
-                    if load_workbook:
-                        # Load the workbook content for the wb_id.
-                        task = "dc_BDM_WORKBOOK_load()"
-                        m = (f"{P2}Task: {task:30} {wb_index:>2} '{wb_id:<40}'")
-                        logger.debug(m)
-                        fr += m + "\n"
-                        success, m = self.dc_BDM_WORKBOOK_load(bdm_wb)
-                        if not success:
-                            m = (f"{P4}Task Failed: dc_BDM_WORKBOOK_load() "
-                                 f"wb_id: '{wb_id}'\n{P8}Result: {m}")
-                            logger.error(m)
-                            return False, m
-                    else:
-                        m = f"Workbook: '{bdm_wb.wb_id}' is not loaded, no action taken."
+                selected_bdm_wb_list.append(self.dc_WORKBOOK_by_index(wb_index))
+            # Process the intended workbooks.
+            for bdm_wb in selected_bdm_wb_list:
+                bdm_wb_abs_path = bdm_wb.abs_path()
+                if bdm_wb_abs_path is None:
+                    m = f"Workbook path is not valid: {bdm_wb.wb_url}"
+                    logger.error(m)
+                    return False, m
+                if load_workbook and not bdm_wb.wb_loaded:
+                    # Load the workbook content if it is not loaded.
+                    success, wb_content = self.dc_WORKBOOK_content_get(bdm_wb)
+                    if not success:
+                        m = f"Failed to load workbook '{bdm_wb.wb_id}': {wb_content}"
                         logger.error(m)
                         return False, m
-                # Obtain the wb_content for wb_id.
-                # wb_content = self.dc_LOADED_WORKBOOKS[wb_id]
-                # add the single wb to the process list.
-                lwbc = {wb_id: bdm_wb.wb_content}
-            # Process the intended workbooks.
-            for wb_id, wb_content in lwbc.items():
-                bdm_wb = self.dc_WORKBOOK_DATA_COLLECTION[wb_id]
+                    bdm_wb.wb_loaded = True
+                    self.dc_LOADED_WORKBOOKS[bdm_wb.wb_id] = wb_content
+                # Check cmd needs loaded workbooks to check
+                if not bdm_wb.wb_loaded:
+                    m = f"wb_name '{bdm_wb.wb_name}' is not loaded, no action taken."
+                    logger.error(m)
+                    return False, m
+                # Now we have a valid bdm_wb to process.
+                # Set the current workbook in the Data Context.
+                wb_id = bdm_wb.wb_id
                 wb_index = self.dc_WORKBOOK_index(wb_id)
                 self.dc_BDM_WORKBOOK = bdm_wb
                 self.dc_WB_INDEX = wb_index  # Set the wb_index in the DC.
-                # if bdm_wb.wb_type == WB_TYPE_CHECK_REGISTER:
-                    # Check for a check register column, add it if not present.
-                    # load the check register here
-                    # check_register_dict = csv_DATA_COLLECTION_url_get(wb_url)
-                    # apply_check_register(ws)
                 if bdm_wb.wb_type == WB_TYPE_EXCEL_TXNS:
                     task = "process_budget_category()"
                     m = (f"{P2}Task: {task:30} {wb_index:>2} '{wb_id:<40}'")
                     logger.debug(m)
                     fr += m + "\n"
-                    success, r = process_budget_category(bdm_wb, self.DC)
+                    success, r = process_budget_category(bdm_wb, self.DC, log_all)
                     if not success:
                         r = (f"{P4}Task Failed: process_budget_category() Workbook: "
                              f"'{wb_id}'\n{P8}Result: {r}")
@@ -1683,7 +1683,7 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             wb_list : List[int] = cmd.get(cp.CK_WB_LIST, [])
             all_wbs : bool = self.cp_cmd_attr_get(cmd, cp.CK_ALL_WBS, self.dc_ALL_WBS)
             selected_bdm_wb_list : List[BDMWorkbook] = []
-            load:bool = cmd[cp.CK_LOAD_WORKBOOK]
+            load_workbook:bool = cmd[cp.CK_LOAD_WORKBOOK]
             if all_wbs:
                 # If all_wbs is True, process all workbooks in the data context.
                 return False, "method not implemented for all_wbs=True"
@@ -1695,20 +1695,12 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
                 selected_bdm_wb_list.append(self.dc_WORKBOOK_by_index(wb_index))
     
             for bdm_wb in selected_bdm_wb_list:
-                if bdm_wb is None:
-                    m = f"wb_index '{wb_index}' is not valid, no action taken."
-                    logger.error(m)
-                    return False, m 
-                if bdm_wb is None:
-                    m = f"wb_index '{wb_index}' is not valid, no action taken."
-                    logger.error(m)
-                    return False, m
                 bdm_wb_abs_path = bdm_wb.abs_path()
                 if bdm_wb_abs_path is None:
                     m = f"Workbook path is not valid: {bdm_wb.wb_url}"
                     logger.error(m)
                     return False, m
-                if load and not bdm_wb.wb_loaded:
+                if load_workbook and not bdm_wb.wb_loaded:
                     # Load the workbook content if it is not loaded.
                     success, wb_content = self.dc_WORKBOOK_content_get(bdm_wb)
                     if not success:

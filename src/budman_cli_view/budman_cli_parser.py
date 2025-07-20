@@ -447,6 +447,10 @@ class BudManCLIParser():
                 action="store_true", 
                 default=True,
                 help="Load the workbook if not yet loaded.")
+            categorization_parser.add_argument(
+                f"--{cp.CK_LOG_ALL}", "-log_all", "-la", 
+                action="store_true", 
+                help="Log every catalog pattern match step.")
             self.add_common_args(categorization_parser)
             
             # workflow intake subcommand

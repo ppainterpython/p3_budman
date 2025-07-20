@@ -511,12 +511,14 @@ def validate_budget_categories(bdm_wb:BDMWorkbook,
         txn_desc_i = col_i(txn_desc_col_name, hdr)
         errors = 0
         for row in ws.iter_rows(min_row=2, values_only=True):
+            # row is a 'tuple' of Cell objects, 0-based index
+            row_idx = row[0].row  # Get the row index, the row number, 1-based.
             # Validate the budget category.
             budget_category = row[budget_cat_i]
             txn_desc = row[txn_desc_i]
-            if not p3u.is_non_empty_str("budget_category", budget_category):
+            if not p3u.is_non_empty_str(BUDGET_CATEGORY_COL_NAME, budget_category):
                 errors += 1
-                # Budget category cannot be empty.
+                # BUDGET_CATEGORY_COL_NAME cell cannot be empty.
                 m = (f"Row {row.index} has an invalid budget category: '{budget_category}'.")
                 logger.error(m)
                 result += f"\n{P2}{m}"
@@ -529,25 +531,25 @@ def validate_budget_categories(bdm_wb:BDMWorkbook,
             l1, l2, l3 = p3u.split_parts(budget_category)
             if not p3u.is_non_empty_str("level1", level1):
                 # Level 1 cannot be empty.
-                m = (f"Row {row.index()} has an invalid Level 1: '{level1}' "
+                m = (f"Row {row_idx} has an invalid Level 1: '{level1}' "
                      f"for budget category: '{budget_category}'.")
                 logger.error(m)
                 result += f"\n{P2}{m}"
                 continue
             if l1 != level1:
-                m = (f"Row {row.index()} has a Level 1: '{level1}' that does not match "
+                m = (f"Row {row_idx} has a Level 1: '{level1}' that does not match "
                      f"the budget category: '{budget_category}' for description '{txn_desc}'.")
                 logger.error(m)
                 result += f"\n{P2}{m}"
                 continue
             if l2 != level2:
-                m = (f"Row {row.index()} has a Level 2: '{level2}' that does not match "
+                m = (f"Row {row_idx} has a Level 2: '{level2}' that does not match "
                      f"the budget category: '{budget_category}' for description '{txn_desc}'.")
                 logger.error(m)
                 result += f"\n{P2}{m}"
                 continue
             if l3 != level3:
-                m = (f"Row {row.index()} has a Level 3: '{level3}' that does not match "
+                m = (f"Row {row_idx} has a Level 3: '{level3}' that does not match "
                      f"the budget category: '{budget_category}' for description '{txn_desc}'.")
                 logger.error(m)
                 result += f"\n{P2}{m}"
@@ -559,7 +561,7 @@ def validate_budget_categories(bdm_wb:BDMWorkbook,
         for key in unique_categories:
             if key not in cat_collection_list:
                 errors += 1
-                m = (f"Row {row.index()} has a budget category: '{key}' that is not in the "
+                m = (f"Row {row_idx} has a budget category: '{key}' that is not in the "
                      f"category collection for FI: '{bdm_wb.fi_key}'.")
                 logger.error(m)
                 result += f"\n{P2}{m}"
@@ -574,7 +576,8 @@ def validate_budget_categories(bdm_wb:BDMWorkbook,
 # ---------------------------------------------------------------------------- +
 #region process_budget_category() function
 def process_budget_category(bdm_wb:BDMWorkbook,
-                            bdm_DC : BudManDataContext_Base) -> BUDMAN_RESULT:
+                            bdm_DC : BudManDataContext_Base,
+                            log_all : bool) -> BUDMAN_RESULT:
     """Process budget categorization for the workbook.
     
     The sheet has banking transaction data in rows and columns. 
@@ -694,6 +697,7 @@ def process_budget_category(bdm_wb:BDMWorkbook,
         acct_cell : Cell = ws.cell(row=1, column=acct_name_i + 1)
         payee_i = col_i(PAYEE_COL_NAME,hdr)
         essential_i = col_i(ESSENTIAL_COL_NAME,hdr)
+        rule_i = col_i(RULE_COL_NAME,hdr)
 
         logger.debug(f"Mapping '{src}'({src_col_index}) to "
                     f"'{dst}'({dst_col_index})")
@@ -701,7 +705,8 @@ def process_budget_category(bdm_wb:BDMWorkbook,
         other_count = 0
         ch = clear_category_histogram()  # Clear the category histogram.
         rules_count = category_map_count()
-        logger.info(f"Start Task: Apply '{rules_count}' budget category mapping rules "
+        task_name = "process_budget_category()"
+        logger.info(f"Start Task: {task_name}: Apply '{rules_count}' budget category mapping rules "
                     f"to {ws.max_row-1} rows in workbook: '{bdm_wb.wb_id}' "
                     f"worksheet: '{ws.title}'")
         st = p3u.start_timer()
@@ -711,9 +716,11 @@ def process_budget_category(bdm_wb:BDMWorkbook,
             # Do the mapping from src to dst.
             dst_cell = row[dst_col_index]
             src_value = row[src_col_index].value 
-            dst_value, payee = categorize_transaction(src_value, fi_txn_catalog)
+            if log_all:
+                logger.debug(f"{P2}Row({row_idx}): Description: '{src_value}'")
+            dst_value, payee, rule_index = categorize_transaction(src_value, 
+                                                      fi_txn_catalog, log_all)
             dst_cell.value = dst_value 
-            # row[dst_col_index].value = dst_value 
             # Set the additional values for BudMan in the row
             date_val = row[date_i].value
             year_month: str = year_month_str(date_val) if date_val else None
@@ -729,11 +736,14 @@ def process_budget_category(bdm_wb:BDMWorkbook,
             if payee is not None:
                 row[payee_i].value = payee if payee_i != -1 else None
             essential_value = False
-            if dst_value in fi_txn_catalog.category_collection:
+            if (dst_value != 'Other' and 
+                dst_value in fi_txn_catalog.category_collection):
                 essential_value = fi_txn_catalog.category_collection[dst_value].essential
             else:
                 logger.warning(f"'{dst_value}' not found in category collection.")
             row[essential_i].value = essential_value if essential_i != -1 else None
+            row[rule_i].value = rule_index if rule_i != -1 else None
+            # Capture 'Other' category transactions.
             transaction = WORKSHEET_row_data(row,hdr) 
             trans_str = transaction.data_str()
             if dst_value == 'Other':

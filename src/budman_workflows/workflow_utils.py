@@ -21,7 +21,7 @@
 import re, pathlib as Path, logging, io, sys, time, hashlib, datetime
 import csv
 from datetime import datetime as dt
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, Tuple
 
 # third-party modules and packages
 import p3logging as p3l, p3_utils as p3u
@@ -31,6 +31,7 @@ from openpyxl.cell.cell import Cell
 from treelib import Tree
 
 # local modules and packages
+from budman_namespace.design_language_namespace import P2
 import budman_settings as bdms
 import budman_namespace as bdm
 from budman_data_context import BudManDataContext_Base
@@ -178,8 +179,9 @@ def clear_category_map():
 #endregion category_map_count() function
 # ---------------------------------------------------------------------------- +
 #region categorize_transaction() function
-def categorize_transaction(description : str, txn_catalog:TXNCategoryCatalog) -> str:
-    """Use the provided compiled category map to map the description to a category."""
+def categorize_transaction(description : str, txn_catalog:TXNCategoryCatalog,
+                           log_all : bool) -> Tuple[str,str]:
+    """Use txn_catalog patterns to map description text to a category."""
     try:
         p3u.is_non_empty_str("description", description, raise_error=True)
         p3u.is_not_obj_of_type("txn_catalog", txn_catalog, TXNCategoryCatalog,
@@ -191,20 +193,33 @@ def categorize_transaction(description : str, txn_catalog:TXNCategoryCatalog) ->
         ccm: bdm.COMPLIED_CATEGORY_MAP = txn_catalog.compiled_category_map
         ch = get_category_histogram()
         payee = ""
-        for pattern, category in ccm.items():
+        rule_index = 0
+        for rule_index, (pattern, category) in enumerate(ccm.items()):
             payee = ""
             m = pattern.search(description)
             if m:
                 if category not in tcc_keys:
-                    logger.warning(f"Category '{category}' not found in "
-                                   f"transaction category collection for FI key '{fi_key}'.")
+                    logger.warning(f"FI key '{fi_key}' rule_index: '{rule_index}', "
+                                   f"Category '{category}', not found in "
+                                   f"transaction category collection.")
                 gc = len(m.groups())
                 if gc == 0 or m[1] is None:
-                    return ch.count(category), payee
+                    if log_all:
+                        logger.debug(f"{P2}Matched rule_index: '{rule_index}', "
+                                     f"pattern: '{pattern.pattern}' "
+                                     f"category: '{category}', "
+                                     f"groups: '{gc}', no payee found.")
+                    return ch.count(category), payee, rule_index
                 payee = m[1]
                 # print(f"Matched pattern: '{pattern.pattern}' with payee: '{payee}'")
-                return ch.count(category), payee
-        return ch.count('Other'), payee  # Default category if no match is found
+                if log_all:
+                    logger.debug(f"{P2}Matched rule_index: '{rule_index}', "
+                                 f"pattern: '{pattern.pattern}' "
+                                 f"category: '{category}', "
+                                 f"payee: '{payee}', groups: '{gc}'.")
+                return ch.count(category), payee, rule_index
+        logger.debug(f"{P2}No Match Description: [{description}]")
+        return ch.count('Other'), 'Other', -1  # Default category if no match is found
     except re.PatternError as e:
         logger.error(p3u.exc_err_msg(e))
         logger.error(f'Pattern error: compiled_category_map dict: ' 

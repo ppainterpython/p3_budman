@@ -63,13 +63,14 @@ CV_LOG_SUBCMD = "log"
 CV_BUDGET_CATEGORIES_SUBCMD = "BUDGET_CATEGORIES"
 CV_TASK_SUBCMD = "task"
 
-# Common argument attribute keys, for any cmd
+# Argument attribute keys, for any cmd
 CK_PARSE_ONLY = "parse_only"
 CK_VALIDATE_ONLY = "validate_only"
 CK_WHAT_IF = "what_if"
 CK_LOAD_WORKBOOK = "load_workbook"
 CK_FIX_SWITCH = "fix_switch"
 CK_VALIDATE_CATEGORIES = "validate_categories"
+CK_LOG_ALL = "log_all"
 
 # Essential Data Context attributes, with cross-cutting scope over cmds
 CK_FI_KEY = "fi_key"
