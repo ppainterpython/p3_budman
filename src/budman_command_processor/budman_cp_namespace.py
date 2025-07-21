@@ -10,6 +10,7 @@
 # third-party modules and packages
 
 # local modules and packages
+import budman_namespace as bdm
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -102,6 +103,9 @@ CK_LEVEL_VALUE = "level_value"
 CK_ROLLOVER_SWITCH = "rollover_switch"
 # subcmd_name CV_RELOAD_SUBCMD constants
 CK_RELOAD_TARGET = "reload_target"
+CV_CATEGORY_MAP = bdm.CATEGORY_MAP
+CV_FI_WORKBOOK_DATA_COLLECTION = bdm.FI_WORKBOOK_DATA_COLLECTION
+CV_WORKFLOWS_MODULE = "budman_workflows"
 # deprecated
 CK_CHECK_REGISTER = "check_register"
 

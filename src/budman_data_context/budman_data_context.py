@@ -297,7 +297,7 @@ class BudManDataContext(BudManDataContext_Base):
         FI_WORKBOOK_DATA_COLLECTION for that fi_key.
         The WORKBOOK_DATA_COLLECTION should be sorted by the key,
         wb_id as it is updated. The wb_index should be based on the 
-        sorted order of the WORKBOOK_DATA_COLLECTION.
+        sorted order of the dc_WORKBOOK_DATA_COLLECTION.
         """
         if not self.dc_VALID: return None
         if not isinstance(value, dict):

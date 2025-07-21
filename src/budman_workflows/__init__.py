@@ -66,6 +66,8 @@ from .budget_category_mapping import (
 
 # symbols for "from budman_model import *"
 __all__ = [
+    # module names
+    "workflow_utils",
     # txn_category.py module
     "BDMTXNCategory",
     "TXNCategoryCatalog",

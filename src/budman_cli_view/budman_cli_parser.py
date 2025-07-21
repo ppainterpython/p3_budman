@@ -92,7 +92,8 @@ class BudManCLIParser():
                 cp.CK_RELOAD_TARGET, 
                 nargs="?",
                 action="store", 
-                choices=[bdm.CATEGORY_MAP, bdm.FI_WORKBOOK_DATA_COLLECTION],
+                choices=[cp.CV_CATEGORY_MAP, cp.CV_FI_WORKBOOK_DATA_COLLECTION,
+                         cp.CV_WORKFLOWS_MODULE],
                 default=bdm.CATEGORY_MAP,
                 help="Name of object to reload, pick from choices.")
             self.add_common_args(reload_parser)

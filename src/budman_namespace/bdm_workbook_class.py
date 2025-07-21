@@ -17,16 +17,12 @@ import p3_utils as p3u, pyjson5, p3logging as p3l
 from openpyxl import Workbook, load_workbook
 # local modules and packages
 import budman_namespace.design_language_namespace as bdm
+from budman_namespace.design_language_namespace import (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10)
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
 logger = logging.getLogger(__name__)
 ID_SEPARATOR = "|"
-P2 = "  "  # 2 space padding
-P4 = "    "  # 4 space padding
-P6 = "      "  # 6 space padding
-P8 = "        "  # 8 space padding
-P10 = "          "  # 10 space padding
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
@@ -132,7 +128,7 @@ class BDMWorkbook:
         else:
             wb_status = "unloaded"
         wb_info = self.wb_info_display_str()
-        s = f"{P6}{str(wb_index):>2}{P6}{str(wb_info):150}"
+        s = f"{P6}{str(wb_index):>4}{P4}{str(wb_info):150}"
         return s
     #endregion wb_index_display_str
     # ------------------------------------------------------------------------ +

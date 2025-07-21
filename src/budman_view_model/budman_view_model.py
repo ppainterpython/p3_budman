@@ -188,12 +188,14 @@
 import logging, os, sys, getpass, time, copy, importlib
 from pathlib import Path
 from typing import List, Type, Optional, Dict, Tuple, Any, Callable
+import importlib
 
 # third-party modules and packages
 import p3_utils as p3u, pyjson5, p3logging as p3l
 from openpyxl import Workbook, load_workbook
 
 # local modules and packages
+import budman_workflows
 from p3_mvvm import (Model_Base, Model_Binding)
 import budman_command_processor.budman_cp_namespace as cp
 from budman_settings import *
@@ -1039,6 +1041,7 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             # Load the BDM_STORE file.
             budman_store_dict = bsm_BDM_STORE_url_get(bdm_url)
             self.dc_BDM_STORE = budman_store_dict
+            # self.dc_initialize()
             self._BDM_STORE_loaded = True
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             return True, budman_store_dict
@@ -1156,7 +1159,7 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
         """
         try:
             logger.debug(f"Start: ...")
-            result = output_bdm_tree()
+            result = output_bdm_tree(self.DC)
             return True, result
         except Exception as e:
             m = p3u.exc_err_msg(e)
@@ -1401,7 +1404,7 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
                         m = f"reload_target is None, no action taken."
                         logger.error(m)
                         return False, m
-                    if reload_target == CATEGORY_MAP:
+                    if reload_target == cp.CV_CATEGORY_MAP:
                         catman: BDMTXNCategoryManager = BDMTXNCategoryManager() #self.WF_CATEGORY_MANAGER
                         category_catalog: TXNCategoryCatalog = None
                         if catman :
@@ -1428,10 +1431,13 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
                         # cm = get_category_map()
                         # ccm = compile_category_map(cm)
                         # set_compiled_category_map(ccm)
-                    if reload_target == FI_WORKBOOK_DATA_COLLECTION:
+                    if reload_target == cp.CV_FI_WORKBOOK_DATA_COLLECTION:
                         wdc: WORKBOOK_DATA_COLLECTION = None
                         wdc, m = self.model.bsm_FI_WORKBOOK_DATA_COLLECTION_resolve(self.dc_FI_KEY)
                         return True, m
+                    if reload_target == cp.CV_WORKFLOWS_MODULE:
+                        importlib.reload(budman_workflows.workflow_utils)
+                        return True, "Reloaded workflows module."
                     return True, r_msg
                 except Exception as e:
                     m = f"Error reloading target: {reload_target}: {p3u.exc_err_msg(e)}"
@@ -1492,49 +1498,31 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             root error is contained in the exception message.
         """
         try:
+            logger.info(f"Start: ...")
+            selected_bdm_wb_list : List[BDMWorkbook] = None
+            selected_bdm_wb_list = self.process_selected_workbook_input(cmd)
+            if selected_bdm_wb_list is None:
+                m = f"No workbooks selected for processing."
+                logger.warning(f"{m}: {cmd}")
+                return False, m
+            fr: str = f"Categorizing {len(selected_bdm_wb_list)} workbooks:"
             success : bool = False
             r : str = ""
-            fr : str = f"Workflow Categorization \n"
             m : str = ""
             lwbc :LOADED_WORKBOOK_COLLECTION = None
-            bdm_wb : Optional[BDMWorkbook] = None
-            wb_content : Optional[WORKBOOK_CONTENT] = None
-            wb_index : int = self.cp_cmd_attr_get(cmd, cp.CK_WB_INDEX, self.dc_WB_INDEX)
-            wb_list : List[int] = cmd.get(cp.CK_WB_LIST, [])
-            all_wbs : bool = self.cp_cmd_attr_get(cmd, cp.CK_ALL_WBS, self.dc_ALL_WBS)
-            selected_bdm_wb_list : List[BDMWorkbook] = []
-            load_workbook : bool = self.cp_cmd_attr_get(cmd, cp.CK_LOAD_WORKBOOK, False)
             log_all : bool = self.cp_cmd_attr_get(cmd, cp.CK_LOG_ALL, False)
-            # wb_index and all_wbs are validated already. 
-            # Choose either all_wbs or a specific workbook designated by 
-            # wb_index to be processed. This applies to loaded workbooks only, 
-            # so configure wf_wb_list with the intended workbooks to categorize.
-            if all_wbs:
-                # If all_wbs, process all loaded workbooks.
-                # lwbc = self.dc_LOADED_WORKBOOKS
-                return False, "method not implemented for all_wbs=True"
-            if len(wb_list) > 0:
-                for wb_index in wb_list:
-                    bdm_wb = self.dc_WORKBOOK_by_index(wb_index)
-                    selected_bdm_wb_list.append(bdm_wb)
-            else:
-                selected_bdm_wb_list.append(self.dc_WORKBOOK_by_index(wb_index))
             # Process the intended workbooks.
             for bdm_wb in selected_bdm_wb_list:
+                wb_id = bdm_wb.wb_id
+                wb_index = self.dc_WORKBOOK_index(bdm_wb.wb_id) 
+                wb_content = bdm_wb.wb_content
+                bdm_wb_abs_path = bdm_wb.abs_path()
+                fr += f"\n{P2}workbook: {wb_index:>2} '{bdm_wb.wb_id:<40}'"
                 bdm_wb_abs_path = bdm_wb.abs_path()
                 if bdm_wb_abs_path is None:
                     m = f"Workbook path is not valid: {bdm_wb.wb_url}"
                     logger.error(m)
                     return False, m
-                if load_workbook and not bdm_wb.wb_loaded:
-                    # Load the workbook content if it is not loaded.
-                    success, wb_content = self.dc_WORKBOOK_content_get(bdm_wb)
-                    if not success:
-                        m = f"Failed to load workbook '{bdm_wb.wb_id}': {wb_content}"
-                        logger.error(m)
-                        return False, m
-                    bdm_wb.wb_loaded = True
-                    self.dc_LOADED_WORKBOOKS[bdm_wb.wb_id] = wb_content
                 # Check cmd needs loaded workbooks to check
                 if not bdm_wb.wb_loaded:
                     m = f"wb_name '{bdm_wb.wb_name}' is not loaded, no action taken."
@@ -1542,15 +1530,13 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
                     return False, m
                 # Now we have a valid bdm_wb to process.
                 # Set the current workbook in the Data Context.
-                wb_id = bdm_wb.wb_id
-                wb_index = self.dc_WORKBOOK_index(wb_id)
                 self.dc_BDM_WORKBOOK = bdm_wb
                 self.dc_WB_INDEX = wb_index  # Set the wb_index in the DC.
                 if bdm_wb.wb_type == WB_TYPE_EXCEL_TXNS:
                     task = "process_budget_category()"
                     m = (f"{P2}Task: {task:30} {wb_index:>2} '{wb_id:<40}'")
                     logger.debug(m)
-                    fr += m + "\n"
+                    fr += f"\n{P2}{m}"
                     success, r = process_budget_category(bdm_wb, self.DC, log_all)
                     if not success:
                         r = (f"{P4}Task Failed: process_budget_category() Workbook: "
@@ -1558,18 +1544,19 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
                         logger.error(r)
                         fr += r + "\n"
                         continue
-                    task = "dc_WORKBOOK_content_put()"
+                    fr += f"\n{P8}Result: {r}"
+                    task = "dc_BDM_WORKBOOK_save()"
                     m = (f"{P2}Task: {task:30} {wb_index:>2} '{wb_id:<40}'")
                     logger.debug(m)
-                    fr += m + "\n"
-                    success, m = self.dc_BDM_WORKBOOK_save(bdm_wb)
+                    fr += f"\n{P2}{m}"
+                    success, r = self.dc_BDM_WORKBOOK_save(bdm_wb)
                     if not success:
                         m = (f"{P4}Task Failed: dc_BDM_WORKBOOK_save() Workbook: "
                              f"'{wb_id}'\n{P8}Result: {m}")
                         logger.error(m)
                         fr += m + "\n"
                         continue
-                    fr += f"{P8}Result: {r}\n"
+                    fr += f"\n{P8}Result: {r}"
             logger.info(m)
             return True, fr
         except Exception as e:
@@ -1678,63 +1665,49 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
         """
         try:
             logger.info(f"Start: ...")
-            bdm_wb: BDMWorkbook
-            wb_index : int = self.cp_cmd_attr_get(cmd, cp.CK_WB_INDEX, self.dc_WB_INDEX)
-            wb_list : List[int] = cmd.get(cp.CK_WB_LIST, [])
-            all_wbs : bool = self.cp_cmd_attr_get(cmd, cp.CK_ALL_WBS, self.dc_ALL_WBS)
-            selected_bdm_wb_list : List[BDMWorkbook] = []
-            load_workbook:bool = cmd[cp.CK_LOAD_WORKBOOK]
-            if all_wbs:
-                # If all_wbs is True, process all workbooks in the data context.
-                return False, "method not implemented for all_wbs=True"
-            if len(wb_list) > 0:
-                for wb_index in wb_list:
-                    bdm_wb = self.dc_WORKBOOK_by_index(wb_index)
-                    selected_bdm_wb_list.append(bdm_wb)
-            else:
-                selected_bdm_wb_list.append(self.dc_WORKBOOK_by_index(wb_index))
-    
+            selected_bdm_wb_list : List[BDMWorkbook] = None
+            selected_bdm_wb_list = self.process_selected_workbook_input(cmd)
+            if selected_bdm_wb_list is None:
+                m = f"No workbooks selected for processing."
+                logger.warning(f"{m}: {cmd}")
+                return False, m
+            result: str = f"Checking {len(selected_bdm_wb_list)} workbooks:"
+            r: str = ""
             for bdm_wb in selected_bdm_wb_list:
+                wb_index = self.dc_WORKBOOK_index(bdm_wb.wb_id) 
+                wb_content = bdm_wb.wb_content
                 bdm_wb_abs_path = bdm_wb.abs_path()
-                if bdm_wb_abs_path is None:
-                    m = f"Workbook path is not valid: {bdm_wb.wb_url}"
-                    logger.error(m)
-                    return False, m
-                if load_workbook and not bdm_wb.wb_loaded:
-                    # Load the workbook content if it is not loaded.
-                    success, wb_content = self.dc_WORKBOOK_content_get(bdm_wb)
-                    if not success:
-                        m = f"Failed to load workbook '{bdm_wb.wb_id}': {wb_content}"
-                        logger.error(m)
-                        return False, m
-                    bdm_wb.wb_loaded = True
-                    self.dc_LOADED_WORKBOOKS[bdm_wb.wb_id] = wb_content
+                result += f"\n{P2}workbook: {wb_index:>2} '{bdm_wb.wb_id:<40}'"
                 # Check cmd needs loaded workbooks to check
                 if not bdm_wb.wb_loaded:
                     m = f"wb_name '{bdm_wb.wb_name}' is not loaded, no action taken."
                     logger.error(m)
-                    return False, m
-                wb_content = self.dc_LOADED_WORKBOOKS[bdm_wb.wb_id]
+                    result += f"\n{P2}{m}"
+                    continue
                 # By default, check the sheet schema. But other cli switches
                 # can added to check something else.
                 if cmd[cp.CK_VALIDATE_CATEGORIES]:
                     # Validate the categories in the workbook.
                     task = "validate_budget_categories()"
-                    m = (f"{P2}Task: {task:30} {bdm_wb.wb_index_display_str(wb_index)}")
+                    m = (f"{P2}Task: {task:30} {wb_index:>2} '{bdm_wb.wb_id:<40}'")
                     logger.debug(m)
-                    success, result = validate_budget_categories(bdm_wb, self.DC)
-                    return success, result
+                    success, r = validate_budget_categories(bdm_wb, self.DC, P4)
+                    result += f"\n{r}"
+                    continue
                 success: bool = check_sheet_schema(wb_content)
                 r = f"Task: check_sheet_schema workbook: Workbook: '{bdm_wb.wb_id}' "
                 if success:
-                    return success, r
+                    result += f"\n{P2}{r}"
+                    continue
                 if cmd[cp.CK_FIX_SWITCH]:
                     r = f"Task: check_sheet_columns workbook: Workbook: '{bdm_wb.wb_id}' "
                     ws = wb_content.active
                     success = check_sheet_columns(ws, add_columns=True)
                     if success: 
                         wb_content.save(bdm_wb_abs_path)
-            return success, r
+                result += f"\n{P2}{r}"
+                continue
+            return success, result
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
@@ -1794,6 +1767,60 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
     #                                                                          +
     # ------------------------------------------------------------------------ +
     #region    helper methods for command execution
+    # ------------------------------------------------------------------------ +
+    #region process_workbook_input()
+    def process_selected_workbook_input(self, cmd: Dict) -> List[BDMWorkbook]:
+        """Process the workbook input from the command.
+
+        Arguments:
+            cmd (Dict): A BudManCommand object.
+
+        Returns:
+            List[BDMWorkbook]: A list of BDMWorkbook objects.
+        """
+        wb_index : int = self.cp_cmd_attr_get(cmd, cp.CK_WB_INDEX, self.dc_WB_INDEX)
+        wb_list : List[int] = cmd.get(cp.CK_WB_LIST, [])
+        all_wbs : bool = self.cp_cmd_attr_get(cmd, cp.CK_ALL_WBS, self.dc_ALL_WBS)
+        selected_bdm_wb_list : List[BDMWorkbook] = []
+        load_workbook:bool = cmd[cp.CK_LOAD_WORKBOOK]
+        if all_wbs:
+            # If all_wbs is True, process all workbooks in the data context.
+            # TODO: list of all workbooks for current wf_key and wf_purpose.
+            logger.warning(f"all_wbs is not yet supported!")
+            return selected_bdm_wb_list
+        if len(wb_list) > 0:
+            for wb_index in wb_list:
+                bdm_wb = self.dc_WORKBOOK_by_index(wb_index)
+                selected_bdm_wb_list.append(bdm_wb)
+        else:
+            selected_bdm_wb_list.append(self.dc_WORKBOOK_by_index(wb_index))
+        if len(selected_bdm_wb_list) == 0:
+            m = f"No workbooks selected for processing: {cmd}"
+            logger.warning(m)
+            return selected_bdm_wb_list
+        for bdm_wb in selected_bdm_wb_list:
+            bdm_wb_abs_path = bdm_wb.abs_path()
+            if bdm_wb_abs_path is None:
+                selected_bdm_wb_list.remove(bdm_wb)
+                m = f"Excluded workbook: '{bdm_wb.wb_id}', "
+                m += f"workbook url is not valid: {bdm_wb.wb_url}"   
+                logger.error(m)
+                continue
+            if load_workbook and not bdm_wb.wb_loaded:
+                # Load the workbook content if it is not loaded.
+                success, result = self.dc_WORKBOOK_content_get(bdm_wb)
+                if not success:
+                    selected_bdm_wb_list.remove(bdm_wb)
+                    m = f"Excluded workbook: '{bdm_wb.wb_id}', "
+                    m += f"failed to load: {result}"
+                    logger.error(m)
+                    continue
+                if not bdm_wb.wb_loaded:
+                    logger.warning(f"Workbook '{bdm_wb.wb_id}' wb_loaded was False!")
+                    bdm_wb.wb_loaded = True
+                # self.dc_LOADED_WORKBOOKS[bdm_wb.wb_id] = wb_content
+        return selected_bdm_wb_list
+    #endregion process_workbook_input()
     # ------------------------------------------------------------------------ +
     #region get_workbook_data_collection_info_str() method
     def get_workbook_data_collection_info_str(self) -> BUDMAN_RESULT: 

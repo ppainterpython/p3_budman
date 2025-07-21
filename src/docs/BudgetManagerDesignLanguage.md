@@ -83,7 +83,9 @@ In the BudgetManager design language, the primary object concepts are
 - WB - Workbook, and
 - BDM_STORE = Budget Manager Store where user-specific budget data is maintained.
 
-The Data Context data is always scoped to the current values of the 'keys' for these primary objects: FI_KEY, WF_KEY, WF_PURPOSE, and WB_NAME. Changing these values will cause the DC to flag the need for a refresh of the underlying data.
+The Data Context data is always scoped to the current values of the 'keys' for these primary objects: FI_KEY, WF_KEY, WF_PURPOSE, and WB_ID. Changing these values will cause the DC to flag the need for a refresh of the underlying data.
+
+A critical property in the Data Context is `dc_WORKBOOK_DATA_COLLECTION` which is a dictionary sorted by the WB_ID of all workbooks stored for a give FI_KEY. The WB_INDEX is the enumerated index of this sorted order. Workbooks are stored in the BDM_STORE but the order is not preserved. Therefore, when the `dc_WORKBOOK_DATA_COLLECTION` property value is assigned, the order is sorted by WB_ID.
 
 #### Data Context Concrete Implementation
 

@@ -325,8 +325,8 @@ class BDMTXNCategoryManager(metaclass=BDMSingletonMeta):
     # ------------------------------------------------------------------------ +
     #region FI_TXN_CATEGORIES_WORKBOOK_update()
     def FI_TXN_CATEGORIES_WORKBOOK_update(self, fi_key: str) -> str:
-        """For the fi_key, refresh the transaction category catalog in-memory
-        from the category_map.
+        """For fi_key, update the TXN_CATEGORIES_WORKBOOK with the latest content
+        of the CATEGORY_MAP_WORKBOOK.
 
         Extract the current unique list of categories from the 
         CATEGORY_MAP_WORKBOOK, and update the TXN_CATEGORIES_WORKBOOK
@@ -452,9 +452,9 @@ class BDMTXNCategoryManager(metaclass=BDMSingletonMeta):
     def FI_TXN_CATEGORIES_WORKBOOK_save(self, 
                 fi_key: str,
                 txn_cat_wb_input: Optional[bdm.TXN_CATEGORIES_WORKBOOK]=None) -> None:
-        """Save the WB_TYPE_TXN_CATEGORIES workbook content for an FI.
+        """Save the TXN_CATEGORIES_WORKBOOK content for an FI.
 
-        Save the content from the WB_TYPE_TXN_CATEGORIES workbook for the given
+        Save the content from the TXN_CATEGORIES_WORKBOOK for the given
         financial institution (FI), configuring its url from settings.
         Also compiles the category map for the financial institution.
 
@@ -464,7 +464,6 @@ class BDMTXNCategoryManager(metaclass=BDMSingletonMeta):
                 If provided, save this workbook. If not, extract from catalog.
         """
         try:
-            test_txn_cat_wb_url = "file:///C:/Users/ppain/OneDrive/budget/boa/TEST_All_TXN_Categories.txn_categories.json"
             self.valid_state()  # Ensure the manager is in a valid state
             # Load the catalog for an FI
             txn_cat_wb_content: bdm.TXN_CATEGORIES_WORKBOOK = None

@@ -314,8 +314,13 @@ BUDMAN_DEFAULT_WORKBOOK_TYPE_VALUE = WF_WORKING
 # ---------------------------------------------------------------------------- +
 # Miscellaneous Convenience Constants
 BUDMAN_WIDTH = 250
+P1 = " "  # 1 space padding
 P2 = "  "  # 2 space padding
+P3 = "   "  # 3 space padding
 P4 = "    "  # 4 space padding
+P5 = "     "  # 5 space padding
 P6 = "      "  # 6 space padding
+P7 = "       "  # 7 space padding
 P8 = "        "  # 8 space padding
+P9 = "         "  # 9 space padding
 P10 = "          "  # 10 space padding

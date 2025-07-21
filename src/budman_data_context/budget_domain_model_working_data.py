@@ -160,8 +160,8 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
                 else:
                     if self.model.bdm_initialized:
                         fi_object = self.model.bdm_FI_OBJECT(self.dc_FI_KEY)
-                        wbc = self.model.bdm_FI_WORKBOOK_DATA_COLLECTION(self.dc_FI_KEY)
-                        self.dc_WORKBOOK_DATA_COLLECTION = wbc
+                        wdc = self.model.bdm_FI_WORKBOOK_DATA_COLLECTION(self.dc_FI_KEY)
+                        self.dc_WORKBOOK_DATA_COLLECTION = wdc
                         self.dc_FI_OBJECT = fi_object
                         if self.WF_CATEGORY_MANAGER is not None:
                             # Load the WB_TYPE_TXN_CATEGORIES for the FI.

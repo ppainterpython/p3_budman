@@ -450,7 +450,8 @@ def year_month_str(date:object) -> str:
 # ---------------------------------------------------------------------------- +
 #region validate_budget_categories() function
 def validate_budget_categories(bdm_wb:BDMWorkbook, 
-                               bdm_DC: BudManDataContext_Base) -> BUDMAN_RESULT:
+                               bdm_DC: BudManDataContext_Base,
+                               pad:str='') -> BUDMAN_RESULT:
     """Validate budget categories in the workbook.
 
     Args:
@@ -468,32 +469,33 @@ def validate_budget_categories(bdm_wb:BDMWorkbook,
                                    raise_error=True)
 
         # Check if the budget categories are valid.
-        result : str = "Validate Budget Categories."
+        task = "validate_budget_categories()"
+        result : str = f"{pad}{task}"
         unique_categories: Dict[str, int] = dict()  # To track unique budget categories.
         if bdm_wb.wb_type != WB_TYPE_EXCEL_TXNS:
             # This is not a transactions workbook, no action taken.
             m = (f"Workbook '{bdm_wb.wb_id}' is not wb_type: "
                  f"'{WB_TYPE_EXCEL_TXNS}', no action taken.")
             logger.error(m)
-            result += f"\n{P2}{m}"
+            result += f"\n{pad}{m}"
             return False, result
         if not bdm_wb.wb_loaded:
             # Load the workbook from the data context.
             m = f"Workbook '{bdm_wb.wb_id}' is not loaded, no action taken."
             logger.error(m)
-            result += f"\n{P2}{m}"
+            result += f"\n{pad}{m}"
             return False, result
         if p3u.is_not_obj_of_type("wb", bdm_wb.wb_content, Workbook):
             m = f"Error accessing wb_content for workbook: '{bdm_wb.wb_id}'."
             logger.error(m)
-            result += f"\n{P2}{m}"
+            result += f"\n{pad}{m}"
             return False, result
         ws : Worksheet = bdm_wb.wb_content.active  # Get the active worksheet.
         if not check_sheet_columns(ws, add_columns=False):
             m = (f"Sheet '{ws.title}' cannot be mapped due to "
                     f"missing required columns.")
             logger.error(m)
-            result += f"\n{P2}{m}"
+            result += f"\n{pad}{m}"
             return False, result
         # A row is a tuple of the Cell objects in the row. Tuples are 0-based
         # hdr is a list, also 0-based. So, using the index(name) will 
@@ -510,9 +512,9 @@ def validate_budget_categories(bdm_wb:BDMWorkbook,
         txn_desc_col_name = bdm_DC.dc_FI_OBJECT[FI_TRANSACTION_DESCRIPTION_COLUMN]
         txn_desc_i = col_i(txn_desc_col_name, hdr)
         errors = 0
-        for row in ws.iter_rows(min_row=2, values_only=True):
+        for row_idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True)):
             # row is a 'tuple' of Cell objects, 0-based index
-            row_idx = row[0].row  # Get the row index, the row number, 1-based.
+            # row_idx = row[0].row  # Get the row index, the row number, 1-based.
             # Validate the budget category.
             budget_category = row[budget_cat_i]
             txn_desc = row[txn_desc_i]
@@ -521,7 +523,7 @@ def validate_budget_categories(bdm_wb:BDMWorkbook,
                 # BUDGET_CATEGORY_COL_NAME cell cannot be empty.
                 m = (f"Row {row.index} has an invalid budget category: '{budget_category}'.")
                 logger.error(m)
-                result += f"\n{P2}{m}"
+                result += f"\n{pad}{m}"
                 continue
             unique_categories[budget_category] = unique_categories.get(budget_category, 0) + 1
             # Validate the levels.
@@ -534,27 +536,27 @@ def validate_budget_categories(bdm_wb:BDMWorkbook,
                 m = (f"Row {row_idx} has an invalid Level 1: '{level1}' "
                      f"for budget category: '{budget_category}'.")
                 logger.error(m)
-                result += f"\n{P2}{m}"
+                result += f"\n{pad}{m}"
                 continue
             if l1 != level1:
                 m = (f"Row {row_idx} has a Level 1: '{level1}' that does not match "
                      f"the budget category: '{budget_category}' for description '{txn_desc}'.")
                 logger.error(m)
-                result += f"\n{P2}{m}"
+                result += f"\n{pad}{m}"
                 continue
             if l2 != level2:
                 m = (f"Row {row_idx} has a Level 2: '{level2}' that does not match "
                      f"the budget category: '{budget_category}' for description '{txn_desc}'.")
                 logger.error(m)
-                result += f"\n{P2}{m}"
+                result += f"\n{pad}{m}"
                 continue
             if l3 != level3:
                 m = (f"Row {row_idx} has a Level 3: '{level3}' that does not match "
                      f"the budget category: '{budget_category}' for description '{txn_desc}'.")
                 logger.error(m)
-                result += f"\n{P2}{m}"
+                result += f"\n{pad}{m}"
                 continue
-        result += f"\n{P2}Workbook validation phase completed. unique categories: {len(unique_categories)} errors: {errors}"
+        result += f"\n{pad}{P2}Workbook validation phase completed. unique categories: {len(unique_categories)} errors: {errors}"
         catman : BDMTXNCategoryManager = bdm_DC.WF_CATEGORY_MANAGER
         fi_txn_catalog : TXNCategoryCatalog = catman.catalogs[bdm_wb.fi_key]
         cat_collection_list = list(fi_txn_catalog.category_collection.keys())
@@ -564,8 +566,8 @@ def validate_budget_categories(bdm_wb:BDMWorkbook,
                 m = (f"Row {row_idx} has a budget category: '{key}' that is not in the "
                      f"category collection for FI: '{bdm_wb.fi_key}'.")
                 logger.error(m)
-                result += f"\n{P2}{m}"
-        result += f"\n{P2}Validation with CATEGORY_COLLECTION phase completed. unique categories: {len(unique_categories)} errors: {errors}"
+                result += f"\n{pad}{m}"
+        result += f"\n{pad}{P2}Validation with CATEGORY_COLLECTION phase completed. unique categories: {len(unique_categories)} errors: {errors}"
         return True, result
     except Exception as e:
         m = p3u.exc_err_msg(e)
