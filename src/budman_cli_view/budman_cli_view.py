@@ -36,9 +36,10 @@ import cmd2, argparse
 from cmd2 import (Cmd2ArgumentParser, with_argparser)
 from cmd2 import (Bg,Fg, style, ansi)
 # local modules and packages
+from budman_settings import *
+from budman_settings.budman_settings_constants import BUDMAN_CMD_HISTORY_FILENAME
 from p3_mvvm import DataContext_Binding
 import budman_namespace as bdm
-from budman_settings import *
 from budman_cli_view import BudManCLIParser
 # from budman_data_context import BudManDataContext_Binding
 #endregion Imports
@@ -62,7 +63,8 @@ CMD_PARSE_ONLY = "parse_only"
 # whole app won't fail, and will display the error message for the
 # particular command parser.
 # TODO: how to get the app_name from settings prior to BudManCLIView instantiation?
-cli_parser : BudManCLIParser = BudManCLIParser("p3_budget_manager")
+settings = BudManSettings()
+cli_parser : BudManCLIParser = BudManCLIParser(settings)
 def init_cmd_parser() -> cmd2.Cmd2ArgumentParser:
     subcmd_parser = cli_parser.init_cmd if cli_parser else None
     return subcmd_parser
@@ -194,11 +196,15 @@ class BudManCLIView(cmd2.Cmd): # , DataContext_Binding):
         self._parse_only :bool = False
         self._current_cmd :Optional[str] = None
         # cmd2.Cmd initialization
-        cmd2.Cmd.__init__(self, shortcuts=shortcuts)
+        hfn = settings[BUDMAN_CMD_HISTORY_FILENAME]
+        cmd2.Cmd.__init__(self, 
+                          shortcuts=shortcuts,
+                          allow_cli_args=False, 
+                         include_ipy=True,
+                         persistent_history_file=hfn)
         self.allow_style = ansi.AllowStyle.TERMINAL
         self.register_precmd_hook(self.precmd_hook)
         self.register_postcmd_hook(self.postcmd_hook)
-        # super().__init__()
         BudManCLIView.prompt = PO_ON_PROMPT if self.parse_only else PO_OFF_PROMPT
         self.initialized : bool = True
     #endregion __init__() method

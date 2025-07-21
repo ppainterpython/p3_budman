@@ -425,7 +425,7 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
                 "show_cmd_workbooks": self.WORKBOOKS_show_cmd,
                 "load_cmd_workbooks": self.WORKBOOKS_load_cmd,
                 "save_cmd_workbooks": self.WORKBOOKS_save_cmd,
-                "change_cmd_workbooks": self.CHANGE_cmd,
+                cp.CV_WORKBOOK_SUBCMD_KEY: self.CHANGE_cmd,
                 "workflow_cmd_categorization": self.WORKFLOW_categorization_cmd,
                 "workflow_cmd_apply": self.WORKFLOW_apply_cmd,
                 "workflow_cmd_check": self.WORKFLOW_check_cmd,
@@ -1075,10 +1075,10 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             bs = self.dc_BDM_STORE
             bs_str = p3u.first_n(str(bs))
             # Prepare the Command output result
-            result = f"Budget Manager Data Context:\n"
-            result += f"{P2}{DC_BDM_STORE}: {bs_str}\n"
-            result += (f"{P2}{DC_INITIALIZED}: {self.dc_INITIALIZED}"
-                        f"{P2}{FI_KEY}: {self.dc_FI_KEY}"
+            result = f"Budget Manager Data Context:"
+            result += f"{P2}{DC_INITIALIZED}: {self.dc_INITIALIZED}"
+            result += f"\n{P2}{DC_BDM_STORE}: {bs_str}"
+            result += ( f"{P2}{FI_KEY}: {self.dc_FI_KEY}"
                         f"{P2}{WF_KEY}: {self.dc_WF_KEY}"
                         f"{P2}{WF_PURPOSE}: {self.dc_WF_PURPOSE}\n")
             result += (f"{P2}{WB_ID}: {self.dc_WB_ID}"
@@ -1342,17 +1342,30 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
         """
         try:
             logger.info(f"Start: ...")
-            if cmd[cp.CK_SUBCMD_NAME] == cp.CK_WB_TYPE:
-                wb_index : int = self.cp_cmd_attr_get(cmd, cp.CK_WB_INDEX, self.dc_WB_INDEX)
-                wb_type = self.cp_cmd_attr_get(cmd, cp.CK_WB_TYPE, self.dc_WB_TYPE)
-                wb = self.dc_WORKBOOK_by_index(wb_index)
-                if (wb):
-                    # Process the change workbook command.
+            if cmd[cp.CK_SUBCMD_NAME] == cp.CV_WORKBOOK_SUBCMD_NAME:
+                selected_bdm_wb_list : List[BDMWorkbook] = None
+                selected_bdm_wb_list = self.process_selected_workbook_input(cmd)
+                result: str = f"Changing {len(selected_bdm_wb_list)} workbooks:"
+                r: str = ""
+                for bdm_wb in selected_bdm_wb_list:
+                    # Select the current workbook in the Data Context.
+                    self.dc_BDM_WORKBOOK = bdm_wb
+                    result += f"\n{P2}workbook: {str(self.dc_WB_INDEX):>4} '{bdm_wb.wb_id:<40}'"
+                    # Apply the include argument switches to the selected workbook.
+                    wb_type = self.cp_cmd_attr_get(cmd, cp.CK_WB_TYPE, None)
                     if wb_type is not None:
-                        wb.wb_type = wb_type
-                        result = (f"Changed workbook type to: '{wb_type}' for "
-                                  f"wb_index: {wb_index:>2} wb_id: '{wb.wb_id}'")
-                        return True, result
+                        bdm_wb.wb_type = wb_type
+                        result += (f"{P4}Changed workbook type to: '{wb_type}' for "
+                                f"wb_index: {str(self.dc_WB_INDEX):>4} wb_id: '{bdm_wb.wb_id}'")
+                        self.dc_BDM_STORE_changed = True
+                    wf_key = self.cp_cmd_attr_get(cmd, cp.CK_WF_KEY, None)
+                    if wf_key is not None:
+                        bdm_wb.wf_key = wf_key
+                        result += (f"{P4}Changed workflow key to: '{wf_key}' for "
+                                f"wb_index: {str(self.dc_WB_INDEX):>4} wb_id: '{bdm_wb.wb_id}'")
+                        self.dc_BDM_STORE_changed = True
+                    self.dc_BDM_WORKBOOK = bdm_wb
+                return True, result
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
@@ -1501,58 +1514,53 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             logger.info(f"Start: ...")
             selected_bdm_wb_list : List[BDMWorkbook] = None
             selected_bdm_wb_list = self.process_selected_workbook_input(cmd)
-            if selected_bdm_wb_list is None:
-                m = f"No workbooks selected for processing."
-                logger.warning(f"{m}: {cmd}")
-                return False, m
             fr: str = f"Categorizing {len(selected_bdm_wb_list)} workbooks:"
             success : bool = False
             r : str = ""
             m : str = ""
-            lwbc :LOADED_WORKBOOK_COLLECTION = None
             log_all : bool = self.cp_cmd_attr_get(cmd, cp.CK_LOG_ALL, False)
             # Process the intended workbooks.
             for bdm_wb in selected_bdm_wb_list:
-                wb_id = bdm_wb.wb_id
-                wb_index = self.dc_WORKBOOK_index(bdm_wb.wb_id) 
-                wb_content = bdm_wb.wb_content
+                # Select the current workbook in the Data Context.
+                self.dc_BDM_WORKBOOK = bdm_wb
                 bdm_wb_abs_path = bdm_wb.abs_path()
-                fr += f"\n{P2}workbook: {wb_index:>2} '{bdm_wb.wb_id:<40}'"
+                fr += f"\n{P2}workbook: {str(self.dc_WB_INDEX):>4} '{self.dc_WB_ID:<40}'"
                 bdm_wb_abs_path = bdm_wb.abs_path()
                 if bdm_wb_abs_path is None:
                     m = f"Workbook path is not valid: {bdm_wb.wb_url}"
                     logger.error(m)
-                    return False, m
+                    fr += f"\n{P4}Error: {m}"
+                    continue
                 # Check cmd needs loaded workbooks to check
                 if not bdm_wb.wb_loaded:
                     m = f"wb_name '{bdm_wb.wb_name}' is not loaded, no action taken."
                     logger.error(m)
-                    return False, m
+                    fr += f"\n{P4}Error: {m}"
+                    continue
                 # Now we have a valid bdm_wb to process.
-                # Set the current workbook in the Data Context.
-                self.dc_BDM_WORKBOOK = bdm_wb
-                self.dc_WB_INDEX = wb_index  # Set the wb_index in the DC.
                 if bdm_wb.wb_type == WB_TYPE_EXCEL_TXNS:
                     task = "process_budget_category()"
-                    m = (f"{P2}Task: {task:30} {wb_index:>2} '{wb_id:<40}'")
+                    m = (f"{P2}Task: {task:30} {str(self.dc_WB_INDEX):>4} "
+                         f"'{self.dc_WB_ID:<40}'")
                     logger.debug(m)
                     fr += f"\n{P2}{m}"
                     success, r = process_budget_category(bdm_wb, self.DC, log_all)
                     if not success:
                         r = (f"{P4}Task Failed: process_budget_category() Workbook: "
-                             f"'{wb_id}'\n{P8}Result: {r}")
+                             f"'{self.dc_WB_ID}'\n{P8}Result: {r}")
                         logger.error(r)
                         fr += r + "\n"
                         continue
                     fr += f"\n{P8}Result: {r}"
                     task = "dc_BDM_WORKBOOK_save()"
-                    m = (f"{P2}Task: {task:30} {wb_index:>2} '{wb_id:<40}'")
+                    m = (f"{P2}Task: {task:30} {str(self.dc_WB_INDEX):>4} "
+                         f"'{self.dc_WB_ID:<40}'")
                     logger.debug(m)
                     fr += f"\n{P2}{m}"
                     success, r = self.dc_BDM_WORKBOOK_save(bdm_wb)
                     if not success:
                         m = (f"{P4}Task Failed: dc_BDM_WORKBOOK_save() Workbook: "
-                             f"'{wb_id}'\n{P8}Result: {m}")
+                             f"'{bdm_wb.wb_id}'\n{P8}Result: {m}")
                         logger.error(m)
                         fr += m + "\n"
                         continue
@@ -1667,17 +1675,13 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             logger.info(f"Start: ...")
             selected_bdm_wb_list : List[BDMWorkbook] = None
             selected_bdm_wb_list = self.process_selected_workbook_input(cmd)
-            if selected_bdm_wb_list is None:
-                m = f"No workbooks selected for processing."
-                logger.warning(f"{m}: {cmd}")
-                return False, m
             result: str = f"Checking {len(selected_bdm_wb_list)} workbooks:"
             r: str = ""
             for bdm_wb in selected_bdm_wb_list:
-                wb_index = self.dc_WORKBOOK_index(bdm_wb.wb_id) 
-                wb_content = bdm_wb.wb_content
+                # Select the current workbook in the Data Context.
+                self.dc_BDM_WORKBOOK = bdm_wb
                 bdm_wb_abs_path = bdm_wb.abs_path()
-                result += f"\n{P2}workbook: {wb_index:>2} '{bdm_wb.wb_id:<40}'"
+                result += f"\n{P2}workbook: {str(self.dc_WB_INDEX):>4} '{bdm_wb.wb_id:<40}'"
                 # Check cmd needs loaded workbooks to check
                 if not bdm_wb.wb_loaded:
                     m = f"wb_name '{bdm_wb.wb_name}' is not loaded, no action taken."
@@ -1689,22 +1693,23 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
                 if cmd[cp.CK_VALIDATE_CATEGORIES]:
                     # Validate the categories in the workbook.
                     task = "validate_budget_categories()"
-                    m = (f"{P2}Task: {task:30} {wb_index:>2} '{bdm_wb.wb_id:<40}'")
+                    m = (f"{P2}Task: {task:30} {str(self.dc_WB_INDEX):>4} "
+                        f"'{bdm_wb.wb_id:<40}'")
                     logger.debug(m)
                     success, r = validate_budget_categories(bdm_wb, self.DC, P4)
                     result += f"\n{r}"
                     continue
-                success: bool = check_sheet_schema(wb_content)
+                success: bool = check_sheet_schema(bdm_wb.wb_content)
                 r = f"Task: check_sheet_schema workbook: Workbook: '{bdm_wb.wb_id}' "
                 if success:
                     result += f"\n{P2}{r}"
                     continue
                 if cmd[cp.CK_FIX_SWITCH]:
                     r = f"Task: check_sheet_columns workbook: Workbook: '{bdm_wb.wb_id}' "
-                    ws = wb_content.active
+                    ws = bdm_wb.wb_content.active
                     success = check_sheet_columns(ws, add_columns=True)
                     if success: 
-                        wb_content.save(bdm_wb_abs_path)
+                        bdm_wb.wb_content.save(bdm_wb_abs_path)
                 result += f"\n{P2}{r}"
                 continue
             return success, result
@@ -1770,19 +1775,23 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
     # ------------------------------------------------------------------------ +
     #region process_workbook_input()
     def process_selected_workbook_input(self, cmd: Dict) -> List[BDMWorkbook]:
-        """Process the workbook input from the command.
+        """Process the workbook input from the command, return a list of BDMWorkbooks.
 
         Arguments:
             cmd (Dict): A BudManCommand object.
 
         Returns:
             List[BDMWorkbook]: A list of BDMWorkbook objects.
+
+        Raises:
+            RuntimeError: If no workbooks are selected.
         """
+        # Extract common command attributes to select workbooks for task action.
         wb_index : int = self.cp_cmd_attr_get(cmd, cp.CK_WB_INDEX, self.dc_WB_INDEX)
         wb_list : List[int] = cmd.get(cp.CK_WB_LIST, [])
         all_wbs : bool = self.cp_cmd_attr_get(cmd, cp.CK_ALL_WBS, self.dc_ALL_WBS)
         selected_bdm_wb_list : List[BDMWorkbook] = []
-        load_workbook:bool = cmd[cp.CK_LOAD_WORKBOOK]
+        load_workbook:bool = self.cp_cmd_attr_get(cmd, cp.CK_LOAD_WORKBOOK, False)
         if all_wbs:
             # If all_wbs is True, process all workbooks in the data context.
             # TODO: list of all workbooks for current wf_key and wf_purpose.
@@ -1795,9 +1804,9 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
         else:
             selected_bdm_wb_list.append(self.dc_WORKBOOK_by_index(wb_index))
         if len(selected_bdm_wb_list) == 0:
-            m = f"No workbooks selected for processing: {cmd}"
+            m = f"No action taken. No workbooks selected for processing: {cmd}"
             logger.warning(m)
-            return selected_bdm_wb_list
+            raise RuntimeError(m)
         for bdm_wb in selected_bdm_wb_list:
             bdm_wb_abs_path = bdm_wb.abs_path()
             if bdm_wb_abs_path is None:

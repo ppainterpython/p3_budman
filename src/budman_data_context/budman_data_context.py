@@ -83,6 +83,7 @@ class BudManDataContext(BudManDataContext_Base):
         self._dc_WB_INDEX : int = -1
         self._dc_ALL_WBS : bool = False
         self._dc_BDM_STORE : BDM_STORE = None
+        self._dc_BDM_STORE_changed : bool = False
         self._dc_WORKBOOK : Optional[WORKBOOK_OBJECT] = None
         self._dc_WORKBOOK_DATA_COLLECTION : WORKBOOK_DATA_COLLECTION = dict()
         self._dc_LOADED_WORKBOOKS : LOADED_WORKBOOK_COLLECTION = dict()
@@ -266,6 +267,15 @@ class BudManDataContext(BudManDataContext_Base):
         self._dc_BDM_STORE = value
 
     @property
+    def dc_BDM_STORE_changed(self) -> bool:
+        """DC-Only: BDM_STORE content has been changed."""
+        return self._dc_BDM_STORE_changed
+    @dc_BDM_STORE_changed.setter
+    def dc_BDM_STORE_changed(self, value: bool) -> None:
+        """DC-Only: Set the BDM_STORE changed status."""
+        self._dc_BDM_STORE_changed = value
+
+    @property
     def dc_BDM_WORKBOOK(self) -> WORKBOOK_OBJECT:
         """Return the current workbook in focus in the DC."""
         if not self.dc_VALID: return None
@@ -274,6 +284,13 @@ class BudManDataContext(BudManDataContext_Base):
     def dc_BDM_WORKBOOK(self, value: WORKBOOK_OBJECT) -> None:
         """Set the current workbook in focus in the DC."""
         if not self.dc_VALID: return None
+        if value is None:
+            self._dc_WORKBOOK = None
+            self.dc_WB_INDEX = -1
+            self.dc_WB_ID = ""
+            self.dc_WB_NAME = ""
+            self.dc_WB_TYPE = ""
+            return
         if not self.dc_WORKBOOK_validate(value):
             raise TypeError(f"dc_WORKBOOK must be a valid WORKBOOK_OBJECT, "
                             f"not a type: '{type(value).__name__}'")
@@ -281,6 +298,7 @@ class BudManDataContext(BudManDataContext_Base):
         self.dc_WB_INDEX = self.dc_WORKBOOK_index(value.wb_id)
         self.dc_WB_NAME = value.wb_name  # Set the wb_name in the DC.
         self.dc_WB_ID = value.wb_id
+        self.dc_WB_TYPE = value.wb_type  # Set the wb_type in the DC.
 
     @property
     def dc_WORKBOOK_DATA_COLLECTION(self) -> WORKBOOK_DATA_COLLECTION:

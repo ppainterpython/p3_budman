@@ -27,7 +27,7 @@ BUDMAN_DEFAULT_FI = "budman.default_fi"
 BUDMAN_DEFAULT_WORKFLOW = "budman.default_workflow"
 BUDMAN_DEFAULT_WORKFLOW_PURPOSE = "budman.default_workflow_purpose"
 BUDMAN_DEFAULT_WORKBOOK_TYPE = "budman.default_workbook_type"
-
+BUDMAN_CMD_HISTORY_FILENAME = "budman.cmd_history_filename"
 # [category_catalog] Table
 CATEGORY_CATALOG = "category_catalog"
 TXN_CATEGORIES_WORKBOOK_FULL_FILENAME = "txn_categories_workbook_full_filename"

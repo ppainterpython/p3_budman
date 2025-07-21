@@ -238,6 +238,15 @@ class BudManDataContext_Binding(BudManDataContext_Base):
         self.DC.dc_BDM_STORE = value
 
     @property
+    def dc_BDM_STORE_changed(self) -> bool:
+        """DC-Binding: BDM_STORE content has been changed."""
+        return self.DC.dc_BDM_STORE_changed
+    @dc_BDM_STORE_changed.setter
+    def dc_BDM_STORE_changed(self, value: bool) -> None:
+        """DC-Binding: Set the BDM_STORE changed status."""
+        self.DC.dc_BDM_STORE_changed = value
+
+    @property
     def dc_BDM_WORKBOOK(self) -> WORKBOOK_OBJECT:
         """Return the current workbook in focus in the DC."""
         if not self.dc_VALID: return None

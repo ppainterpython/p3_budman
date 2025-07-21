@@ -43,14 +43,16 @@ CV_INIT_CMD = "init"
 CV_LOAD_CMD = "load"
 CV_SAVE_CMD = "save"
 CV_SHOW_CMD = "show"
-CV_CHANGE_CMD = "change"
+CV_CHANGE_CMD_NAME = "change"
+CV_CHANGE_CMD_KEY = CV_CHANGE_CMD_NAME + CMD_KEY_SUFFIX
 CV_WORKFLOW_CMD_NAME = "workflow"
 CV_WORKFLOW_CMD_KEY = CV_WORKFLOW_CMD_NAME + CMD_KEY_SUFFIX
 CV_APP_CMD_NAME = "app"
 CV_APP_CMD_KEY = CV_APP_CMD_NAME + CMD_KEY_SUFFIX
 
 # Known CK_SUBCMD_KEY and CK_SUBCMD_NAME values for the BudManViewModel.
-CV_CATEGORIZATION_SUBCMD = "categorization"
+CV_CATEGORIZATION_SUBCMD_NAME = "categorization"
+CV_CATEGORIZATION_SUBCMD_KEY = CV_WORKFLOW_CMD_KEY + "_" + CV_CATEGORIZATION_SUBCMD_NAME
 CV_INTAKE_SUBCMD_NAME = "intake"
 CV_INTAKE_SUBCMD_KEY = CV_WORKFLOW_CMD_KEY + "_" + CV_INTAKE_SUBCMD_NAME
 CV_CHECK_SUBCMD_NAME = "check"
@@ -63,6 +65,8 @@ CV_RELOAD_SUBCMD_KEY = CV_APP_CMD_KEY + "_" + CV_RELOAD_SUBCMD_NAME
 CV_LOG_SUBCMD = "log"
 CV_BUDGET_CATEGORIES_SUBCMD = "BUDGET_CATEGORIES"
 CV_TASK_SUBCMD = "task"
+CV_WORKBOOK_SUBCMD_NAME = "workbook"
+CV_WORKBOOK_SUBCMD_KEY = CV_CHANGE_CMD_KEY + "_" + CV_WORKBOOK_SUBCMD_NAME
 
 # Argument attribute keys, for any cmd
 CK_PARSE_ONLY = "parse_only"
@@ -87,21 +91,23 @@ CK_WB_REF = "wb_ref"
 CK_WB_INFO = "wb_info"
 CK_WF_TASK = "wf_task"
 
-# subcmd_name CV_DELETE_SUBCMD constants
+# subcmd_name CV_CHANGE_CMD argument constants
+CK_WB_TYPE = CK_WB_TYPE
+CK_WF_KEY = CK_WF_KEY
+# subcmd_name CV_DELETE_SUBCMD argument constants
 CK_DELETE_TARGET = "delete_target"
-
-# subcmd_name BUDGET_CATEGORIES constants
+# subcmd_name BUDGET_CATEGORIES argument constants
 CK_CAT_LIST = "cat_list"
 CK_LEVEL = "level"
-# subcmd_name CV_TASK_SUBCMD constants 
+# subcmd_name CV_TASK_SUBCMD argument constants
 CK_TASK_ARGS = "task_args"
 CK_TASK_NAME = "task_name"
-# subcmd_name CV_LOG_SUBCMD constants 
+# subcmd_name CV_LOG_SUBCMD argument constants
 CK_HANDLER_NAME = "handler_name"
 CK_LIST_SWITCH = "list_switch" 
 CK_LEVEL_VALUE = "level_value"
 CK_ROLLOVER_SWITCH = "rollover_switch"
-# subcmd_name CV_RELOAD_SUBCMD constants
+# subcmd_name CV_RELOAD_SUBCMD argument constants
 CK_RELOAD_TARGET = "reload_target"
 CV_CATEGORY_MAP = bdm.CATEGORY_MAP
 CV_FI_WORKBOOK_DATA_COLLECTION = bdm.FI_WORKBOOK_DATA_COLLECTION

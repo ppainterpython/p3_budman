@@ -215,6 +215,17 @@ class BudManDataContext_Base(ABC):
 
     @property
     @abstractmethod
+    def dc_BDM_STORE_changed(self) -> bool:
+        """BDM_STORE content has been changed."""
+        pass
+    @dc_BDM_STORE_changed.setter
+    @abstractmethod
+    def dc_BDM_STORE_changed(self, value: bool) -> None:
+        """Set the BDM_STORE changed status."""
+        pass
+
+    @property
+    @abstractmethod
     def dc_BDM_WORKBOOK(self) -> WORKBOOK_OBJECT:
         """Return the current workbook in focus in the DC."""
         pass

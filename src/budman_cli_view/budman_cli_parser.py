@@ -14,6 +14,8 @@ import p3_utils as p3u, p3logging as p3l
 import cmd2, argparse
 from cmd2 import (Cmd2ArgumentParser, with_argparser)
 # local modules and packages
+from budman_settings import *
+from budman_settings.budman_settings_constants import BUDMAN_CMD_HISTORY_FILENAME
 import budman_command_processor.budman_cp_namespace as cp
 import budman_namespace.design_language_namespace as bdm
                              
@@ -31,9 +33,9 @@ class BudManCLIParser():
     class. It uses the cmd2 library to create a command line interface for the
     BudgetModel application.
     """
-    def __init__(self,app_name : str = "not-set") -> None:
+    def __init__(self,settings: BudManSettings) -> None:
         """Initialize the BudManCLIParser class."""
-        self.app_name = app_name
+        self.app_name = settings[APP_NAME]
         self.init_cmd = cmd2.Cmd2ArgumentParser()
         self.show_cmd = cmd2.Cmd2ArgumentParser()
         self.load_cmd = cmd2.Cmd2ArgumentParser()
@@ -42,14 +44,14 @@ class BudManCLIParser():
         self.workflow_cmd = cmd2.Cmd2ArgumentParser()
         self.change_cmd = cmd2.Cmd2ArgumentParser()
         self.app_cmd = cmd2.Cmd2ArgumentParser()
-        self.init_cmd_parser_setup(app_name)
-        self.show_cmd_parser_setup()
-        self.load_cmd_parser_setup()
-        self.save_cmd_parser_setup()
-        self.val_cmd_parser_setup()
-        self.workflow_cmd_parser_setup()
-        self.change_cmd_parser_setup()
-        self.app_cmd_parser_setup()
+        self.init_cmd_parser_setup(self.app_name)
+        self.show_cmd_parser_setup(self.app_name)
+        self.load_cmd_parser_setup(self.app_name)
+        self.save_cmd_parser_setup(self.app_name)
+        self.val_cmd_parser_setup(self.app_name)
+        self.workflow_cmd_parser_setup(self.app_name)
+        self.change_cmd_parser_setup(self.app_name)
+        self.app_cmd_parser_setup(self.app_name)
     #endregion class BudManCLIParser initialization
     # ------------------------------------------------------------------------ +
     #region Command Parser Setup Methods
@@ -139,20 +141,26 @@ class BudManCLIParser():
             # change subcommands: workbook, wb_ref
             subparsers = parser.add_subparsers()
             # change workbooks subcommand
-            wb_type_subcmd_parser = self.add_WORKBOOKS_subparser(subparsers)
-            wb_type_subcmd_parser.set_defaults(
-                change_cmd="workbooks", # old way
-                cmd_key="change_cmd",   # new way
-                cmd_name="change", 
-                subcmd_name="wb_type",
-                subcmd_key="change_cmd_wb_type")
+            workbook_subcmd_parser = self.add_WORKBOOKS_subparser(subparsers)
+            workbook_subcmd_parser.set_defaults(
+                cmd_key=cp.CV_CHANGE_CMD_KEY,   # new way
+                cmd_name=cp.CV_CHANGE_CMD_NAME,   
+                subcmd_name=cp.CV_WORKBOOK_SUBCMD_NAME,
+                subcmd_key=cp.CV_WORKBOOK_SUBCMD_KEY)
             wb_type_choices = bdm.VALID_WB_TYPE_VALUES
-            wb_type_subcmd_parser.add_argument(
-                "-t", "--wb_type",nargs="?", dest="wb_type", 
+            workbook_subcmd_parser.add_argument(
+                "-t", f"--{cp.CK_WB_TYPE}",nargs="?", dest=cp.CK_WB_TYPE, 
                 default = None,
                 choices=wb_type_choices,
                 help="Specify the workbook type to apply.")
-            self.add_common_args(wb_type_subcmd_parser)
+            wf_choices = bdm.VALID_BDM_WORKFLOWS
+            workbook_subcmd_parser.add_argument(
+                "-w", "--wf_key", nargs="?", dest="wf_key", 
+                default = None,
+                choices=wf_choices,
+                help="Specify the workflow key to apply.")
+            self.add_common_args(workbook_subcmd_parser)
+            wf_choices = bdm.VALID_BDM_WORKFLOWS
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise
@@ -204,10 +212,11 @@ class BudManCLIParser():
             logger.exception(p3u.exc_err_msg(e))
             raise
 
-    def show_cmd_parser_setup(self) -> None:
+    def show_cmd_parser_setup(self,app_name : str = "not-set") -> None:
         """Setup the command line argument parsers for the show command."""
         try:
             parser = self.show_cmd
+            parser.prog = app_name
             # show subcommands: datacontext, workbooks, fin_inst, workflows, and workbooks
             subparsers = self.show_cmd.add_subparsers()
 
@@ -300,10 +309,11 @@ class BudManCLIParser():
             logger.exception(p3u.exc_err_msg(e))
             raise
 
-    def load_cmd_parser_setup(self) -> None:
+    def load_cmd_parser_setup(self,app_name : str = "not-set") -> None:
         """Setup the command line argument parsers for the load command."""
         try:
             parser = self.load_cmd
+            parser.prog = app_name
             # Load subcommands: BDM_STORE, workbooks, check_register
             subparsers = parser.add_subparsers()
 
@@ -336,11 +346,12 @@ class BudManCLIParser():
             logger.exception(p3u.exc_err_msg(e))
             raise
 
-    def save_cmd_parser_setup(self) -> None:
+    def save_cmd_parser_setup(self,app_name : str = "not-set") -> None:
         """Save Command: parser setup"""
         try:
             # Save subcommands: BDM_STORE, workbooks
             parser = self.save_cmd
+            parser.prog = app_name
             subparsers = parser.add_subparsers(
                 dest="save_cmd")
             # subcommand save BDM_STORE
@@ -367,11 +378,12 @@ class BudManCLIParser():
             logger.exception(p3u.exc_err_msg(e))
             raise
 
-    def val_cmd_parser_setup(self) -> None:
+    def val_cmd_parser_setup(self,app_name : str = "not-set") -> None:
         """Examine or Set values in the application settings and data."""
         try:
             self.val_cmd_subparsers = self.val_cmd.add_subparsers(
                 dest="val_cmd")
+            self.val_cmd.prog = app_name
             # val parse_only subcommand
             self.val_po_subcmd_parser = self.val_cmd_subparsers.add_parser(
                 "parse_only",
@@ -419,7 +431,7 @@ class BudManCLIParser():
             logger.exception(p3u.exc_err_msg(e))
             raise
 
-    def workflow_cmd_parser_setup(self) -> None:
+    def workflow_cmd_parser_setup(self,app_name : str = "not-set") -> None:
         """The workflow command is used to perform tasks supported by the
         different workflows configured in Budget Manager. Tasks are functional 
         behaviors working with the available workbooks."""
@@ -437,7 +449,6 @@ class BudManCLIParser():
                 aliases=["cat", "CAT", "c"], 
                 help="Apply Categorization workflow.")
             categorization_parser.set_defaults(
-                workflow_cmd="categorization",
                 cmd_key="workflow_cmd",   # new way
                 cmd_name="workflow", 
                 subcmd_name="categorization",
@@ -494,7 +505,6 @@ class BudManCLIParser():
                 aliases=["t"], 
                 help="Task: Perform a specific workflow task on workbooks.")
             task_parser.set_defaults(
-                workflow_cmd="wf_task",
                 cmd_key="workflow_cmd",   # new way
                 cmd_name="workflow", 
                 subcmd_name="task",
