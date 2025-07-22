@@ -42,7 +42,8 @@ CK_CMD_EXEC_FUNC = "cmd_exec_func"
 CV_INIT_CMD = "init"
 CV_LOAD_CMD = "load"
 CV_SAVE_CMD = "save"
-CV_SHOW_CMD = "show"
+CV_SHOW_CMD_NAME = "show"
+CV_SHOW_CMD_KEY = CV_SHOW_CMD_NAME + CMD_KEY_SUFFIX
 CV_CHANGE_CMD_NAME = "change"
 CV_CHANGE_CMD_KEY = CV_CHANGE_CMD_NAME + CMD_KEY_SUFFIX
 CV_WORKFLOW_CMD_NAME = "workflow"
@@ -65,8 +66,9 @@ CV_RELOAD_SUBCMD_KEY = CV_APP_CMD_KEY + "_" + CV_RELOAD_SUBCMD_NAME
 CV_LOG_SUBCMD = "log"
 CV_BUDGET_CATEGORIES_SUBCMD = "BUDGET_CATEGORIES"
 CV_TASK_SUBCMD = "task"
-CV_WORKBOOK_SUBCMD_NAME = "workbook"
-CV_WORKBOOK_SUBCMD_KEY = CV_CHANGE_CMD_KEY + "_" + CV_WORKBOOK_SUBCMD_NAME
+CV_WORKBOOKS_SUBCMD_NAME = "workbooks"
+CV_CHANGE_WORKBOOKS_SUBCMD_KEY = CV_CHANGE_CMD_KEY + "_" + CV_WORKBOOKS_SUBCMD_NAME
+CV_SHOW_WORKBOOKS_SUBCMD_KEY = CV_SHOW_CMD_KEY + "_" + CV_WORKBOOKS_SUBCMD_NAME
 
 # Argument attribute keys, for any cmd
 CK_PARSE_ONLY = "parse_only"
@@ -91,9 +93,12 @@ CK_WB_REF = "wb_ref"
 CK_WB_INFO = "wb_info"
 CK_WF_TASK = "wf_task"
 
+# subcmd_name CV_WORKBOOK_SUBCMD_NAME argument constants
+CK_BDM_TREE = "bdm_tree"
 # subcmd_name CV_CHANGE_CMD argument constants
-CK_WB_TYPE = CK_WB_TYPE
-CK_WF_KEY = CK_WF_KEY
+CK_NEW_WB_TYPE = "new_wb_type"
+CK_NEW_WF_KEY = "new_wf_key"
+CK_NEW_WF_PURPOSE = "new_wf_purpose"
 # subcmd_name CV_DELETE_SUBCMD argument constants
 CK_DELETE_TARGET = "delete_target"
 # subcmd_name BUDGET_CATEGORIES argument constants

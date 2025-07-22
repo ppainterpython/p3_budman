@@ -145,20 +145,26 @@ class BudManCLIParser():
             workbook_subcmd_parser.set_defaults(
                 cmd_key=cp.CV_CHANGE_CMD_KEY,   # new way
                 cmd_name=cp.CV_CHANGE_CMD_NAME,   
-                subcmd_name=cp.CV_WORKBOOK_SUBCMD_NAME,
-                subcmd_key=cp.CV_WORKBOOK_SUBCMD_KEY)
+                subcmd_name=cp.CV_WORKBOOKS_SUBCMD_NAME,
+                subcmd_key=cp.CV_CHANGE_WORKBOOKS_SUBCMD_KEY)
             wb_type_choices = bdm.VALID_WB_TYPE_VALUES
             workbook_subcmd_parser.add_argument(
-                "-t", f"--{cp.CK_WB_TYPE}",nargs="?", dest=cp.CK_WB_TYPE, 
+                "-t", f"--{cp.CK_NEW_WB_TYPE}",nargs="?", dest=cp.CK_NEW_WB_TYPE, 
                 default = None,
                 choices=wb_type_choices,
                 help="Specify the workbook type to apply.")
             wf_choices = bdm.VALID_BDM_WORKFLOWS
             workbook_subcmd_parser.add_argument(
-                "-w", "--wf_key", nargs="?", dest="wf_key", 
+                "-w", f"--{cp.CK_NEW_WF_KEY}", nargs="?", dest=cp.CK_NEW_WF_KEY, 
                 default = None,
                 choices=wf_choices,
                 help="Specify the workflow key to apply.")
+            purpose_choices = bdm.VALID_WF_PURPOSE_VALUES
+            workbook_subcmd_parser.add_argument(
+                "-p", f"--{cp.CK_NEW_WF_PURPOSE}", nargs="?", dest=cp.CK_NEW_WF_PURPOSE , 
+                default = None,
+                choices=purpose_choices,
+                help="Specify the workflow purpose to apply.")
             self.add_common_args(workbook_subcmd_parser)
             wf_choices = bdm.VALID_BDM_WORKFLOWS
         except Exception as e:
@@ -291,17 +297,17 @@ class BudManCLIParser():
 
             # show workbooks subcommand
             wb_subcmd_parser  = subparsers.add_parser(
-                "workbooks",
+                cp.CV_WORKBOOKS_SUBCMD_NAME,
                 aliases=["wb", "WB"], 
                 help="Show workbook information.")
             wb_subcmd_parser.set_defaults(
-                cmd_key="show_cmd",   # new way
-                cmd_name="show", 
-                subcmd_name="workbooks",
-                subcmd_key="show_cmd_workbooks")
-            # self.add_wb_index_argument(wb_subcmd_parser)
+                cmd_key=cp.CV_SHOW_CMD_KEY,   # new way
+                cmd_name=cp.CV_SHOW_CMD_NAME, 
+                subcmd_name=cp.CV_WORKBOOKS_SUBCMD_NAME,
+                subcmd_key=cp.CV_SHOW_WORKBOOKS_SUBCMD_KEY)
+            self.add_wb_index_argument(wb_subcmd_parser)
             wb_subcmd_parser.add_argument(
-                "-t", "--bdm_tree", 
+                "-t", f"--{cp.CK_BDM_TREE}", 
                 action="store_true",
                 help="Show the BDM tree hierarchy.")
             self.add_common_args(wb_subcmd_parser)

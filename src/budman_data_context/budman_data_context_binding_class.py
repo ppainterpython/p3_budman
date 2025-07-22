@@ -322,6 +322,11 @@ class BudManDataContext_Binding(BudManDataContext_Base):
         """DC_Binding: Validate the provided WF_KEY."""
         return self.DC.dc_WF_KEY_validate(wf_key)
     
+    def dc_WF_PURPOSE_FOLDER_MAP(self, wf_key: str, wf_purpose:str) -> bool:
+        """DC_Binding: Return the wf_folder_id from the provided WF_KEY & WF_PURPOSE.
+        """
+        return self.DC.dc_WF_PURPOSE_FOLDER_MAP(wf_key, wf_purpose)
+
     def dc_WF_PURPOSE_validate(self, wf_purpose: str) -> bool:
         """DC_Binding: Validate the provided WF_PURPOSE."""
         return self.DC.dc_WF_PURPOSE_validate(wf_purpose)
@@ -348,15 +353,6 @@ class BudManDataContext_Binding(BudManDataContext_Base):
             int: Int value of valid wb_index, or -1.
         """
         return self.DC.dc_WB_INDEX_validate(wb_index)
-
-    def dc_WB_REF_validate(self, wb_ref: str) -> bool:
-        """DC_Binding: Validate the provided workbook reference."""
-        return self.DC.dc_WB_REF_validate(wb_ref)
-
-    def dc_WB_REF_resolve(self, wf_key : str) -> Tuple[bool, int, str]: 
-        """DC_Binding: Return True if the wf_key is valid."""
-        # Bind through the DC (data_context) object.
-        return self.DC.dc_WB_REF_resolve(wf_key)
 
     def dc_WORKBOOK_DATA_COLLECTION_validate(self) -> bool:
         """Validate the type of WORKBOOK_DATA_COLLECTION."""

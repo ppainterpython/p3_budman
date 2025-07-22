@@ -368,6 +368,12 @@ class BudManDataContext(BudManDataContext_Base):
         if not self.dc_VALID: return False
         return wf_key in self.dc_BDM_STORE[BDM_WF_COLLECTION]
 
+    def dc_WF_PURPOSE_FOLDER_MAP(self, wf_key: str, wf_purpose:str) -> bool:
+        """Abstract: Return the wf_folder_id from the provided WF_KEY & WF_PURPOSE.
+        For subclass override, no DC-Only view into the Workflow Collection yet.
+        """
+        pass
+
     def dc_WF_PURPOSE_validate(self, wf_purpose: str) -> bool:
         """DC-Only: Validate the provided WF_PURPOSE."""
         return wf_purpose in VALID_WF_PURPOSE_VALUES
@@ -422,88 +428,6 @@ class BudManDataContext(BudManDataContext_Base):
             logger.error(m)
             return False
 
-    def dc_WB_REF_validate(self, wb_ref: str) -> bool:
-        """DC-Only: Validate the provided workbook reference."""
-        try:
-            wb_all, wb_index, wb = self.dc_WB_REF_resolve(wb_ref)
-            if wb_all or int(wb_index) >= 0 or wb is not None:
-                # If wb_all is True, or we have a valid index and wb.
-                return True
-            return False
-        except Exception as e:
-            m = p3u.exc_err_msg(e)
-            logger.error(m)
-            raise
-    
-    def dc_WB_REF_resolve(self, wb_ref:str|int) -> Tuple[bool,int, str]:
-        """DC-Only: Resolve a wb_ref to valid wb_index, wb_name, or ALL_KEY.
-
-        Args:
-            wb_ref (str|int): The wb_ref to validate and resolve. Expecting
-            an int, str with a digit, a str with ALL_KEY, or a str with 
-            wb_id, wb_name or wb_url.
-
-        Returns:
-            Tuple[wb_all:bool, wb_index:int, WORKBOOK_OBJECT: wb]: 
-                (True, -1, None) if wb_ref is ALL_KEY. 
-                (False, wb_index, wb) for a valid index and its workbook.
-                (False, wb_index, wb) matched wb_id, wb_name or wb_url.
-                (False, -1, None) if wb_ref is invalid match.
-        
-        Raises:
-            TypeError: if wb_ref is not a str or int.
-        """
-        try:
-            # Resolve the wb_ref to a valid index and name. Without knowing
-            # the type of the workbook in reference.
-            # Returns: Tuple[wb_all:bool, wb_index:int, wb_name:str]:
-            if wb_ref is None:
-                logger.error("wb_ref is None. Cannot resolve.")
-                return False, -1, None
-            # wb_ref is intended to be flexible for the user. It can be:
-            # - an integer value representing a workbook index
-            # - a string of digits convertible to int workbook index
-            # - a string 'all' representing all workbooks
-            # - a string representing a workbook id, name, or url
-
-            # Process integer wb_index
-            wi_int = self.dc_WB_INDEX_validate_int(wb_ref)
-            success : bool = False
-            result : Optional[WORKBOOK_OBJECT] | Optional[str] = None
-            all_wbs : bool = False
-            if wi_int >= 0:
-                # BUDMAN_RETURN??
-                wb = self.dc_WORKBOOK_by_index(wi_int)
-                if wb is not None:
-                    return all_wbs, wi_int, wb 
-                return False, -1, None
-            # Match ALL_KEY
-            if isinstance(wb_ref, str) and wb_ref.strip() == ALL_KEY:
-                return True, -1, None
-            # If not a str, then invalid from this point.
-            if not isinstance(wb_ref, str):
-                return True, -1, None
-            # Check for wb_id
-            if wb_ref in self.dc_WORKBOOK_DATA_COLLECTION:
-                wb = self.dc_WORKBOOK_DATA_COLLECTION[wb_ref]
-                wb_index = self.dc_WORKBOOK_index(wb_ref)
-                return False, wb_index, wb
-            # Check for wb_name
-            wb = self.dc_WORKBOOK_find(WB_NAME, wb_ref)
-            if wb is not None:
-                wb_index = self.dc_WORKBOOK_index(wb_ref)
-                return False, wb_index, wb
-            # Check for wb_url
-            wb = self.dc_WORKBOOK_find(WB_URL, wb_ref)
-            if wb is not None:
-                wb_index = self.dc_WORKBOOK_index(wb_ref)
-                return False, wb_index, wb
-            return False, -1, None
-        except Exception as e:
-            m = p3u.exc_err_msg(e)
-            logger.error(m)
-            raise
-    
     def dc_WORKBOOK_DATA_COLLECTION_validate(self) -> bool:
         """Validate the type of WORKBOOK_DATA_COLLECTION."""
         if not self.dc_VALID: return False

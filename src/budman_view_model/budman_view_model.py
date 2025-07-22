@@ -335,11 +335,6 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
         try:
             st = p3u.start_timer()
             logger.info(f"BizEVENT: View Model setup for '{self.app_name}'")
-            # Check if the budget domain model is initialized.
-            # bdm = self.initialize_model(load_user_store=load_user_store)
-            # Create/initialize a BDMWorkingData data_context 
-            # self.data_context = BDMWorkingData(self.model)
-            # self.dc_initialize()
             # Initialize the command map.
             # TODO: binding for BudManCommandProcessor in the future,
             #       for now it is built in to the View Model.
@@ -422,17 +417,17 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
                 "load_cmd_BDM_STORE": self.BDM_STORE_load_cmd,
                 "save_cmd_BDM_STORE": self.BDM_STORE_save_cmd,
                 "show_cmd_DATA_CONTEXT": self.DATA_CONTEXT_show_cmd,
-                "show_cmd_workbooks": self.WORKBOOKS_show_cmd,
+                cp.CV_SHOW_WORKBOOKS_SUBCMD_KEY: self.WORKBOOKS_show_cmd,
                 "load_cmd_workbooks": self.WORKBOOKS_load_cmd,
                 "save_cmd_workbooks": self.WORKBOOKS_save_cmd,
-                cp.CV_WORKBOOK_SUBCMD_KEY: self.CHANGE_cmd,
-                "workflow_cmd_categorization": self.WORKFLOW_categorization_cmd,
-                "workflow_cmd_apply": self.WORKFLOW_apply_cmd,
-                "workflow_cmd_check": self.WORKFLOW_check_cmd,
+                cp.CV_CHANGE_WORKBOOKS_SUBCMD_KEY: self.CHANGE_cmd,
+                cp.CV_CATEGORIZATION_SUBCMD_KEY: self.WORKFLOW_categorization_cmd,
+                cp.CV_APPLY_SUBCMD_KEY: self.WORKFLOW_apply_cmd,
+                cp.CV_CHECK_SUBCMD_KEY: self.WORKFLOW_check_cmd,
                 cp.CV_INTAKE_SUBCMD_KEY: self.WORKFLOW_intake_cmd,
-                "show_cmd": self.SHOW_cmd,
-                "change_cmd": self.CHANGE_cmd,
-                "app_cmd": self.APP_cmd,
+                cp.CV_SHOW_CMD_KEY: self.SHOW_cmd,
+                cp.CV_CHANGE_CMD_KEY: self.CHANGE_cmd,
+                cp.CV_APP_CMD_KEY: self.APP_cmd,
             }
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
@@ -1006,6 +1001,7 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             # Save the BDM_STORE file.
             bdm_url = self.dc_BDM_STORE[BDM_URL]
             bsm_BDM_STORE_url_put(bdm_dict, bdm_url)
+            self.dc_BDM_STORE_changed = False
             logger.info(f"Saved BDM_STORE url: {bdm_url}")
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             return True, bdm_dict
@@ -1041,8 +1037,11 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             # Load the BDM_STORE file.
             budman_store_dict = bsm_BDM_STORE_url_get(bdm_url)
             self.dc_BDM_STORE = budman_store_dict
-            # self.dc_initialize()
+            # Now refresh the model state to reflect the BDM_STORE content.
+            model_refresh: BudgetDomainModel = self.model.bdm_initialize()
+            view_model_refresh: BudManViewModel = self.dc_initialize()
             self._BDM_STORE_loaded = True
+            self.dc_BDM_STORE_changed = False
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             return True, budman_store_dict
         except Exception as e:
@@ -1122,6 +1121,7 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
         try:
             st = p3u.start_timer()
             logger.debug(f"Start: ...")
+            result: str = "no result"
             if cmd[cp.CK_SUBCMD_NAME] == cp.CV_BUDGET_CATEGORIES_SUBCMD:
                 # Show the budget categories.
                 cat_list = self.cp_cmd_attr_get(cmd, cp.CK_CAT_LIST, [])
@@ -1158,9 +1158,39 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             root error is contained in the exception message.
         """
         try:
+            st = p3u.start_timer()
             logger.debug(f"Start: ...")
-            result = output_bdm_tree(self.DC)
-            return True, result
+            selected_bdm_wb_list : List[BDMWorkbook] = None
+            selected_bdm_wb_list = self.process_selected_workbook_input(cmd)
+            fr: str = f"Show {len(selected_bdm_wb_list)} workbooks:"
+            bdm_tree : bool = self.cp_cmd_attr_get(cmd, cp.CK_BDM_TREE, False)
+            # Process the intended workbooks.
+            if bdm_tree:
+                result = output_bdm_tree(self.DC)
+                fr += f"\n{P2}BDM Tree:\n{result}"
+            else:
+                # Show the workbooks in the selected_bdm_wb_list.
+                # Prepare the output result
+                fr += f"\n{P2}{FI_KEY:10} {WB_INDEX:6} {WB_ID:50} {WB_TYPE:15} "
+                fr += f"{WB_FILETYPE:15} {WF_KEY:23} {WF_PURPOSE:10} {WF_FOLDER:20} "
+                fr += f"{WB_CONTENT:30}"
+                for wb in selected_bdm_wb_list:
+                    wb_status: str = "found"
+                    check = wb.check_url()
+                    if not check:
+                        wb_status = "not found"
+                    elif wb.wb_loaded:
+                        wb_status = wb.get_wb_content_repr()
+                    else:
+                        wb_status = "unloaded"
+                    wb_index = self.dc_WORKBOOK_index(wb.wb_id)
+                    fr += f"\n{P2}{wb.fi_key:10}  {str(wb_index):>4}    {wb.wb_id:50} "
+                    fr += f"{wb.wb_type:15} {wb.wb_filetype:15} {wb.wf_key:23} "
+                    fr += f"{wb.wf_purpose:10} {wb.wf_folder:20} {wb_status:30}"
+                if len(selected_bdm_wb_list) == 1:
+                        self.dc_BDM_WORKBOOK = wb
+            logger.info(f"Complete: {p3u.stop_timer(st)}")
+            return True, fr
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
@@ -1342,7 +1372,7 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
         """
         try:
             logger.info(f"Start: ...")
-            if cmd[cp.CK_SUBCMD_NAME] == cp.CV_WORKBOOK_SUBCMD_NAME:
+            if cmd[cp.CK_SUBCMD_NAME] == cp.CV_WORKBOOKS_SUBCMD_NAME:
                 selected_bdm_wb_list : List[BDMWorkbook] = None
                 selected_bdm_wb_list = self.process_selected_workbook_input(cmd)
                 result: str = f"Changing {len(selected_bdm_wb_list)} workbooks:"
@@ -1352,17 +1382,31 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
                     self.dc_BDM_WORKBOOK = bdm_wb
                     result += f"\n{P2}workbook: {str(self.dc_WB_INDEX):>4} '{bdm_wb.wb_id:<40}'"
                     # Apply the include argument switches to the selected workbook.
-                    wb_type = self.cp_cmd_attr_get(cmd, cp.CK_WB_TYPE, None)
-                    if wb_type is not None:
-                        bdm_wb.wb_type = wb_type
-                        result += (f"{P4}Changed workbook type to: '{wb_type}' for "
-                                f"wb_index: {str(self.dc_WB_INDEX):>4} wb_id: '{bdm_wb.wb_id}'")
+                    new_wb_type = self.cp_cmd_attr_get(cmd, cp.CK_NEW_WB_TYPE, None)
+                    if new_wb_type is not None:
+                        bdm_wb.wb_type = new_wb_type
+                        result += (f"\n{P4}Changed wb_type: '{new_wb_type}' for "
+                                f"wb_index: {str(self.dc_WB_INDEX):>4}' wb_id: '{bdm_wb.wb_id}'")
                         self.dc_BDM_STORE_changed = True
-                    wf_key = self.cp_cmd_attr_get(cmd, cp.CK_WF_KEY, None)
-                    if wf_key is not None:
-                        bdm_wb.wf_key = wf_key
-                        result += (f"{P4}Changed workflow key to: '{wf_key}' for "
-                                f"wb_index: {str(self.dc_WB_INDEX):>4} wb_id: '{bdm_wb.wb_id}'")
+                    new_wf_key = self.cp_cmd_attr_get(cmd, cp.CK_NEW_WF_KEY, None)
+                    if new_wf_key is not None:
+                        bdm_wb.wf_key = new_wf_key
+                        result += (f"\n{P4}Changed wf_key: '{new_wf_key}' for "
+                                f"wb_index: '{str(self.dc_WB_INDEX):>4}' wb_id: '{bdm_wb.wb_id}'")
+                        self.dc_BDM_STORE_changed = True
+                    new_wf_purpose = self.cp_cmd_attr_get(cmd, cp.CK_NEW_WF_PURPOSE, None)
+                    if new_wf_purpose is not None:
+                        wf_key = new_wf_key or bdm_wb.wf_key
+                        folder_id = self.dc_WF_PURPOSE_FOLDER_MAP(wf_key, new_wf_purpose)
+                        if folder_id != bdm_wb.wf_folder_id:
+                            bdm_wb.wf_folder_id = folder_id
+                            m = f", wf_folder_id: '{folder_id}' "
+                        else:
+                            m = ""
+                        bdm_wb.wf_purpose = new_wf_purpose
+                        result += (f"\n{P4}Changed wf_purpose: '{new_wf_purpose}'"
+                                   f" {m} for wb_index: "
+                                f"'{str(self.dc_WB_INDEX):>4}' wb_id: '{bdm_wb.wb_id}'")
                         self.dc_BDM_STORE_changed = True
                     self.dc_BDM_WORKBOOK = bdm_wb
                 return True, result
@@ -1847,11 +1891,10 @@ class BudManViewModel(BudManDataContext_Binding, Model_Binding): # future ABC fo
             result += f"{WB_TYPE:15}{P2}{WB_CONTENT:30}"
             # print(result)
             result += "\n"
-            wb : BDMWorkbook = None
+            bdm_wb : BDMWorkbook = None
             if wdc_count > 0:
-                for i, wb in enumerate(wdc.values()):
-                    wb.wb_loaded = wb.wb_id in lwbc
-                    r = f"{wb.wb_index_display_str(i)}"
+                for i, bdm_wb in enumerate(wdc.values()):
+                    r = f"{bdm_wb.wb_index_display_str(i)}"
                     result += r + "\n"
             logger.info(f"Complete:")
             return True, result

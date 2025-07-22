@@ -52,85 +52,85 @@ class BudManDataContext_Base(ABC):
     #region BudManDataContext_Base Properties (abstract) 
     @property
     def dc_id(self) -> str:
-        """Identify the data context implementation."""
+        """Abstract: Identify the data context implementation."""
         pass
     @dc_id.setter
     def dc_id(self, value: str) -> None:
-        """Set the identifier for the data context implementation."""
+        """Abstract: Set the identifier for the data context implementation."""
         pass
 
     @property
     @abstractmethod
     def dc_VALID(self) -> bool:
-        """Indicates whether the data context is valid."""
+        """Abstract: Indicates whether the data context is valid."""
         pass
     
     @property
     @abstractmethod
     def dc_INITIALIZED(self) -> bool:
-        """Indicates whether the data context has been initialized."""
+        """Abstract: Indicates whether the data context has been initialized."""
         pass
     @dc_INITIALIZED.setter
     @abstractmethod
     def dc_INITIALIZED(self, value: bool) -> None:
-        """Set the initialized state of the data context."""
+        """Abstract: Set the initialized state of the data context."""
         pass
 
     @property
     @abstractmethod
     def dc_FI_OBJECT(self) -> str:
-        """Return the FI_OBJECT of the current Financial Institution. """
+        """Abstract: Return the FI_OBJECT of the current Financial Institution. """
         pass
     @dc_FI_OBJECT.setter
     @abstractmethod
     def dc_FI_OBJECT(self, value: str) -> None:
-        """Set the FI_OBJECT of the current Financial Institution."""
+        """Abstract: Set the FI_OBJECT of the current Financial Institution."""
         pass
 
     @property
     @abstractmethod
     def dc_FI_KEY(self) -> str:
-        """Return the FI_KEY of the current Financial Institution.
+        """Abstract: Return the FI_KEY of the current Financial Institution.
         Current means that the other data in the DC is for this FI.
         """
         pass
     @dc_FI_KEY.setter
     @abstractmethod
     def dc_FI_KEY(self, value: str) -> None:
-        """Set the FI_KEY of the current Financial Institution."""
+        """Abstract: Set the FI_KEY of the current Financial Institution."""
         pass
 
     @property
     @abstractmethod
     def dc_WF_KEY(self) -> str:
-        """Return the WF_KEY for the current workflow of interest.
+        """Abstract: Return the WF_KEY for the current workflow of interest.
         Current means that the other data in the DC is for this workflow.
         """
         pass
     @dc_WF_KEY.setter
     @abstractmethod
     def dc_WF_KEY(self, value: str) -> None:
-        """Set the WF_KEY for the workflow."""
+        """Abstract: Set the WF_KEY for the workflow."""
         pass
 
     @property
     @abstractmethod
     def dc_WF_PURPOSE(self) -> str:
-        """Return the WF_KEY for the current workflow of interest.
+        """Abstract: Return the WF_KEY for the current workflow of interest.
         Current means that the other data in the DC is for this workflow.
         """
         pass
     @dc_WF_PURPOSE.setter
     @abstractmethod
     def dc_WF_PURPOSE(self, value: str) -> None:
-        """Set the WF_KEY for the workflow."""
+        """Abstract: Set the WF_KEY for the workflow."""
         pass
 
     @property
     @abstractmethod
     def dc_WB_ID(self) -> str:
-        """Return the current WB_REF workbook reference.
-        
+        """Abstract: Return the current WB_REF workbook reference.
+
         Current means the wb_ref for the last operation on a named or referenced
         workbook. The other data in the DC is updated in a similar fashion.
         After an operation on 'all' workbooks, the dc_WB_REF is set to 'all'.
@@ -145,7 +145,7 @@ class BudManDataContext_Base(ABC):
     @property
     @abstractmethod
     def dc_WB_TYPE(self) -> str:
-        """Return the current WB_TYPE (workbook type).
+        """Abstract: Return the current WB_TYPE (workbook type).
         Current means that the other data in the DC is for this workbook type. 
         This indicates the type of data in the workflow being processed,
         e.g., 'input', 'output', 'working', etc.
@@ -154,15 +154,15 @@ class BudManDataContext_Base(ABC):
     @dc_WB_TYPE.setter
     @abstractmethod
     def dc_WB_TYPE(self, value: str) -> None:
-        """Set the WB_TYPE workbook type."""
+        """Abstract: Set the WB_TYPE workbook type."""
         pass
 
     @property
     @abstractmethod
     def dc_WB_NAME(self) -> str:
-        """Return the current WB_NAME workbook name.
-        
-        Current means that the other data in the DC is for this workbook, and 
+        """Abstract: Return the current WB_NAME workbook name.
+
+        Current means that the other data in the DC is for this workbook, and
         that a user has specified this workbook specifically by name.
         This indicates the name of the workbook being processed, e.g., 'budget.xlsx',
         """
@@ -170,15 +170,15 @@ class BudManDataContext_Base(ABC):
     @dc_WB_NAME.setter
     @abstractmethod
     def dc_WB_NAME(self, value: str) -> None:
-        """Set the WB_NAME workbook name."""
+        """Abstract: Set the WB_NAME workbook name."""
         pass
 
     @property
     @abstractmethod
     def dc_WB_INDEX(self) -> int:
-        """Return the current WB_INDEX .
-        
-        Current means that the other data in the DC is for this workbook, and 
+        """Abstract: Return the current WB_INDEX.
+
+        Current means that the other data in the DC is for this workbook, and
         that a user has specified this workbook specifically by index.
         This index is the 0-based index order of the dc_WORKBOOK_DATA_COLLECTION.
         """
@@ -186,59 +186,59 @@ class BudManDataContext_Base(ABC):
     @dc_WB_INDEX.setter
     @abstractmethod
     def dc_WB_INDEX(self, value: int) -> None:
-        """Set the WB_NAME workbook name."""
+        """Abstract: Set the WB_INDEX workbook index."""
         pass
 
     @property
     @abstractmethod
     def dc_ALL_WBS(self) -> bool:
-        """True indicates all workbooks in the DC are selected.
+        """Abstract: True indicates all workbooks in the DC are selected.
         False indicate that ALL selection is not in effect.
         """
         pass
     @dc_ALL_WBS.setter
     @abstractmethod
     def dc_ALL_WBS(self, value: bool) -> None:
-        """Set the WB_NAME workbook name."""
+        """Abstract: Set the ALL_WBS selection status."""
         pass
 
     @property
     @abstractmethod
     def dc_BDM_STORE(self) -> str:
-        """Return the BDM_STORE jsonc definition."""
+        """Abstract: Return the BDM_STORE jsonc definition."""
         pass
     @dc_BDM_STORE.setter
     @abstractmethod
     def dc_BDM_STORE(self, value: str) -> None:
-        """Set the BDM_STORE jsonc definition."""
+        """Abstract: Set the BDM_STORE jsonc definition."""
         pass
 
     @property
     @abstractmethod
     def dc_BDM_STORE_changed(self) -> bool:
-        """BDM_STORE content has been changed."""
+        """Abstract: BDM_STORE content has been changed."""
         pass
     @dc_BDM_STORE_changed.setter
     @abstractmethod
     def dc_BDM_STORE_changed(self, value: bool) -> None:
-        """Set the BDM_STORE changed status."""
+        """Abstract: Set the BDM_STORE changed status."""
         pass
 
     @property
     @abstractmethod
     def dc_BDM_WORKBOOK(self) -> WORKBOOK_OBJECT:
-        """Return the current workbook in focus in the DC."""
+        """Abstract: Return the current workbook in focus in the DC."""
         pass
     @dc_BDM_WORKBOOK.setter
     @abstractmethod
     def dc_BDM_WORKBOOK(self, value: WORKBOOK_OBJECT) -> None:
-        """Set the current workbook in focus in the DC."""
+        """Abstract: Set the current workbook in focus in the DC."""
         pass
 
     @property
     @abstractmethod
     def dc_WORKBOOK_DATA_COLLECTION(self) -> WORKBOOK_DATA_COLLECTION:
-        """Return the WORKBOOK_DATA_COLLECTION of workbooks in the DC.
+        """Abstract: Return the WORKBOOK_DATA_COLLECTION of workbooks in the DC.
         Depends on the value of dc_FI_KEY, returning the 
         FI_WORKBOOK_DATA_COLLECTION for that fi_key.The WORKBOOK_DATA_COLLECTION
         is sorted by the key, wb_id, the wb_index is based on the sorted order."""
@@ -246,7 +246,7 @@ class BudManDataContext_Base(ABC):
     @dc_WORKBOOK_DATA_COLLECTION.setter
     @abstractmethod
     def dc_WORKBOOK_DATA_COLLECTION(self, value: WORKBOOK_DATA_COLLECTION) -> None:
-        """Set the WORKBOOK_DATA_COLLECTION of workbooks in the DC.
+        """Abstract: Set the WORKBOOK_DATA_COLLECTION of workbooks in the DC.
         Depends on the value of dc_FI_KEY, returning the 
         FI_WORKBOOK_DATA_COLLECTION for that fi_key.
         The WORKBOOK_DATA_COLLECTION should be sorted by the key,
@@ -258,13 +258,13 @@ class BudManDataContext_Base(ABC):
     @property
     @abstractmethod
     def dc_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_COLLECTION:
-        """Return the list of workbooks currently loaded in the DC.
+        """Abstract: Return the list of workbooks currently loaded in the DC.
         Loaded means a file is loaded into memory and is available."""
         pass
     @dc_LOADED_WORKBOOKS.setter
     @abstractmethod
     def dc_LOADED_WORKBOOKS(self, value: LOADED_WORKBOOK_COLLECTION) -> None:
-        """Set the list of workbooks currently loaded in the DC.
+        """Abstract: Set the list of workbooks currently loaded in the DC.
         Loaded means a file is loaded into memory and is available."""
         pass
     #endregion BudManDataContext_Base Properties (abstract)
@@ -272,22 +272,27 @@ class BudManDataContext_Base(ABC):
     #region BudManDataContext_Base Methods (abstract)
     @abstractmethod
     def dc_initialize(self) -> DATA_CONTEXT:
-        """Initialize the data context."""
+        """Abstract: Initialize the data context."""
         pass
 
     @abstractmethod
     def dc_FI_KEY_validate(self, fi_key: str) -> bool:
-        """Validate the provided FI_KEY."""
+        """Abstract: Validate the provided FI_KEY."""
         pass
 
     @abstractmethod
     def dc_WF_KEY_validate(self, wf_key: str) -> bool:
-        """Validate the provided WF_KEY."""
+        """Abstract: Validate the provided WF_KEY."""
+        pass
+
+    @abstractmethod
+    def dc_WF_PURPOSE_FOLDER_MAP(self, wf_key: str, wf_purpose:str) -> bool:
+        """Abstract: Return the wf_folder_id from the provided WF_KEY & WF_PURPOSE."""
         pass
 
     @abstractmethod
     def dc_WB_ID_validate(self, wb_id: str) -> bool:
-        """Validate the provided WB_ID."""
+        """Abstract: Validate the provided WB_ID."""
         pass
 
     @abstractmethod
@@ -297,69 +302,44 @@ class BudManDataContext_Base(ABC):
 
     @abstractmethod
     def dc_WB_TYPE_validate(self, wb_type: str) -> bool:
-        """Validate the provided WB_TYPE."""
+        """Abstract: Validate the provided WB_TYPE."""
         pass
 
     @abstractmethod
     def dc_WB_NAME_validate(self, wb_name: str) -> bool:
-        """Validate the provided WB_NAME."""
+        """Abstract: Validate the provided WB_NAME."""
         pass
 
     @abstractmethod
     def dc_WB_INDEX_validate(self, wb_index: int) -> bool:
-        """Validate the provided WB_INDEX."""
-        pass
-
-    @abstractmethod
-    def dc_WB_REF_validate(self, wb_ref: str) -> bool:
-        """Validate the provided workbook reference."""
-        pass
-
-    @abstractmethod
-    def dc_WB_REF_resolve(self, wb_ref: str) -> Tuple[bool,int, str]:
-        """Resolve a wb_ref to valid wb_index, wb_name, or ALL_KEY.
-
-        Args:
-            wb_ref (str|int): The wb_ref to validate and resolve. Expecting
-            a str with a digit, a wb_name, or the ALL_KEY constant.
-
-        Returns:
-            Tuple[wb_all:bool, wb_index:int, wb_name:str]: 
-                (True, -1, ALL_KEY) if wb_ref is ALL_KEY. 
-                (False, wb_index, wb_name) for a valid index, adds wb_name match.
-                (False, -1, wb_name) no valid index, found a wb_name.
-                (False, -1, None) if wb_ref is invalid index or name value.
-        
-        Raises:
-            TypeError: if wb_ref is not a str or int.
-        """
+        """Abstract: Validate the provided WB_INDEX."""
         pass
 
     @abstractmethod
     def dc_WORKBOOK_DATA_COLLECTION_validate(self, wdc : WORKBOOK_DATA_COLLECTION) -> bool:
-        """Validate the type of WORKBOOK_DATA_COLLECTION."""
+        """Abstract: Validate the type of WORKBOOK_DATA_COLLECTION."""
         pass
 
     @abstractmethod
     def dc_WORKBOOK_validate(self, wb : WORKBOOK_OBJECT) -> bool:
-        """Validate the type of WORKBOOK_OBJECT.
+        """Abstract: Validate the type of WORKBOOK_OBJECT.
         Abstract: sub-class hook to test specialized WORKBOOK_OBJECT types.
         """
         pass
 
     @abstractmethod
     def dc_WORKBOOK_loaded(self, wb_id: str) -> bool:
-        """Indicates whether the workbook with wb_id is loaded."""
+        """Abstract: Indicates whether the workbook with wb_id is loaded."""
         pass
 
     @abstractmethod
     def dc_WORKBOOK_name(self, wb_index: int) -> str:
-        """Return the wb_name associated with the give wb_index."""
+        """Abstract: Return the wb_name associated with the give wb_index."""
         pass 
        
     @abstractmethod
     def dc_WORKBOOK_index(self, wb_id: str = None) -> int:
-        """Return the index of a workbook based on wb_id.
+        """Abstract: Return the index of a workbook based on wb_id.
         
         Args:
             wb_id (str): The wb_id of the workbook to index.
@@ -370,12 +350,12 @@ class BudManDataContext_Base(ABC):
 
     @abstractmethod
     def dc_WORKBOOK_by_index(self, wb_index: int) -> Optional[WORKBOOK_OBJECT]:
-        """Return (True, BDWWorkbook on success, (False, error_msg) on failure."""
+        """Abstract: Return (True, BDWWorkbook on success, (False, error_msg) on failure."""
         pass
 
     @abstractmethod
     def dc_WORKBOOK_find(self, find_key: str, value: str) -> WORKBOOK_OBJECT:
-        """Locate and return a workbook by the key and value."""
+        """Abstract: Locate and return a workbook by the key and value."""
         pass
 
     #region   WORKBOOK_CONTENT storage-related methods
@@ -441,7 +421,7 @@ class BudManDataContext_Base(ABC):
 
     @abstractmethod
     def dc_WORKBOOK_remove(self, wb_name: str) -> None:
-        """Remove the specified workbook by name."""
+        """Abstract: Remove the specified workbook by name."""
         pass
 
     @abstractmethod
@@ -451,14 +431,14 @@ class BudManDataContext_Base(ABC):
 
     @abstractmethod
     def dc_BDM_STORE_load(self, bdm_url: str) -> BDM_STORE:
-        """Load a BDM_STORE from bdm_url, set dc_BDM_STORE.
+        """Abstract: Load a BDM_STORE from bdm_url, set dc_BDM_STORE.
         All relevant DC values reference the dc_BDM_STORE.
         """
         pass
 
     @abstractmethod
     def dc_BDM_STORE_save(self, bdm_store: BDM_STORE, bdm_url: str) -> None:
-        """Save the BDM_STORE to the specified file path."""
+        """Abstract: Save the BDM_STORE to the specified file path."""
         pass
 
     #endregion BudManDataContext_Base Methods (abstract)

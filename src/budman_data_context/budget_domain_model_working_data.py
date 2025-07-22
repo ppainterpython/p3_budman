@@ -24,7 +24,7 @@ from budman_data_context import BudManDataContext
 from p3_mvvm import Model_Base, Model_Binding
 from budget_storage_model import (bsm_BDM_WORKBOOK_load, bsm_BDM_WORKBOOK_save)
 from budman_workflows.txn_category import BDMTXNCategoryManager
-
+from budget_domain_model import BudgetDomainModel
 #endregion imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -175,6 +175,11 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
+
+    def dc_WF_PURPOSE_FOLDER_MAP(self, wf_key: str, wf_purpose:str) -> bool:
+        """Model-Aware: Return the wf_folder_id from the provided WF_KEY & WF_PURPOSE.
+        """
+        return self.model.bdm_WF_PURPOSE_FOLDER_MAP(wf_key, wf_purpose)
 
     def dc_WB_INDEX_validate(self, wb_index:int) -> bool:
         """Model-Aware: Validate the workbook index.

@@ -148,6 +148,24 @@ class BDMWorkbook:
         return s
     #endregion wb_info_display_str
     # ------------------------------------------------------------------------ +
+    #region wb_info_show_str
+    def wb_info_show_str(self) -> str:
+        """ Return a string representation of basic BDMWorkbook info. """
+        # fr += f"\n{P2}{FI_KEY:10} {WB_INDEX:6} {WB_ID:50} {WB_TYPE:15} "
+        # fr += f"{WB_FILETYPE:6} {WF_KEY:20} {WF_PURPOSE:10} {WF_FOLDER:20} "
+        # fr += f" {WB_CONTENT:30}"
+        check = self.check_url()
+        wb_status: str = "found"
+        if not check:
+            wb_status = "not found"
+        elif self.wb_loaded:
+            wb_status = self.get_wb_content_repr()
+        else:
+            wb_status = "unloaded"
+        s = f"{self.fi_key:20} {str(self.wb_id):50}{P2}{str(self.wb_type):15}{P2}{wb_status:30}{P2}"
+        return s
+    #endregion wb_info_show_str
+    # ------------------------------------------------------------------------ +
     #region get_wb_content_repr() method
     def get_wb_content_repr(self) -> str: 
         """Return a display string representation fo the wb_content."""
