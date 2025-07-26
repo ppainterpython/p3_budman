@@ -10,7 +10,7 @@
 
 # third-party modules and packages
 import re
-from typing import Dict, List, Tuple, Any, Type, TYPE_CHECKING
+from typing import Dict, List, Tuple, Any, Type, TYPE_CHECKING, Union
 import openpyxl
 from openpyxl import Workbook
 import openpyxl.worksheet.worksheet
@@ -29,7 +29,7 @@ type DATA_MAP = Dict[str, str]
 # BUDMAN data type constants
 type WORKBOOK_ID = str
 type BUDMAN_RESULT = tuple[bool, Any]  # A tuple of (success, message or data)
-type WORKBOOK_OBJECT = object
+type WORKBOOK_OBJECT = Union[object, Dict]
 type WORKBOOK_CONTENT = Any
 WORKBOOK_DATA_COLLECTION = Dict[str, WORKBOOK_OBJECT]
 WORKBOOK_ITEM = DATA_TUPLE
@@ -265,39 +265,13 @@ VALID_WB_FILETYPES = (
 )
 # ---------------------------------------------------------------------------- +
 # DATA_CONTEXT "good guy" interface (Dictionary key names)
-
-# Name: DC_INITIALIZED
-# Type: bool True | False
-# Desc: Indicates if the DC has been initialized.
 DC_INITIALIZED = "dc_initialized"
-# Name: DC_FI_KEY
-# Type: FI_KEY | "all" : str
-# Desc: FI_KEY of the FI data in the DC, or "all" if all are loaded.
 DC_FI_KEY = FI_KEY
-# Name: DC_WF_KEY
-# Type: WF_KEY | "all" : str
-# Desc: WF_KEY of the FI Workflow data in the DC, or "all" if all are loaded.
 DC_WF_KEY = WF_KEY
-# Name: DC_WF_PURPOSE
-# Type: WF_PURPOSE | "all" : str
-# Desc: WF_PURPOSE of the FI Workflow data in the DC, or "all" if all are loaded.
 DC_WF_PURPOSE = WF_PURPOSE
-# Name: DC_WB_TYPE
-# Type: WB_TYPE | "all" : str
-# Desc: WB_TYPE of workbooks in the FI Workflow data in the DC, or "all" if all are loaded.
 DC_WB_TYPE = WB_TYPE
-# Name: DC_WB_NAME
-# Type: WB_NAME | "all" : str
-# Desc: A specific WB_NAME, or "all" if all are loaded.
 DC_WB_NAME = WB_NAME
-# Name: DC_LOADED_WORKBOOKS
-# Type: LOADED_WORKBOOK_COLLECTION
-# Desc: A list of tuples of wb_name, and Workbook objects for workbooks associated
-#       with the current FI_KEY, WF_KEY, and WB_TYPE
 DC_LOADED_WORKBOOKS = "dc_loaded_workbooks"  # key name
-# Name: DC_LOADED_WORKBOOKS
-# Type: Dict
-# Desc: Values loaded from Budget Manager configuration file , or "store".
 DC_BDM_STORE = "dc_bdm_store"
 VALID_DATA_CONTEXT_ATTR_KEYS = (
     DC_INITIALIZED,
@@ -308,6 +282,16 @@ VALID_DATA_CONTEXT_ATTR_KEYS = (
     DC_LOADED_WORKBOOKS,
     DC_BDM_STORE
 )
+# ---------------------------------------------------------------------------- +
+#region CLIView command output type constants
+# CMD_RESULT dictionary key constants
+CMD_RESULT_TYPE ="cmd_result_type"
+CMD_RESULT_CONTENT = "cmd_result_content"
+# CMD_RESULT_TYPE values
+CLIVIEW_OUTPUT_STRING = "cliview_output_string"
+CLIVIEW_WORKBOOK_INFO_TABLE = "cliview_workbook_info_table"
+CLIVIEW_WORKBOOK_TREE_VIEW = "cliview_workbook_tree_view"
+#endregion CLIView command output type constants
 # ---------------------------------------------------------------------------- +
 #
 # Last ditch BudMan application default settings

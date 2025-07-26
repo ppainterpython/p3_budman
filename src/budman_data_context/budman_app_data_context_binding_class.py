@@ -1,11 +1,11 @@
 # ---------------------------------------------------------------------------- +
-#region budman_data_context_client.py module
-"""DC_Binding: DI binding to BudManDataContext_Base.
+#region budman_app_data_context_client.py module
+"""DC_Binding: DI binding to BudManAppDataContext_Base.
 
     This class defines an Binding interface to a concrete provider of the
-    BudManDataContext_Base interface. Binding is a reference to the Dependency
+    BudManAppDataContext_Base interface. Binding is a reference to the Dependency
     Injection (DI) design pattern, where the client class is bound to an
-    implementation of the BudManDataContext_Base interface at runtime. When 
+    implementation of the BudManAppDataContext_Base interface at runtime. When 
     instantiated, it is given a reference to an object implementing the 
     interface. From the client side, the interface is used to interact with 
     the concrete data context without needing to know the details of the 
@@ -37,7 +37,7 @@
     value is the output of the function. When success is False, the result
     value is a string describing the error.
 """
-#endregion budman_data_context_client.py module
+#endregion budman_app_ data_context_client.py module
 # ---------------------------------------------------------------------------- +
 #region Imports
 # python standard library modules and packages
@@ -52,72 +52,66 @@ from budman_namespace.design_language_namespace import (
     WORKBOOK_DATA_COLLECTION, WORKBOOK_OBJECT, BUDMAN_RESULT, 
     WORKBOOK_CONTENT
     )
-from budman_data_context import BudManDataContext_Base
+from budman_data_context import BudManAppDataContext_Base
 import p3_utils as p3u
 #endregion Imports
 # ---------------------------------------------------------------------------- +
-class BudManDataContext_Binding(BudManDataContext_Base):
+class BudManAppDataContext_Binding(BudManAppDataContext_Base):
     """DC_Binding: Interface for a Data Context clients.
     
     This interface is used by clients to interact with a Data Context (DC)
     without needing to know the details of the implementation. The design
     pattern is to bind a provider object as the data_context at creation time.
     If the target data_context does not implement the required interface
-    BudManDataContextBaseInterfaceIt, a TypeError is raised.
+    BudManAppDataContext_Base Interface, a TypeError is raised.
     """
     # ------------------------------------------------------------------------ +
     #region Class Methods
     @classmethod
-    def _valid_DC_Binding(cls, dc_binding: object) -> BudManDataContext_Base:
+    def _valid_DC_Binding(cls, dc_binding: object) -> BudManAppDataContext_Base:
         """DC_Binding: Return dc_value if valid, else raise exception."""
         if dc_binding is None:
             raise ValueError("DC_Binding cannot be None")
-        if not isinstance(dc_binding, BudManDataContext_Base):
-            raise TypeError("DC_Binding must be subclass of BudManDataContext_Base")
+        if not isinstance(dc_binding, BudManAppDataContext_Base):
+            raise TypeError("DC_Binding must be subclass of BudManAppDataContext_Base")
         return dc_binding
     #endregion Class Methods
     # ------------------------------------------------------------------------ +
-    #region BudManDataContext_Binding __init__() method
+    #region BudManAppDataContext_Binding __init__() method
     def __init__(self) -> None:
         """DC_Binding: Simple instantiation-time initialization. 
         Binding happens at initialization-time."""
         super().__init__()
-        self._data_context: BudManDataContext_Base = None
-    #endregion BudManDataContext_Binding __init__() method
+        self._data_context: BudManAppDataContext_Base = None
+    #endregion BudManAppDataContext_Binding __init__() method
     # ------------------------------------------------------------------------ +
-    #region BudManDataContext_Binding Properties
+    #region BudManAppDataContext_Binding Properties
     @property
-    def data_context(self) -> BudManDataContext_Base:
+    def data_context(self) -> BudManAppDataContext_Base:
         """DC_Binding: Return the data context object."""
         return self._data_context
     @data_context.setter
-    def data_context(self, dc_value: BudManDataContext_Base) -> None:
+    def data_context(self, dc_value: BudManAppDataContext_Base) -> None:
         """DC_Binding: Set the data context object."""
         self._data_context = dc_value
 
     @property
-    def DC(self) -> BudManDataContext_Base:
+    def DC(self) -> BudManAppDataContext_Base:
         """DC_Binding: Return the data context.
         This is DC_Binding behavior. If the binding is not valid, an exception 
         is raised. The DC property is a reference to the data context object.
         """
-        return BudManDataContext_Binding._valid_DC_Binding(self).data_context
+        return BudManAppDataContext_Binding._valid_DC_Binding(self).data_context
     @DC.setter
-    def DC(self, value: BudManDataContext_Base) -> None:
+    def DC(self, value: BudManAppDataContext_Base) -> None:
         """DC_Binding: Set the name of the data context.
         This is DC_Binding behavior. If the binding is not valid, an exception 
         is raised. The DC property is a reference to the data context object.
         """        
-        self.data_context = BudManDataContext_Binding._valid_DC_Binding(value)
-    #endregion BudManDataContext_Binding Properties
+        self.data_context = BudManAppDataContext_Binding._valid_DC_Binding(value)
+    #endregion BudManAppDataContext_Binding Properties
     # ------------------------------------------------------------------------ +
-    #region BudManDataContext_Binding Methods
-    # def _valid_DC(self) -> None:
-    #     """DC_Binding: raise exception if the DC property is invalid."""
-    #     BudManDataContext_Binding._valid_DC_Binding(self._data_context)
-    #endregion BudManDataContext_Binding Methods
-    # ------------------------------------------------------------------------ +
-    #region BudManDataContext_Base Properties (concrete)
+    #region BudManAppDataContext_Base Properties (concrete)
     @property
     def dc_id(self) -> str:
         """DC_Binding: Return the identifier for the data context implementation."""
@@ -142,52 +136,52 @@ class BudManDataContext_Binding(BudManDataContext_Base):
         self.DC.dc_INITIALIZED = value
 
     @property
-    def dc_FI_OBJECT(self) -> str:
+    def dc_FI_OBJECT(self) -> Optional[str]:
         """DC_Binding: Return the FI_OBJECT of the current Financial Institution."""
         return self.DC.dc_FI_OBJECT 
     @dc_FI_OBJECT.setter
-    def dc_FI_OBJECT(self, value: str) -> None:
+    def dc_FI_OBJECT(self, value: Optional[str]) -> None:
         """DC_Binding: Set the FI_OBJECT of the current Financial Institution."""
         self.DC.dc_FI_OBJECT = value
 
     @property
-    def dc_FI_KEY(self) -> str:
+    def dc_FI_KEY(self) -> Optional[str]:
         """DC_Binding: Return the FI_KEY for the financial institution."""
         return self.DC.dc_FI_KEY
     @dc_FI_KEY.setter
-    def dc_FI_KEY(self, value: str) -> None:
+    def dc_FI_KEY(self, value: Optional[str]) -> None:
         """DC_Binding: Set the FI_KEY for the financial institution."""
         self.DC.dc_FI_KEY = value
 
     @property
-    def dc_WF_KEY(self) -> str:
+    def dc_WF_KEY(self) -> Optional[str]:
         """DC_Binding: Return the WF_KEY for the workflow."""
         return self.DC.dc_WF_KEY
     @dc_WF_KEY.setter
-    def dc_WF_KEY(self, value: str) -> None:
+    def dc_WF_KEY(self, value: Optional[str]) -> None:
         """DC_Binding: Set the WF_KEY for the workflow."""
         self.DC.dc_WF_KEY = value
 
     @property
-    def dc_WF_PURPOSE(self) -> str:
+    def dc_WF_PURPOSE(self) -> Optional[str]:
         """DC_Binding: Return the WF_PURPOSE workbook type."""
         return self.DC.dc_WF_PURPOSE
     @dc_WF_PURPOSE.setter
-    def dc_WF_PURPOSE(self, value: str) -> None:
+    def dc_WF_PURPOSE(self, value: Optional[str]) -> None:
         """DC_Binding: Set the WF_PURPOSE workbook type."""
         self.DC.dc_WF_PURPOSE = value
 
     @property
-    def dc_WB_ID(self) -> str:
+    def dc_WB_ID(self) -> Optional[str]:
         """DC_Binding: Return the current WB_REF workbook reference value."""
         return self.DC.dc_WB_ID
     @dc_WB_ID.setter
-    def dc_WB_ID(self, value: str) -> None:
+    def dc_WB_ID(self, value: Optional[str]) -> None:
         """DC_Binding: Set the WB_REF workbook reference value."""
         self.DC.dc_WB_ID = value
 
     @property
-    def dc_WB_TYPE(self) -> str:
+    def dc_WB_TYPE(self) -> Optional[str]:
         """DC_Binding: Return the current WB_TYPE (workbook type).
         Current means that the other data in the DC is for this workbook type. 
         This indicates the type of data in the workflow being processed,
@@ -195,16 +189,16 @@ class BudManDataContext_Binding(BudManDataContext_Base):
         """
         return self.DC.dc_WB_TYPE
     @dc_WB_TYPE.setter
-    def dc_WB_TYPE(self, value: str) -> None:
+    def dc_WB_TYPE(self, value: Optional[str]) -> None:
         """DC_Binding: Set the WB_TYPE workbook type."""
         self.DC.dc_WB_TYPE = value
 
     @property
-    def dc_WB_NAME(self) -> str:
+    def dc_WB_NAME(self) -> Optional[str]:
         """DC_Binding: Return the WB_NAME workbook name."""
         return self.DC.dc_WB_NAME
     @dc_WB_NAME.setter
-    def dc_WB_NAME(self, value: str) -> None:
+    def dc_WB_NAME(self, value: Optional[str]) -> None:
         """DC_Binding: Set the WB_NAME workbook name."""
         self.DC.dc_WB_NAME = value
 
@@ -247,18 +241,18 @@ class BudManDataContext_Binding(BudManDataContext_Base):
         self.DC.dc_BDM_STORE_changed = value
 
     @property
-    def dc_BDM_WORKBOOK(self) -> WORKBOOK_OBJECT:
+    def dc_WORKBOOK(self) -> WORKBOOK_OBJECT:
         """Return the current workbook in focus in the DC."""
         if not self.dc_VALID: return None
-        return self.DC.dc_BDM_WORKBOOK
-    @dc_BDM_WORKBOOK.setter
-    def dc_BDM_WORKBOOK(self, value: WORKBOOK_OBJECT) -> None:
+        return self.DC.dc_WORKBOOK
+    @dc_WORKBOOK.setter
+    def dc_WORKBOOK(self, value: WORKBOOK_OBJECT) -> None:
         """Set the current workbook in focus in the DC."""
         if not self.dc_VALID: return None
         if not isinstance(value, object):
             raise TypeError(f"dc_WORKBOOK must be an object, "
                             f"not a type: '{type(value).__name__}'")
-        self.DC.dc_BDM_WORKBOOK = value
+        self.DC.dc_WORKBOOK = value
 
     @property
     def dc_WORKBOOK_DATA_COLLECTION(self) -> WORKBOOK_DATA_COLLECTION:
@@ -305,9 +299,9 @@ class BudManDataContext_Binding(BudManDataContext_Base):
         """Set the current category manager in the DC."""
         self.DC.WF_CATEGORY_MANAGER = value
 
-    #endregion BudManDataContext_Base Properties (concrete)
+    #endregion BudManAppDataContext_Base Properties (concrete)
     # ------------------------------------------------------------------------ +
-    #region BudManDataContext_Base Methods (concrete)
+    #region BudManAppDataContext_Base Methods (concrete)
     def dc_initialize(self) -> None:
         """DC_Binding: Initialize the data context."""
         super().dc_initialize()
@@ -426,7 +420,7 @@ class BudManDataContext_Binding(BudManDataContext_Base):
         """
         return self.DC.dc_WORKBOOK_content_put(wb_content, wb)
 
-    def dc_BDM_WORKBOOK_load(self, wb_index: str) -> BUDMAN_RESULT:
+    def dc_WORKBOOK_load(self, wb_index: str) -> BUDMAN_RESULT:
         """DC_Binding: Load the specified workbook by wb_index into dc_LOADED_WORKBOOKS.
            Returns:
                 BUDMAN_RESULT: a Tuple[success: bool, result: Any].
@@ -435,13 +429,13 @@ class BudManDataContext_Binding(BudManDataContext_Base):
                 dc_LOADED_WORKBOOKS collection.
                 success = False, result is a string describing the error.
         """
-        return self.DC.dc_BDM_WORKBOOK_load(wb_index)
+        return self.DC.dc_WORKBOOK_load(wb_index)
 
-    def dc_BDM_WORKBOOK_save(self, wb: Workbook) -> BUDMAN_RESULT:
+    def dc_WORKBOOK_save(self, wb: Workbook) -> BUDMAN_RESULT:
         """DC_Binding: Save bdm_wb WORKBOOK_CONTENT to storage.
             Abstract: Save bdm_wb WORKBOOK_CONTENT to storage.
         """
-        return self.DC.dc_BDM_WORKBOOK_save(wb)
+        return self.DC.dc_WORKBOOK_save(wb)
     #endregion WORKBOOK_CONTENT storage-related methods
 
     def dc_WORKBOOK_remove(self, wb_name: str) -> None:
@@ -466,5 +460,5 @@ class BudManDataContext_Binding(BudManDataContext_Base):
         """DC_Binding: Save the BDM_STORE to the specified file path."""
         return self.DC.dc_BDM_STORE_save(file_path)
     
-    #endregion BudManDataContext_Base Methods (concrete)
+    #endregion BudManAppDataContext_Base Methods (concrete)
     # ------------------------------------------------------------------------ +

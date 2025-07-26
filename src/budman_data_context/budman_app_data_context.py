@@ -1,24 +1,38 @@
 # ---------------------------------------------------------------------------- +
-#region test_budman_data_context.py
-"""DC-Only: BudManDataContext: A concrete implementation BudManDataContext_Base 
+#region test_budman_app_data_context.py
+"""DC-Only: BudManAppDataContext: A concrete implementation BudManAppDataContext_Base 
     for the Budget Manager application. 
     
     A Data Context (DC) is a component of the MVVM design pattern for 
     applications. It separates concerns by Model, View Model and View object
-    functional layers, providing an traction for data used by ViewModels, 
+    functional layers, providing an abstraction for data used by ViewModels, 
     Models and a View.
 
     The properties and methods reflect the BudMan application design language, 
-    in terms of the domain model objects, command processing, etc. So, it is
-    Budget Domain Model (BDM) aware, but not bound to a particular View, 
-    ViewModel, or Model interface. But, the key concepts in the BDM concerning
-    Financial Institutions (FI), Workflows (WF), Workbooks (WB), and the
+    in terms of the Domain Model objects, command processing, etc. So, it is
+    Budget Domain Model (BDM) aware through the BDM_STORE dictionary, 
+    but not bound to a particular application's implementation of the View, 
+    ViewModel, or Model interface. But, the key concepts in the BDM concerning 
+    Financial Institutions (FI), Workflows (WF), Workbooks (WB), and the 
     Budget Data Model (BDM_STORE) are all represented in the Data Context.
+
+    This DC-Only implementation is designed to depend on the BDM_STORE dictionary
+    as a data structure. A key binding is the FI_DATA_OBJECT property. This
+    DC operates on the premise that one FI is in focus at a time, and all
+    operations are performed in the context of that FI. Changing the FI_OBJECT
+    value ripples through the other properties and methods, so that the
+    application context is always consistent.
 
     A Data Context is not a Model, nor a View Model, it is a bridge between
     the two. It provides a way to access and manipulate data without exposing
     the underlying implementation details. It provides the application context
-    at any moment in time, so the values change.
+    at any moment in time, so the values change. This implementation, DC-Only,
+    is a concrete implmentation of the BudManAppDataContext_Base abstract class.
+    It uses the BDM_STORE dictionary as the backing store. For use with
+    specific application-specific ViewModels, and Models, a different 
+    concrete implementation of the BudManAppDataContext_Base may be used, or
+    become a subclass of this class, to provide additional functionality through
+    overrides of the properties and methods defined here.
 
     Each property and method herein documents its purpose. Most of the 
     properties and methods, if the return value is not None, return basic 
@@ -33,11 +47,18 @@
     which can be extended by subclasses to provide more specific functionality. 
     Here there is no reference to outside data objects, such as a Model or 
     ViewModel. Subclasses may override or extend the default DC behavior.
+
+    This "DC-Only" implementation is designed to work by referencing the Data
+    Context (DC) directly. The BDM_STORE dictionary is assumed to support
+    the data content implied by the DC base interface. No particular 
+    implementation of the Model is assumed. But the structure of the BDM_STORE
+    is treated as an abstraction of the Budget Domain design langauge concepts.
 """
-#endregion test_budman_data_context.py
+#endregion test_budman_app_data_context.py
 # ---------------------------------------------------------------------------- +
 #region imports
 # python standard libraries
+from ast import Not
 import pytest, os
 from pathlib import Path
 from abc import ABC, abstractmethod
@@ -47,29 +68,31 @@ from openpyxl import Workbook
 import logging, p3_utils as p3u, p3logging as p3l
 # local modules and packages
 from budman_namespace.design_language_namespace import (
-    FI_OBJECT, BDM_FI_COLLECTION, BDM_WF_COLLECTION,
-    VALID_WF_PURPOSE_VALUES, VALID_WB_TYPE_VALUES,
-    DATA_CONTEXT, LOADED_WORKBOOK_COLLECTION,
+    FI_OBJECT, DATA_CONTEXT, LOADED_WORKBOOK_COLLECTION, 
     WORKBOOK_DATA_COLLECTION, WORKBOOK_OBJECT,
-    BDM_STORE, DATA_COLLECTION, ALL_KEY, FI_KEY, WF_KEY, WB_ID, WB_NAME,
+    BDM_STORE, DATA_COLLECTION, BUDMAN_RESULT, WORKBOOK_CONTENT,
+    BDM_FI_COLLECTION, BDM_WF_COLLECTION, WF_PURPOSE_FOLDER_MAP,
+    FI_WORKBOOK_DATA_COLLECTION,
+    VALID_WF_PURPOSE_VALUES, VALID_WB_TYPE_VALUES,
+    BDM_STORE_OBJECT,
+    ALL_KEY, FI_KEY, WF_KEY, WB_ID, WB_NAME,
     WB_TYPE, WF_PURPOSE, WB_INDEX, WB_URL, WB_LOADED, WB_CONTENT,
-    BUDMAN_RESULT, WORKBOOK_CONTENT,
     BDM_DATA_CONTEXT, DC_FI_KEY, DC_WF_KEY, DC_WF_PURPOSE, DC_WB_TYPE
     )
-from budman_data_context.budman_data_context_base_ABC import BudManDataContext_Base
-from budget_storage_model.csv_data_collection import (csv_DATA_LIST_url_get)
+from budman_data_context.budman_app_data_context_base_ABC import BudManAppDataContext_Base
+from budget_storage_model import (bsm_BDM_STORE_url_get, bsm_BDM_STORE_url_put)
 #endregion imports
 # ---------------------------------------------------------------------------- +
 #region Globals
 logger = logging.getLogger(__name__)
 #endregion Globals
 # ---------------------------------------------------------------------------- +
-class BudManDataContext(BudManDataContext_Base):
-    """Concrete, non-MVVM-Aware implementation of BudManDataContext_Base."""
+class BudManAppDataContext(BudManAppDataContext_Base):
+    """Concrete, non-MVVM-Aware implementation of BudManAppDataContext_Base."""
     # ------------------------------------------------------------------------ +
-    #region BudManDataContext__init__()
+    #region BudManAppDataContext__init__()
     def __init__(self, *args, dc_id : str = None) -> None:
-        """DC-Only: Constructor Initialize the BudManDataContext."""
+        """DC-Only: Constructor Initialize the BudManAppDataContext."""
         self._initialization_in_progress = True
         self._dc_id :str = dc_id if dc_id else self.__class__.__name__
         self._dc_initialized = False 
@@ -88,9 +111,9 @@ class BudManDataContext(BudManDataContext_Base):
         self._dc_WORKBOOK_DATA_COLLECTION : WORKBOOK_DATA_COLLECTION = dict()
         self._dc_LOADED_WORKBOOKS : LOADED_WORKBOOK_COLLECTION = dict()
         self._dc_DataContext : DATA_CONTEXT = dict()
-    #endregion BudManDataContext__init__()
+    #endregion BudManAppDataContext__init__()
     # ------------------------------------------------------------------------ +
-    #region BudManDataContext_Base Properties (concrete) 
+    #region BudManAppDataContext_Base Properties (concrete) 
     @property
     def dc_id(self) -> str:
         """DC-Only: Identify the data context implementation."""
@@ -131,53 +154,48 @@ class BudManDataContext(BudManDataContext_Base):
             raise TypeError("dc_id must be a string.")
         self._dc_id = value
 
-    #region    dc_FI_OBJECT
     @property
-    def dc_FI_OBJECT(self) -> str:
+    def dc_FI_OBJECT(self) -> FI_OBJECT:
         """DC-Only: Return the FI_OBJECT of the current Financial Institution. """
         return self._dc_FI_OBJECT if self.dc_VALID else None
     @dc_FI_OBJECT.setter
-    def dc_FI_OBJECT(self, value: str) -> None:
+    def dc_FI_OBJECT(self, value: FI_OBJECT) -> None:
         """DC-Only: Set the FI_OBJECT of the current Financial Institution."""
         if not self.dc_VALID: return None
         self._dc_FI_OBJECT = value
-    #endregion dc_FI_OBJECT
 
     @property
-    def dc_FI_KEY(self) -> str:
+    def dc_FI_KEY(self) -> Optional[str]:
         """DC-Only: Return the FI_KEY of the current Financial Institution.
         Depends on the value of dc_BDM_STORE.
         Current means that the other data in the DC is for this FI.
         """
-        if self.dc_BDM_STORE is None and not self._initialization_in_progress:
-            m = "dc_BDM_STORE is None. Cannot get fi_key."
-            logger.warning(m)
-            return None
-        return self._dc_FI_KEY
+        return self.dc_FI_OBJECT[FI_KEY] if self.dc_VALID else None
     @dc_FI_KEY.setter
-    def dc_FI_KEY(self, value: str) -> None:
-        """DC-Only: Set the FI_KEY of the current Financial Institution.
-        Depends on the value of dc_BDM_STORE.
+    def dc_FI_KEY(self, value: Optional[str]) -> None:
+        """DC-Only: Set the FI_KEY of the current Financial Institution by
+        setting the dc_FI_OBJECT to the FI_OBJECT associated with that FI_KEY 
+        in the BDM_STORE. The dc_FI_KEY property is derived from the 
+        dc_FI_OBJECT property. Depends on the value of dc_BDM_STORE.
         """
-        if self.dc_BDM_STORE is None and not self._initialization_in_progress:
-            m = "dc_BDM_STORE is None. Cannot set fi_key."
-            logger.warning(m)
-            return None
-        self._dc_FI_KEY = value
+        if self.dc_VALID:
+            if not self.dc_FI_KEY_validate(value):
+                raise ValueError(f"Invalid FI_KEY: {value}")
+        self.dc_FI_OBJECT = self.dc_BDM_STORE[BDM_FI_COLLECTION].get(value, None)
 
     @property
-    def dc_WF_KEY(self) -> str:
+    def dc_WF_KEY(self) -> Optional[str]:
         """DC-Only: Return the WF_KEY for the current workflow of interest.
         Current means that the other data in the DC is for this workflow.
         """
         return self._dc_WF_KEY
     @dc_WF_KEY.setter
-    def dc_WF_KEY(self, value: str) -> None:
+    def dc_WF_KEY(self, value: Optional[str]) -> None:
         """DC-Only: Set the WF_KEY for the workflow."""
-        self._dc_WF_KEY = value
+        self._dc_WF_KEY = value if self.dc_WF_KEY_validate(value) else None
 
     @property
-    def dc_WF_PURPOSE(self) -> str:
+    def dc_WF_PURPOSE(self) -> Optional[str]:
         """DC-Only: Return the current WF_PURPOSE (workbook type) .
         Current means that the other data in the DC is for this workbook type. 
         This indicates the type of data in the workflow being processed,
@@ -185,50 +203,63 @@ class BudManDataContext(BudManDataContext_Base):
         """
         return self._dc_WF_PURPOSE
     @dc_WF_PURPOSE.setter
-    def dc_WF_PURPOSE(self, value: str) -> None:
+    def dc_WF_PURPOSE(self, value: Optional[str]) -> None:
         """DC-Only: Set the WF_PURPOSE workbook type."""
         self._dc_WF_PURPOSE = value
 
     @property
-    def dc_WB_ID(self) -> str:
+    def dc_WB_ID(self) -> Optional[str]:
         """DC-Only: Return the current WB_ID workbook reference.
         
-        Current means the wb_id for the last operation on a named or referenced
-        workbook. The other data in the DC is updated in a similar fashion.
-        After an operation on 'all' workbooks, the dc_WB_ID is set to 'all'.
+        Current means the wb_id for the current .
         """
-        return self._dc_WB_ID
+        wb = self.dc_WORKBOOK
+        if not wb: return None
+        if self.dc_WORKBOOK_has_property(wb,WB_ID) and WB_ID in wb:
+            return wb[WB_ID]
+        return None
     @dc_WB_ID.setter
-    def dc_WB_ID(self, value: str) -> None:
-        """DC-Only: Set the WB_ID workbook reference."""
-        self._dc_WB_ID = value
+    def dc_WB_ID(self, value: Optional[str]) -> None:
+        """DC-Only: dc_WB_ID setter not supported, set the dc_WORKBOOK property."""
+        raise NotImplementedError("dc_WB_ID is read-only, "
+                                  "set the dc_WORKBOOK property instead.")
 
     @property
-    def dc_WB_TYPE(self) -> str:
+    def dc_WB_TYPE(self) -> Optional[str]:
         """DC-Only: Return the current WB_TYPE (workbook type) .
         Current means that the other data in the DC is for this workbook type. 
         This indicates the type of data in the workflow being processed,
         e.g., 'input', 'output', 'working', etc.
         """
-        return self._dc_WB_TYPE
+        wb = self.dc_WORKBOOK
+        if not wb: return ""
+        if self.dc_WORKBOOK_has_property(wb,WB_TYPE) and WB_TYPE in wb:
+            return wb[WB_TYPE]
+        return None
     @dc_WB_TYPE.setter
-    def dc_WB_TYPE(self, value: str) -> None:
-        """DC-Only: Set the WB_TYPE workbook type."""
-        self._dc_WB_TYPE = value
+    def dc_WB_TYPE(self, value: Optional[str]) -> None:
+        """DC-Only: dc_WB_TYPE setter not supported, set the dc_WORKBOOK property."""
+        raise NotImplementedError("dc_WB_TYPE is read-only, "
+                                  "set the dc_WORKBOOK property instead.")
 
     @property
-    def dc_WB_NAME(self) -> str:
+    def dc_WB_NAME(self) -> Optional[str]:
         """DC-Only: Return the current WB_NAME workbook name.
         
         Current means that the other data in the DC is for this workbook, and 
         that a user has specified this workbook specifically by name.
         This indicates the name of the workbook being processed, e.g., 'budget.xlsx',
         """
-        return self._dc_WB_NAME
+        wb = self.dc_WORKBOOK
+        if not wb: return None
+        if self.dc_WORKBOOK_has_property(wb,WB_NAME) and WB_NAME in wb:
+            return wb[WB_NAME]
+        return None
     @dc_WB_NAME.setter
-    def dc_WB_NAME(self, value: str) -> None:
-        """DC-Only: Set the WB_NAME workbook name."""
-        self._dc_WB_NAME = value
+    def dc_WB_NAME(self, value: Optional[str]) -> None:
+        """DC-Only: dc_WB_NAME setter not supported, set the dc_WORKBOOK property."""
+        raise NotImplementedError("dc_WB_NAME is read-only, "
+                                  "set the dc_WORKBOOK property instead.")
 
     @property
     def dc_WB_INDEX(self) -> int:
@@ -238,13 +269,15 @@ class BudManDataContext(BudManDataContext_Base):
         that a user has specified this workbook specifically by index.
         The index is based on the order of workbooks in the dc_WORKBOOK_DATA_COLLECTION.
         """
-        return self._dc_WB_INDEX
+        wb = self.dc_WORKBOOK
+        if not wb: return -1
+        wb_id = self.dc_WB_ID
+        return self.dc_WORKBOOK_index(wb) if wb_id else -1
     @dc_WB_INDEX.setter
     def dc_WB_INDEX(self, value: int) -> None:
-        """DC-Only: Set the WB_INDEX workbook index."""
-        if not isinstance(value, int):
-            raise TypeError(f"dc_WB_INDEX must be an int, not {type(value).__name__}")
-        self._dc_WB_INDEX = value
+        """DC-Only: dc_WB_INDEX setter not supported, set the dc_WORKBOOK property."""
+        raise NotImplementedError("dc_WB_INDEX is read-only, "
+                                  "set the dc_WORKBOOK property instead.")
 
     @property
     def dc_ALL_WBS(self) -> bool:
@@ -258,11 +291,11 @@ class BudManDataContext(BudManDataContext_Base):
         self._dc_ALL_WBS = value
 
     @property
-    def dc_BDM_STORE(self) -> str:
+    def dc_BDM_STORE(self) -> Optional[str]:
         """DC-Only: Return the BDM_STORE jsonc definition."""
         return self._dc_BDM_STORE
     @dc_BDM_STORE.setter
-    def dc_BDM_STORE(self, value: str) -> None:
+    def dc_BDM_STORE(self, value: Optional[str]) -> None:
         """DC-Only: Set the BDM_STORE jsonc definition."""
         self._dc_BDM_STORE = value
 
@@ -276,29 +309,28 @@ class BudManDataContext(BudManDataContext_Base):
         self._dc_BDM_STORE_changed = value
 
     @property
-    def dc_BDM_WORKBOOK(self) -> WORKBOOK_OBJECT:
-        """Return the current workbook in focus in the DC."""
+    def dc_WORKBOOK(self) -> WORKBOOK_OBJECT:
+        """DC-Only: Return the current workbook in focus in the DC.
+           This binding determines the values of related properties:
+           - dc_WB_INDEX
+           - dc_WB_ID
+           - dc_WB_NAME
+           - dc_WB_TYPE
+        """
         if not self.dc_VALID: return None
+        if not self.dc_WORKBOOK_validate(self._dc_WORKBOOK):
+            return None
         return self._dc_WORKBOOK
-    @dc_BDM_WORKBOOK.setter
-    def dc_BDM_WORKBOOK(self, value: WORKBOOK_OBJECT) -> None:
+    @dc_WORKBOOK.setter
+    def dc_WORKBOOK(self, value: WORKBOOK_OBJECT) -> None:
         """Set the current workbook in focus in the DC."""
         if not self.dc_VALID: return None
         if value is None:
             self._dc_WORKBOOK = None
-            self.dc_WB_INDEX = -1
-            self.dc_WB_ID = ""
-            self.dc_WB_NAME = ""
-            self.dc_WB_TYPE = ""
             return
         if not self.dc_WORKBOOK_validate(value):
-            raise TypeError(f"dc_WORKBOOK must be a valid WORKBOOK_OBJECT, "
-                            f"not a type: '{type(value).__name__}'")
+            return None
         self._dc_WORKBOOK = value
-        self.dc_WB_INDEX = self.dc_WORKBOOK_index(value.wb_id)
-        self.dc_WB_NAME = value.wb_name  # Set the wb_name in the DC.
-        self.dc_WB_ID = value.wb_id
-        self.dc_WB_TYPE = value.wb_type  # Set the wb_type in the DC.
 
     @property
     def dc_WORKBOOK_DATA_COLLECTION(self) -> WORKBOOK_DATA_COLLECTION:
@@ -307,7 +339,9 @@ class BudManDataContext(BudManDataContext_Base):
         FI_WORKBOOK_DATA_COLLECTION for that fi_key. The WORKBOOK_DATA_COLLECTION
         is sorted by the key, wb_id, the wb_index is based on the sorted order."""
         if not self.dc_VALID: return None
-        return self._dc_WORKBOOK_DATA_COLLECTION
+        fi_object = self.dc_FI_OBJECT
+        wdc = fi_object[FI_WORKBOOK_DATA_COLLECTION]
+        return wdc
     @dc_WORKBOOK_DATA_COLLECTION.setter
     def dc_WORKBOOK_DATA_COLLECTION(self, value: WORKBOOK_DATA_COLLECTION) -> None:
         """DC-Only: Set the WORKBOOK_DATA_COLLECTION of workbooks in the DC.
@@ -317,11 +351,8 @@ class BudManDataContext(BudManDataContext_Base):
         wb_id as it is updated. The wb_index should be based on the 
         sorted order of the dc_WORKBOOK_DATA_COLLECTION.
         """
-        if not self.dc_VALID: return None
-        if not isinstance(value, dict):
-            raise TypeError(f"dc_WORKBOOK_DATA_COLLECTION must be a dict, "
-                            f"not a type: '{type(value).__name__}'")
-        self._dc_WORKBOOK_DATA_COLLECTION = dict(sorted(value.items()))
+        raise NotImplementedError("dc_WORKBOOK_DATA_COLLECTION is read-only, "
+                                  "set the dc_FI_OBJECT property instead.")
 
     @property
     def dc_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_COLLECTION:
@@ -333,9 +364,9 @@ class BudManDataContext(BudManDataContext_Base):
         """DC-Only: Set the list of workbooks currently loaded in the DC.
         Loaded means a file is loaded into memory and is available."""
         self._dc_LOADED_WORKBOOKS = value
-    #endregion BudManDataContext_Base Properties (concrete)
+    #endregion BudManAppDataContext_Base Properties (concrete)
     # ------------------------------------------------------------------------ +
-    #region BudManDataContext_Base Methods (concrete)
+    #region BudManAppDataContext_Base Methods (concrete)
     def dc_initialize(self) -> None:
         """DC-Only: Runtime Initialize the data context."""
         try:
@@ -347,7 +378,7 @@ class BudManDataContext(BudManDataContext_Base):
             self.dc_FI_KEY = bdm_store_dc.get(DC_FI_KEY, None)
             self.dc_WF_KEY = bdm_store_dc.get(DC_WF_KEY, None)
             self.dc_WF_PURPOSE = bdm_store_dc.get(DC_WF_PURPOSE, None)
-            self.dc_WB_TYPE = bdm_store_dc.get(DC_WB_TYPE, None)
+            # self.dc_WB_TYPE = bdm_store_dc.get(DC_WB_TYPE, None)
             # Further Model-Aware initialization can be done in the subclass.
             # So, don't change the values here.
             return self
@@ -361,7 +392,7 @@ class BudManDataContext(BudManDataContext_Base):
            Is the fi_key valid in the current BDM_STORE?
         """
         if not self.dc_VALID: return False
-        return fi_key in self.dc_BDM_STORE[BDM_FI_COLLECTION] or fi_key == ALL_KEY
+        return fi_key in self.dc_BDM_STORE[BDM_FI_COLLECTION]
 
     def dc_WF_KEY_validate(self, wf_key: str) -> bool:
         """DC-Only: Validate the provided WF_KEY."""
@@ -369,10 +400,16 @@ class BudManDataContext(BudManDataContext_Base):
         return wf_key in self.dc_BDM_STORE[BDM_WF_COLLECTION]
 
     def dc_WF_PURPOSE_FOLDER_MAP(self, wf_key: str, wf_purpose:str) -> bool:
-        """Abstract: Return the wf_folder_id from the provided WF_KEY & WF_PURPOSE.
-        For subclass override, no DC-Only view into the Workflow Collection yet.
+        """DC-Only: Use the wf_purpoase_folder_map from the BDM_STORE.
+           Abstract: Return the wf_folder_id from the provided WF_KEY & WF_PURPOSE.
         """
-        pass
+        _ = self.dc_WF_KEY_validate(wf_key)
+        wf_object = self.dc_BDM_STORE[BDM_WF_COLLECTION].get(wf_key, None)
+        if wf_object is None:
+            return None
+        wf_pf_map : Dict = wf_object[WF_PURPOSE_FOLDER_MAP]
+        if wf_pf_map is None: return None
+        return wf_pf_map[wf_purpose]
 
     def dc_WF_PURPOSE_validate(self, wf_purpose: str) -> bool:
         """DC-Only: Validate the provided WF_PURPOSE."""
@@ -441,15 +478,16 @@ class BudManDataContext(BudManDataContext_Base):
             return False
         return True 
 
-    def dc_WORKBOOK_validate(self, wb : WORKBOOK_OBJECT) -> bool:
+    def dc_WORKBOOK_validate(self, wb : WORKBOOK_OBJECT=None) -> bool:
         """ DC-Only: Validate the type of WORKBOOK_OBJECT.
             Abstract: sub-class hook to test specialized WORKBOOK_OBJECT types.
             DC-ONLY: check builtin type: 'object'. with wb_id attribute.
             Model-Aware subclasses should override to validate a specific type.
         """
         if not self.dc_VALID: return False
-        if not isinstance(wb, object): return False
-        if not hasattr(wb, 'wb_id'): return False
+        if not isinstance(wb, (dict, object)): return False
+        if not p3u.has_property(wb, 'wb_id'): return False
+        return True
 
     def dc_WORKBOOK_loaded(self, wb_id: str) -> bool:
         """DC-Only: Indicates whether the workbook with wb_id is loaded."""
@@ -612,14 +650,14 @@ class BudManDataContext(BudManDataContext_Base):
             logger.error(m)
             return False, m
         
-    def dc_BDM_WORKBOOK_load(self, bdm_wb: WORKBOOK_OBJECT) -> BUDMAN_RESULT:
+    def dc_WORKBOOK_load(self, bdm_wb: WORKBOOK_OBJECT) -> BUDMAN_RESULT:
         """ DC-Only: Load bdm_wb WORKBOOK_CONTENT. As DC-ONLY, there is no
             direct dependency on Model. The application must set the wb_content
             attribute outside, and set bdm_wb.wb_loaded.
 
             Abstract: Load bdm_wb WORKBOOK_CONTENT from storage, set value 
             or bdm_wb.wb_content, and set bdm_wb.wb_loaded. Make this bdm_wb
-            the dc_BDM_WORKBOOK, so that the application can use it.
+            the dc_WORKBOOK, so that the application can use it.
 
             Returns:
                 BUDMAN_RESULT: a Tuple[success: bool, result: Any].
@@ -644,7 +682,7 @@ class BudManDataContext(BudManDataContext_Base):
             if not wb_loaded:
                 return False, f"BDM_WORKBOOK with id '{wb_id}' is not loaded."
             # Add settings in DC for the workbook.
-            self.dc_BDM_WORKBOOK = bdm_wb
+            self.dc_WORKBOOK = bdm_wb
             self.dc_LOADED_WORKBOOKS[wb_id] = wb_content
             return True, wb_content
         except Exception as e:
@@ -652,7 +690,7 @@ class BudManDataContext(BudManDataContext_Base):
             logger.error(m)
             return False, m
 
-    def dc_BDM_WORKBOOK_save(self, bdm_wb: Workbook) -> BUDMAN_RESULT:
+    def dc_WORKBOOK_save(self, bdm_wb: Workbook) -> BUDMAN_RESULT:
         """ DC-Only: Save bdm_wb WORKBOOK_CONTENT to storage.
             Abstract: Save bdm_wb WORKBOOK_CONTENT to storage.
         """
@@ -699,17 +737,27 @@ class BudManDataContext(BudManDataContext_Base):
         """DC-Only: Load a BDM_STORE from bdm_url, set dc_BDM_STORE.
         All relevant DC values reference the dc_BDM_STORE.
         Override this method to bind to a concrete Model implementation, 
-        for the budget_domain_model. This implementation has no BDM.
+        for the budget_domain_model. This implementation has no BDM but will
+        read the BDM_STORE from a json file in storage.
         """
-        logger.error("BDM_STORE_load method is not implemented in this interface.")
-        return None
+        try:
+            bdm_store = bsm_BDM_STORE_url_get(bdm_url)
+            if bdm_store is None:
+                raise ValueError(f"Failed to load BDM_STORE from URL: {bdm_url}")
+            self.dc_BDM_STORE = bdm_store
+            self.dc_INITIALIZED = True
+            return self.dc_BDM_STORE
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise RuntimeError(f"Failed to load BDM_STORE from URL '{bdm_url}': {m}")
 
     def dc_BDM_STORE_save(self, file_path: str) -> None:
         """Save the BDM_STORE to the specified file path."""
         logger.error("BDM_STORE_save method is not implemented in this interface.")
         return None
 
-    #endregion BudManDataContext_Base Methods (concrete)
+    #endregion BudManAppDataContext_Base Methods (concrete)
     # ------------------------------------------------------------------------ +
     #region    Helper methods
     # ------------------------------------------------------------------------ +
@@ -727,20 +775,41 @@ class BudManDataContext(BudManDataContext_Base):
             m = "Data context initialization in progress."
             logger.debug(m)
             return True, m
-        if not isinstance(self, BudManDataContext_Base):
-            m = "Data context must be an instance of BudManDataContext_Base"
+        if not isinstance(self, BudManAppDataContext_Base):
+            m = "Data context must be an instance of BudManAppDataContext_Base"
             logger.error(m)
             return False, m
         if not self.dc_INITIALIZED:
             m = "Data context is not initialized."
             logger.error(m)
             return False, m
-        if self.dc_BDM_STORE is None:
+        if self._dc_BDM_STORE is None:
             m = "Data context BDM_STORE is not set."
+            logger.error(m)
+            return False, m
+        if self._dc_FI_OBJECT is None:
+            m = "Data context FI_OBJECT is not set."
             logger.error(m)
             return False, m
         return True, "It's all good, the data context is valid."
     #endregion dc_is_valid()
+    # ------------------------------------------------------------------------ +
+    #region dc_WORKBOOK_has_property(wb: WORKBOOK_OBJECT, prop: str) -> bool
+    def dc_WORKBOOK_has_property(self, wb: WORKBOOK_OBJECT, prop: str) -> bool:
+        """DC-Only: Check if the workbook has a specific property.
+        
+        Args:
+            wb (WORKBOOK_OBJECT): The workbook object to check.
+            prop (str): The property name to check for.
+        
+        Returns:
+            bool: True if the workbook has the property, False otherwise.
+        """
+        if not self.dc_VALID:
+            logger.error("Data context is not valid.")
+            return False
+        return p3u.has_property(wb, prop)
+    #endregion dc_WORKBOOK_has_property(wb: WORKBOOK_OBJECT, prop: str) -> bool
     # ------------------------------------------------------------------------ +
     #endregion Helper methods
     # ------------------------------------------------------------------------ +

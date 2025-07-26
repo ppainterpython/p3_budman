@@ -10,9 +10,9 @@ from openpyxl import Workbook
 
 # local modules and packages
 from src.budman_namespace import design_language_namespace as bdmns
-from budman_data_context import BudManDataContext_Base
-from budman_data_context import BudManDataContext_Binding
-from budman_data_context import BudManDataContext
+from budman_data_context import BudManAppDataContext_Base
+from budman_data_context import BudManAppDataContext_Binding
+from budman_data_context import BudManAppDataContext
 
 # local libraries
 import logging, p3_utils as p3u, p3logging as p3l
@@ -23,10 +23,10 @@ logger = logging.getLogger(__name__)
 #endregion Globals
 # ---------------------------------------------------------------------------- +
 def test_budman_data_context_initialize():
-    """Test the BudManDataContext class __init__() and initialize()."""
+    """Test the BudManAppDataContext class __init__() and initialize()."""
     try:
         logger.info(test_budman_data_context_initialize.__doc__)
-        bdmdc = BudManDataContext()
+        bdmdc = BudManAppDataContext()
         assert not bdmdc.dc_INITIALIZED, "Expected INITIALIZED to be False for new instance"
         assert bdmdc.dc_FI_KEY is None, "Expected dc_FI_KEY to be None for new instance"
         assert bdmdc.dc_WF_KEY is None, "Expected dc_WF_KEY to be None for new instance"
@@ -38,54 +38,54 @@ def test_budman_data_context_initialize():
         bdmdc.dc_initialize()
         assert bdmdc.dc_INITIALIZED is True, "Expected INITIALIZED to be True after initialization"
     except Exception as e:
-        pytest.fail(f"BudManDataContextBaseInterface() raised an exception: {str(e)}")
+        pytest.fail(f"BudManAppDataContextBaseInterface() raised an exception: {str(e)}")
 # ---------------------------------------------------------------------------- +
 def test_budman_data_context_client_interface_initialize():
-    """Test the BudManDataContextClientInterface class __init__() and initialize()."""
+    """Test the BudManAppDataContext_Binding class __init__() and initialize()."""
     try:
         logger.info(test_budman_data_context_client_interface_initialize.__doc__)
         try:
-            bdmdc = BudManDataContext().dc_initialize()
+            bdmdc = BudManAppDataContext().dc_initialize()
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
-            pytest.fail(f"BudManDataContext() raised an exception: {str(e)}")
-        assert bdmdc is not None, "BudManDataContext() should not be None"
-        assert isinstance(bdmdc, BudManDataContext_Base), \
-            "Expected BudManDataContext to be a subclass of BudManDataContextBaseInterface, got: " + str(type(bdmdc))
+            pytest.fail(f"BudManAppDataContext() raised an exception: {str(e)}")
+        assert bdmdc is not None, "BudManAppDataContext() should not be None"
+        assert isinstance(bdmdc, BudManAppDataContext_Base), \
+            "Expected BudManAppDataContext to be a subclass of BudManAppDataContextBaseInterface, got: " + str(type(bdmdc))
         assert bdmdc.dc_INITIALIZED is True, "Expected INITIALIZED to be True after instantiation"
         try:
-            dc_client = BudManDataContext_Binding(bdmdc).dc_initialize()
+            dc_client = BudManAppDataContext_Binding(bdmdc).dc_initialize()
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
-            pytest.fail(f"BudManDataContextClientInterface() raised TypeError: {str(e)}")
-        assert dc_client is not None, "BudManDataContextClientInterface should not be None"
-        assert isinstance(dc_client, BudManDataContext_Binding), \
-            "Expected dc_client to be a BudManDataContextClientInterface instance, got: " + str(type(dc_client))
+            pytest.fail(f"BudManAppDataContext_Binding() raised TypeError: {str(e)}")
+        assert dc_client is not None, "BudManAppDataContext_Binding should not be None"
+        assert isinstance(dc_client, BudManAppDataContext_Binding), \
+            "Expected dc_client to be a BudManAppDataContext_Binding instance, got: " + str(type(dc_client))
         assert dc_client.data_context is not None, "dc_client.data_context should not be None"
-        assert isinstance(dc_client.data_context, BudManDataContext_Base), \
-            "Expected dc_client.data_context to be a BudManDataContextBaseInterface instance, got: " + str(type(dc_client.data_context))
+        assert isinstance(dc_client.data_context, BudManAppDataContext_Base), \
+            "Expected dc_client.data_context to be a BudManAppDataContextBaseInterface instance, got: " + str(type(dc_client.data_context))
         assert dc_client.data_context.dc_INITIALIZED is True, \
             "Expected dc_client.data_context.INITIALIZED to be True after instantiation"
     except Exception as e:
         pytest.fail(f"Something raised an exception: {str(e)}")
 # ---------------------------------------------------------------------------- +
 def test_budman_data_context_client_interface_properties():
-    """Test the BudManDataContextClientInterface class properties."""
+    """Test the BudManAppDataContext_Binding class properties."""
     try:
         logger.info(test_budman_data_context_client_interface_properties.__doc__)
         try:
-            bdmdc = BudManDataContext().dc_initialize()
-            dc_client = BudManDataContext_Binding(bdmdc).dc_initialize()
+            bdmdc = BudManAppDataContext().dc_initialize()
+            dc_client = BudManAppDataContext_Binding(bdmdc).dc_initialize()
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
             pytest.fail(f"Constructing raised an exception: {m}")
-        assert dc_client is not None, "BudManDataContextClientInterface should not be None"
-        assert isinstance(dc_client, BudManDataContext_Binding), \
-            "Expected dc_client to be a BudManDataContextClientInterface instance, got: " + str(type(dc_client))
+        assert dc_client is not None, "BudManAppDataContext_Binding should not be None"
+        assert isinstance(dc_client, BudManAppDataContext_Binding), \
+            "Expected dc_client to be a BudManAppDataContext_Binding instance, got: " + str(type(dc_client))
         assert dc_client.data_context is not None, "dc_client.data_context should not be None"
-        assert isinstance(dc_client.data_context, BudManDataContext_Base), \
-            "Expected dc_client.data_context to be a BudManDataContextBaseInterface instance, got: " + str(type(dc_client.data_context))
+        assert isinstance(dc_client.data_context, BudManAppDataContext_Base), \
+            "Expected dc_client.data_context to be a BudManAppDataContextBaseInterface instance, got: " + str(type(dc_client.data_context))
         assert dc_client.data_context.dc_INITIALIZED is True, \
             "Expected dc_client.data_context.INITIALIZED to be True after instantiation"
         dc_client.dc_FI_KEY = "test_fi_key"
@@ -144,22 +144,22 @@ def test_budman_data_context_client_interface_properties():
         pytest.fail(f"Something raised an exception: {m}")
 # ---------------------------------------------------------------------------- +
 def test_budman_data_context_client_interface_methods():
-    """Test the BudManDataContextClientInterface class Methods."""
+    """Test the BudManAppDataContext_Binding class Methods."""
     try:
         logger.info(test_budman_data_context_client_interface_methods.__doc__)
         try:
-            bdmdc = BudManDataContext().dc_initialize()
-            dc_client = BudManDataContext_Binding(bdmdc).dc_initialize()
+            bdmdc = BudManAppDataContext().dc_initialize()
+            dc_client = BudManAppDataContext_Binding(bdmdc).dc_initialize()
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
             pytest.fail(f"Constructing raised an exception: {m}")
-        assert dc_client is not None, "BudManDataContextClientInterface should not be None"
-        assert isinstance(dc_client, BudManDataContext_Binding), \
-            "Expected dc_client to be a BudManDataContextClientInterface instance, got: " + str(type(dc_client))
+        assert dc_client is not None, "BudManAppDataContext_Binding should not be None"
+        assert isinstance(dc_client, BudManAppDataContext_Binding), \
+            "Expected dc_client to be a BudManAppDataContext_Binding instance, got: " + str(type(dc_client))
         assert dc_client.data_context is not None, "dc_client.data_context should not be None"
-        assert isinstance(dc_client.data_context, BudManDataContext), \
-            "Expected dc_client.data_context to be a BudManDataContext, got: " + str(type(dc_client.data_context))
+        assert isinstance(dc_client.data_context, BudManAppDataContext), \
+            "Expected dc_client.data_context to be a BudManAppDataContext, got: " + str(type(dc_client.data_context))
         assert dc_client.data_context.dc_INITIALIZED is True, \
             "Expected dc_client.data_context.INITIALIZED to be True after instantiation"
         assert dc_client.dc_FI_KEY_validate("test_fi_key") is True, \

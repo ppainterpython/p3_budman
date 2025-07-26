@@ -1,6 +1,6 @@
 # ---------------------------------------------------------------------------- +
-#region budman_data_context_base_ABC.py module
-""" BudManDataContext_Base: Abstract Base Class interface.
+#region budman_app_data_context_base_ABC.py module
+""" BudManAppDataContext_Base: Abstract Base Class interface.
 
     A Data Context (DC) is a component of the MVVM design pattern for 
     applications. It separates concerns by Model, View Model and View object
@@ -30,7 +30,7 @@
     value is the output of the function. When success is False, the result
     value is a string describing the error.
 """
-#endregion budman_data_context_base_ABC.py module
+#endregion budman_app_data_context_base_ABC.py module
 # ---------------------------------------------------------------------------- +
 #region Imports
 # python standard library modules and packages
@@ -40,16 +40,16 @@ from typing import Tuple, Any, Union, Dict, Optional
 from openpyxl import Workbook
 # local modules and packages
 from budman_namespace.design_language_namespace import (
-    DATA_CONTEXT, LOADED_WORKBOOK_COLLECTION,
+    DATA_CONTEXT, FI_OBJECT, LOADED_WORKBOOK_COLLECTION,
     WORKBOOK_DATA_COLLECTION,
     BDM_STORE, DATA_COLLECTION, WORKBOOK_OBJECT, BUDMAN_RESULT,
     WORKBOOK_CONTENT)
 #endregion Imports
 # ---------------------------------------------------------------------------- +
-class BudManDataContext_Base(ABC):
+class BudManAppDataContext_Base(ABC):
     """Abstract Base Class Interface for Budget Manager Data Context."""
     # ------------------------------------------------------------------------ +
-    #region BudManDataContext_Base Properties (abstract) 
+    #region BudManAppDataContext_Base Properties (abstract) 
     @property
     def dc_id(self) -> str:
         """Abstract: Identify the data context implementation."""
@@ -78,57 +78,57 @@ class BudManDataContext_Base(ABC):
 
     @property
     @abstractmethod
-    def dc_FI_OBJECT(self) -> str:
+    def dc_FI_OBJECT(self) -> FI_OBJECT:
         """Abstract: Return the FI_OBJECT of the current Financial Institution. """
         pass
     @dc_FI_OBJECT.setter
     @abstractmethod
-    def dc_FI_OBJECT(self, value: str) -> None:
+    def dc_FI_OBJECT(self, value: FI_OBJECT) -> None:
         """Abstract: Set the FI_OBJECT of the current Financial Institution."""
         pass
 
     @property
     @abstractmethod
-    def dc_FI_KEY(self) -> str:
+    def dc_FI_KEY(self) -> Optional[str]:
         """Abstract: Return the FI_KEY of the current Financial Institution.
         Current means that the other data in the DC is for this FI.
         """
         pass
     @dc_FI_KEY.setter
     @abstractmethod
-    def dc_FI_KEY(self, value: str) -> None:
+    def dc_FI_KEY(self, value: Optional[str]) -> None:
         """Abstract: Set the FI_KEY of the current Financial Institution."""
         pass
 
     @property
     @abstractmethod
-    def dc_WF_KEY(self) -> str:
+    def dc_WF_KEY(self) -> Optional[str]:
         """Abstract: Return the WF_KEY for the current workflow of interest.
         Current means that the other data in the DC is for this workflow.
         """
         pass
     @dc_WF_KEY.setter
     @abstractmethod
-    def dc_WF_KEY(self, value: str) -> None:
+    def dc_WF_KEY(self, value: Optional[str]) -> None:
         """Abstract: Set the WF_KEY for the workflow."""
         pass
 
     @property
     @abstractmethod
-    def dc_WF_PURPOSE(self) -> str:
+    def dc_WF_PURPOSE(self) -> Optional[str]:
         """Abstract: Return the WF_KEY for the current workflow of interest.
         Current means that the other data in the DC is for this workflow.
         """
         pass
     @dc_WF_PURPOSE.setter
     @abstractmethod
-    def dc_WF_PURPOSE(self, value: str) -> None:
+    def dc_WF_PURPOSE(self, value: Optional[str]) -> None:
         """Abstract: Set the WF_KEY for the workflow."""
         pass
 
     @property
     @abstractmethod
-    def dc_WB_ID(self) -> str:
+    def dc_WB_ID(self) -> Optional[str]:
         """Abstract: Return the current WB_REF workbook reference.
 
         Current means the wb_ref for the last operation on a named or referenced
@@ -138,13 +138,13 @@ class BudManDataContext_Base(ABC):
         pass
     @dc_WB_ID.setter
     @abstractmethod
-    def dc_WB_ID(self, value: str) -> None:
+    def dc_WB_ID(self, value: Optional[str]) -> None:
         """Set the WB_REF workbook reference."""
         pass
 
     @property
     @abstractmethod
-    def dc_WB_TYPE(self) -> str:
+    def dc_WB_TYPE(self) -> Optional[str]:
         """Abstract: Return the current WB_TYPE (workbook type).
         Current means that the other data in the DC is for this workbook type. 
         This indicates the type of data in the workflow being processed,
@@ -159,7 +159,7 @@ class BudManDataContext_Base(ABC):
 
     @property
     @abstractmethod
-    def dc_WB_NAME(self) -> str:
+    def dc_WB_NAME(self) -> Optional[str]:
         """Abstract: Return the current WB_NAME workbook name.
 
         Current means that the other data in the DC is for this workbook, and
@@ -169,7 +169,7 @@ class BudManDataContext_Base(ABC):
         pass
     @dc_WB_NAME.setter
     @abstractmethod
-    def dc_WB_NAME(self, value: str) -> None:
+    def dc_WB_NAME(self, value: Optional[str]) -> None:
         """Abstract: Set the WB_NAME workbook name."""
         pass
 
@@ -204,12 +204,12 @@ class BudManDataContext_Base(ABC):
 
     @property
     @abstractmethod
-    def dc_BDM_STORE(self) -> str:
+    def dc_BDM_STORE(self) -> Optional[str]:
         """Abstract: Return the BDM_STORE jsonc definition."""
         pass
     @dc_BDM_STORE.setter
     @abstractmethod
-    def dc_BDM_STORE(self, value: str) -> None:
+    def dc_BDM_STORE(self, value: Optional[str]) -> None:
         """Abstract: Set the BDM_STORE jsonc definition."""
         pass
 
@@ -226,12 +226,12 @@ class BudManDataContext_Base(ABC):
 
     @property
     @abstractmethod
-    def dc_BDM_WORKBOOK(self) -> WORKBOOK_OBJECT:
+    def dc_WORKBOOK(self) -> WORKBOOK_OBJECT:
         """Abstract: Return the current workbook in focus in the DC."""
         pass
-    @dc_BDM_WORKBOOK.setter
+    @dc_WORKBOOK.setter
     @abstractmethod
-    def dc_BDM_WORKBOOK(self, value: WORKBOOK_OBJECT) -> None:
+    def dc_WORKBOOK(self, value: WORKBOOK_OBJECT) -> None:
         """Abstract: Set the current workbook in focus in the DC."""
         pass
 
@@ -267,9 +267,9 @@ class BudManDataContext_Base(ABC):
         """Abstract: Set the list of workbooks currently loaded in the DC.
         Loaded means a file is loaded into memory and is available."""
         pass
-    #endregion BudManDataContext_Base Properties (abstract)
+    #endregion BudManAppDataContext_Base Properties (abstract)
     # ------------------------------------------------------------------------ +
-    #region BudManDataContext_Base Methods (abstract)
+    #region BudManAppDataContext_Base Methods (abstract)
     @abstractmethod
     def dc_initialize(self) -> DATA_CONTEXT:
         """Abstract: Initialize the data context."""
@@ -401,10 +401,10 @@ class BudManDataContext_Base(ABC):
         pass
 
     @abstractmethod
-    def dc_BDM_WORKBOOK_load(self, bdm_wb: WORKBOOK_OBJECT) -> BUDMAN_RESULT:
+    def dc_WORKBOOK_load(self, bdm_wb: WORKBOOK_OBJECT) -> BUDMAN_RESULT:
         """ Abstract: Load bdm_wb WORKBOOK_CONTENT from storage, set value 
             or bdm_wb.wb_content, and set bdm_wb.wb_loaded. Make this bdm_wb
-            the dc_BDM_WORKBOOK, so that the application can use it.
+            the dc_WORKBOOK, so that the application can use it.
 
             Returns:
                 BUDMAN_RESULT: a Tuple[success: bool, result: Any].
@@ -414,7 +414,7 @@ class BudManDataContext_Base(ABC):
         pass
 
     @abstractmethod
-    def dc_BDM_WORKBOOK_save(self,bdm_wb: WORKBOOK_OBJECT) -> BUDMAN_RESULT:
+    def dc_WORKBOOK_save(self,bdm_wb: WORKBOOK_OBJECT) -> BUDMAN_RESULT:
         """Abstract: Save bdm_wb WORKBOOK_CONTENT to storage."""
         pass
     #endregion WORKBOOK_CONTENT storage-related methods
@@ -441,5 +441,5 @@ class BudManDataContext_Base(ABC):
         """Abstract: Save the BDM_STORE to the specified file path."""
         pass
 
-    #endregion BudManDataContext_Base Methods (abstract)
+    #endregion BudManAppDataContext_Base Methods (abstract)
     # ------------------------------------------------------------------------ +

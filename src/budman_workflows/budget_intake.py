@@ -35,7 +35,7 @@ from .workflow_utils import (
     category_histogram, clear_category_histogram, get_category_histogram,
 )
 from .txn_category import BDMTXNCategoryManager
-from budman_data_context import BudManDataContext_Base
+from budman_data_context import BudManAppDataContext_Base
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -44,7 +44,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 #region process_txn_intake() function
 def process_txn_intake(cmd: Dict[str, Any], 
-                       bdm_DC: BudManDataContext_Base) -> bdm.BUDMAN_RESULT:
+                       bdm_DC: BudManAppDataContext_Base) -> bdm.BUDMAN_RESULT:
     """Process a transaction intake tasks.
 
     This function processes a transaction intake command by loading the 
@@ -53,7 +53,7 @@ def process_txn_intake(cmd: Dict[str, Any],
 
     Args:
         cmd (Dict[str, Any]): A valid BudMan View Model Command object.
-        bdm_data_context (BudManDataContext_Base): The data context for the 
+        bdm_data_context (BudManAppDataContext_Base): The data context for the 
             BudMan application.
     """
     try:
@@ -149,7 +149,7 @@ def convert_csv_txns_to_excel_txns(csv_txns: BDMWorkbook) -> Union[bool, str]:
 #endregion convert_csv_txns_to_excel_txns() function
 # ---------------------------------------------------------------------------- +
 #region check_schema_intake() function
-def check_schema_intake(cmd: Dict[str, Any], bdm_DC: BudManDataContext_Base) -> bdm.BUDMAN_RESULT:
+def check_schema_intake(cmd: Dict[str, Any], bdm_DC: BudManAppDataContext_Base) -> bdm.BUDMAN_RESULT:
     """Check the schema of an intake workbook.
 
     For one or more designated workbooks, check their schema for their
@@ -157,7 +157,7 @@ def check_schema_intake(cmd: Dict[str, Any], bdm_DC: BudManDataContext_Base) -> 
 
     Args:
         cmd (Dict[str, Any]): A valid BudMan View Model Command object.
-        bdm_data_context (BudManDataContext_Base): The data context for the 
+        bdm_data_context (BudManAppDataContext_Base): The data context for the 
             BudMan application.
     """
     try:

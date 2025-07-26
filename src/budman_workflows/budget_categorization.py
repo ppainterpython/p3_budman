@@ -35,7 +35,7 @@ from .workflow_utils import (
     category_histogram, clear_category_histogram, get_category_histogram,
 )
 from .txn_category import (BDMTXNCategoryManager, TXNCategoryCatalog)
-from budman_data_context import BudManDataContext_Base
+from budman_data_context import BudManAppDataContext_Base
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -450,13 +450,13 @@ def year_month_str(date:object) -> str:
 # ---------------------------------------------------------------------------- +
 #region validate_budget_categories() function
 def validate_budget_categories(bdm_wb:BDMWorkbook, 
-                               bdm_DC: BudManDataContext_Base,
+                               bdm_DC: BudManAppDataContext_Base,
                                pad:str='') -> BUDMAN_RESULT:
     """Validate budget categories in the workbook.
 
     Args:
         bdm_wb (BDMWorkbook): The budget workbook to validate.
-        bdm_DC (BudManDataContext_Base): The data context for the budget.
+        bdm_DC (BudManAppDataContext_Base): The data context for the budget.
 
     Returns:
         bool: True if validation is successful, False otherwise.
@@ -465,7 +465,7 @@ def validate_budget_categories(bdm_wb:BDMWorkbook,
         # Validate the input parameters.
         _ = p3u.is_not_obj_of_type("bdm_wb", bdm_wb, BDMWorkbook, 
                                    raise_error=True)
-        _ = p3u.is_not_obj_of_type("bdm_DC", bdm_DC, BudManDataContext_Base, 
+        _ = p3u.is_not_obj_of_type("bdm_DC", bdm_DC, BudManAppDataContext_Base, 
                                    raise_error=True)
 
         # Check if the budget categories are valid.
@@ -578,7 +578,7 @@ def validate_budget_categories(bdm_wb:BDMWorkbook,
 # ---------------------------------------------------------------------------- +
 #region process_budget_category() function
 def process_budget_category(bdm_wb:BDMWorkbook,
-                            bdm_DC : BudManDataContext_Base,
+                            bdm_DC : BudManAppDataContext_Base,
                             log_all : bool) -> BUDMAN_RESULT:
     """Process budget categorization for the workbook.
     
@@ -597,7 +597,7 @@ def process_budget_category(bdm_wb:BDMWorkbook,
         # Validate the input parameters.
         _ = p3u.is_not_obj_of_type("wb_object", bdm_wb, BDMWorkbook,
                                    raise_error=True)
-        _ = p3u.is_not_obj_of_type("bdm_DC", bdm_DC, BudManDataContext_Base,
+        _ = p3u.is_not_obj_of_type("bdm_DC", bdm_DC, BudManAppDataContext_Base,
                                    raise_error=True)
         success : bool = False
         if bdm_wb.wb_type != WB_TYPE_EXCEL_TXNS:

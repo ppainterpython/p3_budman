@@ -35,7 +35,7 @@ from budman_namespace.bdm_workbook_class import BDMWorkbook
 from budman_namespace.design_language_namespace import P2
 import budman_settings as bdms
 import budman_namespace as bdm
-from budman_data_context import BudManDataContext_Base
+from budman_data_context import BudManAppDataContext_Base
 from budget_storage_model import (
     bsm_BDM_STORE_url_get,
     bsm_WORKBOOK_CONTENT_url_put
@@ -294,17 +294,17 @@ def workbook_names(wdc: bdm.WORKBOOK_DATA_COLLECTION, wf_key: str, wf_folder_id:
         logger.error(m)
         return []
 #endregion workbook_names() function
-# ------------------------------------------------------------------------ +
+# ---------------------------------------------------------------------------- +
 #region extract_bdm_tree() function
-def extract_bdm_tree(bdm_DC: BudManDataContext_Base) -> Tree:
+def extract_bdm_tree(bdm_DC: BudManAppDataContext_Base) -> Tree:
     try:
         logger.debug(f"Start.")
-        p3u.is_not_obj_of_type("bdm_DC", bdm_DC, BudManDataContext_Base, raise_error=True)
+        p3u.is_not_obj_of_type("bdm_DC", bdm_DC, BudManAppDataContext_Base, raise_error=True)
         settings = bdms.BudManSettings()
         p3u.is_not_obj_of_type("settings", settings, bdms.BudManSettings, raise_error=True)
         bdm_store = bdm_DC.dc_BDM_STORE
         if not bdm_store:
-            m = "BudManDataContext_Base instance does not have a valid bdm_store."
+            m = "BudManAppDataContext_Base instance does not have a valid bdm_store."
             logger.error(m)
             raise ValueError(m)
         bdm_store_full_filename = (settings[bdms.BDM_STORE_FILENAME] +
@@ -332,18 +332,33 @@ def extract_bdm_tree(bdm_DC: BudManDataContext_Base) -> Tree:
                 wf_name = wf_obj[bdm.WF_NAME]
                 x_key = f"{fi_key}_{wf_key}"
                 tree.create_node(f"{wf_key} (wf_key)", x_key, parent=f"{fi_key}")
-                tree.create_node(f"'{wf_obj[bdm.WF_INPUT_FOLDER]}' (wf_input)", f"{x_key}_input", parent=x_key)
+                # wf_input workbooks
                 wb_names = workbook_names(wdc, wf_key, bdm.WF_INPUT_FOLDER)
-                for wb_name in wb_names:
-                    tree.create_node(f"{wb_name} (wb_name)", f"{x_key}_input_{wb_name}", parent=f"{x_key}_input")
-                tree.create_node(f"'{wf_obj[bdm.WF_WORKING_FOLDER]}' (wf_working)", f"{x_key}_working", parent=x_key)
+                logger.debug(f"FI: '{fi_key}', WF: '{wf_key}', FOLDER_ID: '{bdm.WF_INPUT_FOLDER}', workbooks({len(wb_names)}): {wb_names}")
+                if len(wb_names) > 0:
+                    tree.create_node(f"'{wf_obj[bdm.WF_INPUT_FOLDER]}' (wf_input)", 
+                                     f"{x_key}_input", parent=x_key)
+                    for wb_name in wb_names:
+                        tree.create_node(f"{wb_name} (wb_name)", 
+                        f"{x_key}_input_{wb_name}", parent=f"{x_key}_input")
+                # wf_working workbooks
                 wb_names = workbook_names(wdc, wf_key, bdm.WF_WORKING_FOLDER)
-                for wb_name in wb_names:
-                    tree.create_node(f"{wb_name} (wb_name)", f"{x_key}_working_{wb_name}", parent=f"{x_key}_working")
-                tree.create_node(f"'{wf_obj[bdm.WF_OUTPUT_FOLDER]}' (wf_output)", f"{x_key}_output", parent=x_key)
+                logger.debug(f"FI: '{fi_key}', WF: '{wf_key}', FOLDER_ID: '{bdm.WF_WORKING_FOLDER}', workbooks({len(wb_names)}): {wb_names}")
+                if len(wb_names) > 0:
+                    tree.create_node(f"'{wf_obj[bdm.WF_WORKING_FOLDER]}' (wf_working)", 
+                                    f"{x_key}_working", parent=x_key)
+                    for wb_name in wb_names:
+                        tree.create_node(f"{wb_name} (wb_name)", 
+                            f"{x_key}_working_{wb_name}", parent=f"{x_key}_working")
+                # wf_output workbooks
                 wb_names = workbook_names(wdc, wf_key, bdm.WF_OUTPUT_FOLDER)
-                for wb_name in wb_names:
-                    tree.create_node(f"{wb_name} (wb_name)", f"{x_key}_output_{wb_name}", parent=f"{x_key}_output")
+                logger.debug(f"FI: '{fi_key}', WF: '{wf_key}', FOLDER_ID: '{bdm.WF_OUTPUT_FOLDER}', workbooks({len(wb_names)}): {wb_names}")
+                if len(wb_names) > 0:
+                    tree.create_node(f"'{wf_obj[bdm.WF_OUTPUT_FOLDER]}' (wf_output)", 
+                                    f"{x_key}_output", parent=x_key)
+                    for wb_name in wb_names:
+                        tree.create_node(f"{wb_name} (wb_name)", 
+                                f"{x_key}_output_{wb_name}", parent=f"{x_key}_output")
         logger.debug(f"Complete.")
         return tree
     except Exception as e:
@@ -351,23 +366,19 @@ def extract_bdm_tree(bdm_DC: BudManDataContext_Base) -> Tree:
         logger.error(m)
         raise
 #endregion extract_bdm_tree() function
-# ------------------------------------------------------------------------ +
+# ---------------------------------------------------------------------------- +
 #region extract_dc_wb_tree() function
-def extract_dc_wb_tree(bdm_DC: BudManDataContext_Base) -> Tree:
+def extract_dc_wb_tree(bdm_DC: BudManAppDataContext_Base) -> Tree:
     """Return a tree structure of the workbook data collection in the provided
-    BudManDataContext_Base instance."""
+    BudManAppDataContext_Base instance."""
     try:
         logger.debug(f"Start.")
-        p3u.is_not_obj_of_type("bdm_DC", bdm_DC, BudManDataContext_Base, raise_error=True)
+        p3u.is_not_obj_of_type("bdm_DC", bdm_DC, 
+                               BudManAppDataContext_Base, raise_error=True)
         settings = bdms.BudManSettings()
-        # bdm_store = bsm_BDM_STORE_url_get(settings[bdms.BDM_STORE_URL])
-        # bdm_store_full_filename = (settings[bdms.BDM_STORE_FILENAME] +
-        #                            settings[bdms.BDM_STORE_FILETYPE])
-        # bdm_folder = settings[bdms.BDM_FOLDER] + '/'
-        # p_str: str = bdm_folder + bdm_store_full_filename
         fi_key = bdm_DC.fi_key
         if not fi_key:
-            m = "BudManDataContext_Base instance does not have a valid fi_key."
+            m = "BudManAppDataContext_Base instance does not have a valid fi_key."
             logger.error(m)
             raise ValueError(m)
         tree = Tree()
@@ -378,18 +389,27 @@ def extract_dc_wb_tree(bdm_DC: BudManDataContext_Base) -> Tree:
             wf_name = wf_obj[bdm.WF_NAME]
             x_key = f"{fi_key}_{wf_key}"
             tree.create_node(f"{wf_key} (wf_key)", x_key, parent=f"{fi_key}")
-            tree.create_node(f"{wf_obj[bdm.WF_INPUT_FOLDER]} (wf_input)", f"{x_key}_input", parent=x_key)
+            tree.create_node(f"{wf_obj[bdm.WF_INPUT_FOLDER]} (wf_input)", 
+                             f"{x_key}_input", parent=x_key)
             wb_names = workbook_names(fi_obj, wf_key, bdm.WF_INPUT_FOLDER)
             for wb_name in wb_names:
-                tree.create_node(f"{wb_name} (wb_name)", f"{x_key}_input_{wb_name}", parent=f"{x_key}_input")
-            tree.create_node(f"{wf_obj[bdm.WF_WORKING_FOLDER]} (wf_working)", f"{x_key}_working", parent=x_key)
+                tree.create_node(f"{wb_name} (wb_name)", 
+                                 f"{x_key}_input_{wb_name}", 
+                                 parent=f"{x_key}_input")
+            tree.create_node(f"{wf_obj[bdm.WF_WORKING_FOLDER]} (wf_working)", 
+                             f"{x_key}_working", parent=x_key)
             wb_names = workbook_names(fi_obj, wf_key, bdm.WF_WORKING_FOLDER)
             for wb_name in wb_names:
-                tree.create_node(f"{wb_name} (wb_name)", f"{x_key}_working_{wb_name}", parent=f"{x_key}_working")
-            tree.create_node(f"{wf_obj[bdm.WF_OUTPUT_FOLDER]} (wf_output)", f"{x_key}_output", parent=x_key)
+                tree.create_node(f"{wb_name} (wb_name)", 
+                                 f"{x_key}_working_{wb_name}", 
+                                 parent=f"{x_key}_working")
+            tree.create_node(f"{wf_obj[bdm.WF_OUTPUT_FOLDER]} (wf_output)", 
+                             f"{x_key}_output", parent=x_key)
             wb_names = workbook_names(fi_obj, wf_key, bdm.WF_OUTPUT_FOLDER)
             for wb_name in wb_names:
-                tree.create_node(f"{wb_name} (wb_name)", f"{x_key}_output_{wb_name}", parent=f"{x_key}_output")
+                tree.create_node(f"{wb_name} (wb_name)", 
+                                 f"{x_key}_output_{wb_name}", 
+                                 parent=f"{x_key}_output")
         logger.debug(f"Complete.")
         return tree
     except Exception as e:
@@ -397,9 +417,9 @@ def extract_dc_wb_tree(bdm_DC: BudManDataContext_Base) -> Tree:
         logger.error(m)
         raise
 #endregion extract_dc_wb_tree() function
-# ------------------------------------------------------------------------ +
+# ---------------------------------------------------------------------------- +
 #region outout_bdm_tree() function
-def output_bdm_tree(bdm_DC: BudManDataContext_Base) -> str:
+def output_bdm_tree(bdm_DC: BudManAppDataContext_Base) -> str:
     """Output the BDM tree to the console."""
     try:
         tree = extract_bdm_tree(bdm_DC)
@@ -409,7 +429,7 @@ def output_bdm_tree(bdm_DC: BudManDataContext_Base) -> str:
         logger.error(m)
         return m
 #endregion outout_bdm_tree() function
-# ------------------------------------------------------------------------ +
+# ---------------------------------------------------------------------------- +
 #region extract_txn_categories() method
 def extract_txn_categories() -> bdm.DATA_OBJECT:
     """Extract transaction categories from the category_map in 
@@ -461,6 +481,6 @@ def extract_txn_categories() -> bdm.DATA_OBJECT:
         logger.error(p3u.exc_err_msg(e))
         raise
 #endregion extract_txn_categories() method
-# ------------------------------------------------------------------------ +
+# ---------------------------------------------------------------------------- +
 #region fi_wb_index() function
 #endregion fi_wb_index()

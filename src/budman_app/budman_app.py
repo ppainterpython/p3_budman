@@ -21,7 +21,7 @@ from budman_namespace import BDMSingletonMeta
 from budman_view_model import (BudManViewModel, BudManCLICommandProcessor_Binding)
 from budman_cli_view import BudManCLIView
 from budget_domain_model import (BudgetDomainModel)
-from budman_data_context import BDMWorkingData
+from budman_data_context import BDMDataContext
 from budman_workflows import BDMTXNCategoryManager
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -203,7 +203,7 @@ class BudManApp(metaclass=BDMSingletonMeta):
             self.view_model.model = self.model
             # Next, create the DATA_CONTEXT for the VIEW_MODEL, using the
             # BDMWorkingData class.
-            self.DC : BDMWorkingData = BDMWorkingData()
+            self.DC : BDMDataContext = BDMDataContext()
             # Next, create the workflow category manager service.
             self.WF_CATEGORY_MANAGER = BDMTXNCategoryManager(self.settings)
             # Stash it in the DC, a sort of service registry.

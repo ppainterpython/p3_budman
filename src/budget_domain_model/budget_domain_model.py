@@ -107,7 +107,12 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
     # ------------------------------------------------------------------------ +
     #region    BudgetDomainModel class constructor __init__()
     def __init__(self, bdm_config : Dict = None) -> None:
-        """Constructor for the BudgetDomainModel class."""
+        """Constructor for the BudgetDomainModel class.
+        
+        Args:
+            bdm_config (Dict): A valid BDM_STORE object dictionary used later
+            to initialize the model state.
+        """
         # Note: _subclassname set by SingletonMeta after __init__() completes.
         logger.debug("Start:")
         # Keep the constructor simple, just set initial values to create the 
@@ -133,7 +138,6 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
         setattr(self, BDM_CREATED_DATE, p3u.now_iso_date_string()) 
         setattr(self, BDM_LAST_MODIFIED_DATE, self._created_date)
         setattr(self, BDM_LAST_MODIFIED_BY, getpass.getuser())
-        # setattr(self, BDM_WORKING_DATA, {})  
         setattr(self, BDM_DATA_CONTEXT, {})  
         logger.debug("Complete:")
     #endregion BudgetDomainModel class constructor __init__()
@@ -156,7 +160,6 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
             BDM_LAST_MODIFIED_DATE: self.bdm_last_modified_date,
             BDM_LAST_MODIFIED_BY: self.bdm_last_modified_by,
             BDM_DATA_CONTEXT: self.bdm_data_context,
-            # BDM_WORKING_DATA: self.bdm_working_data
         }
         return ret
     def __repr__(self) -> str:
@@ -173,7 +176,6 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
         ret += f"'{BDM_CREATED_DATE}': '{self.bdm_created_date}', "
         ret += f"'{BDM_LAST_MODIFIED_DATE}': '{self.bdm_last_modified_date}', "
         ret += f"'{BDM_LAST_MODIFIED_BY}': '{self.bdm_last_modified_by}', "
-        # ret += f"'{BDM_WORKING_DATA}': '{self.bdm_working_data}' }} "
         return ret
     def __str__(self) -> str:
         ''' Return a str representation of the BudgetDomainModel object '''
@@ -189,7 +191,6 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
         ret += f"{BDM_CREATED_DATE} = '{self.bdm_created_date}', "
         ret += f"{BDM_LAST_MODIFIED_DATE} = '{self.bdm_last_modified_date}', "
         ret += f"{BDM_LAST_MODIFIED_BY} = '{self.bdm_last_modified_by}', "
-        # ret += f"{BDM_WORKING_DATA} = {self.bdm_working_data}"
         return ret
     #endregion BudgetDomainModel internal class methods
     # ------------------------------------------------------------------------ +
@@ -315,17 +316,6 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
         """Set the last modified by."""
         self._last_modified_by = value
     
-    # @property
-    # def bdm_working_data(self) -> BDM_WORKING_DATA_OBJECT:
-    #     """The budget domain model working data."""
-    #     self._wd = {} if self._wd is None else self._wd
-    #     return self._wd
-    # @bdm_working_data.setter
-    # def bdm_working_data(self, value: BDM_WORKING_DATA_OBJECT) -> None:
-    #     """Set the budget domain model working data."""
-    #     self._wd = {} if self._wd is None else self._wd
-    #     self._wd = value
-
     @property
     def bdm_data_context(self) -> DATA_CONTEXT:
         """The budget domain model data context values."""
@@ -350,7 +340,7 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
     # ======================================================================== +
     #region    BDM - Budget Domain Model methods
     # ------------------------------------------------------------------------ +    
-    #region BDM Design Notes
+    #region    BDM Design Notes
     """ Budget Model Domain Model (BDM) Documentation.
 
     Budget model Domain Model (BDM) is the conceptual model used to track and 
@@ -460,13 +450,22 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
                  ) -> "BudgetDomainModel":
         """Initialize BDM, from a config_object.
 
-        Currently, as a singleton class, BudgetDomainModel is initialized just once.
-        So, having a resolved config_object Dict is important, lest not much
-        can be initialized. That is the concern of bdm_resolve_config_src().
+        Currently, as a singleton class, BudgetDomainModel is initialized from
+        a stored data file referred to as the BDM_STORE.json. So, having a
+        valid bdm_store_object property is important, lest not much
+        can be initialized. This method will apply the BDM_STORE object and
+        set the model state to match.
+
+        First time, the BDM_STORE is passed in the constructor with the
+        bdm_config argument. Subsequent calls to this method will must be 
+        preceded by setting the bdm_store_object property to a valid
+        BDM_STORE object dictionary created by one of the BDMConfig methods.
 
         Args:
+            self.bdm_store_object property value (dict): A valid BDM_STORE 
+                object dictionary.
             bsm_init (bool): Initialize the BSM if True.
-            create_missing_folders (bool): Create missing folders if True.
+                create_missing_folders (bool): Create missing folders if True.
             raise_errors (bool): Raise errors if True.
         """
         st = p3u.start_timer()
@@ -477,8 +476,9 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
             # to the BDM_STORE_OBJECT property. The real work happens in 
             # bsm_initialize().
             if self.bdm_store_object is None:
-                m = "bdm_config_object property is None, must be a valid configuration dictionary "
-                m += "created by one of the BDMConfig methods prior to BudgetDomainModel().bdm_initialize()." 
+                m = "bdm_store_object property is None, must be a BDM_STORE "
+                m += "object dictionary created by one of the BDMConfig methods "
+                m += "prior to BudgetDomainModel().bdm_initialize()." 
                 logger.error(m)
                 raise ValueError(m)
             # Apply the configuration to the budget model (self)
@@ -497,7 +497,6 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
             setattr(self, BDM_CREATED_DATE, bdm_config[BDM_CREATED_DATE]) 
             setattr(self, BDM_LAST_MODIFIED_DATE, bdm_config[BDM_LAST_MODIFIED_DATE])
             setattr(self, BDM_LAST_MODIFIED_BY, bdm_config[BDM_LAST_MODIFIED_BY])
-            # setattr(self, BDM_WORKING_DATA, {})
             setattr(self, BDM_DATA_CONTEXT, bdm_config[BDM_DATA_CONTEXT])
 
             if bsm_init:

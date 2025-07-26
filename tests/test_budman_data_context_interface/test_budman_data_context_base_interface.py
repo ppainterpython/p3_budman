@@ -10,15 +10,15 @@ from openpyxl import Workbook
 # local modules and packages
 import logging, p3_utils as p3u, p3logging as p3l
 from src.budman_namespace import design_language_namespace as bdmns
-from budman_data_context import BudManDataContext_Base
+from budman_data_context import BudManAppDataContext_Base
 #endregion imports
 # ---------------------------------------------------------------------------- +
 #region Globals
 logger = logging.getLogger(__name__)
 #endregion Globals
 # ---------------------------------------------------------------------------- +
-class testBudManDC(BudManDataContext_Base):
-    """A test subclass of BudManDataContextBaseInterface."""
+class testBudManDC(BudManAppDataContext_Base):
+    """A test subclass of BudManAppDataContext_Base."""
     def __init__(self):
         super().__init__()
         self.test_property = "test_value"
@@ -169,26 +169,26 @@ class testBudManDC(BudManDataContext_Base):
         return None
     #endregion Concrete Methods
 # ---------------------------------------------------------------------------- +
-class TestBudManDataContextBaseInterface():
+class TestBudManAppDataContext_Base():
     def test_budman_data_context_base_interface(self):
-        """Test the BudManDataContextBaseInterface ABC TypeError."""
+        """Test the BudManAppDataContext_Base ABC TypeError."""
         try:
             logger.info(self.test_budman_data_context_base_interface.__doc__)
             # Try to instantiate the abstract base class, should raise TypeError.
             with pytest.raises(TypeError) as excinfo:
-                bdmdc = BudManDataContext_Base(), \
-                f"BudManDataContextBaseInterface() should not be instantiated directly, got: {type(bdmdc)}"
+                bdmdc = BudManAppDataContext_Base(), \
+                f"BudManAppDataContext_Base() should not be instantiated directly, got: {type(bdmdc)}"
         except Exception as e:
-            pytest.fail(f"BudManDataContextBaseInterface() raised an exception: {str(e)}")
+            pytest.fail(f"BudManAppDataContext_Base() raised an exception: {str(e)}")
     # ------------------------------------------------------------------------ +
     def test_budman_data_context_base_interface_subclass__init__(self,capsys):
-        """Test concrete implementation of BudManDataContextBaseInterface class."""
+        """Test concrete implementation of BudManAppDataContext_Base class."""
         try:
             logger.info(self.test_budman_data_context_base_interface_subclass__init__.__doc__)
             # Try to instantiate the abstract base class, should raise TypeError.
             bdmdc = testBudManDC()
             assert bdmdc is not None, "testBudManDC() should not be None"
-            assert isinstance(bdmdc, BudManDataContext_Base), "Expected testBudManDC to be a subclass of BudManDataContextBaseInterface, got: " + str(type(bdmdc))
+            assert isinstance(bdmdc, BudManAppDataContext_Base), "Expected testBudManDC to be a subclass of BudManAppDataContext_Base, got: " + str(type(bdmdc))
             assert bdmdc.dc_INITIALIZED is True, "Expected INITIALIZED to be True after instantiation"
             assert "Getting INITIALIZED" in capsys.readouterr().out, "Expected 'Getting INITIALIZED' in output, got: " + capsys.readouterr().out
             bdmdc.dc_INITIALIZED = True
@@ -222,7 +222,7 @@ class TestBudManDataContextBaseInterface():
             bdmdc.dc_BDM_STORE_save("test_budman_store.jsonc")
             assert "Saving BDM_STORE to test_budman_store.jsonc" in capsys.readouterr().out, "Expected 'Saving BDM_STORE to test_budman_store.jsonc' in output, got: " + capsys.readouterr().out
         except Exception as e:
-            pytest.fail(f"BudManDataContextBaseInterface() raised an exception: {str(e)}")
+            pytest.fail(f"BudManAppDataContext_Base() raised an exception: {str(e)}")
     # ------------------------------------------------------------------------ +
 
     

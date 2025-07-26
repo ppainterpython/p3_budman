@@ -162,9 +162,14 @@ __all__ = [
     "BUDMAN_DEFAULT_WORKBOOK_TYPE_VALUE",
     # Miscellaneous constants
     "BUDMAN_WIDTH",
+    "P1",
     "P2",
+    "P3",
     "P4",
+    "P5",
     "P6",
+    "P7",
     "P8",
+    "P9",
     "P10"
 ]

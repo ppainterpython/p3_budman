@@ -12,7 +12,7 @@ import logging, p3_utils as p3u, p3logging as p3l
 # local modules and packages
 # from config import settings
 from budman_namespace import *
-from budman_data_context import BudManDataContext_Base
+from budman_data_context import BudManAppDataContext_Base
 from budman_data_context import BDMWorkingData
 #endregion imports
 # ---------------------------------------------------------------------------- +
@@ -69,9 +69,9 @@ class TestBDMWorkingDataBaseInterface():
                 m = p3u.exc_err_msg(e)
                 logger.error(m)
                 pytest.fail(f"BDMWorkingDataBaseInterface() raised an exception: {m}")
-            assert bdmwd_bi is not None, "BudManDataContextBaseInterface() should not be None"
+            assert bdmwd_bi is not None, "BudManAppDataContext_Base() should not be None"
             assert isinstance(bdmwd_bi, BDMWorkingData), \
-                "Expected BDMWorkingDataBaseInterface to be a subclass of BudManDataContextBaseInterface, got: " + str(type(bdmwd_bi))
+                "Expected BDMWorkingDataBaseInterface to be a subclass of BudManAppDataContext_Base, got: " + str(type(bdmwd_bi))
             assert bdmwd_bi.dc_INITIALIZED is True, "Expected INITIALIZED to be True after instantiation"
             bdmwd_bi.dc_FI_KEY = "test_fi_key"
             assert bdmwd_bi.dc_FI_KEY == "test_fi_key", \
@@ -84,7 +84,7 @@ class TestBDMWorkingDataBaseInterface():
             pytest.fail(f"Something raised an exception: {m}")
     # ------------------------------------------------------------------------ +
     def test_bdm_wd_base_interface_dc_interface_properties(self,bdmwd_bi):
-        """Test BDMWorkingDataBaseInterface class coverage of BudManDataContextClientInterface class properties."""
+        """Test BDMWorkingDataBaseInterface class coverage of BudManAppDataContext_Binding class properties."""
         try:
             logger.info(self.test_bdm_wd_base_interface_dc_interface_properties.__doc__)
             assert bdmwd_bi is not None, "BDMWorkingDataBaseInterface should not be None"
@@ -143,20 +143,20 @@ class TestBDMWorkingDataBaseInterface():
             pytest.fail(f"Exception: {m}")
     # ------------------------------------------------------------------------ +
     def test_budman_data_context_client_interface_methods(self):
-        """Test the BudManDataContextClientInterface class Methods."""
+        """Test the BudManAppDataContext_Binding class Methods."""
         try:
             logger.info(self.test_budman_data_context_client_interface_methods.__doc__)
             # try:
             #     # Try to instantiate the abstract base class, should raise TypeError.
-            #     bdmdc = BudManDataContextBaseInterface().dc_initialize()
-            #     bdmwd_bi = BudManDataContextClientInterface(bdmdc).dc_initialize()
+            #     bdmdc = BudManAppDataContext_Base().dc_initialize()
+            #     bdmwd_bi = BudManAppDataContext_Binding(bdmdc).dc_initialize()
             # except Exception as e:
             #     m = p3u.exc_err_msg(e)
             #     logger.error(m)
             #     pytest.fail(f"Constructing raised an exception: {m}")
-            # assert bdmwd_bi is not None, "BudManDataContextClientInterface should not be None"
-            # assert isinstance(bdmwd_bi, BudManDataContextClientInterface), \
-            #     "Expected bdmwd_bi to be a BudManDataContextClientInterface instance, got: " + str(type(bdmwd_bi))
+            # assert bdmwd_bi is not None, "BudManAppDataContext_Binding should not be None"
+            # assert isinstance(bdmwd_bi, BudManAppDataContext_Binding), \
+            #     "Expected bdmwd_bi to be a BudManAppDataContext_Binding instance, got: " + str(type(bdmwd_bi))
             # assert bdmwd_bi.data_context is not None, "bdmwd_bi.data_context should not be None"
             # assert isinstance(bdmwd_bi.data_context, BDMWorkingDataBaseInterface), \
             #     "Expected bdmwd_bi.data_context to be a BDMWorkingDataBaseInterface instance, got: " + str(type(bdmwd_bi.data_context))

@@ -3,6 +3,7 @@
         "tests"
     ],
     "python.terminal.activateEnvironment": true,
+    "terminal.external.windowsExec": "C:\\users\\ppain\\launch-gitbash.ps1",
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
     "python.REPL.enableREPLSmartSend": false,

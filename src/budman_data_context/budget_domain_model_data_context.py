@@ -1,14 +1,14 @@
 # ---------------------------------------------------------------------------- +
-#region budget_domain_model_working_data.py
-"""BDMWorkingData: The BDMWD object is the working state of the BudMan app.
+#region budget_domain_model_data_context.py
+"""BDMDataContext: The BDMDataContext object is the working state of the BudMan app.
 
-A BDMWD object is intended to sit apart from the Model and ViewModel layers, serving
-as a bridge. The BudMan design language is inherent to the BDMWD and DC
-interface. A BDMWD object can be bound as a Data Context (DC) in the application
-as it implements the BudManDataContext interface and translates it to the 
+A BDMDataContext object is intended to sit apart from the Model and ViewModel layers, serving
+as a bridge. The BudMan design language is inherent to the BDMDataContext and DC
+interface. A BDMDataContext object can be bound as a Data Context (DC) in the application
+as it implements the BudManDataContext interface and translates it to the
 Budget Domain Model.
 """
-#endregion budget_domain_model_working_data_base_interface.py
+#endregion budget_domain_model_data_context.py
 # ---------------------------------------------------------------------------- +
 #region imports
 # python standard libraries
@@ -20,7 +20,7 @@ import logging, p3_utils as p3u, p3logging as p3l
 # local modules and packages for necessary classes and functions
 from budman_namespace.design_language_namespace import *
 from budman_namespace.bdm_workbook_class import BDMWorkbook
-from budman_data_context import BudManDataContext
+from budman_data_context import BudManAppDataContext
 from p3_mvvm import Model_Base, Model_Binding
 from budget_storage_model import (bsm_BDM_WORKBOOK_load, bsm_BDM_WORKBOOK_save)
 from budman_workflows.txn_category import BDMTXNCategoryManager
@@ -32,7 +32,7 @@ MODEL_OBJECT = Model_Base
 logger = logging.getLogger(__name__)
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
-class BDMWorkingData(BudManDataContext, Model_Binding):
+class BDMDataContext(BudManAppDataContext, Model_Binding):
     """DC and Model-Aware: BDMWD -Budget Domain Model Working Data. 
     
         BDMWorkingData sits between the ViewModel and the Model. Its role is
@@ -92,19 +92,41 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
     #          These method overrides implement Model-Aware behavior.
     # ------------------------------------------------------------------------ +
     #region    BudManDataContext(BudManDataContext_Base) Model-Aware Property Overrides.
-    @property
-    def dc_BDM_WORKBOOK(self) -> BDMWorkbook:
-        """Return the current workbook in focus in the DC."""
-        if not self.dc_VALID: return None
-        return self._dc_WORKBOOK
-    @dc_BDM_WORKBOOK.setter
-    def dc_BDM_WORKBOOK(self, value: Optional[BDMWorkbook]) -> None:
-        """Set the current workbook in focus in the DC."""
-        if not self.dc_VALID: return None
-        if not isinstance(value, BDMWorkbook):
-            raise TypeError(f"dc_WORKBOOK must be a type: BDMWorkbook, "
-                            f"not a type: '{type(value).__name__}'")
-        self._dc_WORKBOOK = value
+    # @property
+    # def dc_FI_OBJECT(self) -> str:
+    #     """DC-Only: Return the FI_OBJECT of the current Financial Institution. 
+    #     """
+    #     return self._dc_FI_OBJECT if self.dc_VALID else None
+    # @dc_FI_OBJECT.setter
+    # def dc_FI_OBJECT(self, value: str) -> None:
+    #     """Model-Aware: Set the current FI_OBJ for the DC.
+    #     Validate the FI_OBJECT before assigning.
+    #     DC-Only: Set the FI_OBJECT of the current Financial Institution."""
+    #     if not self.dc_VALID: return None
+    #     self._dc_FI_OBJECT = value
+
+    # @property
+    # def dc_FI_KEY(self) -> str:
+    #     """DC-Only: Return the FI_KEY of the current Financial Institution.
+    #     Depends on the value of dc_BDM_STORE.
+    #     Current means that the other data in the DC is for this FI.
+    #     """
+    #     if self.dc_BDM_STORE is None and not self._initialization_in_progress:
+    #         m = "dc_BDM_STORE is None. Cannot get fi_key."
+    #         logger.warning(m)
+    #         return None
+    #     return self._dc_FI_KEY
+    # @dc_FI_KEY.setter
+    # def dc_FI_KEY(self, value: str) -> None:
+    #     """DC-Only: Set the FI_KEY of the current Financial Institution.
+    #     Depends on the value of dc_BDM_STORE.
+    #     """
+    #     if self.dc_BDM_STORE is None and not self._initialization_in_progress:
+    #         m = "dc_BDM_STORE is None. Cannot set fi_key."
+    #         logger.warning(m)
+    #         return None
+    #     self._dc_FI_KEY = value
+
 
     @property
     def WF_CATEGORY_MANAGER(self) -> Optional[object]:
@@ -124,7 +146,7 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
     #endregion BudManDataContext(BudManDataContext_Base) Property Overrides.
     # ------------------------------------------------------------------------ +
     #region    BudManDataContext(BudManDataContext_Base) Method Model-Aware Overrides.
-    def dc_initialize(self) -> "BudManDataContext":
+    def dc_initialize(self) -> "BudManAppDataContext":
         """Model-Aware: Initialize the BDMWorkingData instance after construction.
         
         Apply any necessary initializations to the BDMWorkingData instance. 
@@ -159,9 +181,11 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
                     logger.warning(m)
                 else:
                     if self.model.bdm_initialized:
+                        # The fi_object and FI_WORKBOOK_DATA_COLLECTION are the
+                        # key bindings between the BDMDataContext and the Model.
                         fi_object = self.model.bdm_FI_OBJECT(self.dc_FI_KEY)
                         wdc = self.model.bdm_FI_WORKBOOK_DATA_COLLECTION(self.dc_FI_KEY)
-                        self.dc_WORKBOOK_DATA_COLLECTION = wdc
+                        # self.dc_WORKBOOK_DATA_COLLECTION = wdc
                         self.dc_FI_OBJECT = fi_object
                         if self.WF_CATEGORY_MANAGER is not None:
                             # Load the WB_TYPE_TXN_CATEGORIES for the FI.
@@ -181,25 +205,6 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
         """
         return self.model.bdm_WF_PURPOSE_FOLDER_MAP(wf_key, wf_purpose)
 
-    def dc_WB_INDEX_validate(self, wb_index:int) -> bool:
-        """Model-Aware: Validate the workbook index.
-        
-        Args:
-            wb_index (int): The workbook index to validate.
-        Returns:
-            bool: True if the index is valid, False otherwise.
-        """
-        try:
-            if not super().dc_WB_INDEX_validate(wb_index): return False
-            # Also check the bdm_wb.wb_loaded property value.
-            bdm_wb : BDMWorkbook = list(self.dc_WORKBOOK_DATA_COLLECTION.values())[wb_index]
-            bdm_wb.wb_loaded = bdm_wb.wb_id in self.dc_LOADED_WORKBOOKS
-            return True
-        except Exception as e:
-            m = f"Error validating wb_index: {p3u.exc_err_msg(e)}"
-            logger.error(m)
-            return False, m
-        
     def dc_WORKBOOK_validate(self, bdm_wb : WORKBOOK_OBJECT) -> bool:
         """Model-Aware: Validate the type of WORKBOOK_OBJECT.
         Abstract: sub-class hook to test specialized WORKBOOK_OBJECT types.
@@ -207,6 +212,8 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
         Model-Aware: validate type: BDMWorkbook class.
         """
         try:
+            if bdm_wb is None:
+                return False
             if not isinstance(bdm_wb, BDMWorkbook):
                 m = (f"bdm_wb must be type: 'BDMWorkbook', "
                      f"not type: {type(bdm_wb).__name__}.")
@@ -258,7 +265,7 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
                 wb.wb_loaded = True
                 return True, wb_content
             # load is True, so we need to load the workbook content.
-            return self.dc_BDM_WORKBOOK_load(wb)
+            return self.dc_WORKBOOK_load(wb)
         except Exception as e:
             m = f"Error loading workbook '{wb.wb_id}': {p3u.exc_err_msg(e)}"
             logger.error(m)
@@ -288,7 +295,7 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
                 m = f"Workbook content for '{bdm_wb.wb_id}' is None."
                 logger.error(m)
                 return False, m
-            success, result = self.dc_BDM_WORKBOOK_save(wb_content, bdm_wb)
+            success, result = self.dc_WORKBOOK_save(wb_content, bdm_wb)
             bdm_wb.wb_loaded = bdm_wb.wb_id in self.dc_LOADED_WORKBOOKS
             if bdm_wb.wb_loaded :
                 # Retrieve the workbook content from dc_LOADED_WORKBOOKS.
@@ -307,7 +314,7 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
             logger.error(m)
             return False, m
 
-    def dc_BDM_WORKBOOK_load(self, bdm_wb : BDMWorkbook) -> BUDMAN_RESULT:
+    def dc_WORKBOOK_load(self, bdm_wb : BDMWorkbook) -> BUDMAN_RESULT:
         """Model-aware: Load the workbook bdm_wb with BSM service."""
         try:
             # Model-Aware World
@@ -321,7 +328,7 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
             bsm_BDM_WORKBOOK_load(bdm_wb)
             # Add/update to the loaded workbooks collection.
             self.dc_LOADED_WORKBOOKS[bdm_wb.wb_id] = bdm_wb.wb_content
-            self.dc_BDM_WORKBOOK = bdm_wb  # Update workbook-related DC info.
+            self.dc_WORKBOOK = bdm_wb  # Update workbook-related DC info.
             logger.info(f"Loaded workbook '{bdm_wb.wb_id}' "
                         f"from url '{bdm_wb.wb_url}'.")
             return True, bdm_wb.wb_content
@@ -330,7 +337,7 @@ class BDMWorkingData(BudManDataContext, Model_Binding):
             logger.error(m)
             return False, m
         
-    def dc_BDM_WORKBOOK_save(self, bdm_wb : BDMWorkbook) -> BUDMAN_RESULT:
+    def dc_WORKBOOK_save(self, bdm_wb : BDMWorkbook) -> BUDMAN_RESULT:
         """Model-Aware: Save the workbook content to storage.
 
         Args:

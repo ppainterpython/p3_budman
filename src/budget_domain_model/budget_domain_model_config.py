@@ -260,7 +260,7 @@ class BDMConfig(metaclass=BDMSingletonMeta):
                             wb_url = wb_data[WB_URL]
                             try:
                                 _ = p3u.verify_url_file_path(wb_url)
-                            except Exception as e:
+                            except Exception as e: 
                                 m = p3u.exc_err_msg(e)
                                 logger.error(f"Error verifying WORKBOOK URL '{wb_url}': {m}")
                                 logger.error(f"Left out of collection: "

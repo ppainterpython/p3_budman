@@ -89,7 +89,7 @@ A critical property in the Data Context is `dc_WORKBOOK_DATA_COLLECTION` which i
 
 #### Data Context Concrete Implementation
 
-The BudManDataContext_Base abstract base class is an abstract interface used by client modules through binding to an object with a concrete implementation of the interface. The concrete implementation is the BudManDataContext class in the Budget Manager application design. This singleton instance is referenced by the ViewModel and, possibly, View if needed.
+The BudManAppDataContext_Base abstract base class is an abstract interface used by client modules through binding to an object with a concrete implementation of the interface. The concrete implementation is the BudManAppDataContext class in the Budget Manager application design. This singleton instance is referenced by the ViewModel and, possibly, View if needed.
 
 DC is initialized with a reference to the BudgetDomainModel BudgetDomainWorkingData object, available in the BudgetDomainManager bdm_working_data property.
 
@@ -161,7 +161,7 @@ To add clarity, I am refactoring some type definitions:
 
 - __WORKBOOK_DATA_COLLECTION__ for the workbook-centric view.
 
-### Making BudManViewModel a subclass of BudManDataContext_Binding
+### Making BudManViewModel a subclass of BudManAppDataContext_Binding
 
 To keep it simple, and keep an eye on a clean, and simple Dependency Injection pattern, I am making all bindings happen after object instantiation. Using initialize methods, the *_binding classes are configured with the reference to their concrete objects at initialization time, not object instantiation time.
 
@@ -171,6 +171,6 @@ To keep it simple, and keep an eye on a clean, and simple Dependency Injection p
 |------------|------------------------------------------------------------------|
 | 06/17/2025 | Removed bdm_initialize_from_BDM_STORE(self) from budget_domain_model.py|
 | 06/17/2025 |Modified BDMWorkbook class and WORKBOOK_DATA_COLLECTION to be use the wb_id as the key, not a list index. The wb_index used in layers above BDM, not persisted in BDMWorkbook.|
-| 06/19/2025 |Making BudManViewModel a subclass of BudManDataContext_Binding finally.|
+| 06/19/2025 |Making BudManViewModel a subclass of BudManAppDataContext_Binding finally.|
 | 06/23/2025 | Implement -all switch for wf cat cmd. Abandoned the wb_ref approach in favor of a simplified wb_index with the UI. Now, workbooks are referred to by their wb_index in commands, not names. |
 | 06/25/2025 |Extending the workflow process model for cleaner separation of concerns. Command execution methods in the ViewModel take the validated command and arguments and dispatch that, in the case of the workflow command, to appropriate functions that implement the process tasks, passing workbooks to them. Keep the knowledge of the process out of the command execution, just validate and invoke the process function/method, etc.|

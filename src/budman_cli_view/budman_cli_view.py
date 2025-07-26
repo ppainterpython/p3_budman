@@ -26,6 +26,7 @@ declarations are contained in that one class, separate from the View code.
 # ---------------------------------------------------------------------------- +
 #region Imports
 # python standard library modules and packages
+import cmd
 import logging, os, sys, getpass, time, copy
 from pathlib import Path
 from typing import List, Type, Generator, Dict, Tuple, Any, Optional, Union, Callable
@@ -36,12 +37,12 @@ import cmd2, argparse
 from cmd2 import (Cmd2ArgumentParser, with_argparser)
 from cmd2 import (Bg,Fg, style, ansi)
 # local modules and packages
+from budman_cli_view.budman_cli_output import cli_view_cmd_output
 from budman_settings import *
 from budman_settings.budman_settings_constants import BUDMAN_CMD_HISTORY_FILENAME
 from p3_mvvm import DataContext_Binding
 import budman_namespace as bdm
 from budman_cli_view import BudManCLIParser
-# from budman_data_context import BudManDataContext_Binding
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -82,26 +83,6 @@ def change_cmd_parser() -> cmd2.Cmd2ArgumentParser:
     return cli_parser.change_cmd if cli_parser else None
 def app_cmd_parser() -> cmd2.Cmd2ArgumentParser:
     return cli_parser.app_cmd if cli_parser else None
-
-def _filter_opts(opts) -> Dict[str, Any]:
-    if opts is None: return {}
-    oc = vars(opts).copy()
-    oc.pop('cmd2_statement')
-    oc.pop('cmd2_handler')
-    return oc
-def _log_cli_cmd_execute(self, opts):
-    """Log the command and options. Return True if parse_only."""
-    logger.info(f"Execute Command: {str(_filter_opts(opts))}")
-    return self.parse_only if not "val_cmd" in opts else False
-def _log_cli_cmd_complete(self, opts, st = None):
-    m = p3u.stop_timer(st) if st else None
-    logger.info(f"Complete Command: {str(_filter_opts(opts))} {m}")
-def _show_args_only(cli_view : "BudManCLIView", opts) -> bool:
-    oc = vars(opts).copy()
-    oc.pop('cmd2_statement')
-    oc.pop('cmd2_handler')
-    cli_view.poutput(f"args: {str(oc)} parse_only: {cli_view.parse_only}")
-    return cli_view.parse_only
 
 #endregion Configure the CLI parser 
 # ---------------------------------------------------------------------------- +
@@ -333,26 +314,17 @@ class BudManCLIView(cmd2.Cmd): # , DataContext_Binding):
         self._command_processor = value
     #endregion ViewModelCommandProcessor_Binding Properties
     # ------------------------------------------------------------------------ +
-
-    # ------------------------------------------------------------------------ +
     #region ViewModelCommandProcessor_Binding Methods
-    def cp_execute_cmd(self, opts : argparse.Namespace) -> Tuple[str, Any]:
+    def cp_execute_cmd(self, cmd : Dict) -> Tuple[bool, Any]:
         """Send a cmd through the command_processor.
          
         This view is a CommandProcessor_Binding, proxy-ing commands through
         a binding setup at setup time, Dependency Injection."""
         try:
             st = p3u.start_timer()
-            _log_cli_cmd_execute(self, opts)
-            parse_only : bool = self.parse_only or getattr(opts,'parse_only', False)
-            cmd_line = f"{self.current_cmd} {opts.cmd2_statement.get()}"
-            if parse_only: 
-                console.print(f"parse-only: '{cmd_line}' {str(_filter_opts(opts))}")
-                return True, CMD_PARSE_ONLY
-            cmd = BudManCLIView.create_cmd_from_cmd2_argparse(opts)
+            logger.debug(f"Execute Command: {cmd}")
             status, result = self.CP.cp_execute_cmd(cmd)
-            console.print(result)
-            _log_cli_cmd_complete(self, opts)
+            logger.debug(f"Complete Command: {str(cmd)} {p3u.stop_timer(st)}")
             return (status, result)
         except SystemExit as e:
             # Handle the case where argparse exits the program
@@ -361,9 +333,12 @@ class BudManCLIView(cmd2.Cmd): # , DataContext_Binding):
             self.pexcept(e)
     #endregion ViewModelCommandProcessor_Binding methods
     # ------------------------------------------------------------------------ +
+    #
+    #endregion ViewModelCommandProcessor interface implementation
+    # ======================================================================== +
 
-    # ------------------------------------------------------------------------ +
-    #region ViewModelCommandProcessor Interface Command Execution Methods
+    # ======================================================================== +
+    #region BudManCLIView Command Execution Methods
     # ------------------------------------------------------------------------ +
     #
     # ------------------------------------------------------------------------ +
@@ -386,7 +361,17 @@ class BudManCLIView(cmd2.Cmd): # , DataContext_Binding):
     def do_init(self, opts):
         """Initialize aspects of the Data Context for the Budget Manager application."""
         try:
-            status, result = self.cp_execute_cmd(opts)
+            # Construct the command object from cmd2's argparse Namespace.
+            status, cmd = self.construct_cmd(opts)
+            if not status:
+                return
+            # Submit the command to the command processor.
+            status, result = self.cp_execute_cmd(cmd)
+            # Render the result.
+            if status:
+                console.print(result)
+            else:
+                console.print(f"[red]Error:[/red] {result}")
         except Exception as e:
             self.pexcept(e)
     #endregion do_init command - initialize aspects of the BudgetModel application.
@@ -396,7 +381,17 @@ class BudManCLIView(cmd2.Cmd): # , DataContext_Binding):
     def do_change(self, opts):
         """Change (ch) attributes of workbooks and other objects in the Data Context for the Budget Manager application."""
         try:
-            status, result = self.cp_execute_cmd(opts)
+            # Construct the command object from cmd2's argparse Namespace.
+            status, cmd = self.construct_cmd(opts)
+            if not status:
+                return
+            # Submit the command to the command processor.
+            status, result = self.cp_execute_cmd(cmd)
+            # Render the result.
+            if status:
+                console.print(result)
+            else:
+                console.print(f"[red]Error:[/red] {result}")
         except Exception as e:
             self.pexcept(e)
     #endregion do_change command - change attributes of workbooks and other objects.
@@ -412,7 +407,17 @@ class BudManCLIView(cmd2.Cmd): # , DataContext_Binding):
             object for the command processor.
         """
         try:
-            status, result = self.cp_execute_cmd(opts)
+            # Construct the command object from cmd2's argparse Namespace.
+            status, cmd = self.construct_cmd(opts)
+            if not status:
+                return
+            # Submit the command to the command processor.
+            status, result = self.cp_execute_cmd(cmd)
+            # Render the result.
+            if status:
+                cli_view_cmd_output(cmd, result)
+            else:
+                console.print(f"[red]Error:[/red] {result}")
         except Exception as e:
             self.pexcept(e)
     #endregion do_show command
@@ -428,7 +433,17 @@ class BudManCLIView(cmd2.Cmd): # , DataContext_Binding):
             object for the command processor.
         """
         try:
-            status, result = self.cp_execute_cmd(opts)
+            # Construct the command object from cmd2's argparse Namespace.
+            status, cmd = self.construct_cmd(opts)
+            if not status:
+                return
+            # Submit the command to the command processor.
+            status, result = self.cp_execute_cmd(cmd)
+            # Render the result.
+            if status:
+                console.print(result)
+            else:
+                console.print(f"[red]Error:[/red] {result}")
         except Exception as e:
             self.pexcept(e)
     #endregion do_load command - load workbooks
@@ -444,7 +459,17 @@ class BudManCLIView(cmd2.Cmd): # , DataContext_Binding):
             object for the command processor.
         """
         try:
-            status, result = self.cp_execute_cmd(opts)
+            # Construct the command object from cmd2's argparse Namespace.
+            status, cmd = self.construct_cmd(opts)
+            if not status:
+                return
+            # Submit the command to the command processor.
+            status, result = self.cp_execute_cmd(cmd)
+            # Render the result.
+            if status:
+                console.print(result)
+            else:
+                console.print(f"[red]Error:[/red] {result}")
         except Exception as e:
             self.pexcept(e)
     #endregion do_save command - save workbooks
@@ -467,9 +492,7 @@ class BudManCLIView(cmd2.Cmd): # , DataContext_Binding):
             object for the command processor.
         """
         try:
-            _ = _log_cli_cmd_execute(self, opts)
             self.val_subcommand(opts)
-            _log_cli_cmd_complete(self, opts)
         except SystemExit:
             # Handle the case where argparse exits the program
             self.pwarning(BMCLI_SYSTEM_EXIT_WARNING)
@@ -481,27 +504,28 @@ class BudManCLIView(cmd2.Cmd): # , DataContext_Binding):
     def val_subcommand(self, opts) -> None:
         """Examine or set values in Budget Manager."""
         try:
-            _ = _show_args_only(self, opts)
-            if opts.val_cmd == CMD_PARSE_ONLY:
-                if opts.po_value == "toggle":
+            cmd = BudManCLIView.create_cmd_from_cmd2_argparse(opts)
+            self.poutput(f"args: {str(cmd)} parse_only: {self.parse_only}")
+            if cmd.val_cmd == CMD_PARSE_ONLY:
+                if cmd.po_value == "toggle":
                     self.parse_only = not self.parse_only
-                elif opts.po_value == "on":
+                elif cmd.po_value == "on":
                     self.parse_only = True
-                elif opts.po_value == "off":
+                elif cmd.po_value == "off":
                     self.parse_only = False
                 else:
                     self.poutput("Invalid value for parse_only. "
                                  "Use on|off|toggle.")
                 BudManCLIView.prompt = PO_ON_PROMPT if self.parse_only else PO_OFF_PROMPT
                 self.poutput(f"parse_only: {self.parse_only}")
-            elif opts.val_cmd == "wf_key":
-                _ = opts.wf_ref
-            elif opts.val_cmd == "wb_name":
-                _ = opts.wb.ref
-            elif opts.val_cmd == "fi_key":
-                _ = opts.fi_ref
+            elif cmd.val_cmd == "wf_key":
+                _ = cmd.wf_ref
+            elif cmd.val_cmd == "wb_name":
+                _ = cmd.wb.ref
+            elif cmd.val_cmd == "fi_key":
+                _ = cmd.fi_ref
             else:
-                self.poutput(f"Nothing to do here: {str(opts)}.")
+                self.poutput(f"Nothing to do here: {str(cmd)}.")
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
@@ -524,7 +548,17 @@ class BudManCLIView(cmd2.Cmd): # , DataContext_Binding):
 
         """
         try:
-            status, result = self.cp_execute_cmd(opts)
+            # Construct the command object from cmd2's argparse Namespace.
+            status, cmd = self.construct_cmd(opts)
+            if not status:
+                return
+            # Submit the command to the command processor.
+            status, result = self.cp_execute_cmd(cmd)
+            # Render the result.
+            if status:
+                console.print(result)
+            else:
+                console.print(f"[red]Error:[/red] {result}")
         except Exception as e:
             self.pexcept(e)
     #endregion do_workflow command
@@ -541,7 +575,17 @@ class BudManCLIView(cmd2.Cmd): # , DataContext_Binding):
 
         """
         try:
-            status, result = self.cp_execute_cmd(opts)
+            # Construct the command object from cmd2's argparse Namespace.
+            status, cmd = self.construct_cmd(opts)
+            if not status:
+                return
+            # Submit the command to the command processor.
+            status, result = self.cp_execute_cmd(cmd)
+            # Render the result.
+            if status:
+                console.print(result)
+            else:
+                console.print(f"[red]Error:[/red] {result}")
         except Exception as e:
             self.pexcept(e)
     #endregion do_app command
@@ -549,22 +593,34 @@ class BudManCLIView(cmd2.Cmd): # , DataContext_Binding):
     #region do_exit and quit commands
     def do_exit(self, args):
         """Exit the Budget Manager CLI."""
-        # if _log_cli_cmd_execute(self, args): return
         self.poutput("Exiting Budget Manager CLI.")
-        # _log_cli_cmd_complete(self, args)
         return True 
     def do_quit(self, args):
         """Quit the BudgetModel CLI."""
-        # if _log_cli_cmd_execute(self, args): return
         self.poutput("Quitting BudgetModel CLI.")
-        # _log_cli_cmd_complete(self, args)
         return True 
     #endregion do_exit and quit commands
     # ------------------------------------------------------------------------ +    
-    #endregion ViewModelCommandProcessor Command Execution Methods
-    # ------------------------------------------------------------------------ +
+    #region cmd_
+    def construct_cmd(self, opts : argparse.Namespace) -> Tuple[bool, Any]:
+        """Construct a command object from cmd2/argparse arguments. 
+        """
+        try:
+            cmd = BudManCLIView.create_cmd_from_cmd2_argparse(opts)
+            parse_only : bool = self.parse_only or getattr(opts,CMD_PARSE_ONLY, False)
+            cmd_line = f"{self.current_cmd} {opts.cmd2_statement.get()}"
+            if parse_only: 
+                console.print(f"parse-only: '{cmd_line}' {str(cmd)}")
+                return False, CMD_PARSE_ONLY
+            return True, cmd
+        except SystemExit as e:
+            # Handle the case where argparse exits the program
+            self.pwarning(BMCLI_SYSTEM_EXIT_WARNING)
+        except Exception as e:
+            self.pexcept(e)
+    # ------------------------------------------------------------------------ +    
     #
-    #endregion ViewModelCommandProcessor interface implementation
+    #endregion BudManCLIView Command Execution Methods
     # ======================================================================== +
 
 # ---------------------------------------------------------------------------- +
