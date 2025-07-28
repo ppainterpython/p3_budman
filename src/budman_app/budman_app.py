@@ -18,6 +18,7 @@ from p3_utils import exc_err_msg, dscr, start_timer, stop_timer
 # local packages and module libraries
 from budman_settings import *
 from budman_namespace import BDMSingletonMeta
+import budman_command_processor.budman_cp_namespace as cp
 from budman_view_model import (BudManViewModel, BudManCLICommandProcessor_Binding)
 from budman_cli_view import BudManCLIView
 from budget_domain_model import (BudgetDomainModel)
@@ -47,6 +48,7 @@ class BudManApp(metaclass=BDMSingletonMeta):
         self._app_name : Optional[str] = None
         self._start_time : float = start_time
         self._settings : Optional[BudManSettings] = app_settings
+        self._exit_code: int = 0
         d = dscr(self)
         logger.debug(f"{d}.__init__() completed ...")
     # ------------------------------------------------------------------------ +
@@ -160,8 +162,8 @@ class BudManApp(metaclass=BDMSingletonMeta):
             # startup the view or not
             if self.view is None:
                 raise ValueError("View not initialized.")
-            self.view.cmdloop() if startup else None # Application CLI loop
-            self.view_model.shutdown()
+            self._exit_code = self.view.cmdloop() if startup else None # Application CLI loop
+            self.view_model.shutdown() if self.view.save_on_exit else None
         except Exception as e:
             m = exc_err_msg(e)
             logger.error(m)

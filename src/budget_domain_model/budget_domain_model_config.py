@@ -270,7 +270,12 @@ class BDMConfig(metaclass=BDMSingletonMeta):
                         wb_object = BDMWorkbook(**wb_data)
                         # Replace the DATA_OBJECT with the WORKBOOK_OBJECT.
                         fi_object[FI_WORKBOOK_DATA_COLLECTION][wb_id] = wb_object
-            logger.debug(f"Complete:")   
+                    # Sort the FI_WORKBOOK_DATA_COLLECTION by wb_id, for
+                    # WB_INDEX order from here on.
+                    sorted_wdc = dict(
+                        sorted(fi_object[FI_WORKBOOK_DATA_COLLECTION].items()))
+                    fi_object[FI_WORKBOOK_DATA_COLLECTION] = sorted_wdc
+            logger.debug(f"Complete:")
             return None
         except Exception as e:
             m = p3u.exc_err_msg(e)

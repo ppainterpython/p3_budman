@@ -34,7 +34,7 @@ from typing import List, Type, Generator, Dict, Tuple, Any, Optional, Union, Cal
 from rich.console import Console
 import p3_utils as p3u, pyjson5, p3logging as p3l
 import cmd2, argparse
-from cmd2 import (Cmd2ArgumentParser, with_argparser)
+from cmd2 import (Cmd2ArgumentParser, with_argparser, with_argument_list)
 from cmd2 import (Bg,Fg, style, ansi)
 # local modules and packages
 from budman_cli_view.budman_cli_output import cli_view_cmd_output
@@ -42,6 +42,7 @@ from budman_settings import *
 from budman_settings.budman_settings_constants import BUDMAN_CMD_HISTORY_FILENAME
 from p3_mvvm import DataContext_Binding
 import budman_namespace as bdm
+import budman_command_processor.budman_cp_namespace as cp
 from budman_cli_view import BudManCLIParser
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -176,6 +177,7 @@ class BudManCLIView(cmd2.Cmd): # , DataContext_Binding):
         self._settings : BudManSettings = settings if settings else BudManSettings()
         self._parse_only :bool = False
         self._current_cmd :Optional[str] = None
+        self._save_on_exit : bool = True
         # cmd2.Cmd initialization
         hfn = settings[BUDMAN_CMD_HISTORY_FILENAME]
         cmd2.Cmd.__init__(self, 
@@ -191,6 +193,17 @@ class BudManCLIView(cmd2.Cmd): # , DataContext_Binding):
     #endregion __init__() method
     # ------------------------------------------------------------------------ +
     #region   BudManCLIView class properties
+    @property
+    def save_on_exit(self) -> bool:
+        """Get the save_on_exit property."""
+        return self._save_on_exit
+    @save_on_exit.setter
+    def save_on_exit(self, value: bool) -> None:
+        """Set the save_on_exit property."""
+        if not isinstance(value, bool):
+            raise TypeError("save_on_exit must be a boolean.")
+        self._save_on_exit = value
+
     @property
     def app_name(self) -> str:
         """Get the app_name property."""
@@ -579,6 +592,12 @@ class BudManCLIView(cmd2.Cmd): # , DataContext_Binding):
             status, cmd = self.construct_cmd(opts)
             if not status:
                 return
+            # If app exit cmd, handle here.
+            if cmd[cp.CK_SUBCMD_KEY] == cp.CV_EXIT_SUBCMD_KEY:
+                # Handle the --no_save switch
+                self.save_on_exit = not cmd[cp.CK_NO_SAVE]
+                console.print("Exiting Budget Manager CLI.")
+                return True
             # Submit the command to the command processor.
             status, result = self.cp_execute_cmd(cmd)
             # Render the result.
@@ -591,17 +610,17 @@ class BudManCLIView(cmd2.Cmd): # , DataContext_Binding):
     #endregion do_app command
     # ------------------------------------------------------------------------ +
     #region do_exit and quit commands
-    def do_exit(self, args):
-        """Exit the Budget Manager CLI."""
-        self.poutput("Exiting Budget Manager CLI.")
-        return True 
-    def do_quit(self, args):
-        """Quit the BudgetModel CLI."""
-        self.poutput("Quitting BudgetModel CLI.")
-        return True 
+    # def do_exit(self, args):
+    #     """Exit the Budget Manager CLI."""
+    #     console.print("Exiting Budget Manager CLI.")
+    #     return True 
+    # def do_quit(self, args):
+    #     """Quit the BudgetModel CLI."""
+    #     console.print("Quitting BudgetModel CLI.")
+    #     return True 
     #endregion do_exit and quit commands
     # ------------------------------------------------------------------------ +    
-    #region cmd_
+    #region construct_cmd
     def construct_cmd(self, opts : argparse.Namespace) -> Tuple[bool, Any]:
         """Construct a command object from cmd2/argparse arguments. 
         """
@@ -618,6 +637,7 @@ class BudManCLIView(cmd2.Cmd): # , DataContext_Binding):
             self.pwarning(BMCLI_SYSTEM_EXIT_WARNING)
         except Exception as e:
             self.pexcept(e)
+    #endregion construct_cmd
     # ------------------------------------------------------------------------ +    
     #
     #endregion BudManCLIView Command Execution Methods

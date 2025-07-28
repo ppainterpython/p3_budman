@@ -5,6 +5,7 @@
 # python standard library modules and packages
 from rich.console import Console
 from rich.table import Table
+from treelib import Tree
 import logging, re, sys, csv, cmd2, toml
 from cmd2 import (Bg, Fg, ansi, Cmd2ArgumentParser, with_argparser)
 from pathlib import Path
@@ -29,7 +30,8 @@ from budget_storage_model import (
     bsm_BDM_WORKBOOK_load,
     bsm_WORKBOOK_CONTENT_url_put,
     csv_DATA_LIST_url_get, 
-    csv_DATA_LIST_file_load
+    csv_DATA_LIST_file_load,
+    bsm_get_folder_structure
 )
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -260,12 +262,16 @@ class CmdLineApp(cmd2.Cmd):
     #endregion do_extract() method
     # ------------------------------------------------------------------------ +
     #region do_foo() method
+
     def do_foo(self, statement) -> None:
         """Manage foo."""
         try:
             self.check_catalog()
-            console.print(f"foo {statement}")
-            console.print(f"foo {statement!r}")
+            path = r'C:\Users\ppain\OneDrive\budget\boa\raw_data'
+            result = bsm_get_folder_structure(path)
+            tree = build_tree_from_folder(path)
+            tree.show()
+            console.print(f"Folder structure for '{path}':")
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
@@ -307,6 +313,20 @@ class CmdLineApp(cmd2.Cmd):
 #endregion CmdLineApp class
 # ---------------------------------------------------------------------------- +
 #region various functions
+def build_tree_from_folder(root_path: str) -> Tree:
+    tree = Tree()
+    root = Path(root_path).resolve()
+    tree.create_node(tag=root.name, identifier=str(root))  # Root node
+
+    def add_nodes(current_path: Path, parent_id: str):
+        for item in current_path.iterdir():
+            node_id = str(item.resolve())
+            tree.create_node(tag=item.name, identifier=node_id, parent=parent_id)
+            if item.is_dir():
+                add_nodes(item, node_id)
+
+    add_nodes(root, str(root))
+    return tree
 def test_regex(file_path, pattern, show_matches=False):
     try:
         with open(file_path, 'r') as file:

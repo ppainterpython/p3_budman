@@ -69,6 +69,8 @@ CV_CHECK_SUBCMD_NAME = "check"
 CV_CHECK_SUBCMD_KEY = CV_WORKFLOW_CMD_KEY + "_" + CV_CHECK_SUBCMD_NAME
 CV_APPLY_SUBCMD_NAME = "apply"
 CV_APPLY_SUBCMD_KEY = CV_WORKFLOW_CMD_KEY + "_" + CV_APPLY_SUBCMD_NAME
+CV_EXIT_SUBCMD_NAME = "exit"
+CV_EXIT_SUBCMD_KEY = CV_APP_CMD_KEY + "_" + CV_EXIT_SUBCMD_NAME
 CV_DELETE_SUBCMD = "delete"
 CV_RELOAD_SUBCMD_NAME = "reload"
 CV_RELOAD_SUBCMD_KEY = CV_APP_CMD_KEY + "_" + CV_RELOAD_SUBCMD_NAME
@@ -86,6 +88,7 @@ CK_LOAD_WORKBOOK = "load_workbook"
 CK_FIX_SWITCH = "fix_switch"
 CK_VALIDATE_CATEGORIES = "validate_categories"
 CK_LOG_ALL = "log_all"
+CK_NO_SAVE = "no_save"
 
 # Essential Data Context attributes, with cross-cutting scope over cmds
 CK_FI_KEY = "fi_key"

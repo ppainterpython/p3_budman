@@ -92,41 +92,54 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
     #          These method overrides implement Model-Aware behavior.
     # ------------------------------------------------------------------------ +
     #region    BudManDataContext(BudManDataContext_Base) Model-Aware Property Overrides.
-    # @property
-    # def dc_FI_OBJECT(self) -> str:
-    #     """DC-Only: Return the FI_OBJECT of the current Financial Institution. 
-    #     """
-    #     return self._dc_FI_OBJECT if self.dc_VALID else None
-    # @dc_FI_OBJECT.setter
-    # def dc_FI_OBJECT(self, value: str) -> None:
-    #     """Model-Aware: Set the current FI_OBJ for the DC.
-    #     Validate the FI_OBJECT before assigning.
-    #     DC-Only: Set the FI_OBJECT of the current Financial Institution."""
-    #     if not self.dc_VALID: return None
-    #     self._dc_FI_OBJECT = value
+    @property
+    def dc_FI_OBJECT(self) -> Optional[FI_OBJECT]:
+        """DC-Only: Return the FI_OBJECT of the current Financial Institution. """
+        return self._dc_FI_OBJECT if self.dc_VALID else None
+    @dc_FI_OBJECT.setter
+    def dc_FI_OBJECT(self, value: Optional[FI_OBJECT]) -> None:
+        """Model-Aware: Set the current FI_OBJECT value.
+        
+        Can be None. Valid value must be a valid FI_OBJECT from the model.
+        """
+        if not self.dc_VALID: return None
+        # The value must be a valid FI_OBJECT.
+        if not isinstance(value, dict):
+            raise TypeError(f"dc_FI_OBJECT must be an FI_OBJECT, "
+                            f"not {type(value).__name__}.")
+        # The value's FI_KEY must match dc_FI_KEY.
+        if value[FI_KEY] != self.dc_FI_KEY:
+            raise ValueError(f"FI_OBJECT key mismatch: "
+                             f"value[{FI_KEY}]('{value[FI_KEY]}') != "
+                             f"dc_FI_KEY('{self.dc_FI_KEY}')")
+        # The new FI_OBJECT value must be the same object from model.
+        if value != self.model.bdm_FI_COLLECTION.get(self.dc_FI_KEY, None):
+            raise ValueError(f"dc_FI_OBJECT must be the same object from "
+                             f"model.bdm_FI_COLLECTION for key "
+                             f"dc_FI_KEY'{self.dc_FI_KEY}').")
+        self._dc_FI_OBJECT = value
 
-    # @property
-    # def dc_FI_KEY(self) -> str:
-    #     """DC-Only: Return the FI_KEY of the current Financial Institution.
-    #     Depends on the value of dc_BDM_STORE.
-    #     Current means that the other data in the DC is for this FI.
-    #     """
-    #     if self.dc_BDM_STORE is None and not self._initialization_in_progress:
-    #         m = "dc_BDM_STORE is None. Cannot get fi_key."
-    #         logger.warning(m)
-    #         return None
-    #     return self._dc_FI_KEY
-    # @dc_FI_KEY.setter
-    # def dc_FI_KEY(self, value: str) -> None:
-    #     """DC-Only: Set the FI_KEY of the current Financial Institution.
-    #     Depends on the value of dc_BDM_STORE.
-    #     """
-    #     if self.dc_BDM_STORE is None and not self._initialization_in_progress:
-    #         m = "dc_BDM_STORE is None. Cannot set fi_key."
-    #         logger.warning(m)
-    #         return None
-    #     self._dc_FI_KEY = value
-
+    @property
+    def dc_FI_KEY(self) -> Optional[str]:
+        """DC-Only: Return the FI_KEY of the current Financial Institution.
+        Depends on the value of dc_FI_OBJECT.
+        Current means that the other data in the DC is for this FI.
+        """
+        self.not_dc_INITIALIZED()
+        return self.dc_FI_OBJECT[FI_KEY] if self.dc_VALID else None
+    @dc_FI_KEY.setter
+    def dc_FI_KEY(self, value: Optional[str]) -> None:
+        """
+        Model-Aware: Set the current FI_KEY value to None or validated value.
+        Setting FI_KEY is accomplished by setting the dc_FI_OBJECT to the 
+        FI_OBJECT associated with that FI_KEY in the model. Before assigning, 
+        validate the FI_KEY from the model. The dc_FI_KEY property is 
+        derived from the dc_FI_OBJECT property.
+        """
+        self.not_dc_INITIALIZED()
+        if not self.model.bdm_FI_KEY_validate(value):
+            raise ValueError(f"Invalid FI_KEY: {value}")
+        self.dc_FI_OBJECT = self.dc_BDM_STORE[BDM_FI_COLLECTION].get(value, None)
 
     @property
     def WF_CATEGORY_MANAGER(self) -> Optional[object]:
@@ -162,9 +175,8 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
                 m = "There is no model binding. Cannot dc_initialize BDMWorkingData."
                 logger.error(m)
                 raise ValueError(m)
-            # With the model available, obtain the BDM_STORE_OBJECT from the 
-            # model, used to initialize it. The DC initialize chain uses it.
-            # The model's BDM_STORE_OBJECT was used to initialize the model.
+            # There is a model binding, obtain the BDM_STORE_OBJECT from the 
+            # model, used to initialize it. 
             bdm_store = getattr(self.model, BDM_STORE_OBJECT, None)
             if bdm_store is None:
                 m = "The model binding does not have a bdm_store_object."
@@ -172,37 +184,53 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
                 raise ValueError(m)
             # Place a reference to the bdm_store in the DC, for super().dc_initialize().
             self.dc_BDM_STORE = bdm_store
-            # Perform BudManDataContext.dc_initialize() to set up the DC-Only parts.
+            # Perform super().dc_initialize() to set up the DC-Only parts.
             super().dc_initialize()
-            # Model-Aware DC property initialization.
+            # Model-Aware DC property initialization. To proceed, must have 
+            # a valid, initialized model.
             try:
-                if not self.dc_FI_KEY:
-                    m = "dc_FI_KEY is None. Cannot initialize dc_WORKBOOK_DATA_COLLECTION."
-                    logger.warning(m)
-                else:
-                    if self.model.bdm_initialized:
-                        # The fi_object and FI_WORKBOOK_DATA_COLLECTION are the
-                        # key bindings between the BDMDataContext and the Model.
-                        fi_object = self.model.bdm_FI_OBJECT(self.dc_FI_KEY)
-                        wdc = self.model.bdm_FI_WORKBOOK_DATA_COLLECTION(self.dc_FI_KEY)
-                        # self.dc_WORKBOOK_DATA_COLLECTION = wdc
-                        self.dc_FI_OBJECT = fi_object
-                        if self.WF_CATEGORY_MANAGER is not None:
-                            # Load the WB_TYPE_TXN_CATEGORIES for the FI.
-                            wfm : BDMTXNCategoryManager = self.WF_CATEGORY_MANAGER
-                            wfm.FI_TXN_CATEGORIES_WORKBOOK_load(self.dc_FI_KEY)
+                if not self.model.bdm_initialized:
+                    m = "Model is not initialized. Cannot initialize BDMDataContext."
+                    logger.error(m)
+                    raise ValueError(m)
+                # After super().dc_initialize(), the value dc_FI_KEY is set to
+                # the value from the last model save to storage. If it is None,
+                # then further initialization is not possible.
+                if not self._dc_FI_KEY:
+                    m = "dc_FI_KEY is None. Cannot continue to initialize BDMDataContext."
+                    logger.error(m)
+                    raise ValueError(m)
+                # Complete initialization. 
+                # The fi_key/fi_object binding to the model is the critical link
+                # between the BDMDataContext and the Model.
+                fi_object = self.model.bdm_FI_OBJECT(self._dc_FI_KEY)
+                wdc = self.model.bdm_FI_WORKBOOK_DATA_COLLECTION(self._dc_FI_KEY)
+                self._dc_FI_OBJECT = fi_object
+                if self.WF_CATEGORY_MANAGER is not None:
+                    # Load the WB_TYPE_TXN_CATEGORIES for the FI.
+                    wfm : BDMTXNCategoryManager = self.WF_CATEGORY_MANAGER
+                    wfm.FI_TXN_CATEGORIES_WORKBOOK_load(self._dc_FI_KEY)
             except Exception as e:
                 m = f"{p3u.exc_err_msg(e)}"
                 logger.error(m)
-            self.dc_INITIALIZED = True
+            self.dc_INITIALIZED = True # Completes the full DC init process.
             return self
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
+    
+    def not_dc_INITIALIZED(self) -> bool:
+        """Model-Aware: Unforgiving check if the BDMWorkingData is not initialized."""
+        if not self.dc_INITIALIZED:
+            m = "BDMWorkingData is not initialized. Cannot proceed."
+            logger.error(m)
+            raise ValueError(m)
+        return False
 
     def dc_WF_PURPOSE_FOLDER_MAP(self, wf_key: str, wf_purpose:str) -> bool:
         """Model-Aware: Return the wf_folder_id from the provided WF_KEY & WF_PURPOSE.
         """
+        self.not_dc_INITIALIZED()
         return self.model.bdm_WF_PURPOSE_FOLDER_MAP(wf_key, wf_purpose)
 
     def dc_WORKBOOK_validate(self, bdm_wb : WORKBOOK_OBJECT) -> bool:
@@ -211,6 +239,7 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
         DC-ONLY: check builtin type: 'object'.
         Model-Aware: validate type: BDMWorkbook class.
         """
+        self.not_dc_INITIALIZED()
         try:
             if bdm_wb is None:
                 return False
@@ -243,6 +272,7 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
             Optional[WORKBOOK_CONTENT]: The content of the workbook if available,
             otherwise None.
         """
+        self.not_dc_INITIALIZED()
         try:
             # Model-Aware World
             success : bool = False
@@ -282,6 +312,7 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
         Returns:
             BUDMAN_RESULT: Tuple[success:bool, result: Optional[msg:str]
         """
+        self.not_dc_INITIALIZED()
         try:
             # Model-Aware World
             success : bool = False
@@ -316,6 +347,7 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
 
     def dc_WORKBOOK_load(self, bdm_wb : BDMWorkbook) -> BUDMAN_RESULT:
         """Model-aware: Load the workbook bdm_wb with BSM service."""
+        self.not_dc_INITIALIZED()
         try:
             # Model-Aware World
             success : bool = False
@@ -346,6 +378,7 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
         Returns:
             BUDMAN_RESULT: Tuple[success:bool, result: Optional[msg:str]]
         """
+        self.not_dc_INITIALIZED()
         try:
             # Model-Aware World
             success : bool = False

@@ -63,22 +63,36 @@ class BudManCLIParser():
             title = self.app_cmd_parser_setup.__doc__
             subparsers = parser.add_subparsers(title=title) #, dest="app_cmd")
 
+            # app exit subcommand
+            exit_parser = subparsers.add_parser(
+                cp.CV_EXIT_SUBCMD_NAME,
+                aliases=["quit"],
+                help="Exit the application.")
+            exit_parser.set_defaults(cmd_key=cp.CV_APP_CMD_KEY,   # new way
+                                       cmd_name=cp.CV_APP_CMD_NAME, 
+                                       subcmd_name=cp.CV_EXIT_SUBCMD_NAME,
+                                       subcmd_key=cp.CV_EXIT_SUBCMD_KEY)
+            exit_parser.add_argument(
+                f"--{cp.CK_NO_SAVE}",
+                action="store_true",
+                help="Do NOT save BDM_STORE on exit.")
+            self.add_common_args(exit_parser)
+
             # app delete subcommand
-            delete_parser = subparsers.add_parser(
+            exit_parser = subparsers.add_parser(
                 "delete",
                 aliases=["del"],
                 help="Delete a module.")
-            delete_parser.set_defaults(app_cmd="delete",    # old way
-                                       cmd_key="app_cmd",   # new way
+            exit_parser.set_defaults(cmd_key="app_cmd",   # new way
                                        cmd_name="app", 
                                        subcmd_name="delete",
                                        subcmd_key="app_cmd_delete")
-            delete_parser.add_argument(
+            exit_parser.add_argument(
                 "delete_target", nargs="?",
                 type=int, 
                 default= -1,
                 help="wb_index to delete.")
-            self.add_common_args(delete_parser)
+            self.add_common_args(exit_parser)
 
             # app reload subcommand
             reload_parser = subparsers.add_parser(
@@ -159,12 +173,7 @@ class BudManCLIParser():
                 default = None,
                 choices=wb_type_choices,
                 help="Specify the workbook type to apply.")
-            wf_choices = bdm.VALID_BDM_WORKFLOWS
-            workbook_subcmd_parser.add_argument(
-                "-w", f"--{cp.CK_NEW_WF_KEY}", nargs="?", dest=cp.CK_NEW_WF_KEY, 
-                default = None,
-                choices=wf_choices,
-                help="Specify the workflow key to apply.")
+            self.add_workflow_argument(workbook_subcmd_parser)
             purpose_choices = bdm.VALID_WF_PURPOSE_VALUES
             workbook_subcmd_parser.add_argument(
                 "-p", f"--{cp.CK_NEW_WF_PURPOSE}", nargs="?", dest=cp.CK_NEW_WF_PURPOSE , 
@@ -594,6 +603,20 @@ class BudManCLIParser():
             #     action = "store_true",
             #     help="All workbooks switch.") 
             return wb_subcmd_parser
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise
+
+    def add_workflow_argument(self, parser) -> None:
+        """Add a workflow argument to the provided parser."""
+        try:
+            wf_choices = bdm.VALID_BDM_WORKFLOWS
+            parser.add_argument(
+                "-w", f"--{cp.CK_NEW_WF_KEY}", nargs="?", dest=cp.CK_NEW_WF_KEY, 
+                default = None,
+                choices=wf_choices,
+                help="Specify the workflow key to apply.")
+            return
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise

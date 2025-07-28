@@ -816,7 +816,7 @@ def bsm_get_workbook_names(abs_folder : Path) -> List[Path]:
         raise
 #endregion bsm_get_workbook_names()
 # ---------------------------------------------------------------------------- +
-#region    bsm_get_workbook_names()
+#region    bsm_get_workbook_names2()
 def bsm_get_workbook_names2(abs_folder : Path) -> List[Path]:
     """Return list of workbook Paths from absolute folder path."""
     try:
@@ -835,7 +835,7 @@ def bsm_get_workbook_names2(abs_folder : Path) -> List[Path]:
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
-#endregion bsm_get_workbook_names()
+#endregion bsm_get_workbook_names2()
 # ---------------------------------------------------------------------------- +
 #region    bsm_filter_workbook_names()
 def bsm_filter_workbook_names(wb_paths : List[Path]) -> List[Path]:
@@ -851,6 +851,32 @@ def bsm_filter_workbook_names(wb_paths : List[Path]) -> List[Path]:
         logger.error(p3u.exc_err_msg(e))
         raise
 #endregion bsm_filter_workbook_names()
+# ---------------------------------------------------------------------------- +
+#region    bsm_get_folder_structure()
+def bsm_get_folder_structure(path):
+    # Initialize the result dictionary with folder
+    # name, type, and an empty list for children
+    result = {'name': os.path.basename(path),
+              'type': 'folder', 'children': []}
+
+    # Check if the path is a directory
+    if not os.path.isdir(path):
+        return result
+
+    # Iterate over the entries in the directory
+    for entry in os.listdir(path):
+       # Create the full path for the current entry
+        entry_path = os.path.join(path, entry)
+
+        # If the entry is a directory, recursively call the function
+        if os.path.isdir(entry_path):
+            result['children'].append(bsm_get_folder_structure(entry_path))
+        # If the entry is a file, create a dictionary with name and type
+        else:
+            result['children'].append({'name': entry, 'type': 'file'})
+
+    return result
+#endregion bsm_get_folder_structure()
 # ---------------------------------------------------------------------------- +
 #endregion Common functions
 #                                                                              +

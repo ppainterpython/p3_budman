@@ -50,7 +50,7 @@ from openpyxl import Workbook
 from budman_namespace.design_language_namespace import (
     DATA_COLLECTION, LOADED_WORKBOOK_COLLECTION,
     WORKBOOK_DATA_COLLECTION, WORKBOOK_OBJECT, BUDMAN_RESULT, 
-    WORKBOOK_CONTENT
+    WORKBOOK_CONTENT, FI_OBJECT
     )
 from budman_data_context import BudManAppDataContext_Base
 import p3_utils as p3u
@@ -136,11 +136,11 @@ class BudManAppDataContext_Binding(BudManAppDataContext_Base):
         self.DC.dc_INITIALIZED = value
 
     @property
-    def dc_FI_OBJECT(self) -> Optional[str]:
+    def dc_FI_OBJECT(self) -> Optional[FI_OBJECT]:
         """DC_Binding: Return the FI_OBJECT of the current Financial Institution."""
         return self.DC.dc_FI_OBJECT 
     @dc_FI_OBJECT.setter
-    def dc_FI_OBJECT(self, value: Optional[str]) -> None:
+    def dc_FI_OBJECT(self, value: Optional[FI_OBJECT]) -> None:
         """DC_Binding: Set the FI_OBJECT of the current Financial Institution."""
         self.DC.dc_FI_OBJECT = value
 

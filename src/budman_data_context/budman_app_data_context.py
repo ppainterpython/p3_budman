@@ -155,19 +155,33 @@ class BudManAppDataContext(BudManAppDataContext_Base):
         self._dc_id = value
 
     @property
-    def dc_FI_OBJECT(self) -> FI_OBJECT:
+    def dc_FI_OBJECT(self) -> Optional[FI_OBJECT]:
         """DC-Only: Return the FI_OBJECT of the current Financial Institution. """
         return self._dc_FI_OBJECT if self.dc_VALID else None
     @dc_FI_OBJECT.setter
-    def dc_FI_OBJECT(self, value: FI_OBJECT) -> None:
+    def dc_FI_OBJECT(self, value: Optional[FI_OBJECT]) -> None:
         """DC-Only: Set the FI_OBJECT of the current Financial Institution."""
         if not self.dc_VALID: return None
+        # The value must be a valid FI_OBJECT.
+        if not isinstance(value, dict):
+            raise TypeError(f"dc_FI_OBJECT must be an FI_OBJECT, "
+                            f"not {type(value).__name__}.")
+        # The value's FI_KEY must match dc_FI_KEY.
+        if value[FI_KEY] != self.dc_FI_KEY:
+            raise ValueError(f"FI_OBJECT key mismatch: "
+                             f"value[{FI_KEY}]('{value[FI_KEY]}') != "
+                             f"dc_FI_KEY('{self.dc_FI_KEY}')")
+        # The new FI_OBJECT value must be the same object from dc_BDM_STORE.
+        if value != self.dc_BDM_STORE[BDM_FI_COLLECTION].get(self.dc_FI_KEY, None):
+            raise ValueError(f"dc_FI_OBJECT must be the same object from "
+                             f"dc_BDM_STORE[BDM_FI_COLLECTION] for key "
+                             f"dc_FI_KEY'{self.dc_FI_KEY}').")
         self._dc_FI_OBJECT = value
 
     @property
     def dc_FI_KEY(self) -> Optional[str]:
         """DC-Only: Return the FI_KEY of the current Financial Institution.
-        Depends on the value of dc_BDM_STORE.
+        Depends on the value of dc_FI_OBJECT.
         Current means that the other data in the DC is for this FI.
         """
         return self.dc_FI_OBJECT[FI_KEY] if self.dc_VALID else None
@@ -375,10 +389,9 @@ class BudManAppDataContext(BudManAppDataContext_Base):
             # Update DC values saved in BDM_STORE.BDM_DATA_CONTEXT.
             bdms = self.dc_BDM_STORE
             bdm_store_dc = bdms.get(BDM_DATA_CONTEXT, {})
-            self.dc_FI_KEY = bdm_store_dc.get(DC_FI_KEY, None)
-            self.dc_WF_KEY = bdm_store_dc.get(DC_WF_KEY, None)
-            self.dc_WF_PURPOSE = bdm_store_dc.get(DC_WF_PURPOSE, None)
-            # self.dc_WB_TYPE = bdm_store_dc.get(DC_WB_TYPE, None)
+            self._dc_FI_KEY = bdm_store_dc.get(DC_FI_KEY, None)
+            self._dc_WF_KEY = bdm_store_dc.get(DC_WF_KEY, None)
+            self._dc_WF_PURPOSE = bdm_store_dc.get(DC_WF_PURPOSE, None)
             # Further Model-Aware initialization can be done in the subclass.
             # So, don't change the values here.
             return self

@@ -78,12 +78,12 @@ class BudManAppDataContext_Base(ABC):
 
     @property
     @abstractmethod
-    def dc_FI_OBJECT(self) -> FI_OBJECT:
+    def dc_FI_OBJECT(self) -> Optional[FI_OBJECT]:
         """Abstract: Return the FI_OBJECT of the current Financial Institution. """
         pass
     @dc_FI_OBJECT.setter
     @abstractmethod
-    def dc_FI_OBJECT(self, value: FI_OBJECT) -> None:
+    def dc_FI_OBJECT(self, value: Optional[FI_OBJECT]) -> None:
         """Abstract: Set the FI_OBJECT of the current Financial Institution."""
         pass
 

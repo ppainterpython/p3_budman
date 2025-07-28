@@ -548,8 +548,8 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
 
     def bdm_FI_KEY_validate(self, fi_key:str) -> bool:
         """Validate the financial institution key."""
-        if fi_key not in self.bdm_fi_collection and fi_key != ALL_KEY:
-            m = f"Financial Institution '{fi_key}' not 'all' or not found in "
+        if fi_key not in self.bdm_fi_collection:
+            m = f"Financial Institution '{fi_key}' not found in "
             m += f"BDM_FI_COLLECTION: {list(self.bdm_fi_collection.keys())}"
             logger.error(m)
             raise ValueError(m)

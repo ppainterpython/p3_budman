@@ -1586,6 +1586,10 @@ class BudManViewModel(BudManAppDataContext_Binding, Model_Binding): # future ABC
         arrived.
 
         Tasks:
+            0. Show input folder content file list with index (map to raw_input).
+               Just list of file names, not workbooks yet, never modify.
+            0. Workflow/task journal: task, timestamp, input, output action, workflow
+            0. Import new input file to working folder, set filename convention
             1. Load a new csv_txns workbook.
             2. Convert to excel_txns workbook.
             3. Validate columns.

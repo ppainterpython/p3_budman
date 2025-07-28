@@ -24,6 +24,7 @@ from .budget_storage_model import (
     bsm_get_workbook_names,
     bsm_get_workbook_names2,
     bsm_filter_workbook_names,
+    bsm_get_folder_structure,
     bsm_WB_URL_verify,
     bsm_WB_URL_verify_file_scheme,
 )
@@ -51,6 +52,7 @@ __all__ = [
     "bsm_get_workbook_names",
     "bsm_get_workbook_names2",
     "bsm_filter_workbook_names",
+    "bsm_get_folder_structure",
     "bsm_WB_URL_verify",
     "bsm_WB_URL_verify_file_scheme",
     "bsm_BDM_WORKBOOK_load",
