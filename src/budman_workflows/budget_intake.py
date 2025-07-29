@@ -25,6 +25,7 @@ import p3logging as p3l, p3_utils as p3u
 from openpyxl import Workbook, load_workbook
 from openpyxl.worksheet.worksheet import Worksheet
 from openpyxl.cell.cell import Cell
+from treelib import Tree
 
 # local modules and packages
 import budman_command_processor.budman_cp_namespace as cp
@@ -36,11 +37,83 @@ from .workflow_utils import (
 )
 from .txn_category import BDMTXNCategoryManager
 from budman_data_context import BudManAppDataContext_Base
+from budget_storage_model import (
+    bsm_file_tree_from_folder, bsm_get_folder_structure,
+)
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
 logger = logging.getLogger(__name__)
 #endregion Globals and Constants
+# ---------------------------------------------------------------------------- +
+#region process_workflow_intake_tasks() function
+def process_workflow_intake_tasks(cmd: Dict[str, Any], 
+                       bdm_DC: BudManAppDataContext_Base) -> bdm.BUDMAN_RESULT:
+    """Process workflow intake tasks.
+
+    This function processes a transaction intake task command.
+
+    Args:
+        cmd (Dict[str, Any]): A valid BudMan View Model Command object.
+        bdm_DC (BudManAppDataContext_Base): The data context for the 
+            BudMan application.
+    """
+    try:
+        # Assuming the cmd parameters have been validated before reaching this point.
+        if cmd[cp.CK_INTAKE_TASK] == cp.CV_INTAKE_MOVE_TASK:
+            # Process the move task.
+            return True, "Move task processing not implemented yet."
+        elif cmd[cp.CK_INTAKE_TASK] == cp.CV_INTAKE_LIST_TASK:
+            # Process the list task.
+            return list_intake_files(cmd, bdm_DC)
+        else:
+            m = f"Unknown intake task: {cmd[cp.CK_INTAKE_TASK]}"
+            logger.error(m)
+            return False, m
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion process_workflow_intake_tasks() function
+# ---------------------------------------------------------------------------- +
+#region list_intake_files() function
+def list_intake_files(cmd: Dict[str, Any],
+                      bdm_DC: BudManAppDataContext_Base) -> bdm.BUDMAN_RESULT:
+    """List all files from an indicated folder.
+
+    Args:
+        cmd (Dict[str, Any]): A valid BudMan View Model Command object.
+        bdm_DC (BudManAppDataContext_Base): The data context for the 
+            BudMan application.
+
+        cmd should contain:
+            - cp.CK_FOLDER_ID: The ID of the folder to list files from.
+
+    Returns:
+        BUDMAN_RESULT: Tuple[bool, cmd_result]:
+    """
+    try:
+        cmd_result : Dict[str, Any] = {
+            bdm.CMD_RESULT_TYPE: bdm.CLIVIEW_FOLDER_TREE_VIEW,
+            bdm.CMD_RESULT_CONTENT: None
+        }
+        wf_key: str = cmd.get(cp.CK_CMDLINE_WF_KEY, None)
+        if not wf_key:
+            m = "No wf_key provided in data context."
+            logger.error(m)
+            return False, m
+        wf_purpose: str = cmd.get(cp.CK_CMDLINE_WF_PURPOSE, None)
+        if not wf_purpose:
+            m = "No wf_purpose provided in command."
+            logger.error(m)
+            return False, m
+        wf_purpose_folder_abs_path: Path.Path = bdm_DC.dc_WF_PURPOSE_FOLDER_abs_path(wf_key, wf_purpose)
+        folder_tree: Tree = bsm_file_tree_from_folder(wf_purpose_folder_abs_path)
+        cmd_result[bdm.CMD_RESULT_CONTENT] = folder_tree
+        return True, cmd_result
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion list_intake_files() function
 # ---------------------------------------------------------------------------- +
 #region process_txn_intake() function
 def process_txn_intake(cmd: Dict[str, Any], 

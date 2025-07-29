@@ -31,6 +31,7 @@ console = Console(force_terminal=True, width=bdm.BUDMAN_WIDTH, highlight=True,
 def cli_view_cmd_output(cmd: Dict, result: Any) -> None:
     cmd_key = cmd.get(cp.CK_CMD_KEY, None)
     subcmd_key = cmd.get(cp.CK_SUBCMD_KEY, None)
+    # TODO: Need is_CMD_RESULT() 
     if subcmd_key == cp.CV_SHOW_WORKBOOKS_SUBCMD_KEY:
         show_cmd_output(result)
     else:

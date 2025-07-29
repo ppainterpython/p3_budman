@@ -316,10 +316,14 @@ class BudManAppDataContext_Binding(BudManAppDataContext_Base):
         """DC_Binding: Validate the provided WF_KEY."""
         return self.DC.dc_WF_KEY_validate(wf_key)
     
-    def dc_WF_PURPOSE_FOLDER_MAP(self, wf_key: str, wf_purpose:str) -> bool:
+    def dc_WF_PURPOSE_FOLDER_MAP(self, wf_key: str, wf_purpose:str) -> Optional[str]:
         """DC_Binding: Return the wf_folder_id from the provided WF_KEY & WF_PURPOSE.
         """
         return self.DC.dc_WF_PURPOSE_FOLDER_MAP(wf_key, wf_purpose)
+
+    def dc_WF_PURPOSE_FOLDER_abs_path(self, wf_key: str, wf_purpose:str) -> bool:
+        """DC_Binding: Return the abs_path of the folder for the provided WF_KEY & WF_PURPOSE."""
+        return self.DC.dc_WF_PURPOSE_FOLDER_abs_path(wf_key, wf_purpose)
 
     def dc_WF_PURPOSE_validate(self, wf_purpose: str) -> bool:
         """DC_Binding: Validate the provided WF_PURPOSE."""

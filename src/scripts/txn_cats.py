@@ -3,16 +3,18 @@
 #------------------------------------------------------------------------------+
 #region Imports
 # python standard library modules and packages
-from rich.console import Console
-from rich.table import Table
-from treelib import Tree
 import logging, re, sys, csv, cmd2, toml
-from cmd2 import (Bg, Fg, ansi, Cmd2ArgumentParser, with_argparser)
 from pathlib import Path
 import importlib.util
 from typing import Dict, Optional
+
 # third-party modules and packages
+from cmd2 import (Bg, Fg, ansi, Cmd2ArgumentParser, with_argparser)
+from rich.console import Console
+from rich.table import Table
+from treelib import Tree
 import p3_utils as p3u, p3logging as p3l
+
 # local modules and packages
 import budman_namespace as bdm
 from budman_namespace import (P2, P4, P6)
@@ -31,7 +33,8 @@ from budget_storage_model import (
     bsm_WORKBOOK_CONTENT_url_put,
     csv_DATA_LIST_url_get, 
     csv_DATA_LIST_file_load,
-    bsm_get_folder_structure
+    bsm_get_folder_structure,
+    bsm_file_tree_from_folder
 )
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -268,8 +271,7 @@ class CmdLineApp(cmd2.Cmd):
         try:
             self.check_catalog()
             path = r'C:\Users\ppain\OneDrive\budget\boa\raw_data'
-            result = bsm_get_folder_structure(path)
-            tree = build_tree_from_folder(path)
+            tree = bsm_file_tree_from_folder(path)
             tree.show()
             console.print(f"Folder structure for '{path}':")
         except Exception as e:
@@ -327,6 +329,50 @@ def build_tree_from_folder(root_path: str) -> Tree:
 
     add_nodes(root, str(root))
     return tree
+
+def file_index_tree_from_folder(root_path: str) -> Tree:
+    file_index:int = 0
+    dir_index:int = 0
+    tree = Tree()
+    root = Path(root_path).resolve()
+    tag = f"{dir_index:2} {root.name}"
+    tree.create_node(tag=tag, identifier=str(root))  # Root node
+
+    def add_nodes(current_path: Path, parent_id: str, 
+                  file_index: int = 0, dir_index:int = 0) -> int:
+        try:
+            dir_index += 1
+            for item in current_path.iterdir():
+                node_id = str(item.resolve())
+                if item.is_dir():
+                    tag = f"{dir_index:2} {item.name}"
+                    tree.create_node(tag=tag, identifier=node_id, 
+                                    parent=parent_id, 
+                                    data={"type": "folder", 
+                                          "dir_index": dir_index,
+                                          "URL": item.as_uri()})
+                    file_index = add_nodes(item, node_id, 
+                                           file_index, dir_index)
+                else:
+                    tag = f"{file_index:2} {item.name}"
+                    tree.create_node(tag=tag, identifier=node_id, 
+                                    parent=parent_id, 
+                                    data={"type": "file", 
+                                          "file_index": file_index,
+                                          "URL": item.as_uri()})
+                    file_index += 1
+            return file_index
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+
+    try:
+        add_nodes(root, str(root),file_index, dir_index)
+        return tree
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+
 def test_regex(file_path, pattern, show_matches=False):
     try:
         with open(file_path, 'r') as file:

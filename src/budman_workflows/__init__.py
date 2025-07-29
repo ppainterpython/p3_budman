@@ -19,7 +19,7 @@ __description__ = "Budget Manager (BudMan) Workflow process implementation."
 __license__ = "MIT"
 
 from .budget_intake import (
-    process_txn_intake
+    process_workflow_intake_tasks
 )
 from .workflow_utils import (
     extract_category_tree, 
@@ -68,6 +68,8 @@ from .budget_category_mapping import (
 __all__ = [
     # module names
     "workflow_utils",
+    # budget_intake",
+    "process_workflow_intake_tasks",
     # txn_category.py module
     "BDMTXNCategory",
     "TXNCategoryCatalog",

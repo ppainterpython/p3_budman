@@ -286,8 +286,13 @@ class BudManAppDataContext_Base(ABC):
         pass
 
     @abstractmethod
-    def dc_WF_PURPOSE_FOLDER_MAP(self, wf_key: str, wf_purpose:str) -> bool:
+    def dc_WF_PURPOSE_FOLDER_MAP(self, wf_key: str, wf_purpose:str) -> Optional[str]:
         """Abstract: Return the wf_folder_id from the provided WF_KEY & WF_PURPOSE."""
+        pass
+
+    @abstractmethod
+    def dc_WF_PURPOSE_FOLDER_abs_path(self, wf_key: str, wf_purpose:str) -> bool:
+        """Abstract: Return the abs_path of the folder for the provided WF_KEY & WF_PURPOSE."""
         pass
 
     @abstractmethod

@@ -208,7 +208,7 @@ from budman_workflows import (
     check_sheet_schema, check_sheet_columns, 
     validate_budget_categories, process_budget_category,
     apply_check_register, output_category_tree, output_bdm_tree,
-    process_txn_intake
+    process_workflow_intake_tasks
     )
 from budman_workflows import budget_category_mapping
 
@@ -1306,19 +1306,19 @@ class BudManViewModel(BudManAppDataContext_Binding, Model_Binding): # future ABC
                     self.dc_WORKBOOK = bdm_wb
                     result += f"\n{P2}workbook: {str(self.dc_WB_INDEX):>4} '{bdm_wb.wb_id:<40}'"
                     # Apply the include argument switches to the selected workbook.
-                    new_wb_type = self.cp_cmd_attr_get(cmd, cp.CK_NEW_WB_TYPE, None)
+                    new_wb_type = self.cp_cmd_attr_get(cmd, cp.CK_CMDLINE_WB_TYPE, None)
                     if new_wb_type is not None:
                         bdm_wb.wb_type = new_wb_type
                         result += (f"\n{P4}Changed wb_type: '{new_wb_type}' for "
                                 f"wb_index: {str(self.dc_WB_INDEX):>4}' wb_id: '{bdm_wb.wb_id}'")
                         self.dc_BDM_STORE_changed = True
-                    new_wf_key = self.cp_cmd_attr_get(cmd, cp.CK_NEW_WF_KEY, None)
+                    new_wf_key = self.cp_cmd_attr_get(cmd, cp.CK_CMDLINE_WF_KEY, None)
                     if new_wf_key is not None:
                         bdm_wb.wf_key = new_wf_key
                         result += (f"\n{P4}Changed wf_key: '{new_wf_key}' for "
                                 f"wb_index: '{str(self.dc_WB_INDEX):>4}' wb_id: '{bdm_wb.wb_id}'")
                         self.dc_BDM_STORE_changed = True
-                    new_wf_purpose = self.cp_cmd_attr_get(cmd, cp.CK_NEW_WF_PURPOSE, None)
+                    new_wf_purpose = self.cp_cmd_attr_get(cmd, cp.CK_CMDLINE_WF_PURPOSE, None)
                     if new_wf_purpose is not None:
                         wf_key = new_wf_key or bdm_wb.wf_key
                         folder_id = self.dc_WF_PURPOSE_FOLDER_MAP(wf_key, new_wf_purpose)
@@ -1616,7 +1616,7 @@ class BudManViewModel(BudManAppDataContext_Binding, Model_Binding): # future ABC
         """
         try:
             logger.debug(f"Start: process_txn_intake...")
-            return process_txn_intake(cmd, self.DC)
+            return process_workflow_intake_tasks(cmd, self.DC)
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise

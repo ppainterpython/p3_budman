@@ -1,7 +1,6 @@
 # ---------------------------------------------------------------------------- +
 #region budman_cp_namespace.py module
-""" budman_cp_namespace.py defines symbol constants for Command Objects.
-"""
+""" budman_cp_namespace.py defines symbol constants for Command Objects."""
 #endregion budman_cp_namespace.py module
 # ---------------------------------------------------------------------------- +
 #region Imports
@@ -91,25 +90,34 @@ CK_LOG_ALL = "log_all"
 CK_NO_SAVE = "no_save"
 
 # Essential Data Context attributes, with cross-cutting scope over cmds
-CK_FI_KEY = "fi_key"
-CK_WF_KEY = "wf_key"
-CK_WF_PURPOSE = "wf_purpose"
-CK_WB_ID = "wb_id"
-CK_WB_TYPE = "wb_type"
-CK_WB_NAME = "wb_name"
-CK_WB_INDEX = "wb_index"
+CK_FI_KEY = bdm.FI_KEY
+CK_WF_KEY = bdm.WF_KEY
+CK_WF_PURPOSE = bdm.WF_PURPOSE
+CK_WF_INPUT = bdm.WF_INPUT
+CK_WF_WORKING = bdm.WF_WORKING
+CK_WF_OUTPUT = bdm.WF_OUTPUT
+CK_WB_ID = bdm.WB_ID
+CK_WB_TYPE = bdm.WB_TYPE
+CK_WB_NAME = bdm.WB_NAME
+CK_WB_INDEX = bdm.WB_INDEX
 CK_WB_LIST = "wb_list"
 CK_ALL_WBS = "all_wbs"
 CK_WB_REF = "wb_ref"
 CK_WB_INFO = "wb_info"
 CK_WF_TASK = "wf_task"
 
+# subcmd_key CV_INTAKE_SUBCMD_KEY argument constants
+CK_INTAKE_TASK = "intake_task"
+CV_INTAKE_MOVE_TASK = "move"
+CV_INTAKE_LIST_TASK = "list"
+CK_FILE_INDEX = "file_index"
+CK_FOLDER_ID = "folder_id"
 # subcmd_name CV_WORKBOOK_SUBCMD_NAME argument constants
 CK_BDM_TREE = "bdm_tree"
 # subcmd_name CV_CHANGE_CMD argument constants
-CK_NEW_WB_TYPE = "new_wb_type"
-CK_NEW_WF_KEY = "new_wf_key"
-CK_NEW_WF_PURPOSE = "new_wf_purpose"
+CK_CMDLINE_WB_TYPE = "cmdline_wb_type"
+CK_CMDLINE_WF_KEY = "cmdline_wf_key"
+CK_CMDLINE_WF_PURPOSE = "cmdline_wf_purpose"
 # subcmd_name CV_DELETE_SUBCMD argument constants
 CK_DELETE_TARGET = "delete_target"
 # subcmd_name BUDGET_CATEGORIES argument constants

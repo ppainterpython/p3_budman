@@ -168,18 +168,13 @@ class BudManCLIParser():
             self.add_wb_index_argument(workbook_subcmd_parser)
             wb_type_choices = bdm.VALID_WB_TYPE_VALUES
             workbook_subcmd_parser.add_argument(
-                "-t", f"--{cp.CK_NEW_WB_TYPE}",
-                nargs="?", dest=cp.CK_NEW_WB_TYPE, 
+                "-t", f"--{cp.CK_CMDLINE_WB_TYPE}",
+                nargs="?", dest=cp.CK_CMDLINE_WB_TYPE, 
                 default = None,
                 choices=wb_type_choices,
                 help="Specify the workbook type to apply.")
             self.add_workflow_argument(workbook_subcmd_parser)
-            purpose_choices = bdm.VALID_WF_PURPOSE_VALUES
-            workbook_subcmd_parser.add_argument(
-                "-p", f"--{cp.CK_NEW_WF_PURPOSE}", nargs="?", dest=cp.CK_NEW_WF_PURPOSE , 
-                default = None,
-                choices=purpose_choices,
-                help="Specify the workflow purpose to apply.")
+            self.add_purpose_argument(workbook_subcmd_parser)
             self.add_common_args(workbook_subcmd_parser)
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
@@ -470,19 +465,19 @@ class BudManCLIParser():
             d += "subcommand used to present the arguments relevant for the task."
             subparsers = parser.add_subparsers()
             
-            # workflow categorization subcommand
+            #region workflow categorization subcommand
             categorization_parser = subparsers.add_parser(
-                "categorization",
+                cp.CV_CATEGORIZATION_SUBCMD_NAME,
                 aliases=["cat", "CAT", "c"], 
                 help="Apply Categorization workflow.")
             categorization_parser.set_defaults(
-                cmd_key="workflow_cmd",   # new way
-                cmd_name="workflow", 
-                subcmd_name="categorization",
-                subcmd_key="workflow_cmd_categorization")
+                cmd_key=cp.CV_WORKFLOW_CMD_KEY,   # new way
+                cmd_name=cp.CV_WORKFLOW_CMD_NAME, 
+                subcmd_name=cp.CV_CATEGORIZATION_SUBCMD_NAME,
+                subcmd_key=cp.CV_CATEGORIZATION_SUBCMD_KEY)
             self.add_wb_index_argument(categorization_parser)
             categorization_parser.add_argument(
-                "--load_workbook","-l", "-load", 
+                f"--{cp.CK_LOAD_WORKBOOK}","-l", "-load", 
                 action="store_true", 
                 default=True,
                 help="Load the workbook if not yet loaded.")
@@ -491,23 +486,13 @@ class BudManCLIParser():
                 action="store_true", 
                 help="Log every catalog pattern match step.")
             self.add_common_args(categorization_parser)
+            #endregion workflow categorization subcommand
+
+            #region workflow intake subcommand
+            intake_parser = self.add_intake_subparser(subparsers)
+            #endregion workflow intake subcommand
             
-            # workflow intake subcommand
-            intake_parser = subparsers.add_parser(
-                cp.CV_INTAKE_SUBCMD_NAME,
-                aliases=["in", "i"], 
-                help="Apply Intake workflow.")
-            intake_parser.set_defaults(
-                cmd_key=cp.CV_WORKFLOW_CMD_KEY,   # new way
-                cmd_name=cp.CV_WORKFLOW_CMD_NAME, 
-                subcmd_name=cp.CV_INTAKE_SUBCMD_NAME,
-                subcmd_key=cp.CV_INTAKE_SUBCMD_KEY)
-            self.add_wb_index_argument(intake_parser)
-            self.add_load_workbook_argument(intake_parser)
-            self.add_fix_argument(intake_parser)
-            self.add_common_args(intake_parser)
-            
-            # Workflow 'check' subcommand
+            #region Workflow 'check' subcommand
             check_parser = subparsers.add_parser(
                 "check",
                 aliases=["ch"], 
@@ -525,8 +510,9 @@ class BudManCLIParser():
                 action="store_true", 
                 help="Validate the budget categories.")
             self.add_common_args(check_parser)
+            #endregion Workflow 'check' subcommand
 
-            # Workflow task sub-command: task
+            #region Workflow task sub-command: task
             task_parser = subparsers.add_parser(
                 "task",
                 aliases=["t"], 
@@ -549,8 +535,9 @@ class BudManCLIParser():
                 help="List of arguments to pass to the workflow task."
             )
             self.add_wb_index_argument(task_parser)
+            #endregion Workflow task sub-command: task
 
-            # workflow 'apply' subcommand
+            #region workflow 'apply' subcommand
             apply_parser = subparsers.add_parser(
                 cp.CV_APPLY_SUBCMD_NAME,
                 aliases=["a"], 
@@ -571,10 +558,48 @@ class BudManCLIParser():
                 default=None,
                 help="a wb_ref to a check register(s). wb_index, wb_name or 'all'.")
             self.add_common_args(apply_parser)
+            #endregion workflow 'apply' subcommand
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise
     #endregion Command Parser Setup Methods
+    # ------------------------------------------------------------------------ +
+    #region intake subcommand subparser
+    def add_intake_subparser(self, subparsers) -> None:
+        """Add an intake subparser to the provided subparsers."""
+        try:
+            # workflow intake subcommand
+            intake_parser = subparsers.add_parser(
+                cp.CV_INTAKE_SUBCMD_NAME,
+                aliases=["in", "i"], 
+                help="Apply Intake workflow tasks.")
+            intake_parser.set_defaults(
+                cmd_key=cp.CV_WORKFLOW_CMD_KEY,   # new way
+                cmd_name=cp.CV_WORKFLOW_CMD_NAME, 
+                subcmd_name=cp.CV_INTAKE_SUBCMD_NAME,
+                subcmd_key=cp.CV_INTAKE_SUBCMD_KEY)
+            intake_subparsers = intake_parser.add_subparsers(
+                dest=cp.CK_INTAKE_TASK, required=True)
+            # workflow intake move file_index
+            move_parser = intake_subparsers.add_parser( cp.CV_INTAKE_MOVE_TASK, 
+                                                       help=("Move a file into intake process working folder."))
+            move_parser.add_argument(
+                cp.CK_FILE_INDEX, nargs="?",
+                action="store",
+                type=int, 
+                help=("Index of file to move."))
+            self.add_common_args(move_parser)
+            # workflow intake list
+            list_parser = intake_subparsers.add_parser( cp.CV_INTAKE_LIST_TASK, 
+                                                       help=("List files in the intake process working folder."))
+            self.add_workflow_argument(list_parser)
+            self.add_purpose_argument(list_parser)
+            self.add_common_args(list_parser)
+            return intake_parser
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise
+    #endregion intake subcommand subparser
     # ------------------------------------------------------------------------ +
     #region Common Sub-parsers for Commands
     def add_WORKBOOKS_subparser(self, subparsers) -> None:
@@ -612,10 +637,24 @@ class BudManCLIParser():
         try:
             wf_choices = bdm.VALID_BDM_WORKFLOWS
             parser.add_argument(
-                "-w", f"--{cp.CK_NEW_WF_KEY}", nargs="?", dest=cp.CK_NEW_WF_KEY, 
+                "-w", f"--{cp.CK_CMDLINE_WF_KEY}", nargs="?", dest=cp.CK_CMDLINE_WF_KEY, 
                 default = None,
                 choices=wf_choices,
                 help="Specify the workflow key to apply.")
+            return
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise
+
+    def add_purpose_argument(self, parser) -> None:
+        """Add a workflow purpose argument to the provided parser."""
+        try:
+            purpose_choices = bdm.VALID_WF_PURPOSE_VALUES
+            parser.add_argument(
+                "-p", f"--{cp.CK_CMDLINE_WF_PURPOSE}", nargs="?",  
+                default = cp.CK_WF_INPUT,
+                choices=purpose_choices,
+                help="Specify the workflow purpose folder.")
             return
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))

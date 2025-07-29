@@ -291,6 +291,7 @@ CMD_RESULT_CONTENT = "cmd_result_content"
 CLIVIEW_OUTPUT_STRING = "cliview_output_string"
 CLIVIEW_WORKBOOK_INFO_TABLE = "cliview_workbook_info_table"
 CLIVIEW_WORKBOOK_TREE_VIEW = "cliview_workbook_tree_view"
+CLIVIEW_FOLDER_TREE_VIEW = "cliview_folder_tree_view"
 #endregion CLIView command output type constants
 # ---------------------------------------------------------------------------- +
 #

@@ -72,9 +72,9 @@ from budman_namespace.design_language_namespace import (
     WORKBOOK_DATA_COLLECTION, WORKBOOK_OBJECT,
     BDM_STORE, DATA_COLLECTION, BUDMAN_RESULT, WORKBOOK_CONTENT,
     BDM_FI_COLLECTION, BDM_WF_COLLECTION, WF_PURPOSE_FOLDER_MAP,
-    FI_WORKBOOK_DATA_COLLECTION,
+    FI_WORKBOOK_DATA_COLLECTION, FI_FOLDER,
     VALID_WF_PURPOSE_VALUES, VALID_WB_TYPE_VALUES,
-    BDM_STORE_OBJECT,
+    BDM_STORE_OBJECT, BDM_FOLDER,
     ALL_KEY, FI_KEY, WF_KEY, WB_ID, WB_NAME,
     WB_TYPE, WF_PURPOSE, WB_INDEX, WB_URL, WB_LOADED, WB_CONTENT,
     BDM_DATA_CONTEXT, DC_FI_KEY, DC_WF_KEY, DC_WF_PURPOSE, DC_WB_TYPE
@@ -412,7 +412,7 @@ class BudManAppDataContext(BudManAppDataContext_Base):
         if not self.dc_VALID: return False
         return wf_key in self.dc_BDM_STORE[BDM_WF_COLLECTION]
 
-    def dc_WF_PURPOSE_FOLDER_MAP(self, wf_key: str, wf_purpose:str) -> bool:
+    def dc_WF_PURPOSE_FOLDER_MAP(self, wf_key: str, wf_purpose:str) -> Optional[str]:
         """DC-Only: Use the wf_purpoase_folder_map from the BDM_STORE.
            Abstract: Return the wf_folder_id from the provided WF_KEY & WF_PURPOSE.
         """
@@ -423,6 +423,52 @@ class BudManAppDataContext(BudManAppDataContext_Base):
         wf_pf_map : Dict = wf_object[WF_PURPOSE_FOLDER_MAP]
         if wf_pf_map is None: return None
         return wf_pf_map[wf_purpose]
+
+    def dc_WF_PURPOSE_FOLDER_abs_path(self, wf_key: str, wf_purpose:str) -> Path:
+        """DC_Binding: Return the abs_path of the folder for the provided WF_KEY & WF_PURPOSE."""
+        try:
+            _ = self.dc_WF_KEY_validate(wf_key)
+            wf_object = self.dc_BDM_STORE[BDM_WF_COLLECTION].get(wf_key, None)
+            if wf_object is None:
+                logger.error(f"No WF_OBJECT found for WF_KEY: {wf_key}")
+                return None
+            fi_key: str = self.dc_FI_KEY
+            if not self.dc_FI_KEY_validate(fi_key):
+                logger.error(f"Invalid FI_KEY: {fi_key}")
+                return None
+            fi_folder: str = self.dc_FI_OBJECT[FI_FOLDER]
+            if not fi_folder:
+                logger.error(f"No FI_FOLDER found for FI_KEY: {fi_key}")
+                return None
+            bdm_folder: str = self.dc_BDM_STORE.get(BDM_FOLDER, None)
+            if not bdm_folder:
+                logger.error(f"No BDM_FOLDER found in BDM_STORE for FI_KEY: {fi_key}")
+                return None
+            bdm_folder_abs_path: Path = Path(bdm_folder).expanduser()
+            if not bdm_folder_abs_path.exists():
+                logger.error(f"BDM_FOLDER does not exist: {bdm_folder_abs_path}")
+                return None
+            fi_folder_abs_path: Path = bdm_folder_abs_path / fi_folder
+            if not fi_folder_abs_path.exists():
+                logger.error(f"FI_FOLDER does not exist: {fi_folder_abs_path}")
+                return None
+            folder_id:str = self.dc_WF_PURPOSE_FOLDER_MAP(wf_key, wf_purpose)   
+            if folder_id is None:
+                logger.error(f"No folder_id found for WF_KEY: {wf_key}, WF_PURPOSE: {wf_purpose}")
+                return None
+            wf_purpose_folder:str = wf_object[folder_id]
+            if not wf_purpose_folder:
+                logger.error(f"No WF_PURPOSE_FOLDER found for folder_id: {folder_id}")
+                return None
+            wf_purpose_folder_abs_path: Path = fi_folder_abs_path / wf_purpose_folder
+            if not wf_purpose_folder_abs_path.exists():
+                logger.error(f"WF_PURPOSE_FOLDER does not exist: {wf_purpose_folder_abs_path}")
+                return None
+            return wf_purpose_folder_abs_path
+        except Exception as e:
+            logger.error(f"Failed to get WF_PURPOSE_FOLDER_abs_path: {e}")
+            return None
+        return wf_purpose_folder_abs_path
 
     def dc_WF_PURPOSE_validate(self, wf_purpose: str) -> bool:
         """DC-Only: Validate the provided WF_PURPOSE."""

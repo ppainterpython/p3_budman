@@ -51,6 +51,7 @@ import logging, os, time, toml
 from pathlib import Path
 from urllib.parse import urlparse, urlunparse, urlsplit, ParseResult
 from typing import Dict, List, Any, Union
+from treelib import Tree
 
 # third-party modules and packages
 import p3_utils as p3u, pyjson5, p3logging as p3l
@@ -877,6 +878,51 @@ def bsm_get_folder_structure(path):
 
     return result
 #endregion bsm_get_folder_structure()
+# ---------------------------------------------------------------------------- +
+#region    bsm_file_tree_from_folder()
+def bsm_file_tree_from_folder(root_path: str) -> Tree:
+    file_index:int = 0
+    dir_index:int = 0
+    tree = Tree()
+    root = Path(root_path).resolve()
+    tag = f"{dir_index:2} {root.name}"
+    tree.create_node(tag=tag, identifier=str(root))  # Root node
+
+    def add_nodes(current_path: Path, parent_id: str, 
+                  file_index: int = 0, dir_index:int = 0) -> int:
+        try:
+            dir_index += 1
+            for item in current_path.iterdir():
+                node_id = str(item.resolve())
+                if item.is_dir():
+                    tag = f"{dir_index:2} {item.name}"
+                    tree.create_node(tag=tag, identifier=node_id, 
+                                    parent=parent_id, 
+                                    data={"type": "folder", 
+                                          "dir_index": dir_index,
+                                          "URL": item.as_uri()})
+                    file_index = add_nodes(item, node_id, 
+                                           file_index, dir_index)
+                else:
+                    tag = f"{file_index:2} {item.name}"
+                    tree.create_node(tag=tag, identifier=node_id, 
+                                    parent=parent_id, 
+                                    data={"type": "file", 
+                                          "file_index": file_index,
+                                          "URL": item.as_uri()})
+                    file_index += 1
+            return file_index
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+
+    try:
+        add_nodes(root, str(root),file_index, dir_index)
+        return tree
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion bsm_file_tree_from_folder()
 # ---------------------------------------------------------------------------- +
 #endregion Common functions
 #                                                                              +
