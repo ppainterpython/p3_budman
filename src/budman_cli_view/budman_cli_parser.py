@@ -465,6 +465,10 @@ class BudManCLIParser():
             d += "subcommand used to present the arguments relevant for the task."
             subparsers = parser.add_subparsers()
             
+            #region workflow intake subcommand
+            list_parser = self.add_list_subparser(subparsers)
+            #endregion workflow intake subcommand
+            
             #region workflow categorization subcommand
             categorization_parser = subparsers.add_parser(
                 cp.CV_CATEGORIZATION_SUBCMD_NAME,
@@ -564,7 +568,30 @@ class BudManCLIParser():
             raise
     #endregion Command Parser Setup Methods
     # ------------------------------------------------------------------------ +
-    #region intake subcommand subparser
+    #region workflow list subcommand subparser
+    def add_list_subparser(self, subparsers) -> None:
+        """Add a list subparser to the provided subparsers."""
+        try:
+            # workflow list subcommand
+            list_parser = subparsers.add_parser(
+                cp.CV_LIST_SUBCMD_NAME,
+                aliases=["ls"], 
+                help="List workflow task information.")
+            list_parser.set_defaults(
+                cmd_key=cp.CV_WORKFLOW_CMD_KEY,   # new way
+                cmd_name=cp.CV_WORKFLOW_CMD_NAME, 
+                subcmd_name=cp.CV_LIST_SUBCMD_NAME,
+                subcmd_key=cp.CV_LIST_SUBCMD_KEY)
+            self.add_workflow_argument(list_parser)
+            self.add_purpose_argument(list_parser)
+            self.add_common_args(list_parser)
+            return list_parser
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise
+    #endregion workflow list subcommand subparser
+    # ------------------------------------------------------------------------ +
+#region intake subcommand subparser
     def add_intake_subparser(self, subparsers) -> None:
         """Add an intake subparser to the provided subparsers."""
         try:
@@ -588,13 +615,9 @@ class BudManCLIParser():
                 action="store",
                 type=int, 
                 help=("Index of file to move."))
+            self.add_workflow_argument(move_parser)
+            self.add_purpose_argument(move_parser)
             self.add_common_args(move_parser)
-            # workflow intake list
-            list_parser = intake_subparsers.add_parser( cp.CV_INTAKE_LIST_TASK, 
-                                                       help=("List files in the intake process working folder."))
-            self.add_workflow_argument(list_parser)
-            self.add_purpose_argument(list_parser)
-            self.add_common_args(list_parser)
             return intake_parser
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))

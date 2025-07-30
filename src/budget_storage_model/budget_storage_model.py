@@ -880,19 +880,23 @@ def bsm_get_folder_structure(path):
 #endregion bsm_get_folder_structure()
 # ---------------------------------------------------------------------------- +
 #region    bsm_file_tree_from_folder()
-def bsm_file_tree_from_folder(root_path: str) -> Tree:
+def bsm_file_tree_from_folder(path: Path) -> Tree:
     file_index:int = 0
     dir_index:int = 0
+    path2 = Path(r'C:\Users\ppain\OneDrive\budget\boa\raw_data')
     tree = Tree()
-    root = Path(root_path).resolve()
-    tag = f"{dir_index:2} {root.name}"
-    tree.create_node(tag=tag, identifier=str(root))  # Root node
+    # root = root_path.resolve()
+    tag = f"{dir_index:2} {path.name}"
+    tree.create_node(tag=tag, identifier=str(path))  # Root node
 
     def add_nodes(current_path: Path, parent_id: str, 
                   file_index: int = 0, dir_index:int = 0) -> int:
         try:
+            if not current_path.is_dir():
+                raise ValueError(f"Path is not a directory: {current_path}")
             dir_index += 1
             for item in current_path.iterdir():
+                print(item)
                 node_id = str(item.resolve())
                 if item.is_dir():
                     tag = f"{dir_index:2} {item.name}"
@@ -917,7 +921,7 @@ def bsm_file_tree_from_folder(root_path: str) -> Tree:
             raise
 
     try:
-        add_nodes(root, str(root),file_index, dir_index)
+        add_nodes(path, str(path), file_index, dir_index)
         return tree
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))

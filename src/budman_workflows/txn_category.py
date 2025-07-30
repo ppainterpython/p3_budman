@@ -27,7 +27,6 @@ from treelib import Tree
 # local modules and packages
 from budman_namespace import BDMSingletonMeta
 import budman_namespace.design_language_namespace as bdm
-from budman_namespace.bdm_workbook_class import BDMWorkbook
 import budman_settings as bdms
 from budget_storage_model import (
     bsm_WORKBOOK_CONTENT_url_get,

@@ -22,12 +22,7 @@ import budman_settings as bdms
 from budman_workflows.txn_category import (
     BDMTXNCategory, TXNCategoryCatalog, BDMTXNCategoryManager
 )
-from budman_workflows.budget_category_mapping import get_category_map
-from budman_workflows.workflow_utils import (
-    extract_txn_categories,
-    output_bdm_tree,
-    output_category_tree
-) 
+# from budman_workflows.budget_category_mapping import get_category_map
 from budget_storage_model import (
     bsm_BDM_WORKBOOK_load,
     bsm_WORKBOOK_CONTENT_url_put,
@@ -270,7 +265,7 @@ class CmdLineApp(cmd2.Cmd):
         """Manage foo."""
         try:
             self.check_catalog()
-            path = r'C:\Users\ppain\OneDrive\budget\boa\raw_data'
+            path = Path(r'C:\Users\ppain\OneDrive\budget\boa\raw_data')
             tree = bsm_file_tree_from_folder(path)
             tree.show()
             console.print(f"Folder structure for '{path}':")

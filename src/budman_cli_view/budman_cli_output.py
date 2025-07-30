@@ -16,7 +16,8 @@ import p3_utils as p3u, pyjson5, p3logging as p3l
 # local modules and packages
 import budman_namespace.design_language_namespace as bdm
 from budman_namespace.bdm_workbook_class import BDMWorkbook
-import budman_command_processor.budman_cp_namespace as cp
+import budman_command_processor as cp
+from budman_workflows import *
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region    Globals and Constants
@@ -26,16 +27,32 @@ console = Console(force_terminal=True, width=bdm.BUDMAN_WIDTH, highlight=True,
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
 
-# ---------------------------------------------------------------------------- +
 #region cli_view_cmd_output(status: bool, result: Any) -> None
 def cli_view_cmd_output(cmd: Dict, result: Any) -> None:
-    cmd_key = cmd.get(cp.CK_CMD_KEY, None)
-    subcmd_key = cmd.get(cp.CK_SUBCMD_KEY, None)
-    # TODO: Need is_CMD_RESULT() 
-    if subcmd_key == cp.CV_SHOW_WORKBOOKS_SUBCMD_KEY:
-        show_cmd_output(result)
+    if cp.is_CMD_RESULT(result):
+        dispatch_CMD_RESULT(cmd, result)
     else:
         console.print(result)
+# ---------------------------------------------------------------------------- +
+#region dispatch_CMD_RESULT() function
+def dispatch_CMD_RESULT(cmd: Dict, cmd_result: Dict[str, Any]) -> None:
+    """Based on cmd parameter, route the cmd_result to the appropriate output handler."""
+    if not cp.is_CMD_RESULT(cmd_result):
+        logger.error(f"Invalid command result: {cmd_result}")
+        return
+    cmd_key = cmd.get(cp.CK_CMD_KEY, None)
+    subcmd_key = cmd.get(cp.CK_SUBCMD_KEY, None)
+    if cmd_key == cp.CV_WORKFLOW_CMD_KEY:
+        if subcmd_key == cp.CV_LIST_SUBCMD_KEY:
+            console.print(cmd_result[bdm.CMD_RESULT_CONTENT])
+    elif cmd_key == cp.CV_SHOW_CMD_KEY:
+        if subcmd_key == cp.CV_SHOW_WORKBOOKS_SUBCMD_KEY:
+            show_cmd_output(cmd_result)
+        # elif subcmd_key == cp.CV_SHOW_BDM_STORE_SUBCMD_KEY:
+        #     show_cmd_output(cmd_result)
+    else:
+        console.print(f"No output handler for command result: {cmd_result}")
+#endregion dispatch_CMD_RESULT() function
 # ---------------------------------------------------------------------------- +
 #region show_cmd_output() function
 def show_cmd_output(cmd_result: Dict[str, Any]) -> None:

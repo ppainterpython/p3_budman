@@ -30,9 +30,13 @@ from openpyxl.cell.cell import Cell
 # local modules and packages
 from budman_namespace.design_language_namespace import *
 from budman_namespace.bdm_workbook_class import BDMWorkbook
+from .budget_category_mapping import (
+    get_category_map, check_register_map, get_category_histogram,
+    clear_category_histogram
+)
 from .workflow_utils import (
     categorize_transaction, category_map_count, check_register_map,
-    category_histogram, clear_category_histogram, get_category_histogram,
+    get_category_histogram,
 )
 from .txn_category import (BDMTXNCategoryManager, TXNCategoryCatalog)
 from budman_data_context import BudManAppDataContext_Base

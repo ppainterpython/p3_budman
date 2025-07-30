@@ -203,12 +203,10 @@ from budman_namespace.design_language_namespace import *
 from budman_namespace.bdm_workbook_class import BDMWorkbook
 from budman_workflows import (
     BDMTXNCategoryManager, TXNCategoryCatalog,
-    category_map_count, get_category_map, clear_category_map, 
-    compile_category_map, set_compiled_category_map, clear_compiled_category_map,
     check_sheet_schema, check_sheet_columns, 
     validate_budget_categories, process_budget_category,
-    apply_check_register, output_category_tree, output_bdm_tree,
-    process_workflow_intake_tasks
+    output_category_tree, output_bdm_tree,
+    process_workflow_tasks, process_workflow_intake_tasks
     )
 from budman_workflows import budget_category_mapping
 
@@ -422,6 +420,7 @@ class BudManViewModel(BudManAppDataContext_Binding, Model_Binding): # future ABC
                 "save_cmd_workbooks": self.WORKBOOKS_save_cmd,
                 cp.CV_CHANGE_WORKBOOKS_SUBCMD_KEY: self.CHANGE_cmd,
                 cp.CV_CATEGORIZATION_SUBCMD_KEY: self.WORKFLOW_categorization_cmd,
+                cp.CV_WORKFLOW_CMD_KEY: self.WORKFLOW_cmd,
                 cp.CV_APPLY_SUBCMD_KEY: self.WORKFLOW_apply_cmd,
                 cp.CV_CHECK_SUBCMD_KEY: self.WORKFLOW_check_cmd,
                 cp.CV_INTAKE_SUBCMD_KEY: self.WORKFLOW_intake_cmd,
@@ -851,14 +850,14 @@ class BudManViewModel(BudManAppDataContext_Binding, Model_Binding): # future ABC
         return cmd[key_name]
     #endregion cp_cmd_attr_get_set() Command Processor method
     #region BMVM_cmd_WB_INFO_LEVEL_validate() Command Processor method
-    def BMVM_cmd_WB_INFO_LEVEL_validate(self, info_level) -> bool:
-        """Return True if info_level is a valid value."""
-        try:
-            return info_level == ALL_KEY or info_level in VALID_WB_INFO_LEVELS
-        except Exception as e:
-            m = p3u.exc_err_msg(e)
-            logger.error(m)
-            raise
+    # def BMVM_cmd_WB_INFO_LEVEL_validate(self, info_level) -> bool:
+    #     """Return True if info_level is a valid value."""
+    #     try:
+    #         return info_level == ALL_KEY or info_level in VALID_WB_INFO_LEVELS
+    #     except Exception as e:
+    #         m = p3u.exc_err_msg(e)
+    #         logger.error(m)
+    #         raise
     #endregion BMVM_cmd_WB_INFO_LEVEL_validate() Command Processor method
     # ------------------------------------------------------------------------ +
     #endregion ViewModelCommandProcessor_Base methods                          +
@@ -1402,16 +1401,6 @@ class BudManViewModel(BudManAppDataContext_Binding, Model_Binding): # future ABC
                                 return True, m
                             else:
                                 return False, "Failed to reload category_map_module"
-                        # cmc = category_map_count()
-                        # m = f"Workflow reload: '{reload_target}' rule count = {cmc}\n"
-                        # logger.debug(m)
-                        # r_msg += f"\n{m}"
-                        # clear_category_map()
-                        # clear_compiled_category_map()
-                        # importlib.reload(budget_category_mapping)
-                        # cm = get_category_map()
-                        # ccm = compile_category_map(cm)
-                        # set_compiled_category_map(ccm)
                     if reload_target == cp.CV_FI_WORKBOOK_DATA_COLLECTION:
                         wdc: WORKBOOK_DATA_COLLECTION = None
                         wdc, m = self.model.bsm_FI_WORKBOOK_DATA_COLLECTION_resolve(self.dc_FI_KEY)
@@ -1539,6 +1528,41 @@ class BudManViewModel(BudManAppDataContext_Binding, Model_Binding): # future ABC
             logger.error(p3u.exc_err_msg(e))
             raise
     #endregion WORKFLOW_categorization_cmd() method
+    # ------------------------------------------------------------------------ +
+    #region WORKFLOW_cmd() command > wf cat 2
+    def WORKFLOW_cmd(self, cmd : Dict) -> BUDMAN_RESULT:
+        """Execute a workflow task subcmd.
+
+        Arguments:
+            cmd (Dict): A valid BudMan View Model Command object. 
+    
+        Required cmd object attributes:
+            cmd_key: 'workflow_cmd' 
+        Optional cmd object attributes:
+            cmd_name: CV_WORKFLOW_CMD
+            Valid subcommands:
+                subcmd_key: CV_LIST_SUBCMD_KEY
+                subcmd_name: CV_LIST_SUBCMD_NAME
+
+        Returns:
+            Tuple[success : bool, result : CMD_RESULT]: The outcome of the 
+            command execution. If success is True, result contains a CMD_RESULT
+            object, if False, a description of the error.
+            
+        Raises:
+            RuntimeError: A description of the
+            root error is contained in the exception message.
+        """
+        try:
+            st = p3u.start_timer()
+            logger.debug(f"Start: ...")
+            success, result = process_workflow_tasks(cmd, self.DC)
+            logger.info(f"Complete: {p3u.stop_timer(st)}")
+            return success, result
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion WORKFLOW_cmd() method
     # ------------------------------------------------------------------------ +
     #region WORKFLOW_apply_cmd() command > wf cat 2
     def WORKFLOW_apply_cmd(self, cmd : Dict) -> BUDMAN_RESULT:

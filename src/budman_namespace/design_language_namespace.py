@@ -28,6 +28,7 @@ DATA_LIST = List[DATA_OBJECT]
 type DATA_MAP = Dict[str, str]
 # BUDMAN data type constants
 type WORKBOOK_ID = str
+type CMD_RESULT = Dict[str, Any]  # Command result dictionary
 type BUDMAN_RESULT = tuple[bool, Any]  # A tuple of (success, message or data)
 type WORKBOOK_OBJECT = Union[object, Dict]
 type WORKBOOK_CONTENT = Any

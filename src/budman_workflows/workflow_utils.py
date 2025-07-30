@@ -46,11 +46,10 @@ from .txn_category import (
     BDMTXNCategory
 ) 
 from .budget_category_mapping import (
-    compiled_category_map, get_category_map, 
+    get_category_map, 
     check_register_map, 
-    category_histogram, clear_category_histogram,
-    get_category_histogram, get_compiled_category_map,
-    )
+    get_category_histogram
+)
 # from budget_domain_model import (BudgetDomainModel)
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -164,20 +163,6 @@ def category_tree_to_csv(level:int=2):
         logger.error(p3u.exc_err_msg(e))
         raise
 #endregion output_category_tree()
-# ---------------------------------------------------------------------------- +
-#region category_map_count() function
-def category_map_count():
-    return len(get_category_map())
-
-def clear_category_map():
-    global category_map
-    old_map = category_map
-    del category_map
-    category_map = {}
-    logger.info(f"Cleared category_map, old map had {len(old_map)} items.")
-    del old_map
-    return    
-#endregion category_map_count() function
 # ---------------------------------------------------------------------------- +
 #region categorize_transaction() function
 def categorize_transaction(description : str, txn_catalog:TXNCategoryCatalog,
@@ -482,5 +467,17 @@ def extract_txn_categories() -> bdm.DATA_OBJECT:
         raise
 #endregion extract_txn_categories() method
 # ---------------------------------------------------------------------------- +
-#region fi_wb_index() function
-#endregion fi_wb_index()
+#region category_map_count() function
+def category_map_count():
+    return len(get_category_map())
+
+def clear_category_map():
+    global category_map
+    old_map = category_map
+    del category_map
+    category_map = {}
+    logger.info(f"Cleared category_map, old map had {len(old_map)} items.")
+    del old_map
+    return    
+#endregion category_map_count() function
+# ---------------------------------------------------------------------------- +

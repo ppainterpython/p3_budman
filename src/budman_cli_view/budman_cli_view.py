@@ -569,7 +569,7 @@ class BudManCLIView(cmd2.Cmd): # , DataContext_Binding):
             status, result = self.cp_execute_cmd(cmd)
             # Render the result.
             if status:
-                console.print(result)
+                cli_view_cmd_output(cmd, result)
             else:
                 console.print(f"[red]Error:[/red] {result}")
         except Exception as e:
