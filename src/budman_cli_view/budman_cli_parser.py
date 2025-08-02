@@ -403,32 +403,38 @@ class BudManCLIParser():
     def val_cmd_parser_setup(self,app_name : str = "not-set") -> None:
         """Examine or Set values in the application settings and data."""
         try:
-            self.val_cmd_subparsers = self.val_cmd.add_subparsers(
-                dest="val_cmd")
-            self.val_cmd.prog = app_name
+            parser = self.val_cmd
+            parser.prog = app_name
+            title = self.val_cmd_parser_setup.__doc__
+            subparsers = parser.add_subparsers(title=title) #, dest="ap)
+
             # val parse_only subcommand
-            self.val_po_subcmd_parser = self.val_cmd_subparsers.add_parser(
-                "parse_only",
+            po_parser = subparsers.add_parser(
+                cp.CV_PARSE_ONLY_SUBCMD_NAME,
                 aliases=["po", "PO"], 
                 help="Set cli parse-only mode to on|off|toggle, default is toggle.")
-            self.val_po_subcmd_parser.set_defaults(val_cmd="parse_only")
-            self.val_po_subcmd_parser.add_argument(
-                "po_value", nargs="?", 
+            po_parser.set_defaults(cmd_key=cp.CV_VAL_CMD_KEY,   # new way
+                                       cmd_name=cp.CV_VAL_CMD_NAME, 
+                                       subcmd_name=cp.CV_PARSE_ONLY_SUBCMD_NAME,
+                                       subcmd_key=cp.CV_PARSE_ONLY_SUBCMD_KEY)
+            po_parser.add_argument(
+                cp.CK_PO_VALUE, nargs="?", 
                 default= "toggle",
                 help="parse-only value: on | off | toggle. Default is toggle.")
+   
             # val wf_key subcommand
-            self.val_wf_key_subcmd_parser = self.val_cmd_subparsers.add_parser(
+            wf_key_parser = subparsers.add_parser(
                 "wf_key",
                 aliases=["wf", "WF"], 
                 help="Set current wf_key value.")
-            self.val_wf_key_subcmd_parser.set_defaults(val_cmd="wf_key")
-            self.val_wf_key_subcmd_parser.add_argument(
+            wf_key_parser.set_defaults(val_cmd="wf_key")
+            wf_key_parser.add_argument(
                 "wf_ref", nargs="?", 
                 action="store", 
                 default = None,
                 help="wf_key value for valid workflow or 'all'.")
             # val wb_name subcommand
-            self.val_wb_name_subcmd_parser = self.val_cmd_subparsers.add_parser(
+            self.val_wb_name_subcmd_parser = subparsers.add_parser(
                 "wb_name",
                 aliases=["wb", "WB"], 
                 help="Set current wb_name value.")
@@ -439,7 +445,7 @@ class BudManCLIParser():
                 default=None,
                 help="wb_ref is a name for a workbook.")
             # val fi_key subcommand
-            self.val_fi_key_subcmd_parser  = self.val_cmd_subparsers.add_parser(
+            self.val_fi_key_subcmd_parser  = subparsers.add_parser(
                 "fi_key",
                 aliases=["fi", "FI"], 
                 help="Set current fi_key.")
@@ -465,10 +471,14 @@ class BudManCLIParser():
             d += "subcommand used to present the arguments relevant for the task."
             subparsers = parser.add_subparsers()
             
-            #region workflow intake subcommand
+            #region workflow set subcommand
+            set_parser = self.add_set_subparser(subparsers)
+            #endregion workflow set subcommand
+
+            #region workflow list subcommand
             list_parser = self.add_list_subparser(subparsers)
-            #endregion workflow intake subcommand
-            
+            #endregion workflow list subcommand
+
             #region workflow categorization subcommand
             categorization_parser = subparsers.add_parser(
                 cp.CV_CATEGORIZATION_SUBCMD_NAME,
@@ -526,19 +536,18 @@ class BudManCLIParser():
                 cmd_name="workflow", 
                 subcmd_name="task",
                 subcmd_key="workflow_cmd_task")
+            task_name_choices = cp.VALID_TASK_NAMES
             task_parser.add_argument(
-                "task_name", nargs="?",
-                action="store", 
-                default=None,
-                help=("Name of the task function to perform, e.g., 'discover'. "
-                       "Or, 'list' to display a list of valid task names."))
-            task_parser.add_argument(
-                "task_args",
-                nargs="*",
-                default=None,
-                help="List of arguments to pass to the workflow task."
-            )
-            self.add_wb_index_argument(task_parser)
+                cp.CK_TASK_NAME, nargs="?",
+                choices=task_name_choices, 
+                help=("Name of the task function to perform, e.g., 'sync' etc."))
+            # task_parser.add_argument(
+            #     "task_args",
+            #     nargs="*",
+            #     default=None,
+            #     help="List of arguments to pass to the workflow task."
+            # )
+            # self.add_wb_index_argument(task_parser)
             #endregion Workflow task sub-command: task
 
             #region workflow 'apply' subcommand
@@ -591,7 +600,30 @@ class BudManCLIParser():
             raise
     #endregion workflow list subcommand subparser
     # ------------------------------------------------------------------------ +
-#region intake subcommand subparser
+    #region workflow set subcommand subparser
+    def add_set_subparser(self, subparsers) -> None:
+        """Add a set subparser to the provided subparsers."""
+        try:
+            # workflow set subcommand
+            set_parser = subparsers.add_parser(
+                cp.CV_SET_SUBCMD_NAME,
+                aliases=["set"], 
+                help="Set workflow task information.")
+            set_parser.set_defaults(
+                cmd_key=cp.CV_WORKFLOW_CMD_KEY,   # new way
+                cmd_name=cp.CV_WORKFLOW_CMD_NAME, 
+                subcmd_name=cp.CV_SET_SUBCMD_NAME,
+                subcmd_key=cp.CV_SET_SUBCMD_KEY)
+            self.add_workflow_argument(set_parser)
+            self.add_purpose_argument(set_parser)
+            self.add_common_args(set_parser)
+            return set_parser
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise
+    #endregion workflow set subcommand subparser
+    # ------------------------------------------------------------------------ +
+    #region intake subcommand subparser
     def add_intake_subparser(self, subparsers) -> None:
         """Add an intake subparser to the provided subparsers."""
         try:
@@ -660,8 +692,8 @@ class BudManCLIParser():
         try:
             wf_choices = bdm.VALID_BDM_WORKFLOWS
             parser.add_argument(
-                "-w", f"--{cp.CK_CMDLINE_WF_KEY}", nargs="?", dest=cp.CK_CMDLINE_WF_KEY, 
-                default = None,
+                "-w", f"--{cp.CK_CMDLINE_WF_KEY}", nargs="?", 
+                dest=cp.CK_CMDLINE_WF_KEY, 
                 choices=wf_choices,
                 help="Specify the workflow key to apply.")
             return
@@ -675,9 +707,23 @@ class BudManCLIParser():
             purpose_choices = bdm.VALID_WF_PURPOSE_VALUES
             parser.add_argument(
                 "-p", f"--{cp.CK_CMDLINE_WF_PURPOSE}", nargs="?",  
-                default = cp.CK_WF_INPUT,
                 choices=purpose_choices,
-                help="Specify the workflow purpose folder.")
+                help="Specify the workflow folder purpose.")
+            parser.add_argument(
+                "-wi", nargs="?",
+                dest=cp.CK_CMDLINE_WF_PURPOSE,
+                const=cp.CK_WF_INPUT,
+                help="Use workflow folder purpose: wf_input.")
+            parser.add_argument(
+                "-ww", nargs="?",
+                dest=cp.CK_CMDLINE_WF_PURPOSE,
+                const=cp.CK_WF_WORKING,
+                help="Use workflow folder purpose: wf_working.")
+            parser.add_argument(
+                "-wo", nargs="?",
+                dest=cp.CK_CMDLINE_WF_PURPOSE,
+                const=cp.CK_WF_OUTPUT,
+                help="Use workflow folder purpose: wf_output.")
             return
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
@@ -702,6 +748,20 @@ class BudManCLIParser():
                 "-all", dest="all_wbs", 
                 action = "store_true",
                 help="All workbooks switch.") 
+            return
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise
+
+    def add_file_index_argument(self, parser) -> None:
+        """Add one or more file_index numbers from a file list.""" 
+        try:
+            parser.add_argument(
+                cp.CK_FILE_LIST, nargs="*",
+                action='extend',
+                type=int, 
+                default = [],
+                help=f"File index: one or more numbers (spaces, no commas) indexing from a file list, 0-based.")
             return
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
@@ -752,7 +812,7 @@ class BudManCLIParser():
                 action="store_true", 
                 help="Command args are only validated with results returned, but no cmd execution.")
             common_args.add_argument(
-                "-wi", "--what-if", 
+                "--what-if", 
                 action="store_true", 
                 help="Return details about what the command would do, but don't to any action.")
             return common_args

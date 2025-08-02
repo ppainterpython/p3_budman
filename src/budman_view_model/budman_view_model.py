@@ -206,7 +206,7 @@ from budman_workflows import (
     check_sheet_schema, check_sheet_columns, 
     validate_budget_categories, process_budget_category,
     output_category_tree, output_bdm_tree,
-    process_workflow_tasks, process_workflow_intake_tasks
+    WORKFLOW_TASK_process, process_workflow_intake_tasks
     )
 from budman_workflows import budget_category_mapping
 
@@ -1556,7 +1556,7 @@ class BudManViewModel(BudManAppDataContext_Binding, Model_Binding): # future ABC
         try:
             st = p3u.start_timer()
             logger.debug(f"Start: ...")
-            success, result = process_workflow_tasks(cmd, self.DC)
+            success, result = WORKFLOW_TASK_process(cmd, self.DC)
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             return success, result
         except Exception as e:

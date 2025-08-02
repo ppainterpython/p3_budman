@@ -883,9 +883,7 @@ def bsm_get_folder_structure(path):
 def bsm_file_tree_from_folder(path: Path) -> Tree:
     file_index:int = 0
     dir_index:int = 0
-    path2 = Path(r'C:\Users\ppain\OneDrive\budget\boa\raw_data')
     tree = Tree()
-    # root = root_path.resolve()
     tag = f"{dir_index:2} {path.name}"
     tree.create_node(tag=tag, identifier=str(path))  # Root node
 
@@ -896,7 +894,6 @@ def bsm_file_tree_from_folder(path: Path) -> Tree:
                 raise ValueError(f"Path is not a directory: {current_path}")
             dir_index += 1
             for item in current_path.iterdir():
-                print(item)
                 node_id = str(item.resolve())
                 if item.is_dir():
                     tag = f"{dir_index:2} {item.name}"

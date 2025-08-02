@@ -165,6 +165,17 @@ To add clarity, I am refactoring some type definitions:
 
 To keep it simple, and keep an eye on a clean, and simple Dependency Injection pattern, I am making all bindings happen after object instantiation. Using initialize methods, the *_binding classes are configured with the reference to their concrete objects at initialization time, not object instantiation time.
 
+## New Notes About Business Rules for the Workflow Process Model
+
+- WF_INPUT folders are where new input files are placed for a process. The process will not modify the files in its configured WF_INPUT folder.
+- A process may take note of a new files arrival and trigger actions, but no modifications are made to the WF_INPUT file.
+- A process must copy the file to the WF_WORKING folder to save modifications to it.
+- A process may save other files with different names in other folders based on using the WF_INPUT file for tasks resulting in saved output.
+
+## BDM_STORE Design Notes
+
+The BDM_STORE file contains information about "workbooks" which are files used in the various workflow processes by the BUDMAN app. It saves this information in a json file. In the app, there is a folder used as the root of all files utilized which includes files not used as workbooks. There is a command to synchronize the actual files
+
 ## Change Journal
 
 | Date       | Description                                                      |

@@ -907,7 +907,8 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
     #endregion bsm_FI_initialize() method
     # ------------------------------------------------------------------------ +    
     #region bsm_FI_WORKBOOK_DATA_COLLECTION_resolve() method
-    def bsm_FI_WORKBOOK_DATA_COLLECTION_resolve(self, fi_key:str) -> Tuple[WORKBOOK_DATA_COLLECTION, str]:
+    def bsm_FI_WORKBOOK_DATA_COLLECTION_resolve(self, fi_key:str,
+                                                reconcile:bool = False) -> Tuple[WORKBOOK_DATA_COLLECTION, str]:
         """Discover all actual WORKBOOKS in storage for the FI. Return a 
         WORKBOOK_DATA_COLLECTION of BDMWorkbook objects, an inventory of
         what is actually in storage.
@@ -922,7 +923,7 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
         A WORKFLOW_DATA_FOLDER pathname is constructed from the path elements
         in the workflow configuration.
         """
-        wb_collection: WORKBOOK_DATA_COLLECTION = {}
+        discovered_wdc: WORKBOOK_DATA_COLLECTION = {}
         wf_object: WF_OBJECT = None
         r_msg: str = ""
         fi_folder: Path = None
@@ -1008,7 +1009,7 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
                             )
                         wb_id = bdm_wb.wb_id
                         bdm_wb.determine_wb_type() 
-                        wb_collection[wb_id] = bdm_wb
+                        discovered_wdc[wb_id] = bdm_wb
                         m = bdm_wb.wb_info_display_str()
                         logger.debug(f"Collected workbook: {m}")
                         r_msg += f"{P6}workbook: {m}\n"
@@ -1016,19 +1017,20 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
             # from the FI_WORKFLOW structure mapped to storage.
             # Now reconcile the list of BDMWorkbook objects with the 
             # FI_WORKBOOK_DATA_COLLECTION.
-            m = f"FI_KEY('{fi_key}') discovered {len(wb_collection)} workbooks."
+            m = f"FI_KEY('{fi_key}') discovered {len(discovered_wdc)} workbooks."
             logger.debug(m)
             r_msg += f"{P4}{m}\n"
-            self.bsm_FI_WORKBOOK_DATA_COLLECTION_reconcile(fi_key, wb_collection)
+            if reconcile:
+                self.bsm_FI_WORKBOOK_DATA_COLLECTION_reconcile(fi_key, discovered_wdc)
             m = f"Complete: FI_KEY('{fi_key}') WORKBOOK storage discovery"
             logger.debug(m)
             r_msg += f"{P2}{m}\n"
-            return wb_collection, r_msg
+            return discovered_wdc, r_msg
         except Exception as e:
                 m = p3u.exc_err_msg(e)
                 logger.error(m)
                 r_msg += f"{P2}{m}\n"
-                return wb_collection, r_msg
+                return discovered_wdc, r_msg
     #endregion bsm_FI_WORKBOOK_DATA_COLLECTION_resolve() method
     # ------------------------------------------------------------------------ +   
     #region bsm_FI_WORKBOOK_DATA_COLLECTION_reconcile() method

@@ -52,6 +52,8 @@ CV_WORKFLOW_CMD_NAME = "workflow"
 CV_WORKFLOW_CMD_KEY = CV_WORKFLOW_CMD_NAME + CMD_KEY_SUFFIX
 CV_APP_CMD_NAME = "app"
 CV_APP_CMD_KEY = CV_APP_CMD_NAME + CMD_KEY_SUFFIX
+CV_VAL_CMD_NAME = "val"
+CV_VAL_CMD_KEY = CV_VAL_CMD_NAME + CMD_KEY_SUFFIX
 
 # Known CK_SUBCMD_KEY and CK_SUBCMD_NAME values for the BudManViewModel.
 CV_BDM_STORE_SUBCMD_NAME = "BDM_STORE"
@@ -62,6 +64,8 @@ CV_LOAD_WORKBOOKS_SUBCMD_KEY = CV_LOAD_CMD_KEY + "_" + CV_WORKBOOKS_SUBCMD_NAME
 CV_SAVE_WORKBOOKS_SUBCMD_KEY = CV_SAVE_CMD_KEY + "_" + CV_WORKBOOKS_SUBCMD_NAME
 CV_CATEGORIZATION_SUBCMD_NAME = "categorization"
 CV_CATEGORIZATION_SUBCMD_KEY = CV_WORKFLOW_CMD_KEY + "_" + CV_CATEGORIZATION_SUBCMD_NAME
+CV_SET_SUBCMD_NAME = "set"
+CV_SET_SUBCMD_KEY = CV_WORKFLOW_CMD_KEY + "_" + CV_SET_SUBCMD_NAME
 CV_LIST_SUBCMD_NAME = "list"
 CV_LIST_SUBCMD_KEY = CV_WORKFLOW_CMD_KEY + "_" + CV_LIST_SUBCMD_NAME
 CV_INTAKE_SUBCMD_NAME = "intake"
@@ -77,10 +81,12 @@ CV_RELOAD_SUBCMD_NAME = "reload"
 CV_RELOAD_SUBCMD_KEY = CV_APP_CMD_KEY + "_" + CV_RELOAD_SUBCMD_NAME
 CV_LOG_SUBCMD = "log"
 CV_BUDGET_CATEGORIES_SUBCMD = "BUDGET_CATEGORIES"
-CV_TASK_SUBCMD = "task"
+CV_TASK_SUBCMD_NAME = "task"
+CV_TASK_SUBCMD_KEY = CV_WORKFLOW_CMD_KEY + "_" + CV_TASK_SUBCMD_NAME
 CV_CHANGE_WORKBOOKS_SUBCMD_KEY = CV_CHANGE_CMD_KEY + "_" + CV_WORKBOOKS_SUBCMD_NAME
 CV_SHOW_WORKBOOKS_SUBCMD_KEY = CV_SHOW_CMD_KEY + "_" + CV_WORKBOOKS_SUBCMD_NAME
-
+CV_PARSE_ONLY_SUBCMD_NAME = "parse_only"
+CV_PARSE_ONLY_SUBCMD_KEY = CV_VAL_CMD_KEY + "_" + CV_PARSE_ONLY_SUBCMD_NAME
 # Argument attribute keys, for any cmd
 CK_PARSE_ONLY = "parse_only"
 CK_VALIDATE_ONLY = "validate_only"
@@ -90,7 +96,6 @@ CK_FIX_SWITCH = "fix_switch"
 CK_VALIDATE_CATEGORIES = "validate_categories"
 CK_LOG_ALL = "log_all"
 CK_NO_SAVE = "no_save"
-
 # Essential Data Context attributes, with cross-cutting scope over cmds
 CK_FI_KEY = bdm.FI_KEY
 CK_WF_KEY = bdm.WF_KEY
@@ -103,10 +108,13 @@ CK_WB_TYPE = bdm.WB_TYPE
 CK_WB_NAME = bdm.WB_NAME
 CK_WB_INDEX = bdm.WB_INDEX
 CK_WB_LIST = "wb_list"
+CK_FILE_LIST = "file_list"
 CK_ALL_WBS = "all_wbs"
 CK_WB_REF = "wb_ref"
 CK_WB_INFO = "wb_info"
 CK_WF_TASK = "wf_task"
+
+# subcmd_key CV_TASK_SUBCMD_KEY argument constants
 
 # subcmd_key CV_INTAKE_SUBCMD_KEY argument constants
 CK_INTAKE_TASK = "intake_task"
@@ -122,12 +130,15 @@ CK_CMDLINE_WF_KEY = "cmdline_wf_key"
 CK_CMDLINE_WF_PURPOSE = "cmdline_wf_purpose"
 # subcmd_name CV_DELETE_SUBCMD argument constants
 CK_DELETE_TARGET = "delete_target"
+# subcmd_name CV_PARSER_ONLY_SUBCMD argument constants
+CK_PO_VALUE = "po_value"
 # subcmd_name BUDGET_CATEGORIES argument constants
 CK_CAT_LIST = "cat_list"
 CK_LEVEL = "level"
-# subcmd_name CV_TASK_SUBCMD argument constants
-CK_TASK_ARGS = "task_args"
+# subcmd_name CV_TASK_SUBCMD_KEY argument constants
 CK_TASK_NAME = "task_name"
+CV_SYNC = "sync"
+VALID_TASK_NAMES = (CV_SYNC, "foo")
 # subcmd_name CV_LOG_SUBCMD argument constants
 CK_HANDLER_NAME = "handler_name"
 CK_LIST_SWITCH = "list_switch" 

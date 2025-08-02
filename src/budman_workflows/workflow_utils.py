@@ -35,6 +35,7 @@ from budman_namespace.bdm_workbook_class import BDMWorkbook
 from budman_namespace.design_language_namespace import P2
 import budman_settings as bdms
 import budman_namespace as bdm
+import budman_command_processor as cp
 from budman_data_context import BudManAppDataContext_Base
 from budget_storage_model import (
     bsm_BDM_STORE_url_get,
@@ -480,4 +481,26 @@ def clear_category_map():
     del old_map
     return    
 #endregion category_map_count() function
+# ---------------------------------------------------------------------------- +
+#region output_tree_view() function
+def output_tree_view(msg:str='', tree_view:Tree=None) -> bdm.BUDMAN_RESULT:
+    """Create BUDMAN_RESULT with the content of the tree view."""
+    try:
+        # Format the tree for output
+        now = dt.now()
+        now_str = now.strftime("%Y-%m-%d %I:%M:%S %p")
+        original_stdout = sys.stdout  # Save the original stdout
+        buffer = io.StringIO()
+        sys.stdout = buffer  # Redirect stdout to capture tree output
+        print(f"{msg} ({now_str})\n")
+        tree_view.show()
+        sys.stdout = original_stdout  # Reset stdout
+        cmd_result = cp.CMD_RESULT_OBJECT()
+        cmd_result[bdm.CMD_RESULT_CONTENT] = buffer.getvalue()
+        return True, cmd_result
+    except Exception as e:
+        m = p3u.exc_err_msg(e)
+        logger.error(m)
+        return m
+#endregion output_tree_view() function
 # ---------------------------------------------------------------------------- +

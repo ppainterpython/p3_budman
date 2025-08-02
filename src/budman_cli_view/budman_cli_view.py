@@ -518,27 +518,30 @@ class BudManCLIView(cmd2.Cmd): # , DataContext_Binding):
         """Examine or set values in Budget Manager."""
         try:
             cmd = BudManCLIView.create_cmd_from_cmd2_argparse(opts)
-            self.poutput(f"args: {str(cmd)} parse_only: {self.parse_only}")
-            if cmd.val_cmd == CMD_PARSE_ONLY:
-                if cmd.po_value == "toggle":
+            console.print(f"args: {str(cmd)} parse_only: {self.parse_only}")
+            if (cmd[cp.CK_CMD_KEY] == cp.CV_VAL_CMD_KEY and
+               cmd[cp.CK_SUBCMD_KEY] == cp.CV_PARSE_ONLY_SUBCMD_KEY):
+                if cmd[cp.CK_PO_VALUE] == "toggle":
                     self.parse_only = not self.parse_only
-                elif cmd.po_value == "on":
+                elif cmd[cp.CK_PO_VALUE] == "on":
                     self.parse_only = True
-                elif cmd.po_value == "off":
+                elif cmd[cp.CK_PO_VALUE] == "off":
                     self.parse_only = False
                 else:
-                    self.poutput("Invalid value for parse_only. "
+                    console.print("Invalid value for parse_only. "
                                  "Use on|off|toggle.")
                 BudManCLIView.prompt = PO_ON_PROMPT if self.parse_only else PO_OFF_PROMPT
-                self.poutput(f"parse_only: {self.parse_only}")
-            elif cmd.val_cmd == "wf_key":
-                _ = cmd.wf_ref
-            elif cmd.val_cmd == "wb_name":
-                _ = cmd.wb.ref
-            elif cmd.val_cmd == "fi_key":
-                _ = cmd.fi_ref
+                console.print(f"parse_only: {self.parse_only}")
+            elif (cmd[cp.CK_CMD_KEY] == cp.CV_VAL_CMD_KEY and 
+                  cmd["val_cmd"] == "wf_key"):
+                _ = cmd["wf_ref"]
+            elif (cmd[cp.CK_CMD_KEY] == cp.CV_VAL_CMD_KEY and
+                  cmd["wb_name"] is not None):
+                _ = cmd["wb_name"]
+            elif cmd["val_cmd"] == "fi_key":
+                _ = cmd["fi_ref"]
             else:
-                self.poutput(f"Nothing to do here: {str(cmd)}.")
+                console.print(f"Nothing to do here: {str(cmd)}.")
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise

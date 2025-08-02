@@ -19,7 +19,8 @@ __description__ = "Budget Manager (BudMan) Workflow process implementation."
 __license__ = "MIT"
 
 from .workflow_commands import (
-    process_workflow_tasks
+    WORKFLOW_TASK_process,
+    WORKFLOW_get_folder_tree
 )
 from .budget_intake import (
     process_workflow_intake_tasks
@@ -32,7 +33,8 @@ from .workflow_utils import (
     extract_bdm_tree,
     output_bdm_tree,
     category_map_count,
-    clear_category_map
+    clear_category_map,
+    output_tree_view
 )
 from .budget_categorization import (
     check_sheet_columns, 
@@ -70,7 +72,8 @@ from .budget_category_mapping import (
 # symbols for "from budman_model import *"
 __all__ = [
     # workflow_commands.py module
-    "process_workflow_tasks",
+    "WORKFLOW_TASK_process",
+    "WORKFLOW_get_folder_tree",
     # module names
     "workflow_utils",
     # budget_intake",
@@ -88,6 +91,7 @@ __all__ = [
     "output_bdm_tree",
     "category_map_count",
     "clear_category_map",
+    "output_tree_view",
     # budget_categorization.py module
     "check_sheet_columns",
     "check_sheet_schema",

@@ -12,11 +12,13 @@ import atexit, pathlib, time, logging, inspect, logging.config  #, logging.handl
 from typing import Optional
 
 # third-party  packages and module libraries
+from rich.console import Console
 import p3logging as p3l
 from p3_utils import exc_err_msg, dscr, start_timer, stop_timer
 
 # local packages and module libraries
 from budman_settings import *
+import budman_namespace as bdm
 from budman_namespace import BDMSingletonMeta
 import budman_command_processor.budman_cp_namespace as cp
 from budman_view_model import (BudManViewModel, BudManCLICommandProcessor_Binding)
@@ -30,6 +32,9 @@ from budman_workflows import BDMTXNCategoryManager
 # ---------------------------------------------------------------------------- +
 # globals for logger
 logger = logging.getLogger(__name__)
+console = Console(force_terminal=True,width=bdm.BUDMAN_WIDTH, highlight=True,
+                  soft_wrap=False)
+console.print(f"Starting {__name__}...")
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
@@ -163,7 +168,11 @@ class BudManApp(metaclass=BDMSingletonMeta):
             if self.view is None:
                 raise ValueError("View not initialized.")
             self._exit_code = self.view.cmdloop() if startup else None # Application CLI loop
-            self.view_model.shutdown() if self.view.save_on_exit else None
+            if self.view.save_on_exit:
+                self.view_model.shutdown()
+                console.print("BDM_STORE saved on exit.")
+            else:
+                console.print("BDM_STORE not saved on exit.")
         except Exception as e:
             m = exc_err_msg(e)
             logger.error(m)

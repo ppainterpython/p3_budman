@@ -32,6 +32,7 @@ import budman_command_processor.budman_cp_namespace as cp
 import budman_namespace.design_language_namespace as bdm
 from budman_namespace.bdm_workbook_class import BDMWorkbook
 from budman_data_context import BudManAppDataContext_Base
+from .workflow_commands import *
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -54,11 +55,45 @@ def process_workflow_intake_tasks(cmd: Dict[str, Any],
         # Assuming the cmd parameters have been validated before reaching this point.
         if cmd[cp.CK_INTAKE_TASK] == cp.CV_INTAKE_MOVE_TASK:
             # Process the move task.
-            return True, "Move task processing not implemented yet."
+            return INTAKE_PROCESS_copy_file_to_WF_WORKING_folder(cmd, bdm_DC)
         else:
             m = f"Unknown intake task: {cmd[cp.CK_INTAKE_TASK]}"
             logger.error(m)
             return False, m
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion process_workflow_intake_tasks() function
+# ---------------------------------------------------------------------------- +
+#region INTAKE_PROCESS_copy_file_to_WF_WORKING_folder() function
+def INTAKE_PROCESS_copy_file_to_WF_WORKING_folder(
+        cmd: Dict[str, Any], 
+        bdm_DC: BudManAppDataContext_Base) -> bdm.BUDMAN_RESULT:
+    """INTAKE_PROCESS_TASK: copy a file to the WF_WORKING folder.
+
+    Workflow Intake Task to copy a file from the WF_INPUT folder to the
+    WF_WORKING folder. The cmd object has the parameters to identify the file
+    to be copied.
+    Args:
+        cmd (Dict[str, Any]): A valid BudMan View Model Command object.
+        bdm_DC (BudManAppDataContext_Base): The data context for the 
+            BudMan application.
+    """
+    try:
+        # Assuming the cmd parameters have been validated before reaching this point.
+        # Current DC values of wf_key and wf_purpose are are the destination 
+        # folder for the file to be copied. CMDLINE file_index, wf_key and 
+        # wf_purpose identify the file to copy. 
+        # Source file parameters
+        src_wf_key: str = cmd[cp.CK_CMDLINE_WF_KEY]
+        src_wf_purpose: str = cmd[cp.CK_CMDLINE_WF_PURPOSE]
+        src_file_index: int = cmd[cp.CK_FILE_INDEX]
+        src_folder_tree = WORKFLOW_get_folder_tree(src_wf_key, src_wf_purpose, bdm_DC)
+
+        # Destination workflow folder
+        dst_wf_key = bdm_DC.dc_WF_KEY
+        dst_wf_purpose = bdm_DC.dc_WF_PURPOSE
+        return True, f"copy file_index {src_file_index} from {src_wf_key} to {wf_key} for {wf_purpose}"
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
