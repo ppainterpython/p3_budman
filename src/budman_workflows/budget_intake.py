@@ -93,7 +93,9 @@ def INTAKE_PROCESS_copy_file_to_WF_WORKING_folder(
         # Destination workflow folder
         dst_wf_key = bdm_DC.dc_WF_KEY
         dst_wf_purpose = bdm_DC.dc_WF_PURPOSE
-        return True, f"copy file_index {src_file_index} from {src_wf_key} to {wf_key} for {wf_purpose}"
+        msg:str = f"copy file_index {src_file_index} from {src_wf_key} "
+        msg += f"to {dst_wf_key} for {dst_wf_purpose}"
+        return True, msg
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise

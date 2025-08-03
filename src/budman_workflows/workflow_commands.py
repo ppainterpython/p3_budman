@@ -25,6 +25,7 @@ from budman_namespace.bdm_workbook_class import BDMWorkbook
 from budget_storage_model import (
     bsm_file_tree_from_folder
 )
+from budget_domain_model import BudgetDomainModel
 from budman_data_context import BudManAppDataContext_Base
 from .workflow_utils import output_tree_view
 #endregion Imports
@@ -53,6 +54,11 @@ def WORKFLOW_TASK_process(cmd: Dict[str, Any],
         elif cmd[cp.CK_SUBCMD_KEY] == cp.CV_LIST_SUBCMD_KEY:
             # Process the list_folder_tree task.
             return WORKFLOW_TASK_list_folder_tree(cmd, bdm_DC)
+        elif (cmd[cp.CK_SUBCMD_KEY] == cp.CV_TASK_SUBCMD_KEY and
+              cmd[cp.CK_TASK_NAME] == cp.CV_SYNC):
+            # Process the wf sync task.
+            recon: bool = cmd.get(cp.CK_RECONCILE, False)
+            return WORKFLOW_TASK_sync_wdc(recon, bdm_DC)
         else:
             m = f"Unknown workflow task: {cmd[cp.CK_SUBCMD_KEY]}"
             logger.error(m)
@@ -140,6 +146,47 @@ def WORKFLOW_TASK_list_folder_tree(cmd: Dict[str, Any],
         logger.error(p3u.exc_err_msg(e))
         raise
 #endregion WORKFLOW_TASK_list_folder_tree() function
+# ---------------------------------------------------------------------------- +
+#region WORKFLOW_get_folder_tree() function
+def WORKFLOW_TASK_sync_wdc(reconcile:bool, 
+                           bdm_DC: BudManAppDataContext_Base) -> bdm.BUDMAN_RESULT:
+    """Model-Aware: Sync the WORKBOOK_DATA_COLLECTION for the current FI_KEY.
+
+    For the current DC FI_KEY, synchronize the WORKBOOK_DATA_COLLECTION with 
+    files in storage. Use the BSM functions.
+
+    Args:
+        bdm_DC (BudManAppDataContext_Base): The data context for the 
+            BudMan application.
+
+    Returns:
+        treelib.Tree: The folder tree for the specified workflow.
+    """
+    try:
+        st = p3u.start_timer()
+        p3u.is_not_obj_of_type("bdm_DC", bdm_DC, BudManAppDataContext_Base,
+                               raise_error= True)
+        fi_key: str = bdm_DC.dc_FI_KEY
+        if not fi_key:
+            m = "No FI_KEY set in the DC."
+            logger.error(m)
+            return False, m
+        model:BudgetDomainModel = bdm_DC.model
+        if not model:
+            m = "No BudgetDomainModel binding in the DC."
+            logger.error(m)
+            return False, m
+        task_name: str = "sync_wdc()"
+        msg: str = f"Syncing WORKBOOK_DATA_COLLECTION for FI_KEY: '{fi_key}'"
+        logger.debug(f"Start Task: {task_name} {msg}")
+        r_msg: str = ""
+        discovered_wdc: bdm.WORKBOOK_DATA_COLLECTION = None
+        discovered_wdc, r_msg = model.bsm_FI_WORKBOOK_DATA_COLLECTION_resolve(fi_key)
+        return True, msg
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion WORKFLOW_get_folder_tree() function
 # ---------------------------------------------------------------------------- +
 #region WORKFLOW_get_folder_tree() function
 def WORKFLOW_get_folder_tree(wf_key: str, wf_purpose: str, bdm_DC: BudManAppDataContext_Base) -> Tree:

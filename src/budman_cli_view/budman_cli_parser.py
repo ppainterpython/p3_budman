@@ -541,6 +541,11 @@ class BudManCLIParser():
                 cp.CK_TASK_NAME, nargs="?",
                 choices=task_name_choices, 
                 help=("Name of the task function to perform, e.g., 'sync' etc."))
+            task_parser.add_argument(
+                f"--{cp.CK_RECONCILE}", "-r",
+                action="store_true", 
+                help="Reconcile with the WORKBOOK_DATA_COLLECTION on sync."
+            )
             # task_parser.add_argument(
             #     "task_args",
             #     nargs="*",

@@ -16,13 +16,14 @@ from budman_namespace import (
     BDM_STORE, FI_OBJECT, WORKBOOK_DATA_COLLECTION, 
     BDM_FOLDER, BDM_FI_COLLECTION,
     FI_WORKBOOK_DATA_COLLECTION,
-    FI_WORKFLOW_DATA_COLLECTION, FI_NAME, FI_FOLDER,BDM_WF_COLLECTION,
+    FI_NAME, FI_FOLDER,BDM_WF_COLLECTION,
     WF_INPUT_FOLDER,WF_WORKING_FOLDER, WF_OUTPUT_FOLDER,WF_NAME,
     WF_KEY, WF_FOLDER_ID, WB_NAME,
     WF_INPUT, WF_WORKING, WF_OUTPUT, WF_PURPOSE_FOLDER_MAP, BDM_DATA_CONTEXT
     )
 from budget_storage_model import bsm_BDM_STORE_url_get, bsm_BDM_STORE_url_put
 from budman_namespace.bdm_workbook_class import BDMWorkbook
+from budget_domain_model import BDMConfig
 # from budman_workflows.budget_category_mapping import extract_category_tree
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -254,14 +255,15 @@ if __name__ == "__main__":
     try:
         configure_logging(__name__, logtest=False)
         # extract_bdm_tree().show()
-        print(output_bdm_tree())
+        # print(output_bdm_tree())
         # wf_tree()
         # wb_path = p3u.verify_url_file_path(cr_url, test=False)
         # bdms = bsm_BDM_STORE_url_get(wb_url)
+        bdmc = BDMConfig.BDM_STORE_url_get(wb_url)
         # bdm_store_change(bdms)
         # bsm_BDM_STORE_url_put(bdms, wb_url)
         # logger.info(f"wb_path: '{wb_path}' url:'{wb_url}'")
-
+        pass
     except Exception as e:
         m = p3u.exc_err_msg(e)
         logger.error(m)

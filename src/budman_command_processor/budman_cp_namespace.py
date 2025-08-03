@@ -96,6 +96,7 @@ CK_FIX_SWITCH = "fix_switch"
 CK_VALIDATE_CATEGORIES = "validate_categories"
 CK_LOG_ALL = "log_all"
 CK_NO_SAVE = "no_save"
+CK_RECONCILE = "reconcile"
 # Essential Data Context attributes, with cross-cutting scope over cmds
 CK_FI_KEY = bdm.FI_KEY
 CK_WF_KEY = bdm.WF_KEY

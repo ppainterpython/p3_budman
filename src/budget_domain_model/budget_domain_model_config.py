@@ -45,8 +45,6 @@ DEFAULT_BDM_FULL_FILENAME = DEFAULT_BDM_FILENAME + DEFAULT_BDM_FILETYPE
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
-#region Budget Model config and config support 
-# ---------------------------------------------------------------------------- +
 class BDMConfig(metaclass=BDMSingletonMeta):
     """Provides a template Budget Domain Model BDM_STORE object.
     
@@ -97,55 +95,53 @@ class BDMConfig(metaclass=BDMSingletonMeta):
             },
         },
         BDM_WF_COLLECTION: {
-            BDM_WF_INTAKE: { 
-                # WF Object - TODO: add WF_KEY, verify unique
+            BDM_WF_INTAKE: { # WF Object 
                 WF_KEY: BDM_WF_INTAKE,
                 WF_NAME: BDM_WF_INTAKE,
-                WF_INPUT_FOLDER: None,
-                WF_WORKING_FOLDER: "data/new",
-                WF_OUTPUT_FOLDER: "data/categorized",
-                WF_PURPOSE_FOLDER_MAP:  {
-                    WF_OUTPUT: WF_OUTPUT_FOLDER,
-                    WF_WORKING: WF_WORKING_FOLDER,
-                    WF_INPUT: WF_INPUT_FOLDER
-                },
-                WF_PREFIX_IN: None,
-                WF_PREFIX_WORKING: None,
-                WF_PREFIX_OUT: "categorized_"
+                WF_FOLDERS: [
+                    { WF_FOLDER: "raw_data", WF_PURPOSE: "wf_input", WF_PREFIX: None},
+                    { WF_FOLDER: "new", WF_PURPOSE: "wf_working", WF_PREFIX: None}
+                ]
             },
-            BDM_WF_CATEGORIZATION: {     
-                # WF Object
+            BDM_WF_CATEGORIZATION: { # WF Object
                 WF_KEY: BDM_WF_CATEGORIZATION,
                 WF_NAME: BDM_WF_CATEGORIZATION,
-                WF_INPUT_FOLDER: "data/new", 
-                WF_WORKING_FOLDER: "data/categorized",
-                WF_OUTPUT_FOLDER: "data/finalized",
-                WF_PURPOSE_FOLDER_MAP:  {
-                    WF_OUTPUT: WF_OUTPUT_FOLDER,
-                    WF_WORKING: WF_WORKING_FOLDER,
-                    WF_INPUT: WF_INPUT_FOLDER
-                },
-                WF_PREFIX_IN: None,
-                WF_PREFIX_WORKING: "categorized_",
-                WF_PREFIX_OUT: "finalized_"
+                WF_FOLDERS: [
+                    { WF_FOLDER: "categorized", WF_PURPOSE: "wf_working", WF_PREFIX: "categorized_" }
+                ]
             },
-            BDM_WF_FINALIZATION: {   
-                # WF Object
-                WF_KEY: BDM_WF_FINALIZATION,
-                WF_NAME: BDM_WF_FINALIZATION,
-                WF_INPUT_FOLDER: "data/categorized",   
-                WF_WORKING_FOLDER: "data/finalized",
-                WF_OUTPUT_FOLDER: "data/finalized",
-                WF_PURPOSE_FOLDER_MAP:  {
-                    WF_OUTPUT: WF_OUTPUT_FOLDER,
-                    WF_WORKING: WF_WORKING_FOLDER,
-                    WF_INPUT: WF_INPUT_FOLDER
-                },
-                WF_PREFIX_IN: "categorized_",
-                WF_PREFIX_WORKING: "final_prep_",
-                WF_PREFIX_OUT: "finalized_"
+            BDM_WF_BUDGET: { # WF Object
+                WF_KEY: BDM_WF_BUDGET,
+                WF_NAME: BDM_WF_BUDGET,
+                WF_FOLDERS: [
+                    { WF_FOLDER: "budget", WF_PURPOSE: "wf_working", WF_PREFIX: "budget_" }
+                ]
             }
         },
+    # "_workflows": {
+    #     "intake": {
+    #         "wf_key": "intake",
+    #         "wf_name": "intake",
+    #         "wf_folders": [
+    #             {"wf_folder": "raw_data", "wf_purpose": "wf_input", "wf_prefix": null},
+    #             {"wf_folder": "new", "wf_purpose": "wf_working", "wf_prefix": null}
+    #         ],
+    #     },
+    #     "categorize_transactions": {
+    #         "wf_key": "categorize_transactions",
+    #         "wf_name": "categorize_transactions",
+    #         "wf_folders": [
+    #             {"wf_folder": "categorized", "wf_purpose": "wf_working", "wf_prefix": "categorized_"}
+    #         ]
+    #     },
+    #     "budget": {
+    #         "wf_key": "budget",
+    #         "wf_name": "budget",
+    #         "wf_folders": [
+    #             {"wf_folder": "budget", "wf_purpose": "wf_working", "wf_prefix": "budget_"}
+    #         ]
+    #     }
+    # },
         BDM_OPTIONS: {
             BDMO_LOG_CONFIG: "budget_model_logging_config.jsonc",
             BDMO_LOG_LEVEL: "DEBUG",

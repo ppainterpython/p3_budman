@@ -171,6 +171,14 @@ To keep it simple, and keep an eye on a clean, and simple Dependency Injection p
 - A process may take note of a new files arrival and trigger actions, but no modifications are made to the WF_INPUT file.
 - A process must copy the file to the WF_WORKING folder to save modifications to it.
 - A process may save other files with different names in other folders based on using the WF_INPUT file for tasks resulting in saved output.
+- Workflows have folders configured for them in the BDM_STORE file, an array WF_FOLDERS containing WF_FOLDER dictionaries.
+- A WORKFLOW_FOLDER has a WORKFLOW_PURPOSE of wf_input, wf_working or _wf_output.
+- WORKFLOW_FOLDERS contain workbooks and or user files and folders.
+- WORKBOOKS have a WB_TYPE incorporated into the filename, e.g., ".excel_txns", ".cvs_txns", etc.
+- A WORKBOOK without a valid WB_TYPE incorporated into its filename is consider WB_TYPE_USER_CONTENT, or just an ordinary file, not a WORKBOOK used in workflow process tasks. Typically WB_TYPE_USER_CONTENT files are found in wf_input purpose WF_FOLDERs, placed there by the user or some outside automated method.
+- Workflow tasks will move WB_TYPE_USER_CONTENT into WORKBOOK types in WF_FOLDERs and set the filename accordingly.
+- WB_TYPE_USER_CONTENT files are never recognized as WORKBOOKs, or listed in the FI_WORKBOOK_DATA_COLLECTION. The application must create WORKBOOKs and set their WB_TYPE to a valid WB_TYPE at time of creation.
+- WB_TYPE_USER_CONTENT files are not modified by workflow processes but will be listed in the WF_FOLDER content lists with associated file_index numbers.
 
 ## BDM_STORE Design Notes
 

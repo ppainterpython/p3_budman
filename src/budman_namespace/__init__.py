@@ -111,7 +111,7 @@ __all__ = [
     # Supported BM Workflow Names
     "BDM_WF_INTAKE",
     "BDM_WF_CATEGORIZATION",
-    "BDM_WF_FINALIZATION",
+    "BDM_WF_BUDGET",
     "VALID_BDM_WORKFLOWS",
     # WF_OBJECT workflow definition object (Dictionary key names)
     "WF_KEY",

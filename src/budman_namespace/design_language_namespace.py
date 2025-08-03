@@ -84,7 +84,6 @@ FI_KEY = "fi_key"
 WF_KEY = "wf_key"
 WF_PURPOSE = "wf_purpose" 
 WF_FOLDER_ID = "wf_folder_id" 
-WF_FOLDER = "wf_folder"
 WB_LOADED = "wb_loaded" 
 WB_CONTENT = "wb_content" 
 WB_CATEGORY_COLLECTION = "wb_category_collection"
@@ -167,14 +166,17 @@ BDM_FI_NAMES = ("Bank of America", "Merrill Lynch", "CitiBANK")
 #
 BDM_WF_INTAKE = "intake"
 BDM_WF_CATEGORIZATION = "categorize_transactions"
-BDM_WF_FINALIZATION = "budget"
-VALID_BDM_WORKFLOWS = (BDM_WF_INTAKE, BDM_WF_CATEGORIZATION, BDM_WF_FINALIZATION)
+BDM_WF_BUDGET = "budget"
+VALID_BDM_WORKFLOWS = (BDM_WF_INTAKE, BDM_WF_CATEGORIZATION, BDM_WF_BUDGET)
 # ---------------------------------------------------------------------------- +
 #
 # WF_OBJECT workflow definition object (Dictionary key names)
 #
 WF_KEY = WF_KEY
-WF_NAME = "wf_name"  # Also used as key in BM_FI workflows dictionary.
+WF_NAME = "wf_name"  
+WF_FOLDERS = "wf_folders" 
+WF_FOLDER = "wf_folder"  
+WF_PREFIX = "wf_prefix"  
 WF_INPUT_FOLDER = "wf_input_folder" # also used as key in FI_DATA_COLLECTION.
 WF_WORKING_FOLDER = "wf_working_folder" # also used as key in FI_DATA_COLLECTION.
 WF_OUTPUT_FOLDER = "wf_output_folder" # also used as key in FI_DATA_COLLECTION.
@@ -187,8 +189,6 @@ VALID_WF_OBJECT_ATTR_KEYS = (WF_KEY, WF_NAME,
                         WF_INPUT_FOLDER, WF_WORKING_FOLDER, WF_OUTPUT_FOLDER,
                         WF_PREFIX_IN, WF_PREFIX_OUT, WF_PURPOSE_FOLDER_MAP)
 WF_FOLDER_PATH_ELEMENTS = (WF_INPUT_FOLDER, WF_WORKING_FOLDER, WF_OUTPUT_FOLDER)
-WF_FOLDER = "wf_folder"
-WF_FOLDER_ID = "wf_folder_id"
 # ---------------------------------------------------------------------------- +
 # Some data values are used in conjunction with Path objects,
 # as elements of a pathname, such as folders and file names.

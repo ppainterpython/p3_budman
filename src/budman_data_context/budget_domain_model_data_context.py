@@ -28,7 +28,7 @@ from budget_domain_model import BudgetDomainModel
 #endregion imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
-MODEL_OBJECT = Model_Base
+MODEL_OBJECT = BudgetDomainModel
 logger = logging.getLogger(__name__)
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
