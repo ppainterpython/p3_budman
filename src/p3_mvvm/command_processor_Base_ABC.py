@@ -56,7 +56,7 @@ class CommandProcessor_Base(ABC):
 
     # @abstractmethod
     # def cp_validate_cmd(self, cmd : Dict = None,
-    #                     validate_all : bool = False) -> BUDMAN_RESULT:
+    #                     validate_all : bool = False) -> BUDMAN_RESULT_TYPE:
     #     """Validate a command."""
     #     pass
 

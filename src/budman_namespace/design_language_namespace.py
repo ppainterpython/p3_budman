@@ -21,48 +21,43 @@ from openpyxl.worksheet.worksheet import Worksheet #as Worksheet
 # ---------------------------------------------------------------------------- +
 # Type Alias Constants
 # Base Types - not model-aware
-DATA_OBJECT = Dict[str, Any] 
-DATA_TUPLE = Tuple[str, DATA_OBJECT]  # A tuple of (key, value) for data objects
-DATA_COLLECTION = Dict[str, DATA_OBJECT] 
-DATA_LIST = List[DATA_OBJECT] 
-type DATA_MAP = Dict[str, str]
+DATA_OBJECT_TYPE = Dict[str, Any] 
+DATA_TUPLE_TYPE = Tuple[str, DATA_OBJECT_TYPE]  # A tuple of (key, value) for data objects
+DATA_COLLECTION_TYPE = Dict[str, DATA_OBJECT_TYPE] 
+DATA_LIST_TYPE = List[DATA_OBJECT_TYPE] 
+type DATA_MAP_TYPE = Dict[str, str]
 # BUDMAN data type constants
-type WORKBOOK_ID = str
+type WORKBOOK_ID_TYPE = str
 type CMD_RESULT = Dict[str, Any]  # Command result dictionary
-type BUDMAN_RESULT = tuple[bool, Any]  # A tuple of (success, message or data)
-type WORKBOOK_OBJECT = Union[object, Dict]
-type WORKBOOK_CONTENT = Any
-WORKBOOK_DATA_COLLECTION = Dict[str, WORKBOOK_OBJECT]
-WORKBOOK_ITEM = DATA_TUPLE
-LOADED_WORKBOOK_COLLECTION = dict[WORKBOOK_ID, WORKBOOK_CONTENT]
-LOADED_WORKBOOK_ITEM = DATA_OBJECT
-DATA_CONTEXT = DATA_OBJECT
-BDM_STORE = DATA_OBJECT
-BDM_CONFIG = DATA_OBJECT
-BDM_CHECK_REGISTER = DATA_OBJECT
+type BUDMAN_RESULT_TYPE = tuple[bool, Any]  # A tuple of (success, message or data)
+type WORKBOOK_OBJECT_TYPE = Union[object, Dict]
+type WORKBOOK_CONTENT_TYPE = Any
+WORKBOOK_DATA_COLLECTION_TYPE = Dict[str, WORKBOOK_OBJECT_TYPE]
+WORKBOOK_ITEM_TYPE = DATA_TUPLE_TYPE
+LOADED_WORKBOOK_COLLECTION_TYPE = dict[WORKBOOK_ID_TYPE, WORKBOOK_CONTENT_TYPE]
+LOADED_WORKBOOK_ITEM_TYPE = DATA_OBJECT_TYPE
+DATA_CONTEXT_TYPE = DATA_OBJECT_TYPE
+BDM_STORE_TYPE = DATA_OBJECT_TYPE
+BDM_CONFIG_TYPE = DATA_OBJECT_TYPE
+BDM_CHECK_REGISTER_TYPE = DATA_OBJECT_TYPE
 # WORKBOOK type related types
-type CATEGORY_MAP_WORKBOOK = DATA_MAP # a mapping dict
-type TXN_CATEGORIES_WORKBOOK = DATA_OBJECT
-type TXN_REGISTER_WORKBOOK = DATA_OBJECT
-type EXCEL_TXNS_WORKBOOK = openpyxl.Workbook
-type EXCEL_TXNS_WORKSHEET = openpyxl.worksheet.worksheet.Worksheet
-type CATEGORY_COLLECTION = DATA_COLLECTION
-type COMPLIED_CATEGORY_MAP = Dict[re.Pattern, str]
+type CATEGORY_MAP_WORKBOOK_TYPE = DATA_MAP_TYPE # a mapping dict
+type TXN_CATEGORIES_WORKBOOK_TYPE = DATA_OBJECT_TYPE
+type TXN_REGISTER_WORKBOOK_TYPE = DATA_OBJECT_TYPE
+type EXCEL_TXNS_WORKBOOK_TYPE = openpyxl.Workbook
+type EXCEL_TXNS_WORKSHEET_TYPE = openpyxl.worksheet.worksheet.Worksheet
+type CATEGORY_COLLECTION_TYPE = DATA_COLLECTION_TYPE
+type COMPLIED_CATEGORY_MAP_TYPE = Dict[re.Pattern, str]
 
-# MODEL_OBJECT : Type[object] = object()
-BDMO_OBJECT = DATA_OBJECT
-FI_OBJECT = DATA_OBJECT  # Financial Institution object
-FI_COLLECTION = DATA_COLLECTION
-FI_DATA_OBJECT = DATA_OBJECT
-WF_OBJECT = DATA_OBJECT  # Workflow object
-WF_COLLECTION = DATA_COLLECTION 
-# WF_DATA_COLLECTION workflow data collection (Dictionary key names)
-# A dict for each FI, to hold the data for each workflow.
-# { wf_key: WF_DATA_OBJECT, ... }
-WF_DATA_COLLECTION = DATA_COLLECTION
-# A dict for worklow to hold data for a specific FI
-WF_DATA_OBJECT = DATA_OBJECT  # a DATA_OBJECT for a specific FI,WF
-BDM_WORKING_DATA_OBJECT = DATA_OBJECT
+# MODEL_OBJECT-related types
+type BDM_OPTIONS_TYPE = DATA_OBJECT_TYPE
+type FI_OBJECT_TYPE = DATA_OBJECT_TYPE  # Financial Institution object
+type FI_COLLECTION_TYPE = DATA_COLLECTION_TYPE
+type WF_OBJECT_TYPE = DATA_OBJECT_TYPE  # Workflow object
+type WF_COLLECTION_TYPE = DATA_COLLECTION_TYPE 
+type WF_FOLDER_CONFIG_TYPE = DATA_OBJECT_TYPE
+type WF_FOLDER_CONFIG_LIST_TYPE = List[WF_FOLDER_CONFIG_TYPE]
+type FI_WF_FOLDER_CONFIG_COLLECTION_TYPE = Dict[str, WF_FOLDER_CONFIG_LIST_TYPE]
 # ---------------------------------------------------------------------------- +
 # Budget Storage Model (BSM) constants
 BSM_SUPPORTED_URL_SCHEMES = ("file") #, "http", "https")
@@ -72,7 +67,15 @@ PATH = "_path"
 ABS_PATH = "_abs" + PATH
 WORKBOOKS = "_workbooks"
 # ---------------------------------------------------------------------------- +
-# DC and BDMWorkbook Attribute key name constants
+# Common dictionary attribute key name constants
+FI_KEY = "fi_key"
+WF_KEY = "wf_key"
+WF_FOLDER = "wf_folder"
+WF_PURPOSE = "wf_purpose"
+WF_PREFIX = "wf_prefix"  
+WF_FOLDER_URL = "wf_folder_url" 
+WF_USER_CONTENT = "wf_user_content"
+WF_FOLDER_ID = "wf_folder_id" 
 WB_INDEX = "wb_index" 
 WB_ID = "wb_id"
 WB_NAME = "wb_name"
@@ -80,23 +83,12 @@ WB_FILENAME = "wb_filename"
 WB_FILETYPE = "wb_filetype"
 WB_TYPE = "wb_type"
 WB_URL = "wb_url" 
-FI_KEY = "fi_key"
-WF_KEY = "wf_key"
-WF_PURPOSE = "wf_purpose" 
-WF_FOLDER_ID = "wf_folder_id" 
+WB_URL = "wb_url"  
 WB_LOADED = "wb_loaded" 
 WB_CONTENT = "wb_content" 
 WB_CATEGORY_COLLECTION = "wb_category_collection"
 WB_CATEGORY_COUNT = "wb_category_count"
 WB_CATEGORY_MAP_URL = "wb_category_map_url"  # URL to the category map workbook
-# ---------------------------------------------------------------------------- +
-# Attribute value constants
-WB_INFO_LEVEL_INFO = "info"
-WB_INFO_LEVEL_VERBOSE = "verbose"
-VALID_WB_INFO_LEVELS = [WB_INFO_LEVEL_INFO, WB_INFO_LEVEL_VERBOSE]
-RELOAD_TARGET = "reload_target"
-CATEGORY_MAP = "category_map"
-ALL_KEY = "all"
 # ---------------------------------------------------------------------------- +
 #
 # Budget Domain Model Constants
@@ -148,35 +140,35 @@ BDMO_EXPECTED_KEYS = (BDMO_LOG_CONFIG, BDMO_LOG_LEVEL, BDMO_LOG_FILE,
                     BDMO_JSON_LOG_FILE)
 # ---------------------------------------------------------------------------- +
 # FI_OBJECT financial institution pseudo-Object (Dictionary key names)
-FI_KEY = FI_KEY 
+FI_KEY = FI_KEY # common
 FI_NAME = "fi_name"
 FI_TYPE = "fi_type"
 FI_FOLDER = "fi_folder" 
 FI_TRANSACTION_DESCRIPTION_COLUMN = "fi_transaction_description_column"
+FI_WF_FOLDER_CONFIG_COLLECTION = "fi_wf_folder_config_collection" 
 FI_WORKBOOK_DATA_COLLECTION = "fi_workbook_data_collection" 
-# Additional FI_DATA-related constants
 VALID_FI_OBJECT_ATTR_KEYS = (FI_KEY, FI_NAME, FI_TYPE, FI_FOLDER, 
+                             FI_WF_FOLDER_CONFIG_COLLECTION, 
                              FI_WORKBOOK_DATA_COLLECTION)
+# Other FI-related constants
 VALID_FI_KEYS = ("boa", "merrill")
 VALID_FI_TYPES = ("bank", "brokerage", "organization", "person")
 BDM_FI_NAMES = ("Bank of America", "Merrill Lynch", "CitiBANK")
 # ---------------------------------------------------------------------------- +
 #
-# Supported BM Workflow Names
+# Example Workflow Names
 #
-BDM_WF_INTAKE = "intake"
-BDM_WF_CATEGORIZATION = "categorize_transactions"
-BDM_WF_BUDGET = "budget"
-VALID_BDM_WORKFLOWS = (BDM_WF_INTAKE, BDM_WF_CATEGORIZATION, BDM_WF_BUDGET)
+EXAMPLE_BDM_WF_INTAKE = "intake"
+EXAMPLE_BDM_WF_CATEGORIZATION = "categorize_transactions"
+EXAMPLE_BDM_WF_BUDGET = "budget"
+VALID_BDM_WORKFLOWS = (EXAMPLE_BDM_WF_INTAKE, EXAMPLE_BDM_WF_CATEGORIZATION, EXAMPLE_BDM_WF_BUDGET)
 # ---------------------------------------------------------------------------- +
 #
-# WF_OBJECT workflow definition object (Dictionary key names)
+# WF_OBJECT_TYPE workflow definition object (Dictionary key names)
 #
-WF_KEY = WF_KEY
+WF_KEY = WF_KEY #common
 WF_NAME = "wf_name"  
-WF_FOLDERS = "wf_folders" 
-WF_FOLDER = "wf_folder"  
-WF_PREFIX = "wf_prefix"  
+WF_FOLDER_CONFIG_LIST = "wf_folder_config_list" 
 WF_INPUT_FOLDER = "wf_input_folder" # also used as key in FI_DATA_COLLECTION.
 WF_WORKING_FOLDER = "wf_working_folder" # also used as key in FI_DATA_COLLECTION.
 WF_OUTPUT_FOLDER = "wf_output_folder" # also used as key in FI_DATA_COLLECTION.
@@ -184,8 +176,13 @@ WF_PREFIX_IN = "wf_prefix_in"
 WF_PREFIX_WORKING = "wf_prefix_working"
 WF_PREFIX_OUT = "wf_prefix_out"
 WF_PURPOSE_FOLDER_MAP = "wf_purpose_folder_map" # map of workbook names to paths
+# WF_FOLDER_CONFIG_TYPE workflow folder definition object (Dictionary key names)
+WF_FOLDER = WF_FOLDER # common
+WF_PURPOSE = WF_PURPOSE # common
+WF_PREFIX = WF_PREFIX # common  
+WF_FOLDER_URL = WF_FOLDER_URL # common 
 # Additional WF_OBJECT-related constants
-VALID_WF_OBJECT_ATTR_KEYS = (WF_KEY, WF_NAME, 
+VALID_WF_OBJECT_ATTR_KEYS = (WF_KEY, WF_NAME, WF_FOLDER_CONFIG_LIST,
                         WF_INPUT_FOLDER, WF_WORKING_FOLDER, WF_OUTPUT_FOLDER,
                         WF_PREFIX_IN, WF_PREFIX_OUT, WF_PURPOSE_FOLDER_MAP)
 WF_FOLDER_PATH_ELEMENTS = (WF_INPUT_FOLDER, WF_WORKING_FOLDER, WF_OUTPUT_FOLDER)
@@ -228,18 +225,14 @@ WB_TYPE_CSV_TXNS = ".csv_txns"
 WB_TYPE_TXN_CATEGORIES = ".txn_categories"
 WB_TYPE_CATEGORY_MAP = "_category_map"
 WB_TYPE_BUDGET = ".budget"
-WB_USER_CONTENT = ".user_content"
-WB_TYPE_UNKNOWN = ".unknown_type"
 VALID_WB_TYPE_VALUES = (
     WB_TYPE_BDM_STORE, WB_TYPE_BDM_CONFIG,
     WB_TYPE_TXN_REGISTER, WB_TYPE_EXCEL_TXNS,
     WB_TYPE_CSV_TXNS, WB_TYPE_BUDGET, 
     WB_TYPE_TXN_CATEGORIES,
     WB_TYPE_CATEGORY_MAP,
-    WB_USER_CONTENT
-    # WB_TYPE_UNKNOWN
     )
-WB_URL = "wb_url"  
+WB_TYPE_UNKNOWN = ".unknown_type"
 # Workbook Filetype Constants
 WB_FILETYPE_CSV = ".csv"
 WB_FILETYPE_XLSX = ".xlsx"
@@ -286,7 +279,7 @@ VALID_DATA_CONTEXT_ATTR_KEYS = (
 # ---------------------------------------------------------------------------- +
 #region CLIView command output type constants
 # CMD_RESULT dictionary key constants
-CMD_RESULT_TYPE ="cmd_result_type"
+CMD_RESULT_TYPE = "cmd_result_type"
 CMD_RESULT_CONTENT = "cmd_result_content"
 # CMD_RESULT_TYPE values
 CLIVIEW_OUTPUT_STRING = "cliview_output_string"
@@ -298,7 +291,7 @@ CLIVIEW_FOLDER_TREE_VIEW = "cliview_folder_tree_view"
 #
 # Last ditch BudMan application default settings
 #
-BUDMAN_DEFAULT_WORKFLOW_VALUE = BDM_WF_CATEGORIZATION
+BUDMAN_DEFAULT_WORKFLOW_VALUE = EXAMPLE_BDM_WF_CATEGORIZATION
 BUDMAN_DEFAULT_WORKBOOK_TYPE_VALUE = WF_WORKING
 # ---------------------------------------------------------------------------- +
 # Miscellaneous Convenience Constants

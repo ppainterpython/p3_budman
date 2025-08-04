@@ -110,7 +110,7 @@ class BudManCLIParser():
                 action="store", 
                 choices=[cp.CV_CATEGORY_MAP, cp.CV_FI_WORKBOOK_DATA_COLLECTION,
                          cp.CV_WORKFLOWS_MODULE],
-                default=bdm.CATEGORY_MAP,
+                default=cp.CV_CATEGORY_MAP,
                 help="Name of object to reload, pick from choices.")
             self.add_common_args(reload_parser)
 

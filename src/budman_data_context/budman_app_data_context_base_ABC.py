@@ -24,7 +24,7 @@
     Each property and method herein documents its purpose. Most of the 
     properties and methods, if the return value is not None, return basic 
     data types, or aliases for those defined in the Design Language namespace.
-    However, some of the return a BUDMAN_RESULT, which is a tuple of
+    However, some of the return a BUDMAN_RESULT_TYPE, which is a tuple of
     (success: bool, result: Any). This scheme is used to be forgiving when
     errors occur. The success value being True means no error and the result
     value is the output of the function. When success is False, the result
@@ -40,10 +40,10 @@ from typing import Tuple, Any, Union, Dict, Optional
 from openpyxl import Workbook
 # local modules and packages
 from budman_namespace.design_language_namespace import (
-    DATA_CONTEXT, FI_OBJECT, LOADED_WORKBOOK_COLLECTION,
-    WORKBOOK_DATA_COLLECTION,
-    BDM_STORE, DATA_COLLECTION, WORKBOOK_OBJECT, BUDMAN_RESULT,
-    WORKBOOK_CONTENT)
+    DATA_CONTEXT_TYPE, FI_OBJECT_TYPE, LOADED_WORKBOOK_COLLECTION_TYPE,
+    WORKBOOK_DATA_COLLECTION_TYPE,
+    BDM_STORE_TYPE, DATA_COLLECTION_TYPE, WORKBOOK_OBJECT_TYPE, BUDMAN_RESULT_TYPE,
+    WORKBOOK_CONTENT_TYPE)
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 class BudManAppDataContext_Base(ABC):
@@ -78,12 +78,12 @@ class BudManAppDataContext_Base(ABC):
 
     @property
     @abstractmethod
-    def dc_FI_OBJECT(self) -> Optional[FI_OBJECT]:
+    def dc_FI_OBJECT(self) -> Optional[FI_OBJECT_TYPE]:
         """Abstract: Return the FI_OBJECT of the current Financial Institution. """
         pass
     @dc_FI_OBJECT.setter
     @abstractmethod
-    def dc_FI_OBJECT(self, value: Optional[FI_OBJECT]) -> None:
+    def dc_FI_OBJECT(self, value: Optional[FI_OBJECT_TYPE]) -> None:
         """Abstract: Set the FI_OBJECT of the current Financial Institution."""
         pass
 
@@ -226,18 +226,18 @@ class BudManAppDataContext_Base(ABC):
 
     @property
     @abstractmethod
-    def dc_WORKBOOK(self) -> WORKBOOK_OBJECT:
+    def dc_WORKBOOK(self) -> WORKBOOK_OBJECT_TYPE:
         """Abstract: Return the current workbook in focus in the DC."""
         pass
     @dc_WORKBOOK.setter
     @abstractmethod
-    def dc_WORKBOOK(self, value: WORKBOOK_OBJECT) -> None:
+    def dc_WORKBOOK(self, value: WORKBOOK_OBJECT_TYPE) -> None:
         """Abstract: Set the current workbook in focus in the DC."""
         pass
 
     @property
     @abstractmethod
-    def dc_WORKBOOK_DATA_COLLECTION(self) -> WORKBOOK_DATA_COLLECTION:
+    def dc_WORKBOOK_DATA_COLLECTION(self) -> WORKBOOK_DATA_COLLECTION_TYPE:
         """Abstract: Return the WORKBOOK_DATA_COLLECTION of workbooks in the DC.
         Depends on the value of dc_FI_KEY, returning the 
         FI_WORKBOOK_DATA_COLLECTION for that fi_key.The WORKBOOK_DATA_COLLECTION
@@ -245,7 +245,7 @@ class BudManAppDataContext_Base(ABC):
         pass
     @dc_WORKBOOK_DATA_COLLECTION.setter
     @abstractmethod
-    def dc_WORKBOOK_DATA_COLLECTION(self, value: WORKBOOK_DATA_COLLECTION) -> None:
+    def dc_WORKBOOK_DATA_COLLECTION(self, value: WORKBOOK_DATA_COLLECTION_TYPE) -> None:
         """Abstract: Set the WORKBOOK_DATA_COLLECTION of workbooks in the DC.
         Depends on the value of dc_FI_KEY, returning the 
         FI_WORKBOOK_DATA_COLLECTION for that fi_key.
@@ -257,13 +257,13 @@ class BudManAppDataContext_Base(ABC):
 
     @property
     @abstractmethod
-    def dc_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_COLLECTION:
+    def dc_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_COLLECTION_TYPE:
         """Abstract: Return the list of workbooks currently loaded in the DC.
         Loaded means a file is loaded into memory and is available."""
         pass
     @dc_LOADED_WORKBOOKS.setter
     @abstractmethod
-    def dc_LOADED_WORKBOOKS(self, value: LOADED_WORKBOOK_COLLECTION) -> None:
+    def dc_LOADED_WORKBOOKS(self, value: LOADED_WORKBOOK_COLLECTION_TYPE) -> None:
         """Abstract: Set the list of workbooks currently loaded in the DC.
         Loaded means a file is loaded into memory and is available."""
         pass
@@ -271,7 +271,7 @@ class BudManAppDataContext_Base(ABC):
     # ------------------------------------------------------------------------ +
     #region BudManAppDataContext_Base Methods (abstract)
     @abstractmethod
-    def dc_initialize(self) -> DATA_CONTEXT:
+    def dc_initialize(self) -> DATA_CONTEXT_TYPE:
         """Abstract: Initialize the data context."""
         pass
 
@@ -321,14 +321,14 @@ class BudManAppDataContext_Base(ABC):
         pass
 
     @abstractmethod
-    def dc_WORKBOOK_DATA_COLLECTION_validate(self, wdc : WORKBOOK_DATA_COLLECTION) -> bool:
+    def dc_WORKBOOK_DATA_COLLECTION_validate(self, wdc : WORKBOOK_DATA_COLLECTION_TYPE) -> bool:
         """Abstract: Validate the type of WORKBOOK_DATA_COLLECTION."""
         pass
 
     @abstractmethod
-    def dc_WORKBOOK_validate(self, wb : WORKBOOK_OBJECT) -> bool:
-        """Abstract: Validate the type of WORKBOOK_OBJECT.
-        Abstract: sub-class hook to test specialized WORKBOOK_OBJECT types.
+    def dc_WORKBOOK_validate(self, wb : WORKBOOK_OBJECT_TYPE) -> bool:
+        """Abstract: Validate the type of WORKBOOK_OBJECT_TYPE.
+        Abstract: sub-class hook to test specialized WORKBOOK_OBJECT_TYPE types.
         """
         pass
 
@@ -354,50 +354,50 @@ class BudManAppDataContext_Base(ABC):
         pass
 
     @abstractmethod
-    def dc_WORKBOOK_by_index(self, wb_index: int) -> Optional[WORKBOOK_OBJECT]:
+    def dc_WORKBOOK_by_index(self, wb_index: int) -> Optional[WORKBOOK_OBJECT_TYPE]:
         """Abstract: Return (True, BDWWorkbook on success, (False, error_msg) on failure."""
         pass
 
     @abstractmethod
-    def dc_WORKBOOK_find(self, find_key: str, value: str) -> WORKBOOK_OBJECT:
+    def dc_WORKBOOK_find(self, find_key: str, value: str) -> WORKBOOK_OBJECT_TYPE:
         """Abstract: Locate and return a workbook by the key and value."""
         pass
 
-    #region   WORKBOOK_CONTENT storage-related methods
+    #region   WORKBOOK_CONTENT_TYPE storage-related methods
     @abstractmethod
-    def dc_WORKBOOK_content_get(self, wb: WORKBOOK_OBJECT, load:bool=True) -> BUDMAN_RESULT:
+    def dc_WORKBOOK_CONTENT_TYPE_get(self, wb: WORKBOOK_OBJECT_TYPE, load:bool=True) -> BUDMAN_RESULT_TYPE:
         """Abstract: Get the workbook content from dc_LOADED_WORKBOOKS property,
         if present, and return as result. This abstract class is not 
         Model-Aware, so the application may use other means to arrange for 
         content to be there with appropriate overrides or by putting the 
-        content directly with dc_WORKBOOK_content_put. To be simple and 
-        consistent, use the WORKBOOK_OBJECT to access the workbook metadata.
+        content directly with dc_WORKBOOK_CONTENT_TYPE_put. To be simple and 
+        consistent, use the WORKBOOK_OBJECT_TYPE to access the workbook metadata.
 
         Args:
-            wb (WORKBOOK_OBJECT): The workbook object to retrieve content for.
+            wb (WORKBOOK_OBJECT_TYPE): The workbook object to retrieve content for.
             load (bool): If True, load the content from storage if not 
                 already loaded.
         Returns:
-            Optional[WORKBOOK_CONTENT]: The content of the workbook if available,
+            Optional[WORKBOOK_CONTENT_TYPE]: The content of the workbook if available,
             otherwise None.
         """
         pass
 
     @abstractmethod
-    def dc_WORKBOOK_content_put(self, wb_content:WORKBOOK_CONTENT, wb: WORKBOOK_OBJECT) -> BUDMAN_RESULT:
+    def dc_WORKBOOK_CONTENT_TYPE_put(self, wb_content:WORKBOOK_CONTENT_TYPE, wb: WORKBOOK_OBJECT_TYPE) -> BUDMAN_RESULT_TYPE:
         """Abstract: Put the workbook's content to storage.
         This class is not Model-Aware, so the application may
-        put content in for a WORKBOOK_OBJECT with this method in the blind.
-        To be simple and consistent, use the WORKBOOK_OBJECT to access 
+        put content in for a WORKBOOK_OBJECT_TYPE with this method in the blind.
+        To be simple and consistent, use the WORKBOOK_OBJECT_TYPE to access 
         the workbook content. In other methods, a wb_ref is resolved to a 
-        WORKBOOK_OBJECT, so this method can be used to put the content of a 
-        workbook by its WORKBOOK_OBJECT.
+        WORKBOOK_OBJECT_TYPE, so this method can be used to put the content of a 
+        workbook by its WORKBOOK_OBJECT_TYPE.
         Args:
-            wb_content (WORKBOOK_CONTENT): The content to put into the 
+            wb_content (WORKBOOK_CONTENT_TYPE): The content to put into the 
                 dc_LOADED_WORKBOOKS property.
-            wb (WORKBOOK_OBJECT): The workbook object owning the content.
+            wb (WORKBOOK_OBJECT_TYPE): The workbook object owning the content.
         Returns:
-            BUDMAN_RESULT: a Tuple[success: bool, result: Any].
+            BUDMAN_RESULT_TYPE: a Tuple[success: bool, result: Any].
                 success = True, result is a message about the loaded 
                 workbook indicating the workbook is available in the 
                 dc_LOADED_WORKBOOKS collection.
@@ -406,23 +406,23 @@ class BudManAppDataContext_Base(ABC):
         pass
 
     @abstractmethod
-    def dc_WORKBOOK_load(self, bdm_wb: WORKBOOK_OBJECT) -> BUDMAN_RESULT:
-        """ Abstract: Load bdm_wb WORKBOOK_CONTENT from storage, set value 
+    def dc_WORKBOOK_load(self, bdm_wb: WORKBOOK_OBJECT_TYPE) -> BUDMAN_RESULT_TYPE:
+        """ Abstract: Load bdm_wb WORKBOOK_CONTENT_TYPE from storage, set value 
             or bdm_wb.wb_content, and set bdm_wb.wb_loaded. Make this bdm_wb
             the dc_WORKBOOK, so that the application can use it.
 
             Returns:
-                BUDMAN_RESULT: a Tuple[success: bool, result: Any].
+                BUDMAN_RESULT_TYPE: a Tuple[success: bool, result: Any].
                     success = True, result is bdm_wb.wb_content.
                     success = False, result is a string describing the error.
         """
         pass
 
     @abstractmethod
-    def dc_WORKBOOK_save(self,bdm_wb: WORKBOOK_OBJECT) -> BUDMAN_RESULT:
-        """Abstract: Save bdm_wb WORKBOOK_CONTENT to storage."""
+    def dc_WORKBOOK_save(self,bdm_wb: WORKBOOK_OBJECT_TYPE) -> BUDMAN_RESULT_TYPE:
+        """Abstract: Save bdm_wb WORKBOOK_CONTENT_TYPE to storage."""
         pass
-    #endregion WORKBOOK_CONTENT storage-related methods
+    #endregion WORKBOOK_CONTENT_TYPE storage-related methods
 
     @abstractmethod
     def dc_WORKBOOK_remove(self, wb_name: str) -> None:
@@ -435,14 +435,14 @@ class BudManAppDataContext_Base(ABC):
         pass
 
     @abstractmethod
-    def dc_BDM_STORE_load(self, bdm_url: str) -> BDM_STORE:
+    def dc_BDM_STORE_load(self, bdm_url: str) -> BDM_STORE_TYPE:
         """Abstract: Load a BDM_STORE from bdm_url, set dc_BDM_STORE.
         All relevant DC values reference the dc_BDM_STORE.
         """
         pass
 
     @abstractmethod
-    def dc_BDM_STORE_save(self, bdm_store: BDM_STORE, bdm_url: str) -> None:
+    def dc_BDM_STORE_save(self, bdm_store: BDM_STORE_TYPE, bdm_url: str) -> None:
         """Abstract: Save the BDM_STORE to the specified file path."""
         pass
 

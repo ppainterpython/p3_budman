@@ -22,7 +22,7 @@ from budman_namespace.design_language_namespace import *
 from budman_namespace.bdm_workbook_class import BDMWorkbook
 from budman_data_context import BudManAppDataContext
 from p3_mvvm import Model_Base, Model_Binding
-from budget_storage_model import (bsm_BDM_WORKBOOK_load, bsm_BDM_WORKBOOK_save)
+from budget_storage_model import (bsm_BDMWorkbook_load, bsm_BDMWorkbook_save)
 from budman_workflows.txn_category import BDMTXNCategoryManager
 from budget_domain_model import BudgetDomainModel
 #endregion imports
@@ -93,11 +93,11 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
     # ------------------------------------------------------------------------ +
     #region    BudManDataContext(BudManDataContext_Base) Model-Aware Property Overrides.
     @property
-    def dc_FI_OBJECT(self) -> Optional[FI_OBJECT]:
+    def dc_FI_OBJECT(self) -> Optional[FI_OBJECT_TYPE]:
         """DC-Only: Return the FI_OBJECT of the current Financial Institution. """
         return self._dc_FI_OBJECT if self.dc_VALID else None
     @dc_FI_OBJECT.setter
-    def dc_FI_OBJECT(self, value: Optional[FI_OBJECT]) -> None:
+    def dc_FI_OBJECT(self, value: Optional[FI_OBJECT_TYPE]) -> None:
         """Model-Aware: Set the current FI_OBJECT value.
         
         Can be None. Valid value must be a valid FI_OBJECT from the model.
@@ -233,7 +233,7 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
         self.not_dc_INITIALIZED()
         return self.model.bdm_WF_PURPOSE_FOLDER_MAP(wf_key, wf_purpose)
 
-    def dc_WORKBOOK_validate(self, bdm_wb : WORKBOOK_OBJECT) -> bool:
+    def dc_WORKBOOK_validate(self, bdm_wb : WORKBOOK_OBJECT_TYPE) -> bool:
         """Model-Aware: Validate the type of WORKBOOK_OBJECT.
         Abstract: sub-class hook to test specialized WORKBOOK_OBJECT types.
         DC-ONLY: check builtin type: 'object'.
@@ -258,7 +258,7 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
             logger.error(m)
             return False
         
-    def dc_WORKBOOK_content_get(self, wb : BDMWorkbook, load:bool = True) -> BUDMAN_RESULT:
+    def dc_WORKBOOK_content_get(self, wb : BDMWorkbook, load:bool = True) -> BUDMAN_RESULT_TYPE:
         """Model-Aware: Get the workbook content from dc_LOADED_WORKBOOKS 
         property if present. To be simple and consistent, use the 
         WORKBOOK_OBJECT to access the workbook meta-data.
@@ -301,7 +301,7 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
             logger.error(m)
             return False, m
 
-    def dc_WORKBOOK_content_put(self,wb_content:WORKBOOK_CONTENT, bdm_wb : BDMWorkbook) -> BUDMAN_RESULT:
+    def dc_WORKBOOK_content_put(self,wb_content:WORKBOOK_CONTENT_TYPE, bdm_wb : BDMWorkbook) -> BUDMAN_RESULT_TYPE:
         """Model-Aware: Put the workbook content into dc_LOADED_WORKBOOKS,
         replacing previous content if present. Then, save the content. 
 
@@ -345,7 +345,7 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
             logger.error(m)
             return False, m
 
-    def dc_WORKBOOK_load(self, bdm_wb : BDMWorkbook) -> BUDMAN_RESULT:
+    def dc_WORKBOOK_load(self, bdm_wb : BDMWorkbook) -> BUDMAN_RESULT_TYPE:
         """Model-aware: Load the workbook bdm_wb with BSM service."""
         self.not_dc_INITIALIZED()
         try:
@@ -357,7 +357,7 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
                 logger.error(m)
                 return False, m
             # Model-aware: Load the bdm_wb WORKBOOK_CONTENT object with the BSM.
-            bsm_BDM_WORKBOOK_load(bdm_wb)
+            bsm_BDMWorkbook_load(bdm_wb)
             # Add/update to the loaded workbooks collection.
             self.dc_LOADED_WORKBOOKS[bdm_wb.wb_id] = bdm_wb.wb_content
             self.dc_WORKBOOK = bdm_wb  # Update workbook-related DC info.
@@ -368,8 +368,8 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
             m = f"Error loading wb_id '{bdm_wb.wb_id}': {p3u.exc_err_msg(e)}"
             logger.error(m)
             return False, m
-        
-    def dc_WORKBOOK_save(self, bdm_wb : BDMWorkbook) -> BUDMAN_RESULT:
+
+    def dc_WORKBOOK_save(self, bdm_wb : BDMWorkbook) -> BUDMAN_RESULT_TYPE:
         """Model-Aware: Save the workbook content to storage.
 
         Args:
@@ -388,7 +388,7 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
                 logger.error(m)
                 return False, m
             # Save the workbook content using the BSM.
-            bsm_BDM_WORKBOOK_save(bdm_wb)
+            bsm_BDMWorkbook_save(bdm_wb)
             # Update the dc_LOADED_WORKBOOKS with the saved content.
             self.dc_LOADED_WORKBOOKS[bdm_wb.wb_id] = bdm_wb.wb_content
             bdm_wb.wb_loaded = True

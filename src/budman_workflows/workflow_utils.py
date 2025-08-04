@@ -177,7 +177,7 @@ def categorize_transaction(description : str, txn_catalog:TXNCategoryCatalog,
         fi_key: str = txn_catalog.fi_key
         txn_category_collection = txn_catalog.txn_categories_workbook[bdm.WB_CATEGORY_COLLECTION]
         tcc_keys = list(txn_category_collection.keys())
-        ccm: bdm.COMPLIED_CATEGORY_MAP = txn_catalog.compiled_category_map
+        ccm: bdm.COMPLIED_CATEGORY_MAP_TYPE = txn_catalog.compiled_category_map
         ch = get_category_histogram()
         payee = ""
         rule_index = 0
@@ -257,7 +257,7 @@ def txn_category_url_save(cat_url: str) -> None:
 #endregion txn_category_url_save() function
 # ---------------------------------------------------------------------------- +
 #region workbook_names() function
-def workbook_names(wdc: bdm.WORKBOOK_DATA_COLLECTION, wf_key: str, wf_folder_id: str) -> List[str]:
+def workbook_names(wdc: bdm.WORKBOOK_DATA_COLLECTION_TYPE, wf_key: str, wf_folder_id: str) -> List[str]:
     """Return a list of workbook names for the given workflow key and folder."""
     try:
         wb_name_list: List[str] = []
@@ -299,7 +299,7 @@ def extract_bdm_tree(bdm_DC: BudManAppDataContext_Base) -> Tree:
         p_str: str = bdm_folder + bdm_store_full_filename
         tree = Tree()
         tree.create_node(f"BDM_STORE: '{p_str}'", "root")  # root node
-        wdc : bdm.WORKBOOK_DATA_COLLECTION = None
+        wdc : bdm.WORKBOOK_DATA_COLLECTION_TYPE = None
         # For all Financial Institutions (FI) in the BDM_STORE
         for fi_key, fi_obj in bdm_store[bdm.BDM_FI_COLLECTION].items():
             fi_folder = fi_obj[bdm.FI_FOLDER]
@@ -369,7 +369,7 @@ def extract_dc_wb_tree(bdm_DC: BudManAppDataContext_Base) -> Tree:
             raise ValueError(m)
         tree = Tree()
         tree.create_node(f"FI)KEY('{fi_key}') Data Context", "root")  # root node
-        wdc : bdm.WORKBOOK_DATA_COLLECTION = bdm_DC.dc_WORKBOOK_DATA_COLLECTION
+        wdc : bdm.WORKBOOK_DATA_COLLECTION_TYPE = bdm_DC.dc_WORKBOOK_DATA_COLLECTION
         for wf_key in bdm_DC.dc_BDM_STORE[bdm.BDM_WF_COLLECTION]:
             wf_obj = bdm_DC.dc_BDM_STORE[bdm.BDM_WF_COLLECTION][wf_key]
             wf_name = wf_obj[bdm.WF_NAME]
@@ -417,7 +417,7 @@ def output_bdm_tree(bdm_DC: BudManAppDataContext_Base) -> str:
 #endregion outout_bdm_tree() function
 # ---------------------------------------------------------------------------- +
 #region extract_txn_categories() method
-def extract_txn_categories() -> bdm.DATA_OBJECT:
+def extract_txn_categories() -> bdm.DATA_OBJECT_TYPE:
     """Extract transaction categories from the category_map in 
     the budget_category_mapping.py module and return them as a dict.
 
@@ -483,8 +483,8 @@ def clear_category_map():
 #endregion category_map_count() function
 # ---------------------------------------------------------------------------- +
 #region output_tree_view() function
-def output_tree_view(msg:str='', tree_view:Tree=None) -> bdm.BUDMAN_RESULT:
-    """Create BUDMAN_RESULT with the content of the tree view."""
+def output_tree_view(msg:str='', tree_view:Tree=None) -> bdm.BUDMAN_RESULT_TYPE:
+    """Create BUDMAN_RESULT_TYPE with the content of the tree view."""
     try:
         # Format the tree for output
         now = dt.now()

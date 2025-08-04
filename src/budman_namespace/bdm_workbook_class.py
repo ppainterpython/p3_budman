@@ -50,7 +50,7 @@ class BDMWorkbook:
     wf_folder_id: str = None
     wf_folder: str = None
     wb_loaded : bool = False
-    wb_content: bdm.WORKBOOK_CONTENT = None
+    wb_content: bdm.WORKBOOK_CONTENT_TYPE = None
     wb_last_error: Optional[str] = None
     #endregion dataclass object attributes
     # ------------------------------------------------------------------------ +

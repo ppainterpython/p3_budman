@@ -455,7 +455,7 @@ def year_month_str(date:object) -> str:
 #region validate_budget_categories() function
 def validate_budget_categories(bdm_wb:BDMWorkbook, 
                                bdm_DC: BudManAppDataContext_Base,
-                               pad:str='') -> BUDMAN_RESULT:
+                               pad:str='') -> BUDMAN_RESULT_TYPE:
     """Validate budget categories in the workbook.
 
     Args:
@@ -583,7 +583,7 @@ def validate_budget_categories(bdm_wb:BDMWorkbook,
 #region process_budget_category() function
 def process_budget_category(bdm_wb:BDMWorkbook,
                             bdm_DC : BudManAppDataContext_Base,
-                            log_all : bool) -> BUDMAN_RESULT:
+                            log_all : bool) -> BUDMAN_RESULT_TYPE:
     """Process budget categorization for the workbook.
     
     The sheet has banking transaction data in rows and columns. 
@@ -804,7 +804,8 @@ def copy_row_to_worksheet(source_row, dest_worksheet):
 #endregion process_budget_category() function
 # ---------------------------------------------------------------------------- +
 #region apply_check_register() function
-def apply_check_register(cr_wb_content:BDM_CHECK_REGISTER, trans_wb_ref:EXCEL_TXNS_WORKBOOK) -> None:
+def apply_check_register(cr_wb_content:BDM_CHECK_REGISTER_TYPE, 
+                         trans_wb_ref:EXCEL_TXNS_WORKBOOK_TYPE) -> None:
     """Apply the check transactions to the worksheet.
     
     The sheet has banking transaction data in rows and columns. 

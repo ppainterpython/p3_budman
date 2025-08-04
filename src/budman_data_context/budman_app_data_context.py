@@ -37,7 +37,7 @@
     Each property and method herein documents its purpose. Most of the 
     properties and methods, if the return value is not None, return basic 
     data types, or aliases for those defined in the Design Language namespace.
-    However, some of the return a BUDMAN_RESULT, which is a tuple of
+    However, some of the return a BUDMAN_RESULT_TYPE, which is a tuple of
     (success: bool, result: Any). This scheme is used to be forgiving when
     errors occur. The success value being True means no error and the result
     value is the output of the function. When success is False, the result
@@ -68,14 +68,14 @@ from openpyxl import Workbook
 import logging, p3_utils as p3u, p3logging as p3l
 # local modules and packages
 from budman_namespace.design_language_namespace import (
-    FI_OBJECT, DATA_CONTEXT, LOADED_WORKBOOK_COLLECTION, 
-    WORKBOOK_DATA_COLLECTION, WORKBOOK_OBJECT,
-    BDM_STORE, DATA_COLLECTION, BUDMAN_RESULT, WORKBOOK_CONTENT,
+    FI_OBJECT_TYPE, DATA_CONTEXT_TYPE, LOADED_WORKBOOK_COLLECTION_TYPE, 
+    WORKBOOK_DATA_COLLECTION_TYPE, WORKBOOK_OBJECT_TYPE,
+    BDM_STORE_TYPE, DATA_COLLECTION_TYPE, BUDMAN_RESULT_TYPE, WORKBOOK_CONTENT_TYPE,
     BDM_FI_COLLECTION, BDM_WF_COLLECTION, WF_PURPOSE_FOLDER_MAP,
     FI_WORKBOOK_DATA_COLLECTION, FI_FOLDER,
     VALID_WF_PURPOSE_VALUES, VALID_WB_TYPE_VALUES,
     BDM_STORE_OBJECT, BDM_FOLDER,
-    ALL_KEY, FI_KEY, WF_KEY, WB_ID, WB_NAME,
+    FI_KEY, WF_KEY, WB_ID, WB_NAME,
     WB_TYPE, WF_PURPOSE, WB_INDEX, WB_URL, WB_LOADED, WB_CONTENT,
     BDM_DATA_CONTEXT, DC_FI_KEY, DC_WF_KEY, DC_WF_PURPOSE, DC_WB_TYPE
     )
@@ -96,7 +96,7 @@ class BudManAppDataContext(BudManAppDataContext_Base):
         self._initialization_in_progress = True
         self._dc_id :str = dc_id if dc_id else self.__class__.__name__
         self._dc_initialized = False 
-        self._dc_FI_OBJECT : Optional[FI_OBJECT] = None 
+        self._dc_FI_OBJECT : Optional[FI_OBJECT_TYPE] = None 
         self._dc_FI_KEY : Optional[str] = None       
         self._dc_WF_KEY : Optional[str] = None       
         self._dc_WF_PURPOSE : Optional[str] = None
@@ -105,12 +105,12 @@ class BudManAppDataContext(BudManAppDataContext_Base):
         self._dc_WB_NAME : Optional[str] = None     
         self._dc_WB_INDEX : int = -1
         self._dc_ALL_WBS : bool = False
-        self._dc_BDM_STORE : BDM_STORE = None
+        self._dc_BDM_STORE : BDM_STORE_TYPE = None
         self._dc_BDM_STORE_changed : bool = False
-        self._dc_WORKBOOK : Optional[WORKBOOK_OBJECT] = None
-        self._dc_WORKBOOK_DATA_COLLECTION : WORKBOOK_DATA_COLLECTION = dict()
-        self._dc_LOADED_WORKBOOKS : LOADED_WORKBOOK_COLLECTION = dict()
-        self._dc_DataContext : DATA_CONTEXT = dict()
+        self._dc_WORKBOOK : Optional[WORKBOOK_OBJECT_TYPE] = None
+        self._dc_WORKBOOK_DATA_COLLECTION : WORKBOOK_DATA_COLLECTION_TYPE = dict()
+        self._dc_LOADED_WORKBOOKS : LOADED_WORKBOOK_COLLECTION_TYPE = dict()
+        self._dc_DataContext : DATA_CONTEXT_TYPE = dict()
     #endregion BudManAppDataContext__init__()
     # ------------------------------------------------------------------------ +
     #region BudManAppDataContext_Base Properties (concrete) 
@@ -155,11 +155,11 @@ class BudManAppDataContext(BudManAppDataContext_Base):
         self._dc_id = value
 
     @property
-    def dc_FI_OBJECT(self) -> Optional[FI_OBJECT]:
+    def dc_FI_OBJECT(self) -> Optional[FI_OBJECT_TYPE]:
         """DC-Only: Return the FI_OBJECT of the current Financial Institution. """
         return self._dc_FI_OBJECT if self.dc_VALID else None
     @dc_FI_OBJECT.setter
-    def dc_FI_OBJECT(self, value: Optional[FI_OBJECT]) -> None:
+    def dc_FI_OBJECT(self, value: Optional[FI_OBJECT_TYPE]) -> None:
         """DC-Only: Set the FI_OBJECT of the current Financial Institution."""
         if not self.dc_VALID: return None
         # The value must be a valid FI_OBJECT.
@@ -323,7 +323,7 @@ class BudManAppDataContext(BudManAppDataContext_Base):
         self._dc_BDM_STORE_changed = value
 
     @property
-    def dc_WORKBOOK(self) -> WORKBOOK_OBJECT:
+    def dc_WORKBOOK(self) -> WORKBOOK_OBJECT_TYPE:
         """DC-Only: Return the current workbook in focus in the DC.
            This binding determines the values of related properties:
            - dc_WB_INDEX
@@ -336,7 +336,7 @@ class BudManAppDataContext(BudManAppDataContext_Base):
             return None
         return self._dc_WORKBOOK
     @dc_WORKBOOK.setter
-    def dc_WORKBOOK(self, value: WORKBOOK_OBJECT) -> None:
+    def dc_WORKBOOK(self, value: WORKBOOK_OBJECT_TYPE) -> None:
         """Set the current workbook in focus in the DC."""
         if not self.dc_VALID: return None
         if value is None:
@@ -347,7 +347,7 @@ class BudManAppDataContext(BudManAppDataContext_Base):
         self._dc_WORKBOOK = value
 
     @property
-    def dc_WORKBOOK_DATA_COLLECTION(self) -> WORKBOOK_DATA_COLLECTION:
+    def dc_WORKBOOK_DATA_COLLECTION(self) -> WORKBOOK_DATA_COLLECTION_TYPE:
         """DC-Only: Return the WORKBOOK_DATA_COLLECTION of workbooks in the DC.
         Depends on the value of dc_FI_KEY, returning the 
         FI_WORKBOOK_DATA_COLLECTION for that fi_key. The WORKBOOK_DATA_COLLECTION
@@ -357,7 +357,7 @@ class BudManAppDataContext(BudManAppDataContext_Base):
         wdc = fi_object[FI_WORKBOOK_DATA_COLLECTION]
         return wdc
     @dc_WORKBOOK_DATA_COLLECTION.setter
-    def dc_WORKBOOK_DATA_COLLECTION(self, value: WORKBOOK_DATA_COLLECTION) -> None:
+    def dc_WORKBOOK_DATA_COLLECTION(self, value: WORKBOOK_DATA_COLLECTION_TYPE) -> None:
         """DC-Only: Set the WORKBOOK_DATA_COLLECTION of workbooks in the DC.
         Depends on the value of dc_FI_KEY, returning the 
         FI_WORKBOOK_DATA_COLLECTION for that fi_key.
@@ -369,12 +369,12 @@ class BudManAppDataContext(BudManAppDataContext_Base):
                                   "set the dc_FI_OBJECT property instead.")
 
     @property
-    def dc_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_COLLECTION:
+    def dc_LOADED_WORKBOOKS(self) -> LOADED_WORKBOOK_COLLECTION_TYPE:
         """DC-Only: Return the list of workbooks currently loaded in the DC.
         Loaded means a file is loaded into memory and is available."""
         return self._dc_LOADED_WORKBOOKS
     @dc_LOADED_WORKBOOKS.setter
-    def dc_LOADED_WORKBOOKS(self, value: LOADED_WORKBOOK_COLLECTION) -> None:
+    def dc_LOADED_WORKBOOKS(self, value: LOADED_WORKBOOK_COLLECTION_TYPE) -> None:
         """DC-Only: Set the list of workbooks currently loaded in the DC.
         Loaded means a file is loaded into memory and is available."""
         self._dc_LOADED_WORKBOOKS = value
@@ -537,9 +537,9 @@ class BudManAppDataContext(BudManAppDataContext_Base):
             return False
         return True 
 
-    def dc_WORKBOOK_validate(self, wb : WORKBOOK_OBJECT=None) -> bool:
-        """ DC-Only: Validate the type of WORKBOOK_OBJECT.
-            Abstract: sub-class hook to test specialized WORKBOOK_OBJECT types.
+    def dc_WORKBOOK_validate(self, wb : WORKBOOK_OBJECT_TYPE=None) -> bool:
+        """ DC-Only: Validate the type of WORKBOOK_OBJECT_TYPE.
+            Abstract: sub-class hook to test specialized WORKBOOK_OBJECT_TYPE types.
             DC-ONLY: check builtin type: 'object'. with wb_id attribute.
             Model-Aware subclasses should override to validate a specific type.
         """
@@ -608,7 +608,7 @@ class BudManAppDataContext(BudManAppDataContext_Base):
             logger.error(p3u.exc_err_msg(e))
             raise
     
-    def dc_WORKBOOK_by_index(self, wb_index: int) -> Optional[WORKBOOK_OBJECT]:
+    def dc_WORKBOOK_by_index(self, wb_index: int) -> Optional[WORKBOOK_OBJECT_TYPE]:
         """DC-Only: Return obj or None."""
         try:
             if self.dc_WB_INDEX_validate(wb_index):
@@ -619,7 +619,7 @@ class BudManAppDataContext(BudManAppDataContext_Base):
             logger.error(m)
             raise ValueError(f"Error retrieving workbook by index '{wb_index}': {e}")
 
-    def dc_WORKBOOK_find(self, find_key: str, value: str) -> WORKBOOK_OBJECT:
+    def dc_WORKBOOK_find(self, find_key: str, value: str) -> WORKBOOK_OBJECT_TYPE:
         """DC-Only: Locate and return a workbook by the key and value."""
         try:
             if not self.dc_VALID:
@@ -649,21 +649,21 @@ class BudManAppDataContext(BudManAppDataContext_Base):
             logger.error(m)
             raise ValueError(f"Error finding workbook by {find_key} = {value}: {e}")
 
-    #region WORKBOOK_CONTENT storage-related methods
-    def dc_WORKBOOK_content_get(self, wb: WORKBOOK_OBJECT) -> BUDMAN_RESULT:
+    #region WORKBOOK_CONTENT_TYPE storage-related methods
+    def dc_WORKBOOK_CONTENT_TYPE_get(self, wb: WORKBOOK_OBJECT_TYPE) -> BUDMAN_RESULT_TYPE:
         """DC-Only: Get the workbook content from dc_LOADED_WORKBOOKS property
         if present. This class is not Model-Aware, so the application may
         use other means to arrange for content to be there with appropriate
         overrides or by putting the content directly with 
-        dc_WORKBOOK_content_put. To be simple and consistent, use the 
-        WORKBOOK_OBJECT to access the workbook content. In other methods, 
-        a wb_ref is resolved to a WORKBOOK_OBJECT, so this method can be 
-        used to get the content of a workbook by its WORKBOOK_OBJECT.
+        dc_WORKBOOK_CONTENT_TYPE_put. To be simple and consistent, use the 
+        WORKBOOK_OBJECT_TYPE to access the workbook content. In other methods, 
+        a wb_ref is resolved to a WORKBOOK_OBJECT_TYPE, so this method can be 
+        used to get the content of a workbook by its WORKBOOK_OBJECT_TYPE.
 
         Args:
-            wb (WORKBOOK_OBJECT): The workbook object to retrieve content for.
+            wb (WORKBOOK_OBJECT_TYPE): The workbook object to retrieve content for.
         Returns:
-            Optional[WORKBOOK_CONTENT]: The content of the workbook if available,
+            Optional[WORKBOOK_CONTENT_TYPE]: The content of the workbook if available,
             otherwise None.
         """
         success, result = self.dc_is_valid()
@@ -671,7 +671,7 @@ class BudManAppDataContext(BudManAppDataContext_Base):
             success, result = self.dc_is_valid()
             if not success: return False, result
             if wb is None :
-                logger.error("dc_WORKBOOK_content_get requires a valid WORKBOOK_OBJECT.")
+                logger.error("dc_WORKBOOK_CONTENT_TYPE_get requires a valid WORKBOOK_OBJECT_TYPE.")
                 return False, None
             if wb.wb_id in self.dc_LOADED_WORKBOOKS:
                 # If the workbook is loaded, return its content.
@@ -682,25 +682,25 @@ class BudManAppDataContext(BudManAppDataContext_Base):
             logger.error(m)
             return False, m
     
-    def dc_WORKBOOK_content_put(self, wb_content:WORKBOOK_CONTENT, wb: WORKBOOK_OBJECT) -> BUDMAN_RESULT:
+    def dc_WORKBOOK_CONTENT_TYPE_put(self, wb_content:WORKBOOK_CONTENT_TYPE, wb: WORKBOOK_OBJECT_TYPE) -> BUDMAN_RESULT_TYPE:
         """DC-Only: Put the workbook's content into dc_LOADED_WORKBOOKS property.
         This class is not Model-Aware, so the application may
-        put content in for a WORKBOOK_OBJECT with this method in the blind.
-        To be simple and consistent, use the WORKBOOK_OBJECT to access 
+        put content in for a WORKBOOK_OBJECT_TYPE with this method in the blind.
+        To be simple and consistent, use the WORKBOOK_OBJECT_TYPE to access 
         the workbook content. In other methods, a wb_ref is resolved to a 
-        WORKBOOK_OBJECT, so this method can be used to put the content of a 
-        workbook by its WORKBOOK_OBJECT.
+        WORKBOOK_OBJECT_TYPE, so this method can be used to put the content of a 
+        workbook by its WORKBOOK_OBJECT_TYPE.
 
         Args:
-            wb_content (WORKBOOK_CONTENT): The content to put into the 
+            wb_content (WORKBOOK_CONTENT_TYPE): The content to put into the 
             dc_LOADED_WORKBOOKS property.
-            wb (WORKBOOK_OBJECT): The workbook object owning the content.
+            wb (WORKBOOK_OBJECT_TYPE): The workbook object owning the content.
         """
         try:
             success, result = self.dc_is_valid()
             if not success: return False, result
             if wb is None :
-                logger.error("dc_WORKBOOK_content_get requires a valid WORKBOOK_OBJECT.")
+                logger.error("dc_WORKBOOK_CONTENT_TYPE_get requires a valid WORKBOOK_OBJECT_TYPE.")
                 return None
             self.dc_LOADED_WORKBOOKS[wb.wb_id] = wb_content
             return True, None 
@@ -709,17 +709,17 @@ class BudManAppDataContext(BudManAppDataContext_Base):
             logger.error(m)
             return False, m
         
-    def dc_WORKBOOK_load(self, bdm_wb: WORKBOOK_OBJECT) -> BUDMAN_RESULT:
-        """ DC-Only: Load bdm_wb WORKBOOK_CONTENT. As DC-ONLY, there is no
+    def dc_WORKBOOK_load(self, bdm_wb: WORKBOOK_OBJECT_TYPE) -> BUDMAN_RESULT_TYPE:
+        """ DC-Only: Load bdm_wb WORKBOOK_CONTENT_TYPE. As DC-ONLY, there is no
             direct dependency on Model. The application must set the wb_content
             attribute outside, and set bdm_wb.wb_loaded.
 
-            Abstract: Load bdm_wb WORKBOOK_CONTENT from storage, set value 
+            Abstract: Load bdm_wb WORKBOOK_CONTENT_TYPE from storage, set value 
             or bdm_wb.wb_content, and set bdm_wb.wb_loaded. Make this bdm_wb
             the dc_WORKBOOK, so that the application can use it.
 
             Returns:
-                BUDMAN_RESULT: a Tuple[success: bool, result: Any].
+                BUDMAN_RESULT_TYPE: a Tuple[success: bool, result: Any].
                     success = True, result is bdm_wb.wb_content.
                     success = False, result is a string describing the error.
         """
@@ -749,9 +749,9 @@ class BudManAppDataContext(BudManAppDataContext_Base):
             logger.error(m)
             return False, m
 
-    def dc_WORKBOOK_save(self, bdm_wb: Workbook) -> BUDMAN_RESULT:
-        """ DC-Only: Save bdm_wb WORKBOOK_CONTENT to storage.
-            Abstract: Save bdm_wb WORKBOOK_CONTENT to storage.
+    def dc_WORKBOOK_save(self, bdm_wb: Workbook) -> BUDMAN_RESULT_TYPE:
+        """ DC-Only: Save bdm_wb WORKBOOK_CONTENT_TYPE to storage.
+            Abstract: Save bdm_wb WORKBOOK_CONTENT_TYPE to storage.
         """
         try:
             # DC-Only World. Can only detect and return wb_content if it is 
@@ -770,9 +770,9 @@ class BudManAppDataContext(BudManAppDataContext_Base):
             logger.error(m)
             return False, m
         return None
-    #endregion WORKBOOK_CONTENT storage-related methods
+    #endregion WORKBOOK_CONTENT_TYPE storage-related methods
 
-    def dc_WORKBOOK_remove(self, wb_index: str) -> WORKBOOK_OBJECT:
+    def dc_WORKBOOK_remove(self, wb_index: str) -> WORKBOOK_OBJECT_TYPE:
         """DC-Only: Remove the specified workbook by index."""
         try:
             bdm_wb = self.dc_WORKBOOK_by_index(wb_index)
@@ -821,10 +821,10 @@ class BudManAppDataContext(BudManAppDataContext_Base):
     #region    Helper methods
     # ------------------------------------------------------------------------ +
     #region dc_is_valid()
-    def dc_is_valid(self) -> BUDMAN_RESULT:
+    def dc_is_valid(self) -> BUDMAN_RESULT_TYPE:
         """DC-Only: Check if the data context is valid and usable.
         Returns:
-            BUDMAN_RESULT: A tuple of (success: bool, reason: str).0
+            BUDMAN_RESULT_TYPE: A tuple of (success: bool, reason: str).0
             bool: True if the data context is valid, False otherwise.   
             str: A 'reason' message indicating the reason for invalidity.
         """
@@ -853,12 +853,12 @@ class BudManAppDataContext(BudManAppDataContext_Base):
         return True, "It's all good, the data context is valid."
     #endregion dc_is_valid()
     # ------------------------------------------------------------------------ +
-    #region dc_WORKBOOK_has_property(wb: WORKBOOK_OBJECT, prop: str) -> bool
-    def dc_WORKBOOK_has_property(self, wb: WORKBOOK_OBJECT, prop: str) -> bool:
+    #region dc_WORKBOOK_has_property(wb: WORKBOOK_OBJECT_TYPE, prop: str) -> bool
+    def dc_WORKBOOK_has_property(self, wb: WORKBOOK_OBJECT_TYPE, prop: str) -> bool:
         """DC-Only: Check if the workbook has a specific property.
         
         Args:
-            wb (WORKBOOK_OBJECT): The workbook object to check.
+            wb (WORKBOOK_OBJECT_TYPE): The workbook object to check.
             prop (str): The property name to check for.
         
         Returns:
@@ -868,7 +868,7 @@ class BudManAppDataContext(BudManAppDataContext_Base):
             logger.error("Data context is not valid.")
             return False
         return p3u.has_property(wb, prop)
-    #endregion dc_WORKBOOK_has_property(wb: WORKBOOK_OBJECT, prop: str) -> bool
+    #endregion dc_WORKBOOK_has_property(wb: WORKBOOK_OBJECT_TYPE, prop: str) -> bool
     # ------------------------------------------------------------------------ +
     #endregion Helper methods
     # ------------------------------------------------------------------------ +

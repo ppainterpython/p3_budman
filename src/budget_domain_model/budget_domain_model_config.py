@@ -70,16 +70,42 @@ class BDMConfig(metaclass=BDMSingletonMeta):
         BDM_FILETYPE: ".jsonc",  # the BDM store filetype, default is jsonc
         BDM_FOLDER: "~/OneDrive/budget", 
         BDM_URL: None,
-        BDM_FI_COLLECTION: { # FI_COLLECTION Dict[FI_KEY: FI_OBJECT]
+        BDM_FI_COLLECTION: { # EXAMPLE FI_COLLECTION Dict[FI_KEY: FI_OBJECT]
             "boa": # FI_KEY
             {      # FI_OBJECT
                 FI_KEY: "boa",
                 FI_NAME: "Bank of America",
                 FI_TYPE: "bank",
                 FI_FOLDER: "boa",
+                FI_WF_FOLDER_CONFIG_COLLECTION: { 
+                    "intake": 
+                    [ # WF_FOLDER_CONFIG_LIST_TYPE
+                        { # WF_FOLDER_CONFIG_TYPE Object
+                            WF_FOLDER: "raw_data", 
+                            WF_PURPOSE: "wf_input",
+                            WF_PREFIX: None,
+                            WF_FOLDER_URL: None
+                        },
+                        { # WF_FOLDER_CONFIG_TYPE Object
+                            WF_FOLDER: "new", 
+                            WF_PURPOSE: "wf_working",
+                            WF_PREFIX: None,
+                            WF_FOLDER_URL: None
+                        }
+                    ],
+                    "categorize_transactions": 
+                    [ # WF_FOLDER_CONFIG_LIST_TYPE
+                        { # WF_FOLDER_CONFIG_TYPE Object
+                            WF_FOLDER: "categorized", 
+                            WF_PURPOSE: "wf_working",
+                            WF_PREFIX: "categorized_",
+                            WF_FOLDER_URL: None
+                        }
+                    ]
+                },
                 FI_WORKBOOK_DATA_COLLECTION: 
-                    {  # FI_WORKBOOK_DATA_COLLECTION: Dict[WB_INDEX: WORKBOOK_OBJECT]
-                        0: {}
+                    {  # FI_WORKBOOK_DATA_COLLECTION: Dict[WB_ID: WORKBOOK_OBJECT]
+                        "some_wb_id": {}
                 },
             },
             "merrill": # FI_KEY
@@ -88,33 +114,72 @@ class BDMConfig(metaclass=BDMSingletonMeta):
                 FI_NAME: "Merrill Lynch",
                 FI_TYPE: "brokerage",
                 FI_FOLDER: "merrill",
+                FI_WF_FOLDER_CONFIG_COLLECTION: { 
+                    "intake": 
+                    [ # WF_FOLDER_CONFIG_LIST_TYPE
+                        { # WF_FOLDER_CONFIG_TYPE Object
+                            WF_FOLDER: "raw_data", 
+                            WF_PURPOSE: "wf_input",
+                            WF_PREFIX: None,
+                            WF_FOLDER_URL: None
+                        },
+                        { # WF_FOLDER_CONFIG_TYPE Object
+                            WF_FOLDER: "new", 
+                            WF_PURPOSE: "wf_working",
+                            WF_PREFIX: None,
+                            WF_FOLDER_URL: None
+                        }
+                    ],
+                    "categorize_transactions": 
+                    [ # WF_FOLDER_CONFIG_LIST_TYPE
+                        { # WF_FOLDER_CONFIG_TYPE Object
+                            WF_FOLDER: "categorized", 
+                            WF_PURPOSE: "wf_working",
+                            WF_PREFIX: "categorized_",
+                            WF_FOLDER_URL: None
+                        }
+                    ]
+                },
                 FI_WORKBOOK_DATA_COLLECTION: 
-                    {  # FI_WORKBOOK_DATA_COLLECTION: Dict[WB_INDEX: WORKBOOK_OBJECT]
-                        0: {}
+                    {  # FI_WORKBOOK_DATA_COLLECTION: Dict[WB_ID: WORKBOOK_OBJECT]
+                        "some_wb_id": {}
                 },
             },
         },
+        # Example workflow collection
         BDM_WF_COLLECTION: {
-            BDM_WF_INTAKE: { # WF Object 
-                WF_KEY: BDM_WF_INTAKE,
-                WF_NAME: BDM_WF_INTAKE,
-                WF_FOLDERS: [
-                    { WF_FOLDER: "raw_data", WF_PURPOSE: "wf_input", WF_PREFIX: None},
-                    { WF_FOLDER: "new", WF_PURPOSE: "wf_working", WF_PREFIX: None}
+            EXAMPLE_BDM_WF_INTAKE: { # WF Object 
+                WF_KEY: EXAMPLE_BDM_WF_INTAKE,
+                WF_NAME: EXAMPLE_BDM_WF_INTAKE,
+                WF_FOLDER_CONFIG_LIST: [ # WF_FOLDER_CONFIG_LIST_TYPE
+                    { # WF_FOLDER_CONFIG_TYPE Object
+                        WF_FOLDER: "raw_data", WF_PURPOSE: "wf_input", 
+                        WF_PREFIX: None, WF_FOLDER_URL: None
+                    },
+                    { # WF_FOLDER_CONFIG_TYPE Object
+                        WF_FOLDER: "new", WF_PURPOSE: "wf_working", 
+                        WF_PREFIX: None, WF_FOLDER_URL: None
+                    }
                 ]
             },
-            BDM_WF_CATEGORIZATION: { # WF Object
-                WF_KEY: BDM_WF_CATEGORIZATION,
-                WF_NAME: BDM_WF_CATEGORIZATION,
-                WF_FOLDERS: [
-                    { WF_FOLDER: "categorized", WF_PURPOSE: "wf_working", WF_PREFIX: "categorized_" }
+            EXAMPLE_BDM_WF_CATEGORIZATION: { # WF Object
+                WF_KEY: EXAMPLE_BDM_WF_CATEGORIZATION,
+                WF_NAME: EXAMPLE_BDM_WF_CATEGORIZATION,
+                WF_FOLDER_CONFIG_LIST: [ # WF_FOLDER_CONFIG_LIST_TYPE
+                    { # WF_FOLDER_CONFIG_TYPE Object
+                        WF_FOLDER: "categorized", WF_PURPOSE: "wf_working", 
+                        WF_PREFIX: "categorized_", WF_FOLDER_URL: None
+                    }
                 ]
             },
-            BDM_WF_BUDGET: { # WF Object
-                WF_KEY: BDM_WF_BUDGET,
-                WF_NAME: BDM_WF_BUDGET,
-                WF_FOLDERS: [
-                    { WF_FOLDER: "budget", WF_PURPOSE: "wf_working", WF_PREFIX: "budget_" }
+            EXAMPLE_BDM_WF_BUDGET: { # WF Object
+                WF_KEY: EXAMPLE_BDM_WF_BUDGET,
+                WF_NAME: EXAMPLE_BDM_WF_BUDGET,
+                WF_FOLDER_CONFIG_LIST: [ # WF_FOLDER_CONFIG_LIST_TYPE
+                    { # WF_FOLDER_CONFIG_TYPE Object
+                        WF_FOLDER: "budget", WF_PURPOSE: "wf_working", 
+                        WF_PREFIX: "budget_", WF_FOLDER_URL: None
+                    }
                 ]
             }
         },
@@ -154,7 +219,7 @@ class BDMConfig(metaclass=BDMSingletonMeta):
         # BDM_WORKING_DATA: {},
         BDM_DATA_CONTEXT: {
             DC_FI_KEY: "boa",  # Financial Institution Key
-            DC_WF_KEY: BDM_WF_CATEGORIZATION,  # Workflow Key
+            DC_WF_KEY: EXAMPLE_BDM_WF_CATEGORIZATION,  # Workflow Key
             DC_WF_PURPOSE: WF_WORKING,
             DC_WB_TYPE: WF_WORKING
         }
@@ -180,7 +245,7 @@ class BDMConfig(metaclass=BDMSingletonMeta):
     # ------------------------------------------------------------------------ +
     #region BDM_CONFIG_default() classmethod
     @classmethod
-    def BDM_CONFIG_default(cls, default : bool = False) -> BDM_CONFIG:
+    def BDM_CONFIG_default(cls, default : bool = False) -> BDM_CONFIG_TYPE:
         """Get a pristine version of a BDM_CONFIG dictionary."""
         try:
             logger.debug("Start:  ...")
@@ -289,7 +354,7 @@ class BDMConfig(metaclass=BDMSingletonMeta):
 
             _ = p3u.is_not_obj_of_type("model", model, BudgetDomainModel, 
                                        raise_error=True)    
-            bdm_store: BDM_STORE = model.to_dict()
+            bdm_store: BDM_STORE_TYPE = model.to_dict()
             # Traverse the BDM_STORE and remove non-serializable objects.
             # Replace objects with known non-serializable attributes with a
             # dict copy with the non-serializable attributes set to None.
@@ -334,20 +399,24 @@ class BDMConfig(metaclass=BDMSingletonMeta):
     # ------------------------------------------------------------------------ +
     #region BDM_STORE_url_get() create BDM_CONFIG from a loaded BDM_STORE url.
     @classmethod
-    def BDM_STORE_url_get(cls, bdm_url : str) -> BDM_CONFIG:
-        """Configure this BDMConfig object from loading a BDM_STORE url."""
+    def BDM_STORE_url_get(cls, bdm_url : str) -> BDM_CONFIG_TYPE:
+        """Load the BDM_STORE json file from storate via the bdm_url , 
+        validate the BDM_STORE attributes, create a BDMConfig object from 
+        the BDM_STORE content and return it."""
         try:
             logger.debug("Start:  ...")
             bdm_store = bsm_BDM_STORE_url_get(bdm_url)
-            # Ensure the URL used to load is set in the config
+            # Update the URL used to load is set in the bdm_store structure.
             bdm_store[BDM_URL] = bdm_url  
             # Validate the loaded BDM_STORE config. Raises error if not happy
             cls.BDM_CONFIG_validate_attributes(bdm_store)
             # Rehydrate any python class objects from json
-            cls.BDM_STORE_rehydrate(bdm_store)
-            # Get the instance of BDMConfig configured from bdms
+            # cls.BDM_STORE_rehydrate(bdm_store)
+            # Create an instance of BDMConfig configured from bdm_store
             bdm_config = BDMConfig(bdm_config = bdm_store)            
-            logger.debug(f"Complete:")   
+            logger.debug(f"Complete:")
+            # BDMConfig is now ready for use, populated from BDM_STORE with
+            # scalar value and dictionaries retrieved from bdm_store.
             return bdm_config
         except Exception as e:
             m = p3u.exc_err_msg(e)
@@ -414,11 +483,11 @@ class BDMConfig(metaclass=BDMSingletonMeta):
         setattr(self, BDM_ID, value)
 
     @property
-    def bdm_config_object(self) -> BDM_CONFIG:
+    def bdm_config_object(self) -> BDM_CONFIG_TYPE:
         """The budget model configuration object."""
         return getattr(self, BDM_CONFIG_OBJECT)
     @bdm_config_object.setter
-    def bdm_config_object(self, value: BDM_CONFIG) -> None:
+    def bdm_config_object(self, value: BDM_CONFIG_TYPE) -> None:
         """Set the budget model configuration object."""
         if not isinstance(value, dict):
             raise ValueError(f"bm_config_object must be an object: {value}")
@@ -488,11 +557,11 @@ class BDMConfig(metaclass=BDMSingletonMeta):
         self._workflows = value
 
     @property
-    def bdm_options(self) -> BDMO_OBJECT:
+    def bdm_options(self) -> BDM_OPTIONS_TYPE:
         """The budget model options dictionary."""
         return self._options
     @bdm_options.setter
-    def bdm_options(self, value: BDMO_OBJECT) -> None:
+    def bdm_options(self, value: BDM_OPTIONS_TYPE) -> None:
         """Set the budget model options dictionary."""
         self._options = value
 
@@ -524,11 +593,11 @@ class BDMConfig(metaclass=BDMSingletonMeta):
         self._last_modified_by = value
     
     @property
-    def data_context(self) -> DATA_CONTEXT:
+    def data_context(self) -> DATA_CONTEXT_TYPE:
         """The data context for the budget model."""
         return self.bdm_working_data 
     @data_context.setter
-    def data_context(self, value: DATA_CONTEXT) -> None:
+    def data_context(self, value: DATA_CONTEXT_TYPE) -> None:
         """Set the data context for the budget model."""
         self.bdm_working_data = value
 

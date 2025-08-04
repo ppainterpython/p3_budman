@@ -41,7 +41,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 #region process_workflow_intake_tasks() function
 def process_workflow_intake_tasks(cmd: Dict[str, Any], 
-                       bdm_DC: BudManAppDataContext_Base) -> bdm.BUDMAN_RESULT:
+                       bdm_DC: BudManAppDataContext_Base) -> bdm.BUDMAN_RESULT_TYPE:
     """Process workflow intake tasks.
 
     This function processes a transaction intake task command.
@@ -68,7 +68,7 @@ def process_workflow_intake_tasks(cmd: Dict[str, Any],
 #region INTAKE_PROCESS_copy_file_to_WF_WORKING_folder() function
 def INTAKE_PROCESS_copy_file_to_WF_WORKING_folder(
         cmd: Dict[str, Any], 
-        bdm_DC: BudManAppDataContext_Base) -> bdm.BUDMAN_RESULT:
+        bdm_DC: BudManAppDataContext_Base) -> bdm.BUDMAN_RESULT_TYPE:
     """INTAKE_PROCESS_TASK: copy a file to the WF_WORKING folder.
 
     Workflow Intake Task to copy a file from the WF_INPUT folder to the
@@ -103,7 +103,7 @@ def INTAKE_PROCESS_copy_file_to_WF_WORKING_folder(
 # ---------------------------------------------------------------------------- +
 #region process_txn_intake() function
 def process_txn_intake(cmd: Dict[str, Any], 
-                       bdm_DC: BudManAppDataContext_Base) -> bdm.BUDMAN_RESULT:
+                       bdm_DC: BudManAppDataContext_Base) -> bdm.BUDMAN_RESULT_TYPE:
     """Process a transaction intake tasks.
 
     This function processes a transaction intake command by loading the 
@@ -132,7 +132,7 @@ def process_txn_intake(cmd: Dict[str, Any],
         success, result = bdm_DC.dc_WORKBOOK_content_get(bdm_wb) 
         if not success:
             return False, result
-        csv_txns: bdm.DATA_LIST = result
+        csv_txns: bdm.DATA_LIST_TYPE = result
         # Task 2: Convert the csv_txns to a excel_txns
         csv_path: Path.Path = bdm_wb.abs_path()
         if not csv_path:
@@ -208,7 +208,7 @@ def convert_csv_txns_to_excel_txns(csv_txns: BDMWorkbook) -> Union[bool, str]:
 #endregion convert_csv_txns_to_excel_txns() function
 # ---------------------------------------------------------------------------- +
 #region check_schema_intake() function
-def check_schema_intake(cmd: Dict[str, Any], bdm_DC: BudManAppDataContext_Base) -> bdm.BUDMAN_RESULT:
+def check_schema_intake(cmd: Dict[str, Any], bdm_DC: BudManAppDataContext_Base) -> bdm.BUDMAN_RESULT_TYPE:
     """Check the schema of an intake workbook.
 
     For one or more designated workbooks, check their schema for their
@@ -250,7 +250,7 @@ def check_schema_intake(cmd: Dict[str, Any], bdm_DC: BudManAppDataContext_Base) 
         success, result = bdm_DC.dc_WORKBOOK_content_get(bdm_wb) 
         if not success:
             return False, result
-        csv_txns: bdm.DATA_LIST = result
+        csv_txns: bdm.DATA_LIST_TYPE = result
         # Task 2: Convert the csv_txns to a excel_txns
         csv_path: Path.Path = bdm_wb.abs_path()
         if not csv_path:

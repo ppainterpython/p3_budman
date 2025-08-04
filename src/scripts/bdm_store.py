@@ -13,7 +13,7 @@ from treelib import Tree
 # local modules and packages
 from budman_settings import *
 from budman_namespace import (
-    BDM_STORE, FI_OBJECT, WORKBOOK_DATA_COLLECTION, 
+    BDM_STORE_TYPE, FI_OBJECT_TYPE, WORKBOOK_DATA_COLLECTION_TYPE, 
     BDM_FOLDER, BDM_FI_COLLECTION,
     FI_WORKBOOK_DATA_COLLECTION,
     FI_NAME, FI_FOLDER,BDM_WF_COLLECTION,
@@ -83,10 +83,10 @@ def wf_tree():
             fi_folder = fi_obj[FI_FOLDER]
             fi_name = fi_obj[FI_NAME]
             print(f"'{fi_folder}' [{fi_key}]'{fi_name}'")
-            if fi_obj[FI_WORKFLOW_DATA_COLLECTION] is None:
+            if fi_obj[FI_WORKBOOK_DATA_COLLECTION] is None:
                 logger.warning(f"FI_DATA_COLLECTION is None for FI_KEY: {fi_key}")
                 continue
-            for wf_key, data_obj in fi_obj[FI_WORKFLOW_DATA_COLLECTION].items():
+            for wf_key, data_obj in fi_obj[FI_WORKBOOK_DATA_COLLECTION].items():
                 wf_obj = wf_col[wf_key]
                 wf_name = wf_obj[WF_NAME] 
                 # print(f"  '{wf_key}' wf_name: '{wf_obj[WF_NAME]}'")
@@ -112,7 +112,7 @@ def wf_tree():
 #endregion wf_tree() function
 # ------------------------------------------------------------------------ +
 #region bdm_store_change() function
-def bdm_store_change(bdms:BDM_STORE):
+def bdm_store_change(bdms:BDM_STORE_TYPE):
     try:
         # change key from '0' to 'wf_folder' + '|' + 'wb_name'
         # change 'loaded' to 'wb_loaded'
@@ -165,10 +165,10 @@ def bdm_store_change(bdms:BDM_STORE):
 #endregion bdm_store_change() function
 # ------------------------------------------------------------------------ +
 #region workbook_names() function
-def workbook_names(fi_obj:FI_OBJECT,wf_key:str,wf_folder_id:str,) -> List[str]:
+def workbook_names(fi_obj:FI_OBJECT_TYPE,wf_key:str,wf_folder_id:str,) -> List[str]:
     """Return a list of workbook names for the given workflow key and folder."""
     try:
-        wdc : WORKBOOK_DATA_COLLECTION = fi_obj[FI_WORKBOOK_DATA_COLLECTION]
+        wdc : WORKBOOK_DATA_COLLECTION_TYPE = fi_obj[FI_WORKBOOK_DATA_COLLECTION]
         wb_name_list: List[str] = []
         if wdc is None or len(wdc) == 0:
             return wb_name_list
@@ -201,7 +201,7 @@ def extract_bdm_tree():
         p_str: str = bdm_folder + bdm_store_full_filename
         tree = Tree()
         tree.create_node(f"BDM_STORE: '{p_str}'", "root")  # root node
-        wdc : WORKBOOK_DATA_COLLECTION = None
+        wdc : WORKBOOK_DATA_COLLECTION_TYPE = None
         for fi_key, fi_obj in bdms[BDM_FI_COLLECTION].items():
             fi_folder = fi_obj[FI_FOLDER]
             fi_name = fi_obj[FI_NAME]
@@ -258,8 +258,8 @@ if __name__ == "__main__":
         # print(output_bdm_tree())
         # wf_tree()
         # wb_path = p3u.verify_url_file_path(cr_url, test=False)
-        # bdms = bsm_BDM_STORE_url_get(wb_url)
-        bdmc = BDMConfig.BDM_STORE_url_get(wb_url)
+        bdms = bsm_BDM_STORE_url_get(wb_url)
+        # bdmc = BDMConfig.BDM_STORE_url_get(wb_url)
         # bdm_store_change(bdms)
         # bsm_BDM_STORE_url_put(bdms, wb_url)
         # logger.info(f"wb_path: '{wb_path}' url:'{wb_url}'")

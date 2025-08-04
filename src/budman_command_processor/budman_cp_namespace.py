@@ -147,7 +147,7 @@ CK_LEVEL_VALUE = "level_value"
 CK_ROLLOVER_SWITCH = "rollover_switch"
 # subcmd_name CV_RELOAD_SUBCMD argument constants
 CK_RELOAD_TARGET = "reload_target"
-CV_CATEGORY_MAP = bdm.CATEGORY_MAP
+CV_CATEGORY_MAP = "category_map"
 CV_FI_WORKBOOK_DATA_COLLECTION = bdm.FI_WORKBOOK_DATA_COLLECTION
 CV_WORKFLOWS_MODULE = "budman_workflows"
 # deprecated

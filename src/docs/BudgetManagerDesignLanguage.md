@@ -167,18 +167,22 @@ To keep it simple, and keep an eye on a clean, and simple Dependency Injection p
 
 ## New Notes About Business Rules for the Workflow Process Model
 
-- WF_INPUT folders are where new input files are placed for a process. The process will not modify the files in its configured WF_INPUT folder.
-- A process may take note of a new files arrival and trigger actions, but no modifications are made to the WF_INPUT file.
-- A process must copy the file to the WF_WORKING folder to save modifications to it.
-- A process may save other files with different names in other folders based on using the WF_INPUT file for tasks resulting in saved output.
 - Workflows have folders configured for them in the BDM_STORE file, an array WF_FOLDERS containing WF_FOLDER dictionaries.
-- A WORKFLOW_FOLDER has a WORKFLOW_PURPOSE of wf_input, wf_working or _wf_output.
-- WORKFLOW_FOLDERS contain workbooks and or user files and folders.
-- WORKBOOKS have a WB_TYPE incorporated into the filename, e.g., ".excel_txns", ".cvs_txns", etc.
-- A WORKBOOK without a valid WB_TYPE incorporated into its filename is consider WB_TYPE_USER_CONTENT, or just an ordinary file, not a WORKBOOK used in workflow process tasks. Typically WB_TYPE_USER_CONTENT files are found in wf_input purpose WF_FOLDERs, placed there by the user or some outside automated method.
-- Workflow tasks will move WB_TYPE_USER_CONTENT into WORKBOOK types in WF_FOLDERs and set the filename accordingly.
-- WB_TYPE_USER_CONTENT files are never recognized as WORKBOOKs, or listed in the FI_WORKBOOK_DATA_COLLECTION. The application must create WORKBOOKs and set their WB_TYPE to a valid WB_TYPE at time of creation.
-- WB_TYPE_USER_CONTENT files are not modified by workflow processes but will be listed in the WF_FOLDER content lists with associated file_index numbers.
+- A WF_FOLDER has a WORKFLOW_PURPOSE of wf_input, wf_working or _wf_output.
+- Only zero or one WF_FOLDER per WF_PURPOSE may be configured.
+- A WF_FOLDER contains files which may be WORKBOOKS or WF_USER_CONTENT files.
+- WF_INPUT folders are where new input files are placed for a process. A given process will not modify the files in its configured WF_INPUT folder.
+- A process may take note of a new files arrival and trigger actions, but no modifications are made to the WF_INPUT file.
+- A process must copy the WF_INPUT file to a WF_WORKING or WF_OUTPUT folder to save modifications to it.
+- A process may save other files with different names in other folders based on using the WF_INPUT file for tasks resulting in saved output.
+- WORKBOOK files have a WB_TYPE incorporated into their filename, identifying them as a WORKBOOK, e.g., ".excel_txns", ".cvs_txns", etc.
+- A file without a valid WB_TYPE incorporated into its filename is considered a WF_USER_CONTENT file, just an ordinary file, not a WORKBOOK used in workflow process tasks, except as input. Typically WF_USER_CONTENT files are found in a WF_INPUT folder, placed there by the user or some outside automated method.
+- Workflow tasks will copy and convert WF_USER_CONTENT files into WORKBOOK types in WF_FOLDERs and set the filename accordingly.
+- WF_USER_CONTENT files are never recognized as WORKBOOKs, or listed in the FI_WORKBOOK_DATA_COLLECTION. The application must create a WORKBOOK file and set their WB_TYPE to a valid WB_TYPE at time of creation.
+- WF_USER_CONTENT files are not modified by workflow processes but may be shown in WF_FOLDER file lists with associated file_index numbers.
+- In storage, an WF_FOLDER is always a child (descendent) of an associated FI_FOLDER for an FI_KEY. It may be a direct child such as "intake" or a folder structure such as "data/intake" depending on the BDM_STORE configuration of WF_FOLDER key values for a specific WORKFLOW.
+- In storage, an FI_FOLDER is always a child of the BDM_FOLDER associated with the BDM_STORE currently in focus. The BUDMAN app can work with multiple BDM_STORE objects, but only one is in focus at a time.
+- BDMWorkbook objects, used to represent WORKBOOKS, store the full URL to a WORKBOOK and to its parent WF_FOLDER.
 
 ## BDM_STORE Design Notes
 

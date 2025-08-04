@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
 #region    csv_DATA_LIST_get_url() function
-def csv_DATA_LIST_url_get(csv_url : str = None) -> bdm.DATA_LIST:
+def csv_DATA_LIST_url_get(csv_url : str = None) -> bdm.DATA_LIST_TYPE:
     """Get a DATA_LIST object from a URL to a csv file in storage.
 
     A csv dictionary is read in from the csv_url. Parse the URL and decide
@@ -86,7 +86,7 @@ def csv_DATA_LIST_url_put(csv_list: list, csv_url: str = None) -> None:
 #endregion csv_DATA_LIST_url_put() function
 # ---------------------------------------------------------------------------- +
 #region    csv_DATA_LIST_file_load() function
-def csv_DATA_LIST_file_load(csv_path : Path) -> bdm.DATA_LIST:
+def csv_DATA_LIST_file_load(csv_path : Path) -> bdm.DATA_LIST_TYPE:
     """Load a DATA_LIST from a csv file at the given Path.
     
     A csv file is read in from the csv_path. The csv file is expected to
@@ -108,7 +108,7 @@ def csv_DATA_LIST_file_load(csv_path : Path) -> bdm.DATA_LIST:
 
         with open(csv_path, "r",newline="",encoding='utf-8-sig') as f:
             reader = csv.DictReader(f, skipinitialspace=True)
-            data_list: bdm.DATA_LIST = list(reader)
+            data_list: bdm.DATA_LIST_TYPE = list(reader)
         logger.info(f"BizEVENT: BSM: Loaded DATA_LIST from csv file: '{csv_path}'")
         logger.debug(f"BSM: Complete {p3u.stop_timer(st)}")
         return data_list

@@ -24,7 +24,7 @@ from budman_workflows.txn_category import (
 )
 # from budman_workflows.budget_category_mapping import get_category_map
 from budget_storage_model import (
-    bsm_BDM_WORKBOOK_load,
+    bsm_BDMWorkbook_load,
     bsm_WORKBOOK_CONTENT_url_put,
     csv_DATA_LIST_url_get, 
     csv_DATA_LIST_file_load,

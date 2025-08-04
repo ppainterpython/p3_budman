@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 #region WORKFLOW_TASK_process() function
 def WORKFLOW_TASK_process(cmd: Dict[str, Any], 
-                       bdm_DC: BudManAppDataContext_Base) -> bdm.BUDMAN_RESULT:
+                       bdm_DC: BudManAppDataContext_Base) -> bdm.BUDMAN_RESULT_TYPE:
     """Process workflow  tasks.
 
     This function processes various worklow tasks.
@@ -70,7 +70,7 @@ def WORKFLOW_TASK_process(cmd: Dict[str, Any],
 # ---------------------------------------------------------------------------- +
 #region WORKFLOW_TASK_set_value() function
 def WORKFLOW_TASK_set_value(cmd: Dict[str, Any], 
-                       bdm_DC: BudManAppDataContext_Base) -> bdm.BUDMAN_RESULT:
+                       bdm_DC: BudManAppDataContext_Base) -> bdm.BUDMAN_RESULT_TYPE:
     """WORKFLOW_SET_subcmd: Set values in the DC for workflow tasks.
 
     This function sets values in the data context for workflow tasks based on the
@@ -104,7 +104,7 @@ def WORKFLOW_TASK_set_value(cmd: Dict[str, Any],
 # ---------------------------------------------------------------------------- +
 #region WORKFLOW_TASK_list_folder_tree() function
 def WORKFLOW_TASK_list_folder_tree(cmd: Dict[str, Any],
-                      bdm_DC: BudManAppDataContext_Base) -> bdm.BUDMAN_RESULT:
+                      bdm_DC: BudManAppDataContext_Base) -> bdm.BUDMAN_RESULT_TYPE:
     """List all files from an indicated workflow folder.
 
     Args:
@@ -117,7 +117,7 @@ def WORKFLOW_TASK_list_folder_tree(cmd: Dict[str, Any],
             - cp.CK_CMDLINE_WF_PURPOSE: The wf_purpose of interest.
 
     Returns:
-        BUDMAN_RESULT: Tuple[bool, CMD_RESULT]:
+        BUDMAN_RESULT_TYPE: Tuple[bool, CMD_RESULT]:
     """
     try:
         wf_key: str = cmd.get(cp.CK_CMDLINE_WF_KEY, None)
@@ -149,7 +149,7 @@ def WORKFLOW_TASK_list_folder_tree(cmd: Dict[str, Any],
 # ---------------------------------------------------------------------------- +
 #region WORKFLOW_get_folder_tree() function
 def WORKFLOW_TASK_sync_wdc(reconcile:bool, 
-                           bdm_DC: BudManAppDataContext_Base) -> bdm.BUDMAN_RESULT:
+                           bdm_DC: BudManAppDataContext_Base) -> bdm.BUDMAN_RESULT_TYPE:
     """Model-Aware: Sync the WORKBOOK_DATA_COLLECTION for the current FI_KEY.
 
     For the current DC FI_KEY, synchronize the WORKBOOK_DATA_COLLECTION with 
@@ -180,7 +180,7 @@ def WORKFLOW_TASK_sync_wdc(reconcile:bool,
         msg: str = f"Syncing WORKBOOK_DATA_COLLECTION for FI_KEY: '{fi_key}'"
         logger.debug(f"Start Task: {task_name} {msg}")
         r_msg: str = ""
-        discovered_wdc: bdm.WORKBOOK_DATA_COLLECTION = None
+        discovered_wdc: bdm.WORKBOOK_DATA_COLLECTION_TYPE = None
         discovered_wdc, r_msg = model.bsm_FI_WORKBOOK_DATA_COLLECTION_resolve(fi_key)
         return True, msg
     except Exception as e:

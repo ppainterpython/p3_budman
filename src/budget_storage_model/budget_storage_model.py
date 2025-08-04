@@ -4,16 +4,16 @@
 
     Need to update: filetypes and wb_types
 
-    In the BDM, the basic unit of storage is the BDM_WORKBOOK, which is a
+    In the BDM, the basic unit of storage is the BDMWorkbook, which is a
     data file in a storage system, contained in folders (directories). The
-    BSM translates the Domain Model view of BDM_WORKBOOKS to the underlying
+    BSM translates the Domain Model view of BDMWorkbook objects to the underlying
     storage service specifications. The local file system and various cloud 
     storage services are where the mapping will go. BSM depends on the 
     BDMWorkbook class, from the design language namespace. BDMWorkbook
     holds metadata about the workbook. It has a wb_url attribute that links it
     to the storage service.
 
-    A BDM_WORKBOOK has a wb_type, wb_filename and wb_filetype, which influences
+    A BDMWorkbook has a wb_type, wb_filename and wb_filetype, which influences
     the implementation to load/save its content from/to storage.
     There are no dependencies to other application functional layers. However,
      it does include the design language namespace module for constants and 
@@ -21,18 +21,18 @@
 
     BSM presents a layered interface. 
     
-    First, there is access to workbook storage via the BDM_WORKBOOK itself, 
+    First, there is access to workbook storage via the BDMWorkbook itself, 
     which contains the wb_url, wb_type etc. From that information, the secondary
     layers are used to route the request. This first layer has a method naming
-    convention like: BDM_WORKBOOK_content_load() and BDM_WORKBOOK_content_save().
+    convention like: BDMWorkbook_content_load() and BDMWorkbook_content_save().
     A critical design constraint for layer one is that the caller bears the
-    responsibility to ensure the BDM_WORKBOOK is valid and accounted for in the
+    responsibility to ensure the BDMWorkbook is valid and accounted for in the
     higher layers of the application.
 
     Second, there is a wb_url get/put layer which uses the actual content data
     in conjunction with the wb_type as arguments to route the request. This
     second layer has a method naming convention like:
-    BDM_WORKBOOK_content_url_get() and BDM_WORKBOOK_content_url_put().
+    BDMWorkbook_content_url_get() and BDMWorkbook_content_url_put().
 
     Third, there is the layer to support a given storage service. Presently, 
     the BSM is supporting the local file system only. So absolute pathnames are
@@ -75,20 +75,26 @@ logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------- +
 #                                                                              +
-#region Layer 1 - BDM_WORKBOOK storage functions                               +
+#region Layer 1 - Storage system object functions                              +
 #                                                                              +
 # ---------------------------------------------------------------------------- +
 #region BSM Layer 1 Design Notes
 """
-    Layer 1 - BDM_WORKBOOK storage functions - The BDM_WORKBOOK attributes must
+    Layer 1 - At this layer, the BSM supports objects stored in various 
+    storage systems by a URL. The scheme component of the URL utlimately
+    determines the storage service used to load/save the content of the
+    object. Presently, layer 1 recognizes the BDMWorkbook object type and
+    the generic concept of a folder and file.
+    BDMWorkbook storage functions - The BDMWorkbook attributes must
     contain wb_url, wb_type, wb_filename, and wb_filetype. That information is
-    used to map the load or save request to the appropriate Level 2 request. 
+    used to map the load or save request to the appropriate Level 2 request.
+    File and Folder object storage functions - tbd.
 """
 #endregion BSM Layer 1 Design Notes
 # ---------------------------------------------------------------------------- +
-#region    bsm_BDM_WORKBOOK_load() 
-def bsm_BDM_WORKBOOK_load(bdm_wb:BDMWorkbook) -> bdm.WORKBOOK_CONTENT:
-    """Load the BDM_WORKBOOK content from its storage service.
+#region    bsm_BDMWorkbook_load() 
+def bsm_BDMWorkbook_load(bdm_wb:BDMWorkbook) -> bdm.WORKBOOK_CONTENT_TYPE:
+    """Load the BDMWorkbook content from its storage service.
 
     A BDMWorkbook has content, stored elsewhere, and metadata kept in the
     BDM_STORE.
@@ -103,7 +109,7 @@ def bsm_BDM_WORKBOOK_load(bdm_wb:BDMWorkbook) -> bdm.WORKBOOK_CONTENT:
         st: float = p3u.start_timer()
         logger.debug(f"Start:")
         p3u.is_not_obj_of_type("bdm_wb", bdm_wb, BDMWorkbook, raise_error=True)
-        logger.debug(f"Loading BDM_WORKBOOK content for WB_ID('{bdm_wb.wb_id}') ")
+        logger.debug(f"Loading BDMWorkbook content for WB_ID('{bdm_wb.wb_id}') ")
         bdm_wb.wb_content = bsm_WORKBOOK_CONTENT_url_get(bdm_wb.wb_url, bdm_wb.wb_type)
         bdm_wb.wb_loaded = True
         logger.debug(f"Complete: {p3u.stop_timer(st)}")
@@ -111,29 +117,29 @@ def bsm_BDM_WORKBOOK_load(bdm_wb:BDMWorkbook) -> bdm.WORKBOOK_CONTENT:
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
-#endregion bsm_BDM_WORKBOOK_load()
+#endregion bsm_BDMWorkbook_load()
 # ---------------------------------------------------------------------------- +
-#region    bsm_BDM_WORKBOOK_save()
-def bsm_BDM_WORKBOOK_save(bdm_wb:BDMWorkbook) -> None:
+#region    bsm_BDMWorkbook_save()
+def bsm_BDMWorkbook_save(bdm_wb:BDMWorkbook) -> None:
     """
-    Save the BDM_WORKBOOK content to its storage service.
+    Save the BDMWorkbook content to its storage service.
     
     """
     try:
         st: float = p3u.start_timer()
         logger.debug(f"Start:")
         p3u.is_not_obj_of_type("bdm_wb", bdm_wb, BDMWorkbook, raise_error=True)
-        logger.debug(f"Saving BDM_WORKBOOK content for WB_ID('{bdm_wb.wb_id}') ")
+        logger.debug(f"Saving BDMWorkbook content for WB_ID('{bdm_wb.wb_id}') ")
         bsm_WORKBOOK_CONTENT_url_put(bdm_wb.wb_content,bdm_wb.wb_url, bdm_wb.wb_type)
         bdm_wb.wb_loaded = True
         logger.debug(f"Complete: {p3u.stop_timer(st)}")
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
-#endregion bsm_BDM_WORKBOOK_save()
+#endregion bsm_BDMWorkbook_save()
 # ---------------------------------------------------------------------------- +
 #                                                                              +
-#endregion Layer 1 - BDM_WORKBOOK storage functions
+#endregion Layer 1 - Storage system object functions                           +
 #                                                                              +
 # ---------------------------------------------------------------------------- +
 
@@ -152,7 +158,7 @@ def bsm_BDM_WORKBOOK_save(bdm_wb:BDMWorkbook) -> None:
 # ---------------------------------------------------------------------------- +
 #region    bsm_WORKBOOK_CONTENT_url_get() function
 def bsm_WORKBOOK_CONTENT_url_get(wb_content_url: str, 
-                                     wb_type: str) -> bdm.WORKBOOK_CONTENT:
+                                     wb_type: str) -> bdm.WORKBOOK_CONTENT_TYPE:
     """BSM: Load a WORKBOOK_OBJECT from storage by URL.
 
     Layer 2 point getting wb_content from a storage service. Parse the URL to 
@@ -177,7 +183,7 @@ def bsm_WORKBOOK_CONTENT_url_get(wb_content_url: str,
                                                                   test=True)
         logger.debug(f"Loading WORKBOOK_CONTENT from path: "
                      f"'{wb_content_abs_path}' for URL: '{wb_content_url}'")
-        wb_content: bdm.WORKBOOK_CONTENT = None
+        wb_content: bdm.WORKBOOK_CONTENT_TYPE = None
         wb_content = bsm_WORKBOOK_CONTENT_file_load(wb_content_abs_path, 
                                                     wb_type,
                                                     pre_validated=True)
@@ -189,7 +195,7 @@ def bsm_WORKBOOK_CONTENT_url_get(wb_content_url: str,
 #endregion bsm_WORKBOOK_CONTENT_url_get() function
 # ---------------------------------------------------------------------------- +
 #region bsm_WORKBOOK_CONTENT_url_put() function
-def bsm_WORKBOOK_CONTENT_url_put(wb_content: bdm.WORKBOOK_CONTENT, 
+def bsm_WORKBOOK_CONTENT_url_put(wb_content: bdm.WORKBOOK_CONTENT_TYPE, 
                                    wb_content_url: str, 
                                    wb_type: str) -> None:
     """BSM: Save a WORKBOOK_OBJECT to storage by URL.
@@ -244,7 +250,7 @@ def bsm_WORKBOOK_CONTENT_url_put(wb_content: bdm.WORKBOOK_CONTENT,
 #region    bsm_WORKBOOK_CONTENT_file_load(wb_abs_path : str = None) -> Any
 def bsm_WORKBOOK_CONTENT_file_load(wb_content_abs_path:Path, 
                                    wb_type: str,
-                                   pre_validated:bool=False) -> bdm.WORKBOOK_CONTENT:
+                                   pre_validated:bool=False) -> bdm.WORKBOOK_CONTENT_TYPE:
     """Load a wb_content file of a given wb_type.
 
     BSM Layer 3: This is a local file system service function, loading a 
@@ -272,7 +278,7 @@ def bsm_WORKBOOK_CONTENT_file_load(wb_content_abs_path:Path,
             ...
         # Depending on the wb_type, route the request to actual implementation
         # for the wb_type, wb_filetype.
-        wb_content: bdm.WORKBOOK_CONTENT = None
+        wb_content: bdm.WORKBOOK_CONTENT_TYPE = None
         if wb_type in [bdm.WB_TYPE_BDM_STORE, bdm.WB_TYPE_BDM_CONFIG]:
             # WB_TYPE_BDM_STORE, WB_TYPE_BDM_CONFIG: Load it as a json file.
             with open(wb_content_abs_path, "r") as f:
@@ -307,7 +313,7 @@ def bsm_WORKBOOK_CONTENT_file_load(wb_content_abs_path:Path,
 #endregion bsm_WORKBOOK_CONTENT_file_load(wb_abs_path : str = None) -> Any
 # ---------------------------------------------------------------------------- +
 #region    bsm_WORKBOOK_content_file_save(wb:Workbook,wb_abs_path : str = None) -> Any
-def bsm_WORKBOOK_CONTENT_file_save(wb_content:bdm.WORKBOOK_CONTENT,
+def bsm_WORKBOOK_CONTENT_file_save(wb_content:bdm.WORKBOOK_CONTENT_TYPE,
                                    wb_content_abs_path:Path, 
                                    wb_type: str,
                                    pre_validated:bool=False) -> None:
@@ -317,7 +323,7 @@ def bsm_WORKBOOK_CONTENT_file_save(wb_content:bdm.WORKBOOK_CONTENT,
     workbook's data content to the local file system.
 
     Args:
-        wb_content (bdm.WORKBOOK_CONTENT): The workbook content to save.
+        wb_content (bdm.WORKBOOK_CONTENT_TYPE): The workbook content to save.
         wb_content_abs_path (Path): The path of the workbook file to load.
         wb_type (str): The type of the workbook to load.
         pre_validated (bool): If True, the input parameters are already validated.
@@ -404,7 +410,7 @@ def bsm_WORKBOOK_content_file_save1(wb_content:Workbook,wb_path:Path) -> None:
 #endregion bsm_WORKBOOK_content_file_save1(wb_abs_path : str = None) -> Any
 # ---------------------------------------------------------------------------- +
 #region    bsm_BDM_STORE_file_save() function
-def json_DATA_OBJECT_file_save(json_content:bdm.DATA_OBJECT, json_abs_path:Path) -> None:
+def json_DATA_OBJECT_file_save(json_content:bdm.DATA_OBJECT_TYPE, json_abs_path:Path) -> None:
     """Save a DATA_OBJECT to a json file."""
     try:
         # json_content must be a dictionary.
@@ -432,7 +438,7 @@ def json_DATA_OBJECT_file_save(json_content:bdm.DATA_OBJECT, json_abs_path:Path)
 # ---------------------------------------------------------------------------- +
 #region    BDM_STORE functions
 #region    bsm_BDM_STORE_url_get() function
-def bsm_BDM_STORE_url_get(bdms_url : str = None) -> bdm.BDM_STORE:
+def bsm_BDM_STORE_url_get(bdms_url : str = None) -> bdm.BDM_STORE_TYPE:
     """BSM: Load a bdm.BDM_STORE object from a URL.
     
     Entry point for a bdm.BDM_STORE file load operation. Parse the URL and decide
@@ -466,7 +472,7 @@ def bsm_BDM_STORE_url_get(bdms_url : str = None) -> bdm.BDM_STORE:
 #endregion bsm_BDM_STORE_url_get() function
 # ---------------------------------------------------------------------------- +
 #region    bsm_BDM_STORE_url_put() function
-def bsm_BDM_STORE_url_put(bdm_store:bdm.BDM_STORE, bdms_url : str = None) -> Dict:
+def bsm_BDM_STORE_url_put(bdm_store:bdm.BDM_STORE_TYPE, bdms_url : str = None) -> Dict:
     """BSM: Save the BDM_STORE object to storage at the url.
     
     Store the BDM_STORE dictionary with a storage service based on the url.
@@ -503,7 +509,7 @@ def bsm_BDM_STORE_url_put(bdm_store:bdm.BDM_STORE, bdms_url : str = None) -> Dic
 #endregion bsm_BDM_STORE_url_put() function
 # ---------------------------------------------------------------------------- +
 #region    bsm_BDM_STORE_file_load() function
-def bsm_BDM_STORE_file_load(bdms_path : Path = None) -> bdm.BDM_STORE:
+def bsm_BDM_STORE_file_load(bdms_path : Path = None) -> bdm.BDM_STORE_TYPE:
     """Load a BDM_STORE file from the given Path value."""
     try:
         if bdms_path is None or not isinstance(bdms_path, Path):
@@ -540,7 +546,7 @@ def bsm_BDM_STORE_file_load(bdms_path : Path = None) -> bdm.BDM_STORE:
 #endregion bsm_BDM_STORE_file_load() function
 # ---------------------------------------------------------------------------- +
 #region    bsm_BDM_STORE_file_save() function
-def bsm_BDM_STORE_file_save(bdm_store:bdm.BDM_STORE, bdms_path:Path) -> None:
+def bsm_BDM_STORE_file_save(bdm_store:bdm.BDM_STORE_TYPE, bdms_path:Path) -> None:
     """Save the Budget Manager Store to a .jsonc file."""
     try:
         # bdm_store must be a dictionary.
@@ -627,7 +633,7 @@ def bsm_WB_TYPE(wb_url : str, wb_filetype:str) -> Any:
         # to the immediate left of the wb_filetype, like 
         # "file:///path/to/wb_filename.wb_type_wb_name.wb_filetype".
         for wb_type in bdm.VALID_WB_TYPE_VALUES:
-            if wb_type.lower() + wb_filetype.lower()  in wb_url.lower():
+            if wb_type.lower() + wb_filetype.lower() in wb_url.lower():
                 return wb_type
         wb_abs_path = bsm_WB_URL_verify_file_scheme(wb_url, test=True)
         wb_filetype = wb_abs_path.suffix.lower()
@@ -782,7 +788,9 @@ def bsm_verify_folder(ap: Path, create:bool=True, raise_errors:bool=True) -> boo
         if not ap.is_absolute():
             m = f"Path is not absolute: '{str(ap)}'"
             logger.error(m)
-            raise ValueError(m)
+            if raise_errors:
+                raise ValueError(m)
+            return False
         if ap.exists() and ap.is_dir():
             logger.debug(f"Folder exists: '{str(ap)}'")
             return True
@@ -794,10 +802,13 @@ def bsm_verify_folder(ap: Path, create:bool=True, raise_errors:bool=True) -> boo
                 ap.mkdir(parents=True, exist_ok=True)
                 return True
             else:
-                raise ValueError(m)
+                raise ValueError(m) if raise_errors else False
+        return False
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
-        raise
+        if raise_errors:
+            raise
+        return False
 #endregion bsm_verify_folder(ap: Path, create:bool=True, raise_errors:bool=True) -> bool
 # ---------------------------------------------------------------------------- +
 #region    bsm_get_workbook_names()

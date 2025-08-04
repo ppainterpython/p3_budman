@@ -380,13 +380,14 @@ class BudManViewModel(BudManAppDataContext_Binding, Model_Binding): # future ABC
             logger.debug(f"Start: ...")
             # if a bdms_url is provided, load the BDM_STORE file.
             if p3u.str_notempty(self.bdms_url):
-                # Load the BDM_STORE file from the URL.
+                # Load the BDM_STORE file from the URL, initializing 
+                # a BDMConfig object.
                 bdmc : BDMConfig= BDMConfig.BDM_STORE_url_get(self.bdms_url)
                 if bdmc is None:
                     m = f"Failed to load BDM_STORE from URL: {self.bdms_url}"
                     logger.error(m)
                     raise ValueError(m)
-                bdm_config : BDM_CONFIG = bdmc.bdm_config_object
+                bdm_config : BDM_CONFIG_TYPE = bdmc.bdm_config_object
                 # Use the loaded BDM_STORE file as a config_object 
                 self._BDM_STORE_loaded = True
             else:
@@ -569,7 +570,7 @@ class BudManViewModel(BudManAppDataContext_Binding, Model_Binding): # future ABC
     #endregion cp_execute_cmd() Command Processor method
     #region cp_validate_cmd() Command Processor method
     def cp_validate_cmd(self, cmd : Dict = None,
-                        validate_all : bool = False) -> BUDMAN_RESULT:
+                        validate_all : bool = False) -> BUDMAN_RESULT_TYPE:
         """Validate the cmd object for cmd_key and parameters.
 
         Extract a valid, known full_cmd_key/cmd_key to succeed.
@@ -635,10 +636,10 @@ class BudManViewModel(BudManAppDataContext_Binding, Model_Binding): # future ABC
                         result = f"Invalid wf_key value: '{value}'."
                         success = False 
                         logger.error(result)
-                    if value == ALL_KEY:
-                        logger.warning(f"wf_key: '{ALL_KEY}' not implemented."
-                                    f" Defaulting to {BDM_WF_CATEGORIZATION}.")
-                        cmd[key] = BDM_WF_CATEGORIZATION
+                    if value == cp.CK_ALL_WBS:
+                        logger.warning(f"wf_key: '{cp.CK_ALL_WBS}' not implemented."
+                                    f" Defaulting to {EXAMPLE_BDM_WF_CATEGORIZATION}.")
+                        cmd[key] = EXAMPLE_BDM_WF_CATEGORIZATION
                     continue
                 elif key == cp.CK_WB_ID:
                     if not self.dc_WB_ID_validate(value):
@@ -786,7 +787,7 @@ class BudManViewModel(BudManAppDataContext_Binding, Model_Binding): # future ABC
         If no command name is found, an error message is returned.
         
         returns:
-            BUDMAN_RESULT: The command name if found, else an error message.
+            BUDMAN_RESULT_TYPE: The command name if found, else an error message.
         """
         try:
             if p3u.str_empty(cmd_key):
@@ -904,7 +905,7 @@ class BudManViewModel(BudManAppDataContext_Binding, Model_Binding): # future ABC
                 logger.error(m)
                 raise RuntimeError(f"{m}")
             fi_key = cmd.get(cp.CK_FI_KEY, None)
-            wf_key = cmd.get(cp.CK_WF_KEY, BDM_WF_CATEGORIZATION)
+            wf_key = cmd.get(cp.CK_WF_KEY, EXAMPLE_BDM_WF_CATEGORIZATION)
             wf_purpose = cmd.get(cp.CK_WF_PURPOSE, WF_WORKING)
             wb_type = cmd.get(cp.CK_WB_TYPE, WF_WORKING)
             wb_name = cmd.get(cp.CK_WB_NAME, None)
@@ -1016,7 +1017,7 @@ class BudManViewModel(BudManAppDataContext_Binding, Model_Binding): # future ABC
     #endregion BDM_STORE_load_cmd() method
     # ------------------------------------------------------------------------ +
     #region DATA_CONTEXT_show_cmd() command > show dc
-    def DATA_CONTEXT_show_cmd(self, cmd : Dict) -> BUDMAN_RESULT:
+    def DATA_CONTEXT_show_cmd(self, cmd : Dict) -> BUDMAN_RESULT_TYPE:
         """Show information in the Budget Manager Data Context.
 
         Arguments:
@@ -1068,7 +1069,7 @@ class BudManViewModel(BudManAppDataContext_Binding, Model_Binding): # future ABC
     #endregion DATA_CONTEXT_show_cmd() method
     # ------------------------------------------------------------------------ +
     #region SHOW_cmd() command > show dc
-    def SHOW_cmd(self, cmd : Dict) -> BUDMAN_RESULT:
+    def SHOW_cmd(self, cmd : Dict) -> BUDMAN_RESULT_TYPE:
         """Show requested info from Budget Manager Data Context.
 
         Arguments:
@@ -1110,7 +1111,7 @@ class BudManViewModel(BudManAppDataContext_Binding, Model_Binding): # future ABC
     #endregion SHOW_cmd() method
     # ------------------------------------------------------------------------ +
     #region WORKBOOKS_show_cmd() command > show wb 2
-    def WORKBOOKS_show_cmd(self, cmd : Dict) -> BUDMAN_RESULT:
+    def WORKBOOKS_show_cmd(self, cmd : Dict) -> BUDMAN_RESULT_TYPE:
         """Show information about WORKBOOKS in the DC.
 
         Arguments:
@@ -1177,7 +1178,7 @@ class BudManViewModel(BudManAppDataContext_Binding, Model_Binding): # future ABC
     #endregion DATA_CONTEXT_show_cmd() method
     # ------------------------------------------------------------------------ +
     #region WORKBOOKS_load_cmd() command > load wb 0
-    def WORKBOOKS_load_cmd(self, cmd : Dict) -> BUDMAN_RESULT:
+    def WORKBOOKS_load_cmd(self, cmd : Dict) -> BUDMAN_RESULT_TYPE:
         """Model-aware: Load workbook content for one or more WORKBOOKS in the DC.
 
         A load_cmd_workbooks command will use the wb_ref value in the cmd. 
@@ -1225,7 +1226,7 @@ class BudManViewModel(BudManAppDataContext_Binding, Model_Binding): # future ABC
     #endregion WORKBOOKS_load_cmd() method
     # ------------------------------------------------------------------------ +
     #region WORKBOOKS_save_cmd() command > save wb 3
-    def WORKBOOKS_save_cmd(self, cmd : Dict) -> BUDMAN_RESULT: 
+    def WORKBOOKS_save_cmd(self, cmd : Dict) -> BUDMAN_RESULT_TYPE: 
         """Model-Aware: Execute save command for one WB_INDEX or ALL_WBS.
         In BudMan, loaded workbook content is maintained in the 
         dc_LOADED_WORKBOOKS collection. This command will cause that content
@@ -1339,7 +1340,7 @@ class BudManViewModel(BudManAppDataContext_Binding, Model_Binding): # future ABC
     #endregion CHANGE_cmd() method
     # ------------------------------------------------------------------------ +
     #region APP_cmd() command > wf cat 2
-    def APP_cmd(self, cmd : Dict) -> BUDMAN_RESULT:
+    def APP_cmd(self, cmd : Dict) -> BUDMAN_RESULT_TYPE:
         """App commands to manipulate app values and settings.
 
         The APP_cmd command can use a variety of other command line arguments.
@@ -1402,7 +1403,7 @@ class BudManViewModel(BudManAppDataContext_Binding, Model_Binding): # future ABC
                             else:
                                 return False, "Failed to reload category_map_module"
                     if reload_target == cp.CV_FI_WORKBOOK_DATA_COLLECTION:
-                        wdc: WORKBOOK_DATA_COLLECTION = None
+                        wdc: WORKBOOK_DATA_COLLECTION_TYPE = None
                         wdc, m = self.model.bsm_FI_WORKBOOK_DATA_COLLECTION_resolve(self.dc_FI_KEY)
                         return True, m
                     if reload_target == cp.CV_WORKFLOWS_MODULE:
@@ -1434,7 +1435,7 @@ class BudManViewModel(BudManAppDataContext_Binding, Model_Binding): # future ABC
     #endregion APP_cmd() method
     # ------------------------------------------------------------------------ +
     #region WORKFLOW_categorization_cmd() command > wf cat 2
-    def WORKFLOW_categorization_cmd(self, cmd : Dict) -> BUDMAN_RESULT:
+    def WORKFLOW_categorization_cmd(self, cmd : Dict) -> BUDMAN_RESULT_TYPE:
         """Apply categorization workflow to one or more WORKBOOKS in the DC.
 
         As a workflow process, the WORKFLOW_categorization_cmd method has the
@@ -1530,7 +1531,7 @@ class BudManViewModel(BudManAppDataContext_Binding, Model_Binding): # future ABC
     #endregion WORKFLOW_categorization_cmd() method
     # ------------------------------------------------------------------------ +
     #region WORKFLOW_cmd() command > wf cat 2
-    def WORKFLOW_cmd(self, cmd : Dict) -> BUDMAN_RESULT:
+    def WORKFLOW_cmd(self, cmd : Dict) -> BUDMAN_RESULT_TYPE:
         """Execute a workflow task subcmd.
 
         Arguments:
@@ -1565,7 +1566,7 @@ class BudManViewModel(BudManAppDataContext_Binding, Model_Binding): # future ABC
     #endregion WORKFLOW_cmd() method
     # ------------------------------------------------------------------------ +
     #region WORKFLOW_apply_cmd() command > wf cat 2
-    def WORKFLOW_apply_cmd(self, cmd : Dict) -> BUDMAN_RESULT:
+    def WORKFLOW_apply_cmd(self, cmd : Dict) -> BUDMAN_RESULT_TYPE:
         """Apply workflow tasks to WORKBOOKS.
 
         A WORKFLOW_apply_cmd command will use the wb_ref value in the cmd. 
@@ -1647,7 +1648,7 @@ class BudManViewModel(BudManAppDataContext_Binding, Model_Binding): # future ABC
     #endregion WORKFLOW_intake_cmd() method
     # ------------------------------------------------------------------------ +
     #region WORKFLOW_check() command > wf check 2 
-    def WORKFLOW_check_cmd(self, cmd : Dict) -> BUDMAN_RESULT:
+    def WORKFLOW_check_cmd(self, cmd : Dict) -> BUDMAN_RESULT_TYPE:
         """Apply workflow to one or more WORKBOOKS in the DC.
 
         A WORKFLOW_categorization_cmd command will use the wb_ref value in the cmd. 
@@ -1738,7 +1739,7 @@ class BudManViewModel(BudManAppDataContext_Binding, Model_Binding): # future ABC
     #endregion WORKFLOW_reload_cmd() method
     # ------------------------------------------------------------------------ +
     #region UNKNOWN_cmd() command > wf cat 2
-    def UNKNOWN_cmd(self, cmd : Dict) -> BUDMAN_RESULT:
+    def UNKNOWN_cmd(self, cmd : Dict) -> BUDMAN_RESULT_TYPE:
         """A cmd received that is not found in the current cmd map.
 
         A CHANGE_cmd command uses the wb_ref arg parameter.
@@ -1747,7 +1748,7 @@ class BudManViewModel(BudManAppDataContext_Binding, Model_Binding): # future ABC
             cmd (Dict): A BudManCommand object. 
 
         Returns:
-            BUDMAN_RESULT:Tuple[success : bool, result : Any]: 
+            BUDMAN_RESULT_TYPE:Tuple[success : bool, result : Any]: 
             success: False, Result: message about the cmd object content.
             
         Raises:
@@ -1826,7 +1827,7 @@ class BudManViewModel(BudManAppDataContext_Binding, Model_Binding): # future ABC
     #endregion process_workbook_input()
     # ------------------------------------------------------------------------ +
     #region get_workbook_data_collection_info_str() method
-    def get_workbook_data_collection_info_str(self) -> BUDMAN_RESULT: 
+    def get_workbook_data_collection_info_str(self) -> BUDMAN_RESULT_TYPE: 
         """Construct an outout string with information about the WORKBOOKS."""
         try:
             logger.debug(f"Start: ...")
@@ -1870,7 +1871,7 @@ class BudManViewModel(BudManAppDataContext_Binding, Model_Binding): # future ABC
         wb_ref : str = self.cp_cmd_attr_get(cmd, cp.CK_WB_REF, self.dc_WB_ID)
         # Get the command arguments.
         fi_key = cmd.get(cp.CK_FI_KEY, None)
-        wf_key = cmd.get(cp.CK_WF_KEY, BDM_WF_CATEGORIZATION)
+        wf_key = cmd.get(cp.CK_WF_KEY, EXAMPLE_BDM_WF_CATEGORIZATION)
         wf_purpose = cmd.get(cp.CK_WF_PURPOSE, WF_INPUT)
         wb_type = cmd.get(cp.CK_WB_TYPE, WB_TYPE_EXCEL_TXNS)
         wb_name = cmd.get("wb_name", None)
