@@ -84,6 +84,7 @@ from budget_storage_model import (
     )                              
 from p3_mvvm.model_base_ABC import Model_Base
 from budman_namespace.bdm_workbook_class import BDMWorkbook
+from .budget_domain_model_config import BDMConfig
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -97,34 +98,30 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
     # ======================================================================== +
     """BudgetDomainModel class implementing Singleton pattern.
     
-        A singleton class to manage the budget model for the application.
+        A singleton class to manage the BudgetDomainModel for the application.
         This class is used to store and manage the budget data, including
-        the budget folder, institutions, and options. 
+        the budget folder, institutions, workbooks, and options.
 
-        When instantiated, a config object is provided to the constructor.
-
+        When instantiated, a BDMConfig object is provided to the constructor.
     """
     # ------------------------------------------------------------------------ +
     #region    BudgetDomainModel class constructor __init__()
-    def __init__(self, bdm_config : Dict = None) -> None:
+    def __init__(self, bdm_config : BDMConfig = None) -> None:
         """Constructor for the BudgetDomainModel class.
+
+        This initial constructor is kept simple, just set initial values 
+        to create the essential attributes in the object with one critical 
+        exception. A valid BDMConfig object is required,  created by one of 
+        the methods on the BDMConfig class. Here is is just added to the
+        BDM_STORE_OBJECT property. The real work happens in bdm_initialize().
         
         Args:
-            bdm_config (Dict): A valid BDM_STORE object dictionary used later
+            bdm_config (BDMConfig): A valid BDMConfig object used later
             to initialize the model state.
         """
         # Note: _subclassname set by SingletonMeta after __init__() completes.
         logger.debug("Start:")
-        # Keep the constructor simple, just set initial values to create the 
-        # attributes in the object with one critical exception.
-        # A valid bdm_config dictionary created by one of the methods on the
-        # BDMConfig class is required here. Here is is just added to the
-        # BDM_STORE_OBJECT property. The real work happens in bdm_initialize().
-        if bdm_config is None:
-            m = "bdm_config parameter is None, must be a valid configuration dictionary "
-            m += "created by one of the BDMConfig methods prior to BudgetDomainModel()." 
-            logger.error(m)
-            raise ValueError(m)
+        p3u.is_not_obj_of_type("bdm_config",bdm_config,BDMConfig,raise_error=True)
         setattr(self, BDM_ID, None)
         setattr(self, BDM_STORE_OBJECT, bdm_config) # CRITICAL to later initialization.
         setattr(self, BDM_INITIALIZED, False)
@@ -162,6 +159,24 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
             BDM_DATA_CONTEXT: self.bdm_data_context,
         }
         return ret
+    def __getitm__(self, key: str) -> Any:
+        """Get an item from the BudgetDomainModel by key."""
+        if hasattr(self, key):
+            return getattr(self, key)
+        raise KeyError(f"Key '{key}' not found in BudgetDomainModel.")
+    def __setitm__(self, key: str, value: Any) -> None:
+        """Set an item in the BudgetDomainModel by key."""
+        if hasattr(self, key):
+            setattr(self, key, value)
+        else:
+            raise KeyError(f"Key '{key}' not found in BudgetDomainModel.")
+    def __delitm__(self, key: str) -> None:
+        """Delete an item from the BudgetDomainModel by key."""
+        if hasattr(self, key):
+            delattr(self, key)
+        else:
+            raise KeyError(f"Key '{key}' not found in BudgetDomainModel.")
+
     def __repr__(self) -> str:
         ''' Return a str representation of the BudgetDomainModel object '''
         ret = f"{{ "
@@ -444,53 +459,41 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
     # ======================================================================== +
     #region    BDM bdm_initialize(self, bsm_init, ...)
     def bdm_initialize(self, 
-                 bsm_init : bool = True,
                  create_missing_folders : bool = True,
                  raise_errors : bool = True
                  ) -> "BudgetDomainModel":
-        """Initialize BDM, from a config_object.
+        """Initialize the BudgetDomainModel (BDM), from a BDMConfig object.
 
         Currently, as a singleton class, BudgetDomainModel is initialized from
-        a stored data file referred to as the BDM_STORE.json. So, having a
-        valid bdm_store_object property is important, lest not much
-        can be initialized. This method will apply the BDM_STORE object and
-        set the model state to match.
-
-        First time, the BDM_STORE is passed in the constructor with the
-        bdm_config argument. Subsequent calls to this method will must be 
-        preceded by setting the bdm_store_object property to a valid
-        BDM_STORE object dictionary created by one of the BDMConfig methods.
+        BDMConfig object, which must be the current value of the 
+        self.bdm_store_object property. Applications can support different 
+        techniques to create the BDMConfig using that class. Having a valid
+        bdm_store_object property is important, lest not much can be initialized.
+        This method will apply the BDM_STORE_OBJECT values
+        and set the BDM state to match.
 
         Args:
-            self.bdm_store_object property value (dict): A valid BDM_STORE 
-                object dictionary.
-            bsm_init (bool): Initialize the BSM if True.
-                create_missing_folders (bool): Create missing folders if True.
+            self.bdm_store_object property value (dict): A valid BDM_CONFIG object.
+            create_missing_folders (bool): Create missing folders if True.
             raise_errors (bool): Raise errors if True.
         """
         st = p3u.start_timer()
         logger.info(f"BizEVENT: Model setup for BudgetDomainModel (BDM)")
         try:
-            # A valid bdm_config_object dictionary created by one of the methods 
-            # on the BDMConfig class is required here. Here it is just added 
-            # to the BDM_STORE_OBJECT property. The real work happens in 
-            # bsm_initialize().
-            if self.bdm_store_object is None:
-                m = "bdm_store_object property is None, must be a BDM_STORE "
-                m += "object dictionary created by one of the BDMConfig methods "
-                m += "prior to BudgetDomainModel().bdm_initialize()." 
-                logger.error(m)
-                raise ValueError(m)
-            # Apply the configuration to the budget model (self)
-            # No defaults here, the bdm_config_object must have all keys and values.
+            # self.bdm_store_object property must contain a valid BDMConfig 
+            # object to initialize the BDM, cannot proceed without it. 
             bdm_config = self.bdm_store_object
-            setattr(self, BDM_ID, bdm_config.get(BDM_ID))
+            p3u.is_not_obj_of_type("bdm_config", bdm_config, BDMConfig, raise_error=True)
+            # Apply the BDMConfig content to the budget model (self)
+            # No defaults here, the BDMConfig must have all keys and values.
             setattr(self, BDM_STORE_OBJECT, bdm_config)
-            setattr(self, BDM_INITIALIZED, bdm_config.get(BDM_INITIALIZED))
-            setattr(self, BDM_FILENAME, bdm_config.get(BDM_FILENAME))
-            setattr(self, BDM_FILETYPE, bdm_config.get(BDM_FILETYPE))
-            setattr(self, BDM_FOLDER, bdm_config.get(BDM_FOLDER))  
-            setattr(self, BDM_URL, bdm_config.get(BDM_URL))  
+            setattr(self, BDM_ID, bdm_config[BDM_ID])
+            setattr(self, BDM_STORE_OBJECT, bdm_config)
+            setattr(self, BDM_INITIALIZED, bdm_config[BDM_INITIALIZED])
+            setattr(self, BDM_FILENAME, bdm_config[BDM_FILENAME])
+            setattr(self, BDM_FILETYPE, bdm_config[BDM_FILETYPE])
+            setattr(self, BDM_FOLDER, bdm_config[BDM_FOLDER])  
+            setattr(self, BDM_URL, bdm_config[BDM_URL])  
             setattr(self, BDM_FI_COLLECTION, copy.deepcopy(bdm_config[BDM_FI_COLLECTION]))
             setattr(self, BDM_WF_COLLECTION, copy.deepcopy(bdm_config[BDM_WF_COLLECTION])) 
             setattr(self, BDM_OPTIONS, copy.deepcopy(bdm_config[BDM_OPTIONS]))
@@ -498,9 +501,15 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
             setattr(self, BDM_LAST_MODIFIED_DATE, bdm_config[BDM_LAST_MODIFIED_DATE])
             setattr(self, BDM_LAST_MODIFIED_BY, bdm_config[BDM_LAST_MODIFIED_BY])
             setattr(self, BDM_DATA_CONTEXT, bdm_config[BDM_DATA_CONTEXT])
-
-            if bsm_init:
-                self.bsm_initialize(create_missing_folders, raise_errors)
+            # Now, initialize storage system dependencies using the 
+            # Budget Storage Model (BSM). Storage is mapped to folders and files
+            # regardless of the storage system, e.g., filesystem, database, etc.
+            self.bsm_initialize(create_missing_folders, raise_errors)
+            # Now rehydrate (marshall) any object classes from the stored 
+            # format of static python values and dictionaries (stored in json)
+            # into objects for classes used within the BDM.
+            self.bdm_FI_WORKBOOK_DATA_COLLECTION_initialize()
+            # Initialization complete.
             self.bdm_initialized = True
             logger.debug(f"Complete: {p3u.stop_timer(st)}")   
             return self
@@ -509,6 +518,81 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
             logger.error(m)
             raise
     #endregion BDM bdm_initialize(self, bsm_init, ...) 
+    # ------------------------------------------------------------------------ +
+    #region    BDM FI_WORKBOOK_DATA_COLLECTION_initialize() method
+    def bdm_FI_WORKBOOK_DATA_COLLECTION_initialize(self) -> None:
+        """Rehydrate objects loaded from the BDM_STORE into their class instances."""
+        try:
+            logger.debug("Start:  ...")
+            # Focus on the BDM_FI_COLLECTION.
+            if (self.bdm_fi_collection is None or
+                len(self.bdm_fi_collection) == 0):
+                logger.debug("FI_COLLECTION is empty.")
+                return None
+            for fi_key, fi_object in self.bdm_fi_collection.items():
+                if (fi_object[FI_WORKBOOK_DATA_COLLECTION] is None or
+                    not isinstance(fi_object[FI_WORKBOOK_DATA_COLLECTION], dict) or
+                    len(fi_object[FI_WORKBOOK_DATA_COLLECTION]) == 0):
+                    logger.debug(f"FI_KEY('{fi_key}') has no WORKBOOK_DATA_COLLECTION.")
+                    continue
+                fi_folder_abs_path: Path = self.bsm_FI_FOLDER_abs_path(fi_key)
+                for wb_id, wb_data in fi_object[FI_WORKBOOK_DATA_COLLECTION].items():
+                    if not isinstance(wb_data, dict):
+                        # During this initialization, expecting the wb_data as
+                        # a dict, not a BDMWorkbook object or some other type.
+                        logger.warning(f"FI_KEY('{fi_key}') wb_id('{wb_id}') "
+                                        f"wb_data is not a dict, skipping "
+                                        f"type: {type(wb_data)}")
+                        continue
+                    # Check if the wb_data.wb_url still exists. If not,
+                    # remove it from the collection.
+                    if (WB_URL in wb_data and
+                        wb_data[WB_URL] is not None and
+                        isinstance(wb_data[WB_URL], str)):
+                        wb_url = wb_data[WB_URL]
+                        try:
+                            _ = p3u.verify_url_file_path(wb_url)
+                        except Exception as e: 
+                            m = p3u.exc_err_msg(e)
+                            logger.error(f"Error verifying WORKBOOK URL "
+                                         f"'{wb_url}': {m} ")
+                            logger.error(f"Skipping: FI_KEY('{fi_key}') WB_ID('{wb_id}')")
+                            continue
+                    # Check the wb_data content for schema compliance with
+                    # the BDMWorkbook class. If not compliant, skip it.
+                    wb_data_2: dict = BDMWorkbook.check_schema(wb_data)
+                    # Convert the WORKBOOK_ITEM to a WORKBOOK_OBJECT.
+                    wb_object = BDMWorkbook(**wb_data_2)
+                    # Get the wf_folder_url expected for this workbook.
+                    wb_folder_url = self.bdm_FI_WF_FOLDER_URL(wb_object.fi_key, 
+                                                              wb_object.wf_key, 
+                                                              wb_object.wf_purpose)
+                    if wb_folder_url is None:
+                        # wb_folder_url not found in the fi_wf_folder_config_collection
+                        # which means the fi_workbook_data_collection is out of
+                        # sync with the fi_wf_folder_config_collection.
+                        wf_folder_abs_path: Path = fi_folder_abs_path / wb_object.wf_folder
+                        logger.warning(f"FI_KEY('{fi_key}') WF_KEY('{wb_object.wf_key}') "
+                                     f"WF_PURPOSE('{wb_object.wf_purpose}'): "
+                                     f"FI_WF_FOLDER_CONFIG_COLLECTION is missing "
+                                     f"BDMWorkbook(wb_id='{wb_object.wb_id}').wf_folder "
+                                     f"'{wb_object.wf_folder}'.")
+                    # Set the wb_folder_url in the WORKBOOK_OBJECT.
+                    wb_object.wb_folder_url = wb_folder_url
+                    # Replace the DATA_OBJECT with the WORKBOOK_OBJECT.
+                    fi_object[FI_WORKBOOK_DATA_COLLECTION][wb_id] = wb_object
+                # Sort the FI_WORKBOOK_DATA_COLLECTION by wb_id, for
+                # WB_INDEX order from here on.
+                sorted_wdc = dict(
+                    sorted(fi_object[FI_WORKBOOK_DATA_COLLECTION].items()))
+                fi_object[FI_WORKBOOK_DATA_COLLECTION] = sorted_wdc
+            logger.debug(f"Complete:")
+            return None
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise
+    #endregion BDM FI_WORKBOOK_DATA_COLLECTION_initialize() method
     # ------------------------------------------------------------------------ +
     #region    BDM FI_OBJECT_TYPE methods
     def bdm_FI_OBJECT(self, fi_key:str) -> FI_OBJECT_TYPE:
@@ -543,6 +627,23 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
                 return {}
             return self.bdm_FI_OBJECT(fi_key)[FI_WF_FOLDER_CONFIG_COLLECTION]
         except ValueError as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise
+
+    def bdm_FI_WF_FOLDER_CONFIG_COLLECTION_append(self, 
+                fi_key:str, wf_key:str, wf_folder_config:dict) -> None:
+        """Append a new WF_FOLDER_CONFIG to the FI_WF_FOLDER_CONFIG_COLLECTION for fi_key."""
+        try:
+            fi_wf_fldr_cfg_coll: FI_WF_FOLDER_CONFIG_COLLECTION_TYPE = None
+            fi_wf_fldr_cfg_coll = self.bdm_FI_WF_FOLDER_CONFIG_COLLECTION(fi_key)
+            if fi_wf_fldr_cfg_coll is None:
+                fi_wf_fldr_cfg_coll = {}
+            if wf_key not in fi_wf_fldr_cfg_coll:
+                fi_wf_fldr_cfg_coll[wf_key] = []
+            fi_wf_fldr_cfg_coll[wf_key].append(wf_folder_config)
+            return None
+        except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
@@ -584,6 +685,59 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
             logger.error(m)
             raise ValueError(m)
         return True
+
+    def bdm_FI_WF_FOLDER_CONFIG(self, fi_key:str, 
+                             wf_key:str, wf_purpose:str) -> Optional[str]:
+        """Return the FI_WF_FOLDER_CONFIG for a given fi_key, wf_key and wf_purpose."""
+        try:
+            fi_wf_fldr_cfg_coll: FI_WF_FOLDER_CONFIG_COLLECTION_TYPE = None
+            fi_wf_fldr_cfg_coll = self.bdm_FI_WF_FOLDER_CONFIG_COLLECTION(fi_key)
+            if (fi_wf_fldr_cfg_coll is None or
+                len(fi_wf_fldr_cfg_coll) == 0):
+                m = f"FI_WF_FOLDER_CONFIG_COLLECTION for fi_key('{fi_key}') "
+                m += "is empty or None."
+                logger.warning(m)
+                return None
+            self.bdm_WF_KEY_validate(wf_key)
+            self.bdm_WF_PURPOSE_validate(wf_purpose)
+            if (wf_key not in fi_wf_fldr_cfg_coll):
+                m = f"Workflow key '{wf_key}' not found in "
+                m += f"FI_WF_FOLDER_CONFIG_COLLECTION for fi_key('{fi_key}'): "
+                m += f"{list(fi_wf_fldr_cfg_coll.keys())}"
+                logger.warning(m)
+                return None
+            wf_fldr_cfg_list : WF_FOLDER_CONFIG_LIST_TYPE = fi_wf_fldr_cfg_coll[wf_key]
+            if (wf_fldr_cfg_list is None or
+                len(wf_fldr_cfg_list) == 0):
+                m = f"Workflow folder config list for FI_KEY('{fi_key}') "
+                m += f"WF_KEY('{wf_key}') is empty or None."
+                logger.warning(m)
+                return None
+            for wf_folder_config in wf_fldr_cfg_list:
+                if (wf_folder_config[WF_PURPOSE] == wf_purpose):
+                    return wf_folder_config
+            return None
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise ValueError(m)
+        
+    def bdm_FI_WF_FOLDER_URL(self, fi_key:str, 
+                             wf_key:str, wf_purpose:str) -> Optional[str]:
+        """Return the FI_WF_FOLDER_URL for a given fi_key, wf_key and wf_purpose."""
+        try:
+            wf_folder_config: Optional[WF_FOLDER_CONFIG_TYPE] = None
+            wf_folder_config = self.bdm_FI_WF_FOLDER_CONFIG(fi_key, wf_key, wf_purpose)
+            if wf_folder_config is None:
+                m = f"Workflow folder config for FI_KEY('{fi_key}'), "
+                m += f"WF_KEY('{wf_key}'), WF_PURPOSE('{wf_purpose}') is None."
+                logger.warning(m)
+                return None
+            return wf_folder_config.get(WF_FOLDER_URL, None)
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise ValueError(m)
     #endregion BDM FI_OBJECT_TYPE methods
     # ------------------------------------------------------------------------ +
     #region    BDM WF_OBJECT_TYPE Dict attribute getter methods
@@ -647,24 +801,6 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
             logger.error(m)
             raise ValueError(m)
         return True
-
-    # def bdm_WF_FOLDER(self, wf_key:str, wf_purpose:str) -> Optional[str]:
-    #     """Return the WF_FOLDER value for (wf_key, wf_purpose).
-    #     Not a full path, just the configuration value."""
-    #     wf_folder_config = self.bdm_WF_PURPOSE_FOLDER_CONFIG(wf_key, wf_purpose)
-    #     if wf_folder_config is None:
-    #         m = f"Invalid wf_purpose '{wf_purpose}' for workflow '{wf_key}'."
-    #         logger.error(m)
-    #         raise ValueError(m)
-    #     return self.bdm_WF_OBJECT(wf_key)[WF_FOLDER]
-    
-    # def bdm_WF_PREFIX_IN(self, wf_key:str) -> str:
-    #     """Return the WF_PREFIX_IN value for wf_key."""
-    #     return self.bdm_WF_OBJECT(wf_key)[WF_PREFIX_IN]
-    
-    # def bdm_WF_PREFIX_OUT(self, wf_key:str) -> str:
-    #     """Return the WF_PREFIX_OUT value for wf_key."""
-    #     return self.bdm_WF_OBJECT(wf_key)[WF_PREFIX_OUT]    
 
     # def bdm_WF_PURPOSE_FOLDER_MAP(self, wf_key:str, wf_purpose:str=None) -> str|dict:
     #     """Map a WF_PURPOSE value to folder key name (folder-id).
@@ -846,7 +982,6 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
     def bsm_BDM_FOLDER_abs_path_str(self) -> str:
         """str of self.bsm_BDM_FOLDER_abs_path()."""
         return str(self.bsm_BDM_FOLDER_abs_path())
-    
     def bsm_BDM_FOLDER_resolve(self, 
                               create_missing_folders : bool=True,
                               raise_errors : bool=True) -> None:
@@ -896,7 +1031,6 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
     def bsm_BDM_URL_abs_path_str(self) -> str:
         """str of self.bsm_BDM_URL_abs_path()."""
         return str(self.bsm_BDM_URL_abs_path())
-    
     def bsm_BDM_URL_resolve(self, 
                               create_missing_folders : bool=True,
                               raise_errors : bool=True) -> None:
@@ -925,10 +1059,8 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
         
         Examine elements of self for the financial institution indicated by
         fi_key. Validate the mapping of the BDM data dependent on mapping to 
-        folders and files in the filesystem. Flags control whether to create the
-        filesystem structure if it is not present. Also scan the workflow 
-        folders for the presence of workbook excel files and load their 
-        references into the BDM as appropriate.
+        folders and files in the storage system. Flags control whether to 
+        create the storage system structure if it is not present. 
 
         Args:
             fi_key (str): The financial institution key.
@@ -945,17 +1077,16 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
         """
         st = p3u.start_timer()
         # Plan: validate filesystem folders: bf, fi, wf
-        #       update the BDM workbook mappings to BSM 
+        #       update and refresh any storage system URL references. 
         try:
             logger.debug("Start: ...")
             p3u.str_empty(fi_key, raise_error=True) # Raises TypeError, ValueError
             # Resolve FI_FOLDER path.
             self.bsm_FI_FOLDER_resolve(fi_key, 
                                         create_missing_folders, raise_errors)
-            # Resolve and initialize the FI_WF_FOLDER_CONFIG_COLLECTION.
+            # Resolve/initialize the FI_WF_FOLDER_CONFIG_COLLECTION.
             self.bsm_FI_WF_FOLDER_CONFIG_resolve(fi_key, 
                                         create_missing_folders, raise_errors)
-            # TODO: Rehydrate the FI_WORKBOOK_DATA_COLLECTION.
             logger.debug(f"Complete: {p3u.stop_timer(st)}")   
             return True
         except Exception as e:
@@ -1130,7 +1261,7 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
                 raise
     #endregion bsm_FI_WORKBOOK_DATA_COLLECTION_reconcile() method
     # ------------------------------------------------------------------------ + 
-    #region bsm_FI_DATA FI_FOLDER Path methods
+    #region bsm_FI_FOLDER Path methods
     def bsm_FI_FOLDER_path_str(self, fi_key: str) -> str:
         """str version of the FI_FOLDER value as a Path.
         
@@ -1161,19 +1292,56 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
         fi_ap = self.bsm_FI_FOLDER_abs_path(fi_key)
         logger.debug(f"FI_KEY('{fi_key}') Checking FI_FOLDER('{fi_ap}')")
         _ = bsm_verify_folder(fi_ap, create_missing_folders, raise_errors)
-    #endregion bsm_FI_DATA FI_FOLDER Path methods
+    #endregion bsm_FI_FOLDER Path methods
     # ------------------------------------------------------------------------ + 
-    #region bsm_FI_WF_FOLDER_CONFIG_resolve Path methods
+    #region bsm_FI_WF_FOLDER_CONFIG_resolve() method
     def bsm_FI_WF_FOLDER_CONFIG_resolve(self, 
                 fi_key:str, create_missing_folders:bool=True, 
                 raise_errors:bool=True) -> None:
-        """Resolve the FI_WF_FOLDER_CONFIG_COLLECTION for the fi_key, create 
-        missing folders if requested. Update the WF_FOLDER_URL attributes.
-        Does nothing with the folder content.
+        """Resolve all WF_FOLDER_CONFIG settings an FI_KEY.
+        
+        A BDM_STORE provides configurations for workflow processes in the
+        application in the BDM_WF_COLLECTION attribute. Each defined workflow 
+        provides a WF_FOLDER_CONFIG_LIST with 0 or more WF_FOLDER_CONFIG 
+        dictionary objects. A WF_FOLDER_CONFIG dict has four attributes: 
+        WF_FOLDER, WF_PURPOSE, WF_PREFIX, and WF_FOLDER_URL. At initialization
+        time, when the BDM_STORE is loaded to initialize the BDM, these settings
+        are resolved. 
+
+        The first part of this resolve step is to validate that each FI_KEY 
+        in the BDM_FI_COLLECTION is configured with the same 
+        WF_FOLDER_CONFIG_LISTs, using the BDM_WF_COLLECTION definitions.
+        
+        The second part is to resolve each FI_KEY FI_WF_FOLDER_CONFIG_COLLECTION
+        to create missing folders and update the WF_FOLDER_URL attributes.
         """
         try:
             logger.debug(f"FI_KEY('{fi_key}') FI_WF_FOLDER_CONFIG_COLLECTION.")
             fi_folder_abs_path: Path = self.bsm_FI_FOLDER_abs_path(fi_key)
+
+            # Step 1. Validate the FI_WF_FOLDER_CONFIG_COLLECTION has all the
+            # WF_FOLDER_CONFIG_LISTs prescribed in the BDM_WF_COLLECTION.
+            if (self.bdm_wf_collection is None or len(self.bdm_wf_collection) == 0):
+                m = f"BDM_WF_COLLECTION is empty for FI_KEY('{fi_key}'). "
+                m += "Cannot resolve workflow folder configurations."
+                logger.error(m)
+                raise ValueError(m)
+            # Iteration each workflow's wf_folder_config_list.
+            for wf_key, wf_object in self.bdm_wf_collection.items():
+                wf_folder_config_list: WF_FOLDER_CONFIG_LIST_TYPE = None
+                wf_folder_config_list = wf_object[WF_FOLDER_CONFIG_LIST]
+                for wf_folder_config in wf_folder_config_list:
+                    # Lookup wf_folder_config in the fi_wf_folder_config_list.
+                    fi_wf_folder_config: WF_FOLDER_CONFIG_TYPE = None
+                    fi_wf_folder_config = self.bdm_FI_WF_FOLDER_CONFIG(
+                        fi_key, wf_key, wf_folder_config[WF_PURPOSE])
+                    if fi_wf_folder_config is None:
+                        # Not found, so add it to the fi_wf_folder_config_list.
+                        self.bdm_FI_WF_FOLDER_CONFIG_COLLECTION_append(
+                            fi_key, wf_key, wf_folder_config)
+                        logger.debug(f"FI_KEY('{fi_key}') WF_KEY('{wf_key}') "
+                                      f"added wf_folder_config: ({wf_folder_config})")
+            # Step 2. Resolve the FI_WF_FOLDER_CONFIG_COLLECTION.
             fi_wf_fldr_cfg: FI_WF_FOLDER_CONFIG_COLLECTION_TYPE = None
             fi_wf_fldr_cfg = self.bdm_FI_WF_FOLDER_CONFIG_COLLECTION(fi_key)
             for wf_key, wf_config_list in fi_wf_fldr_cfg.items():
@@ -1192,6 +1360,9 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
+    #endregion bsm_FI_WF_FOLDER_CONFIG_resolve() method
+    # ------------------------------------------------------------------------ + 
+    #region bsm_FI_WF_FOLDER Path methods
     def bsm_FI_WORKFLOW_DATA_FOLDER_path_str(self, fi_key : str, wf_key : str,
                                folder_id : str) -> str:
         """str version of the WF_FOLDER value for fi_key/wf_key/folder_id."""

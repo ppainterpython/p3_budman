@@ -381,13 +381,12 @@ class BudManViewModel(BudManAppDataContext_Binding, Model_Binding): # future ABC
             # if a bdms_url is provided, load the BDM_STORE file.
             if p3u.str_notempty(self.bdms_url):
                 # Load the BDM_STORE file from the URL, initializing 
-                # a BDMConfig object.
-                bdmc : BDMConfig= BDMConfig.BDM_STORE_url_get(self.bdms_url)
+                # a BDMConfig object, to use for initialization tasks.
+                bdmc : BDMConfig = BDMConfig.BDM_STORE_url_get(self.bdms_url)
                 if bdmc is None:
                     m = f"Failed to load BDM_STORE from URL: {self.bdms_url}"
                     logger.error(m)
                     raise ValueError(m)
-                bdm_config : BDM_CONFIG_TYPE = bdmc.bdm_config_object
                 # Use the loaded BDM_STORE file as a config_object 
                 self._BDM_STORE_loaded = True
             else:
@@ -396,7 +395,7 @@ class BudManViewModel(BudManAppDataContext_Binding, Model_Binding): # future ABC
                 # Use the default BDM_CONFIG object as a config_object 
                 self._BDM_STORE_loaded = False
             # Now to create the model and initialize it.
-            model : BudgetDomainModel = BudgetDomainModel(bdm_config).bdm_initialize()
+            model : BudgetDomainModel = BudgetDomainModel(bdmc).bdm_initialize()
             if not model.bdm_initialized: 
                 raise ValueError("BudgetModel is not initialized.")
             logger.debug(f"Complete: {p3u.stop_timer(st)}")

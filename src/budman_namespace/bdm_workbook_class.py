@@ -21,6 +21,13 @@ from budman_namespace.design_language_namespace import (P1, P2, P3, P4, P5, P6, 
 #region Globals and Constants
 logger = logging.getLogger(__name__)
 ID_SEPARATOR = "|"
+BDMWORKBOOK_SCHEMA_VERSION = "1.3.0"
+# Schema History:
+#  1.0.0 - 06/19/2025 - Initial version with basic attributes.   
+#  1.1.0 - 07/06/2025 - added wb_type, wb_content attributes.
+#  1.2.0 - 07/26/2025 - added wb_last_error attribute.
+#  1.3.0 - 08/04/2025 - Added wf_folder_url attribute, added wb_schema_version 
+#                       and tracking schema changes.
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
@@ -42,16 +49,18 @@ class BDMWorkbook:
     wb_name : str = None
     wb_filename : str = None
     wb_filetype : str = None #Optional[str] = "not_set"
-    wb_type : str = field(default=bdm.WB_TYPE_UNKNOWN)
+    wb_type : str = field(default=bdm.WB_TYPE_UNKNOWN) # added 07/06/2025
     wb_url : str = None
     fi_key: str = None
     wf_key: str = None
     wf_purpose: str = None
-    wf_folder_id: str = None
+    # wf_folder_id: str = None # Removed 08/04/2025, added wf_folder_url at that time.
+    wf_folder_url: str = None
     wf_folder: str = None
     wb_loaded : bool = False
-    wb_content: bdm.WORKBOOK_CONTENT_TYPE = None
-    wb_last_error: Optional[str] = None
+    wb_content: bdm.WORKBOOK_CONTENT_TYPE = None  # added 07/06/2025
+    wb_last_error: Optional[str] = None  # added 07/26/2025
+    wb_schema_version: str = BDMWORKBOOK_SCHEMA_VERSION # added 08/04/2025
     #endregion dataclass object attributes
     # ------------------------------------------------------------------------ +
     #region __getitem__() and __setitem__() methods
@@ -71,7 +80,8 @@ class BDMWorkbook:
         elif hasattr(self, key):
             setattr(self, key, value)
         else:
-            raise KeyError(f"{key} is not a valid property or attribute of BDMWorkbook")    #endregion __getitem__() and __setitem__() methods
+            raise KeyError(f"{key} is not a valid property or attribute of BDMWorkbook")    
+    #endregion __getitem__() and __setitem__() methods
     # ------------------------------------------------------------------------ +
     #region internal methods: __repr__
     def __repr__(self) -> str:
@@ -110,6 +120,28 @@ class BDMWorkbook:
     # ------------------------------------------------------------------------ +
 
     # ------------------------------------------------------------------------ +
+    #region BDMWorkbook class methods
+    @classmethod
+    def check_schema(cls, wb_data: dict[str, Any]) -> Dict[str, str]:
+        """Check wb_data attributes as suitable to construct BDMWorkbook(**wb_data).
+        
+        As the schema evolves, this method is to help older persistent data be
+        converted to recent schema versions. It checks for additions, deletions, 
+        adjustments in the attributes and values of the dataclass.
+        """
+        p3u.is_not_obj_of_type("wb_data", wb_data, dict, raise_error=True)
+        copy = wb_data.copy()
+        if "wf_folder_id" in copy:
+            del copy["wf_folder_id"]
+        if "wb_schema_version" not in copy:
+            copy["wb_schema_version"] = BDMWORKBOOK_SCHEMA_VERSION
+        if "wf_folder_url" not in copy:
+            copy["wf_folder_url"] = None
+        return copy
+    #endregion BDMWorkbook class methods
+    # ------------------------------------------------------------------------ +
+
+    # ------------------------------------------------------------------------ +
     #region BDMWorkbook instance methods
     # ------------------------------------------------------------------------ +
     #region wb_index_display_str
@@ -119,7 +151,7 @@ class BDMWorkbook:
         #{P2}{FI_WORKBOOK_DATA_COLLECTION}: {wdc_count}\n"
         #{P4}{WB_INDEX:8}{P2}{WB_ID:50}{P2}{WB_CONTENT:30}{P2}{WB_TYPE:15}{P2}{WB_TYPE:15}{P2}{WF_KEY:15}{P2}{WF_PURPOSE:10}{P2}\n
         #
-        check = self.check_url()
+        check = self.check_wb_url()
         wb_status: str = "found"
         if not check:
             wb_status = "not found"
@@ -136,7 +168,7 @@ class BDMWorkbook:
     def wb_info_display_str(self) -> str:
         """ Return a string representation of basic BDMWorkbook info. """
         # format: {WB_ID:50}{P2}{WB_CONTENT:30}{P2}{WB_TYPE:15}{P2}{WB_TYPE:15}{P2}{WF_KEY:15}{P2}{WF_PURPOSE:10}{P2}\n
-        check = self.check_url()
+        check = self.check_wb_url()
         wb_status: str = "found"
         if not check:
             wb_status = "not found"
@@ -177,7 +209,7 @@ class BDMWorkbook:
         """Return a display string representation of the wb_content status."""
         try:
             wb_status: str = ""
-            check = self.check_url()
+            check = self.check_wb_url()
             if not check:
                 wb_status = f"not found at URL:'{self.wb_url}'"
             elif self.wb_loaded and self.wb_content is not None:
@@ -221,8 +253,8 @@ class BDMWorkbook:
             return False
     #endregion check_url
     # ------------------------------------------------------------------------ +
-    #region check_url()
-    def check_url(self) -> bool:
+    #region check_wb_url()
+    def check_wb_url(self) -> bool:
         """ Check if the workbook URL is valid. """
         try:
             if not self.wb_url:
@@ -234,7 +266,22 @@ class BDMWorkbook:
         except Exception as e:
             logger.error(f"Error checking URL '{self.wb_url}': {p3u.exc_err_msg(e)}")
             return False
-    #endregion check_url
+    #endregion check_wb_url
+    # ------------------------------------------------------------------------ +
+    #region check_wb_url()
+    def check_wb_url(self) -> bool:
+        """ Check if the workbook URL is valid. """
+        try:
+            if not self.wb_url:
+                return False
+            wb_path = Path().from_uri(self.wb_url)
+            if not wb_path.exists():
+                return False
+            return True
+        except Exception as e:
+            logger.error(f"Error checking URL '{self.wb_url}': {p3u.exc_err_msg(e)}")
+            return False
+    #endregion check_wb_url
     # ------------------------------------------------------------------------ +
     #region determine_wb_type
     def determine_wb_type(self, wb_index:int=-1) -> str:

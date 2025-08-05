@@ -388,7 +388,7 @@ class BudManAppDataContext(BudManAppDataContext_Base):
             self.dc_BDM_STORE = dict() if self.dc_BDM_STORE is None else self.dc_BDM_STORE
             # Update DC values saved in BDM_STORE.BDM_DATA_CONTEXT.
             bdms = self.dc_BDM_STORE
-            bdm_store_dc = bdms.get(BDM_DATA_CONTEXT, {})
+            bdm_store_dc = getattr(bdms,BDM_DATA_CONTEXT, {})
             self._dc_FI_KEY = bdm_store_dc.get(DC_FI_KEY, None)
             self._dc_WF_KEY = bdm_store_dc.get(DC_WF_KEY, None)
             self._dc_WF_PURPOSE = bdm_store_dc.get(DC_WF_PURPOSE, None)

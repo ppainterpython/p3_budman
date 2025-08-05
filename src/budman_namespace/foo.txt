@@ -1,0 +1,755 @@
+commit f8376b00f3f10c967ce2d0ae42556606493163df
+Author: ppainter1958 <ppainter1958@gmail.com>
+Date:   Sun Aug 3 22:30:51 2025 -0500
+
+    checkpoint
+
+diff --git a/src/budman_namespace/bdm_workbook_class.py b/src/budman_namespace/bdm_workbook_class.py
+index a6a5752..048db0e 100644
+--- a/src/budman_namespace/bdm_workbook_class.py
++++ b/src/budman_namespace/bdm_workbook_class.py
+@@ -50,7 +50,7 @@ class BDMWorkbook:
+     wf_folder_id: str = None
+     wf_folder: str = None
+     wb_loaded : bool = False
+-    wb_content: bdm.WORKBOOK_CONTENT = None
++    wb_content: bdm.WORKBOOK_CONTENT_TYPE = None
+     wb_last_error: Optional[str] = None
+     #endregion dataclass object attributes
+     # ------------------------------------------------------------------------ +
+
+commit 308d51d3c30e53d4b9cc8333c0a5952836d9cd74
+Author: ppainter1958 <ppainter1958@gmail.com>
+Date:   Sat Jul 26 00:22:23 2025 -0500
+
+    did some refactoring of DC, trying to the model more in budget_domain_model_data_context
+
+diff --git a/src/budman_namespace/bdm_workbook_class.py b/src/budman_namespace/bdm_workbook_class.py
+index 5c6fe9e..a6a5752 100644
+--- a/src/budman_namespace/bdm_workbook_class.py
++++ b/src/budman_namespace/bdm_workbook_class.py
+@@ -1,9 +1,7 @@
+ # ---------------------------------------------------------------------------- +
+-#region workbook_object.py module
+-""" workbook_object.py WorkbookObject class implementation.
+-
+-"""
+-#endregion budget_domain_model.py module
++#region bdm_workbook_class.py module
++""" bdm_workbook_class.py BDMWorkbook class implementation."""
++#endregion bdm_workbook_class.py module
+ # ---------------------------------------------------------------------------- +
+ #region Imports
+ # python standard library modules and packages
+@@ -53,8 +51,28 @@ class BDMWorkbook:
+     wf_folder: str = None
+     wb_loaded : bool = False
+     wb_content: bdm.WORKBOOK_CONTENT = None
++    wb_last_error: Optional[str] = None
+     #endregion dataclass object attributes
+     # ------------------------------------------------------------------------ +
++    #region __getitem__() and __setitem__() methods
++    def __getitem__(self, key: str):
++        # Try to get a property or attribute by name
++        if hasattr(self.__class__, key) and isinstance(getattr(self.__class__, key), property):
++            return getattr(self, key)
++        elif hasattr(self, key):
++            return getattr(self, key)
++        else:
++            raise KeyError(f"{key} is not a valid property or attribute of BDMWorkbook")
++
++    def __setitem__(self, key: str, value):
++        # Try to set a property or attribute by name
++        if hasattr(self.__class__, key) and isinstance(getattr(self.__class__, key), property):
++            setattr(self, key, value)
++        elif hasattr(self, key):
++            setattr(self, key, value)
++        else:
++            raise KeyError(f"{key} is not a valid property or attribute of BDMWorkbook")    #endregion __getitem__() and __setitem__() methods
++    # ------------------------------------------------------------------------ +
+     #region internal methods: __repr__
+     def __repr__(self) -> str:
+         """BDMWorkbook.__repr__() method."""
+@@ -94,24 +112,6 @@ class BDMWorkbook:
+     # ------------------------------------------------------------------------ +
+     #region BDMWorkbook instance methods
+     # ------------------------------------------------------------------------ +
+-    #region determine_wb_type
+-    def determine_wb_type(self, wb_index:int=-1) -> str:
+-        """ Determine the wb_type based on the filename or set unknown. """
+-        abs_path: Path = self.abs_path()
+-        if abs_path is None:
+-            logger.error(f"BDMWorkbook: {self.wb_id} has no abs_path.")
+-            self.wb_type = bdm.WB_TYPE_UNKNOWN
+-            return self.wb_type
+-        fn = abs_path.stem
+-        for tn in bdm.VALID_WB_TYPE_VALUES:
+-            if tn in fn.lower():
+-                self.wb_type = tn
+-                return self.wb_type
+-        self.wb_type = bdm.WB_TYPE_UNKNOWN
+-        logger.warning(f"BDMWorkbook: {self.wb_id} has unknown wb_type")
+-        return self.wb_type
+-    #endregion determine_wb_type
+-    # ------------------------------------------------------------------------ +
+     #region wb_index_display_str
+     def wb_index_display_str(self, wb_index:int=-1) -> str:
+         """ Return an indexed string representation of the BDMWorkbook object. """
+@@ -149,36 +149,48 @@ class BDMWorkbook:
+     #endregion wb_info_display_str
+     # ------------------------------------------------------------------------ +
+     #region wb_info_show_str
+-    def wb_info_show_str(self) -> str:
+-        """ Return a string representation of basic BDMWorkbook info. """
++    def wb_info_dict(self,wb_index:int,hdr:bool=False) -> Union[Dict, List]:
++        """ Return a dictionary representation of basic BDMWorkbook info. """
+         # fr += f"\n{P2}{FI_KEY:10} {WB_INDEX:6} {WB_ID:50} {WB_TYPE:15} "
+         # fr += f"{WB_FILETYPE:6} {WF_KEY:20} {WF_PURPOSE:10} {WF_FOLDER:20} "
+         # fr += f" {WB_CONTENT:30}"
+-        check = self.check_url()
+-        wb_status: str = "found"
+-        if not check:
+-            wb_status = "not found"
+-        elif self.wb_loaded:
+-            wb_status = self.get_wb_content_repr()
+-        else:
+-            wb_status = "unloaded"
+-        s = f"{self.fi_key:20} {str(self.wb_id):50}{P2}{str(self.wb_type):15}{P2}{wb_status:30}{P2}"
+-        return s
++        if hdr:
++            return list(bdm.FI_KEY, bdm.WB_INDEX, bdm.WB_ID, bdm.WB_TYPE,
++                       bdm.WB_FILETYPE, bdm.WF_KEY, bdm.WF_PURPOSE,
++                       bdm.WF_FOLDER, bdm.WB_CONTENT)
++        wb_status = self.get_wb_content_repr()
++        return {
++            bdm.FI_KEY: self.fi_key,
++            bdm.WB_INDEX: wb_index,
++            bdm.WB_ID: self.wb_id,
++            bdm.WB_TYPE: self.wb_type,
++            bdm.WB_FILETYPE: self.wb_filetype,
++            bdm.WF_KEY: self.wf_key,
++            bdm.WF_PURPOSE: self.wf_purpose,
++            bdm.WF_FOLDER: self.wf_folder,
++            bdm.WB_CONTENT: self.get_wb_content_repr()
++        }
+     #endregion wb_info_show_str
+     # ------------------------------------------------------------------------ +
+     #region get_wb_content_repr() method
+     def get_wb_content_repr(self) -> str: 
+-        """Return a display string representation fo the wb_content."""
++        """Return a display string representation of the wb_content status."""
+         try:
+-            if self.wb_content is None:
+-                return "n/a"
+-            d = p3u.dscr(self.wb_content)
+-            if isinstance(self.wb_content, Workbook):
+-                return f"{self.wb_content!r}"
+-            elif isinstance(self.wb_content, dict):
+-                return f"{d}[{len(self.wb_content)} items]"
++            wb_status: str = ""
++            check = self.check_url()
++            if not check:
++                wb_status = f"not found at URL:'{self.wb_url}'"
++            elif self.wb_loaded and self.wb_content is not None:
++                d = p3u.dscr(self.wb_content)
++                if isinstance(self.wb_content, Workbook):
++                    wb_status = f"{self.wb_content!r}"
++                elif isinstance(self.wb_content, dict):
++                    wb_status = f"{d}[{len(self.wb_content)} items]"
++                else:
++                    wb_status = f"{d}"
+             else:
+-                return f"{d}"
++                wb_status = "unloaded"
++            return wb_status
+         except Exception as e:
+             m = p3u.exc_err_msg(e)
+             logger.error(m)
+@@ -224,5 +236,23 @@ class BDMWorkbook:
+             return False
+     #endregion check_url
+     # ------------------------------------------------------------------------ +
++    #region determine_wb_type
++    def determine_wb_type(self, wb_index:int=-1) -> str:
++        """ Determine the wb_type based on the filename or set unknown. """
++        abs_path: Path = self.abs_path()
++        if abs_path is None:
++            logger.error(f"BDMWorkbook: {self.wb_id} has no abs_path.")
++            self.wb_type = bdm.WB_TYPE_UNKNOWN
++            return self.wb_type
++        fn = abs_path.stem
++        for tn in bdm.VALID_WB_TYPE_VALUES:
++            if tn in fn.lower():
++                self.wb_type = tn
++                return self.wb_type
++        self.wb_type = bdm.WB_TYPE_UNKNOWN
++        logger.warning(f"BDMWorkbook: {self.wb_id} has unknown wb_type")
++        return self.wb_type
++    #endregion determine_wb_type
++    # ------------------------------------------------------------------------ +
+     #endregion BDMWorkbook instance methods
+     # ------------------------------------------------------------------------ +
+
+commit b62f9ab1b792e5773b8bcd1a623272b6323b1206
+Author: ppainter1958 <ppainter1958@gmail.com>
+Date:   Tue Jul 22 00:43:32 2025 -0500
+
+    cp: show wb 0 1 2 -t
+
+diff --git a/src/budman_namespace/bdm_workbook_class.py b/src/budman_namespace/bdm_workbook_class.py
+index e97c49f..5c6fe9e 100644
+--- a/src/budman_namespace/bdm_workbook_class.py
++++ b/src/budman_namespace/bdm_workbook_class.py
+@@ -148,6 +148,24 @@ class BDMWorkbook:
+         return s
+     #endregion wb_info_display_str
+     # ------------------------------------------------------------------------ +
++    #region wb_info_show_str
++    def wb_info_show_str(self) -> str:
++        """ Return a string representation of basic BDMWorkbook info. """
++        # fr += f"\n{P2}{FI_KEY:10} {WB_INDEX:6} {WB_ID:50} {WB_TYPE:15} "
++        # fr += f"{WB_FILETYPE:6} {WF_KEY:20} {WF_PURPOSE:10} {WF_FOLDER:20} "
++        # fr += f" {WB_CONTENT:30}"
++        check = self.check_url()
++        wb_status: str = "found"
++        if not check:
++            wb_status = "not found"
++        elif self.wb_loaded:
++            wb_status = self.get_wb_content_repr()
++        else:
++            wb_status = "unloaded"
++        s = f"{self.fi_key:20} {str(self.wb_id):50}{P2}{str(self.wb_type):15}{P2}{wb_status:30}{P2}"
++        return s
++    #endregion wb_info_show_str
++    # ------------------------------------------------------------------------ +
+     #region get_wb_content_repr() method
+     def get_wb_content_repr(self) -> str: 
+         """Return a display string representation fo the wb_content."""
+
+commit 795374681fd930252173cc5a686571f70b90fd43
+Author: ppainter1958 <ppainter1958@gmail.com>
+Date:   Sun Jul 20 19:24:04 2025 -0500
+
+    cp: selected wb input processing
+
+diff --git a/src/budman_namespace/bdm_workbook_class.py b/src/budman_namespace/bdm_workbook_class.py
+index fa5a1a6..e97c49f 100644
+--- a/src/budman_namespace/bdm_workbook_class.py
++++ b/src/budman_namespace/bdm_workbook_class.py
+@@ -17,16 +17,12 @@ import p3_utils as p3u, pyjson5, p3logging as p3l
+ from openpyxl import Workbook, load_workbook
+ # local modules and packages
+ import budman_namespace.design_language_namespace as bdm
++from budman_namespace.design_language_namespace import (P1, P2, P3, P4, P5, P6, P7, P8, P9, P10)
+ #endregion Imports
+ # ---------------------------------------------------------------------------- +
+ #region Globals and Constants
+ logger = logging.getLogger(__name__)
+ ID_SEPARATOR = "|"
+-P2 = "  "  # 2 space padding
+-P4 = "    "  # 4 space padding
+-P6 = "      "  # 6 space padding
+-P8 = "        "  # 8 space padding
+-P10 = "          "  # 10 space padding
+ # ---------------------------------------------------------------------------- +
+ #endregion Globals and Constants
+ # ---------------------------------------------------------------------------- +
+@@ -132,7 +128,7 @@ class BDMWorkbook:
+         else:
+             wb_status = "unloaded"
+         wb_info = self.wb_info_display_str()
+-        s = f"{P6}{str(wb_index):>2}{P6}{str(wb_info):150}"
++        s = f"{P6}{str(wb_index):>4}{P4}{str(wb_info):150}"
+         return s
+     #endregion wb_index_display_str
+     # ------------------------------------------------------------------------ +
+
+commit ab65bb0d56cc233f15ed26bbb7f6408701eb2ebf
+Author: ppainter1958 <ppainter1958@gmail.com>
+Date:   Fri Jul 11 00:56:51 2025 -0500
+
+    refactored bsm to 3 layers, multiple filetypes based wb_type,
+
+diff --git a/src/budman_namespace/bdm_workbook_class.py b/src/budman_namespace/bdm_workbook_class.py
+index 6d6196b..fa5a1a6 100644
+--- a/src/budman_namespace/bdm_workbook_class.py
++++ b/src/budman_namespace/bdm_workbook_class.py
+@@ -56,7 +56,7 @@ class BDMWorkbook:
+     wf_folder_id: str = None
+     wf_folder: str = None
+     wb_loaded : bool = False
+-    wb_content: Union[Workbook, Dict, str] = None
++    wb_content: bdm.WORKBOOK_CONTENT = None
+     #endregion dataclass object attributes
+     # ------------------------------------------------------------------------ +
+     #region internal methods: __repr__
+
+commit eccde3004d91ad7798db282dcf2e0dde56226bd1
+Author: ppainter1958 <ppainter1958@gmail.com>
+Date:   Sun Jul 6 18:57:12 2025 -0500
+
+    cp: eliminate the workflow_data_collection, wip
+
+diff --git a/src/budman_namespace/bdm_workbook_class.py b/src/budman_namespace/bdm_workbook_class.py
+index fe6284d..6d6196b 100644
+--- a/src/budman_namespace/bdm_workbook_class.py
++++ b/src/budman_namespace/bdm_workbook_class.py
+@@ -11,7 +11,7 @@ from dataclasses import dataclass, asdict, field
+ import logging
+ from urllib.parse import urlparse, unquote
+ from pathlib import Path
+-from typing import Any, Optional, Union, List
++from typing import Any, Optional, Union, List, Dict
+ # third-party modules and packages
+ import p3_utils as p3u, pyjson5, p3logging as p3l
+ from openpyxl import Workbook, load_workbook
+@@ -48,7 +48,7 @@ class BDMWorkbook:
+     wb_name : str = None
+     wb_filename : str = None
+     wb_filetype : str = None #Optional[str] = "not_set"
+-    wb_type : str = field(default="not-set")
++    wb_type : str = field(default=bdm.WB_TYPE_UNKNOWN)
+     wb_url : str = None
+     fi_key: str = None
+     wf_key: str = None
+@@ -56,6 +56,7 @@ class BDMWorkbook:
+     wf_folder_id: str = None
+     wf_folder: str = None
+     wb_loaded : bool = False
++    wb_content: Union[Workbook, Dict, str] = None
+     #endregion dataclass object attributes
+     # ------------------------------------------------------------------------ +
+     #region internal methods: __repr__
+@@ -67,6 +68,12 @@ class BDMWorkbook:
+                 f"wb_loaded={self.wb_loaded}>")
+     #endregion internal methods: __repr__
+     # ------------------------------------------------------------------------ +
++    #region internal methods: to_dict(self)
++    def to_dict(self) -> dict[str, Any]:
++        """Convert the BDMWorkbook instance to a dictionary."""
++        return asdict(self)
++    #endregion internal methods: to_dict(self)
++    # ------------------------------------------------------------------------ +
+     #region BDMWorkbook properties
+     @property
+     def wb_id(self) -> str:
+@@ -91,26 +98,78 @@ class BDMWorkbook:
+     # ------------------------------------------------------------------------ +
+     #region BDMWorkbook instance methods
+     # ------------------------------------------------------------------------ +
+-    #region display_str
+-    def display_str(self, wb_index:int=-1,wb_content:str="not loaded") -> str:
+-        """ Return a string representation of the BDMWorkbook object. """
++    #region determine_wb_type
++    def determine_wb_type(self, wb_index:int=-1) -> str:
++        """ Determine the wb_type based on the filename or set unknown. """
++        abs_path: Path = self.abs_path()
++        if abs_path is None:
++            logger.error(f"BDMWorkbook: {self.wb_id} has no abs_path.")
++            self.wb_type = bdm.WB_TYPE_UNKNOWN
++            return self.wb_type
++        fn = abs_path.stem
++        for tn in bdm.VALID_WB_TYPE_VALUES:
++            if tn in fn.lower():
++                self.wb_type = tn
++                return self.wb_type
++        self.wb_type = bdm.WB_TYPE_UNKNOWN
++        logger.warning(f"BDMWorkbook: {self.wb_id} has unknown wb_type")
++        return self.wb_type
++    #endregion determine_wb_type
++    # ------------------------------------------------------------------------ +
++    #region wb_index_display_str
++    def wb_index_display_str(self, wb_index:int=-1) -> str:
++        """ Return an indexed string representation of the BDMWorkbook object. """
+         # Test output layout
+         #{P2}{FI_WORKBOOK_DATA_COLLECTION}: {wdc_count}\n"
+-        #{P4}{WB_INDEX:8}{P2}{WB_ID:50}{P2}wb_loaded{P2}{WB_CONTENT:30}{P2}{WB_TYPE:15}{P2}{WB_TYPE:15}{P2}{WF_KEY:15}{P2}{WF_PURPOSE:10}{P2}\n
++        #{P4}{WB_INDEX:8}{P2}{WB_ID:50}{P2}{WB_CONTENT:30}{P2}{WB_TYPE:15}{P2}{WB_TYPE:15}{P2}{WF_KEY:15}{P2}{WF_PURPOSE:10}{P2}\n
+         #
+         check = self.check_url()
+         wb_status: str = "found"
+         if not check:
+             wb_status = "not found"
+         elif self.wb_loaded:
+-            wb_status = "loaded"
++            wb_status = self.get_wb_content_repr()
+         else:
+             wb_status = "unloaded"
+-        s = f"{P6}{str(wb_index):>2}{P6}{str(self.wb_id):50}{P2}"
+-        s += f"{str(self.wb_type):15}{P2}{str(wb_status):^9}"
+-        s += f"{P2}{wb_content:30}{P2}"
++        wb_info = self.wb_info_display_str()
++        s = f"{P6}{str(wb_index):>2}{P6}{str(wb_info):150}"
+         return s
+-    #endregion display_str
++    #endregion wb_index_display_str
++    # ------------------------------------------------------------------------ +
++    #region wb_info_display_str
++    def wb_info_display_str(self) -> str:
++        """ Return a string representation of basic BDMWorkbook info. """
++        # format: {WB_ID:50}{P2}{WB_CONTENT:30}{P2}{WB_TYPE:15}{P2}{WB_TYPE:15}{P2}{WF_KEY:15}{P2}{WF_PURPOSE:10}{P2}\n
++        check = self.check_url()
++        wb_status: str = "found"
++        if not check:
++            wb_status = "not found"
++        elif self.wb_loaded:
++            wb_status = self.get_wb_content_repr()
++        else:
++            wb_status = "unloaded"
++        s = f"{str(self.wb_id):50}{P2}{str(self.wb_type):15}{P2}{wb_status:30}{P2}"
++        return s
++    #endregion wb_info_display_str
++    # ------------------------------------------------------------------------ +
++    #region get_wb_content_repr() method
++    def get_wb_content_repr(self) -> str: 
++        """Return a display string representation fo the wb_content."""
++        try:
++            if self.wb_content is None:
++                return "n/a"
++            d = p3u.dscr(self.wb_content)
++            if isinstance(self.wb_content, Workbook):
++                return f"{self.wb_content!r}"
++            elif isinstance(self.wb_content, dict):
++                return f"{d}[{len(self.wb_content)} items]"
++            else:
++                return f"{d}"
++        except Exception as e:
++            m = p3u.exc_err_msg(e)
++            logger.error(m)
++            return False, m, None
++    #endregion get_wb_content_repr() method
+     # ------------------------------------------------------------------------ +
+     #region display_brief_str
+     def display_brief_str(self, wb_index:int=-1) -> str:
+
+commit 59c4e57f8501457aa114287a7d7c64ed0d2bd80d
+Author: ppainter1958 <ppainter1958@gmail.com>
+Date:   Sat Jul 5 21:34:15 2025 -0500
+
+    improving categorization rules
+
+diff --git a/src/budman_namespace/bdm_workbook_class.py b/src/budman_namespace/bdm_workbook_class.py
+index 05aaf4d..fe6284d 100644
+--- a/src/budman_namespace/bdm_workbook_class.py
++++ b/src/budman_namespace/bdm_workbook_class.py
+@@ -107,7 +107,7 @@ class BDMWorkbook:
+         else:
+             wb_status = "unloaded"
+         s = f"{P6}{str(wb_index):>2}{P6}{str(self.wb_id):50}{P2}"
+-        s += f"{str(self.wb_type):14}{P2}{str(wb_status):^9}"
++        s += f"{str(self.wb_type):15}{P2}{str(wb_status):^9}"
+         s += f"{P2}{wb_content:30}{P2}"
+         return s
+     #endregion display_str
+
+commit 0fbf0de8a4b7ca511fd3d580b83f9a76a285add0
+Author: ppainter1958 <ppainter1958@gmail.com>
+Date:   Fri Jul 4 23:54:51 2025 -0500
+
+    basic csv input to excel for new month bank txns
+
+diff --git a/src/budman_namespace/bdm_workbook_class.py b/src/budman_namespace/bdm_workbook_class.py
+index f78ae9c..05aaf4d 100644
+--- a/src/budman_namespace/bdm_workbook_class.py
++++ b/src/budman_namespace/bdm_workbook_class.py
+@@ -9,13 +9,14 @@
+ # python standard library modules and packages
+ from dataclasses import dataclass, asdict, field
+ import logging
++from urllib.parse import urlparse, unquote
+ from pathlib import Path
+ from typing import Any, Optional, Union, List
+ # third-party modules and packages
+ import p3_utils as p3u, pyjson5, p3logging as p3l
+ from openpyxl import Workbook, load_workbook
+ # local modules and packages
+-
++import budman_namespace.design_language_namespace as bdm
+ #endregion Imports
+ # ---------------------------------------------------------------------------- +
+ #region Globals and Constants
+@@ -119,6 +120,22 @@ class BDMWorkbook:
+         return s
+     #endregion display_brief_str
+     # ------------------------------------------------------------------------ +
++    #region abs_path()
++    def abs_path(self) -> Optional[Path]:
++        """ Return abs_path of wb_url. """
++        try:
++            if not self.wb_url:
++                return None
++            parsed_url = urlparse(self.wb_url)
++            if parsed_url.scheme != "file":
++                raise ValueError(f"URL scheme is not 'file': {parsed_url.scheme}")
++            file_path = Path.from_uri(self.wb_url)
++            return file_path
++        except Exception as e:
++            logger.error(f"Error checking URL '{self.wb_url}': {p3u.exc_err_msg(e)}")
++            return False
++    #endregion check_url
++    # ------------------------------------------------------------------------ +
+     #region check_url()
+     def check_url(self) -> bool:
+         """ Check if the workbook URL is valid. """
+
+commit 4f7f523a24c5b95d32ba08c8438bcec6a90c0c1d
+Author: ppainter1958 <ppainter1958@gmail.com>
+Date:   Wed Jul 2 23:31:01 2025 -0500
+
+    working on intake for csv_txns wb_type
+
+diff --git a/src/budman_namespace/bdm_workbook_class.py b/src/budman_namespace/bdm_workbook_class.py
+index ced6bb0..f78ae9c 100644
+--- a/src/budman_namespace/bdm_workbook_class.py
++++ b/src/budman_namespace/bdm_workbook_class.py
+@@ -97,8 +97,16 @@ class BDMWorkbook:
+         #{P2}{FI_WORKBOOK_DATA_COLLECTION}: {wdc_count}\n"
+         #{P4}{WB_INDEX:8}{P2}{WB_ID:50}{P2}wb_loaded{P2}{WB_CONTENT:30}{P2}{WB_TYPE:15}{P2}{WB_TYPE:15}{P2}{WF_KEY:15}{P2}{WF_PURPOSE:10}{P2}\n
+         #
++        check = self.check_url()
++        wb_status: str = "found"
++        if not check:
++            wb_status = "not found"
++        elif self.wb_loaded:
++            wb_status = "loaded"
++        else:
++            wb_status = "unloaded"
+         s = f"{P6}{str(wb_index):>2}{P6}{str(self.wb_id):50}{P2}"
+-        s += f"{str(self.wb_type):14}{P2}{str(self.wb_loaded):^9}"
++        s += f"{str(self.wb_type):14}{P2}{str(wb_status):^9}"
+         s += f"{P2}{wb_content:30}{P2}"
+         return s
+     #endregion display_str
+@@ -111,5 +119,20 @@ class BDMWorkbook:
+         return s
+     #endregion display_brief_str
+     # ------------------------------------------------------------------------ +
++    #region check_url()
++    def check_url(self) -> bool:
++        """ Check if the workbook URL is valid. """
++        try:
++            if not self.wb_url:
++                return False
++            wb_path = Path().from_uri(self.wb_url)
++            if not wb_path.exists():
++                return False
++            return True
++        except Exception as e:
++            logger.error(f"Error checking URL '{self.wb_url}': {p3u.exc_err_msg(e)}")
++            return False
++    #endregion check_url
++    # ------------------------------------------------------------------------ +
+     #endregion BDMWorkbook instance methods
+     # ------------------------------------------------------------------------ +
+
+commit 5cef23f30408b1b0b81703f9180e2c6c68a42d33
+Author: ppainter1958 <ppainter1958@gmail.com>
+Date:   Thu Jun 26 02:57:10 2025 -0500
+
+    enhanced workflow cat process and task handling
+
+diff --git a/src/budman_namespace/bdm_workbook_class.py b/src/budman_namespace/bdm_workbook_class.py
+index 9e1ab5f..ced6bb0 100644
+--- a/src/budman_namespace/bdm_workbook_class.py
++++ b/src/budman_namespace/bdm_workbook_class.py
+@@ -98,8 +98,8 @@ class BDMWorkbook:
+         #{P4}{WB_INDEX:8}{P2}{WB_ID:50}{P2}wb_loaded{P2}{WB_CONTENT:30}{P2}{WB_TYPE:15}{P2}{WB_TYPE:15}{P2}{WF_KEY:15}{P2}{WF_PURPOSE:10}{P2}\n
+         #
+         s = f"{P6}{str(wb_index):>2}{P6}{str(self.wb_id):50}{P2}"
+-        s += f"{str(self.wb_loaded):^9}{P2}{wb_content:30}{P2}"
+-        s += f"{str(self.wb_type):15}"
++        s += f"{str(self.wb_type):14}{P2}{str(self.wb_loaded):^9}"
++        s += f"{P2}{wb_content:30}{P2}"
+         return s
+     #endregion display_str
+     # ------------------------------------------------------------------------ +
+
+commit ea5e7dab6a30d6b9b0973c490a06f9225a85a0c7
+Author: ppainter1958 <ppainter1958@gmail.com>
+Date:   Wed Jun 25 23:53:53 2025 -0500
+
+    checkpoint -
+
+diff --git a/src/budman_namespace/bdm_workbook_class.py b/src/budman_namespace/bdm_workbook_class.py
+index f3cd308..9e1ab5f 100644
+--- a/src/budman_namespace/bdm_workbook_class.py
++++ b/src/budman_namespace/bdm_workbook_class.py
+@@ -113,7 +113,3 @@ class BDMWorkbook:
+     # ------------------------------------------------------------------------ +
+     #endregion BDMWorkbook instance methods
+     # ------------------------------------------------------------------------ +
+-
+-    # ------------------------------------------------------------------------ +
+-    #region    BDMWorkbook Class methods
+-    # ------------------------------------------------------------------------ +
+
+commit 31df7c74621fdf6b93117e27a01769072e245108
+Author: ppainter1958 <ppainter1958@gmail.com>
+Date:   Tue Jun 24 00:38:23 2025 -0500
+
+    checkpoint
+
+diff --git a/src/budman_namespace/bdm_workbook_class.py b/src/budman_namespace/bdm_workbook_class.py
+index 4b99f4a..f3cd308 100644
+--- a/src/budman_namespace/bdm_workbook_class.py
++++ b/src/budman_namespace/bdm_workbook_class.py
+@@ -91,20 +91,23 @@ class BDMWorkbook:
+     #region BDMWorkbook instance methods
+     # ------------------------------------------------------------------------ +
+     #region display_str
+-    def display_str(self, wb_index:int=-1) -> str:
++    def display_str(self, wb_index:int=-1,wb_content:str="not loaded") -> str:
+         """ Return a string representation of the BDMWorkbook object. """
+-        s = f"{P4}{str(wb_index):>4}{P4}{str(self.wb_type):15}{P2}"
+-        s += f"{str(self.wb_name):35}{P2}{str(self.wf_key):15}{P2}"
+-        s += f"{str(self.wf_purpose):10}{P2}{str(self.wf_folder_id):20}{P2}"
+-        s += f"{str(self.wf_folder):18}" #{P2}{str(self.wb_url):150}"
++        # Test output layout
++        #{P2}{FI_WORKBOOK_DATA_COLLECTION}: {wdc_count}\n"
++        #{P4}{WB_INDEX:8}{P2}{WB_ID:50}{P2}wb_loaded{P2}{WB_CONTENT:30}{P2}{WB_TYPE:15}{P2}{WB_TYPE:15}{P2}{WF_KEY:15}{P2}{WF_PURPOSE:10}{P2}\n
++        #
++        s = f"{P6}{str(wb_index):>2}{P6}{str(self.wb_id):50}{P2}"
++        s += f"{str(self.wb_loaded):^9}{P2}{wb_content:30}{P2}"
++        s += f"{str(self.wb_type):15}"
+         return s
+     #endregion display_str
+     # ------------------------------------------------------------------------ +
+     #region display_brief_str
+     def display_brief_str(self, wb_index:int=-1) -> str:
+         """ Return a string representation of the BDMWorkbook object. """
+-        s = f"{P4}{str(wb_index):^6}{P2}{str(self.wb_type):15}{P2}"
+-        s += f"{str(self.wb_name):35}"
++        s = f"{P4}{str(wb_index):^6}{P4}{str(self.wb_name):35}{P2}"
++        s += f"{str(self.wb_type):15}{P2}"
+         return s
+     #endregion display_brief_str
+     # ------------------------------------------------------------------------ +
+
+commit 0badbf37c54da769607e5c979ab0ca67880fc76c
+Author: ppainter1958 <ppainter1958@gmail.com>
+Date:   Thu Jun 19 02:54:30 2025 -0500
+
+    checkpoint, debugging refactor with circular dep
+
+diff --git a/src/budman_namespace/bdm_workbook_class.py b/src/budman_namespace/bdm_workbook_class.py
+new file mode 100644
+index 0000000..4b99f4a
+--- /dev/null
++++ b/src/budman_namespace/bdm_workbook_class.py
+@@ -0,0 +1,116 @@
++# ---------------------------------------------------------------------------- +
++#region workbook_object.py module
++""" workbook_object.py WorkbookObject class implementation.
++
++"""
++#endregion budget_domain_model.py module
++# ---------------------------------------------------------------------------- +
++#region Imports
++# python standard library modules and packages
++from dataclasses import dataclass, asdict, field
++import logging
++from pathlib import Path
++from typing import Any, Optional, Union, List
++# third-party modules and packages
++import p3_utils as p3u, pyjson5, p3logging as p3l
++from openpyxl import Workbook, load_workbook
++# local modules and packages
++
++#endregion Imports
++# ---------------------------------------------------------------------------- +
++#region Globals and Constants
++logger = logging.getLogger(__name__)
++ID_SEPARATOR = "|"
++P2 = "  "  # 2 space padding
++P4 = "    "  # 4 space padding
++P6 = "      "  # 6 space padding
++P8 = "        "  # 8 space padding
++P10 = "          "  # 10 space padding
++# ---------------------------------------------------------------------------- +
++#endregion Globals and Constants
++# ---------------------------------------------------------------------------- +
++@dataclass
++class BDMWorkbook:
++    #region    doc string
++    """ BDMWorkbook is basic wrapper around file-based data objects. It 
++    holds the metadata attributes for a particular workbook. BDMWorkbook objects
++    are serialized for storage. A url is used to identify the workbook, and
++    the workbook is loaded from the storage system when needed.
++
++    Attributes:
++        wb_id (str): Unique identifier for the workbook. It is the wf_folder 
++        value appended with wb_name with '|' as a separator. 
++    """
++    #endregion doc string
++    # ------------------------------------------------------------------------ +
++    # region   dataclass object attributes
++    wb_name : str = None
++    wb_filename : str = None
++    wb_filetype : str = None #Optional[str] = "not_set"
++    wb_type : str = field(default="not-set")
++    wb_url : str = None
++    fi_key: str = None
++    wf_key: str = None
++    wf_purpose: str = None
++    wf_folder_id: str = None
++    wf_folder: str = None
++    wb_loaded : bool = False
++    #endregion dataclass object attributes
++    # ------------------------------------------------------------------------ +
++    #region internal methods: __repr__
++    def __repr__(self) -> str:
++        """BDMWorkbook.__repr__() method."""
++        return (f"<BDMWorkbook[{hex(id(self))}]: "
++                f"wb_id={self.wb_id!r}, "
++                f"wb_type={self.wb_type!r}, "
++                f"wb_loaded={self.wb_loaded}>")
++    #endregion internal methods: __repr__
++    # ------------------------------------------------------------------------ +
++    #region BDMWorkbook properties
++    @property
++    def wb_id(self) -> str:
++        """ combine wf_folder ID_SEPARATOR wb_name. """
++        return f"{self.wf_folder}{ID_SEPARATOR}{self.wb_name}"
++    @wb_id.setter
++    def wb_id(self, value: str) -> None:
++        """ set the wb_name. """
++        raise NotImplementedError("BDMWorkbook.wb_id is a read-only property, "
++                                  "it is derived from wf_folder and wb_name.")
++    @property
++    def name(self) -> str:
++        """ name property returns the wb_name. """
++        return self.wb_name
++    @name.setter
++    def name(self, value: str) -> None:
++        """ set the wb_name. """
++        self.wb_name = value
++    #endregion BDMWorkbook properties
++    # ------------------------------------------------------------------------ +
++
++    # ------------------------------------------------------------------------ +
++    #region BDMWorkbook instance methods
++    # ------------------------------------------------------------------------ +
++    #region display_str
++    def display_str(self, wb_index:int=-1) -> str:
++        """ Return a string representation of the BDMWorkbook object. """
++        s = f"{P4}{str(wb_index):>4}{P4}{str(self.wb_type):15}{P2}"
++        s += f"{str(self.wb_name):35}{P2}{str(self.wf_key):15}{P2}"
++        s += f"{str(self.wf_purpose):10}{P2}{str(self.wf_folder_id):20}{P2}"
++        s += f"{str(self.wf_folder):18}" #{P2}{str(self.wb_url):150}"
++        return s
++    #endregion display_str
++    # ------------------------------------------------------------------------ +
++    #region display_brief_str
++    def display_brief_str(self, wb_index:int=-1) -> str:
++        """ Return a string representation of the BDMWorkbook object. """
++        s = f"{P4}{str(wb_index):^6}{P2}{str(self.wb_type):15}{P2}"
++        s += f"{str(self.wb_name):35}"
++        return s
++    #endregion display_brief_str
++    # ------------------------------------------------------------------------ +
++    #endregion BDMWorkbook instance methods
++    # ------------------------------------------------------------------------ +
++
++    # ------------------------------------------------------------------------ +
++    #region    BDMWorkbook Class methods
++    # ------------------------------------------------------------------------ +

@@ -377,6 +377,7 @@ def extract_dc_wb_tree(bdm_DC: BudManAppDataContext_Base) -> Tree:
             tree.create_node(f"{wf_key} (wf_key)", x_key, parent=f"{fi_key}")
             tree.create_node(f"{wf_obj[bdm.WF_INPUT_FOLDER]} (wf_input)", 
                              f"{x_key}_input", parent=x_key)
+            fi_obj = "foo"  # temp, incomplete
             wb_names = workbook_names(fi_obj, wf_key, bdm.WF_INPUT_FOLDER)
             for wb_name in wb_names:
                 tree.create_node(f"{wb_name} (wb_name)", 
