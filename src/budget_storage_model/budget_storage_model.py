@@ -312,7 +312,7 @@ def bsm_WORKBOOK_CONTENT_file_load(wb_content_abs_path:Path,
         raise
 #endregion bsm_WORKBOOK_CONTENT_file_load(wb_abs_path : str = None) -> Any
 # ---------------------------------------------------------------------------- +
-#region    bsm_WORKBOOK_content_file_save(wb:Workbook,wb_abs_path : str = None) -> Any
+#region    bsm_WORKBOOK_CONTENT_file_save(wb:Workbook,wb_abs_path : str = None) -> Any
 def bsm_WORKBOOK_CONTENT_file_save(wb_content:bdm.WORKBOOK_CONTENT_TYPE,
                                    wb_content_abs_path:Path, 
                                    wb_type: str,
@@ -380,36 +380,9 @@ def bsm_WORKBOOK_CONTENT_file_save(wb_content:bdm.WORKBOOK_CONTENT_TYPE,
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise    
-#endregion bsm_WORKBOOK_content_file_save(wb_abs_path : str = None) -> Any
+#endregion bsm_WORKBOOK_CONTENT_file_save(wb_abs_path : str = None) -> Any
 # ---------------------------------------------------------------------------- +
-#region    bsm_WORKBOOK_content_file_save1(wb:Workbook,wb_abs_path : str = None) -> Any
-def bsm_WORKBOOK_content_file_save1(wb_content:Workbook,wb_path:Path) -> None:
-    """Save a transaction file for a Financial Institution Workflow.
-
-    Storage Model: This is a Model function, storing an excel workbook
-    file to storage.
-
-    Args:
-        wb (Workbook): The workbook to save.
-        wb_path (Path): The path of the workbook file to save.
-
-    """
-    st = time.time()
-    try:
-        # TODO: add logic to for workbook open in excel, work around.
-        logger.info("Saving wb: ...")
-        # Make a backup copy of the csv file if it exists.
-        if wb_path.exists():
-            p3u.copy_backup(wb_path, Path("backup"))
-        wb_content.save(filename=wb_path)
-        logger.info(f"BizEVENT: Saved excel workbook to '{wb_path}'")
-        return
-    except Exception as e:
-        logger.error(p3u.exc_err_msg(e))
-        raise
-#endregion bsm_WORKBOOK_content_file_save1(wb_abs_path : str = None) -> Any
-# ---------------------------------------------------------------------------- +
-#region    bsm_BDM_STORE_file_save() function
+#region    json_DATA_OBJECT_file_save() function
 def json_DATA_OBJECT_file_save(json_content:bdm.DATA_OBJECT_TYPE, json_abs_path:Path) -> None:
     """Save a DATA_OBJECT to a json file."""
     try:
@@ -434,7 +407,7 @@ def json_DATA_OBJECT_file_save(json_content:bdm.DATA_OBJECT_TYPE, json_abs_path:
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
-#endregion bsm_BDM_STORE_file_save() function
+#endregion json_DATA_OBJECT_file_save() function
 # ---------------------------------------------------------------------------- +
 #region    BDM_STORE functions
 #region    bsm_BDM_STORE_url_get() function
@@ -572,34 +545,6 @@ def bsm_BDM_STORE_file_save(bdm_store:bdm.BDM_STORE_TYPE, bdms_path:Path) -> Non
         logger.error(p3u.exc_err_msg(e))
         raise
 #endregion bsm_BDM_STORE_file_save() function
-# ---------------------------------------------------------------------------- +
-#region    bsm_BDM_STORE_new module
-def bsm_BDM_STORE_new(bdms_url : str = None) -> str:
-    """Create a new budget storage model file."""
-    try:
-        st = p3u.start_timer()
-        # bmt = BDMConfig(default=True)
-        # filename = name or bmt.bdm_filename
-        # folder = folder or bmt.bdm_folder
-        # filetype = filetype or bmt.bdm_filetype
-        # logger.debug("Start: ...")
-        # # Create a new budget storage model file.
-        # bdm = BudgetDomainModelIdentity(filename=filename, filetype=filetype)
-        # bsm_folder_path = Path(folder).expanduser()
-        # bsm_folder_abs_path = bsm_folder_path.resolve()
-        # bsm_store_abs_path = bsm_folder_abs_path / bdm.filename
-        # if not os.path.exists(bsm_store_abs_path):
-        #     with open(bsm_store_abs_path, "w") as f:
-        #         f.write("{}")
-        #     logger.info(f"Created new budget storage model file: {bsm_store_abs_path}")
-        # else:
-        #     logger.warning(f"Budget storage model file already exists: {bsm_store_abs_path}")
-        logger.debug(f"Complete: {p3u.stop_timer(st)}")   
-        return None #str(bsm_store_abs_path)
-    except Exception as e:
-        logger.error(p3u.exc_err_msg(e))
-        raise
-#endregion bsm_BDM_STORE_new module
 # ---------------------------------------------------------------------------- +
 #region    bsm_BDM_STORE_file_abs_path()
 def bsm_BDM_STORE_file_abs_path(filename : str, filetype : str, folder : str  ) -> Path:
@@ -817,23 +762,6 @@ def bsm_get_workbook_names(abs_folder : Path) -> List[Path]:
     try:
         p3u.is_obj_of_type("wb_folder", abs_folder, Path, raise_error=True)
         # Get a list of Path objects for all .xlsx files in the folder.
-        wb_paths = list(abs_folder.glob("*.xlsx"))
-        if not wb_paths:
-            logger.warning(f"No workbook files found in folder: {abs_folder}")
-            return []
-        filtered_wb_paths = bsm_filter_workbook_names(wb_paths)
-        return filtered_wb_paths
-    except Exception as e:
-        logger.error(p3u.exc_err_msg(e))
-        raise
-#endregion bsm_get_workbook_names()
-# ---------------------------------------------------------------------------- +
-#region    bsm_get_workbook_names2()
-def bsm_get_workbook_names2(abs_folder : Path) -> List[Path]:
-    """Return list of workbook Paths from absolute folder path."""
-    try:
-        p3u.is_obj_of_type("wb_folder", abs_folder, Path, raise_error=True)
-        # Get a list of Path objects for all .xlsx files in the folder.
         wb_paths = []
         for filetype in bdm.VALID_WB_FILETYPES:
             my_glob = f"*{filetype}"
@@ -847,7 +775,7 @@ def bsm_get_workbook_names2(abs_folder : Path) -> List[Path]:
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
-#endregion bsm_get_workbook_names2()
+#endregion bsm_get_workbook_names()
 # ---------------------------------------------------------------------------- +
 #region    bsm_filter_workbook_names()
 def bsm_filter_workbook_names(wb_paths : List[Path]) -> List[Path]:
@@ -935,6 +863,21 @@ def bsm_file_tree_from_folder(path: Path) -> Tree:
         logger.error(p3u.exc_err_msg(e))
         raise
 #endregion bsm_file_tree_from_folder()
+# ---------------------------------------------------------------------------- +
+#region    bsm_BDM_STORE_to_json()
+def bsm_BDM_STORE_to_json(bdm_store_dict: bdm.BDM_STORE_TYPE) -> str:
+    """Convert the BDMStore object to a JSON string."""
+    try:
+        # Serialize the BDMStore object to json
+        # Only persist the properties in BDM_PERSISTED_PROPERTIES.
+        filtered_bsm = {k: v for k, v in bdm_store_dict.items() if k in bdm.BSM_PERSISTED_PROPERTIES}
+        return json.dumps(filtered_bsm, indent=4)
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion bsm_BDM_STORE_to_json()
+# ---------------------------------------------------------------------------- +
+#endregion bsm_BDM_STORE_to_json()
 # ---------------------------------------------------------------------------- +
 #endregion Common functions
 #                                                                              +

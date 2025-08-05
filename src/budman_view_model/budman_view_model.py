@@ -214,7 +214,10 @@ from budget_domain_model import (
     BudgetDomainModel, 
     BDMConfig
     )
-from budget_storage_model import *
+from budget_storage_model import (
+    bsm_BDM_STORE_url_put,
+    bsm_BDM_STORE_url_get
+    )
 from budman_data_context.budman_app_data_context_binding_class import BudManAppDataContext_Binding
 from budman_data_context.budget_domain_model_data_context import BDMDataContext
 from budman_cli_view import budman_cli_parser, budman_cli_view
@@ -266,7 +269,6 @@ class BudManViewModel(BudManAppDataContext_Binding, Model_Binding): # future ABC
         self._BDM_STORE_loaded : bool = False
         self._budget_domain_model : BudgetDomainModel = None
         self._cmd_map : Dict[str, Callable] = None
-        self._shutdown : bool = False
     #endregion __init__() constructor method
     # ------------------------------------------------------------------------ +
     #region    BudManViewModel Class Properties     
@@ -345,32 +347,7 @@ class BudManViewModel(BudManAppDataContext_Binding, Model_Binding): # future ABC
             raise
     #endregion BudManViewModel Class initialize() method                       +
     # ------------------------------------------------------------------------ +
-    #region    BudManViewModel Class shutdown() method                          +
-    def shutdown(self) -> None:
-        """Shutdown the command view_model."""
-        try:
-            st = p3u.start_timer()
-            logger.info(f"Shutdown Start: ...")
-            if self._shutdown:
-                logger.debug(f"shutdown already complete.")
-                return None
-            # Save the BDM_STORE file with the BSM.
-            # Get a Dict of the BudgetModel to store.
-            bdm_dict = BDMConfig.BDM_STORE_dehydrate(self.budget_domain_model)
-            # budget_model_dict = self.budget_domain_model.to_dict()
-            # Save the BDM_STORE file.
-            bdm_url = self.dc_BDM_STORE[BDM_URL]
-            bsm_BDM_STORE_url_put(bdm_dict, bdm_url)
-            logger.info(f"Saved BDM_STORE url: {bdm_url}")
-            logger.info(f"Shutdown Complete: {p3u.stop_timer(st)}")
-            self._shutdown = True
-            return None
-        except Exception as e:
-            logger.error(p3u.exc_err_msg(e))
-            raise
-    #endregion BudManViewModel Class shutdown() method                       +
-    # ------------------------------------------------------------------------ +
-    #region    BudManViewModel Class initialize_model() method                   +
+    #region    BudManViewModel Class initialize_model() method                 +
     def initialize_model(self, bdms_url : str) -> BudgetDomainModel:
         """Create a model using the bdms_url location for a valid BDM_STORE.
             The BDM_STORE object provides the model configuration and state.
@@ -404,6 +381,20 @@ class BudManViewModel(BudManAppDataContext_Binding, Model_Binding): # future ABC
             logger.error(p3u.exc_err_msg(e))
             raise
     #endregion BudManViewModel Class initialize_model() method                   +
+    # ------------------------------------------------------------------------ +
+    #region    BudManViewModel Class save_model() method                       +
+    def save_model(self) -> None:
+        """Save the model for this view_model."""
+        try:
+            st = p3u.start_timer()
+            logger.info(f"Start: ...")
+            self.model.bdm_save_model()
+            logger.info(f"Complete: {p3u.stop_timer(st)}")
+            return None
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion BudManViewModel Class save_model() method                       +
     # ------------------------------------------------------------------------ +
     #region    ViewModelCommandProcessor_Base cp_initialize_cmd_map() method+
     def cp_initialize_cmd_map(self) -> None:
@@ -1100,6 +1091,8 @@ class BudManViewModel(BudManAppDataContext_Binding, Model_Binding): # future ABC
                 cat_list = self.cp_cmd_attr_get(cmd, cp.CK_CAT_LIST, [])
                 tree_level = self.cp_cmd_attr_get(cmd, cp.CK_LEVEL, 2)
                 result = output_category_tree(level=tree_level, cat_list=cat_list)
+            elif cmd[cp.CK_SUBCMD_NAME] == cp.CV_BDM_STORE_SUBCMD_NAME:
+                result = self.model.bdm_BDM_STORE_json()
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             return True, result
         except Exception as e:

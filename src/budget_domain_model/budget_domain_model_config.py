@@ -175,30 +175,6 @@ class BDMConfig(metaclass=BDMSingletonMeta):
                 ]
             }
         },
-    # "_workflows": {
-    #     "intake": {
-    #         "wf_key": "intake",
-    #         "wf_name": "intake",
-    #         "wf_folders": [
-    #             {"wf_folder": "raw_data", "wf_purpose": "wf_input", "wf_prefix": null},
-    #             {"wf_folder": "new", "wf_purpose": "wf_working", "wf_prefix": null}
-    #         ],
-    #     },
-    #     "categorize_transactions": {
-    #         "wf_key": "categorize_transactions",
-    #         "wf_name": "categorize_transactions",
-    #         "wf_folders": [
-    #             {"wf_folder": "categorized", "wf_purpose": "wf_working", "wf_prefix": "categorized_"}
-    #         ]
-    #     },
-    #     "budget": {
-    #         "wf_key": "budget",
-    #         "wf_name": "budget",
-    #         "wf_folders": [
-    #             {"wf_folder": "budget", "wf_purpose": "wf_working", "wf_prefix": "budget_"}
-    #         ]
-    #     }
-    # },
         BDM_OPTIONS: {
             BDMO_LOG_CONFIG: "budget_model_logging_config.jsonc",
             BDMO_LOG_LEVEL: "DEBUG",
@@ -208,7 +184,6 @@ class BDMConfig(metaclass=BDMSingletonMeta):
         BDM_CREATED_DATE: None,
         BDM_LAST_MODIFIED_DATE: None,
         BDM_LAST_MODIFIED_BY: None,
-        # BDM_WORKING_DATA: {},
         BDM_DATA_CONTEXT: {
             DC_FI_KEY: "boa",  # Financial Institution Key
             DC_WF_KEY: EXAMPLE_BDM_WF_CATEGORIZATION,  # Workflow Key
@@ -279,59 +254,6 @@ class BDMConfig(metaclass=BDMSingletonMeta):
             logger.error(m)
             raise
     #endregion BDM_CONFIG_validate_attributes() created BDMConfig from a loaded BDM_STORE url.
-    # ------------------------------------------------------------------------ +
-    #region BDM_STORE_dehydrate() remove non-serializable objects.
-    # @classmethod
-    # def BDM_STORE_dehydrate(cls, model : BudgetDomainModel) -> None:
-    #     """Create a BDM_STORE dict from a BudgetDomainModel instance.
-    #     Remove non-serializable objects from the resulting BDM_STORE."""
-    #     try:
-    #         logger.debug("Start:  ...")
-
-    #         _ = p3u.is_not_obj_of_type("model", model, BudgetDomainModel, 
-    #                                    raise_error=True)    
-    #         bdm_store: BDM_STORE_TYPE = model.to_dict()
-    #         # Traverse the BDM_STORE and remove non-serializable objects.
-    #         # Replace objects with known non-serializable attributes with a
-    #         # dict copy with the non-serializable attributes set to None.
-    #         if (BDM_FI_COLLECTION in bdm_store and
-    #             bdm_store[BDM_FI_COLLECTION] is not None and
-    #             isinstance(bdm_store[BDM_FI_COLLECTION], dict) and 
-    #             len(bdm_store[BDM_FI_COLLECTION]) > 0):
-    #             for fi_key, fi_object in bdm_store[BDM_FI_COLLECTION].items():
-    #                 if not isinstance(fi_object, dict):
-    #                     continue
-    #                 if (FI_WORKBOOK_DATA_COLLECTION not in fi_object or
-    #                     fi_object[FI_WORKBOOK_DATA_COLLECTION] is None or
-    #                     not isinstance(fi_object[FI_WORKBOOK_DATA_COLLECTION], dict) or
-    #                     len(fi_object[FI_WORKBOOK_DATA_COLLECTION]) == 0):
-    #                     continue
-    #                 for wb_id, bdm_wb in fi_object[FI_WORKBOOK_DATA_COLLECTION].items():
-    #                     if isinstance(bdm_wb, BDMWorkbook):
-    #                         # Convert the BDMWorkbook object to a dict.
-    #                         # Don't modify the BDMWorkbook objects
-    #                         bdm_wb_dict = bdm_wb.to_dict()
-    #                     elif isinstance(bdm_wb, dict):
-    #                         bdm_wb_dict = bdm_wb
-    #                     else:
-    #                         continue
-    #                     # A bdm_wb dict may have an object for wb_content
-    #                     if bdm_wb_dict[WB_CONTENT] is not None:
-    #                         # Never serialize the wb_content, so set it to None.
-    #                         wbc_type = type(bdm_wb_dict[WB_CONTENT]).__name__
-    #                         logger.debug(f" Dehydrating BDMWorkbook({wb_id}): "
-    #                                      f"wb_content type: '{wbc_type}'")
-    #                         bdm_wb_dict[WB_CONTENT] = None
-    #                         bdm_wb_dict[WB_LOADED] = False 
-    #                         # Replace the bdm_wb in fi_object[FI_WORKBOOK_DATA_COLLECTION]
-    #                         fi_object[FI_WORKBOOK_DATA_COLLECTION][wb_id] = bdm_wb_dict
-    #         logger.debug(f"Complete:")   
-    #         return bdm_store
-    #     except Exception as e:
-    #         m = p3u.exc_err_msg(e)
-    #         logger.error(m)
-    #         raise
-    #endregion BDM_STORE_dehydrate() created BDMConfig from a loaded BDM_STORE url.
     # ------------------------------------------------------------------------ +
     #region BDM_STORE_url_get() create BDM_CONFIG from a loaded BDM_STORE url.
     @classmethod

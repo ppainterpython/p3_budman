@@ -107,7 +107,6 @@ BDM_OPTIONS = "_options"                       # Type: BDMO_OBJECT
 BDM_CREATED_DATE = "_created_date"             # Type: str - ISO date string
 BDM_LAST_MODIFIED_DATE = "_last_modified_date" # Type: str - ISO date string
 BDM_LAST_MODIFIED_BY = "_last_modified_by"     # Type: str - user name
-BDM_WORKING_DATA = "_wd"                       # Type: BDM_WORKING_DATA
 BDM_DATA_CONTEXT = "_data_context"             # Type: DATA_CONTEXT
 # BDMConfig class Property name Constants (same as BudgetDomainModel)
 # but with BDM_CONFIG_OBJECT instead of BDM_STORE_OBJECT.
@@ -118,7 +117,7 @@ VALID_BDM_PROPERTIES = (
     BDM_FILENAME, BDM_FILETYPE, BDM_FOLDER, 
     BDM_URL, BDM_FI_COLLECTION, BDM_WF_COLLECTION, BDM_OPTIONS,
     BDM_CREATED_DATE, BDM_LAST_MODIFIED_DATE, 
-    BDM_LAST_MODIFIED_BY, BDM_WORKING_DATA, BDM_DATA_CONTEXT)
+    BDM_LAST_MODIFIED_BY, BDM_DATA_CONTEXT)
 BSM_PERSISTED_PROPERTIES = (
     BDM_ID, BDM_FILENAME, BDM_FILETYPE, BDM_FOLDER, 
     BDM_URL, BDM_FI_COLLECTION, BDM_WF_COLLECTION,  

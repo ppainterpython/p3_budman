@@ -35,37 +35,39 @@ logger = logging.getLogger(__name__)
 class BDMDataContext(BudManAppDataContext, Model_Binding):
     """DC and Model-Aware: BDMWD -Budget Domain Model Working Data. 
     
-        BDMWorkingData sits between the ViewModel and the Model. Its role is
+        BDMDataContext sits between the ViewModel and the Model. Its role is
         to serve as the Data Context provider to the ViewModel, so it provides
-        the BudManDataContext interface. Some of the concrete properties and
-        methods from BudManDataContext are overridden to specialize the access
-        to the Model.
+        the BudManAppDataContext interface. Some of the concrete properties and
+        methods from BudManDataContext are overridden to specialize the 
+        access to the Model, referred to as "Model-Aware".
 
-        Assess to the Model is through binding to model property required by
-        the BDMClientInterface. With that, BDMWorkingData can access the the 
+        Access to the Model is through binding to model property required by
+        the BDMClientInterface. With that, BDMDataContext can access the the
         whole Model.
 
-        A ViewModel considers the BDMWD properties and methods as an extension
-        of the DataContext (DC) object binding. A client such as the ViewModel
-        is intended to use the BudManDataContext Interface on the DC. The hope
-        is that these properties and methods will satisfy most needs. However,
-        if the need arises, the ViewModel can access the BDMWD Interface
-        also provided. But the design encourages that to happen in the concrete
-        overrides provided in BDMWD DC functions.
+        A client such as the ViewModel is intended to use the 
+        BudManAppDataContext Interface on the DC. The hope
+        is that these properties and methods will satisfy most needs. 
+
+        At present, some DC properities are also saved in the Model so they may
+        be set at application startup as part of the DC initialization:
+        - dc_FI_KEY: The key of the current Financial Institution.
+        - dc_WF_KEY: The key of the current Workflow.
+        - dc_WF_PURPOSE: The purpose of the current Workflow folder.
     """
     # ======================================================================== +
-    #region    BDMWorkingData class intrinsics
+    #region    BDMDataContext class intrinsics
     # ------------------------------------------------------------------------ +
-    #region __init__() method init during BDMWorkingData constructor.
+    #region __init__() method init during BDMDataContext constructor.
     def __init__(self,  model : Model_Base = None, *args, dc_id : str = None) -> None:
         dc_id = args[0] if len(args) > 0 else None
         super().__init__(*args, dc_id=dc_id)
         self._model : MODEL_OBJECT = model
         self._dc_id = self.__class__.__name__ if not self._dc_id else None
         self._WF_CATEGORY_MANAGER : Optional[object] = None
-    #endregion __init__() method init during BDMWorkingData constructor.
+    #endregion __init__() method init during BDMDataContext constructor.
     # ------------------------------------------------------------------------ +
-    #endregion    BDMWorkingData class intrinsics
+    #endregion    BDMDataContext class intrinsics
     # ======================================================================== +
 
     # ======================================================================== +
@@ -140,6 +142,36 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
         if not self.model.bdm_FI_KEY_validate(value):
             raise ValueError(f"Invalid FI_KEY: {value}")
         self.dc_FI_OBJECT = self.dc_BDM_STORE[BDM_FI_COLLECTION].get(value, None)
+        # One of the model-saved DC properties.
+        self.model.bdm_data_context[DC_FI_KEY] = value
+
+    @property
+    def dc_WF_KEY(self) -> Optional[str]:
+        """DC-Only: Return the WF_KEY for the current workflow of interest.
+        Current means that the other data in the DC is for this workflow.
+        """
+        return super().dc_WF_KEY
+    @dc_WF_KEY.setter
+    def dc_WF_KEY(self, value: Optional[str]) -> None:
+        """Model-Aware: Set the WF_KEY for the workflow."""
+        super().dc_WF_KEY = value if self.dc_WF_KEY_validate(value) else None
+        # One of the model-saved DC properties.
+        self.model.bdm_data_context[DC_WF_KEY] = value
+
+    @property
+    def dc_WF_PURPOSE(self) -> Optional[str]:
+        """DC-Only: Return the current WF_PURPOSE (workbook type) .
+        Current means that the other data in the DC is for this workbook type. 
+        This indicates the type of data in the workflow being processed,
+        e.g., 'input', 'output', 'working', etc.
+        """
+        return super().dc_WF_PURPOSE
+    @dc_WF_PURPOSE.setter
+    def dc_WF_PURPOSE(self, value: Optional[str]) -> None:
+        """Model-Only: Set the WF_PURPOSE workbook type."""
+        super().dc_WF_PURPOSE = value
+        # One of the model-saved DC properties.
+        self.model.bdm_data_context[DC_WF_PURPOSE] = value
 
     @property
     def WF_CATEGORY_MANAGER(self) -> Optional[object]:
@@ -160,19 +192,19 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
     # ------------------------------------------------------------------------ +
     #region    BudManDataContext(BudManDataContext_Base) Method Model-Aware Overrides.
     def dc_initialize(self) -> "BudManAppDataContext":
-        """Model-Aware: Initialize the BDMWorkingData instance after construction.
+        """Model-Aware: Initialize the BDMDataContext instance after construction.
         
-        Apply any necessary initializations to the BDMWorkingData instance. 
+        Apply any necessary initializations to the BDMDataContext instance. 
         First, update the DC with BDM_CONFIG from model.bdm_config_object.
         Second, update the DC with appropriate values from BDMClientInterface 
         concerning the BDM Working Data (BDMWD).
         Returns:
-            BDMWorkingData: The initialized BDMWorkingData instance.
+            BDMDataContext: The initialized BDMDataContext instance.
         """
         try:
             # We are Model-Aware, so we can access the model.
             if self.model is None:
-                m = "There is no model binding. Cannot dc_initialize BDMWorkingData."
+                m = "There is no model binding. Cannot dc_initialize BDMDataContext."
                 logger.error(m)
                 raise ValueError(m)
             # There is a model binding, obtain the BDM_STORE_OBJECT from the 
@@ -220,9 +252,9 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
             raise
     
     def not_dc_INITIALIZED(self) -> bool:
-        """Model-Aware: Unforgiving check if the BDMWorkingData is not initialized."""
+        """Model-Aware: Unforgiving check if the BDMDataContext is not initialized."""
         if not self.dc_INITIALIZED:
-            m = "BDMWorkingData is not initialized. Cannot proceed."
+            m = "BDMDataContext is not initialized. Cannot proceed."
             logger.error(m)
             raise ValueError(m)
         return False

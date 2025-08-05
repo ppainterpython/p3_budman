@@ -79,8 +79,9 @@ from budman_namespace.bdm_singleton_meta import BDMSingletonMeta
 from budman_namespace.design_language_namespace import *
 from budget_storage_model import (
     bsm_verify_folder, 
+    bsm_BDM_STORE_url_put,
     bsm_get_workbook_names,
-    bsm_get_workbook_names2,
+    bsm_BDM_STORE_to_json
     )                              
 from p3_mvvm.model_base_ABC import Model_Base
 from budman_namespace.bdm_workbook_class import BDMWorkbook
@@ -109,18 +110,19 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
     def __init__(self, bdm_config : BDMConfig = None) -> None:
         """Constructor for the BudgetDomainModel class.
 
-        This initial constructor is kept simple, just set initial values 
-        to create the essential attributes in the object with one critical 
-        exception. A valid BDMConfig object is required,  created by one of 
-        the methods on the BDMConfig class. Here is is just added to the
-        BDM_STORE_OBJECT property. The real work happens in bdm_initialize().
-        
+        This initial constructor is kept simple, returning an instance with
+        empty initial values, with one critical exception: a valid BDMConfig
+        object is required, created by one of the methods on the BDMConfig
+        class. The bdm_config object is assigned as the initial value of
+        the BDM_STORE_OBJECT property. The rest of the BDM content is hydrated
+        later during initialization.
+
         Args:
             bdm_config (BDMConfig): A valid BDMConfig object used later
-            to initialize the model state.
+            to initialize and rehydrate the model state.
         """
-        # Note: _subclassname set by SingletonMeta after __init__() completes.
         logger.debug("Start:")
+        # If a valid BDMConfig object is not provided, raise an error.
         p3u.is_not_obj_of_type("bdm_config",bdm_config,BDMConfig,raise_error=True)
         setattr(self, BDM_ID, None)
         setattr(self, BDM_STORE_OBJECT, bdm_config) # CRITICAL to later initialization.
@@ -176,7 +178,6 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
             delattr(self, key)
         else:
             raise KeyError(f"Key '{key}' not found in BudgetDomainModel.")
-
     def __repr__(self) -> str:
         ''' Return a str representation of the BudgetDomainModel object '''
         ret = f"{{ "
@@ -287,6 +288,13 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
         self._financial_institutions = value
 
     @property
+    def bdm_fi_count(self) -> int:
+        """Return the number of Financial Institutions in the collection."""
+        if self._financial_institutions is not None:
+            return len(self._financial_institutions)
+        return 0
+
+    @property
     def bdm_wf_collection(self) -> WF_COLLECTION_TYPE:
         """The workflow collection."""
         return self._workflows
@@ -294,6 +302,13 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
     def bdm_wf_collection(self, value: WF_COLLECTION_TYPE) -> None:
         """Set the workflows collection."""
         self._workflows = value
+
+    @property
+    def bdm_wf_count(self) -> int:
+        """Return the number of workflows in the collection."""
+        if self._workflows is not None:
+            return len(self._workflows)
+        return 0
 
     @property
     def bdm_options(self) -> BDM_OPTIONS_TYPE:
@@ -462,12 +477,12 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
                  create_missing_folders : bool = True,
                  raise_errors : bool = True
                  ) -> "BudgetDomainModel":
-        """Initialize the BudgetDomainModel (BDM), from a BDMConfig object.
+        """Hydrate the BDM from a BDMConfig object.
 
         Currently, as a singleton class, BudgetDomainModel is initialized from
         BDMConfig object, which must be the current value of the 
         self.bdm_store_object property. Applications can support different 
-        techniques to create the BDMConfig using that class. Having a valid
+        techniques to create the BDMConfig using a subclass. Having a valid
         bdm_store_object property is important, lest not much can be initialized.
         This method will apply the BDM_STORE_OBJECT values
         and set the BDM state to match.
@@ -480,12 +495,13 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
         st = p3u.start_timer()
         logger.info(f"BizEVENT: Model setup for BudgetDomainModel (BDM)")
         try:
-            # self.bdm_store_object property must contain a valid BDMConfig 
-            # object to initialize the BDM, cannot proceed without it. 
+            # If a valid BDMConfig object is not provided, raise an error.
+            p3u.is_not_obj_of_type("bdm_store_object property", 
+                                   self.bdm_store_object, BDMConfig, 
+                                   raise_error=True)
             bdm_config = self.bdm_store_object
-            p3u.is_not_obj_of_type("bdm_config", bdm_config, BDMConfig, raise_error=True)
-            # Apply the BDMConfig content to the budget model (self)
-            # No defaults here, the BDMConfig must have all keys and values.
+            # Hydrate the BDM from the BDMConfig content.
+            # No defaults here, the BDMConfig must have all attributevalues.
             setattr(self, BDM_STORE_OBJECT, bdm_config)
             setattr(self, BDM_ID, bdm_config[BDM_ID])
             setattr(self, BDM_STORE_OBJECT, bdm_config)
@@ -501,14 +517,17 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
             setattr(self, BDM_LAST_MODIFIED_DATE, bdm_config[BDM_LAST_MODIFIED_DATE])
             setattr(self, BDM_LAST_MODIFIED_BY, bdm_config[BDM_LAST_MODIFIED_BY])
             setattr(self, BDM_DATA_CONTEXT, bdm_config[BDM_DATA_CONTEXT])
-            # Now, initialize storage system dependencies using the 
-            # Budget Storage Model (BSM). Storage is mapped to folders and files
-            # regardless of the storage system, e.g., filesystem, database, etc.
+            # Initialize the Budget Storage Model (BSM).
+            # This resolves dependencies for the storage systems supported by 
+            # the BSM, mapping folders and files according to the supported 
+            # storage system, e.g., filesystem, database, etc. Within the BDM,
+            # all folders and files are referenced by URL.
             self.bsm_initialize(create_missing_folders, raise_errors)
-            # Now rehydrate (marshall) any object classes from the stored 
-            # format of static python values and dictionaries (stored in json)
-            # into objects for classes used within the BDM.
-            self.bdm_FI_WORKBOOK_DATA_COLLECTION_initialize()
+            # When the BDM is constructed and then initialized, the assumption 
+            # is that data was marshalled from a storage format such as json.
+            # bdm_rehydrate() reinstates andy native class objects based from 
+            # the persisted storage format.
+            self.bdm_rehydrate()
             # Initialization complete.
             self.bdm_initialized = True
             logger.debug(f"Complete: {p3u.stop_timer(st)}")   
@@ -519,9 +538,9 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
             raise
     #endregion BDM bdm_initialize(self, bsm_init, ...) 
     # ------------------------------------------------------------------------ +
-    #region    BDM FI_WORKBOOK_DATA_COLLECTION_initialize() method
-    def bdm_FI_WORKBOOK_DATA_COLLECTION_initialize(self) -> None:
-        """Rehydrate objects loaded from the BDM_STORE into their class instances."""
+    #region    BDM bdm_rehydrate() method
+    def bdm_rehydrate(self) -> None:
+        """Rehydrate dicts loaded from the BDM_STORE into class instances."""
         try:
             logger.debug("Start:  ...")
             # Focus on the BDM_FI_COLLECTION.
@@ -592,7 +611,88 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
-    #endregion BDM FI_WORKBOOK_DATA_COLLECTION_initialize() method
+    #endregion bdm_rehydrate() method
+    # ------------------------------------------------------------------------ +
+    #region    bdm_dehydrate() method
+    def bdm_dehydrate(self) -> BDM_STORE_TYPE:
+        """Return a serializable BDM_STORE dict with the current BDM content."""
+        try:
+            logger.debug("Start:  ...")
+            bdm_store: BDM_STORE_TYPE = self.to_dict()
+            # Traverse the BDM_STORE and remove non-serializable objects.
+            # Replace objects with known non-serializable attributes with a
+            # a serializable dict copy.
+            if self.bdm_fi_count == 0:
+                logger.debug("FI_COLLECTION is empty.")
+                return bdm_store
+            for fi_key, fi_object in bdm_store[BDM_FI_COLLECTION].items():
+                if not isinstance(fi_object, dict):
+                    logger.warning(f"FI_KEY('{fi_key}') is not a dict, "
+                                    f"skipping type: {type(fi_object)}")
+                    continue
+                wdc: WORKBOOK_DATA_COLLECTION_TYPE = fi_object[FI_WORKBOOK_DATA_COLLECTION]
+                # If the FI_WORKBOOK_DATA_COLLECTION is empty, skip it.
+                if (wdc is None or len(wdc) == 0):
+                    logger.debug(f"FI_KEY('{fi_key}') WORKBOOK_DATA_COLLECTION is empty.")
+                    continue
+                for wb_id, bdm_wb in wdc.items():
+                    if isinstance(bdm_wb, BDMWorkbook):
+                        # Convert the BDMWorkbook object to a dict.
+                        # Don't modify the BDMWorkbook objects
+                        bdm_wb_dict = bdm_wb.to_dict()
+                    elif isinstance(bdm_wb, dict):
+                        bdm_wb_dict = bdm_wb
+                    else:
+                        logger.warning(f"FI_KEY('{fi_key}') WB_ID('{wb_id}') "
+                                       f"type:({type(bdm_wb).__name__}).")
+                        continue
+                    # A bdm_wb dict may have an object for wb_content
+                    if bdm_wb_dict[WB_CONTENT] is not None:
+                        # Never serialize the wb_content, so set it to None.
+                        wbc_type = type(bdm_wb_dict[WB_CONTENT]).__name__
+                        logger.debug(f" Dehydrating BDMWorkbook({wb_id}): "
+                                        f"wb_content type: '{wbc_type}'")
+                        bdm_wb_dict[WB_CONTENT] = None
+                        bdm_wb_dict[WB_LOADED] = False 
+                    # Replace the bdm_wb in fi_object[FI_WORKBOOK_DATA_COLLECTION]
+                    fi_object[FI_WORKBOOK_DATA_COLLECTION][wb_id] = bdm_wb_dict
+            logger.debug(f"Complete:")   
+            return bdm_store
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise
+    #endregion bdm_dehydrate() method
+    # ------------------------------------------------------------------------ +
+    #region    bdm_save_model() method                       +
+    def bdm_save_model(self) -> None:
+        """Save the model for this view_model to the BDM_STORE."""
+        try:
+            st = p3u.start_timer()
+            logger.info(f"Start: ...")
+            # Get a Dict of the BudgetModel to store.
+            bdm_dict = self.bdm_dehydrate()
+            # Save the BDM_STORE file to storage.
+            bsm_BDM_STORE_url_put(bdm_dict, self.bdm_url)
+            logger.info(f"Saved BDM_STORE url: {self.bdm_url}")
+            logger.info(f"Complete: {p3u.stop_timer(st)}")
+            return None
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion bdm_save_model() method                       +
+    # ------------------------------------------------------------------------ +
+    #region    bdm_BDM_STORE_json() method
+    def bdm_BDM_STORE_json(self) -> str:
+        """Return the BDM_STORE as a JSON string."""
+        try:
+            bdm_store: BDM_STORE_TYPE = self.bdm_dehydrate()
+            json_str: str = bsm_BDM_STORE_to_json(bdm_store)
+            return json_str
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise ValueError(m)
     # ------------------------------------------------------------------------ +
     #region    BDM FI_OBJECT_TYPE methods
     def bdm_FI_OBJECT(self, fi_key:str) -> FI_OBJECT_TYPE:
@@ -672,7 +772,8 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
             raise ValueError(m)
 
     def bdm_FI_KEY_validate(self, fi_key:str) -> bool:
-        """Validate the financial institution key."""
+        """Validate the financial institution key as a member of the
+        BDM_FI_COLLECTION and referencing a valid FI_OBJECT dict."""
         p3u.is_not_non_empty_str(fi_key, "fi_key",raise_error=True)
         if (self.bdm_fi_collection is None or
             len(self.bdm_fi_collection) == 0):
@@ -682,6 +783,15 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
         if fi_key not in self.bdm_fi_collection:
             m = f"Financial Institution '{fi_key}' not found in "
             m += f"BDM_FI_COLLECTION: {list(self.bdm_fi_collection.keys())}"
+            logger.error(m)
+            raise ValueError(m)
+        if (self.bdm_fi_collection[fi_key] is None or 
+            not isinstance(self.bdm_fi_collection[fi_key], dict) or
+            not FI_KEY in self.bdm_fi_collection[fi_key] or
+            self.bdm_fi_collection[fi_key][FI_KEY] != fi_key):
+            m = f"FI_KEY('{fi_key}') does not reference a valid FI_OBJECT "
+            m += f"or does not match one BDM_FI_COLLECTION: "
+            m += f"{list(self.bdm_fi_collection.keys())}"
             logger.error(m)
             raise ValueError(m)
         return True
@@ -996,7 +1106,7 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
             # Resolve the BDM_FOLDER path.
             bf_ap = self.bsm_BDM_FOLDER_abs_path()
             if bsm_verify_folder(bf_ap, create_missing_folders, raise_errors):
-                wb_paths = bsm_get_workbook_names2(bf_ap)
+                wb_paths = bsm_get_workbook_names(bf_ap)
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
@@ -1167,7 +1277,7 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
                         r_msg += f"{P4}{m}\n"
                         continue
                     # This is where the bsm scans a folder for actual workbook files.
-                    bdm_wb_paths = bsm_get_workbook_names2(wfdf_abs_path)
+                    bdm_wb_paths = bsm_get_workbook_names(wfdf_abs_path)
                     if len(bdm_wb_paths) == 0:
                         m = f"{id} wfdf_abs_path has no workbooks: {wfdf_abs_path}"
                         logger.debug(m)

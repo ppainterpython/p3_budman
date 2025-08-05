@@ -392,6 +392,7 @@ class BudManAppDataContext(BudManAppDataContext_Base):
             self._dc_FI_KEY = bdm_store_dc.get(DC_FI_KEY, None)
             self._dc_WF_KEY = bdm_store_dc.get(DC_WF_KEY, None)
             self._dc_WF_PURPOSE = bdm_store_dc.get(DC_WF_PURPOSE, None)
+            self._dc_WB_TYPE = bdm_store_dc.get(DC_WB_TYPE, None)
             # Further Model-Aware initialization can be done in the subclass.
             # So, don't change the values here.
             return self

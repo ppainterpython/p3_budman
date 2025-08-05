@@ -169,7 +169,7 @@ class BudManApp(metaclass=BDMSingletonMeta):
                 raise ValueError("View not initialized.")
             self._exit_code = self.view.cmdloop() if startup else None # Application CLI loop
             if self.view.save_on_exit:
-                self.view_model.shutdown()
+                self.view_model.save_model()
                 console.print("BDM_STORE saved on exit.")
             else:
                 console.print("BDM_STORE not saved on exit.")
@@ -183,7 +183,7 @@ class BudManApp(metaclass=BDMSingletonMeta):
     def budman_app_exit_handler(self):
         """start the cli repl loop."""
         try:
-            self.view_model.shutdown()
+            self.view_model.save_model()
             m = f"BizEVENT: Exiting application {self.settings[APP_NAME]}..."
             logger.info(m)
         except Exception as e:

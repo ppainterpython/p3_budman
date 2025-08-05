@@ -314,7 +314,6 @@ class BudManCLIParser():
                 cp.CV_WORKBOOKS_SUBCMD_NAME,
                 aliases=["wb", "WB"], 
                 help="Show workbook information.")
-            # wb_subcmd_parser = self.add_WORKBOOKS_subparser(subparsers)
             wb_subcmd_parser.set_defaults(
                 cmd_key=cp.CV_SHOW_CMD_KEY,   # new way
                 cmd_name=cp.CV_SHOW_CMD_NAME, 
@@ -328,6 +327,22 @@ class BudManCLIParser():
             self.add_common_args(wb_subcmd_parser)
             #endregion show workbooks subcommand
 
+            #region show BDM_STORE subcommand
+            bdms_subcmd_parser  = subparsers.add_parser(
+                cp.CV_BDM_STORE_SUBCMD_NAME,
+                aliases=["bdm_store", "BDM_STORE"], 
+                help="Show BDM Store information.")
+            bdms_subcmd_parser.set_defaults(
+                cmd_key=cp.CV_SHOW_CMD_KEY,   # new way
+                cmd_name=cp.CV_SHOW_CMD_NAME, 
+                subcmd_name=cp.CV_BDM_STORE_SUBCMD_NAME,
+                subcmd_key=cp.CV_SHOW_BDM_STORE_SUBCMD_KEY)
+            bdms_subcmd_parser.add_argument(
+                "-j", f"--{cp.CK_JSON}", 
+                action="store_true",
+                help="Show the BDM_STORE in json.")
+            self.add_common_args(bdms_subcmd_parser)
+            #endregion show workbooks subcommand
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise
