@@ -150,11 +150,11 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
         """DC-Only: Return the WF_KEY for the current workflow of interest.
         Current means that the other data in the DC is for this workflow.
         """
-        return super().dc_WF_KEY
+        return self._dc_WF_KEY
     @dc_WF_KEY.setter
     def dc_WF_KEY(self, value: Optional[str]) -> None:
         """Model-Aware: Set the WF_KEY for the workflow."""
-        super().dc_WF_KEY = value if self.dc_WF_KEY_validate(value) else None
+        self._dc_WF_KEY = value if self.dc_WF_KEY_validate(value) else None
         # One of the model-saved DC properties.
         self.model.bdm_data_context[DC_WF_KEY] = value
 
@@ -165,11 +165,11 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
         This indicates the type of data in the workflow being processed,
         e.g., 'input', 'output', 'working', etc.
         """
-        return super().dc_WF_PURPOSE
+        return self._dc_WF_PURPOSE
     @dc_WF_PURPOSE.setter
     def dc_WF_PURPOSE(self, value: Optional[str]) -> None:
-        """Model-Only: Set the WF_PURPOSE workbook type."""
-        super().dc_WF_PURPOSE = value
+        """Model-Aware: Set the WF_PURPOSE workbook type."""
+        self._dc_WF_PURPOSE = value
         # One of the model-saved DC properties.
         self.model.bdm_data_context[DC_WF_PURPOSE] = value
 

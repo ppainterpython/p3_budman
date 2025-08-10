@@ -41,6 +41,7 @@ from budman_cli_view.budman_cli_output import cli_view_cmd_output
 from budman_settings import *
 from budman_settings.budman_settings_constants import BUDMAN_CMD_HISTORY_FILENAME
 from p3_mvvm import DataContext_Binding
+from budman_data_context import BudManAppDataContext_Binding
 import budman_namespace as bdm
 import budman_command_processor.budman_cp_namespace as cp
 from budman_cli_view import BudManCLIParser
@@ -67,29 +68,33 @@ CMD_PARSE_ONLY = "parse_only"
 # TODO: how to get the app_name from settings prior to BudManCLIView instantiation?
 settings = BudManSettings()
 cli_parser : BudManCLIParser = BudManCLIParser(settings)
+def app_cmd_parser() -> cmd2.Cmd2ArgumentParser:
+    return cli_parser.app_cmd if cli_parser else None
+def change_cmd_parser() -> cmd2.Cmd2ArgumentParser:
+    return cli_parser.change_cmd if cli_parser else None
 def init_cmd_parser() -> cmd2.Cmd2ArgumentParser:
     subcmd_parser = cli_parser.init_cmd if cli_parser else None
     return subcmd_parser
-def show_cmd_parser() -> cmd2.Cmd2ArgumentParser:
-    return cli_parser.show_cmd if cli_parser else None
+def list_cmd_parser() -> cmd2.Cmd2ArgumentParser:
+    return cli_parser.list_cmd if cli_parser else None
 def load_cmd_parser() -> cmd2.Cmd2ArgumentParser:
     return cli_parser.load_cmd if cli_parser else None
 def save_cmd_parser() -> cmd2.Cmd2ArgumentParser:
     return cli_parser.save_cmd if cli_parser else None
+def show_cmd_parser() -> cmd2.Cmd2ArgumentParser:
+    return cli_parser.show_cmd if cli_parser else None
 def val_cmd_parser() -> cmd2.Cmd2ArgumentParser:
     return cli_parser.val_cmd if cli_parser else None
 def workflow_cmd_parser() -> cmd2.Cmd2ArgumentParser:
     return cli_parser.workflow_cmd if cli_parser else None
-def change_cmd_parser() -> cmd2.Cmd2ArgumentParser:
-    return cli_parser.change_cmd if cli_parser else None
-def app_cmd_parser() -> cmd2.Cmd2ArgumentParser:
-    return cli_parser.app_cmd if cli_parser else None
 
 #endregion Configure the CLI parser 
 # ---------------------------------------------------------------------------- +
-class BudManCLIView(cmd2.Cmd): # , DataContext_Binding):
+class BudManCLIView(cmd2.Cmd, BudManAppDataContext_Binding): # , DataContext_Binding 
     # ======================================================================== +
     #region BudManCLIView class intrinsics
+    # ------------------------------------------------------------------------ +
+    #region doc string
     """An MVVM View class for BudMan implementing a command line interface.
     
     Operates under MVVM pattern, as a View concerned with all users interaction. 
@@ -121,7 +126,7 @@ class BudManCLIView(cmd2.Cmd): # , DataContext_Binding):
 
     At app-setup time (Dependency Injection), the view is bound to objects
     providing the ViewModelCommandProcessor_Base and ViewModelDataContext_Base
-    interfaces (abstract base class - ABC). There are two techniques available.
+    interfaces (abstract base class - ABC). There are three techniques available.
     First, a concrete implementation of the DCorCP_Base interface can be applied
     directly in a class. Second, a class providing such a concrete 
     implementation could be subclassed (inherited). Or third, a class 
@@ -133,6 +138,7 @@ class BudManCLIView(cmd2.Cmd): # , DataContext_Binding):
     service objects.
     TODO: Use ABC for ViewModelCommandProcessor interface.
     """
+    #endregion doc string
     # ------------------------------------------------------------------------ +
     #region Class variables and methods
     prompt = "budman> "
@@ -193,6 +199,11 @@ class BudManCLIView(cmd2.Cmd): # , DataContext_Binding):
     #endregion __init__() method
     # ------------------------------------------------------------------------ +
     #region   BudManCLIView class properties
+    @property
+    def prompt(self) -> str:
+        """Get the prompt property."""
+        return self._prompt
+    
     @property
     def save_on_exit(self) -> bool:
         """Get the save_on_exit property."""
@@ -267,6 +278,13 @@ class BudManCLIView(cmd2.Cmd): # , DataContext_Binding):
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise
+    def current_working_location(self) -> str:
+        """Get the current working location."""
+        fi_key = self.DC.dc_FI_KEY if self.DC else "unknown"
+        wf_key = self.DC.dc_WF_KEY if self.DC else "unknown"
+        wf_purpose = self.DC.dc_WF_PURPOSE if self.DC else "unknown"
+        cwl: str = f"({fi_key}:{wf_key}:{wf_purpose})"
+        return cwl
     #endregion BudManCLIView Methods
     # ------------------------------------------------------------------------ +
     #region   precmd_hook() Methods
@@ -289,6 +307,8 @@ class BudManCLIView(cmd2.Cmd): # , DataContext_Binding):
         try:
             logger.debug(f"Start:")
             self.current_cmd = None
+            self.prompt = f"{self.current_working_location()}\n{BudManCLIView.prompt}"
+            cmd2.Cmd.set_window_title(f"Budget Manager CLI - {self.current_working_location()}")
             logger.debug(f"Complete:")
             return data
         except Exception as e:
@@ -355,29 +375,28 @@ class BudManCLIView(cmd2.Cmd): # , DataContext_Binding):
     # ------------------------------------------------------------------------ +
     #
     # ------------------------------------------------------------------------ +
-    #region restart command - restart the application.
-    def do_restart(self, args):
-        """Restart the Budget Manager CLI application."""
-        try:
-            logger.info(f"BizEVENT: Restarting the application.")
-            # Restart the application.
-            python = sys.executable
-            os.execl(python, python, *sys.argv)
-            return 
-        except Exception as e:
-            logger.error(p3u.exc_err_msg(e))
-            raise
-    #endregion restart command - restart the application.
-    # ------------------------------------------------------------------------ +
-    #region do_init command - initialize aspects of the BudgetModel application.
-    @cmd2.with_argparser(init_cmd_parser()) # This decorator links cmd2 with argparse.
-    def do_init(self, opts):
-        """Initialize aspects of the Data Context for the Budget Manager application."""
+    #region do_app command
+    @with_argparser(app_cmd_parser())
+    def do_app(self, opts):
+        """View and adjust app settings and features.
+        
+        Arguments:
+            opts (argparse.Namespace): The command line options after parsing
+            the arguments with argparse. The opts dict becomes the command
+            object for the command processor.
+
+        """
         try:
             # Construct the command object from cmd2's argparse Namespace.
             status, cmd = self.construct_cmd(opts)
             if not status:
                 return
+            # If app exit cmd, handle here.
+            if cmd[cp.CK_SUBCMD_KEY] == cp.CV_EXIT_SUBCMD_KEY:
+                # Handle the --no_save switch
+                self.save_on_exit = not cmd[cp.CK_NO_SAVE]
+                console.print("Exiting Budget Manager CLI.")
+                return True
             # Submit the command to the command processor.
             status, result = self.cp_execute_cmd(cmd)
             # Render the result.
@@ -387,7 +406,7 @@ class BudManCLIView(cmd2.Cmd): # , DataContext_Binding):
                 console.print(f"[red]Error:[/red] {result}")
         except Exception as e:
             self.pexcept(e)
-    #endregion do_init command - initialize aspects of the BudgetModel application.
+    #endregion do_app command
     # ------------------------------------------------------------------------ +
     #region do_change command - change attributes of workbooks and other objects.
     @cmd2.with_argparser(change_cmd_parser()) # This decorator links cmd2 with argparse.
@@ -409,11 +428,31 @@ class BudManCLIView(cmd2.Cmd): # , DataContext_Binding):
             self.pexcept(e)
     #endregion do_change command - change attributes of workbooks and other objects.
     # ------------------------------------------------------------------------ +
-    #region do_show command - workbooks, status, etc.
-    @cmd2.with_argparser(show_cmd_parser())
-    def do_show(self, opts):
-        """Show information from the Budget Manager application.
-        
+    #region do_init command - initialize aspects of the BudgetModel application.
+    @cmd2.with_argparser(init_cmd_parser()) # This decorator links cmd2 with argparse.
+    def do_init(self, opts):
+        """Initialize aspects of the Data Context for the Budget Manager application."""
+        try:
+            # Construct the command object from cmd2's argparse Namespace.
+            status, cmd = self.construct_cmd(opts)
+            if not status:
+                return
+            # Submit the command to the command processor.
+            status, result = self.cp_execute_cmd(cmd)
+            # Render the result.
+            if status:
+                console.print(result)
+            else:
+                console.print(f"[red]Error:[/red] {result}")
+        except Exception as e:
+            self.pexcept(e)
+    #endregion do_init command - initialize aspects of the BudgetModel application.
+    # ------------------------------------------------------------------------ +
+    #region do_list command - workbooks, status, etc.
+    @cmd2.with_argparser(list_cmd_parser())
+    def do_list(self, opts):
+        """List information from the Budget Manager application.
+
         Arguments:
             opts (argparse.Namespace): The command line options after parsing
             the arguments with argparse. The opts dict becomes the command
@@ -460,6 +499,46 @@ class BudManCLIView(cmd2.Cmd): # , DataContext_Binding):
         except Exception as e:
             self.pexcept(e)
     #endregion do_load command - load workbooks
+    # ------------------------------------------------------------------------ +
+    #region restart command - restart the application.
+    def do_restart(self, args):
+        """Restart the Budget Manager CLI application."""
+        try:
+            logger.info(f"BizEVENT: Restarting the application.")
+            # Restart the application.
+            python = sys.executable
+            os.execl(python, python, *sys.argv)
+            return 
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion restart command - restart the application.
+    # ------------------------------------------------------------------------ +
+    #region do_show command - workbooks, status, etc.
+    @cmd2.with_argparser(show_cmd_parser())
+    def do_show(self, opts):
+        """Show information from the Budget Manager application.
+        
+        Arguments:
+            opts (argparse.Namespace): The command line options after parsing
+            the arguments with argparse. The opts dict becomes the command
+            object for the command processor.
+        """
+        try:
+            # Construct the command object from cmd2's argparse Namespace.
+            status, cmd = self.construct_cmd(opts)
+            if not status:
+                return
+            # Submit the command to the command processor.
+            status, result = self.cp_execute_cmd(cmd)
+            # Render the result.
+            if status:
+                cli_view_cmd_output(cmd, result)
+            else:
+                console.print(f"[red]Error:[/red] {result}")
+        except Exception as e:
+            self.pexcept(e)
+    #endregion do_show command
     # ------------------------------------------------------------------------ +
     #region do_save command - save workbooks
     @cmd2.with_argparser(save_cmd_parser())
@@ -579,50 +658,6 @@ class BudManCLIView(cmd2.Cmd): # , DataContext_Binding):
             self.pexcept(e)
     #endregion do_workflow command
     # ------------------------------------------------------------------------ +
-    #region do_app command
-    @with_argparser(app_cmd_parser())
-    def do_app(self, opts):
-        """View and adjust app settings and features.
-        
-        Arguments:
-            opts (argparse.Namespace): The command line options after parsing
-            the arguments with argparse. The opts dict becomes the command
-            object for the command processor.
-
-        """
-        try:
-            # Construct the command object from cmd2's argparse Namespace.
-            status, cmd = self.construct_cmd(opts)
-            if not status:
-                return
-            # If app exit cmd, handle here.
-            if cmd[cp.CK_SUBCMD_KEY] == cp.CV_EXIT_SUBCMD_KEY:
-                # Handle the --no_save switch
-                self.save_on_exit = not cmd[cp.CK_NO_SAVE]
-                console.print("Exiting Budget Manager CLI.")
-                return True
-            # Submit the command to the command processor.
-            status, result = self.cp_execute_cmd(cmd)
-            # Render the result.
-            if status:
-                console.print(result)
-            else:
-                console.print(f"[red]Error:[/red] {result}")
-        except Exception as e:
-            self.pexcept(e)
-    #endregion do_app command
-    # ------------------------------------------------------------------------ +
-    #region do_exit and quit commands
-    # def do_exit(self, args):
-    #     """Exit the Budget Manager CLI."""
-    #     console.print("Exiting Budget Manager CLI.")
-    #     return True 
-    # def do_quit(self, args):
-    #     """Quit the BudgetModel CLI."""
-    #     console.print("Quitting BudgetModel CLI.")
-    #     return True 
-    #endregion do_exit and quit commands
-    # ------------------------------------------------------------------------ +    
     #region construct_cmd
     def construct_cmd(self, opts : argparse.Namespace) -> Tuple[bool, Any]:
         """Construct a command object from cmd2/argparse arguments. 

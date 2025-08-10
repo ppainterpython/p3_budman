@@ -819,12 +819,16 @@ def bsm_get_folder_structure(path):
 #endregion bsm_get_folder_structure()
 # ---------------------------------------------------------------------------- +
 #region    bsm_file_tree_from_folder()
-def bsm_file_tree_from_folder(path: Path) -> Tree:
+def bsm_file_tree_from_folder(wf_folder_url:str) -> Tree:
+    """Create a Tree structure from a folder URL."""
+    p3u.is_not_non_empty_str("wf_folder_url", wf_folder_url, raise_error=True)
+    wf_folder_abs_path: Path = Path.from_uri(wf_folder_url)
+    bsm_verify_folder(wf_folder_abs_path, create=False, raise_errors=True)
     file_index:int = 0
     dir_index:int = 0
     tree = Tree()
-    tag = f"{dir_index:2} {path.name}"
-    tree.create_node(tag=tag, identifier=str(path))  # Root node
+    tag = f"{dir_index:2} {wf_folder_abs_path.name}"
+    tree.create_node(tag=tag, identifier=str(wf_folder_abs_path))  # Root node
 
     def add_nodes(current_path: Path, parent_id: str, 
                   file_index: int = 0, dir_index:int = 0) -> int:
@@ -857,7 +861,7 @@ def bsm_file_tree_from_folder(path: Path) -> Tree:
             raise
 
     try:
-        add_nodes(path, str(path), file_index, dir_index)
+        add_nodes(wf_folder_abs_path, str(wf_folder_abs_path), file_index, dir_index)
         return tree
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))

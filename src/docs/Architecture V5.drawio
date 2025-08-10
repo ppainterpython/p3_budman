@@ -1,6 +1,6 @@
 <mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/28.0.6 Chrome/138.0.7204.100 Electron/37.2.3 Safari/537.36" version="28.0.6">
   <diagram id="N458_lr4ttNGEyz7QCCE" name="Page-1">
-    <mxGraphModel dx="18287" dy="17030" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
+    <mxGraphModel dx="7418" dy="10502" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -154,7 +154,7 @@
         <mxCell id="wIEmJoaFOBh2xFhIoxgx-7" value="&lt;font style=&quot;color: rgb(255, 179, 102);&quot;&gt;+ model: -&amp;gt; MODEL_OBJECT &amp;lt;&amp;lt;Model_Base&amp;gt;&amp;gt;&lt;/font&gt;" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5,0,0,0],[0.65,0.5,0,0,0]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontColor=#EEEEEE;fontFamily=Lucida Console;labelBackgroundColor=none;fontSize=10;" parent="yZSgEj6sZusE3E6RH4b0-412" vertex="1">
           <mxGeometry y="760" width="390" height="20" as="geometry" />
         </mxCell>
-        <mxCell id="kQ5t4qy_jaQ6N--ZEEbe-48" value="&lt;font style=&quot;font-size: 14px;&quot;&gt;BDMWorkingData&lt;/font&gt;&lt;div&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;&amp;lt;&amp;lt;class&amp;gt;&amp;gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;budget_domain_model_working_data.py&lt;/span&gt;&lt;/div&gt;" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=60;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;strokeColor=#BAC8D3;fontColor=#EEEEEE;fillColor=#09555B;labelBackgroundColor=none;rounded=0;points=[[0,0,0,0,0],[0,0,0,150,0],[0,0.2,0,0,0],[0,0.5,0,0,0],[0,0.75,0,0,0],[0,1,0,0,0],[0.25,0,0,0,0],[0.25,1,0,0,0],[0.5,1,0,0,0],[0.75,0,0,0,0],[0.75,1,0,0,0],[1,0,0,0,0],[1,0.25,0,0,0],[1,0.5,0,0,0],[1,0.75,0,0,0],[1,1,0,0,0]];" parent="yZSgEj6sZusE3E6RH4b0-269" vertex="1">
+        <mxCell id="kQ5t4qy_jaQ6N--ZEEbe-48" value="&lt;font style=&quot;font-size: 14px;&quot;&gt;BDMDataContext&lt;/font&gt;&lt;div&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;&amp;lt;&amp;lt;class&amp;gt;&amp;gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;budget_domain_model_working_data.py&lt;/span&gt;&lt;/div&gt;" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=60;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;strokeColor=#BAC8D3;fontColor=#EEEEEE;fillColor=#09555B;labelBackgroundColor=none;rounded=0;points=[[0,0,0,0,0],[0,0,0,150,0],[0,0.2,0,0,0],[0,0.5,0,0,0],[0,0.75,0,0,0],[0,1,0,0,0],[0.25,0,0,0,0],[0.25,1,0,0,0],[0.5,1,0,0,0],[0.75,0,0,0,0],[0.75,1,0,0,0],[1,0,0,0,0],[1,0.25,0,0,0],[1,0.5,0,0,0],[1,0.75,0,0,0],[1,1,0,0,0]];" parent="yZSgEj6sZusE3E6RH4b0-269" vertex="1">
           <mxGeometry x="1140" y="1379.9999999999998" width="360" height="360" as="geometry">
             <mxRectangle x="430" y="598" width="140" height="30" as="alternateBounds" />
           </mxGeometry>
@@ -593,7 +593,7 @@
             <mxRectangle width="290.0000000000009" height="20" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="C1SaUKioDoDoB-BUxkxg-188" value="&lt;font style=&quot;text-wrap-mode: wrap; font-size: 14px; color: rgb(255, 255, 255);&quot;&gt;BudManDataContext&lt;/font&gt;&lt;div style=&quot;font-size: 12px; text-wrap-mode: wrap;&quot;&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;&lt;font style=&quot;color: rgb(255, 255, 255);&quot;&gt;&amp;lt;&amp;lt;class&amp;gt;&amp;gt;&lt;/font&gt;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px; text-wrap-mode: wrap; color: rgb(32, 32, 32);&quot;&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;&lt;font style=&quot;color: rgb(255, 255, 255);&quot;&gt;budman_data_context.py&lt;/font&gt;&lt;/span&gt;&lt;/div&gt;" style="shape=table;startSize=60;container=1;collapsible=1;childLayout=tableLayout;fixedRows=1;rowLines=0;fontStyle=1;align=center;resizeLast=1;html=1;fontSize=10;fillStyle=solid;fillColor=light-dark(#095B55, #09555b);points=[[0,0,0,0,0],[0,0,0,0,10],[0,0.5,0,0,0],[0,0.75,0,0,0],[0,1,0,0,0],[0.25,0,0,0,0],[0.25,1,0,0,0],[0.5,0,0,0,0],[0.5,1,0,0,0],[0.75,0,0,0,0],[0.75,1,0,0,0],[1,0,0,0,0],[1,0,0,0,10],[1,0.5,0,0,0],[1,0.75,0,0,0],[1,1,0,0,0]];swimlaneLine=1;strokeColor=default;" parent="yZSgEj6sZusE3E6RH4b0-269" vertex="1">
+        <mxCell id="C1SaUKioDoDoB-BUxkxg-188" value="&lt;font style=&quot;text-wrap-mode: wrap; font-size: 14px; color: rgb(255, 255, 255);&quot;&gt;BudManAppDataContext&lt;/font&gt;&lt;div style=&quot;font-size: 12px; text-wrap-mode: wrap;&quot;&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;&lt;font style=&quot;color: rgb(255, 255, 255);&quot;&gt;&amp;lt;&amp;lt;class&amp;gt;&amp;gt;&lt;/font&gt;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px; text-wrap-mode: wrap; color: rgb(32, 32, 32);&quot;&gt;&lt;span style=&quot;font-weight: normal;&quot;&gt;&lt;font style=&quot;color: rgb(255, 255, 255);&quot;&gt;budman_data_context.py&lt;/font&gt;&lt;/span&gt;&lt;/div&gt;" style="shape=table;startSize=60;container=1;collapsible=1;childLayout=tableLayout;fixedRows=1;rowLines=0;fontStyle=1;align=center;resizeLast=1;html=1;fontSize=10;fillStyle=solid;fillColor=light-dark(#095B55, #09555b);points=[[0,0,0,0,0],[0,0,0,0,10],[0,0.5,0,0,0],[0,0.75,0,0,0],[0,1,0,0,0],[0.25,0,0,0,0],[0.25,1,0,0,0],[0.5,0,0,0,0],[0.5,1,0,0,0],[0.75,0,0,0,0],[0.75,1,0,0,0],[1,0,0,0,0],[1,0,0,0,10],[1,0.5,0,0,0],[1,0.75,0,0,0],[1,1,0,0,0]];swimlaneLine=1;strokeColor=default;" parent="yZSgEj6sZusE3E6RH4b0-269" vertex="1">
           <mxGeometry x="970" y="750" width="640" height="502" as="geometry">
             <mxRectangle x="5120" y="-2240" width="220" height="30" as="alternateBounds" />
           </mxGeometry>
@@ -3780,7 +3780,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="r-HjLkqidW2sjcumusfv-3" value="&lt;span style=&quot;color: rgb(0, 127, 255); font-size: 36px;&quot;&gt;Dependency Diagram&lt;/span&gt;" style="swimlane;whiteSpace=wrap;html=1;strokeColor=#007FFF;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=12;fontColor=default;fontStyle=1;fillColor=default;startSize=60;" parent="1" vertex="1">
-          <mxGeometry x="-5180" y="-9240" width="6170" height="3610" as="geometry" />
+          <mxGeometry x="-5180" y="-9240" width="4730" height="3610" as="geometry" />
         </mxCell>
         <mxCell id="r-HjLkqidW2sjcumusfv-28" value="&lt;font style=&quot;font-size: 18px;&quot;&gt;PKG&lt;/font&gt;&lt;div&gt;&lt;font style=&quot;font-size: 18px;&quot;&gt;p3_mvvm&lt;/font&gt;&lt;/div&gt;" style="ellipse;whiteSpace=wrap;html=1;align=center;strokeColor=default;verticalAlign=top;fontFamily=Helvetica;fontSize=12;fontColor=default;fillColor=#5E7A75;container=1;" parent="r-HjLkqidW2sjcumusfv-3" vertex="1">
           <mxGeometry x="2480" y="300" width="430" height="170" as="geometry" />
@@ -6132,6 +6132,177 @@
         </mxCell>
         <mxCell id="C1SaUKioDoDoB-BUxkxg-526" value="" style="shape=image;verticalLabelPosition=bottom;labelBackgroundColor=default;verticalAlign=top;aspect=fixed;imageAspect=0;image=data:image/png,iVBORw0KGgoAAAANSUhEUgAAAXoAAAG2CAMAAABGVL1tAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAACTUExURQAAAP///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////9E7JV4AAAAxdFJOUwA4UICnv9///e/Hd5fn3R8QWPcIh9lwtyDPQJ/XMEiPYHgYkGivwOThiegoZKDBoXYmOvFtAAAACXBIWXMAABcRAAAXEQHKJvM/AAATiElEQVR4Xu2da3uqMNaGtYqOjs5Ycay1tVanzqlzeP//r3svPMBaKwmKJqwgz/1p74IJ3IScEzqdB+i+9PpJkgyGTeQPo/Ef5Q01hJfJVN5N4/jTn+VdRc/stT+Xt9FIRqm8tbiZLZ7De8ZfmuQ+XY7k9TeZt+a4f21moeqmKe5X7/LKm08z3K+fKq+50AT3S3nRT0L07tOJvOSnIXL3s7G84CciavfpM5uP2/2HvNgjg+Sj11s3DXkXGfG6t5Wwn72NPK0ZyBs5Eqv7L3mhw/l2JU9qDPJeTsTpfmXU5z+aK96lPk73sg07brJ4p/oY3X+LS+zHd4mVELdTEJ37VIyJ7OQJTYPfDiU296J28y2PNw5+P4y43O95Gdv4NF+qPi73W3ZpfXm4gdD7+Sv9T0ZE7vdsNHAcz4XdD72hVY/+LyMe96x6M9/Lw02E3tGqE6/7N3pVW3m0kdA7WnWidZ/S/OY5Er1UH6v7V3pJz5HoDfWRumedxc+R6E31UbpPaaV+LI82FHJLZ/Uxuu/Sy3mC1tQRek+XjsD43P/Qq2l2f2WB9Z6ic78g1/IpDzYVck8kOcXm/kAu5Rn6EI6Qe6JvcmTuE3IlT1K1dKqPzD2d3PospaxTfVzuqfrmd9SfIfckqg4xuafV+rU82FTIPclaW0Tu6VW0QX1E7ulFtEJ9PO7pNbRDfTTu6SW0RH0s7ukVtEV9JO7pBbRGfRzuafztUR+Fexp9i9TH4J7G3ib1EbinkbdKvb57Gne71JvuD/KMsNCoW6bedP8hzwgKjblt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;" parent="1" vertex="1">
           <mxGeometry x="4980" y="-4762.44" width="79.78" height="92.44" as="geometry" />
+        </mxCell>
+        <mxCell id="QGntIHunnyA1WiAcTs19-1" value="&lt;span style=&quot;color: rgb(0, 127, 255); font-size: 36px;&quot;&gt;container&lt;/span&gt;" style="swimlane;whiteSpace=wrap;html=1;strokeColor=#007FFF;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=12;fontColor=default;fontStyle=1;fillColor=default;startSize=60;swimlaneFillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="-5230" y="990" width="4530" height="2610" as="geometry" />
+        </mxCell>
+        <mxCell id="QGntIHunnyA1WiAcTs19-4" style="edgeStyle=entityRelationEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="QGntIHunnyA1WiAcTs19-1" source="QGntIHunnyA1WiAcTs19-2" target="QGntIHunnyA1WiAcTs19-3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="QGntIHunnyA1WiAcTs19-7" style="edgeStyle=entityRelationEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.25;entryDx=0;entryDy=0;" edge="1" parent="QGntIHunnyA1WiAcTs19-1" source="QGntIHunnyA1WiAcTs19-2" target="QGntIHunnyA1WiAcTs19-5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="QGntIHunnyA1WiAcTs19-8" style="edgeStyle=entityRelationEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="QGntIHunnyA1WiAcTs19-1" source="QGntIHunnyA1WiAcTs19-21" target="QGntIHunnyA1WiAcTs19-24">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="580" y="810" as="sourcePoint" />
+            <mxPoint x="680" y="520" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="QGntIHunnyA1WiAcTs19-2" value="&lt;font face=&quot;Lucida Console&quot; style=&quot;font-size: 20px;&quot;&gt;workflow &quot;wf&quot;&lt;/font&gt;" style="text;html=1;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;spacingRight=4;" vertex="1" parent="QGntIHunnyA1WiAcTs19-1">
+          <mxGeometry x="420" y="1570" width="190" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="QGntIHunnyA1WiAcTs19-3" value="&lt;font face=&quot;Lucida Console&quot; style=&quot;font-size: 20px;&quot;&gt;list&amp;nbsp;&lt;/font&gt;&lt;span style=&quot;font-family: &amp;quot;Lucida Console&amp;quot;; font-size: 20px;&quot;&gt;--cmdline_wf_key | -w &amp;lt;&#39;intake&#39; | &#39;categorize_transactions&#39; | &#39;budget&#39;&amp;gt;&amp;nbsp;&lt;/span&gt;&lt;div&gt;&lt;span style=&quot;font-family: &amp;quot;Lucida Console&amp;quot;; font-size: 20px;&quot;&gt;&amp;nbsp; &amp;nbsp; &amp;nbsp;--cmdline_wf_purpose | [-p &amp;lt;&#39;wf_input&#39; | &#39;wf_working&#39; | &#39;wf_output&#39;&amp;gt; | -wi | -ww | -wo]&lt;/span&gt;&lt;span style=&quot;font-family: &amp;quot;Lucida Console&amp;quot;; font-size: 20px;&quot;&gt;&lt;/span&gt;&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;spacingLeft=4;" vertex="1" parent="QGntIHunnyA1WiAcTs19-1">
+          <mxGeometry x="710" y="1360" width="1140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="QGntIHunnyA1WiAcTs19-5" value="&lt;font face=&quot;Lucida Console&quot; style=&quot;font-size: 20px;&quot;&gt;set --cmdline_wf_key | -w &amp;lt;&#39;intake&#39; | &#39;categorize_transactions&#39; | &#39;budget&#39;&amp;gt;&amp;nbsp;&lt;/font&gt;&lt;div&gt;&lt;font face=&quot;Lucida Console&quot; style=&quot;font-size: 20px;&quot;&gt;&amp;nbsp; &amp;nbsp; --cmdline_wf_purpose | [-p &amp;lt;&#39;wf_input&#39; | &#39;wf_working&#39; | &#39;wf_output&#39;&amp;gt; | -wi | -ww | -wo]&lt;/font&gt;&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;spacingLeft=4;" vertex="1" parent="QGntIHunnyA1WiAcTs19-1">
+          <mxGeometry x="710" y="1440" width="1150" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="QGntIHunnyA1WiAcTs19-6" value="&lt;font face=&quot;Lucida Console&quot; style=&quot;font-size: 20px;&quot;&gt;categorization | cat&amp;nbsp; wb_index [--load_workbook | -l | -load] [-log_all | -la]&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;spacingLeft=4;" vertex="1" parent="QGntIHunnyA1WiAcTs19-1">
+          <mxGeometry x="710" y="1280" width="1010" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="QGntIHunnyA1WiAcTs19-9" value="&lt;font face=&quot;Lucida Console&quot; style=&quot;font-size: 20px;&quot;&gt;intake | &quot;in&quot; | &quot;i&quot; copy file_index&amp;nbsp;&lt;/font&gt;&lt;font style=&quot;font-size: 20px;&quot; face=&quot;Lucida Console&quot;&gt;--cmdline_wf_key | -w &amp;lt;&#39;intake&#39; | &#39;categorize_transactions&#39; | &#39;budget&#39;&amp;gt;&amp;nbsp;&lt;/font&gt;&lt;div&gt;&lt;font style=&quot;font-size: 20px;&quot; face=&quot;Lucida Console&quot;&gt;&amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; --cmdline_wf_purpose | [-p &amp;lt;&#39;wf_input&#39; | &#39;wf_working&#39; | &#39;wf_output&#39;&amp;gt; | -wi | -ww | -wo]&lt;/font&gt;&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;spacingLeft=4;" vertex="1" parent="QGntIHunnyA1WiAcTs19-1">
+          <mxGeometry x="710" y="1590" width="1580" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="QGntIHunnyA1WiAcTs19-10" value="&lt;font face=&quot;Lucida Console&quot; style=&quot;font-size: 20px;&quot;&gt;check | ch wb_index [-load] [-fix] [--validate_categories | -val | -v]&amp;nbsp;&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;spacingLeft=4;" vertex="1" parent="QGntIHunnyA1WiAcTs19-1">
+          <mxGeometry x="710" y="1660" width="980" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="QGntIHunnyA1WiAcTs19-11" style="edgeStyle=entityRelationEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="QGntIHunnyA1WiAcTs19-1" source="QGntIHunnyA1WiAcTs19-2">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="620" y="1595" as="sourcePoint" />
+            <mxPoint x="710" y="1610" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="QGntIHunnyA1WiAcTs19-12" style="edgeStyle=entityRelationEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="QGntIHunnyA1WiAcTs19-1" source="QGntIHunnyA1WiAcTs19-2" target="QGntIHunnyA1WiAcTs19-10">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="620" y="1595" as="sourcePoint" />
+            <mxPoint x="720" y="1615" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="QGntIHunnyA1WiAcTs19-13" value="&lt;font face=&quot;Lucida Console&quot; style=&quot;font-size: 20px;&quot;&gt;task &quot;t&quot; task_name: &#39;sync&#39; [--reconcile | -r]&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;spacingLeft=4;" vertex="1" parent="QGntIHunnyA1WiAcTs19-1">
+          <mxGeometry x="710" y="1710" width="860" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="QGntIHunnyA1WiAcTs19-14" style="edgeStyle=entityRelationEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="QGntIHunnyA1WiAcTs19-1" source="QGntIHunnyA1WiAcTs19-2" target="QGntIHunnyA1WiAcTs19-13">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="620" y="1595" as="sourcePoint" />
+            <mxPoint x="720" y="1685" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="QGntIHunnyA1WiAcTs19-15" value="&lt;font face=&quot;Lucida Console&quot; style=&quot;font-size: 20px;&quot;&gt;apply | &quot;a&quot; --category_map &quot;cm-name&quot;&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;spacingLeft=4;" vertex="1" parent="QGntIHunnyA1WiAcTs19-1">
+          <mxGeometry x="710" y="1760" width="510" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="QGntIHunnyA1WiAcTs19-16" style="edgeStyle=entityRelationEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="QGntIHunnyA1WiAcTs19-1" source="QGntIHunnyA1WiAcTs19-2" target="QGntIHunnyA1WiAcTs19-15">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="620" y="1595" as="sourcePoint" />
+            <mxPoint x="720" y="1735" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="QGntIHunnyA1WiAcTs19-18" value="&lt;font face=&quot;Lucida Console&quot; style=&quot;font-size: 20px;&quot;&gt;change&lt;/font&gt;" style="text;html=1;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;spacingLeft=4;spacingRight=4;" vertex="1" parent="QGntIHunnyA1WiAcTs19-1">
+          <mxGeometry x="430" y="880" width="90" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="QGntIHunnyA1WiAcTs19-19" value="&lt;font face=&quot;Lucida Console&quot; style=&quot;font-size: 20px;&quot;&gt;save BDM_STORE file_index&amp;nbsp;&lt;/font&gt;&lt;font style=&quot;font-size: 20px;&quot; face=&quot;Lucida Console&quot;&gt;--cmdline_wf_key | -w &amp;lt;&#39;intake&#39; | &#39;categorize_transactions&#39; | &#39;budget&#39;&amp;gt;&amp;nbsp;&lt;/font&gt;&lt;div&gt;&lt;font style=&quot;font-size: 20px;&quot; face=&quot;Lucida Console&quot;&gt;&amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; --cmdline_wf_purpose | [-p &amp;lt;&#39;wf_input&#39; | &#39;wf_working&#39; | &#39;wf_output&#39;&amp;gt; | -wi | -ww | -wo]&lt;/font&gt;&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;spacingLeft=4;" vertex="1" parent="QGntIHunnyA1WiAcTs19-1">
+          <mxGeometry x="710" y="1520" width="1580" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="QGntIHunnyA1WiAcTs19-20" style="edgeStyle=entityRelationEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;" edge="1" parent="QGntIHunnyA1WiAcTs19-1" source="QGntIHunnyA1WiAcTs19-2" target="QGntIHunnyA1WiAcTs19-19">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="620" y="1595" as="sourcePoint" />
+            <mxPoint x="720" y="1620" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="QGntIHunnyA1WiAcTs19-21" value="&lt;font style=&quot;font-size: 20px;&quot; face=&quot;Lucida Console&quot;&gt;show&amp;nbsp;&lt;/font&gt;" style="text;html=1;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;spacingLeft=4;spacingRight=4;" vertex="1" parent="QGntIHunnyA1WiAcTs19-1">
+          <mxGeometry x="440" y="360" width="70" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="QGntIHunnyA1WiAcTs19-22" value="&lt;font face=&quot;Lucida Console&quot; style=&quot;font-size: 20px;&quot;&gt;BUDGET_CATEGORIES | cat&amp;nbsp; cat_list [--level | -l ]&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;spacingLeft=4;" vertex="1" parent="QGntIHunnyA1WiAcTs19-1">
+          <mxGeometry x="710" y="360" width="1010" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="QGntIHunnyA1WiAcTs19-24" value="&lt;font face=&quot;Lucida Console&quot; style=&quot;font-size: 20px;&quot;&gt;DATA_CONTEXT | dc | DC&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;spacingLeft=4;" vertex="1" parent="QGntIHunnyA1WiAcTs19-1">
+          <mxGeometry x="710" y="270" width="1010" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="QGntIHunnyA1WiAcTs19-25" style="edgeStyle=entityRelationEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="QGntIHunnyA1WiAcTs19-1" source="QGntIHunnyA1WiAcTs19-2" target="QGntIHunnyA1WiAcTs19-6">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="620" y="1595" as="sourcePoint" />
+            <mxPoint x="720" y="1305" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="QGntIHunnyA1WiAcTs19-26" style="edgeStyle=entityRelationEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="QGntIHunnyA1WiAcTs19-1" source="QGntIHunnyA1WiAcTs19-21" target="QGntIHunnyA1WiAcTs19-22">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="520" y="385" as="sourcePoint" />
+            <mxPoint x="720" y="295" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="QGntIHunnyA1WiAcTs19-27" value="&lt;font face=&quot;Lucida Console&quot; style=&quot;font-size: 20px;&quot;&gt;fin_inst | fi | FI |financial_institutions fi_key&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;spacingLeft=4;" vertex="1" parent="QGntIHunnyA1WiAcTs19-1">
+          <mxGeometry x="710" y="310" width="1010" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="QGntIHunnyA1WiAcTs19-28" style="edgeStyle=entityRelationEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="QGntIHunnyA1WiAcTs19-1" source="QGntIHunnyA1WiAcTs19-21" target="QGntIHunnyA1WiAcTs19-27">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="520" y="385" as="sourcePoint" />
+            <mxPoint x="720" y="295" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="QGntIHunnyA1WiAcTs19-29" value="&lt;font face=&quot;Lucida Console&quot; style=&quot;font-size: 20px;&quot;&gt;workflows | wf | WF&amp;nbsp;&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;spacingLeft=4;" vertex="1" parent="QGntIHunnyA1WiAcTs19-1">
+          <mxGeometry x="710" y="410" width="1010" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="QGntIHunnyA1WiAcTs19-30" style="edgeStyle=entityRelationEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="QGntIHunnyA1WiAcTs19-1" source="QGntIHunnyA1WiAcTs19-21" target="QGntIHunnyA1WiAcTs19-29">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="520" y="385" as="sourcePoint" />
+            <mxPoint x="720" y="385" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="QGntIHunnyA1WiAcTs19-31" value="&lt;font face=&quot;Lucida Console&quot; style=&quot;font-size: 20px;&quot;&gt;workbooks | wb | WB&amp;nbsp;wb_index --bdm_tree | -t&amp;nbsp;&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;spacingLeft=4;" vertex="1" parent="QGntIHunnyA1WiAcTs19-1">
+          <mxGeometry x="710" y="450" width="1010" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="QGntIHunnyA1WiAcTs19-32" style="edgeStyle=entityRelationEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="QGntIHunnyA1WiAcTs19-1" source="QGntIHunnyA1WiAcTs19-21" target="QGntIHunnyA1WiAcTs19-31">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="520" y="385" as="sourcePoint" />
+            <mxPoint x="720" y="435" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="QGntIHunnyA1WiAcTs19-33" value="&lt;font style=&quot;font-size: 20px;&quot; face=&quot;Lucida Console&quot;&gt;app&lt;/font&gt;" style="text;html=1;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;spacingLeft=4;spacingRight=4;" vertex="1" parent="QGntIHunnyA1WiAcTs19-1">
+          <mxGeometry x="430" y="620" width="50" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="QGntIHunnyA1WiAcTs19-34" value="&lt;font face=&quot;Lucida Console&quot; style=&quot;font-size: 20px;&quot;&gt;exit | quit --no_save&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;spacingLeft=4;" vertex="1" parent="QGntIHunnyA1WiAcTs19-1">
+          <mxGeometry x="710" y="580" width="1010" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="QGntIHunnyA1WiAcTs19-35" style="edgeStyle=entityRelationEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="QGntIHunnyA1WiAcTs19-1" source="QGntIHunnyA1WiAcTs19-33" target="QGntIHunnyA1WiAcTs19-34">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="520" y="385" as="sourcePoint" />
+            <mxPoint x="720" y="475" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="QGntIHunnyA1WiAcTs19-36" value="&lt;font face=&quot;Lucida Console&quot; style=&quot;font-size: 20px;&quot;&gt;delete | del delete_target&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;spacingLeft=4;" vertex="1" parent="QGntIHunnyA1WiAcTs19-1">
+          <mxGeometry x="710" y="540" width="1010" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="QGntIHunnyA1WiAcTs19-37" style="edgeStyle=entityRelationEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="QGntIHunnyA1WiAcTs19-1" source="QGntIHunnyA1WiAcTs19-33" target="QGntIHunnyA1WiAcTs19-36">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="520" y="595" as="sourcePoint" />
+            <mxPoint x="720" y="605" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="QGntIHunnyA1WiAcTs19-38" value="&lt;font face=&quot;Lucida Console&quot; style=&quot;font-size: 20px;&quot;&gt;reload | r reload_target&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;spacingLeft=4;" vertex="1" parent="QGntIHunnyA1WiAcTs19-1">
+          <mxGeometry x="710" y="620" width="1010" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="QGntIHunnyA1WiAcTs19-39" style="edgeStyle=entityRelationEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="QGntIHunnyA1WiAcTs19-1" source="QGntIHunnyA1WiAcTs19-33" target="QGntIHunnyA1WiAcTs19-38">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="520" y="595" as="sourcePoint" />
+            <mxPoint x="720" y="605" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="QGntIHunnyA1WiAcTs19-40" value="&lt;font face=&quot;Lucida Console&quot; style=&quot;font-size: 20px;&quot;&gt;log&amp;nbsp; handler_name [--list | -ls] [--level | -l] [--rollover | -r]&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;spacingLeft=4;" vertex="1" parent="QGntIHunnyA1WiAcTs19-1">
+          <mxGeometry x="710" y="660" width="1010" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="QGntIHunnyA1WiAcTs19-41" style="edgeStyle=entityRelationEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="QGntIHunnyA1WiAcTs19-1" source="QGntIHunnyA1WiAcTs19-33" target="QGntIHunnyA1WiAcTs19-40">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="510" y="645" as="sourcePoint" />
+            <mxPoint x="720" y="645" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="QGntIHunnyA1WiAcTs19-42" value="&lt;font face=&quot;Lucida Console&quot; style=&quot;font-size: 20px;&quot;&gt;workbooks | wb | WB&amp;nbsp;wb_index [--cmdline_wb_type | -t &amp;lt;valid-wb-type&amp;gt;]&lt;/font&gt;&lt;div&gt;&lt;font style=&quot;font-size: 20px;&quot; face=&quot;Lucida Console&quot;&gt;&amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp;[--cmdline_wf_key | -w &amp;lt;&#39;intake&#39; | &#39;categorize_transactions&#39; | &#39;budget&#39;&amp;gt;]&amp;nbsp;&amp;nbsp;&lt;/font&gt;&lt;div&gt;&lt;font style=&quot;font-size: 20px;&quot; face=&quot;Lucida Console&quot;&gt;&amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp;[--cmdline_wf_purpose | [-p &amp;lt;&#39;wf_input&#39; | &#39;wf_working&#39; | &#39;wf_output&#39;&amp;gt; | -wi | -ww | -wo]&lt;/font&gt;&lt;/div&gt;&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;spacingLeft=4;" vertex="1" parent="QGntIHunnyA1WiAcTs19-1">
+          <mxGeometry x="710" y="840" width="1550" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="QGntIHunnyA1WiAcTs19-43" style="edgeStyle=entityRelationEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.25;entryDx=0;entryDy=0;" edge="1" parent="QGntIHunnyA1WiAcTs19-1" source="QGntIHunnyA1WiAcTs19-18" target="QGntIHunnyA1WiAcTs19-42">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="490" y="645" as="sourcePoint" />
+            <mxPoint x="720" y="645" as="targetPoint" />
+          </mxGeometry>
         </mxCell>
       </root>
     </mxGraphModel>

@@ -53,8 +53,8 @@ def process_workflow_intake_tasks(cmd: Dict[str, Any],
     """
     try:
         # Assuming the cmd parameters have been validated before reaching this point.
-        if cmd[cp.CK_INTAKE_TASK] == cp.CV_INTAKE_MOVE_TASK:
-            # Process the move task.
+        if cmd[cp.CK_INTAKE_TASK] == cp.CV_INTAKE_COPY_TASK:
+            # Process the copy task.
             return INTAKE_PROCESS_copy_file_to_WF_WORKING_folder(cmd, bdm_DC)
         else:
             m = f"Unknown intake task: {cmd[cp.CK_INTAKE_TASK]}"
@@ -80,7 +80,7 @@ def INTAKE_PROCESS_copy_file_to_WF_WORKING_folder(
             BudMan application.
     """
     try:
-        # Assuming the cmd parameters have been validated before reaching this point.
+        # Assume the cmd parameters have been validated before reaching this point.
         # Current DC values of wf_key and wf_purpose are are the destination 
         # folder for the file to be copied. CMDLINE file_index, wf_key and 
         # wf_purpose identify the file to copy. 
@@ -88,8 +88,9 @@ def INTAKE_PROCESS_copy_file_to_WF_WORKING_folder(
         src_wf_key: str = cmd[cp.CK_CMDLINE_WF_KEY]
         src_wf_purpose: str = cmd[cp.CK_CMDLINE_WF_PURPOSE]
         src_file_index: int = cmd[cp.CK_FILE_INDEX]
-        src_folder_tree = WORKFLOW_get_folder_tree(src_wf_key, src_wf_purpose, bdm_DC)
-
+        fi_key:str = bdm_DC.dc_FI_KEY
+        src_folder_tree = WORKFLOW_get_folder_tree(fi_key, src_wf_key, 
+                                                   src_wf_purpose, bdm_DC)
         # Destination workflow folder
         dst_wf_key = bdm_DC.dc_WF_KEY
         dst_wf_purpose = bdm_DC.dc_WF_PURPOSE

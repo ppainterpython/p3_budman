@@ -105,7 +105,7 @@ def WORKFLOW_TASK_set_value(cmd: Dict[str, Any],
 #region WORKFLOW_TASK_list_folder_tree() function
 def WORKFLOW_TASK_list_folder_tree(cmd: Dict[str, Any],
                       bdm_DC: BudManAppDataContext_Base) -> bdm.BUDMAN_RESULT_TYPE:
-    """List all files from an indicated workflow folder.
+    """List all files from an indicated workflow folder under current DC FI_KEY.
 
     Args:
         cmd (Dict[str, Any]): A valid BudMan View Model Command object.
@@ -138,7 +138,12 @@ def WORKFLOW_TASK_list_folder_tree(cmd: Dict[str, Any],
                 m = "No wf_purpose from cmd args or DC."
                 logger.error(m)
                 return False, m
-        folder_tree: Tree = WORKFLOW_get_folder_tree(wf_key, wf_purpose, bdm_DC)
+        fi_key: str = bdm_DC.dc_FI_KEY
+        folder_tree: Tree = WORKFLOW_get_folder_tree(fi_key, wf_key, wf_purpose, bdm_DC)
+        if not folder_tree:
+            m = f"No wf_folder found for FI_KEY: '{fi_key}', WF_KEY: '{wf_key}', WF_PURPOSE: '{wf_purpose}'"
+            logger.error(m)
+            return False, m
         msg = f"Workflow Folder Tree for WORKFLOW('{wf_key}') "
         msg += f"PURPOSE('{wf_purpose}')"
         return output_tree_view(msg, folder_tree)
@@ -147,7 +152,7 @@ def WORKFLOW_TASK_list_folder_tree(cmd: Dict[str, Any],
         raise
 #endregion WORKFLOW_TASK_list_folder_tree() function
 # ---------------------------------------------------------------------------- +
-#region WORKFLOW_get_folder_tree() function
+#region WORKFLOW_TASK_sync_wdc() function
 def WORKFLOW_TASK_sync_wdc(reconcile:bool, 
                            bdm_DC: BudManAppDataContext_Base) -> bdm.BUDMAN_RESULT_TYPE:
     """Model-Aware: Sync the WORKBOOK_DATA_COLLECTION for the current FI_KEY.
@@ -186,10 +191,11 @@ def WORKFLOW_TASK_sync_wdc(reconcile:bool,
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
-#endregion WORKFLOW_get_folder_tree() function
+#endregion WORKFLOW_TASK_sync_wdc() function
 # ---------------------------------------------------------------------------- +
 #region WORKFLOW_get_folder_tree() function
-def WORKFLOW_get_folder_tree(wf_key: str, wf_purpose: str, bdm_DC: BudManAppDataContext_Base) -> Tree:
+def WORKFLOW_get_folder_tree(fi_key: str, wf_key: str, wf_purpose: str, 
+                             bdm_DC: BudManAppDataContext_Base) -> Tree:
     """Obtain a folder tree based on wf_key and wf_purpose.
 
      A folder tree is a treelib.Tree object with the folders and files from a
@@ -208,8 +214,18 @@ def WORKFLOW_get_folder_tree(wf_key: str, wf_purpose: str, bdm_DC: BudManAppData
         treelib.Tree: The folder tree for the specified workflow.
     """
     try:
-        wf_purpose_folder_abs_path: Path.Path = bdm_DC.dc_WF_PURPOSE_FOLDER_abs_path(wf_key, wf_purpose)
-        folder_tree: Tree = bsm_file_tree_from_folder(wf_purpose_folder_abs_path)
+        # Validate the model binding.
+        model: BudgetDomainModel = bdm_DC.model
+        if not model:
+            m = "No BudgetDomainModel binding in the DC."
+            logger.error(m)
+            raise ValueError(m)
+        fi_wf_folder_url: str = model.bdm_FI_WF_FOLDER_URL(fi_key, wf_key, 
+                                                           wf_purpose, 
+                                                           raise_errors=False)
+        if not fi_wf_folder_url:
+            return None
+        folder_tree: Tree = bsm_file_tree_from_folder(fi_wf_folder_url)
         return folder_tree
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))

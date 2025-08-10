@@ -195,9 +195,10 @@ import p3_utils as p3u, pyjson5, p3logging as p3l
 from openpyxl import Workbook, load_workbook
 
 # local modules and packages
+# from budman_command_processor.cp_utils import CMD_RESULT_OBJECT
 import budman_workflows
 from p3_mvvm import (Model_Base, Model_Binding)
-import budman_command_processor.budman_cp_namespace as cp
+import budman_command_processor as cp
 from budman_settings import *
 from budman_namespace.design_language_namespace import *
 from budman_namespace.bdm_workbook_class import BDMWorkbook
@@ -859,6 +860,37 @@ class BudManViewModel(BudManAppDataContext_Binding, Model_Binding): # future ABC
     # ======================================================================== +
  
     # ======================================================================== +
+    #region    Model_Binding to BudgetDomainModel                              + 
+    # ======================================================================== +
+    #                                                                          +
+    # ------------------------------------------------------------------------ +
+    #region    Model_Binding Properties                                        +
+    @property
+    def budget_domain_model(self) -> BudgetDomainModel:
+        """Return the BudgetModel instance."""
+        return self._budget_domain_model
+    @budget_domain_model.setter
+    def budget_domain_model(self, value: BudgetDomainModel) -> None:
+        """Set the BudgetModel instance."""
+        if not isinstance(value, BudgetDomainModel):
+            raise ValueError("budget_model must be a BudgetModel instance.")
+        self._budget_domain_model = value
+
+    @property
+    def model(self) -> Model_Base:
+        """Return the model object reference."""
+        return self._budget_domain_model
+    @model.setter
+    def model(self, bdm: Model_Base) -> None:
+        """Set the model object reference."""
+        if not isinstance(bdm, Model_Base):
+            raise TypeError("model must be a BDMBaseInterface instance")
+        self._budget_domain_model = bdm
+    #endregion Model_Binding Properties                                        +
+    #endregion Model_Binding to BudgetDomainModel               +
+    # ======================================================================== +
+
+    # ======================================================================== +
     #region    Command Execution Methods                                       +
     # ======================================================================== +
     #region FI_init_cmd() command > init FI boa
@@ -1107,17 +1139,17 @@ class BudManViewModel(BudManAppDataContext_Binding, Model_Binding): # future ABC
         """Show information about WORKBOOKS in the DC.
 
         Arguments:
-            cmd (Dict): A valid BudMan View Model Command object. 
-            cmd_key: show_cmd
-            subcmd_key: show_cmd_workbooks
+            cmd (Dict): A valid BudMan View Model Command object with the
+            following attributes: 
+                cmd_key: show_cmd
+                subcmd_key: show_cmd_workbooks
             Optional cmd object attributes:
                 wb_list: A list of workbook indices to show
                 all_wbs: bool, if True, show all workbooks, '-all' switch.
                 bdm_tree: bool, if True, show the BDM tree instead of workbooks.
         Returns:
-            Tuple[output_type: str, result : Any]): The output of 
-            the command execution. The output_type identifies the expected
-            type and content of the result of the command.
+            BUDMAN_RESULT_TYPE:
+                Tuple[success: bool, result : CMD_RESULT]:
 
         Raises:
             RuntimeError: A description of the
@@ -1130,24 +1162,18 @@ class BudManViewModel(BudManAppDataContext_Binding, Model_Binding): # future ABC
             selected_bdm_wb_list = self.process_selected_workbook_input(cmd)
             fr: str = f"Show {len(selected_bdm_wb_list)} workbooks:"
             bdm_tree : bool = self.cp_cmd_attr_get(cmd, cp.CK_BDM_TREE, False)
-            cmd_result : Dict[str, Any] = {
-                CMD_RESULT_TYPE: CLIVIEW_OUTPUT_STRING,
-                CMD_RESULT_CONTENT: None
-            }
+            cmd_result: CMD_RESULT = cp.CMD_RESULT_OBJECT()
             # Process the intended workbooks.
             if bdm_tree:
+                # Show workbooks with tree output
                 result = output_bdm_tree(self.DC)
-                # Construct the output dictionary result
                 cmd_result[CMD_RESULT_TYPE] = CLIVIEW_WORKBOOK_TREE_VIEW
                 cmd_result[CMD_RESULT_CONTENT] = result
             else:
                 # Collect the wb info for workbooks in the selected_bdm_wb_list.
                 # Construct the output dictionary result
-                cmd_result : Dict[str, Any] = {
-                    CMD_RESULT_TYPE: CLIVIEW_WORKBOOK_INFO_TABLE,
-                    CMD_RESULT_CONTENT: list()
-                }
-                # wb_info: List[Dict[str,str]] = []
+                cmd_result[CMD_RESULT_TYPE] = CLIVIEW_WORKBOOK_INFO_TABLE
+                cmd_result[CMD_RESULT_CONTENT] = list()
                 ws = "[red]|[/red]"
                 fr += f"\n{P2}{FI_KEY:10}{ws}{WB_INDEX:6} {WB_ID:50} {WB_TYPE:15} "
                 fr += f"{WB_FILETYPE:15} {WF_KEY:23} {WF_PURPOSE:10} "
@@ -1759,9 +1785,12 @@ class BudManViewModel(BudManAppDataContext_Binding, Model_Binding): # future ABC
     #endregion CHANGE_cmd() method
     # ------------------------------------------------------------------------ +
     #                                                                          +
-    # ------------------------------------------------------------------------ +
-    #region    helper methods for command execution
-    # ------------------------------------------------------------------------ +
+    #endregion Command Execution Methods                                       +
+    # ======================================================================== +
+
+    # ======================================================================== +
+    #region    helper methods                                                  +
+    # ======================================================================== +
     #region process_workbook_input()
     def process_selected_workbook_input(self, cmd: Dict) -> List[BDMWorkbook]:
         """Process the workbook input from the command, return a list of BDMWorkbooks.
@@ -1908,39 +1937,6 @@ class BudManViewModel(BudManAppDataContext_Binding, Model_Binding): # future ABC
         return False
     #endregion wb_ref_not_valid() method
     # ------------------------------------------------------------------------ +
-    #endregion helper methods for command execution
-    # ------------------------------------------------------------------------ +
     #                                                                          +
-    #endregion Command Execution Methods                                       +
-    # ======================================================================== +
- 
-    # ======================================================================== +
-    #region    Model_Binding to BudgetDomainModel                              + 
-    # ======================================================================== +
-    #                                                                          +
-    # ------------------------------------------------------------------------ +
-    #region    Model_Binding Properties                                        +
-    @property
-    def budget_domain_model(self) -> BudgetDomainModel:
-        """Return the BudgetModel instance."""
-        return self._budget_domain_model
-    @budget_domain_model.setter
-    def budget_domain_model(self, value: BudgetDomainModel) -> None:
-        """Set the BudgetModel instance."""
-        if not isinstance(value, BudgetDomainModel):
-            raise ValueError("budget_model must be a BudgetModel instance.")
-        self._budget_domain_model = value
-
-    @property
-    def model(self) -> Model_Base:
-        """Return the model object reference."""
-        return self._budget_domain_model
-    @model.setter
-    def model(self, bdm: Model_Base) -> None:
-        """Set the model object reference."""
-        if not isinstance(bdm, Model_Base):
-            raise TypeError("model must be a BDMBaseInterface instance")
-        self._budget_domain_model = bdm
-    #endregion Model_Binding Properties                                        +
-    #endregion Model_Binding to BudgetDomainModel               +
+    #endregion helper methods for command execution                            +
     # ======================================================================== +

@@ -693,6 +693,7 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise ValueError(m)
+    #endregion bdm_BDM_STORE_json() method
     # ------------------------------------------------------------------------ +
     #region    BDM FI_OBJECT_TYPE methods
     def bdm_FI_OBJECT(self, fi_key:str) -> FI_OBJECT_TYPE:
@@ -833,7 +834,9 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
             raise ValueError(m)
         
     def bdm_FI_WF_FOLDER_URL(self, fi_key:str, 
-                             wf_key:str, wf_purpose:str) -> Optional[str]:
+                             wf_key:str, 
+                             wf_purpose:str,
+                             raise_errors: bool =  True) -> Optional[str]:
         """Return the FI_WF_FOLDER_URL for a given fi_key, wf_key and wf_purpose."""
         try:
             wf_folder_config: Optional[WF_FOLDER_CONFIG_TYPE] = None
@@ -842,8 +845,18 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
                 m = f"Workflow folder config for FI_KEY('{fi_key}'), "
                 m += f"WF_KEY('{wf_key}'), WF_PURPOSE('{wf_purpose}') is None."
                 logger.warning(m)
+                if raise_errors:
+                    raise ValueError(m)
                 return None
-            return wf_folder_config.get(WF_FOLDER_URL, None)
+            return_url: str = wf_folder_config.get(WF_FOLDER_URL, None)
+            if return_url is None:
+                m = f"Workflow folder config for FI_KEY('{fi_key}'), "
+                m += f"WF_KEY('{wf_key}'), WF_PURPOSE('{wf_purpose}') does not "
+                m += "have a WF_FOLDER_URL."
+                logger.warning(m)
+                if raise_errors:
+                    raise ValueError(m)
+            return return_url
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)

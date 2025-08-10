@@ -441,7 +441,7 @@ class BudManAppDataContext(BudManAppDataContext_Base):
             if not fi_folder:
                 logger.error(f"No FI_FOLDER found for FI_KEY: {fi_key}")
                 return None
-            bdm_folder: str = self.dc_BDM_STORE.get(BDM_FOLDER, None)
+            bdm_folder: str = self.dc_BDM_STORE[BDM_FOLDER]
             if not bdm_folder:
                 logger.error(f"No BDM_FOLDER found in BDM_STORE for FI_KEY: {fi_key}")
                 return None

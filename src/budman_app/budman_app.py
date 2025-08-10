@@ -263,10 +263,11 @@ class BudManApp(metaclass=BDMSingletonMeta):
             # self.CP.CP is the function provided by the _Base to execute a 
             # command. The _Binding is a proxy to the _Base.
             self.CP.CP = self.view_model.cp_execute_cmd 
-            # Next, create and initialize the VIEW and bind the CommandProcessor.
+            # Next, create the VIEW with the CommandProcessor.
             self.view = BudManCLIView(self.CP,self.app_name,self.settings)
-            # Bind the DATA_CONTEXT to the VIEW.
+            # Next, bind the DATA_CONTEXT to the VIEW.
             self.view.DC = self.DC
+            # Next, initialize the view.
             self.view.initialize() 
             # Register exit handler
             atexit.register(self.budman_app_exit_handler)

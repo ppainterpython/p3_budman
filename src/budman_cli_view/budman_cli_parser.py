@@ -36,22 +36,26 @@ class BudManCLIParser():
     def __init__(self,settings: BudManSettings) -> None:
         """Initialize the BudManCLIParser class."""
         self.app_name = settings[APP_NAME]
+        self.common_cmd_args = cmd2.Cmd2ArgumentParser(add_help=False)
+        self.common_cmd_parser_setup(self.app_name)
+        self.app_cmd = cmd2.Cmd2ArgumentParser()
+        self.change_cmd = cmd2.Cmd2ArgumentParser()
         self.init_cmd = cmd2.Cmd2ArgumentParser()
-        self.show_cmd = cmd2.Cmd2ArgumentParser()
+        self.list_cmd = cmd2.Cmd2ArgumentParser(parents=[self.common_cmd_args])
         self.load_cmd = cmd2.Cmd2ArgumentParser()
         self.save_cmd = cmd2.Cmd2ArgumentParser()
+        self.show_cmd = cmd2.Cmd2ArgumentParser()
         self.val_cmd = cmd2.Cmd2ArgumentParser()
         self.workflow_cmd = cmd2.Cmd2ArgumentParser()
-        self.change_cmd = cmd2.Cmd2ArgumentParser()
-        self.app_cmd = cmd2.Cmd2ArgumentParser()
+        self.app_cmd_parser_setup(self.app_name)
+        self.change_cmd_parser_setup(self.app_name)
         self.init_cmd_parser_setup(self.app_name)
-        self.show_cmd_parser_setup(self.app_name)
+        self.list_cmd_parser_setup(self.app_name)
         self.load_cmd_parser_setup(self.app_name)
         self.save_cmd_parser_setup(self.app_name)
+        self.show_cmd_parser_setup(self.app_name)
         self.val_cmd_parser_setup(self.app_name)
         self.workflow_cmd_parser_setup(self.app_name)
-        self.change_cmd_parser_setup(self.app_name)
-        self.app_cmd_parser_setup(self.app_name)
     #endregion class BudManCLIParser initialization
     # ------------------------------------------------------------------------ +
     #region Command Parser Setup Methods
@@ -180,6 +184,14 @@ class BudManCLIParser():
             logger.exception(p3u.exc_err_msg(e))
             raise
 
+    def common_cmd_parser_setup(self,app_name : str = "not-set") -> None:
+        """Parser with all the common cmdline arguments."""
+        try:
+            self.add_common_args(self.common_cmd_args)
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise
+
     def init_cmd_parser_setup(self,app_name : str = "not-set") -> None:
         """Setup 'init' cmd argument parsers."""
         try:
@@ -223,6 +235,99 @@ class BudManCLIParser():
                 default='all',
                 help="Workbook name.")
             self.add_common_args(fi_subcmd_parser)
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise
+
+    def list_cmd_parser_setup(self,app_name : str = "not-set") -> None:
+        """Setup the command line argument parsers for the list command."""
+        try:
+            parser = self.list_cmd
+            parser.prog = app_name
+            # List subcommands: workbooks
+            subparsers = parser.add_subparsers()
+
+            # WORKBOOK subcommand (wb_index | -all) [fi_key]
+            wb_subcmd_parser  = subparsers.add_parser(
+                cp.CV_WORKBOOKS_SUBCMD_NAME,
+                aliases=["wb", "WB"], 
+                help="Select workbooks to list.")
+            wb_subcmd_parser.set_defaults(cmd_key=cp.CV_LIST_CMD_KEY,   # new way
+                                          cmd_name=cp.CV_LIST_CMD_NAME, 
+                                          subcmd_name=cp.CV_WORKBOOKS_SUBCMD_NAME)
+            self.add_wb_index_argument(wb_subcmd_parser)
+            wb_subcmd_parser.add_argument(
+                "-t", f"--{cp.CK_BDM_TREE}", 
+                action="store_true",
+                help="Show the BDM tree hierarchy.")
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise
+
+    def load_cmd_parser_setup(self,app_name : str = "not-set") -> None:
+        """Setup the command line argument parsers for the load command."""
+        try:
+            parser = self.load_cmd
+            parser.prog = app_name
+            # Load subcommands: BDM_STORE, workbooks, check_register
+            subparsers = parser.add_subparsers()
+
+            # BDM_STORE subcommand
+            bdm_store_subcmd_parser = subparsers.add_parser(
+                "BDM_STORE",
+                aliases=["store", "bms", "budget_manager_store","BDM_STORE"], 
+                help="Load the Budget Manager Store file.")
+            bdm_store_subcmd_parser.set_defaults(
+                cmd_key=cp.CV_LOAD_CMD_KEY,   # new way
+                cmd_name=cp.CV_LOAD_CMD_NAME, 
+                subcmd_name=cp.CV_BDM_STORE_SUBCMD_NAME,
+                subcmd_key=cp.CV_LOAD_BDM_STORE_SUBCMD_KEY)
+            self.add_common_args(bdm_store_subcmd_parser)
+
+            # WORKBOOK subcommand (wb_index | -all) [fi_key]
+            wb_subcmd_parser  = subparsers.add_parser(
+                "workbooks",
+                aliases=["wb", "WB"], 
+                help="Select workbooks for.")
+            wb_subcmd_parser.set_defaults(load_cmd="workbooks",
+                                        cmd_key="load_cmd",   # new way
+                                        cmd_name="load", 
+                                        subcmd_name="workbooks",
+                                        subcmd_key="load_cmd_workbooks")
+            self.add_wb_index_argument(wb_subcmd_parser)
+            self.add_common_args(wb_subcmd_parser)
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise
+
+    def save_cmd_parser_setup(self,app_name : str = "not-set") -> None:
+        """Save Command: parser setup"""
+        try:
+            # Save subcommands: BDM_STORE, workbooks
+            parser = self.save_cmd
+            parser.prog = app_name
+            subparsers = parser.add_subparsers(
+                dest="save_cmd")
+            # subcommand save BDM_STORE
+            self.save_bm_store_subcmd_parser = subparsers.add_parser(
+                "BDM_STORE",
+                aliases=["store", "bms", "BMS", "budget_manager_store","BDM_STORE"], 
+                help="Save the Budget Manager Store file.")
+            self.save_bm_store_subcmd_parser.set_defaults(
+                save_cmd="BDM_STORE",
+                cmd_key="save_cmd",   # new way
+                cmd_name="save", 
+                subcmd_name="BDM_STORE",
+                subcmd_key="save_cmd_BDM_STORE")
+            # subcommand save workbooks [wb_name] [fi_key]
+            self.save_wb_subcmd_parser = self.add_WORKBOOKS_subparser(subparsers)
+            self.save_wb_subcmd_parser.set_defaults(
+                save_cmd="workbooks",
+                cmd_key="save_cmd",   # new way
+                cmd_name="save", 
+                subcmd_name="workbooks",
+                subcmd_key="save_cmd_workbooks")
+            self.add_common_args(parser)
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise
@@ -343,74 +448,6 @@ class BudManCLIParser():
                 help="Show the BDM_STORE in json.")
             self.add_common_args(bdms_subcmd_parser)
             #endregion show workbooks subcommand
-        except Exception as e:
-            logger.exception(p3u.exc_err_msg(e))
-            raise
-
-    def load_cmd_parser_setup(self,app_name : str = "not-set") -> None:
-        """Setup the command line argument parsers for the load command."""
-        try:
-            parser = self.load_cmd
-            parser.prog = app_name
-            # Load subcommands: BDM_STORE, workbooks, check_register
-            subparsers = parser.add_subparsers()
-
-            # BDM_STORE subcommand
-            bdm_store_subcmd_parser = subparsers.add_parser(
-                "BDM_STORE",
-                aliases=["store", "bms", "budget_manager_store","BDM_STORE"], 
-                help="Load the Budget Manager Store file.")
-            bdm_store_subcmd_parser.set_defaults(
-                cmd_key=cp.CV_LOAD_CMD_KEY,   # new way
-                cmd_name=cp.CV_LOAD_CMD_NAME, 
-                subcmd_name=cp.CV_BDM_STORE_SUBCMD_NAME,
-                subcmd_key=cp.CV_LOAD_BDM_STORE_SUBCMD_KEY)
-            self.add_common_args(bdm_store_subcmd_parser)
-
-            # WORKBOOK subcommand (wb_index | -all) [fi_key]
-            wb_subcmd_parser  = subparsers.add_parser(
-                "workbooks",
-                aliases=["wb", "WB"], 
-                help="Select workbooks for.")
-            wb_subcmd_parser.set_defaults(load_cmd="workbooks",
-                                        cmd_key="load_cmd",   # new way
-                                        cmd_name="load", 
-                                        subcmd_name="workbooks",
-                                        subcmd_key="load_cmd_workbooks")
-            self.add_wb_index_argument(wb_subcmd_parser)
-            self.add_common_args(wb_subcmd_parser)
-        except Exception as e:
-            logger.exception(p3u.exc_err_msg(e))
-            raise
-
-    def save_cmd_parser_setup(self,app_name : str = "not-set") -> None:
-        """Save Command: parser setup"""
-        try:
-            # Save subcommands: BDM_STORE, workbooks
-            parser = self.save_cmd
-            parser.prog = app_name
-            subparsers = parser.add_subparsers(
-                dest="save_cmd")
-            # subcommand save BDM_STORE
-            self.save_bm_store_subcmd_parser = subparsers.add_parser(
-                "BDM_STORE",
-                aliases=["store", "bms", "BMS", "budget_manager_store","BDM_STORE"], 
-                help="Save the Budget Manager Store file.")
-            self.save_bm_store_subcmd_parser.set_defaults(
-                save_cmd="BDM_STORE",
-                cmd_key="save_cmd",   # new way
-                cmd_name="save", 
-                subcmd_name="BDM_STORE",
-                subcmd_key="save_cmd_BDM_STORE")
-            # subcommand save workbooks [wb_name] [fi_key]
-            self.save_wb_subcmd_parser = self.add_WORKBOOKS_subparser(subparsers)
-            self.save_wb_subcmd_parser.set_defaults(
-                save_cmd="workbooks",
-                cmd_key="save_cmd",   # new way
-                cmd_name="save", 
-                subcmd_name="workbooks",
-                subcmd_key="save_cmd_workbooks")
-            self.add_common_args(parser)
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise
@@ -660,16 +697,16 @@ class BudManCLIParser():
             intake_subparsers = intake_parser.add_subparsers(
                 dest=cp.CK_INTAKE_TASK, required=True)
             # workflow intake move file_index
-            move_parser = intake_subparsers.add_parser( cp.CV_INTAKE_MOVE_TASK, 
-                                                       help=("Move a file into intake process working folder."))
-            move_parser.add_argument(
+            copy_parser = intake_subparsers.add_parser( cp.CV_INTAKE_COPY_TASK, 
+                        help=("Copy a file to process working folder."))
+            copy_parser.add_argument(
                 cp.CK_FILE_INDEX, nargs="?",
                 action="store",
                 type=int, 
                 help=("Index of file to move."))
-            self.add_workflow_argument(move_parser)
-            self.add_purpose_argument(move_parser)
-            self.add_common_args(move_parser)
+            self.add_workflow_argument(copy_parser)
+            self.add_purpose_argument(copy_parser)
+            self.add_common_args(copy_parser)
             return intake_parser
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
