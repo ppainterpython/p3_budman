@@ -22,22 +22,23 @@ import budman_namespace as bdm
 # argparse converts hyphens '-' to underscores '_', so we use underscores
 #
 # List of cmd 'key' (CK_) string constants, use like cmd[CK_NAME]
-# cmd 'key' values are CV_
+# cmd key 'values' are CV_
 #
-# All cmd obj required attributes
+# CMD_OBJECT required attributes
 CMD_KEY_SUFFIX = "_cmd"
-CK_CMD_KEY = "cmd_key"
-"""A string identifier for a known cmd, used to bind to an execution function."""
-CK_SUBCMD_KEY = "subcmd_key"
-"""The string identifier for a known subcmd, can be used with cmd_key to bind exec func."""
 CK_CMD_NAME = "cmd_name"
 """The cmd object key defining the command name."""
-CK_SUBCMD_NAME = "subcmd_name"
-"""The string identifier for a known subcmd, can be used with cmd_key to bind exec func."""
+CK_CMD_KEY = "cmd_key"
+"""A string identifier for a known cmd, used to bind to an execution function."""
 CK_CMD_EXEC_FUNC = "cmd_exec_func"
 """The cmd object key assigned the command execution function callable value."""
+# Optional CMD_OBJECT attributes
+CK_SUBCMD_NAME = "subcmd_name"
+"""The string identifier for a known subcmd, can be used with cmd_key to bind exec func."""
+CK_SUBCMD_KEY = "subcmd_key"
+"""The string identifier for a known subcmd, can be used with cmd_key to bind exec func."""
 
-# Known CK_CMD_KEY and CK_CMD_NAME values for the BudManViewModel.
+# Known CK_CMD_KEY and CK_CMD_NAME values for the BudMan Command Processor.
 CV_APP_CMD_NAME = "app"
 CV_APP_CMD_KEY = CV_APP_CMD_NAME + CMD_KEY_SUFFIX
 CV_CHANGE_CMD_NAME = "change"
@@ -57,7 +58,7 @@ CV_VAL_CMD_KEY = CV_VAL_CMD_NAME + CMD_KEY_SUFFIX
 CV_WORKFLOW_CMD_NAME = "workflow"
 CV_WORKFLOW_CMD_KEY = CV_WORKFLOW_CMD_NAME + CMD_KEY_SUFFIX
 
-# Known CK_SUBCMD_KEY and CK_SUBCMD_NAME values for the BudManViewModel.
+# Supported CK_CMD_KEY CK_SUBCMD_KEY values for the BudMan Command Processor.
 CV_BDM_STORE_SUBCMD_NAME = "BDM_STORE"
 CV_SHOW_BDM_STORE_SUBCMD_KEY = CV_SHOW_CMD_KEY + "_" + CV_BDM_STORE_SUBCMD_NAME
 CV_LOAD_BDM_STORE_SUBCMD_KEY = CV_LOAD_CMD_KEY + "_" + CV_BDM_STORE_SUBCMD_NAME
@@ -90,7 +91,7 @@ CV_CHANGE_WORKBOOKS_SUBCMD_KEY = CV_CHANGE_CMD_KEY + "_" + CV_WORKBOOKS_SUBCMD_N
 CV_SHOW_WORKBOOKS_SUBCMD_KEY = CV_SHOW_CMD_KEY + "_" + CV_WORKBOOKS_SUBCMD_NAME
 CV_PARSE_ONLY_SUBCMD_NAME = "parse_only"
 CV_PARSE_ONLY_SUBCMD_KEY = CV_VAL_CMD_KEY + "_" + CV_PARSE_ONLY_SUBCMD_NAME
-# Argument attribute keys, for any cmd
+# Common argument attribute keys, for any cmd
 CK_PARSE_ONLY = "parse_only"
 CK_VALIDATE_ONLY = "validate_only"
 CK_WHAT_IF = "what_if"
@@ -121,14 +122,14 @@ CK_WF_TASK = "wf_task"
 
 # subcmd_key CV_TASK_SUBCMD_KEY argument constants
 
-# subcmd_key CV_INTAKE_SUBCMD_KEY argument constants
+# subcmd_key CV_INTAKE_SUBCMD_KEY argument key/value constants
 CK_INTAKE_TASK = "intake_task"
 CV_INTAKE_MOVE_TASK = "move"
 CV_INTAKE_COPY_TASK = "copy"
 CV_INTAKE_LIST_TASK = "list"
 CK_FILE_INDEX = "file_index"
 CK_FOLDER_ID = "folder_id"
-# subcmd_name CV_WORKBOOK_SUBCMD_NAME argument constants
+# subcmd_name CV_WORKBOOK_SUBCMD_NAME argument key/value constants
 CK_BDM_TREE = "bdm_tree"
 # subcmd_name CV_CHANGE_CMD argument constants
 CK_CMDLINE_WB_TYPE = "cmdline_wb_type"

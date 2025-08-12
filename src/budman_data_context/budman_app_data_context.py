@@ -229,9 +229,7 @@ class BudManAppDataContext(BudManAppDataContext_Base):
         """
         wb = self.dc_WORKBOOK
         if not wb: return None
-        if self.dc_WORKBOOK_has_property(wb,WB_ID) and WB_ID in wb:
-            return wb[WB_ID]
-        return None
+        return wb[WB_ID]
     @dc_WB_ID.setter
     def dc_WB_ID(self, value: Optional[str]) -> None:
         """DC-Only: dc_WB_ID setter not supported, set the dc_WORKBOOK property."""

@@ -36,16 +36,15 @@ class BudManCLIParser():
     def __init__(self,settings: BudManSettings) -> None:
         """Initialize the BudManCLIParser class."""
         self.app_name = settings[APP_NAME]
-        self.common_cmd_args = cmd2.Cmd2ArgumentParser(add_help=False)
-        self.common_cmd_parser_setup(self.app_name)
+        # self.common_cmd_args = cmd2.Cmd2ArgumentParser(add_help=False)
+        # self.common_cmd_parser_setup(self.app_name)
         self.app_cmd = cmd2.Cmd2ArgumentParser()
         self.change_cmd = cmd2.Cmd2ArgumentParser()
         self.init_cmd = cmd2.Cmd2ArgumentParser()
-        self.list_cmd = cmd2.Cmd2ArgumentParser(parents=[self.common_cmd_args])
+        self.list_cmd = cmd2.Cmd2ArgumentParser()
         self.load_cmd = cmd2.Cmd2ArgumentParser()
         self.save_cmd = cmd2.Cmd2ArgumentParser()
         self.show_cmd = cmd2.Cmd2ArgumentParser()
-        self.val_cmd = cmd2.Cmd2ArgumentParser()
         self.workflow_cmd = cmd2.Cmd2ArgumentParser()
         self.app_cmd_parser_setup(self.app_name)
         self.change_cmd_parser_setup(self.app_name)
@@ -54,7 +53,6 @@ class BudManCLIParser():
         self.load_cmd_parser_setup(self.app_name)
         self.save_cmd_parser_setup(self.app_name)
         self.show_cmd_parser_setup(self.app_name)
-        self.val_cmd_parser_setup(self.app_name)
         self.workflow_cmd_parser_setup(self.app_name)
     #endregion class BudManCLIParser initialization
     # ------------------------------------------------------------------------ +
@@ -260,6 +258,7 @@ class BudManCLIParser():
                 "-t", f"--{cp.CK_BDM_TREE}", 
                 action="store_true",
                 help="Show the BDM tree hierarchy.")
+            self.add_common_args(wb_subcmd_parser)
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise
@@ -452,65 +451,6 @@ class BudManCLIParser():
             logger.exception(p3u.exc_err_msg(e))
             raise
 
-    def val_cmd_parser_setup(self,app_name : str = "not-set") -> None:
-        """Examine or Set values in the application settings and data."""
-        try:
-            parser = self.val_cmd
-            parser.prog = app_name
-            title = self.val_cmd_parser_setup.__doc__
-            subparsers = parser.add_subparsers(title=title) #, dest="ap)
-
-            # val parse_only subcommand
-            po_parser = subparsers.add_parser(
-                cp.CV_PARSE_ONLY_SUBCMD_NAME,
-                aliases=["po", "PO"], 
-                help="Set cli parse-only mode to on|off|toggle, default is toggle.")
-            po_parser.set_defaults(cmd_key=cp.CV_VAL_CMD_KEY,   # new way
-                                       cmd_name=cp.CV_VAL_CMD_NAME, 
-                                       subcmd_name=cp.CV_PARSE_ONLY_SUBCMD_NAME,
-                                       subcmd_key=cp.CV_PARSE_ONLY_SUBCMD_KEY)
-            po_parser.add_argument(
-                cp.CK_PO_VALUE, nargs="?", 
-                default= "toggle",
-                help="parse-only value: on | off | toggle. Default is toggle.")
-   
-            # val wf_key subcommand
-            wf_key_parser = subparsers.add_parser(
-                "wf_key",
-                aliases=["wf", "WF"], 
-                help="Set current wf_key value.")
-            wf_key_parser.set_defaults(val_cmd="wf_key")
-            wf_key_parser.add_argument(
-                "wf_ref", nargs="?", 
-                action="store", 
-                default = None,
-                help="wf_key value for valid workflow or 'all'.")
-            # val wb_name subcommand
-            self.val_wb_name_subcmd_parser = subparsers.add_parser(
-                "wb_name",
-                aliases=["wb", "WB"], 
-                help="Set current wb_name value.")
-            self.val_wb_name_subcmd_parser.set_defaults(val_cmd="wb_name")
-            self.val_wb_name_subcmd_parser.add_argument(
-                "wb_ref", nargs="?", 
-                action="store", 
-                default=None,
-                help="wb_ref is a name for a workbook.")
-            # val fi_key subcommand
-            self.val_fi_key_subcmd_parser  = subparsers.add_parser(
-                "fi_key",
-                aliases=["fi", "FI"], 
-                help="Set current fi_key.")
-            self.val_fi_key_subcmd_parser.set_defaults(val_cmd="fi_key")
-            self.val_fi_key_subcmd_parser.add_argument(
-                "fi_ref", nargs="?", 
-                action="store", 
-                default = None,
-                help="fi_key value for valid Fin. Inst. or 'all'.")
-        except Exception as e:
-            logger.exception(p3u.exc_err_msg(e))
-            raise
-
     def workflow_cmd_parser_setup(self,app_name : str = "not-set") -> None:
         """The workflow command is used to perform tasks supported by the
         different workflows configured in Budget Manager. Tasks are functional 
@@ -646,8 +586,8 @@ class BudManCLIParser():
             list_parser.set_defaults(
                 cmd_key=cp.CV_WORKFLOW_CMD_KEY,   # new way
                 cmd_name=cp.CV_WORKFLOW_CMD_NAME, 
-                subcmd_name=cp.CV_LIST_SUBCMD_NAME,
-                subcmd_key=cp.CV_LIST_SUBCMD_KEY)
+                subcmd_name=cp.CV_LIST_SUBCMD_NAME
+                )
             self.add_workflow_argument(list_parser)
             self.add_purpose_argument(list_parser)
             self.add_common_args(list_parser)
@@ -789,12 +729,7 @@ class BudManCLIParser():
     def add_wb_index_argument(self, parser) -> None:
         """Add a wb_index or all_wbs arguments.""" 
         try:
-            group = parser.add_mutually_exclusive_group(required=True)
-            # group.add_argument(
-            #     "wb_index", nargs="?",
-            #     type=int, 
-            #     default = -1,
-            #     help=f"Workbook index: number associated in the workbook list, 0-based.")
+            group = parser.add_mutually_exclusive_group(required=False)
             group.add_argument(
                 "wb_list", nargs="*",
                 action='extend',
@@ -854,12 +789,7 @@ class BudManCLIParser():
             common_args = parser.add_argument_group(
                 title="Common Options", 
                 description="Add these to any command.")
-            # Add common arguments to the parser
-            # common_args.add_argument(
-            #     "wb_ref", nargs="?", 
-            #     action="store", 
-            #     default='all',
-            #     help="Workbook reference, name or number from show workbooks.")
+            # Add common arguments to the parser (subparser)
             common_args.add_argument(
                 "-po", "--parse-only",  
                 action="store_true", 

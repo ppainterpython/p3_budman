@@ -23,22 +23,3 @@ import budman_namespace.design_language_namespace as bdm
 logger = logging.getLogger(__name__)
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
-#region CMD_RESULT_OBJECT()
-def CMD_RESULT_OBJECT(
-    result_type: str = bdm.CMD_RESULT_TYPE,
-    result_content: Any = None
-) -> bdm.CMD_RESULT:
-    """Create a command result object."""
-    cmd_result = {
-        bdm.CMD_RESULT_TYPE: result_type,
-        bdm.CMD_RESULT_CONTENT: result_content
-    }
-    return cmd_result.copy() 
-# ---------------------------------------------------------------------------- +
-#region is_CMD_RESULT() function
-def is_CMD_RESULT(cmd_result: Any) -> bool:
-    """Check if the cmd_result parameter is a valid command result."""
-    if isinstance(cmd_result, dict):
-        return bdm.CMD_RESULT_TYPE in cmd_result and bdm.CMD_RESULT_CONTENT in cmd_result
-    return False
-#endregion is_CMD_RESULT() function

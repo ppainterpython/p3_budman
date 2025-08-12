@@ -32,7 +32,7 @@ from pathlib import Path
 from typing import List, Type, Generator, Dict, Tuple, Any, Optional, Union, Callable
 # third-party modules and packages
 from rich.console import Console
-import p3_utils as p3u, pyjson5, p3logging as p3l
+import p3_utils as p3u, pyjson5, p3logging as p3l, p3_mvvm as p3m
 import cmd2, argparse
 from cmd2 import (Cmd2ArgumentParser, with_argparser, with_argument_list)
 from cmd2 import (Bg,Fg, style, ansi)
@@ -40,7 +40,6 @@ from cmd2 import (Bg,Fg, style, ansi)
 from budman_cli_view.budman_cli_output import cli_view_cmd_output
 from budman_settings import *
 from budman_settings.budman_settings_constants import BUDMAN_CMD_HISTORY_FILENAME
-from p3_mvvm import DataContext_Binding
 from budman_data_context import BudManAppDataContext_Binding
 import budman_namespace as bdm
 import budman_command_processor.budman_cp_namespace as cp
@@ -55,7 +54,14 @@ console = Console(force_terminal=True,width=bdm.BUDMAN_WIDTH, highlight=True,
 BMCLI_SYSTEM_EXIT_WARNING = "Not exiting due to SystemExit"
 PO_OFF_PROMPT = "p3budman> "
 PO_ON_PROMPT = "po-p3budman> "
-CMD_PARSE_ONLY = "parse_only"
+TERM_TITLE = "Budget Manager CLI"
+red = str(Fg.RED)
+green = str(Fg.GREEN)
+yellow = str(Fg.YELLOW)
+blue = str(Fg.BLUE)
+magenta = str(Fg.MAGENTA)
+cyan = str(Fg.CYAN)
+fg_reset = str(Fg.RESET)
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
@@ -83,8 +89,6 @@ def save_cmd_parser() -> cmd2.Cmd2ArgumentParser:
     return cli_parser.save_cmd if cli_parser else None
 def show_cmd_parser() -> cmd2.Cmd2ArgumentParser:
     return cli_parser.show_cmd if cli_parser else None
-def val_cmd_parser() -> cmd2.Cmd2ArgumentParser:
-    return cli_parser.val_cmd if cli_parser else None
 def workflow_cmd_parser() -> cmd2.Cmd2ArgumentParser:
     return cli_parser.workflow_cmd if cli_parser else None
 
@@ -140,36 +144,10 @@ class BudManCLIView(cmd2.Cmd, BudManAppDataContext_Binding): # , DataContext_Bin
     """
     #endregion doc string
     # ------------------------------------------------------------------------ +
-    #region Class variables and methods
+    #region Class variables
     prompt = "budman> "
     intro = "\nWelcome to the Budget Manager CLI. Type help or ? to list commands.\n"
-    # Class Methods
-    @classmethod
-    def create_cmd_from_cmd2_argparse(cls, opts : argparse.Namespace) -> Dict[str, Any]:
-        """Create a CommandProcessor cmd dictionary from argparse.Namespace.
-        
-        This method is specific to BudManCLIView which utilizes argparse for 
-        command line argument parsing integrated with cmd2.cmd for command help
-        and execution. It converts the argparse.Namespace object into a
-        dictionary suitable for the command processor to execute, but 
-        independent of the cmd2.cmd structure and argparse specifics.
-
-        A ViewModelCommandProcessor_Binding implementation must provide valid
-        ViewModelCommandProcessor cmd dictionaries to the
-        ViewModelCommandProcessor interface. This method is used to convert
-        the cmd2.cmd arguments into a dictionary that can be used by the
-        ViewModelCommandProcessor_Binding implementation.
-        """
-        if not isinstance(opts, argparse.Namespace):
-            raise TypeError("opts must be an instance of argparse.Namespace.")
-        # Convert to dict, remove two common cmd2 attributes, if present.
-        cmd = vars(opts).copy()
-        cmd.pop('cmd2_statement')
-        cmd.pop('cmd2_handler')
-        # TODO: validate cmd_key, cmd_name attributes in cmd dict.
-
-        return cmd
-    #endregion Class variables and methods
+    #endregion Class variables
     # ------------------------------------------------------------------------ +
     #region    __init__() method
     def __init__(self, 
@@ -178,10 +156,10 @@ class BudManCLIView(cmd2.Cmd, BudManAppDataContext_Binding): # , DataContext_Bin
                  settings : Optional[BudManSettings] = None) -> None:
         shortcuts = dict(cmd2.DEFAULT_SHORTCUTS)
         shortcuts.update({'wf': 'workflow'})
+        self.initialized : bool = False
         self._app_name = app_name
         self._command_processor = command_processor
         self._settings : BudManSettings = settings if settings else BudManSettings()
-        self._parse_only :bool = False
         self._current_cmd :Optional[str] = None
         self._save_on_exit : bool = True
         # cmd2.Cmd initialization
@@ -191,18 +169,19 @@ class BudManCLIView(cmd2.Cmd, BudManAppDataContext_Binding): # , DataContext_Bin
                           allow_cli_args=False, 
                          include_ipy=True,
                          persistent_history_file=hfn)
+        self.parse_only : bool = False
         self.allow_style = ansi.AllowStyle.TERMINAL
         self.register_precmd_hook(self.precmd_hook)
         self.register_postcmd_hook(self.postcmd_hook)
-        BudManCLIView.prompt = PO_ON_PROMPT if self.parse_only else PO_OFF_PROMPT
-        self.initialized : bool = True
+        self.add_settable(
+            cmd2.Settable(cp.CK_PARSE_ONLY, str, 'parse_only mode: on|off|toggle',
+                          self, onchange_cb=self._onchange_parse_only)
+        )
+        self.set_prompt()
+        # BudManCLIView.update_terminal_title(f"{TERM_TITLE}")
     #endregion __init__() method
     # ------------------------------------------------------------------------ +
     #region   BudManCLIView class properties
-    @property
-    def prompt(self) -> str:
-        """Get the prompt property."""
-        return self._prompt
     
     @property
     def save_on_exit(self) -> bool:
@@ -225,18 +204,6 @@ class BudManCLIView(cmd2.Cmd, BudManAppDataContext_Binding): # , DataContext_Bin
         if not isinstance(value, str):
             raise TypeError("app_name must be a string.")
         self._app_name = value
-        BudManCLIView.prompt = PO_ON_PROMPT if self.parse_only else PO_OFF_PROMPT
-
-    @property
-    def parse_only(self) -> bool:
-        """Get the parse_only property."""
-        return self._parse_only
-    @parse_only.setter
-    def parse_only(self, value: bool) -> None:
-        """Set the parse_only property."""
-        if not isinstance(value, bool):
-            raise TypeError("parse_only must be a boolean.")
-        self._parse_only = value
         BudManCLIView.prompt = PO_ON_PROMPT if self.parse_only else PO_OFF_PROMPT
 
     @property
@@ -272,8 +239,8 @@ class BudManCLIView(cmd2.Cmd, BudManAppDataContext_Binding): # , DataContext_Bin
         """Initialize the BudManCLIView class."""
         try:
             logger.info(f"BizEVENT: View setup for BudManCLIView({self._app_name}).")
-            # self.cli_parser.view_cmd = self
             self.initialized = True
+            self.set_prompt()
             return self
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
@@ -283,8 +250,22 @@ class BudManCLIView(cmd2.Cmd, BudManAppDataContext_Binding): # , DataContext_Bin
         fi_key = self.DC.dc_FI_KEY if self.DC else "unknown"
         wf_key = self.DC.dc_WF_KEY if self.DC else "unknown"
         wf_purpose = self.DC.dc_WF_PURPOSE if self.DC else "unknown"
-        cwl: str = f"({fi_key}:{wf_key}:{wf_purpose})"
+        cwl: str = f"{fg_reset}({green}{fi_key}:{cyan}{wf_key}:{yellow}{wf_purpose}{fg_reset})"
         return cwl
+    def set_prompt(self) -> None:
+        """Set the prompt for the CLI."""
+        try:
+            # update the dynamic prompt and window title
+            BudManCLIView.prompt = PO_ON_PROMPT if self.parse_only else PO_OFF_PROMPT
+            if self.initialized:
+                cwl = self.current_working_location()
+                # cmd2.Cmd.set_window_title(f"Budget Manager CLI - {cwl}")
+                self.prompt = f"{cwl}\n{BudManCLIView.prompt}"
+            else:
+                self.prompt = f"{BudManCLIView.prompt}"
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise
     #endregion BudManCLIView Methods
     # ------------------------------------------------------------------------ +
     #region   precmd_hook() Methods
@@ -307,8 +288,10 @@ class BudManCLIView(cmd2.Cmd, BudManAppDataContext_Binding): # , DataContext_Bin
         try:
             logger.debug(f"Start:")
             self.current_cmd = None
-            self.prompt = f"{self.current_working_location()}\n{BudManCLIView.prompt}"
-            cmd2.Cmd.set_window_title(f"Budget Manager CLI - {self.current_working_location()}")
+            # update the dynamic prompt and window title
+            self.set_prompt()
+            cwl = self.current_working_location()
+            # BudManCLIView.update_terminal_title(f"Budget Manager CLI - {cwl}")
             logger.debug(f"Complete:")
             return data
         except Exception as e:
@@ -371,7 +354,7 @@ class BudManCLIView(cmd2.Cmd, BudManAppDataContext_Binding): # , DataContext_Bin
     # ======================================================================== +
 
     # ======================================================================== +
-    #region BudManCLIView Command Execution Methods
+    #region BudManCLIView do_command Execution Methods
     # ------------------------------------------------------------------------ +
     #
     # ------------------------------------------------------------------------ +
@@ -566,66 +549,6 @@ class BudManCLIView(cmd2.Cmd, BudManAppDataContext_Binding): # , DataContext_Bin
             self.pexcept(e)
     #endregion do_save command - save workbooks
     # ------------------------------------------------------------------------ +
-    #region do_val command - workbooks, status, etc.
-    @cmd2.with_argparser(val_cmd_parser())
-    def do_val(self, opts):
-        """Val command to get and set values in Budget Manager application.
-        
-        The val cmd does various actions depending on the subcommand and options
-        provided. The subcommands are:
-            parse_only: toggle, on, off
-            wf_key: <workflow key>
-            wb_name: <workbook name>
-            fi_key: <financial institution key>
-
-        Arguments:
-            opts (argparse.Namespace): The command line options after parsing
-            the arguments with argparse. The opts dict becomes the command
-            object for the command processor.
-        """
-        try:
-            self.val_subcommand(opts)
-        except SystemExit:
-            # Handle the case where argparse exits the program
-            self.pwarning(BMCLI_SYSTEM_EXIT_WARNING)
-        except Exception as e:
-            self.pexcept(e)
-    #endregion do_val command
-    # ------------------------------------------------------------------------ +
-    #region val_subcommand() method
-    def val_subcommand(self, opts) -> None:
-        """Examine or set values in Budget Manager."""
-        try:
-            cmd = BudManCLIView.create_cmd_from_cmd2_argparse(opts)
-            console.print(f"args: {str(cmd)} parse_only: {self.parse_only}")
-            if (cmd[cp.CK_CMD_KEY] == cp.CV_VAL_CMD_KEY and
-               cmd[cp.CK_SUBCMD_KEY] == cp.CV_PARSE_ONLY_SUBCMD_KEY):
-                if cmd[cp.CK_PO_VALUE] == "toggle":
-                    self.parse_only = not self.parse_only
-                elif cmd[cp.CK_PO_VALUE] == "on":
-                    self.parse_only = True
-                elif cmd[cp.CK_PO_VALUE] == "off":
-                    self.parse_only = False
-                else:
-                    console.print("Invalid value for parse_only. "
-                                 "Use on|off|toggle.")
-                BudManCLIView.prompt = PO_ON_PROMPT if self.parse_only else PO_OFF_PROMPT
-                console.print(f"parse_only: {self.parse_only}")
-            elif (cmd[cp.CK_CMD_KEY] == cp.CV_VAL_CMD_KEY and 
-                  cmd["val_cmd"] == "wf_key"):
-                _ = cmd["wf_ref"]
-            elif (cmd[cp.CK_CMD_KEY] == cp.CV_VAL_CMD_KEY and
-                  cmd["wb_name"] is not None):
-                _ = cmd["wb_name"]
-            elif cmd["val_cmd"] == "fi_key":
-                _ = cmd["fi_ref"]
-            else:
-                console.print(f"Nothing to do here: {str(cmd)}.")
-        except Exception as e:
-            logger.error(p3u.exc_err_msg(e))
-            raise
-    #endregion val_subcommand() method
-    # ------------------------------------------------------------------------ +
     #region do_workflow command
     @with_argparser(workflow_cmd_parser())
     def do_workflow(self, opts):
@@ -658,17 +581,25 @@ class BudManCLIView(cmd2.Cmd, BudManAppDataContext_Binding): # , DataContext_Bin
             self.pexcept(e)
     #endregion do_workflow command
     # ------------------------------------------------------------------------ +
+    #
+    #endregion BudManCLIView do_ommand Execution Methods
+    # ======================================================================== +
+
+    # ======================================================================== +
+    #region BudManCLIView Helper Methods
+    # ------------------------------------------------------------------------ +
+    #
+    # ------------------------------------------------------------------------ +
     #region construct_cmd
     def construct_cmd(self, opts : argparse.Namespace) -> Tuple[bool, Any]:
-        """Construct a command object from cmd2/argparse arguments. 
-        """
+        """Construct a command object from cmd2/argparse arguments."""
         try:
-            cmd = BudManCLIView.create_cmd_from_cmd2_argparse(opts)
-            parse_only : bool = self.parse_only or getattr(opts,CMD_PARSE_ONLY, False)
+            cmd = self.extract_CMD_OBJECT_from_argparse_Namespace(opts)
+            parse_only : bool = self.parse_only or cmd[cp.CK_PARSE_ONLY]
             cmd_line = f"{self.current_cmd} {opts.cmd2_statement.get()}"
             if parse_only: 
                 console.print(f"parse-only: '{cmd_line}' {str(cmd)}")
-                return False, CMD_PARSE_ONLY
+                return False, cp.CK_PARSE_ONLY
             return True, cmd
         except SystemExit as e:
             # Handle the case where argparse exits the program
@@ -676,9 +607,84 @@ class BudManCLIView(cmd2.Cmd, BudManAppDataContext_Binding): # , DataContext_Bin
         except Exception as e:
             self.pexcept(e)
     #endregion construct_cmd
+    # ------------------------------------------------------------------------ +
+    #region extract_CMD_OBJECT_from_argparse_Namespace
+    def extract_CMD_OBJECT_from_argparse_Namespace(self, opts : argparse.Namespace) -> Dict[str, Any]:
+        """Create a CommandProcessor cmd dictionary from argparse.Namespace.
+        
+        This method is specific to BudManCLIView which utilizes argparse for 
+        command line argument parsing integrated with cmd2.cmd for command help
+        and execution. It converts the argparse.Namespace object into a
+        dictionary suitable for the command processor to execute, but 
+        independent of the cmd2.cmd structure and argparse specifics.
+
+        A ViewModelCommandProcessor_Binding implementation must provide valid
+        ViewModelCommandProcessor cmd dictionaries to the
+        ViewModelCommandProcessor interface. This method is used to convert
+        the cmd2.cmd arguments into a dictionary that can be used by the
+        ViewModelCommandProcessor_Binding implementation.
+        """
+        try:
+            if not isinstance(opts, argparse.Namespace):
+                raise TypeError("opts must be an instance of argparse.Namespace.")
+            cmd2_cmd_name: str = ''
+            cmd_name: str = ''
+            cmd_key: str = ''
+            subcmd_name: str = ''
+            subcmd_key: str = ''
+            cmd_exec_func: Optional[Callable] = None
+
+            # Convert to dict, remove two common cmd2 attributes, if present.
+            # see bottom of https://cmd2.readthedocs.io/en/latest/features/argument_processing/#decorator-order
+            opts_dict = vars(opts).copy()
+            cmd2_statement: cmd2.Statement = opts_dict.pop('cmd2_statement', None).get()
+            cmd2_handler = opts_dict.pop('cmd2_handler', None).get()
+            if cmd2_statement is not None:
+                # A valid cmd2.cmd will provide a cmd_name, at a minimum.
+                # see https://cmd2.readthedocs.io/en/latest/features/commands/#statements
+                cmd2_cmd_name = cmd2_statement.command
+            # Collect the command attributes present (or not) in the opts_dict.
+            cmd_name = opts_dict.get(p3m.CK_CMD_NAME, cmd2_cmd_name) 
+            if p3u.str_empty(cmd_name):
+                # Must have cmd_name
+                raise ValueError("Invalid: No command name provided.")
+            cmd_key = opts_dict.get(p3m.CK_CMD_KEY, f"{cmd_name}{p3m.CMD_KEY_SUFFIX}")
+            subcmd_name = opts_dict.get(p3m.CK_SUBCMD_NAME, None)
+            subcmd_key = opts_dict.get(p3m.CK_SUBCMD_KEY, 
+                    f"{cmd_key}_{subcmd_name}" if subcmd_name else None)
+            cmd_exec_func = opts_dict.get(p3m.CK_CMD_EXEC_FUNC, None)
+            # Validate CMD_OBJECT requirements.
+            if not p3m.validate_cmd_key_with_name(cmd_name, cmd_key):
+                raise ValueError(f"Invalid: cmd_key '{cmd_key}' does not match cmd_name '{cmd_name}'.")
+            if (p3u.str_notempty(subcmd_name) and 
+                not p3m.validate_subcmd_key_with_name(subcmd_name, cmd_key, subcmd_key)):
+                raise ValueError(f"Invalid: subcmd_key '{subcmd_key}' does not "
+                                f"match subcmd_name '{subcmd_name}'.")
+            cmd = p3m.CMD_OBJECT(
+                cmd_name=cmd_name,
+                cmd_key=cmd_key,
+                subcmd_name=subcmd_name,
+                subcmd_key=subcmd_key,
+                cmd_exec_func=cmd_exec_func,
+                other_attrs=opts_dict)
+            return cmd
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise ValueError(f"Failed to create command object from cmd2:opts: {e}")
+    #endregion extract_CMD_OBJECT_from_argparse_Namespace
+    # ------------------------------------------------------------------------ +    
+    #region _onchange_parse_only
+    def _onchange_parse_only(self, _param_name, _old, new: str) -> None:
+        """parse_only settalbe attribute was changed."""
+        if new == "toggle":
+            self.parse_only = not self.parse_only
+        elif new == "on":
+            self.parse_only = True
+        elif new == "off":
+            self.parse_only = False
     # ------------------------------------------------------------------------ +    
     #
-    #endregion BudManCLIView Command Execution Methods
+    #endregion BudManCLIView Helper Methods
     # ======================================================================== +
 
 # ---------------------------------------------------------------------------- +

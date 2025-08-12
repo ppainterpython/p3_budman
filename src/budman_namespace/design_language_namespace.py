@@ -28,7 +28,6 @@ DATA_LIST_TYPE = List[DATA_OBJECT_TYPE]
 type DATA_MAP_TYPE = Dict[str, str]
 # BUDMAN data type constants
 type WORKBOOK_ID_TYPE = str
-type CMD_RESULT = Dict[str, Any]  # Command result dictionary
 type BUDMAN_RESULT_TYPE = tuple[bool, Any]  # A tuple of (success, message or data)
 type WORKBOOK_OBJECT_TYPE = Union[object, Dict]
 type WORKBOOK_CONTENT_TYPE = Any
@@ -277,10 +276,7 @@ VALID_DATA_CONTEXT_ATTR_KEYS = (
 )
 # ---------------------------------------------------------------------------- +
 #region CLIView command output type constants
-# CMD_RESULT dictionary key constants
-CMD_RESULT_TYPE = "cmd_result_type"
-CMD_RESULT_CONTENT = "cmd_result_content"
-# CMD_RESULT_TYPE values
+# CMD_RESULT_TYPE_KEY values
 CLIVIEW_OUTPUT_STRING = "cliview_output_string"
 CLIVIEW_WORKBOOK_INFO_TABLE = "cliview_workbook_info_table"
 CLIVIEW_WORKBOOK_TREE_VIEW = "cliview_workbook_tree_view"

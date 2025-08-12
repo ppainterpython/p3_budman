@@ -66,7 +66,8 @@ class BDMWorkbook:
     #region __getitem__() and __setitem__() methods
     def __getitem__(self, key: str):
         # Try to get a property or attribute by name
-        if hasattr(self.__class__, key) and isinstance(getattr(self.__class__, key), property):
+        if (hasattr(self.__class__, key) and 
+            isinstance(getattr(self.__class__, key), property)):
             return getattr(self, key)
         elif hasattr(self, key):
             return getattr(self, key)
