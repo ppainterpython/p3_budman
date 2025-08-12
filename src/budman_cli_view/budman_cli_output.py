@@ -45,57 +45,35 @@ def dispatch_CMD_RESULT(cmd: Dict, cmd_result: p3m.CMD_RESULT_TYPE) -> None:
     if cmd_key == cp.CV_WORKFLOW_CMD_KEY:
         if subcmd_key == cp.CV_LIST_SUBCMD_KEY:
             console.print(cmd_result[p3m.CMD_RESULT_CONTENT_KEY])
-    elif cmd_key == cp.CV_SHOW_CMD_KEY:
+    elif cmd_key == cp.CV_SHOW_CMD_KEY or cmd_key == cp.CV_LIST_CMD_KEY:
         if subcmd_key == cp.CV_SHOW_WORKBOOKS_SUBCMD_KEY:
-            show_cmd_output(cmd_result)
+            cmd_output(cmd_result)
         # elif subcmd_key == cp.CV_SHOW_BDM_STORE_SUBCMD_KEY:
         #     show_cmd_output(cmd_result)
     else:
         console.print(f"No output handler for command result: {cmd_result}")
 #endregion dispatch_CMD_RESULT() function
 # ---------------------------------------------------------------------------- +
-#region show_cmd_output() function
-def show_cmd_output(cmd_result: Dict[str, Any]) -> None:
+#region cmd_output() function
+def cmd_output(cmd_result: Dict[str, Any]) -> None:
     """Display the command result output."""
     if cmd_result is None:
         return
-    result_type = cmd_result.get(bdm.CMD_RESULT_TYPE, None)
+    result_type = cmd_result.get(p3m.CMD_RESULT_TYPE_KEY, None)
     if result_type == bdm.CLIVIEW_OUTPUT_STRING:
-        output_content = cmd_result.get(bdm.CMD_RESULT_CONTENT, "")
+        output_content = cmd_result.get(p3m.CMD_RESULT_CONTENT_KEY, "")
         console.print(output_content)
     elif result_type == bdm.CLIVIEW_WORKBOOK_INFO_TABLE:
-        output_table = cmd_result.get(bdm.CMD_RESULT_CONTENT, [])
+        output_table = cmd_result.get(p3m.CMD_RESULT_CONTENT_KEY, [])
         hdr = list(output_table[0].keys()) if output_table else []
         table = Table(*hdr, show_header=True, header_style="bold green")
         for row in output_table:
             table.add_row(*[str(cell) for cell in row.values()])
         console.print(table)
     elif result_type == bdm.CLIVIEW_WORKBOOK_TREE_VIEW:
-        tree_view = cmd_result.get(bdm.CMD_RESULT_CONTENT, "")
+        tree_view = cmd_result.get(p3m.CMD_RESULT_CONTENT_KEY, "")
         console.print(tree_view)
     else:
         logger.warning(f"Unknown command result type: {result_type}")
-#endregion show_cmd_output() function
+#endregion cmd_output() function
 # ---------------------------------------------------------------------------- +
-#region show_cmd_output() function
-def show_cmd_output(cmd_result: Dict[str, Any]) -> None:
-    """Display the command result output."""
-    if cmd_result is None:
-        return
-    result_type = cmd_result.get(bdm.CMD_RESULT_TYPE, None)
-    if result_type == bdm.CLIVIEW_OUTPUT_STRING:
-        output_content = cmd_result.get(bdm.CMD_RESULT_CONTENT, "")
-        console.print(output_content)
-    elif result_type == bdm.CLIVIEW_WORKBOOK_INFO_TABLE:
-        output_table = cmd_result.get(bdm.CMD_RESULT_CONTENT, [])
-        hdr = list(output_table[0].keys()) if output_table else []
-        table = Table(*hdr, show_header=True, header_style="bold green")
-        for row in output_table:
-            table.add_row(*[str(cell) for cell in row.values()])
-        console.print(table)
-    elif result_type == bdm.CLIVIEW_WORKBOOK_TREE_VIEW:
-        tree_view = cmd_result.get(bdm.CMD_RESULT_CONTENT, "")
-        console.print(tree_view)
-    else:
-        logger.warning(f"Unknown command result type: {result_type}")
-#endregion show_cmd_output() function
