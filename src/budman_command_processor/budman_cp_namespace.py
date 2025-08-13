@@ -60,10 +60,11 @@ CV_WORKFLOW_CMD_KEY = CV_WORKFLOW_CMD_NAME + CMD_KEY_SUFFIX
 
 # Supported CK_CMD_KEY CK_SUBCMD_KEY values for the BudMan Command Processor.
 CV_BDM_STORE_SUBCMD_NAME = "BDM_STORE"
-CV_SHOW_BDM_STORE_SUBCMD_KEY = CV_SHOW_CMD_KEY + "_" + CV_BDM_STORE_SUBCMD_NAME
+CV_LIST_BDM_STORE_SUBCMD_KEY = CV_LIST_CMD_KEY + "_" + CV_BDM_STORE_SUBCMD_NAME
 CV_LOAD_BDM_STORE_SUBCMD_KEY = CV_LOAD_CMD_KEY + "_" + CV_BDM_STORE_SUBCMD_NAME
 CV_SAVE_BDM_STORE_SUBCMD_KEY = CV_SAVE_CMD_KEY + "_" + CV_BDM_STORE_SUBCMD_NAME
 CV_WORKBOOKS_SUBCMD_NAME = "workbooks"
+CV_LIST_WORKBOOKS_SUBCMD_KEY = CV_LIST_CMD_KEY + "_" + CV_WORKBOOKS_SUBCMD_NAME
 CV_LOAD_WORKBOOKS_SUBCMD_KEY = CV_LOAD_CMD_KEY + "_" + CV_WORKBOOKS_SUBCMD_NAME
 CV_SAVE_WORKBOOKS_SUBCMD_KEY = CV_SAVE_CMD_KEY + "_" + CV_WORKBOOKS_SUBCMD_NAME
 CV_CATEGORIZATION_SUBCMD_NAME = "categorization"
@@ -91,10 +92,12 @@ CV_CHANGE_WORKBOOKS_SUBCMD_KEY = CV_CHANGE_CMD_KEY + "_" + CV_WORKBOOKS_SUBCMD_N
 CV_SHOW_WORKBOOKS_SUBCMD_KEY = CV_SHOW_CMD_KEY + "_" + CV_WORKBOOKS_SUBCMD_NAME
 CV_PARSE_ONLY_SUBCMD_NAME = "parse_only"
 CV_PARSE_ONLY_SUBCMD_KEY = CV_VAL_CMD_KEY + "_" + CV_PARSE_ONLY_SUBCMD_NAME
-# Common argument attribute keys, for any cmd
-CK_PARSE_ONLY = "parse_only"
-CK_VALIDATE_ONLY = "validate_only"
-CK_WHAT_IF = "what_if"
+
+# Common argument optional flag attribute keys, used in parsers
+CK_PARSE_ONLY = "parse_only"          # --parse_only  -po
+CK_VALIDATE_ONLY = "validate_only"    # --validate_only  -vo
+CK_WHAT_IF = "what_if"                # --what_if  -wi
+CK_ALL_WBS = "all_wbs"                # --all_wbs  -all
 CK_LOAD_WORKBOOK = "load_workbook"
 CK_FIX_SWITCH = "fix_switch"
 CK_VALIDATE_CATEGORIES = "validate_categories"
@@ -102,7 +105,10 @@ CK_LOG_ALL = "log_all"
 CK_NO_SAVE = "no_save"
 CK_RECONCILE = "reconcile"
 CK_JSON = "json"
-# Essential Data Context attributes, with cross-cutting scope over cmds
+
+# Common positional argument attribute keys, used in parsers
+CK_WB_INDEX = bdm.WB_INDEX
+CK_WB_LIST = "wb_list"
 CK_FI_KEY = bdm.FI_KEY
 CK_WF_KEY = bdm.WF_KEY
 CK_WF_PURPOSE = bdm.WF_PURPOSE
@@ -112,10 +118,7 @@ CK_WF_OUTPUT = bdm.WF_OUTPUT
 CK_WB_ID = bdm.WB_ID
 CK_WB_TYPE = bdm.WB_TYPE
 CK_WB_NAME = bdm.WB_NAME
-CK_WB_INDEX = bdm.WB_INDEX
-CK_WB_LIST = "wb_list"
 CK_FILE_LIST = "file_list"
-CK_ALL_WBS = "all_wbs"
 CK_WB_REF = "wb_ref"
 CK_WB_INFO = "wb_info"
 CK_WF_TASK = "wf_task"
@@ -129,7 +132,7 @@ CV_INTAKE_COPY_TASK = "copy"
 CV_INTAKE_LIST_TASK = "list"
 CK_FILE_INDEX = "file_index"
 CK_FOLDER_ID = "folder_id"
-# subcmd_name CV_WORKBOOK_SUBCMD_NAME argument key/value constants
+# subcmd_name CV_WORKBOOKS_SUBCMD_NAME argument key/value constants
 CK_BDM_TREE = "bdm_tree"
 # subcmd_name CV_CHANGE_CMD argument constants
 CK_CMDLINE_WB_TYPE = "cmdline_wb_type"

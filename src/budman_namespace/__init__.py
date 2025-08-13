@@ -10,11 +10,14 @@ __license__ = "MIT"
 
 # Data Context abstract interface
 from .bdm_singleton_meta import BDMSingletonMeta
+from .bdm_workbook_class import BDMWorkbook
 from .design_language_namespace import *
 
 __all__ = [
     # Metaclass for Singleton Pattern
     "BDMSingletonMeta",
+    # BDM Workbook Class
+    "BDMWorkbook",
     # Type Alias Constants
     "DATA_OBJECT_TYPE",
     "DATA_TUPLE_TYPE",

@@ -198,14 +198,14 @@ from openpyxl import Workbook, load_workbook
 # from budman_command_processor.cp_utils import CMD_RESULT_OBJECT
 import budman_workflows
 import budman_command_processor as cp
-from budman_settings import *
+import budman_settings as bdms
 from budman_namespace.design_language_namespace import *
 from budman_namespace.bdm_workbook_class import BDMWorkbook
 from budman_workflows import (
     BDMTXNCategoryManager, TXNCategoryCatalog,
     check_sheet_schema, check_sheet_columns, 
     validate_budget_categories, process_budget_category,
-    output_category_tree, output_bdm_tree,
+    output_category_tree,
     WORKFLOW_TASK_process, process_workflow_intake_tasks
     )
 from budman_workflows import budget_category_mapping
@@ -261,7 +261,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.Model_Binding): # future
     #                                                                          +
     # ------------------------------------------------------------------------ +
     #region    BudManViewModel Class __init__() constructor method             +
-    def __init__(self, bdms_url : str = None, settings : BudManSettings = None) -> None:
+    def __init__(self, bdms_url : str = None, settings : bdms.BudManSettings = None) -> None:
         super().__init__()
         self._bdm_store_url : str = bdms_url
         self._settings = settings
@@ -277,7 +277,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.Model_Binding): # future
         """Return the application name."""
         if self._settings is None:
             raise ValueError("Settings not configured.")
-        return self._settings.get(APP_NAME, "BudManViewModel")      
+        return self._settings.get(bdms.APP_NAME, "BudManViewModel")
 
     @property
     def bdms_url(self) -> str:
@@ -293,13 +293,13 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.Model_Binding): # future
         self._bdm_store_url = url
 
     @property
-    def settings(self) -> BudManSettings:
+    def settings(self) -> bdms.BudManSettings:
         """Return the application settings."""
         return self._settings
     @settings.setter
-    def settings(self, settings: BudManSettings) -> None:
+    def settings(self, settings: bdms.BudManSettings) -> None:
         """Set the application settings."""
-        if not isinstance(settings, BudManSettings):
+        if not isinstance(settings, bdms.BudManSettings):
             raise TypeError("settings must be a BudManSettings instance")
         self._settings = settings
 
@@ -407,7 +407,6 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.Model_Binding): # future
                 "load_cmd_BDM_STORE": self.BDM_STORE_load_cmd,
                 "save_cmd_BDM_STORE": self.BDM_STORE_save_cmd,
                 "show_cmd_DATA_CONTEXT": self.DATA_CONTEXT_show_cmd,
-                cp.CV_SHOW_WORKBOOKS_SUBCMD_KEY: self.WORKBOOKS_show_cmd,
                 "load_cmd_workbooks": self.WORKBOOKS_load_cmd,
                 "save_cmd_workbooks": self.WORKBOOKS_save_cmd,
                 cp.CV_CHANGE_WORKBOOKS_SUBCMD_KEY: self.CHANGE_cmd,
@@ -992,43 +991,54 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.Model_Binding): # future
         try:
             st = p3u.start_timer()
             logger.debug(f"Start: ...")
-            result: Any = "no result"
+            cmd_result: p3m.CMD_RESULT_TYPE = p3m.CMD_RESULT_OBJECT(
+                cmd_result_status=False,
+                result_content_type=CLIVIEW_OUTPUT_STRING,
+                result_content="No result content."
+            )
             if cmd[cp.CK_CMD_KEY] != cp.CV_LIST_CMD_KEY:
                 # Invalid cmd_key
-                result = f"LIST_cmd() Invalid cmd_key: {cmd[cp.CK_CMD_KEY]}"
-                logger.error(result)
-                return False, result
-            # Dispatch based on the subcmd_key
+                cmd_result[p3m.CMD_RESULT_CONTENT] = f"LIST_cmd() Invalid cmd_key: {cmd[cp.CK_CMD_KEY]}"
+                logger.error(cmd_result[p3m.CMD_RESULT_CONTENT])
+                return False, cmd_result
+            # Dispatch based on the subcmd_key and/or subcmd_name
+
+            #region list workbooks
             if cmd[cp.CK_SUBCMD_NAME] == cp.CV_WORKBOOKS_SUBCMD_NAME:
-                # List the selected WORKBOOKS for.
+                # List the workbooks selected by list command line arguments.
+                # Tree or Table formats are available.
                 selected_bdm_wb_list : List[BDMWorkbook] = None
                 selected_bdm_wb_list = self.process_selected_workbook_input(cmd)
                 bdm_tree : bool = self.cp_cmd_attr_get(cmd, cp.CK_BDM_TREE, False)
-                cmd_result: p3m.CMD_RESULT_TYPE = cp.CMD_RESULT_OBJECT()
                 if bdm_tree:
                     # If bdm_tree is True, output the BDM tree.
-                    cmd_result = output_bdm_tree(
-                        bdm_wb_list=selected_bdm_wb_list,
-                        wb_type=self.dc_WB_TYPE,
-                        wb_name=self.dc_WB_NAME)
+                    tree = cp.extract_bdm_tree(self.DC)
+                    status, tree_output = cp.output_tree_view("foo",tree)
+                    cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = CLIVIEW_WORKBOOK_TREE_VIEW
+                    cmd_result[p3m.CMD_RESULT_CONTENT] = tree_output
                 else:
                     # Collect the wb info for workbooks in the selected_bdm_wb_list.
                     # Construct the output dictionary result
-                    cmd_result[p3m.CMD_RESULT_TYPE_KEY] = CLIVIEW_WORKBOOK_INFO_TABLE
-                    cmd_result[p3m.CMD_RESULT_CONTENT_KEY] = list()
+                    cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = CLIVIEW_WORKBOOK_INFO_TABLE
+                    cmd_result[p3m.CMD_RESULT_CONTENT] = list()
                     ws = "[red]|[/red]"
                     fr = f"\n{P2}{FI_KEY:10}{ws}{WB_INDEX:6} {WB_ID:50} {WB_TYPE:15} "
                     fr += f"{WB_FILETYPE:15} {WF_KEY:23} {WF_PURPOSE:10} "
                     fr += f"{WF_FOLDER:20} {WB_CONTENT:30}"
                     for wb in selected_bdm_wb_list:
                         wb_index = self.dc_WORKBOOK_index(wb.wb_id)
-                        cmd_result[p3m.CMD_RESULT_CONTENT_KEY].append(wb.wb_info_dict(wb_index))
+                        cmd_result[p3m.CMD_RESULT_CONTENT].append(wb.wb_info_dict(wb_index))
                     if len(selected_bdm_wb_list) == 1:
                             self.dc_WORKBOOK = wb
+            #endregion list workbooks
+            #region list BDM_STORE
             elif cmd[cp.CK_SUBCMD_NAME] == cp.CV_BDM_STORE_SUBCMD_NAME:
-                result = self.model.bdm_BDM_STORE_json()
+                cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = CLIVIEW_JSON_STRING
+                cmd_result[p3m.CMD_RESULT_CONTENT] = self.model.bdm_BDM_STORE_json()
+            #endregion list BDM_STORE
             logger.info(f"Complete: {p3u.stop_timer(st)}")
-            return True, result
+            cmd_result[p3m.CMD_RESULT_STATUS] = True
+            return True, cmd_result
         except Exception as e:
             m = (f"Error executing cmd: {cmd[cp.CK_CMD_NAME]} {cmd[cp.CK_SUBCMD_NAME]}: "
                  f"{p3u.exc_err_msg(e)}")
@@ -1202,63 +1212,6 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.Model_Binding): # future
             logger.error(m)
             return False, m
     #endregion SHOW_cmd() method
-    # ------------------------------------------------------------------------ +
-    #region WORKBOOKS_show_cmd() command > show wb 2
-    def WORKBOOKS_show_cmd(self, cmd : Dict) -> BUDMAN_RESULT_TYPE:
-        """Show information about WORKBOOKS in the DC.
-
-        Arguments:
-            cmd (Dict): A valid BudMan View Model Command object with the
-            following attributes: 
-                cmd_key: show_cmd
-                subcmd_key: show_cmd_workbooks
-            Optional cmd object attributes:
-                wb_list: A list of workbook indices to show
-                all_wbs: bool, if True, show all workbooks, '-all' switch.
-                bdm_tree: bool, if True, show the BDM tree instead of workbooks.
-        Returns:
-            BUDMAN_RESULT_TYPE:
-                Tuple[success: bool, result : CMD_RESULT]:
-
-        Raises:
-            RuntimeError: A description of the
-            root error is contained in the exception message.
-        """
-        try:
-            st = p3u.start_timer()
-            logger.debug(f"Start: ...")
-            selected_bdm_wb_list : List[BDMWorkbook] = None
-            selected_bdm_wb_list = self.process_selected_workbook_input(cmd)
-            fr: str = f"Show {len(selected_bdm_wb_list)} workbooks:"
-            bdm_tree : bool = self.cp_cmd_attr_get(cmd, cp.CK_BDM_TREE, False)
-            cmd_result: p3m.CMD_RESULT_TYPE = p3m.CMD_RESULT_OBJECT()
-            # Process the intended workbooks.
-            if bdm_tree:
-                # Show workbooks with tree output
-                result = output_bdm_tree(self.DC)
-                cmd_result[p3m.CMD_RESULT_TYPE_KEY] = CLIVIEW_WORKBOOK_TREE_VIEW
-                cmd_result[p3m.CMD_RESULT_CONTENT_KEY] = result
-            else:
-                # Collect the wb info for workbooks in the selected_bdm_wb_list.
-                # Construct the output dictionary result
-                cmd_result[p3m.CMD_RESULT_TYPE_KEY] = CLIVIEW_WORKBOOK_INFO_TABLE
-                cmd_result[p3m.CMD_RESULT_CONTENT_KEY] = list()
-                ws = "[red]|[/red]"
-                fr += f"\n{P2}{FI_KEY:10}{ws}{WB_INDEX:6} {WB_ID:50} {WB_TYPE:15} "
-                fr += f"{WB_FILETYPE:15} {WF_KEY:23} {WF_PURPOSE:10} "
-                fr += f"{WF_FOLDER:20} {WB_CONTENT:30}"
-                for wb in selected_bdm_wb_list:
-                    wb_index = self.dc_WORKBOOK_index(wb.wb_id)
-                    cmd_result[p3m.CMD_RESULT_CONTENT_KEY].append(wb.wb_info_dict(wb_index))
-                if len(selected_bdm_wb_list) == 1:
-                        self.dc_WORKBOOK = wb
-            logger.info(f"Complete: {p3u.stop_timer(st)}")
-            return True, cmd_result
-        except Exception as e:
-            m = p3u.exc_err_msg(e)
-            logger.error(m)
-            return False, m
-    #endregion DATA_CONTEXT_show_cmd() method
     # ------------------------------------------------------------------------ +
     #region WORKBOOKS_load_cmd() command > load wb 0
     def WORKBOOKS_load_cmd(self, cmd : Dict) -> BUDMAN_RESULT_TYPE:
@@ -1872,7 +1825,6 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.Model_Binding): # future
         """
         try:
             # Extract common command attributes to select workbooks for task action.
-            wb_index : int = self.cp_cmd_attr_get(cmd, cp.CK_WB_INDEX, self.dc_WB_INDEX)
             wb_list : List[int] = cmd.get(cp.CK_WB_LIST, [])
             all_wbs : bool = self.cp_cmd_attr_get(cmd, cp.CK_ALL_WBS, self.dc_ALL_WBS)
             selected_bdm_wb_list : List[BDMWorkbook] = []
@@ -1884,8 +1836,6 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.Model_Binding): # future
                 for wb_index in wb_list:
                     bdm_wb = self.dc_WORKBOOK_by_index(wb_index)
                     selected_bdm_wb_list.append(bdm_wb)
-            elif wb_index >= 0:
-                selected_bdm_wb_list.append(self.dc_WORKBOOK_by_index(wb_index))
             else:
                 ...
             if len(selected_bdm_wb_list) == 0:

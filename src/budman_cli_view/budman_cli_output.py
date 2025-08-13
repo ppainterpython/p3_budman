@@ -30,50 +30,54 @@ console = Console(force_terminal=True, width=bdm.BUDMAN_WIDTH, highlight=True,
 #region cli_view_cmd_output(status: bool, result: Any) -> None
 def cli_view_cmd_output(cmd: Dict, result: Any) -> None:
     if p3m.is_CMD_RESULT(result):
-        dispatch_CMD_RESULT(cmd, result)
+        CMD_RESULT_output(result)
     else:
         console.print(result)
 # ---------------------------------------------------------------------------- +
 #region dispatch_CMD_RESULT() function
-def dispatch_CMD_RESULT(cmd: Dict, cmd_result: p3m.CMD_RESULT_TYPE) -> None:
-    """Based on cmd parameter, route the cmd_result to the appropriate output handler."""
-    if not p3m.is_CMD_RESULT(cmd_result):
-        logger.error(f"Invalid command result: {cmd_result}")
+def CMD_RESULT_output(cmd_result: p3m.CMD_RESULT_TYPE) -> None:
+    """Route the cmd_result to the appropriate output handler."""
+    if (cmd_result is None or 
+        not p3m.is_CMD_RESULT(cmd_result)):
+        m = f"Invalid command result: {cmd_result}"
+        logger.error(m)
+        err_output(m)
         return
-    cmd_key = cmd.get(cp.CK_CMD_KEY, None)
-    subcmd_key = cmd.get(cp.CK_SUBCMD_KEY, None)
-    if cmd_key == cp.CV_WORKFLOW_CMD_KEY:
-        if subcmd_key == cp.CV_LIST_SUBCMD_KEY:
-            console.print(cmd_result[p3m.CMD_RESULT_CONTENT_KEY])
-    elif cmd_key == cp.CV_SHOW_CMD_KEY or cmd_key == cp.CV_LIST_CMD_KEY:
-        if subcmd_key == cp.CV_SHOW_WORKBOOKS_SUBCMD_KEY:
-            cmd_output(cmd_result)
-        # elif subcmd_key == cp.CV_SHOW_BDM_STORE_SUBCMD_KEY:
-        #     show_cmd_output(cmd_result)
-    else:
-        console.print(f"No output handler for command result: {cmd_result}")
-#endregion dispatch_CMD_RESULT() function
-# ---------------------------------------------------------------------------- +
-#region cmd_output() function
-def cmd_output(cmd_result: Dict[str, Any]) -> None:
-    """Display the command result output."""
-    if cmd_result is None:
+    if not cmd_result.get(p3m.CMD_RESULT_STATUS, False):
+        # If the command result status is False, output the error message.
+        err_msg = str(cmd_result.get(p3m.CMD_RESULT_CONTENT, "No error message provided."))
+        err_output(err_msg)
         return
-    result_type = cmd_result.get(p3m.CMD_RESULT_TYPE_KEY, None)
+    result_type = cmd_result.get(p3m.CMD_RESULT_CONTENT_TYPE, None)
     if result_type == bdm.CLIVIEW_OUTPUT_STRING:
-        output_content = cmd_result.get(p3m.CMD_RESULT_CONTENT_KEY, "")
-        console.print(output_content)
+        # OUTPUT_STRING input is a simple string.
+        result_content = cmd_result.get(p3m.CMD_RESULT_CONTENT, "")
+        console.print(result_content)
+    elif result_type == bdm.CLIVIEW_JSON_STRING:
+        # JSON_STRING input is a JSON string.
+        result_content = cmd_result.get(p3m.CMD_RESULT_CONTENT, "")
+        console.print_json(result_content)
     elif result_type == bdm.CLIVIEW_WORKBOOK_INFO_TABLE:
-        output_table = cmd_result.get(p3m.CMD_RESULT_CONTENT_KEY, [])
-        hdr = list(output_table[0].keys()) if output_table else []
+        # INFO_TABLE input is an array dictionaries.
+        result_table = cmd_result.get(p3m.CMD_RESULT_CONTENT, [])
+        hdr = list(result_table[0].keys()) if result_table else []
         table = Table(*hdr, show_header=True, header_style="bold green")
-        for row in output_table:
+        for row in result_table:
             table.add_row(*[str(cell) for cell in row.values()])
         console.print(table)
     elif result_type == bdm.CLIVIEW_WORKBOOK_TREE_VIEW:
-        tree_view = cmd_result.get(p3m.CMD_RESULT_CONTENT_KEY, "")
-        console.print(tree_view)
+        # TREE_VIEW input is a string representation of a tree view.
+        result_tree = cmd_result.get(p3m.CMD_RESULT_CONTENT, "")
+        console.print(result_tree)
     else:
         logger.warning(f"Unknown command result type: {result_type}")
-#endregion cmd_output() function
+        result_content = str(cmd_result.get(p3m.CMD_RESULT_CONTENT, ""))
+        console.print(result_content)
+#endregion dispatch_CMD_RESULT() function
+# ---------------------------------------------------------------------------- +
+#region err_output() function
+def err_output(msg: str) -> None:
+    """Display error msg output."""
+    console.print(f"[red]Error:[/red] {msg}", style="bold red")
+#endregion err_output() function
 # ---------------------------------------------------------------------------- +

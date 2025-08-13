@@ -276,8 +276,9 @@ VALID_DATA_CONTEXT_ATTR_KEYS = (
 )
 # ---------------------------------------------------------------------------- +
 #region CLIView command output type constants
-# CMD_RESULT_TYPE_KEY values
+# CMD_RESULT_CONTENT_TYPE values
 CLIVIEW_OUTPUT_STRING = "cliview_output_string"
+CLIVIEW_JSON_STRING = "cliview_json_string"
 CLIVIEW_WORKBOOK_INFO_TABLE = "cliview_workbook_info_table"
 CLIVIEW_WORKBOOK_TREE_VIEW = "cliview_workbook_tree_view"
 CLIVIEW_FOLDER_TREE_VIEW = "cliview_folder_tree_view"

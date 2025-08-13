@@ -88,9 +88,10 @@ CK_CMD_EXEC_FUNC = "cmd_exec_func"
 BASE_COMMAND_OBJECT_ATTRIBUTES = [
     CK_CMD_NAME, CK_CMD_KEY, CK_SUBCMD_NAME, CK_SUBCMD_KEY, CK_CMD_EXEC_FUNC
 ]
-# CMD_RESULT dictionary key constants
-CMD_RESULT_TYPE_KEY = "cmd_result_type"
-CMD_RESULT_CONTENT_KEY = "cmd_result_content"
+# CMD_RESULT_OBJECT dictionary key constants
+CMD_RESULT_STATUS = "cmd_result_status"
+CMD_RESULT_CONTENT_TYPE = "cmd_result_content_type"
+CMD_RESULT_CONTENT = "cmd_result_content"
 #endregion Types and Constants
 # ---------------------------------------------------------------------------- +
 #region CommandProcessor class
@@ -224,13 +225,15 @@ def validate_subcmd_key_with_name(subcmd_name: str, cmd_key: str,
 # --------------------------------------------------------------------------- +
 #region CMD_RESULT_OBJECT()
 def CMD_RESULT_OBJECT(
-    result_type: str = '',
+    cmd_result_status: bool = False,
+    result_content_type: str = '',
     result_content: Any = None
 ) -> CMD_RESULT_TYPE:
     """Create a command result object."""
     cmd_result = {
-        CMD_RESULT_TYPE_KEY: result_type,
-        CMD_RESULT_CONTENT_KEY: result_content
+        CMD_RESULT_STATUS: cmd_result_status,
+        CMD_RESULT_CONTENT_TYPE: result_content_type,
+        CMD_RESULT_CONTENT: result_content
     }
     return cmd_result.copy() 
 # ---------------------------------------------------------------------------- +
@@ -238,7 +241,9 @@ def CMD_RESULT_OBJECT(
 def is_CMD_RESULT(cmd_result: Any) -> bool:
     """Check if the cmd_result parameter is a valid command result."""
     if isinstance(cmd_result, dict):
-        return CMD_RESULT_TYPE_KEY in cmd_result and CMD_RESULT_CONTENT_KEY  in cmd_result
+        return (CMD_RESULT_CONTENT_TYPE in cmd_result and  
+                CMD_RESULT_CONTENT in cmd_result and 
+                CMD_RESULT_STATUS in cmd_result)
     return False
 #endregion is_CMD_RESULT() function
 # ---------------------------------------------------------------------------- +

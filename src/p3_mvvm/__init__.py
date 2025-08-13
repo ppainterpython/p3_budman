@@ -44,8 +44,9 @@ from .command_processor import (
     CK_SUBCMD_NAME,
     CK_SUBCMD_KEY,
     CK_CMD_EXEC_FUNC,
-    CMD_RESULT_TYPE_KEY,
-    CMD_RESULT_CONTENT_KEY,
+    CMD_RESULT_STATUS,
+    CMD_RESULT_CONTENT_TYPE,
+    CMD_RESULT_CONTENT,
     # Functions
     CMD_OBJECT, 
     validate_cmd_key_with_name,
@@ -75,8 +76,9 @@ __all__ = [
     "CK_SUBCMD_NAME",
     "CK_SUBCMD_KEY",
     "CK_CMD_EXEC_FUNC",
-    "CMD_RESULT_TYPE_KEY",
-    "CMD_RESULT_CONTENT_KEY",
+    "CMD_RESULT_STATUS",
+    "CMD_RESULT_CONTENT_TYPE",
+    "CMD_RESULT_CONTENT",
     # Command Processor Functions
     "CMD_OBJECT",
     "validate_cmd_key_with_name",

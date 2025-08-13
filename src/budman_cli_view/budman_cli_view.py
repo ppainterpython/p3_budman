@@ -38,11 +38,11 @@ from cmd2 import (Cmd2ArgumentParser, with_argparser, with_argument_list)
 from cmd2 import (Bg,Fg, style, ansi)
 # local modules and packages
 from budman_cli_view.budman_cli_output import cli_view_cmd_output
-from budman_settings import *
+import budman_settings as bdms
 from budman_settings.budman_settings_constants import BUDMAN_CMD_HISTORY_FILENAME
 from budman_data_context import BudManAppDataContext_Binding
 import budman_namespace as bdm
-import budman_command_processor.budman_cp_namespace as cp
+import budman_command_processor as cp
 from budman_cli_view import BudManCLIParser
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -72,7 +72,7 @@ fg_reset = str(Fg.RESET)
 # whole app won't fail, and will display the error message for the
 # particular command parser.
 # TODO: how to get the app_name from settings prior to BudManCLIView instantiation?
-settings = BudManSettings()
+settings = bdms.BudManSettings()
 cli_parser : BudManCLIParser = BudManCLIParser(settings)
 def app_cmd_parser() -> cmd2.Cmd2ArgumentParser:
     return cli_parser.app_cmd if cli_parser else None
@@ -153,17 +153,17 @@ class BudManCLIView(cmd2.Cmd, BudManAppDataContext_Binding): # , DataContext_Bin
     def __init__(self, 
                  command_processor : Optional[Callable] = None,
                  app_name : str = "budman_cli",
-                 settings : Optional[BudManSettings] = None) -> None:
+                 settings : Optional[bdms.BudManSettings] = None) -> None:
         shortcuts = dict(cmd2.DEFAULT_SHORTCUTS)
         shortcuts.update({'wf': 'workflow'})
         self.initialized : bool = False
         self._app_name = app_name
         self._command_processor = command_processor
-        self._settings : BudManSettings = settings if settings else BudManSettings()
+        self._settings : bdms.BudManSettings = settings if settings else bdms.BudManSettings()
         self._current_cmd :Optional[str] = None
         self._save_on_exit : bool = True
         # cmd2.Cmd initialization
-        hfn = settings[BUDMAN_CMD_HISTORY_FILENAME]
+        hfn = self._settings[BUDMAN_CMD_HISTORY_FILENAME]
         cmd2.Cmd.__init__(self, 
                           shortcuts=shortcuts,
                           allow_cli_args=False, 
@@ -222,13 +222,13 @@ class BudManCLIView(cmd2.Cmd, BudManAppDataContext_Binding): # , DataContext_Bin
             logger.debug("Current command cleared.")
 
     @property
-    def settings(self) -> BudManSettings:
+    def settings(self) -> bdms.BudManSettings:
         """Get the settings property."""
         return self._settings
     @settings.setter
-    def settings(self, value: BudManSettings) -> None:
+    def settings(self, value: bdms.BudManSettings) -> None:
         """Set the settings property."""
-        if not isinstance(value, BudManSettings):
+        if not isinstance(value, bdms.BudManSettings):
             raise TypeError("settings must be a BudManSettings instance.")
         self._settings = value
         logger.debug(f"Settings updated: {self._settings}")
@@ -274,7 +274,7 @@ class BudManCLIView(cmd2.Cmd, BudManAppDataContext_Binding): # , DataContext_Bin
         try:
             logger.debug(f"Start:")
             # self.cli_parser.view_cmd = self
-            self.current_cmd = data.statement.command
+            self.current_cmd = data.statement.raw
             logger.debug(f"Complete:")
             return data
         except Exception as e:
@@ -596,9 +596,8 @@ class BudManCLIView(cmd2.Cmd, BudManAppDataContext_Binding): # , DataContext_Bin
         try:
             cmd = self.extract_CMD_OBJECT_from_argparse_Namespace(opts)
             parse_only : bool = self.parse_only or cmd[cp.CK_PARSE_ONLY]
-            cmd_line = f"{self.current_cmd} {opts.cmd2_statement.get()}"
             if parse_only: 
-                console.print(f"parse-only: '{cmd_line}' {str(cmd)}")
+                console.print(f"parse-only: '{self.current_cmd}' {str(cmd)}")
                 return False, cp.CK_PARSE_ONLY
             return True, cmd
         except SystemExit as e:

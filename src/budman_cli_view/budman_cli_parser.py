@@ -36,8 +36,6 @@ class BudManCLIParser():
     def __init__(self,settings: BudManSettings) -> None:
         """Initialize the BudManCLIParser class."""
         self.app_name = settings[APP_NAME]
-        # self.common_cmd_args = cmd2.Cmd2ArgumentParser(add_help=False)
-        # self.common_cmd_parser_setup(self.app_name)
         self.app_cmd = cmd2.Cmd2ArgumentParser()
         self.change_cmd = cmd2.Cmd2ArgumentParser()
         self.init_cmd = cmd2.Cmd2ArgumentParser()
@@ -64,16 +62,16 @@ class BudManCLIParser():
             parser.prog = app_name
             title = self.app_cmd_parser_setup.__doc__
             subparsers = parser.add_subparsers(title=title) #, dest="app_cmd")
+            parser.set_defaults(cmd_key=cp.CV_APP_CMD_KEY,
+                                cmd_name=cp.CV_APP_CMD_NAME)
 
             # app exit subcommand
             exit_parser = subparsers.add_parser(
                 cp.CV_EXIT_SUBCMD_NAME,
                 aliases=["quit"],
                 help="Exit the application.")
-            exit_parser.set_defaults(cmd_key=cp.CV_APP_CMD_KEY,   # new way
-                                       cmd_name=cp.CV_APP_CMD_NAME, 
-                                       subcmd_name=cp.CV_EXIT_SUBCMD_NAME,
-                                       subcmd_key=cp.CV_EXIT_SUBCMD_KEY)
+            exit_parser.set_defaults(subcmd_name=cp.CV_EXIT_SUBCMD_NAME,
+                                     subcmd_key=cp.CV_EXIT_SUBCMD_KEY)
             exit_parser.add_argument(
                 f"--{cp.CK_NO_SAVE}",
                 action="store_true",
@@ -85,10 +83,8 @@ class BudManCLIParser():
                 "delete",
                 aliases=["del"],
                 help="Delete a module.")
-            exit_parser.set_defaults(cmd_key="app_cmd",   # new way
-                                       cmd_name="app", 
-                                       subcmd_name="delete",
-                                       subcmd_key="app_cmd_delete")
+            exit_parser.set_defaults(subcmd_name="delete",
+                                     subcmd_key="app_cmd_delete")
             exit_parser.add_argument(
                 "delete_target", nargs="?",
                 type=int, 
@@ -102,8 +98,6 @@ class BudManCLIParser():
                 aliases=["r"], 
                 help="Reload objects like modules and data.")
             reload_parser.set_defaults(
-                cmd_key=cp.CV_APP_CMD_KEY,   # new way
-                cmd_name=cp.CV_APP_CMD_NAME, 
                 subcmd_name=cp.CV_RELOAD_SUBCMD_NAME,
                 subcmd_key=cp.CV_RELOAD_SUBCMD_KEY)
             reload_parser.add_argument(
@@ -121,11 +115,8 @@ class BudManCLIParser():
                 "log", 
                 # aliases=["log"], 
                 help="Workbook reference wb_name, wb_index, or 'all'.")
-            log_subcmd_parser.set_defaults(app_cmd="log",
-                                       cmd_key="app_cmd",   # new way
-                                       cmd_name="app", 
-                                       subcmd_name="log",
-                                       subcmd_key="app_cmd_log")
+            log_subcmd_parser.set_defaults(subcmd_name="log",
+                                           subcmd_key="app_cmd_log")
             log_subcmd_parser.add_argument(
                 "handler_name", nargs="?", 
                 default = None,
@@ -155,16 +146,16 @@ class BudManCLIParser():
             parser.prog = app_name
             subparsers = parser.add_subparsers()
             title = f"Change SubCommands"
+            parser.set_defaults(cmd_key=cp.CV_CHANGE_CMD_KEY,
+                                cmd_name=cp.CV_CHANGE_CMD_NAME)
+
             # change subcommands: workbook, wb_ref
             # change workbooks subcommand
-            # workbook_subcmd_parser = self.add_WORKBOOKS_subparser(subparsers)
             workbook_subcmd_parser  = subparsers.add_parser(
                 cp.CV_WORKBOOKS_SUBCMD_NAME,
                 aliases=["wb", "WB"], 
                 help="Change workbook attributes.")
             workbook_subcmd_parser.set_defaults(
-                cmd_key=cp.CV_CHANGE_CMD_KEY,   # new way
-                cmd_name=cp.CV_CHANGE_CMD_NAME,
                 subcmd_name=cp.CV_WORKBOOKS_SUBCMD_NAME,
                 subcmd_key=cp.CV_CHANGE_WORKBOOKS_SUBCMD_KEY)
             self.add_wb_index_argument(workbook_subcmd_parser)
@@ -178,14 +169,6 @@ class BudManCLIParser():
             self.add_workflow_argument(workbook_subcmd_parser)
             self.add_purpose_argument(workbook_subcmd_parser)
             self.add_common_args(workbook_subcmd_parser)
-        except Exception as e:
-            logger.exception(p3u.exc_err_msg(e))
-            raise
-
-    def common_cmd_parser_setup(self,app_name : str = "not-set") -> None:
-        """Parser with all the common cmdline arguments."""
-        try:
-            self.add_common_args(self.common_cmd_args)
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise
@@ -242,17 +225,30 @@ class BudManCLIParser():
         try:
             parser = self.list_cmd
             parser.prog = app_name
-            # List subcommands: workbooks
+            # List command subparsers
             subparsers = parser.add_subparsers()
+            parser.set_defaults(cmd_key=cp.CV_LIST_CMD_KEY,
+                                cmd_name=cp.CV_LIST_CMD_NAME)
 
-            # WORKBOOK subcommand (wb_index | -all) [fi_key]
+            # bdm_store_subcmd_parser
+            # list BDM_STORE 
+            bdm_store_subcmd_parser = subparsers.add_parser(
+                cp.CV_BDM_STORE_SUBCMD_NAME,
+                aliases=["bdm_store", "bms", "BMS", "budget_manager_store"], 
+                help="List the Budget Manager Store file.")
+            bdm_store_subcmd_parser.set_defaults(
+                subcmd_name=cp.CV_BDM_STORE_SUBCMD_NAME,
+                subcmd_key=cp.CV_LIST_BDM_STORE_SUBCMD_KEY)
+            self.add_common_args(bdm_store_subcmd_parser)
+
+            # wb_subcmd_parser subcmd parser
+            # list workbooks [wb_index | -all]
             wb_subcmd_parser  = subparsers.add_parser(
                 cp.CV_WORKBOOKS_SUBCMD_NAME,
                 aliases=["wb", "WB"], 
                 help="Select workbooks to list.")
-            wb_subcmd_parser.set_defaults(cmd_key=cp.CV_LIST_CMD_KEY,   # new way
-                                          cmd_name=cp.CV_LIST_CMD_NAME, 
-                                          subcmd_name=cp.CV_WORKBOOKS_SUBCMD_NAME)
+            wb_subcmd_parser.set_defaults(
+                subcmd_name=cp.CV_WORKBOOKS_SUBCMD_NAME)
             self.add_wb_index_argument(wb_subcmd_parser)
             wb_subcmd_parser.add_argument(
                 "-t", f"--{cp.CK_BDM_TREE}", 
@@ -268,31 +264,31 @@ class BudManCLIParser():
         try:
             parser = self.load_cmd
             parser.prog = app_name
-            # Load subcommands: BDM_STORE, workbooks, check_register
+            # Load subcommands: BDM_STORE, workbooks
             subparsers = parser.add_subparsers()
+            parser.set_defaults(cmd_key=cp.CV_LOAD_CMD_KEY,   # new way
+                                cmd_name=cp.CV_LOAD_CMD_NAME)
 
-            # BDM_STORE subcommand
+            # bdm_store_subcmd_parser
+            # load BDM_STORE 
             bdm_store_subcmd_parser = subparsers.add_parser(
-                "BDM_STORE",
-                aliases=["store", "bms", "budget_manager_store","BDM_STORE"], 
+                cp.CV_BDM_STORE_SUBCMD_NAME,
+                aliases=["bdm_store", "bms", "BMS", "budget_manager_store"], 
                 help="Load the Budget Manager Store file.")
             bdm_store_subcmd_parser.set_defaults(
-                cmd_key=cp.CV_LOAD_CMD_KEY,   # new way
-                cmd_name=cp.CV_LOAD_CMD_NAME, 
                 subcmd_name=cp.CV_BDM_STORE_SUBCMD_NAME,
                 subcmd_key=cp.CV_LOAD_BDM_STORE_SUBCMD_KEY)
             self.add_common_args(bdm_store_subcmd_parser)
 
-            # WORKBOOK subcommand (wb_index | -all) [fi_key]
+            # wb_subcmd_parser
+            # load workbooks [wb_index | -all | --all_wbs]
             wb_subcmd_parser  = subparsers.add_parser(
                 "workbooks",
                 aliases=["wb", "WB"], 
-                help="Select workbooks for.")
-            wb_subcmd_parser.set_defaults(load_cmd="workbooks",
-                                        cmd_key="load_cmd",   # new way
-                                        cmd_name="load", 
-                                        subcmd_name="workbooks",
-                                        subcmd_key="load_cmd_workbooks")
+                help="Select workbooks for loading.")
+            wb_subcmd_parser.set_defaults(
+                subcmd_name=cp.CV_WORKBOOKS_SUBCMD_NAME,
+                subcmd_key=cp.CV_LOAD_WORKBOOKS_SUBCMD_KEY)
             self.add_wb_index_argument(wb_subcmd_parser)
             self.add_common_args(wb_subcmd_parser)
         except Exception as e:
@@ -305,28 +301,32 @@ class BudManCLIParser():
             # Save subcommands: BDM_STORE, workbooks
             parser = self.save_cmd
             parser.prog = app_name
-            subparsers = parser.add_subparsers(
-                dest="save_cmd")
-            # subcommand save BDM_STORE
-            self.save_bm_store_subcmd_parser = subparsers.add_parser(
-                "BDM_STORE",
-                aliases=["store", "bms", "BMS", "budget_manager_store","BDM_STORE"], 
+            subparsers = parser.add_subparsers()
+            parser.set_defaults(cmd_key=cp.CV_SAVE_CMD_KEY,   # new way
+                                cmd_name=cp.CV_SAVE_CMD_NAME)
+
+            # bdm_store_subcmd_parser
+            # save BDM_STORE
+            bdm_store_subcmd_parser = subparsers.add_parser(
+                cp.CV_BDM_STORE_SUBCMD_NAME,
+                aliases=["bdm_store", "bms", "BMS", "budget_manager_store"], 
                 help="Save the Budget Manager Store file.")
-            self.save_bm_store_subcmd_parser.set_defaults(
-                save_cmd="BDM_STORE",
-                cmd_key="save_cmd",   # new way
-                cmd_name="save", 
-                subcmd_name="BDM_STORE",
-                subcmd_key="save_cmd_BDM_STORE")
-            # subcommand save workbooks [wb_name] [fi_key]
-            self.save_wb_subcmd_parser = self.add_WORKBOOKS_subparser(subparsers)
-            self.save_wb_subcmd_parser.set_defaults(
-                save_cmd="workbooks",
-                cmd_key="save_cmd",   # new way
-                cmd_name="save", 
-                subcmd_name="workbooks",
-                subcmd_key="save_cmd_workbooks")
-            self.add_common_args(parser)
+            bdm_store_subcmd_parser.set_defaults(
+                subcmd_name=cp.CV_BDM_STORE_SUBCMD_NAME,
+                subcmd_key=cp.CV_SAVE_BDM_STORE_SUBCMD_KEY)
+            self.add_common_args(bdm_store_subcmd_parser)
+
+            # wb_subcmd_parser
+            # save workbooks [wb_index | -all | --all_wbs]
+            wb_subcmd_parser  = subparsers.add_parser(
+                cp.CV_WORKBOOKS_SUBCMD_NAME,
+                aliases=["wb", "WB"], 
+                help="Select workbooks to save.")
+            wb_subcmd_parser.set_defaults(
+                subcmd_name=cp.CV_WORKBOOKS_SUBCMD_NAME,
+                subcmd_key=cp.CV_SAVE_WORKBOOKS_SUBCMD_KEY)
+            self.add_wb_index_argument(wb_subcmd_parser)
+            self.add_common_args(wb_subcmd_parser)
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise
@@ -337,6 +337,9 @@ class BudManCLIParser():
             parser = self.show_cmd
             parser.prog = app_name
             subparsers = self.show_cmd.add_subparsers()
+            parser.set_defaults(cmd_key=cp.CV_SHOW_CMD_KEY,
+                                cmd_name=cp.CV_SHOW_CMD_NAME)
+
             # show subcommands: categories, datacontext, workbooks, fin_inst, 
             # workflows
 
@@ -413,40 +416,6 @@ class BudManCLIParser():
             self.add_common_args(wf_subcmd_parser)
             #endregion show workflows subcommand
 
-            #region show workbooks subcommand
-            wb_subcmd_parser  = subparsers.add_parser(
-                cp.CV_WORKBOOKS_SUBCMD_NAME,
-                aliases=["wb", "WB"], 
-                help="Show workbook information.")
-            wb_subcmd_parser.set_defaults(
-                cmd_key=cp.CV_SHOW_CMD_KEY,   # new way
-                cmd_name=cp.CV_SHOW_CMD_NAME, 
-                subcmd_name=cp.CV_WORKBOOKS_SUBCMD_NAME,
-                subcmd_key=cp.CV_SHOW_WORKBOOKS_SUBCMD_KEY)
-            self.add_wb_index_argument(wb_subcmd_parser)
-            wb_subcmd_parser.add_argument(
-                "-t", f"--{cp.CK_BDM_TREE}", 
-                action="store_true",
-                help="Show the BDM tree hierarchy.")
-            self.add_common_args(wb_subcmd_parser)
-            #endregion show workbooks subcommand
-
-            #region show BDM_STORE subcommand
-            bdms_subcmd_parser  = subparsers.add_parser(
-                cp.CV_BDM_STORE_SUBCMD_NAME,
-                aliases=["bdm_store", "BDM_STORE"], 
-                help="Show BDM Store information.")
-            bdms_subcmd_parser.set_defaults(
-                cmd_key=cp.CV_SHOW_CMD_KEY,   # new way
-                cmd_name=cp.CV_SHOW_CMD_NAME, 
-                subcmd_name=cp.CV_BDM_STORE_SUBCMD_NAME,
-                subcmd_key=cp.CV_SHOW_BDM_STORE_SUBCMD_KEY)
-            bdms_subcmd_parser.add_argument(
-                "-j", f"--{cp.CK_JSON}", 
-                action="store_true",
-                help="Show the BDM_STORE in json.")
-            self.add_common_args(bdms_subcmd_parser)
-            #endregion show workbooks subcommand
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise
@@ -653,37 +622,6 @@ class BudManCLIParser():
             raise
     #endregion intake subcommand subparser
     # ------------------------------------------------------------------------ +
-    #region Common Sub-parsers for Commands
-    def add_WORKBOOKS_subparser(self, subparsers) -> None:
-        """Add a WORKBOOKS subparser to the provided subparsers.""" 
-        try:
-            wb_subcmd_parser  = subparsers.add_parser(
-                "workbooks",
-                aliases=["wb", "WB"], 
-                help="Select workbooks for.")
-            self.add_wb_index_argument(wb_subcmd_parser)
-            # # wb_subcmd_parser.set_defaults(load_cmd="workbooks")
-            group = wb_subcmd_parser.add_mutually_exclusive_group(required=True)
-            # group.add_argument(
-            #     "wb_index", nargs="?",
-            #     type=int, 
-            #     default = -1,
-            #     help=f"Workbook index: number associated in the workbook list, 0-based.")
-            group.add_argument(
-                "wb_list", nargs="*",
-                action='extend',
-                type=int, 
-                default = [],
-                help=f"Workbook index: one or more numbers (spaces, no commas) indexing from the workbook list, 0-based.")
-            # group.add_argument(
-            #     "-all", dest="all_wbs", 
-            #     action = "store_true",
-            #     help="All workbooks switch.") 
-            return wb_subcmd_parser
-        except Exception as e:
-            logger.exception(p3u.exc_err_msg(e))
-            raise
-
     def add_workflow_argument(self, parser) -> None:
         """Add a workflow argument to the provided parser."""
         try:
@@ -727,18 +665,18 @@ class BudManCLIParser():
             raise
 
     def add_wb_index_argument(self, parser) -> None:
-        """Add a wb_index or all_wbs arguments.""" 
+        """Add a wb_index or all_wbs arguments."""
         try:
             group = parser.add_mutually_exclusive_group(required=False)
             group.add_argument(
-                "wb_list", nargs="*",
+                cp.CK_WB_LIST, nargs="*",
                 action='extend',
                 type=int, 
                 default = [],
                 help=f"Workbook index: one or more numbers (spaces, no commas) indexing from the workbook list, 0-based.")
             group.add_argument(
-                "-all", dest="all_wbs", 
-                action = "store_true",
+                f"--{cp.CK_ALL_WBS}", "-all", dest="all_wbs", 
+                action="store_true",
                 help="All workbooks switch.") 
             return
         except Exception as e:
@@ -787,19 +725,19 @@ class BudManCLIParser():
         """Add common arguments to the provided parser."""
         try:
             common_args = parser.add_argument_group(
-                title="Common Options", 
+                title="Common Command Options", 
                 description="Add these to any command.")
             # Add common arguments to the parser (subparser)
             common_args.add_argument(
-                "-po", "--parse-only",  
+                "-po", f"--{cp.CK_PARSE_ONLY}",  
                 action="store_true", 
                 help="The command line is only parsed and displayed without executing.")
             common_args.add_argument(
-                "-vo", "--validate-only",  
+                "-vo", f"--{cp.CK_VALIDATE_ONLY}",  
                 action="store_true", 
                 help="Command args are only validated with results returned, but no cmd execution.")
             common_args.add_argument(
-                "--what-if", 
+                f"--{cp.CK_WHAT_IF}", 
                 action="store_true", 
                 help="Return details about what the command would do, but don't to any action.")
             return common_args
