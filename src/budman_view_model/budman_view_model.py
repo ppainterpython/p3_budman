@@ -1011,31 +1011,28 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.Model_Binding): # future
                 selected_bdm_wb_list = self.process_selected_workbook_input(cmd)
                 bdm_tree : bool = self.cp_cmd_attr_get(cmd, cp.CK_BDM_TREE, False)
                 if bdm_tree:
-                    # If bdm_tree is True, output the BDM tree.
-                    tree = cp.extract_bdm_tree(self.DC)
-                    status, tree_output = cp.output_tree_view("foo",tree)
-                    cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = CLIVIEW_WORKBOOK_TREE_VIEW
-                    cmd_result[p3m.CMD_RESULT_CONTENT] = tree_output
+                    # If bdm_tree option is True, output the BDM tree.
+                    # tree = cp.extract_bdm_tree(self.DC)
+                    # cmd_result = cp.output_tree_view(tree)
+                    cp.output_model_tree(self.DC)
                 else:
                     # Collect the wb info for workbooks in the selected_bdm_wb_list.
                     # Construct the output dictionary result
                     cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = CLIVIEW_WORKBOOK_INFO_TABLE
                     cmd_result[p3m.CMD_RESULT_CONTENT] = list()
-                    ws = "[red]|[/red]"
-                    fr = f"\n{P2}{FI_KEY:10}{ws}{WB_INDEX:6} {WB_ID:50} {WB_TYPE:15} "
-                    fr += f"{WB_FILETYPE:15} {WF_KEY:23} {WF_PURPOSE:10} "
-                    fr += f"{WF_FOLDER:20} {WB_CONTENT:30}"
                     for wb in selected_bdm_wb_list:
                         wb_index = self.dc_WORKBOOK_index(wb.wb_id)
                         cmd_result[p3m.CMD_RESULT_CONTENT].append(wb.wb_info_dict(wb_index))
                     if len(selected_bdm_wb_list) == 1:
                             self.dc_WORKBOOK = wb
             #endregion list workbooks
+
             #region list BDM_STORE
             elif cmd[cp.CK_SUBCMD_NAME] == cp.CV_BDM_STORE_SUBCMD_NAME:
                 cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = CLIVIEW_JSON_STRING
                 cmd_result[p3m.CMD_RESULT_CONTENT] = self.model.bdm_BDM_STORE_json()
             #endregion list BDM_STORE
+
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             cmd_result[p3m.CMD_RESULT_STATUS] = True
             return True, cmd_result

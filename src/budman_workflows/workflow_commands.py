@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 #region WORKFLOW_TASK_process() function
 def WORKFLOW_TASK_process(cmd: Dict[str, Any], 
                        bdm_DC: BudManAppDataContext_Base) -> bdm.BUDMAN_RESULT_TYPE:
-    """Process workflow  tasks.
+    """Process workflow tasks.
 
     This function processes various worklow tasks.
 

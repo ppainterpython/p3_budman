@@ -29,9 +29,12 @@ console = Console(force_terminal=True, width=bdm.BUDMAN_WIDTH, highlight=True,
 
 #region cli_view_cmd_output(status: bool, result: Any) -> None
 def cli_view_cmd_output(cmd: Dict, result: Any) -> None:
+    """Display the command output based on the command result."""
     if p3m.is_CMD_RESULT(result):
+        # A CMD_RESULT_OBJECT was returned.
         CMD_RESULT_output(result)
     else:
+        # A simple string or other object was returned.
         console.print(result)
 # ---------------------------------------------------------------------------- +
 #region dispatch_CMD_RESULT() function

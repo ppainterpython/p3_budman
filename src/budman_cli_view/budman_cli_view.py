@@ -31,7 +31,12 @@ import logging, os, sys, getpass, time, copy
 from pathlib import Path
 from typing import List, Type, Generator, Dict, Tuple, Any, Optional, Union, Callable
 # third-party modules and packages
+from rich import print
+from rich.markup import escape
+from rich.text import Text
+from rich.tree import Tree
 from rich.console import Console
+from rich.table import Table
 import p3_utils as p3u, pyjson5, p3logging as p3l, p3_mvvm as p3m
 import cmd2, argparse
 from cmd2 import (Cmd2ArgumentParser, with_argparser, with_argument_list)
@@ -247,9 +252,9 @@ class BudManCLIView(cmd2.Cmd, BudManAppDataContext_Binding): # , DataContext_Bin
             raise
     def current_working_location(self) -> str:
         """Get the current working location."""
-        fi_key = self.DC.dc_FI_KEY if self.DC else "unknown"
-        wf_key = self.DC.dc_WF_KEY if self.DC else "unknown"
-        wf_purpose = self.DC.dc_WF_PURPOSE if self.DC else "unknown"
+        fi_key = self.dc_FI_KEY if self.DC else "unknown"
+        wf_key = self.dc_WF_KEY if self.DC else "unknown"
+        wf_purpose = self.dc_WF_PURPOSE if self.DC else "unknown"
         cwl: str = f"{fg_reset}({green}{fi_key}:{cyan}{wf_key}:{yellow}{wf_purpose}{fg_reset})"
         return cwl
     def set_prompt(self) -> None:
@@ -684,6 +689,8 @@ class BudManCLIView(cmd2.Cmd, BudManAppDataContext_Binding): # , DataContext_Bin
     # ------------------------------------------------------------------------ +    
     #
     #endregion BudManCLIView Helper Methods
+    # ------------------------------------------------------------------------ +    
+    #endregion BudManCLIView class
     # ======================================================================== +
 
 # ---------------------------------------------------------------------------- +

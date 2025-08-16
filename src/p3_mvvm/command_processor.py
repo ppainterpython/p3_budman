@@ -45,7 +45,19 @@
         underscore '_' and the subcmd_name. For example: cmd_key = 'list_cmd'
         and subcmd_name = 'workbooks' results in 
         subcmd_key = 'list_cmd_workbooks'.
+    - 'cmd_exec_func': Callable  A callable function to execute the sub-command.
 
+    Command_Processor provides a general purpost CMD_RESULT dictionary returned
+    by a command or sub-command EXEC_FUNC. The CMD_RESULT dictionary
+    contains the following keys:
+    - 'cmd_result_status': bool  The status of the command execution, True if
+        successful, False if an error occurred.
+    - 'cmd_result_content_type': str A symbol reflecting the type of the result
+      returned by the command. This will be application function specific for
+      each command implemented.
+    - 'cmd_result_content': Any  The content returned by the command execution. 
+      If cmd_result_success is True, this can be any type of object. If False,
+      this is typically a string error message.
 """
 #endregion command_processor.py module
 # ---------------------------------------------------------------------------- +
@@ -77,14 +89,21 @@ CK_CMD_NAME = "cmd_name"
 CK_CMD_KEY = "cmd_key"
 """Key storing a command key value based on the command name. A cmd_key value
 is made by appending the CMD_KEY_SUFFIX to the command name str."""
+CK_CMD_EXEC_FUNC = "cmd_exec_func"
+"""The cmd object key assigned the command execution function callable value."""
+# Optional CMD_OBJECT SUBCMD attributes - many commands have a sub-command
+# second part which the command processor can use when dispatching the EXEC_FUNC
+# via the cmd_map. An EXEC_FUNCTION can be bound to a cmd_key or a subcmd_key.
+# When no CK_SUBCMD_KEY is bound in the cmd_map, the EXEC_FUNC is bound
+# to the cmd_key and it will handled further sub-processing directly. When a
+# CK_SUBCMD_KEY is bound in the cmd_map, the EXEC_FUNC will be called to process
+# the sub-command directly.
 CK_SUBCMD_NAME = "subcmd_name"
 """Optional key storing a subcmd name value. A subcmd is optional."""
 CK_SUBCMD_KEY = "subcmd_key"
 """A key storing a subcmd key value, based on the cmd_key and subcmd_name. 
 A subcmd_key is formed by appending the cmd_key with underscore and the 
 subcmd_name."""
-CK_CMD_EXEC_FUNC = "cmd_exec_func"
-"""The cmd object key assigned the command execution function callable value."""
 BASE_COMMAND_OBJECT_ATTRIBUTES = [
     CK_CMD_NAME, CK_CMD_KEY, CK_SUBCMD_NAME, CK_SUBCMD_KEY, CK_CMD_EXEC_FUNC
 ]
@@ -176,7 +195,7 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
 # ---------------------------------------------------------------------------- +
 
 # --------------------------------------------------------------------------- +
-#region CMD OBJECT functions
+#region CMD_OBJECT functions
 # ---------------------------------------------------------------------------- +
 #region CMD_OBJECT()
 def CMD_OBJECT(
@@ -217,7 +236,7 @@ def validate_subcmd_key_with_name(subcmd_name: str, cmd_key: str,
     return True if subcmd_key == f"{cmd_key}_{subcmd_name}" else False
 #endregion validate_subcmd_key_with_name() function
 # ---------------------------------------------------------------------------- +
-#endregion CMD OBJECT functions
+#endregion CMD_OBJECT functions
 # ---------------------------------------------------------------------------- +
 
 # ---------------------------------------------------------------------------- +
@@ -229,13 +248,14 @@ def CMD_RESULT_OBJECT(
     result_content_type: str = '',
     result_content: Any = None
 ) -> CMD_RESULT_TYPE:
-    """Create a command result object."""
+    """Construct a CMD_RESULT_OBJECT from input parameters."""
     cmd_result = {
         CMD_RESULT_STATUS: cmd_result_status,
         CMD_RESULT_CONTENT_TYPE: result_content_type,
         CMD_RESULT_CONTENT: result_content
     }
     return cmd_result.copy() 
+#endregion CMD_RESULT_OBJECT()
 # ---------------------------------------------------------------------------- +
 #region is_CMD_RESULT() function
 def is_CMD_RESULT(cmd_result: Any) -> bool:
@@ -247,5 +267,5 @@ def is_CMD_RESULT(cmd_result: Any) -> bool:
     return False
 #endregion is_CMD_RESULT() function
 # ---------------------------------------------------------------------------- +
-#region CMD_RESULT_OBJECT functions
+#endregion CMD_RESULT_OBJECT functions
 # ---------------------------------------------------------------------------- +
