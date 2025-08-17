@@ -1,8 +1,8 @@
 # ---------------------------------------------------------------------------- +
-#region budman_commands.py module
-""" budman_commands.py implements some command processing functions for BudMan.
+#region budman_command_services.py module
+""" budman_command_services.py implements functions for BudMan app commands.
 """
-#endregion budman_commands.py module
+#endregion budman_command_services.py module
 # ---------------------------------------------------------------------------- +
 #region Imports
 # python standard library modules and packages
@@ -142,7 +142,8 @@ def output_model_tree(bdm_DC: BudManAppDataContext_Base) -> None:
                 f"'{fi_folder}' :bank: workbook count: '{count}'",
                 guide_style="bold white"
             )
-            if count == 0: continue
+            if count == 0: 
+                continue
             # Put the wdc in wb_index order, which is sorted by wb_id key.
             wdc = dict(sorted(wdc.items(), key=lambda item: item[0]))
             for wf_key, wf_folder_config_list in model.bdm_FI_WF_FOLDER_CONFIG_COLLECTION(fi_key).items():

@@ -39,6 +39,7 @@ from typing import Tuple, Any, Union, Dict, Optional
 # third-party modules and packages
 from openpyxl import Workbook
 # local modules and packages
+from p3_mvvm import DataContext_Base
 from budman_namespace.design_language_namespace import (
     DATA_CONTEXT_TYPE, FI_OBJECT_TYPE, LOADED_WORKBOOK_COLLECTION_TYPE,
     WORKBOOK_DATA_COLLECTION_TYPE,
@@ -46,35 +47,11 @@ from budman_namespace.design_language_namespace import (
     WORKBOOK_CONTENT_TYPE)
 #endregion Imports
 # ---------------------------------------------------------------------------- +
-class BudManAppDataContext_Base(ABC):
+class BudManAppDataContext_Base(DataContext_Base):
     """Abstract Base Class Interface for Budget Manager Data Context."""
     # ------------------------------------------------------------------------ +
     #region BudManAppDataContext_Base Properties (abstract) 
-    @property
-    def dc_id(self) -> str:
-        """Abstract: Identify the data context implementation."""
-        pass
-    @dc_id.setter
-    def dc_id(self, value: str) -> None:
-        """Abstract: Set the identifier for the data context implementation."""
-        pass
-
-    @property
-    @abstractmethod
-    def dc_VALID(self) -> bool:
-        """Abstract: Indicates whether the data context is valid."""
-        pass
-    
-    @property
-    @abstractmethod
-    def dc_INITIALIZED(self) -> bool:
-        """Abstract: Indicates whether the data context has been initialized."""
-        pass
-    @dc_INITIALIZED.setter
-    @abstractmethod
-    def dc_INITIALIZED(self, value: bool) -> None:
-        """Abstract: Set the initialized state of the data context."""
-        pass
+    # Extends DataContext_Base with BudManApp specific properties.
 
     @property
     @abstractmethod
@@ -270,11 +247,7 @@ class BudManAppDataContext_Base(ABC):
     #endregion BudManAppDataContext_Base Properties (abstract)
     # ------------------------------------------------------------------------ +
     #region BudManAppDataContext_Base Methods (abstract)
-    @abstractmethod
-    def dc_initialize(self) -> DATA_CONTEXT_TYPE:
-        """Abstract: Initialize the data context."""
-        pass
-
+    # Extends DataContext_Base with BudManApp specific methods.
     @abstractmethod
     def dc_FI_KEY_validate(self, fi_key: str) -> bool:
         """Abstract: Validate the provided FI_KEY."""

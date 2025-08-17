@@ -73,8 +73,6 @@ WF_FOLDER = "wf_folder"
 WF_PURPOSE = "wf_purpose"
 WF_PREFIX = "wf_prefix"  
 WF_FOLDER_URL = "wf_folder_url" 
-WF_USER_CONTENT = "wf_user_content"
-WF_FOLDER_ID = "wf_folder_id" 
 WB_INDEX = "wb_index" 
 WB_ID = "wb_id"
 WB_NAME = "wb_name"
@@ -167,12 +165,12 @@ VALID_BDM_WORKFLOWS = (EXAMPLE_BDM_WF_INTAKE, EXAMPLE_BDM_WF_CATEGORIZATION, EXA
 WF_KEY = WF_KEY #common
 WF_NAME = "wf_name"  
 WF_FOLDER_CONFIG_LIST = "wf_folder_config_list" 
-WF_INPUT_FOLDER = "wf_input_folder" # also used as key in FI_DATA_COLLECTION.
-WF_WORKING_FOLDER = "wf_working_folder" # also used as key in FI_DATA_COLLECTION.
-WF_OUTPUT_FOLDER = "wf_output_folder" # also used as key in FI_DATA_COLLECTION.
-WF_PREFIX_IN = "wf_prefix_in"
-WF_PREFIX_WORKING = "wf_prefix_working"
-WF_PREFIX_OUT = "wf_prefix_out"
+# WF_INPUT_FOLDER = "wf_input_folder" # also used as key in FI_DATA_COLLECTION.
+# WF_WORKING_FOLDER = "wf_working_folder" # also used as key in FI_DATA_COLLECTION.
+# WF_OUTPUT_FOLDER = "wf_output_folder" # also used as key in FI_DATA_COLLECTION.
+# WF_PREFIX_IN = "wf_prefix_in"
+# WF_PREFIX_WORKING = "wf_prefix_working"
+# WF_PREFIX_OUT = "wf_prefix_out"
 WF_PURPOSE_FOLDER_MAP = "wf_purpose_folder_map" # map of workbook names to paths
 # WF_FOLDER_CONFIG_TYPE workflow folder definition object (Dictionary key names)
 WF_FOLDER = WF_FOLDER # common
@@ -181,17 +179,14 @@ WF_PREFIX = WF_PREFIX # common
 WF_FOLDER_URL = WF_FOLDER_URL # common 
 # Additional WF_OBJECT-related constants
 VALID_WF_OBJECT_ATTR_KEYS = (WF_KEY, WF_NAME, WF_FOLDER_CONFIG_LIST,
-                        WF_INPUT_FOLDER, WF_WORKING_FOLDER, WF_OUTPUT_FOLDER,
-                        WF_PREFIX_IN, WF_PREFIX_OUT, WF_PURPOSE_FOLDER_MAP)
-WF_FOLDER_PATH_ELEMENTS = (WF_INPUT_FOLDER, WF_WORKING_FOLDER, WF_OUTPUT_FOLDER)
+                        WF_PURPOSE_FOLDER_MAP)
 # ---------------------------------------------------------------------------- +
 # Some data values are used in conjunction with Path objects,
 # as elements of a pathname, such as folders and file names.
 # All Path-related data values are treated as pseudo-Objects and have
 # methods to construct, manipulate, and resolve Path objects and handle
 # the various string representations of the Path objects.
-VALID_BDM_PATH_ELEMENTS = (BDM_FOLDER, BDM_URL, FI_FOLDER, 
-                           WF_INPUT_FOLDER, WF_WORKING_FOLDER, WF_OUTPUT_FOLDER)
+VALID_BDM_PATH_ELEMENTS = (BDM_FOLDER, BDM_URL, FI_FOLDER)
 # ---------------------------------------------------------------------------- +
 # Workflow-related (WF_) data associated with a specific FI is BSM territory.
 # The primary data object now is the WORKBOOK (excel workbook, .csv file, .json etc.). 

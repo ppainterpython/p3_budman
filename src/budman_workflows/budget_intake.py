@@ -32,7 +32,7 @@ import budman_command_processor.budman_cp_namespace as cp
 import budman_namespace.design_language_namespace as bdm
 from budman_namespace.bdm_workbook_class import BDMWorkbook
 from budman_data_context import BudManAppDataContext_Base
-from .workflow_commands import *
+from .workflow_command_services import *
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants

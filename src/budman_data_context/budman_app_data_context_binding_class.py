@@ -45,6 +45,7 @@ from abc import ABC, abstractmethod
 from typing import Tuple, Union, Dict, Optional
 # third-party modules and packages
 from openpyxl import Workbook
+import p3_utils as p3u, p3_mvvm as p3m
 
 # local modules and packages
 from budman_namespace.design_language_namespace import (
@@ -53,10 +54,9 @@ from budman_namespace.design_language_namespace import (
     WORKBOOK_CONTENT_TYPE, FI_OBJECT_TYPE
     )
 from budman_data_context import BudManAppDataContext_Base
-import p3_utils as p3u
 #endregion Imports
 # ---------------------------------------------------------------------------- +
-class BudManAppDataContext_Binding(BudManAppDataContext_Base):
+class BudManAppDataContext_Binding(BudManAppDataContext_Base, p3m.DataContext_Binding):
     """DC_Binding: Interface for a Data Context clients.
     
     This interface is used by clients to interact with a Data Context (DC)
@@ -66,35 +66,18 @@ class BudManAppDataContext_Binding(BudManAppDataContext_Base):
     BudManAppDataContext_Base Interface, a TypeError is raised.
     """
     # ------------------------------------------------------------------------ +
-    #region Class Methods
+    #region Class Methods (override DataContext_Binding)
     @classmethod
-    def _valid_DC_Binding(cls, dc_binding: object) -> BudManAppDataContext_Base:
+    def _valid_DC_Binding(cls, dc_binding: BudManAppDataContext_Base) -> BudManAppDataContext_Base:
         """DC_Binding: Return dc_value if valid, else raise exception."""
         if dc_binding is None:
             raise ValueError("DC_Binding cannot be None")
         if not isinstance(dc_binding, BudManAppDataContext_Base):
             raise TypeError("DC_Binding must be subclass of BudManAppDataContext_Base")
         return dc_binding
-    #endregion Class Methods
+    #endregion Class Methods (override DataContext_Binding)
     # ------------------------------------------------------------------------ +
-    #region BudManAppDataContext_Binding __init__() method
-    def __init__(self) -> None:
-        """DC_Binding: Simple instantiation-time initialization. 
-        Binding happens at initialization-time."""
-        super().__init__()
-        self._data_context: BudManAppDataContext_Base = None
-    #endregion BudManAppDataContext_Binding __init__() method
-    # ------------------------------------------------------------------------ +
-    #region BudManAppDataContext_Binding Properties
-    @property
-    def data_context(self) -> BudManAppDataContext_Base:
-        """DC_Binding: Return the data context object."""
-        return self._data_context
-    @data_context.setter
-    def data_context(self, dc_value: BudManAppDataContext_Base) -> None:
-        """DC_Binding: Set the data context object."""
-        self._data_context = dc_value
-
+    #region BudManAppDataContext_Binding Properties (override DataContext_Binding)
     @property
     def DC(self) -> BudManAppDataContext_Base:
         """DC_Binding: Return the data context.
@@ -109,32 +92,9 @@ class BudManAppDataContext_Binding(BudManAppDataContext_Base):
         is raised. The DC property is a reference to the data context object.
         """        
         self.data_context = BudManAppDataContext_Binding._valid_DC_Binding(value)
-    #endregion BudManAppDataContext_Binding Properties
+    #endregion BudManAppDataContext_Binding Properties (override DataContext_Binding)
     # ------------------------------------------------------------------------ +
-    #region BudManAppDataContext_Base Properties (concrete)
-    @property
-    def dc_id(self) -> str:
-        """DC_Binding: Return the identifier for the data context implementation."""
-        return self.DC.dc_id
-    @dc_id.setter
-    def dc_id(self, value: str) -> None:
-        """DC_Binding: Set the identifier for the data context implementation."""
-        self.DC.dc_id = value
-
-    @property
-    def dc_VALID(self) -> str:   
-        """DC-Only: Indicates whether the data context is valid."""
-        return self.DC.dc_VALID
-
-    @property
-    def dc_INITIALIZED(self) -> bool:
-        """DC_Binding: Indicates whether the data context has been initialized."""
-        return self.DC.dc_INITIALIZED
-    @dc_INITIALIZED.setter
-    def dc_INITIALIZED(self, value: bool) -> None:
-        """DC_Binding: Set the initialized state of the data context."""
-        self.DC.dc_INITIALIZED = value
-
+    #region BudManAppDataContext_Base Properties (concrete - extends DataContext_Base)
     @property
     def dc_FI_OBJECT(self) -> Optional[FI_OBJECT_TYPE]:
         """DC_Binding: Return the FI_OBJECT of the current Financial Institution."""
@@ -301,12 +261,12 @@ class BudManAppDataContext_Binding(BudManAppDataContext_Base):
 
     #endregion BudManAppDataContext_Base Properties (concrete)
     # ------------------------------------------------------------------------ +
-    #region BudManAppDataContext_Base Methods (concrete)
-    def dc_initialize(self) -> None:
-        """DC_Binding: Initialize the data context."""
-        super().dc_initialize()
-        self.DC.dc_initialize()
-        return self
+    #region BudManAppDataContext_Base Methods (concrete - extends DataContext_Base)
+    # def dc_initialize(self) -> None:
+    #     """DC_Binding: Initialize the data context."""
+    #     super().dc_initialize()
+    #     self.DC.dc_initialize()
+    #     return self
 
     def dc_FI_KEY_validate(self, fi_key: str) -> bool:
         """DC_Binding: Validate the provided FI_KEY."""

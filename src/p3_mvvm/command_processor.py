@@ -69,6 +69,7 @@ from typing import List, Type, Generator, Dict, Tuple, Any, Callable, Optional
 from h11 import Data
 import p3_utils as p3u, pyjson5, p3logging as p3l
 # local modules and packages
+from .mvvm_namespace import *
 from .command_processor_Base_ABC import CommandProcessor_Base
 from .data_context_binding import DataContext_Binding
 #endregion Imports
@@ -77,41 +78,6 @@ from .data_context_binding import DataContext_Binding
 logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 #endregion Globals
-# ---------------------------------------------------------------------------- +
-#region Types and Constants
-type CMD_OBJECT_TYPE = Dict[str, Any]
-type CMD_RESULT_TYPE = Dict[str, Any]  # Command result dictionary
-
-# All CMD_OBJECT required attributes
-CMD_KEY_SUFFIX = "_cmd"
-CK_CMD_NAME = "cmd_name"
-"""Key for storing the command name value. All commands have a unique name."""
-CK_CMD_KEY = "cmd_key"
-"""Key storing a command key value based on the command name. A cmd_key value
-is made by appending the CMD_KEY_SUFFIX to the command name str."""
-CK_CMD_EXEC_FUNC = "cmd_exec_func"
-"""The cmd object key assigned the command execution function callable value."""
-# Optional CMD_OBJECT SUBCMD attributes - many commands have a sub-command
-# second part which the command processor can use when dispatching the EXEC_FUNC
-# via the cmd_map. An EXEC_FUNCTION can be bound to a cmd_key or a subcmd_key.
-# When no CK_SUBCMD_KEY is bound in the cmd_map, the EXEC_FUNC is bound
-# to the cmd_key and it will handled further sub-processing directly. When a
-# CK_SUBCMD_KEY is bound in the cmd_map, the EXEC_FUNC will be called to process
-# the sub-command directly.
-CK_SUBCMD_NAME = "subcmd_name"
-"""Optional key storing a subcmd name value. A subcmd is optional."""
-CK_SUBCMD_KEY = "subcmd_key"
-"""A key storing a subcmd key value, based on the cmd_key and subcmd_name. 
-A subcmd_key is formed by appending the cmd_key with underscore and the 
-subcmd_name."""
-BASE_COMMAND_OBJECT_ATTRIBUTES = [
-    CK_CMD_NAME, CK_CMD_KEY, CK_SUBCMD_NAME, CK_SUBCMD_KEY, CK_CMD_EXEC_FUNC
-]
-# CMD_RESULT_OBJECT dictionary key constants
-CMD_RESULT_STATUS = "cmd_result_status"
-CMD_RESULT_CONTENT_TYPE = "cmd_result_content_type"
-CMD_RESULT_CONTENT = "cmd_result_content"
-#endregion Types and Constants
 # ---------------------------------------------------------------------------- +
 #region CommandProcessor class
 class CommandProcessor(CommandProcessor_Base, DataContext_Binding):

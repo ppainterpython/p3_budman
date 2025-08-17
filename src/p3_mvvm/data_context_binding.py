@@ -56,7 +56,7 @@ class DataContext_Binding(DataContext_Base):
     def __init__(self) -> None:
         """DC_Binding: Simple instantiation-time initialization. 
         Binding happens at initialization-time."""
-        super().__init__()
+        # super().__init__()
         self._data_context: DataContext_Base = None
     #endregion DataContext_Binding __init__() method
     # ------------------------------------------------------------------------ +
@@ -87,7 +87,7 @@ class DataContext_Binding(DataContext_Base):
         self.data_context = DataContext_Binding._valid_DC_Binding(value)
     #endregion DataContext_Binding Properties
     # ------------------------------------------------------------------------ +
-    #region DataContext_Binding Properties (concrete)
+    #region DataContext_Base Properties (concrete)
     @property
     def dc_id(self) -> str:
         """DC_Binding: Return the identifier for the data context implementation."""
@@ -105,13 +105,19 @@ class DataContext_Binding(DataContext_Base):
     def dc_INITIALIZED(self, value: bool) -> None:
         """DC_Binding: Set the initialized state of the data context."""
         self.DC.dc_INITIALIZED = value
-    #endregion DataContext_Binding Properties (concrete)
+
+    @property
+    def dc_VALID(self) -> bool:   
+        """DC-Only: Indicates whether the data context is valid."""
+        return self.DC.dc_VALID
+
+    #endregion DataContext_Base Properties (concrete)
     # ------------------------------------------------------------------------ +
-    #region DataContext_Binding Methods (concrete)
+    #region DataContext_Base Methods (concrete)
     def dc_initialize(self) -> None:
         """DC_Binding: Initialize the data context."""
-        super().dc_initialize()
+        # super().dc_initialize()
         self.DC.dc_initialize()
         return self
-    #endregion DataContext_Binding Methods (concrete)
+    #endregion DataContext_Base Methods (concrete)
     # ------------------------------------------------------------------------ +

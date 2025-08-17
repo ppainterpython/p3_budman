@@ -1,10 +1,16 @@
 """
 p3_MVVM - a simple MVVM framework for Python.
 
-MVVM - Model-View-ViewModelA - is a design pattern framework for a
-software application.
+MVVM - Model-View-ViewModel - is a design pattern framework for a
+software application. Uses the concepts of Model, View, ViewModel, 
+Command Processor and Data Context.
+
+A lightweight Dependency Injection capability is provided but only within a
+single process application without threading or asynchronous support. Uses
+binding to link client objects to provider objects via abstract base classes as 
+interfaces.
 """
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 __author__ = "Paul Painter"
 __copyright__ = "2025 Paul Painter"
 __name__ = "p3_mvvm"
@@ -33,8 +39,17 @@ from .command_processor_Base_ABC import (
     CommandProcessor_Base
 )
 from .command_processor import (
-    # Types
+    # Classes
     CommandProcessor,
+    # Functions
+    CMD_OBJECT, 
+    validate_cmd_key_with_name,
+    validate_subcmd_key_with_name,
+    CMD_RESULT_OBJECT,
+    is_CMD_RESULT,
+)
+from .mvvm_namespace import (
+    # Types
     CMD_OBJECT_TYPE,
     CMD_RESULT_TYPE,
     # Constants
@@ -47,12 +62,6 @@ from .command_processor import (
     CMD_RESULT_STATUS,
     CMD_RESULT_CONTENT_TYPE,
     CMD_RESULT_CONTENT,
-    # Functions
-    CMD_OBJECT, 
-    validate_cmd_key_with_name,
-    validate_subcmd_key_with_name,
-    CMD_RESULT_OBJECT,
-    is_CMD_RESULT,
 )
 # target for 'from budman_app import *'
 __all__ = [

@@ -18,7 +18,7 @@ __name__ = "budman_workflows"
 __description__ = "Budget Manager (BudMan) Workflow process implementation."
 __license__ = "MIT"
 
-from .workflow_commands import (
+from .workflow_command_services import (
     WORKFLOW_TASK_process,
     WORKFLOW_get_folder_tree
 )

@@ -40,7 +40,7 @@ class DataContext(DataContext_Base):
         self._dc_id: str = "DataContext"
     #endregion DataContext __init__() method
     # ------------------------------------------------------------------------ +
-    #region DataContext Properties
+    #region DataContext_Base Properties
     @property
     def dc_id(self) -> str:
         """Return the identifier for the data context implementation."""
@@ -58,12 +58,21 @@ class DataContext(DataContext_Base):
     def dc_INITIALIZED(self, value: bool) -> None:
         """Set the initialized state of the data context."""
         self.dc_INITIALIZED = value
-    #endregion DataContext Properties
+
+    @property
+    def dc_VALID(self) -> bool:
+        """DC-Only: Indicates whether the data context is valid."""
+        if not isinstance(self, DataContext_Base):
+            return False
+        if not self.dc_INITIALIZED:
+            return False
+    
+    #endregion DataContext_Base Properties
     # ------------------------------------------------------------------------ +
-    #region DataContext Methods (concrete)
+    #region DataContext_Base Methods (concrete)
     def dc_initialize(self) -> None:
         """DC_Binding: Initialize the data context."""
         super().dc_initialize()
         return self
-    #endregion DataContext Methods (concrete)
+    #endregion DataContext_Base Methods (concrete)
     # ------------------------------------------------------------------------ +

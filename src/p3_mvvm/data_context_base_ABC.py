@@ -50,6 +50,12 @@ class DataContext_Base(ABC):
         """Set the initialized state of the data context."""
         pass
 
+    @property
+    @abstractmethod
+    def dc_VALID(self) -> bool:
+        """Abstract: Indicates whether the data context is valid."""
+        pass
+    
     #endregion DataContext_Base Properties (abstract)
     # ------------------------------------------------------------------------ +
     #region DataContext_Base Methods (abstract)

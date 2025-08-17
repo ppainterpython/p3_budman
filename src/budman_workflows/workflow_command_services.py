@@ -1,8 +1,9 @@
 # ---------------------------------------------------------------------------- +
-#region cp_utils.py module
-""" cp_utils.py implements utility functions for command processing.
+#region workflow_command_services.py module
+""" workflow_command_services.py implements functions for BudMan app
+workflow-related commands.
 """
-#endregion cp_utils.py module
+#endregion workflow_command_services.py module
 # ---------------------------------------------------------------------------- +
 #region Imports
 # python standard library modules and packages
@@ -47,19 +48,19 @@ def WORKFLOW_TASK_process(cmd: Dict[str, Any],
     """
     try:
         # Assuming the cmd parameters have been validated before reaching this point.
-        if cmd[cp.CK_SUBCMD_KEY] == cp.CV_SET_SUBCMD_KEY:
+        if cmd[cp.p3m.CK_SUBCMD_KEY] == cp.CV_SET_SUBCMD_KEY:
             # Process the set_value task.
             return WORKFLOW_TASK_set_value(cmd, bdm_DC)
-        elif cmd[cp.CK_SUBCMD_KEY] == cp.CV_LIST_SUBCMD_KEY:
+        elif cmd[cp.p3m.CK_SUBCMD_KEY] == cp.CV_LIST_SUBCMD_KEY:
             # Process the list_folder_tree task.
             return WORKFLOW_TASK_list_folder_tree(cmd, bdm_DC)
-        elif (cmd[cp.CK_SUBCMD_KEY] == cp.CV_TASK_SUBCMD_KEY and
+        elif (cmd[cp.p3m.CK_SUBCMD_KEY] == cp.CV_TASK_SUBCMD_KEY and
               cmd[cp.CK_TASK_NAME] == cp.CV_SYNC):
             # Process the wf sync task.
             recon: bool = cmd.get(cp.CK_RECONCILE, False)
             return WORKFLOW_TASK_sync_wdc(recon, bdm_DC)
         else:
-            m = f"Unknown workflow task: {cmd[cp.CK_SUBCMD_KEY]}"
+            m = f"Unknown workflow task: {cmd[cp.p3m.CK_SUBCMD_KEY]}"
             logger.error(m)
             return False, m
     except Exception as e:

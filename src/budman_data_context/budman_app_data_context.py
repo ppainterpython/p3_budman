@@ -126,12 +126,6 @@ class BudManAppDataContext(BudManAppDataContext_Base):
         self._dc_id = value
 
     @property
-    def dc_VALID(self) -> bool:
-        """DC-Only: Indicates whether the data context is valid."""
-        success, reason = self.dc_is_valid()
-        return success
-    
-    @property
     def dc_INITIALIZED(self) -> bool:
         """DC-Only: Indicates whether the data context has been initialized."""
         return self._dc_initialized
@@ -144,16 +138,11 @@ class BudManAppDataContext(BudManAppDataContext_Base):
         self._dc_initialized = value
 
     @property
-    def dc_id(self) -> str:
-        """DC-Only: Return the id of the data context implementation."""
-        return self._dc_id
-    @dc_id.setter
-    def dc_id(self, value: str) -> None:
-        """DC-Only: Set the id of the data context implementation."""
-        if not isinstance(value, str):
-            raise TypeError("dc_id must be a string.")
-        self._dc_id = value
-
+    def dc_VALID(self) -> bool:
+        """DC-Only: Indicates whether the data context is valid."""
+        success, reason = self.dc_is_valid()
+        return success
+    
     @property
     def dc_FI_OBJECT(self) -> Optional[FI_OBJECT_TYPE]:
         """DC-Only: Return the FI_OBJECT of the current Financial Institution. """

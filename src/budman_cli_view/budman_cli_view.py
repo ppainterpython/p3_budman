@@ -380,7 +380,7 @@ class BudManCLIView(cmd2.Cmd, BudManAppDataContext_Binding): # , DataContext_Bin
             if not status:
                 return
             # If app exit cmd, handle here.
-            if cmd[cp.CK_SUBCMD_KEY] == cp.CV_EXIT_SUBCMD_KEY:
+            if cmd[cp.p3m.CK_SUBCMD_KEY] == cp.CV_EXIT_SUBCMD_KEY:
                 # Handle the --no_save switch
                 self.save_on_exit = not cmd[cp.CK_NO_SAVE]
                 console.print("Exiting Budget Manager CLI.")

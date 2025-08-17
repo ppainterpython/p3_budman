@@ -72,20 +72,17 @@ import logging, os, getpass, time, copy
 from pathlib import Path
 from typing import List, Optional, Type, Generator, Dict, Tuple, Any, TYPE_CHECKING
 # third-party modules and packages
-import p3_utils as p3u, pyjson5, p3logging as p3l
+import p3_utils as p3u, pyjson5, p3logging as p3l, p3_mvvm as p3m
 from openpyxl import Workbook, load_workbook
 # local modules and packages
-from budman_namespace.bdm_singleton_meta import BDMSingletonMeta
-from budman_namespace.design_language_namespace import *
+from budman_namespace import *
+from .budget_domain_model_config import BDMConfig
 from budget_storage_model import (
     bsm_verify_folder, 
     bsm_BDM_STORE_url_put,
     bsm_get_workbook_names,
     bsm_BDM_STORE_to_json
     )                              
-from p3_mvvm.model_base_ABC import Model_Base
-from budman_namespace.bdm_workbook_class import BDMWorkbook
-from .budget_domain_model_config import BDMConfig
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -93,7 +90,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
-class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
+class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
     # ======================================================================== +
     #region BudgetDomainModel class intrinsics
     # ======================================================================== +
@@ -472,7 +469,7 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
     """
     #endregion BDM Design Notes
     # ======================================================================== +
-    #region    BDM bdm_initialize(self, bsm_init, ...)
+    #region    bdm_initialize(self, bsm_init, ...)
     def bdm_initialize(self, 
                  create_missing_folders : bool = True,
                  raise_errors : bool = True
@@ -536,9 +533,9 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
-    #endregion BDM bdm_initialize(self, bsm_init, ...) 
+    #endregion bdm_initialize(self, bsm_init, ...) 
     # ------------------------------------------------------------------------ +
-    #region    BDM bdm_rehydrate() method
+    #region    bdm_rehydrate() method
     def bdm_rehydrate(self) -> None:
         """Rehydrate dicts loaded from the BDM_STORE into class instances."""
         try:
@@ -695,7 +692,7 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
             raise ValueError(m)
     #endregion bdm_BDM_STORE_json() method
     # ------------------------------------------------------------------------ +
-    #region    BDM FI_OBJECT_TYPE methods
+    #region    bdm_FI_OBJECT_TYPE methods
     def bdm_FI_OBJECT(self, fi_key:str) -> FI_OBJECT_TYPE:
         """Return the FI_OBJECT for fi_key."""
         self.bdm_FI_KEY_validate(fi_key)
@@ -861,9 +858,9 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise ValueError(m)
-    #endregion BDM FI_OBJECT_TYPE methods
+    #endregion bdm_FI_OBJECT_TYPE methods
     # ------------------------------------------------------------------------ +
-    #region    BDM WF_OBJECT_TYPE Dict attribute getter methods
+    #region    bdm_WF_OBJECT_TYPE Dict attribute getter methods
     def bdm_WF_OBJECT(self, wf_key:str) -> WF_OBJECT_TYPE:
         """Return the WF_OBJECT specified wf_key."""
         self.bdm_WF_KEY_validate(wf_key)
@@ -948,7 +945,7 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
     #         return wf_pf_map
     #     return wf_pf_map[wf_purpose]
 
-    #endregion BDM WF_OBJECT_TYPE pseudo-Object properties
+    #endregion bdm_WF_OBJECT_TYPE pseudo-Object properties
     # ------------------------------------------------------------------------ +
     #endregion BDM - Budget Domain Model methods
     # ======================================================================== +
@@ -1485,11 +1482,11 @@ class BudgetDomainModel(Model_Base,metaclass=BDMSingletonMeta):
             raise
     #endregion bsm_FI_WF_FOLDER_CONFIG_resolve() method
     # ------------------------------------------------------------------------ + 
-    #region bsm_FI_WF_FOLDER Path methods
+    #region bsm_FI_WF_FOLDER Path methods TODO: Are these still needed?
     def bsm_FI_WORKFLOW_DATA_FOLDER_path_str(self, fi_key : str, wf_key : str,
                                folder_id : str) -> str:
         """str version of the WF_FOLDER value for fi_key/wf_key/folder_id."""
-        if folder_id not in WF_FOLDER_PATH_ELEMENTS:
+        if folder_id not in VALID_WF_PURPOSE_VALUES:
             m = f"Invalid folder_id '{folder_id}' for FI_KEY('{fi_key}') "
             m += f"and WF_KEY('{wf_key}')"
             logger.error(m)

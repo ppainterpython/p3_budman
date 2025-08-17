@@ -1,6 +1,6 @@
 # ---------------------------------------------------------------------------- +
 #region budman_cp_namespace.py module
-""" budman_cp_namespace.py defines symbol constants for Command Objects."""
+""" budman_cp_namespace.py defines symbol constants for budman app Command Objects."""
 #endregion budman_cp_namespace.py module
 # ---------------------------------------------------------------------------- +
 #region Imports
@@ -9,56 +9,35 @@
 # third-party modules and packages
 
 # local modules and packages
+import p3_mvvm as p3m
 import budman_namespace as bdm
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
-#region Global Constants for ViewModelCommandProcessor
-# BudMan Command Processor Argument Name Constants. Arguments are placed in
-# the command dictionary as key/value pairs. The keys are used to identify
-# the command line arguments but also include values placed in the cmd object
-# prior to cp_execute_cmd() being called, depending on the parsing activity
-# of a View interface that is constructing the cmd object. 
-# argparse converts hyphens '-' to underscores '_', so we use underscores
-#
-# List of cmd 'key' (CK_) string constants, use like cmd[CK_NAME]
-# cmd key 'values' are CV_
-#
-# CMD_OBJECT required attributes
-CMD_KEY_SUFFIX = "_cmd"
-CK_CMD_NAME = "cmd_name"
-"""The cmd object key defining the command name."""
-CK_CMD_KEY = "cmd_key"
-"""A string identifier for a known cmd, used to bind to an execution function."""
-CK_CMD_EXEC_FUNC = "cmd_exec_func"
-"""The cmd object key assigned the command execution function callable value."""
-# Optional CMD_OBJECT attributes
-CK_SUBCMD_NAME = "subcmd_name"
-"""The string identifier for a known subcmd, can be used with cmd_key to bind exec func."""
-CK_SUBCMD_KEY = "subcmd_key"
-"""The string identifier for a known subcmd, can be used with cmd_key to bind exec func."""
+# BudMan application-specific Command Processor attribute Constants.
 
-# Known CK_CMD_KEY and CK_CMD_NAME values for the BudMan Command Processor.
+# Known p3m.CK_CMD_KEY and p3m.CK_CMD_NAME values for BudMan app Command Objects.
 CV_APP_CMD_NAME = "app"
-CV_APP_CMD_KEY = CV_APP_CMD_NAME + CMD_KEY_SUFFIX
+CV_APP_CMD_KEY = CV_APP_CMD_NAME + p3m.CMD_KEY_SUFFIX
 CV_CHANGE_CMD_NAME = "change"
-CV_CHANGE_CMD_KEY = CV_CHANGE_CMD_NAME + CMD_KEY_SUFFIX
+CV_CHANGE_CMD_KEY = CV_CHANGE_CMD_NAME + p3m.CMD_KEY_SUFFIX
 CV_INIT_CMD_NAME = "init"
-CV_INIT_CMD_KEY = CV_INIT_CMD_NAME + CMD_KEY_SUFFIX
+CV_INIT_CMD_KEY = CV_INIT_CMD_NAME + p3m.CMD_KEY_SUFFIX
 CV_LOAD_CMD_NAME = "load"
-CV_LOAD_CMD_KEY = CV_LOAD_CMD_NAME + CMD_KEY_SUFFIX
+CV_LOAD_CMD_KEY = CV_LOAD_CMD_NAME + p3m.CMD_KEY_SUFFIX
 CV_LIST_CMD_NAME = "list"
-CV_LIST_CMD_KEY = CV_LIST_CMD_NAME + CMD_KEY_SUFFIX
+CV_LIST_CMD_KEY = CV_LIST_CMD_NAME + p3m.CMD_KEY_SUFFIX
 CV_SAVE_CMD_NAME = "save"
-CV_SAVE_CMD_KEY = CV_SAVE_CMD_NAME + CMD_KEY_SUFFIX
+CV_SAVE_CMD_KEY = CV_SAVE_CMD_NAME + p3m.CMD_KEY_SUFFIX
 CV_SHOW_CMD_NAME = "show"
-CV_SHOW_CMD_KEY = CV_SHOW_CMD_NAME + CMD_KEY_SUFFIX
+CV_SHOW_CMD_KEY = CV_SHOW_CMD_NAME + p3m.CMD_KEY_SUFFIX
 CV_VAL_CMD_NAME = "val"
-CV_VAL_CMD_KEY = CV_VAL_CMD_NAME + CMD_KEY_SUFFIX
+CV_VAL_CMD_KEY = CV_VAL_CMD_NAME + p3m.CMD_KEY_SUFFIX
 CV_WORKFLOW_CMD_NAME = "workflow"
-CV_WORKFLOW_CMD_KEY = CV_WORKFLOW_CMD_NAME + CMD_KEY_SUFFIX
+CV_WORKFLOW_CMD_KEY = CV_WORKFLOW_CMD_NAME + p3m.CMD_KEY_SUFFIX
 
-# Supported CK_CMD_KEY CK_SUBCMD_KEY values for the BudMan Command Processor.
+# Supported p3m.CK_CMD_KEY, p3m.CK_SUBCMD_KEY and p3m.CK_SUBCMD_NAME values 
+# for the BudMan App Command Objects.
 CV_BDM_STORE_SUBCMD_NAME = "BDM_STORE"
 CV_LIST_BDM_STORE_SUBCMD_KEY = CV_LIST_CMD_KEY + "_" + CV_BDM_STORE_SUBCMD_NAME
 CV_LOAD_BDM_STORE_SUBCMD_KEY = CV_LOAD_CMD_KEY + "_" + CV_BDM_STORE_SUBCMD_NAME
@@ -162,8 +141,8 @@ CV_WORKFLOWS_MODULE = "budman_workflows"
 # deprecated
 CK_CHECK_REGISTER = "check_register"
 
-BUDMAN_VALID_CK_ATTRS = (CK_CMD_KEY, CK_CMD_NAME, CK_SUBCMD_KEY, CK_SUBCMD_NAME, 
-                        CK_CMD_EXEC_FUNC,
+BUDMAN_VALID_CK_ATTRS = (p3m.CK_CMD_KEY, p3m.CK_CMD_NAME, p3m.CK_SUBCMD_KEY, p3m.CK_SUBCMD_NAME, 
+                        p3m.CK_CMD_EXEC_FUNC,
                         CK_PARSE_ONLY, CK_VALIDATE_ONLY, CK_WHAT_IF, 
                         CK_FI_KEY, CK_WF_KEY,CK_WF_PURPOSE,
                         CK_WB_TYPE, CK_WB_NAME, CK_WB_REF,CK_WB_INFO,

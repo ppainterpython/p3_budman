@@ -539,7 +539,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.Model_Binding): # future
             success, result = self.cp_validate_cmd(cmd)
             if not success: return success, result
             # if cp_validate_cmd() is good, continue.
-            exec_func: Callable = cmd[cp.CK_CMD_EXEC_FUNC]
+            exec_func: Callable = cmd[cp.p3m.CK_CMD_EXEC_FUNC]
             function_name = exec_func.__name__
             validate_only: bool = self.cp_cmd_attr_get(cmd, cp.CK_VALIDATE_ONLY)
             if validate_only:
@@ -600,7 +600,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.Model_Binding): # future
             success:bool = True
             # Validate the cmd arguments.
             for key, value in cmd.items():
-                if key == cmd[cp.CK_CMD_KEY]: 
+                if key == cmd[cp.p3m.CK_CMD_KEY]: 
                     continue
                 # elif key == cp.CK_ALL_WBS:
                 #     cmd[cp.CK_WB_INDEX] = -1
@@ -661,8 +661,8 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.Model_Binding): # future
                     all_results += f"{P2}{result}\n"
             # Argument check is complete
             if success:
-                m = (f"Command validated - cmd_key: '{cmd[cp.CK_CMD_KEY]}' "
-                            f"subcmd_key: {str(cmd[cp.CK_SUBCMD_KEY])}")
+                m = (f"Command validated - cmd_key: '{cmd[cp.p3m.CK_CMD_KEY]}' "
+                            f"subcmd_key: {str(cmd[cp.p3m.CK_SUBCMD_KEY])}")
                 logger.info(m)
                 return success, m # The happy path return 
             if validate_all:
@@ -729,10 +729,10 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.Model_Binding): # future
             success : bool = False
             cmd_exec_func : Callable = None
             # Check for the current cmd keys.
-            cmd_key:str = cmd.get(cp.CK_CMD_KEY, None)
-            cmd_name:str = cmd.get(cp.CK_CMD_NAME, None)
-            subcmd_name:str = cmd.get(cp.CK_SUBCMD_NAME, None)
-            subcmd_key:str = cmd.get(cp.CK_SUBCMD_KEY, None)
+            cmd_key:str = cmd.get(cp.p3m.CK_CMD_KEY, None)
+            cmd_name:str = cmd.get(cp.p3m.CK_CMD_NAME, None)
+            subcmd_name:str = cmd.get(cp.p3m.CK_SUBCMD_NAME, None)
+            subcmd_key:str = cmd.get(cp.p3m.CK_SUBCMD_KEY, None)
             # Bind the command execution function, using subcmd_key first,
             # then cmd_key, then the UNKNOWN_cmd function.
             if subcmd_key:
@@ -740,7 +740,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.Model_Binding): # future
             if cmd_key and cmd_exec_func is None:
                 cmd_exec_func = self.cp_exec_func_binding(cmd_key, self.UNKNOWN_cmd)
             # Add it to the cmd object.
-            cmd[cp.CK_CMD_EXEC_FUNC] = cmd_exec_func
+            cmd[cp.p3m.CK_CMD_EXEC_FUNC] = cmd_exec_func
             return True
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
@@ -784,7 +784,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.Model_Binding): # future
                 m = "cmd_key is empty, no command name found."
                 logger.error(m)
                 return False, m
-            result : str = cmd_key[:-4] if cmd_key.endswith(cp.CMD_KEY_SUFFIX) else cmd_key
+            result : str = cmd_key[:-4] if cmd_key.endswith(cp.p3m.CMD_KEY_SUFFIX) else cmd_key
             if len(result) == 0 or result == cmd_key:
                 m = f"No command name found in: {str(cmd_key)}"
                 logger.error(m)
@@ -996,15 +996,15 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.Model_Binding): # future
                 result_content_type=CLIVIEW_OUTPUT_STRING,
                 result_content="No result content."
             )
-            if cmd[cp.CK_CMD_KEY] != cp.CV_LIST_CMD_KEY:
+            if cmd[cp.p3m.CK_CMD_KEY] != cp.CV_LIST_CMD_KEY:
                 # Invalid cmd_key
-                cmd_result[p3m.CMD_RESULT_CONTENT] = f"LIST_cmd() Invalid cmd_key: {cmd[cp.CK_CMD_KEY]}"
+                cmd_result[p3m.CMD_RESULT_CONTENT] = f"LIST_cmd() Invalid cmd_key: {cmd[cp.p3m.CK_CMD_KEY]}"
                 logger.error(cmd_result[p3m.CMD_RESULT_CONTENT])
                 return False, cmd_result
             # Dispatch based on the subcmd_key and/or subcmd_name
 
             #region list workbooks
-            if cmd[cp.CK_SUBCMD_NAME] == cp.CV_WORKBOOKS_SUBCMD_NAME:
+            if cmd[cp.p3m.CK_SUBCMD_NAME] == cp.CV_WORKBOOKS_SUBCMD_NAME:
                 # List the workbooks selected by list command line arguments.
                 # Tree or Table formats are available.
                 selected_bdm_wb_list : List[BDMWorkbook] = None
@@ -1028,7 +1028,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.Model_Binding): # future
             #endregion list workbooks
 
             #region list BDM_STORE
-            elif cmd[cp.CK_SUBCMD_NAME] == cp.CV_BDM_STORE_SUBCMD_NAME:
+            elif cmd[cp.p3m.CK_SUBCMD_NAME] == cp.CV_BDM_STORE_SUBCMD_NAME:
                 cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = CLIVIEW_JSON_STRING
                 cmd_result[p3m.CMD_RESULT_CONTENT] = self.model.bdm_BDM_STORE_json()
             #endregion list BDM_STORE
@@ -1037,7 +1037,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.Model_Binding): # future
             cmd_result[p3m.CMD_RESULT_STATUS] = True
             return True, cmd_result
         except Exception as e:
-            m = (f"Error executing cmd: {cmd[cp.CK_CMD_NAME]} {cmd[cp.CK_SUBCMD_NAME]}: "
+            m = (f"Error executing cmd: {cmd[cp.p3m.CK_CMD_NAME]} {cmd[cp.p3m.CK_SUBCMD_NAME]}: "
                  f"{p3u.exc_err_msg(e)}")
             logger.error(m)
             return False, m
@@ -1194,17 +1194,17 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.Model_Binding): # future
             st = p3u.start_timer()
             logger.debug(f"Start: ...")
             result: str = "no result"
-            if cmd[cp.CK_SUBCMD_NAME] == cp.CV_BUDGET_CATEGORIES_SUBCMD:
+            if cmd[cp.p3m.CK_SUBCMD_NAME] == cp.CV_BUDGET_CATEGORIES_SUBCMD:
                 # Show the budget categories.
                 cat_list = self.cp_cmd_attr_get(cmd, cp.CK_CAT_LIST, [])
                 tree_level = self.cp_cmd_attr_get(cmd, cp.CK_LEVEL, 2)
                 result = output_category_tree(level=tree_level, cat_list=cat_list)
-            elif cmd[cp.CK_SUBCMD_NAME] == cp.CV_BDM_STORE_SUBCMD_NAME:
+            elif cmd[cp.p3m.CK_SUBCMD_NAME] == cp.CV_BDM_STORE_SUBCMD_NAME:
                 result = self.model.bdm_BDM_STORE_json()
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             return True, result
         except Exception as e:
-            m = (f"Error executing cmd: {cmd[cp.CK_CMD_NAME]} {cmd[cp.CK_SUBCMD_NAME]}: "
+            m = (f"Error executing cmd: {cmd[cp.p3m.CK_CMD_NAME]} {cmd[cp.p3m.CK_SUBCMD_NAME]}: "
                  f"{p3u.exc_err_msg(e)}")
             logger.error(m)
             return False, m
@@ -1329,7 +1329,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.Model_Binding): # future
         """
         try:
             logger.info(f"Start: ...")
-            if cmd[cp.CK_SUBCMD_NAME] == cp.CV_WORKBOOKS_SUBCMD_NAME:
+            if cmd[cp.p3m.CK_SUBCMD_NAME] == cp.CV_WORKBOOKS_SUBCMD_NAME:
                 selected_bdm_wb_list : List[BDMWorkbook] = None
                 selected_bdm_wb_list = self.process_selected_workbook_input(cmd)
                 result: str = f"Changing {len(selected_bdm_wb_list)} workbooks:"
@@ -1407,7 +1407,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.Model_Binding): # future
             logger.debug(r_msg)
             success: bool = False
             result: Any = None
-            subcmd_name = cmd[cp.CK_SUBCMD_NAME]
+            subcmd_name = cmd[cp.p3m.CK_SUBCMD_NAME]
             if subcmd_name == cp.CV_LOG_SUBCMD:
                 # Show the current log level.
                 return True, "App Log cmd."
@@ -1461,7 +1461,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.Model_Binding): # future
             else:
                 return False, f"Unknown app subcmd: {subcmd_name}"
         except Exception as e:
-            m = f"Error executing cmd: {cmd[cp.CK_CMD_NAME]} {cmd[cp.CK_SUBCMD_NAME]}: "
+            m = f"Error executing cmd: {cmd[cp.p3m.CK_CMD_NAME]} {cmd[cp.p3m.CK_SUBCMD_NAME]}: "
             m += p3u.exc_err_msg(e)
             logger.error(m)
             return False, m
@@ -1626,7 +1626,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.Model_Binding): # future
             logger.debug(r_msg)
             success: bool = False
             result: Any = None
-            subcmd_name = cmd[cp.CK_SUBCMD_NAME]
+            subcmd_name = cmd[cp.p3m.CK_SUBCMD_NAME]
             if subcmd_name == cp.CV_APPLY_SUBCMD_NAME:
                 # Update the txn_categories by apply the category_map.
                 return True, "Applied category_map to txn_categories."
