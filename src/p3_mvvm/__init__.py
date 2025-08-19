@@ -42,11 +42,12 @@ from .command_processor import (
     # Classes
     CommandProcessor,
     # Functions
-    CMD_OBJECT, 
+    create_CMD_OBJECT, 
     validate_cmd_key_with_name,
     validate_subcmd_key_with_name,
-    CMD_RESULT_OBJECT,
+    create_CMD_RESULT_OBJECT,
     is_CMD_RESULT,
+    create_CMD_RESULT_ERROR
 )
 from .mvvm_namespace import (
     # Types
@@ -62,6 +63,13 @@ from .mvvm_namespace import (
     CMD_RESULT_STATUS,
     CMD_RESULT_CONTENT_TYPE,
     CMD_RESULT_CONTENT,
+    CMD_OBJECT_VALUE,
+    CMD_STRING_OUTPUT,
+    CMD_JSON_OUTPUT,
+    CMD_WORKBOOK_INFO_TABLE,
+    CMD_WORKBOOK_TREE_VIEW,
+    CMD_FILE_TREE_VIEW,
+    CMD_ERROR_STRING_OUTPUT
 )
 # target for 'from budman_app import *'
 __all__ = [
@@ -88,11 +96,19 @@ __all__ = [
     "CMD_RESULT_STATUS",
     "CMD_RESULT_CONTENT_TYPE",
     "CMD_RESULT_CONTENT",
+    "create_CMD_OBJECT",
+    "CMD_STRING_OUTPUT",
+    "CMD_JSON_OUTPUT",
+    "CMD_WORKBOOK_INFO_TABLE",
+    "CMD_WORKBOOK_TREE_VIEW",
+    "CMD_FILE_TREE_VIEW",
+    "CMD_ERROR_STRING_OUTPUT",
     # Command Processor Functions
-    "CMD_OBJECT",
+    "create_CMD_OBJECT",
     "validate_cmd_key_with_name",
     "validate_subcmd_key_with_name",
-    "CMD_RESULT_OBJECT",
-    "is_CMD_RESULT"
+    "create_CMD_RESULT_OBJECT",
+    "is_CMD_RESULT",
+    "create_CMD_RESULT_ERROR"
 ]
 

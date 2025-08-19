@@ -81,19 +81,24 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 #region CommandProcessor class
 class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
+    # ------------------------------------------------------------------------ +
+    #region CommandProcessor class instrisics - override for app-specific
+    # ------------------------------------------------------------------------ +
     #region CommandProcessor class doc string
     """Concrete Class for CommandProcessor_Base."""
     #endregion CommandProcessor class doc string
     # ------------------------------------------------------------------------ +
     #region __init__() constructor method
     def __init__(self) -> None:
-        super().__init__()
         self._initialized : bool = False
-        self._cp : Callable = None 
         self._cmd_map : Dict[str, Callable] = None
     #endregion __init__() constructor method
     # ------------------------------------------------------------------------ +
-    #region CommandProcessor_Binding Properties
+    #endregion CommandProcessor class instrisics - override for app-specific
+    # ------------------------------------------------------------------------ +
+
+    # ------------------------------------------------------------------------ +
+    #region CommandProcessor_Base Properties
     @property
     def cp_cmd_map(self) -> Dict[str, Callable]:
         """Return the command map for the command processor."""
@@ -104,27 +109,28 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
         if not isinstance(value, dict):
             raise ValueError("cp_cmd_map must be a dictionary.")
         self._cmd_map = value
-
-    #endregion CommandProcessor_BindingProperties
+    #endregion CommandProcessor_Base Properties
     # ------------------------------------------------------------------------ +
-    #region initialize() method
-    def initialize(self, cp : Optional[Callable]) -> "CommandProcessor":
+    #region CommandProcessor_Base Methods
+    # ------------------------------------------------------------------------ +
+    #region cp_initialize() method
+    def cp_initialize(self) -> "CommandProcessor":
         """Initialize the CommandProcessor."""
         try:
-            self.CP = cp
+            self.cp_initialize_cmd_map()
             self.initialized = True
             logger.debug(f"CommandProcessor initialized.")
             return self
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
-    #endregion initialize() method
+    #endregion cp_initialize() method
     # ------------------------------------------------------------------------ +
     #region cp_initialize_cmd_map() method
     def cp_initialize_cmd_map(self) -> None:
-        """Initialize the CommandProcessor."""
+        """Application-specific: Initialize the cp_cmd_map."""
         try:
-            self.initialized = True
+            self.cp_cmd_map = {}
             logger.debug(f"CommandProcessor cmd_map initialized.")
             return self
         except Exception as e:
@@ -134,37 +140,56 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
     # ------------------------------------------------------------------------ +
     #region cp_execute_cmd() method
     def cp_execute_cmd(self, cmd : Dict = None,
-                       raise_error : bool = False) -> Tuple[bool, Any]:
-        """Execute a command with the bound command processor.
+                       raise_error : bool = False) -> CMD_RESULT_TYPE:
+        """Execute a command within the command processor.
 
         Pass the command request through to the command processor for
-        execution. The command processor is a callable object within the 
-        ViewModel.
+        execution. 
 
         Arguments:
             cmd (Dict): The command to execute along with any arguments.
         
         Returns:
-            Tuple[success : bool, result : Any]: The outcome of the command 
+            CMD_RESULT_TYPE: The outcome of the command 
             execution.
         """
         try:
-            return True, str(cmd)
+            st = p3u.start_timer()
+            logger.info(f"Start Command: {cmd}")
+            success, result = self.cp_validate_cmd(cmd)
+            if not success: return success, result
+            # if cp_validate_cmd() is good, continue.
+            exec_func: Callable = cmd[CK_CMD_EXEC_FUNC]
+            function_name = exec_func.__name__
+            # validate_only: bool = self.cp_cmd_attr_get(cmd, cp.CK_VALIDATE_ONLY)
+            # if validate_only:
+            #     result = f"vo-command: {function_name}({str(cmd)})"
+            #     logger.info(result)
+            #     return True, result
+            logger.info(f"Executing command: {function_name}({str(cmd)})")
+            # Execute a cmd with its associated exec_func from the cmd_map.
+            cmd_result: CMD_RESULT_TYPE = exec_func(cmd)
+            # status, result = self.cp_cmd_map.get(full_cmd_key)(cmd)
+            logger.info(f"Complete Command: [{p3u.stop_timer(st)}] "
+                        f"{(cmd_result[CMD_RESULT_STATUS])}")
+            return cmd_result
         except Exception as e:
-            m = p3u.exc_err_msg(e)
-            logger.error(m)
+            cmd_result = create_CMD_RESULT_ERROR(cmd, e)
             if raise_error:
-                raise RuntimeError(m)
-            return False, m
+                raise RuntimeError(cmd_result[CMD_RESULT_CONTENT]) from e
+            return cmd_result
     #endregion cp_execute_cmd() method
+    # ------------------------------------------------------------------------ +
+    #endregion Command_Processor_Base Methods
+    # ------------------------------------------------------------------------ +
 #endregion CommandProcessor class
 # ---------------------------------------------------------------------------- +
 
 # --------------------------------------------------------------------------- +
 #region CMD_OBJECT functions
 # ---------------------------------------------------------------------------- +
-#region CMD_OBJECT()
-def CMD_OBJECT(
+#region create_CMD_OBJECT()
+def create_CMD_OBJECT(
     cmd_name: str = None,
     cmd_key: str = None,
     subcmd_name: str = None,
@@ -185,7 +210,7 @@ def CMD_OBJECT(
         # in cmd_obj.
         cmd_obj.update({k: v for k, v in other_attrs.items() if k not in cmd_obj})
     return cmd_obj.copy()
-#endregion CMD_OBJECT()
+#endregion create_CMD_OBJECT()
 # ---------------------------------------------------------------------------- +
 #region validate_cmd_key_with_name() function
 def validate_cmd_key_with_name(cmd_name: str, cmd_key: str) -> bool:
@@ -208,20 +233,22 @@ def validate_subcmd_key_with_name(subcmd_name: str, cmd_key: str,
 # ---------------------------------------------------------------------------- +
 #region CMD_RESULT_OBJECT functions
 # --------------------------------------------------------------------------- +
-#region CMD_RESULT_OBJECT()
-def CMD_RESULT_OBJECT(
+#region create_CMD_RESULT_OBJECT()
+def create_CMD_RESULT_OBJECT(
     cmd_result_status: bool = False,
     result_content_type: str = '',
-    result_content: Any = None
+    result_content: Optional[Any] = None,
+    cmd_object: Optional[CMD_OBJECT_TYPE] = None
 ) -> CMD_RESULT_TYPE:
     """Construct a CMD_RESULT_OBJECT from input parameters."""
     cmd_result = {
         CMD_RESULT_STATUS: cmd_result_status,
         CMD_RESULT_CONTENT_TYPE: result_content_type,
-        CMD_RESULT_CONTENT: result_content
+        CMD_RESULT_CONTENT: result_content,
+        CMD_OBJECT_VALUE: cmd_object
     }
     return cmd_result.copy() 
-#endregion CMD_RESULT_OBJECT()
+#endregion create_CMD_RESULT_OBJECT()
 # ---------------------------------------------------------------------------- +
 #region is_CMD_RESULT() function
 def is_CMD_RESULT(cmd_result: Any) -> bool:
@@ -232,6 +259,20 @@ def is_CMD_RESULT(cmd_result: Any) -> bool:
                 CMD_RESULT_STATUS in cmd_result)
     return False
 #endregion is_CMD_RESULT() function
+# ---------------------------------------------------------------------------- +
+#region create_CMD_RESULT_ERROR() function
+def create_CMD_RESULT_ERROR(cmd: CMD_OBJECT_TYPE, e: Exception) -> CMD_RESULT_TYPE:
+    """Construct a CMD_RESULT_ERROR from input parameters."""
+    m = p3u.exc_err_msg(e)
+    logger.error(m)
+    cmd_result = {
+        CMD_RESULT_STATUS: False,
+        CMD_RESULT_CONTENT_TYPE: CMD_ERROR_STRING_OUTPUT,
+        CMD_RESULT_CONTENT: m,
+        CMD_OBJECT_VALUE: cmd
+    }
+    return cmd_result.copy()
+#endregion create_CMD_RESULT_ERROR() function
 # ---------------------------------------------------------------------------- +
 #endregion CMD_RESULT_OBJECT functions
 # ---------------------------------------------------------------------------- +

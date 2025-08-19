@@ -15,7 +15,7 @@ from typing import List, Type, Generator, Dict, Tuple, Any, Callable, Optional
 # third-party modules and packages
 import p3_utils as p3u, pyjson5, p3logging as p3l
 # local modules and packages
-from budman_namespace import *
+from .mvvm_namespace import *
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -24,8 +24,14 @@ logger = logging.getLogger(__name__)
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
 class CommandProcessor_Base(ABC):
+    # ------------------------------------------------------------------------ +
+    #region CommandProcessor class doc string
     """Abstract Base Class for Command Processor."""
-    #region CommandProcessor Properties
+    #endregion CommandProcessor class doc string
+    # ------------------------------------------------------------------------ +
+
+    # ------------------------------------------------------------------------ +
+    #region CommandProcessor_Base Properties
     @property
     @abstractmethod
     def cp_cmd_map(self) -> Dict[str, Callable]:
@@ -36,11 +42,21 @@ class CommandProcessor_Base(ABC):
     def cp_cmd_map(self, value : Dict[str, Callable]) -> None:
         """Set the command map for the command processor."""
         pass
-    #endregion CommandProcessor Properties
+    #endregion CommandProcessor_Base Properties
     # ------------------------------------------------------------------------ +
     #region CommandProcessor methods
     @abstractmethod
-    def cp_execute_cmd(self, cmd : Dict = None, raise_error:bool=False) -> Tuple[bool, Any]:
+    def cp_initialize(self, cp : Optional[Callable]) -> "CommandProcessor_Base":
+        """Initialize the CommandProcessor."""
+        pass
+
+    @abstractmethod
+    def cp_initialize_cmd_map(self) -> None:
+        """Application-specific: Initialize the cp_cmd_map."""
+        pass
+
+    @abstractmethod
+    def cp_execute_cmd(self, cmd : Dict = None, raise_error:bool=False) -> CMD_RESULT_TYPE:
         """Execute a command.
 
         The command processor is a callable object.
@@ -54,12 +70,62 @@ class CommandProcessor_Base(ABC):
         """
         pass
 
-    # @abstractmethod
-    # def cp_validate_cmd(self, cmd : Dict = None,
-    #                     validate_all : bool = False) -> BUDMAN_RESULT_TYPE:
-    #     """Validate a command."""
-    #     pass
+    @abstractmethod
+    def cp_validate_cmd(self, cmd : Dict = None,
+                        validate_all : bool = False) -> Any:
+        """Validate a command."""
+        pass
 
+    @abstractmethod
+    def cp_validate_cmd_object(self, 
+                               cmd : Dict = None,
+                               raise_error:bool=False) -> bool:
+        """Validate Command Processor is initialized and the cmd object is valid.
 
+        Test self.initialized property, must be True to proceed.
+
+        Verify the cmd object is a dictionary, not None and not 0 length.
+
+        Arguments:
+            cmd (Dict): A candidate Command object to validate.
+            raise_error (bool): If True, raise any errors encountered. 
+
+        returns:
+            bool: True if Command Processor is initialized, and cmd object is 
+            a dictionary, False otherwise.
+
+        Raise:
+            RuntimeError: If raise_error is True, a RunTimeError is raised 
+            with an error message.
+        """
+        pass
+
+    @abstractmethod
+    def cp_exec_func_binding(self, cmd_key : str, default:Callable) -> Callable:
+        """Get the command function for a given command key.
+
+        This method retrieves the command function from the command map
+        using the provided command key. If the command key is not found,
+        it returns a function that handles unknown command cmd objects.
+
+        Arguments:
+            cmd_key (str): The command key to look up in the command map.
+
+        Returns:
+            Callable: The function associated with the command key, or an 
+            UNKNOWN_cmd function if the key is not found.
+        """
+        pass
+
+    @abstractmethod
+    def cp_cmd_attr_get(self, cmd: Dict,
+                    key_name: str, default_value: Any = None) -> Any:
+        """Use cmd attr key_name to get value or return default."""
+        pass
+    
+    @abstractmethod
+    def cp_cmd_attr_set(self, cmd: Dict, key_name: str, value: Any) -> None:
+        """Set the cmd attribute key_name to value."""
+        pass
 
     #endregion CommandProcessor_Base methods

@@ -227,7 +227,14 @@ from budman_cli_view import budman_cli_parser, budman_cli_view
 logger = logging.getLogger(__name__)
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
-class BudManViewModel(BudManAppDataContext_Binding, p3m.Model_Binding): # future ABC for DC, CP, VM interfaces
+class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor, 
+                      p3m.Model_Binding): 
+
+    # ======================================================================== +
+    #region BudManViewModel_Base class intrinsics                              +
+    # ======================================================================== +
+    #                                                                          +
+    # ------------------------------------------------------------------------ +
     #region BudManViewModel class doc string                                   +
     """BudManViewModel - A Budget Manager View Model providing 
     CommandProcessor & Data Context.
@@ -254,11 +261,6 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.Model_Binding): # future
     which a View may subscribe to.
     """
     #endregion BudManViewModel class doc string                                +
-
-    # ======================================================================== +
-    #region BudManViewModel_Base class intrinsics                              +
-    # ======================================================================== +
-    #                                                                          +
     # ------------------------------------------------------------------------ +
     #region    BudManViewModel Class __init__() constructor method             +
     def __init__(self, bdms_url : str = None, settings : bdms.BudManSettings = None) -> None:
@@ -396,41 +398,13 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.Model_Binding): # future
             raise
     #endregion BudManViewModel Class save_model() method                       +
     # ------------------------------------------------------------------------ +
-    #region    ViewModelCommandProcessor_Base cp_initialize_cmd_map() method+
-    def cp_initialize_cmd_map(self) -> None:
-        """Initialize the cmd_map dictionary."""
-        try:
-            # Use the following cmd_map to dispatch the command for execution.
-            self.cp_cmd_map = {
-                "init_cmd_fin_inst": self.FI_init_cmd,
-                cp.CV_LIST_CMD_KEY: self.LIST_cmd,
-                "load_cmd_BDM_STORE": self.BDM_STORE_load_cmd,
-                "save_cmd_BDM_STORE": self.BDM_STORE_save_cmd,
-                "show_cmd_DATA_CONTEXT": self.DATA_CONTEXT_show_cmd,
-                "load_cmd_workbooks": self.WORKBOOKS_load_cmd,
-                "save_cmd_workbooks": self.WORKBOOKS_save_cmd,
-                cp.CV_CHANGE_WORKBOOKS_SUBCMD_KEY: self.CHANGE_cmd,
-                cp.CV_CATEGORIZATION_SUBCMD_KEY: self.WORKFLOW_categorization_cmd,
-                cp.CV_WORKFLOW_CMD_KEY: self.WORKFLOW_cmd,
-                cp.CV_APPLY_SUBCMD_KEY: self.WORKFLOW_apply_cmd,
-                cp.CV_CHECK_SUBCMD_KEY: self.WORKFLOW_check_cmd,
-                cp.CV_INTAKE_SUBCMD_KEY: self.WORKFLOW_intake_cmd,
-                cp.CV_SHOW_CMD_KEY: self.SHOW_cmd,
-                cp.CV_CHANGE_CMD_KEY: self.CHANGE_cmd,
-                cp.CV_APP_CMD_KEY: self.APP_cmd,
-            }
-        except Exception as e:
-            logger.error(p3u.exc_err_msg(e))
-            raise
-    #endregion ViewModelCommandProcessor_Base cp_initialize_cmd_map() method+
-    # ------------------------------------------------------------------------ +
     #endregion BudManViewModel class intrinsics
     # ======================================================================== +
 
     # ======================================================================== +
-    #region    ViewModelCommandProcessor_Base                                  +
+    #region    BudManViewModel CommandProcessor_Base Override methods          +
     # ======================================================================== +
-    #region    Design Notes                                                       +
+    #region    Design Notes                                                    +
     """ ViewModelCommandProcessor Design Notes (future ABC)
 
     A Command Pattern supports a means to represent a command as an object,
@@ -492,26 +466,37 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.Model_Binding): # future
     """
     #endregion design notes                                                    +
     # ------------------------------------------------------------------------ +
-    #region    ViewModelCommandProcessor_Base Properties                       +
-    @property
-    def cp_cmd_map(self) -> Dict[str, Callable]:
-        """Return the command map dictionary."""
-        return self._cmd_map
-    @cp_cmd_map.setter
-    def cp_cmd_map(self, value: Dict[str, Callable]) -> None:
-        """Set the command map dictionary."""
-        if not isinstance(value, dict):
-            raise ValueError("cmd_map must be a dictionary.")
-        self._cmd_map = value
-
-    #endregion ViewModelCommandProcessor_Base Properties                       +
-    # ------------------------------------------------------------------------ +
-    #region ViewModelCommandProcessor_Base ABC Interface methods               +
-    # ------------------------------------------------------------------------ +
-    #region cp_execute_cmd() Command Processor method
+    #region    cp_initialize_cmd_map() method+
+    def cp_initialize_cmd_map(self) -> None:
+        """BudManApp-Specific Override: Initialize the cmd_map dictionary."""
+        try:
+            # Use the following cmd_map to dispatch the command for execution.
+            self.cp_cmd_map = {
+                "init_cmd_fin_inst": self.FI_init_cmd,
+                cp.CV_LIST_CMD_KEY: self.LIST_cmd,
+                "load_cmd_BDM_STORE": self.BDM_STORE_load_cmd,
+                "save_cmd_BDM_STORE": self.BDM_STORE_save_cmd,
+                "show_cmd_DATA_CONTEXT": self.DATA_CONTEXT_show_cmd,
+                "load_cmd_workbooks": self.WORKBOOKS_load_cmd,
+                "save_cmd_workbooks": self.WORKBOOKS_save_cmd,
+                cp.CV_CHANGE_WORKBOOKS_SUBCMD_KEY: self.CHANGE_cmd,
+                cp.CV_CATEGORIZATION_SUBCMD_KEY: self.WORKFLOW_categorization_cmd,
+                cp.CV_WORKFLOW_CMD_KEY: self.WORKFLOW_cmd,
+                cp.CV_APPLY_SUBCMD_KEY: self.WORKFLOW_apply_cmd,
+                cp.CV_CHECK_SUBCMD_KEY: self.WORKFLOW_check_cmd,
+                cp.CV_INTAKE_SUBCMD_KEY: self.WORKFLOW_intake_cmd,
+                cp.CV_SHOW_CMD_KEY: self.SHOW_cmd,
+                cp.CV_CHANGE_CMD_KEY: self.CHANGE_cmd,
+                cp.CV_APP_CMD_KEY: self.APP_cmd,
+            }
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion ViewModelCommandProcessor_Base cp_initialize_cmd_map() method+
+    #region    cp_execute_cmd() Command Processor method
     def cp_execute_cmd(self, 
                          cmd : Dict = None,
-                         raise_error : bool = False) -> Tuple[bool, Any]:
+                         raise_error : bool = False) -> p3m.CMD_RESULT_TYPE:
         """Execute a command for the View Model.
 
         This method executes a command for the Budget Model View Model. 
@@ -539,7 +524,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.Model_Binding): # future
             success, result = self.cp_validate_cmd(cmd)
             if not success: return success, result
             # if cp_validate_cmd() is good, continue.
-            exec_func: Callable = cmd[cp.p3m.CK_CMD_EXEC_FUNC]
+            exec_func: Callable = cmd[p3m.CK_CMD_EXEC_FUNC]
             function_name = exec_func.__name__
             validate_only: bool = self.cp_cmd_attr_get(cmd, cp.CK_VALIDATE_ONLY)
             if validate_only:
@@ -547,21 +532,22 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.Model_Binding): # future
                 logger.info(result)
                 return True, result
             logger.info(f"Executing command: {function_name}({str(cmd)})")
-            status, result = exec_func(cmd)
+            # Execute a cmd with its associated exec_func from the cmd_map.
+            cmd_result: p3m.CMD_RESULT_TYPE = exec_func(cmd)
             # status, result = self.cp_cmd_map.get(full_cmd_key)(cmd)
-            logger.info(f"Complete Command: [{p3u.stop_timer(st)}] {(status, str(result))}")
-            return status, result
+            logger.info(f"Complete Command: [{p3u.stop_timer(st)}] "
+                        f"{(cmd_result[p3m.CMD_RESULT_STATUS])}")
+            return cmd_result
         except Exception as e:
-            m = p3u.exc_err_msg(e)
-            logger.error(m)
+            cmd_result = p3m.create_CMD_RESULT_ERROR(cmd, e)
             if raise_error:
-                raise RuntimeError(m)
-            return False, m
+                raise RuntimeError(cmd_result[p3m.CMD_RESULT_MESSAGE]) from e
+            return cmd_result
     #endregion cp_execute_cmd() Command Processor method
-    #region cp_validate_cmd() Command Processor method
+    #region    cp_validate_cmd() Command Processor method
     def cp_validate_cmd(self, cmd : Dict = None,
-                        validate_all : bool = False) -> BUDMAN_RESULT_TYPE:
-        """Validate the cmd object for cmd_key and parameters.
+                        validate_all : bool = False) -> p3m.CMD_RESULT_TYPE:
+        """BudMan-App-specific: Validate the cmd object for cmd_key and parameters.
 
         Extract a valid, known full_cmd_key/cmd_key to succeed.
         Consider values to common arguments which can be validated with
@@ -673,7 +659,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.Model_Binding): # future
             logger.error(m)
             return False, m
     #endregion cp_validate_cmd() Command Processor method
-    #region cp_validate_cmd_object() Command Processor method
+    #region    cp_validate_cmd_object() Command Processor method
     def cp_validate_cmd_object(self, 
                                cmd : Dict = None,
                                raise_error:bool=False) -> bool:
@@ -746,7 +732,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.Model_Binding): # future
             logger.error(p3u.exc_err_msg(e))
             raise
     #endregion cp_validate_cmd_object() Command Processor method
-    #region cp_exec_func_binding() Command Processor method
+    #region    cp_exec_func_binding() Command Processor method
     def cp_exec_func_binding(self, cmd_key : str, default:Callable) -> Callable:
         """Get the command function for a given command key.
 
@@ -769,33 +755,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.Model_Binding): # future
             exec_func = default if default else None
         return exec_func
     #endregion cp_exec_func_binding() Command Processor method
-    #region cp_cmd_name() Command Processor method
-    def cp_cmd_name(self, cmd_key : str) -> str:
-        """Extract the command name from the cmd_key.
-
-        The command name is the front portion preceding the CMD_KEY_SUFFIX. 
-        If no command name is found, an error message is returned.
-        
-        returns:
-            BUDMAN_RESULT_TYPE: The command name if found, else an error message.
-        """
-        try:
-            if p3u.str_empty(cmd_key):
-                m = "cmd_key is empty, no command name found."
-                logger.error(m)
-                return False, m
-            result : str = cmd_key[:-4] if cmd_key.endswith(cp.p3m.CMD_KEY_SUFFIX) else cmd_key
-            if len(result) == 0 or result == cmd_key:
-                m = f"No command name found in: {str(cmd_key)}"
-                logger.error(m)
-                return False, m
-            return True, result
-        except Exception as e:
-            m = f"Error extracting command name from cmd_key '{cmd_key}': {p3u.exc_err_msg(e)}"
-            logger.error(m)
-            return False, m
-    #endregion cp_cmd_name() Command Processor method
-    #region cp_cmd_attr_get() Command Processor method
+    #region    cp_cmd_attr_get() Command Processor method
     def cp_cmd_attr_get(self, cmd: Dict,
                        key_name: str, default_value: Any = None) -> Any:
         """Use cmd attr key_name to get value or return default."""                  
@@ -810,7 +770,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.Model_Binding): # future
             return default_value
         return value
     #endregion cp_cmd_attr_get() Command Processor method
-    #region cp_cmd_attr_set() Command Processor method
+    #region    cp_cmd_attr_set() Command Processor method
     def cp_cmd_attr_set(self, cmd: Dict,
                        arg_name: str, value: Any) -> None:
         """Set a command argument value in the cmd dictionary."""
@@ -828,33 +788,9 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.Model_Binding): # future
         # Set the value in the cmd dictionary.
         cmd[arg_name] = value
     #endregion cp_cmd_attr_set() Command Processor method
-    #region cp_cmd_attr_get_set() Command Processor method
-    def cp_cmd_attr_get_set(self, cmd: Dict,
-                       key_name: str, default_value: Any = None) -> Any:
-        """Use cmd attr key_name to get value or set to default and return."""                  
-        if not isinstance(cmd, dict):
-            raise TypeError("cmd must be a dictionary.")    
-        if not isinstance(key_name, str):
-            raise TypeError("arg_name must be a string.")
-        if key_name not in cmd:
-            cmd[key_name] = default_value
-        return cmd[key_name]
-    #endregion cp_cmd_attr_get_set() Command Processor method
-    #region BMVM_cmd_WB_INFO_LEVEL_validate() Command Processor method
-    # def BMVM_cmd_WB_INFO_LEVEL_validate(self, info_level) -> bool:
-    #     """Return True if info_level is a valid value."""
-    #     try:
-    #         return info_level == ALL_KEY or info_level in VALID_WB_INFO_LEVELS
-    #     except Exception as e:
-    #         m = p3u.exc_err_msg(e)
-    #         logger.error(m)
-    #         raise
-    #endregion BMVM_cmd_WB_INFO_LEVEL_validate() Command Processor method
-    # ------------------------------------------------------------------------ +
-    #endregion ViewModelCommandProcessor_Base methods                          +
     # ------------------------------------------------------------------------ +
     #                                                                          +
-    #endregion ViewModelCommandProcessor_Base                                  +
+    #endregion BudManViewModel CommandProcessor_Base Override methods          +
     # ======================================================================== +
  
     # ======================================================================== +
@@ -991,9 +927,9 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.Model_Binding): # future
         try:
             st = p3u.start_timer()
             logger.debug(f"Start: ...")
-            cmd_result: p3m.CMD_RESULT_TYPE = p3m.CMD_RESULT_OBJECT(
+            cmd_result: p3m.CMD_RESULT_TYPE = p3m.create_CMD_RESULT_OBJECT(
                 cmd_result_status=False,
-                result_content_type=CLIVIEW_OUTPUT_STRING,
+                result_content_type=p3m.CMD_STRING_OUTPUT,
                 result_content="No result content."
             )
             if cmd[cp.p3m.CK_CMD_KEY] != cp.CV_LIST_CMD_KEY:
@@ -1018,7 +954,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.Model_Binding): # future
                 else:
                     # Collect the wb info for workbooks in the selected_bdm_wb_list.
                     # Construct the output dictionary result
-                    cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = CLIVIEW_WORKBOOK_INFO_TABLE
+                    cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = p3m.CMD_WORKBOOK_INFO_TABLE
                     cmd_result[p3m.CMD_RESULT_CONTENT] = list()
                     for wb in selected_bdm_wb_list:
                         wb_index = self.dc_WORKBOOK_index(wb.wb_id)
@@ -1029,7 +965,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.Model_Binding): # future
 
             #region list BDM_STORE
             elif cmd[cp.p3m.CK_SUBCMD_NAME] == cp.CV_BDM_STORE_SUBCMD_NAME:
-                cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = CLIVIEW_JSON_STRING
+                cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = p3m.CMD_JSON_OUTPUT
                 cmd_result[p3m.CMD_RESULT_CONTENT] = self.model.bdm_BDM_STORE_json()
             #endregion list BDM_STORE
 

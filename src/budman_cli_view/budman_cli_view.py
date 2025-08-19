@@ -459,7 +459,9 @@ class BudManCLIView(cmd2.Cmd, BudManAppDataContext_Binding): # , DataContext_Bin
             else:
                 console.print(f"[red]Error:[/red] {result}")
         except Exception as e:
-            self.pexcept(e)
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            self.pexcept(m)
     #endregion do_show command
     # ------------------------------------------------------------------------ +
     #region do_load command - load workbooks
@@ -600,7 +602,7 @@ class BudManCLIView(cmd2.Cmd, BudManAppDataContext_Binding): # , DataContext_Bin
         """Construct a command object from cmd2/argparse arguments."""
         try:
             cmd = self.extract_CMD_OBJECT_from_argparse_Namespace(opts)
-            parse_only : bool = self.parse_only or cmd[cp.CK_PARSE_ONLY]
+            parse_only:bool = self.CP.cp_cmd_attr_get(cmd, cp.CK_PARSE_ONLY, False)
             if parse_only: 
                 console.print(f"parse-only: '{self.current_cmd}' {str(cmd)}")
                 return False, cp.CK_PARSE_ONLY
@@ -609,7 +611,9 @@ class BudManCLIView(cmd2.Cmd, BudManAppDataContext_Binding): # , DataContext_Bin
             # Handle the case where argparse exits the program
             self.pwarning(BMCLI_SYSTEM_EXIT_WARNING)
         except Exception as e:
-            self.pexcept(e)
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            self.pexcept(m)
     #endregion construct_cmd
     # ------------------------------------------------------------------------ +
     #region extract_CMD_OBJECT_from_argparse_Namespace
@@ -664,7 +668,7 @@ class BudManCLIView(cmd2.Cmd, BudManAppDataContext_Binding): # , DataContext_Bin
                 not p3m.validate_subcmd_key_with_name(subcmd_name, cmd_key, subcmd_key)):
                 raise ValueError(f"Invalid: subcmd_key '{subcmd_key}' does not "
                                 f"match subcmd_name '{subcmd_name}'.")
-            cmd = p3m.CMD_OBJECT(
+            cmd = p3m.create_CMD_OBJECT(
                 cmd_name=cmd_name,
                 cmd_key=cmd_key,
                 subcmd_name=subcmd_name,

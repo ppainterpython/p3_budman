@@ -38,6 +38,8 @@ from typing import List, Type, Generator, Dict, Tuple, Any, Callable, Optional
 # 
 type CMD_OBJECT_TYPE = Dict[str, Any]
 type CMD_RESULT_TYPE = Dict[str, Any]  # Command result dictionary
+# ---------------------------------------------------------------------------- +
+
 
 # All CMD_OBJECT required attributes
 CMD_KEY_SUFFIX = "_cmd"
@@ -68,4 +70,12 @@ BASE_COMMAND_OBJECT_ATTRIBUTES = [
 CMD_RESULT_STATUS = "cmd_result_status"
 CMD_RESULT_CONTENT_TYPE = "cmd_result_content_type"
 CMD_RESULT_CONTENT = "cmd_result_content"
+CMD_OBJECT_VALUE = "cmd_object_value"
+# CMD_RESULT_CONTENT_TYPE values
+CMD_STRING_OUTPUT = "string_output"
+CMD_JSON_OUTPUT = "json_output"
+CMD_WORKBOOK_INFO_TABLE = "workbook_info_table_output"
+CMD_WORKBOOK_TREE_VIEW = "workbook_tree_view_output"
+CMD_FILE_TREE_VIEW = "file_tree_view_output"
+CMD_ERROR_STRING_OUTPUT = "error_string_output"
 #endregion Types and Constants

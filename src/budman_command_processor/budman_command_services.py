@@ -215,7 +215,7 @@ def output_tree_view(tree_view:Tree=None) -> p3m.CMD_RESULT_TYPE:
         sys.stdout = buffer  # Redirect stdout to capture tree output
         tree_view.show()
         sys.stdout = original_stdout  # Reset stdout
-        cmd_result = p3m.CMD_RESULT_OBJECT(
+        cmd_result = p3m.create_CMD_RESULT_OBJECT(
             cmd_result_status=True,
             result_content_type=bdm.CLIVIEW_WORKBOOK_TREE_VIEW,
             result_content=buffer.getvalue()
