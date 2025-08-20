@@ -28,7 +28,7 @@ console = Console(force_terminal=True, width=bdm.BUDMAN_WIDTH, highlight=True,
 # ---------------------------------------------------------------------------- +
 
 #region cli_view_cmd_output(status: bool, result: Any) -> None
-def cli_view_cmd_output(cmd: Dict, result: Any) -> None:
+def cli_view_cmd_output(cmd: Dict, result: p3m.CMD_RESULT_TYPE ) -> None:
     """Display the command output based on the command result."""
     if p3m.is_CMD_RESULT(result):
         # A CMD_RESULT_OBJECT was returned.
@@ -52,15 +52,15 @@ def CMD_RESULT_output(cmd_result: p3m.CMD_RESULT_TYPE) -> None:
         err_output(err_msg)
         return
     result_type = cmd_result.get(p3m.CMD_RESULT_CONTENT_TYPE, None)
-    if result_type == bdm.CLIVIEW_OUTPUT_STRING:
+    if result_type == p3m.CMD_STRING_OUTPUT:
         # OUTPUT_STRING input is a simple string.
         result_content = cmd_result.get(p3m.CMD_RESULT_CONTENT, "")
         console.print(result_content)
-    elif result_type == bdm.CLIVIEW_JSON_STRING:
+    elif result_type == p3m.CMD_JSON_OUTPUT:
         # JSON_STRING input is a JSON string.
         result_content = cmd_result.get(p3m.CMD_RESULT_CONTENT, "")
         console.print_json(result_content)
-    elif result_type == bdm.CLIVIEW_WORKBOOK_INFO_TABLE:
+    elif result_type == p3m.CMD_WORKBOOK_INFO_TABLE:
         # INFO_TABLE input is an array dictionaries.
         result_table = cmd_result.get(p3m.CMD_RESULT_CONTENT, [])
         hdr = list(result_table[0].keys()) if result_table else []
@@ -68,7 +68,7 @@ def CMD_RESULT_output(cmd_result: p3m.CMD_RESULT_TYPE) -> None:
         for row in result_table:
             table.add_row(*[str(cell) for cell in row.values()])
         console.print(table)
-    elif result_type == bdm.CLIVIEW_WORKBOOK_TREE_VIEW:
+    elif result_type == p3m.CMD_WORKBOOK_TREE_VIEW:
         # TREE_VIEW input is a string representation of a tree view.
         result_tree = cmd_result.get(p3m.CMD_RESULT_CONTENT, "")
         console.print(result_tree)

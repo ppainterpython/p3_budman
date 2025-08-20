@@ -99,7 +99,8 @@ def workflow_cmd_parser() -> cmd2.Cmd2ArgumentParser:
 
 #endregion Configure the CLI parser 
 # ---------------------------------------------------------------------------- +
-class BudManCLIView(cmd2.Cmd, BudManAppDataContext_Binding): # , DataContext_Binding 
+class BudManCLIView(cmd2.Cmd, BudManAppDataContext_Binding,
+                    p3m.CommandProcessor_Binding): # , DataContext_Binding 
     # ======================================================================== +
     #region BudManCLIView class intrinsics
     # ------------------------------------------------------------------------ +
@@ -156,18 +157,20 @@ class BudManCLIView(cmd2.Cmd, BudManAppDataContext_Binding): # , DataContext_Bin
     # ------------------------------------------------------------------------ +
     #region    __init__() method
     def __init__(self, 
-                 command_processor : Optional[Callable] = None,
+                 command_processor : Optional[p3m.CommandProcessor_Binding] = None,
                  app_name : str = "budman_cli",
                  settings : Optional[bdms.BudManSettings] = None) -> None:
-        shortcuts = dict(cmd2.DEFAULT_SHORTCUTS)
-        shortcuts.update({'wf': 'workflow'})
+        # Initialize super() CommandProcessor_Binding.
+        p3m.CommandProcessor_Binding.__init__(self)
         self.initialized : bool = False
         self._app_name = app_name
-        self._command_processor = command_processor
+        self._cp = command_processor
         self._settings : bdms.BudManSettings = settings if settings else bdms.BudManSettings()
         self._current_cmd :Optional[str] = None
         self._save_on_exit : bool = True
-        # cmd2.Cmd initialization
+        # Setup and do cmd2.cmd initialization.
+        shortcuts = dict(cmd2.DEFAULT_SHORTCUTS)
+        shortcuts.update({'wf': 'workflow'})
         hfn = self._settings[BUDMAN_CMD_HISTORY_FILENAME]
         cmd2.Cmd.__init__(self, 
                           shortcuts=shortcuts,
@@ -185,59 +188,6 @@ class BudManCLIView(cmd2.Cmd, BudManAppDataContext_Binding): # , DataContext_Bin
         self.set_prompt()
         # BudManCLIView.update_terminal_title(f"{TERM_TITLE}")
     #endregion __init__() method
-    # ------------------------------------------------------------------------ +
-    #region   BudManCLIView class properties
-    
-    @property
-    def save_on_exit(self) -> bool:
-        """Get the save_on_exit property."""
-        return self._save_on_exit
-    @save_on_exit.setter
-    def save_on_exit(self, value: bool) -> None:
-        """Set the save_on_exit property."""
-        if not isinstance(value, bool):
-            raise TypeError("save_on_exit must be a boolean.")
-        self._save_on_exit = value
-
-    @property
-    def app_name(self) -> str:
-        """Get the app_name property."""
-        return self._app_name
-    @app_name.setter
-    def app_name(self, value: str) -> None:
-        """Set the app_name property."""
-        if not isinstance(value, str):
-            raise TypeError("app_name must be a string.")
-        self._app_name = value
-        BudManCLIView.prompt = PO_ON_PROMPT if self.parse_only else PO_OFF_PROMPT
-
-    @property
-    def current_cmd(self) -> Optional[str]:
-        """Get the current_cmd property."""
-        return self._current_cmd
-    @current_cmd.setter
-    def current_cmd(self, value: Optional[str]) -> None:
-        """Set the current_cmd property."""
-        if value is not None and not isinstance(value, str):
-            raise TypeError("current_cmd must be a string or None.")
-        self._current_cmd = value
-        if value:
-            logger.debug(f"Current command set to: {value}")
-        else:
-            logger.debug("Current command cleared.")
-
-    @property
-    def settings(self) -> bdms.BudManSettings:
-        """Get the settings property."""
-        return self._settings
-    @settings.setter
-    def settings(self, value: bdms.BudManSettings) -> None:
-        """Set the settings property."""
-        if not isinstance(value, bdms.BudManSettings):
-            raise TypeError("settings must be a BudManSettings instance.")
-        self._settings = value
-        logger.debug(f"Settings updated: {self._settings}")
-    #endregion BudManCLIView class properties
     # ------------------------------------------------------------------------ +
     #region    BudManCLIView Methods
     def initialize(self) -> None:
@@ -304,58 +254,60 @@ class BudManCLIView(cmd2.Cmd, BudManAppDataContext_Binding): # , DataContext_Bin
             raise
     #endregion postcmd_hook Methods
     # ------------------------------------------------------------------------ +
-    #endregion BudManCLIView class  intrinsics
-    # ======================================================================== +
-
-    # ======================================================================== +
-    #region ViewModelCommandProcessor_Binding implementation
-    # TODO: Create ViewModelCommandProcessor_Binding class so BudManCLIView
-    # can inherit it.
-    # ======================================================================== +
-    #                                                                          +
-    # ------------------------------------------------------------------------ +
-    #region ViewModelCommandProcessor_Binding Properties
-    @property
-    def command_processor(self) -> Callable:
-        """Get the command_processor property."""
-        return self._command_processor    
-    @command_processor.setter
-    def command_processor(self, value: Callable) -> None:
-        """Set the command_processor property."""
-        self._command_processor = value
-
-    @property
-    def CP(self) -> Callable:
-        """Alias for the command_processor property."""
-        return self._command_processor
+    #region   BudManCLIView class properties
     
-    @CP.setter
-    def CP(self, value: Callable) -> None:
-        """Alias for the command_processor property."""
-        self._command_processor = value
-    #endregion ViewModelCommandProcessor_Binding Properties
+    @property
+    def save_on_exit(self) -> bool:
+        """Get the save_on_exit property."""
+        return self._save_on_exit
+    @save_on_exit.setter
+    def save_on_exit(self, value: bool) -> None:
+        """Set the save_on_exit property."""
+        if not isinstance(value, bool):
+            raise TypeError("save_on_exit must be a boolean.")
+        self._save_on_exit = value
+
+    @property
+    def app_name(self) -> str:
+        """Get the app_name property."""
+        return self._app_name
+    @app_name.setter
+    def app_name(self, value: str) -> None:
+        """Set the app_name property."""
+        if not isinstance(value, str):
+            raise TypeError("app_name must be a string.")
+        self._app_name = value
+        BudManCLIView.prompt = PO_ON_PROMPT if self.parse_only else PO_OFF_PROMPT
+
+    @property
+    def current_cmd(self) -> Optional[str]:
+        """Get the current_cmd property."""
+        return self._current_cmd
+    @current_cmd.setter
+    def current_cmd(self, value: Optional[str]) -> None:
+        """Set the current_cmd property."""
+        if value is not None and not isinstance(value, str):
+            raise TypeError("current_cmd must be a string or None.")
+        self._current_cmd = value
+        if value:
+            logger.debug(f"Current command set to: {value}")
+        else:
+            logger.debug("Current command cleared.")
+
+    @property
+    def settings(self) -> bdms.BudManSettings:
+        """Get the settings property."""
+        return self._settings
+    @settings.setter
+    def settings(self, value: bdms.BudManSettings) -> None:
+        """Set the settings property."""
+        if not isinstance(value, bdms.BudManSettings):
+            raise TypeError("settings must be a BudManSettings instance.")
+        self._settings = value
+        logger.debug(f"Settings updated: {self._settings}")
+    #endregion BudManCLIView class properties
     # ------------------------------------------------------------------------ +
-    #region ViewModelCommandProcessor_Binding Methods
-    def cp_execute_cmd(self, cmd : Dict) -> Tuple[bool, Any]:
-        """Send a cmd through the command_processor.
-         
-        This view is a CommandProcessor_Binding, proxy-ing commands through
-        a binding setup at setup time, Dependency Injection."""
-        try:
-            st = p3u.start_timer()
-            logger.debug(f"Execute Command: {cmd}")
-            status, result = self.CP.cp_execute_cmd(cmd)
-            logger.debug(f"Complete Command: {str(cmd)} {p3u.stop_timer(st)}")
-            return (status, result)
-        except SystemExit as e:
-            # Handle the case where argparse exits the program
-            self.pwarning(BMCLI_SYSTEM_EXIT_WARNING)
-        except Exception as e:
-            self.pexcept(e)
-    #endregion ViewModelCommandProcessor_Binding methods
-    # ------------------------------------------------------------------------ +
-    #
-    #endregion ViewModelCommandProcessor interface implementation
+    #endregion BudManCLIView class  intrinsics
     # ======================================================================== +
 
     # ======================================================================== +
@@ -452,12 +404,12 @@ class BudManCLIView(cmd2.Cmd, BudManAppDataContext_Binding): # , DataContext_Bin
             if not status:
                 return
             # Submit the command to the command processor.
-            status, result = self.cp_execute_cmd(cmd)
+            cmd_result: p3m.CMD_RESULT_TYPE = self.cp_execute_cmd(cmd)
             # Render the result.
-            if status:
-                cli_view_cmd_output(cmd, result)
+            if cmd_result[p3m.CMD_RESULT_STATUS]:
+                cli_view_cmd_output(cmd, cmd_result)
             else:
-                console.print(f"[red]Error:[/red] {result}")
+                console.print(f"[red]Error:[/red] {cmd_result[p3m.CMD_RESULT_CONTENT]}")
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
@@ -520,12 +472,12 @@ class BudManCLIView(cmd2.Cmd, BudManAppDataContext_Binding): # , DataContext_Bin
             if not status:
                 return
             # Submit the command to the command processor.
-            status, result = self.cp_execute_cmd(cmd)
+            cmd_result: p3m.CMD_RESULT_TYPE  = self.cp_execute_cmd(cmd)
             # Render the result.
-            if status:
-                cli_view_cmd_output(cmd, result)
+            if cmd_result[p3m.CMD_RESULT_STATUS]:
+                cli_view_cmd_output(cmd, cmd_result[p3m.CMD_RESULT_DATA])
             else:
-                console.print(f"[red]Error:[/red] {result}")
+                console.print(f"[red]Error:[/red] {cmd_result[p3m.CMD_RESULT_ERROR]}")
         except Exception as e:
             self.pexcept(e)
     #endregion do_show command
@@ -578,12 +530,12 @@ class BudManCLIView(cmd2.Cmd, BudManAppDataContext_Binding): # , DataContext_Bin
             if not status:
                 return
             # Submit the command to the command processor.
-            status, result = self.cp_execute_cmd(cmd)
+            cmd_result: p3m.CMD_RESULT_TYPE  = self.cp_execute_cmd(cmd)
             # Render the result.
-            if status:
-                cli_view_cmd_output(cmd, result)
+            if cmd_result[p3m.CMD_RESULT_STATUS]:
+                cli_view_cmd_output(cmd, cmd_result[p3m.CMD_RESULT_DATA])
             else:
-                console.print(f"[red]Error:[/red] {result}")
+                console.print(f"[red]Error:[/red] {cmd_result[p3m.CMD_RESULT_ERROR]}")
         except Exception as e:
             self.pexcept(e)
     #endregion do_workflow command
@@ -602,7 +554,7 @@ class BudManCLIView(cmd2.Cmd, BudManAppDataContext_Binding): # , DataContext_Bin
         """Construct a command object from cmd2/argparse arguments."""
         try:
             cmd = self.extract_CMD_OBJECT_from_argparse_Namespace(opts)
-            parse_only:bool = self.CP.cp_cmd_attr_get(cmd, cp.CK_PARSE_ONLY, False)
+            parse_only:bool = self.CP.cp_cmd_attr_get(cmd, p3m.CK_PARSE_ONLY, False)
             if parse_only: 
                 console.print(f"parse-only: '{self.current_cmd}' {str(cmd)}")
                 return False, cp.CK_PARSE_ONLY

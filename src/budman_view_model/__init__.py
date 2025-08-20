@@ -12,10 +12,6 @@ __license__ = "MIT"
 from .budman_view_model import (
     BudManViewModel
 )
-from .budman_cli_view_command_processor_binding import (
-    BudManCLICommandProcessor_Binding
-)
 __all__ = [
-    "BudManViewModel",
-    "BudManCLICommandProcessor_Binding"
+    "BudManViewModel"
 ]

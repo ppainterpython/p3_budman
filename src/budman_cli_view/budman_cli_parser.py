@@ -10,7 +10,7 @@
 import logging, shutil
 from typing import List
 # third-party modules and packages
-import p3_utils as p3u, p3logging as p3l
+import p3_utils as p3u, p3logging as p3l, p3_mvvm as p3m
 import cmd2, argparse
 from cmd2 import (Cmd2ArgumentParser, with_argparser)
 # local modules and packages
@@ -158,7 +158,7 @@ class BudManCLIParser():
             workbook_subcmd_parser.set_defaults(
                 subcmd_name=cp.CV_WORKBOOKS_SUBCMD_NAME,
                 subcmd_key=cp.CV_CHANGE_WORKBOOKS_SUBCMD_KEY)
-            self.add_wb_index_argument(workbook_subcmd_parser)
+            self.add_wb_list_argument(workbook_subcmd_parser)
             wb_type_choices = bdm.VALID_WB_TYPE_VALUES
             workbook_subcmd_parser.add_argument(
                 "-t", f"--{cp.CK_CMDLINE_WB_TYPE}",
@@ -227,8 +227,11 @@ class BudManCLIParser():
             parser.prog = app_name
             # List command subparsers
             subparsers = parser.add_subparsers()
-            parser.set_defaults(cmd_key=cp.CV_LIST_CMD_KEY,
-                                cmd_name=cp.CV_LIST_CMD_NAME)
+            list_cmd_defaults = {
+                p3m.CK_CMD_KEY: cp.CV_LIST_CMD_KEY,
+                p3m.CK_CMD_NAME: cp.CV_LIST_CMD_NAME
+            }
+            parser.set_defaults(**list_cmd_defaults)
 
             # bdm_store_subcmd_parser
             # list BDM_STORE 
@@ -236,24 +239,29 @@ class BudManCLIParser():
                 cp.CV_BDM_STORE_SUBCMD_NAME,
                 aliases=["bdm_store", "bms", "BMS", "budget_manager_store"], 
                 help="List the Budget Manager Store file.")
-            bdm_store_subcmd_parser.set_defaults(
-                subcmd_name=cp.CV_BDM_STORE_SUBCMD_NAME,
-                subcmd_key=cp.CV_LIST_BDM_STORE_SUBCMD_KEY)
+            bdm_store_subcmd_defaults = {
+                p3m.CK_SUBCMD_NAME: cp.CV_BDM_STORE_SUBCMD_NAME,
+                p3m.CK_SUBCMD_KEY: cp.CV_LIST_BDM_STORE_SUBCMD_KEY
+            }
+            bdm_store_subcmd_parser.set_defaults(**bdm_store_subcmd_defaults)
             self.add_common_args(bdm_store_subcmd_parser)
 
             # wb_subcmd_parser subcmd parser
-            # list workbooks [wb_index | -all]
+            # list workbooks [wb_list | -all] [-t]
             wb_subcmd_parser  = subparsers.add_parser(
                 cp.CV_WORKBOOKS_SUBCMD_NAME,
                 aliases=["wb", "WB"], 
                 help="Select workbooks to list.")
-            wb_subcmd_parser.set_defaults(
-                subcmd_name=cp.CV_WORKBOOKS_SUBCMD_NAME)
-            self.add_wb_index_argument(wb_subcmd_parser)
+            wb_subcmd_defaults = {
+                p3m.CK_SUBCMD_NAME: cp.CV_WORKBOOKS_SUBCMD_NAME,
+                p3m.CK_SUBCMD_KEY: cp.CV_LIST_WORKBOOKS_SUBCMD_KEY
+            }
+            wb_subcmd_parser.set_defaults(**wb_subcmd_defaults)
             wb_subcmd_parser.add_argument(
                 "-t", f"--{cp.CK_BDM_TREE}", 
                 action="store_true",
                 help="Show the BDM tree hierarchy.")
+            self.add_wb_list_argument(wb_subcmd_parser)
             self.add_common_args(wb_subcmd_parser)
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
@@ -289,7 +297,7 @@ class BudManCLIParser():
             wb_subcmd_parser.set_defaults(
                 subcmd_name=cp.CV_WORKBOOKS_SUBCMD_NAME,
                 subcmd_key=cp.CV_LOAD_WORKBOOKS_SUBCMD_KEY)
-            self.add_wb_index_argument(wb_subcmd_parser)
+            self.add_wb_list_argument(wb_subcmd_parser)
             self.add_common_args(wb_subcmd_parser)
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
@@ -325,7 +333,7 @@ class BudManCLIParser():
             wb_subcmd_parser.set_defaults(
                 subcmd_name=cp.CV_WORKBOOKS_SUBCMD_NAME,
                 subcmd_key=cp.CV_SAVE_WORKBOOKS_SUBCMD_KEY)
-            self.add_wb_index_argument(wb_subcmd_parser)
+            self.add_wb_list_argument(wb_subcmd_parser)
             self.add_common_args(wb_subcmd_parser)
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
@@ -450,7 +458,7 @@ class BudManCLIParser():
                 cmd_name=cp.CV_WORKFLOW_CMD_NAME, 
                 subcmd_name=cp.CV_CATEGORIZATION_SUBCMD_NAME,
                 subcmd_key=cp.CV_CATEGORIZATION_SUBCMD_KEY)
-            self.add_wb_index_argument(categorization_parser)
+            self.add_wb_list_argument(categorization_parser)
             categorization_parser.add_argument(
                 f"--{cp.CK_LOAD_WORKBOOK}","-l", "-load", 
                 action="store_true", 
@@ -477,7 +485,7 @@ class BudManCLIParser():
                 cmd_name=cp.CV_WORKFLOW_CMD_NAME, 
                 subcmd_name=cp.CV_CHECK_SUBCMD_NAME,
                 subcmd_key=cp.CV_CHECK_SUBCMD_KEY)
-            self.add_wb_index_argument(check_parser)
+            self.add_wb_list_argument(check_parser)
             self.add_load_workbook_argument(check_parser)
             self.add_fix_argument(check_parser)
             check_parser.add_argument(
@@ -664,8 +672,8 @@ class BudManCLIParser():
             logger.exception(p3u.exc_err_msg(e))
             raise
 
-    def add_wb_index_argument(self, parser) -> None:
-        """Add a wb_index or all_wbs arguments."""
+    def add_wb_list_argument(self, parser) -> None:
+        """Add a wb_list or all_wbs arguments."""
         try:
             group = parser.add_mutually_exclusive_group(required=False)
             group.add_argument(

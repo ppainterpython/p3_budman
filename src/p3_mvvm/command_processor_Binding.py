@@ -16,7 +16,7 @@ import p3_utils as p3u, pyjson5, p3logging as p3l
 # local modules and packages
 from .mvvm_namespace import *
 from .command_processor_Base_ABC import CommandProcessor_Base
-from .data_context_base_ABC import DataContext_Base
+from .command_processor import create_CMD_RESULT_ERROR
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -36,7 +36,7 @@ class CommandProcessor_Binding(CommandProcessor_Base):
     def __init__(self) -> None:
         super().__init__()
         self._initialized : bool = False
-        self._cp : Callable = None  # Command Processor
+        self._cp : CommandProcessor_Base = None  # Command Processor
         self._cmd_map : Dict[str, Callable] = None
     #endregion __init__() constructor method
     # ------------------------------------------------------------------------ +
@@ -48,7 +48,7 @@ class CommandProcessor_Binding(CommandProcessor_Base):
     @property
     def CP(self) -> CommandProcessor_Base:
         """Return the command processor."""
-        self._cp
+        return self._cp
     @CP.setter
     def CP(self, value : CommandProcessor_Base) -> None:
         """Set the command processor."""
@@ -66,15 +66,6 @@ class CommandProcessor_Binding(CommandProcessor_Base):
         if not isinstance(value, dict):
             raise ValueError("cp_cmd_map must be a dictionary.")
         self.CP.cp_cmd_map = value
-
-    @property
-    def data_context(self) -> DataContext_Base:
-        """Return the command processor."""
-        pass
-    @data_context.setter
-    def data_context(self, value : DataContext_Base) -> None:
-        """Set the command processor."""
-        pass
 
     #endregion CommandProcessor_BindingProperties
     # ------------------------------------------------------------------------ +
@@ -123,15 +114,15 @@ class CommandProcessor_Binding(CommandProcessor_Base):
             return self.CP.cp_execute_cmd(cmd)
         except Exception as e:
             cmd_result = create_CMD_RESULT_ERROR(cmd, e)
-            m = p3u.exc_err_msg(e)
-            logger.error(m)
+            m = cmd_result[CMD_RESULT_CONTENT]
             if raise_error:
                 raise RuntimeError(m)
             return False, m
     #endregion execute_cmd() command method
     # ------------------------------------------------------------------------ +
-    #region execute_cmd() method
-    def cp_validate_cmd(self, cmd : Dict = None,
+    #region cp_validate_cmd() method
+    def cp_validate_cmd(self, 
+                        cmd : Dict = None,
                         validate_all : bool = False) -> CMD_RESULT_TYPE:
         """CP-Binding: Validate the cmd object for cmd_key and parameters.
 
@@ -139,12 +130,50 @@ class CommandProcessor_Binding(CommandProcessor_Base):
         try:
             return self.CP.cp_validate_cmd(cmd, validate_all)
         except Exception as e:
-            m = p3u.exc_err_msg(e)
-            logger.error(m)
-            if raise_error:
-                raise RuntimeError(m)
-            return False, m
-    #endregion execute_cmd() command method
+            cmd_result = create_CMD_RESULT_ERROR(cmd, e)
+            return cmd_result
+    #endregion cp_validate_cmd() command method
+    # ------------------------------------------------------------------------ +
+    #region cp_validate_cmd_object() method
+    def cp_validate_cmd_object(self, 
+                               cmd : Dict = None,
+                               raise_error : bool = False) -> bool:
+        """CP-Binding: Validate the cmd object. """
+        try:
+            return self.CP.cp_validate_cmd_object(cmd, raise_error)
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion cp_validate_cmd_object() command method
+    # ------------------------------------------------------------------------ +
+    #region cp_exec_func_binding() method
+    def cp_exec_func_binding(self, cmd_key : str, default:Callable) -> Callable:
+        """Get the command function for a given command key."""
+        try:
+            return self.CP.cp_exec_func_binding(cmd_key, default)
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion cp_exec_func_binding() command method
+    # ------------------------------------------------------------------------ +
+    #region cp_cmd_attr_get() method
+    def cp_cmd_attr_get(self, cmd: Dict,
+                       key_name: str, default_value: Any = None) -> Any:
+        """Use cmd attr key_name to get value or return default."""                  
+        try:
+            return self.CP.cp_cmd_attr_get(cmd, key_name, default_value)
+        except Exception as e:
+            raise
+    #endregion cp_cmd_attr_get() command method
+    # ------------------------------------------------------------------------ +
+    #region cp_cmd_attr_set() method
+    def cp_cmd_attr_set(self, cmd: Dict, arg_name: str, value: Any) -> None:
+        """Set a command argument value in the cmd dictionary."""
+        try:
+            return self.CP.cp_cmd_attr_set(cmd, arg_name, value)
+        except Exception as e:
+            raise
+    #endregion cp_cmd_attr_set() command method
     # ------------------------------------------------------------------------ +
     #endregion CommandProcessor_Base Methods                                   +
     # ------------------------------------------------------------------------ +

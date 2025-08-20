@@ -273,64 +273,6 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
         self._cmd_map : Dict[str, Callable] = None
     #endregion __init__() constructor method
     # ------------------------------------------------------------------------ +
-    #region    BudManViewModel Class Properties     
-    @property
-    def app_name(self) -> str:
-        """Return the application name."""
-        if self._settings is None:
-            raise ValueError("Settings not configured.")
-        return self._settings.get(bdms.APP_NAME, "BudManViewModel")
-
-    @property
-    def bdms_url(self) -> str:
-        """Return the BDM_STORE URL."""
-        return self._bdm_store_url
-    @bdms_url.setter
-    def bdms_url(self, url: str) -> None:
-        """Set the BDM_STORE URL."""
-        if not isinstance(url, str):
-            raise TypeError("bdms_url must be a string")
-        if not url.startswith("file://") and not url.startswith("http://"):
-            raise ValueError("bdms_url must be a valid file or http URL")
-        self._bdm_store_url = url
-
-    @property
-    def settings(self) -> bdms.BudManSettings:
-        """Return the application settings."""
-        return self._settings
-    @settings.setter
-    def settings(self, settings: bdms.BudManSettings) -> None:
-        """Set the application settings."""
-        if not isinstance(settings, bdms.BudManSettings):
-            raise TypeError("settings must be a BudManSettings instance")
-        self._settings = settings
-
-    @property
-    def initialized(self) -> bool:
-        """Return True if the ViewModel is initialized."""
-        return self._initialized
-    @initialized.setter
-    def initialized(self, value: bool) -> None:
-        """Set the initialized property."""
-        if not isinstance(value, bool):
-            raise ValueError("initialized must be a boolean value.")
-        self._initialized = value
-
-    # def _valid_DC(self) -> BDMWorkingData:
-    #     """Init self._data_context if it is None."""
-    #     try:
-    #         if (self._data_context is None or 
-    #             not isinstance(self._data_context, BDMWorkingData)):
-    #             m = f"data_context property is not a BDMWorkingData instance, " 
-    #             m += f"it is {type(self._data_context)}."
-    #             logger.error(m)
-    #             raise TypeError(m)
-    #         return self._data_context
-    #     except Exception as e:
-    #         logger.error(p3u.exc_err_msg(e))
-    #         raise
-    #endregion BudManViewModel Class Properties                                +
-    # ------------------------------------------------------------------------ +
     #region    BudManViewModel Class initialize() method                       +
     def initialize(self) -> "BudManViewModel":
         """Initialize the command view_model."""
@@ -397,6 +339,51 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             logger.error(p3u.exc_err_msg(e))
             raise
     #endregion BudManViewModel Class save_model() method                       +
+    # ------------------------------------------------------------------------ +
+    #region    BudManViewModel Class Properties     
+    @property
+    def app_name(self) -> str:
+        """Return the application name."""
+        if self._settings is None:
+            raise ValueError("Settings not configured.")
+        return self._settings.get(bdms.APP_NAME, "BudManViewModel")
+
+    @property
+    def bdms_url(self) -> str:
+        """Return the BDM_STORE URL."""
+        return self._bdm_store_url
+    @bdms_url.setter
+    def bdms_url(self, url: str) -> None:
+        """Set the BDM_STORE URL."""
+        if not isinstance(url, str):
+            raise TypeError("bdms_url must be a string")
+        if not url.startswith("file://") and not url.startswith("http://"):
+            raise ValueError("bdms_url must be a valid file or http URL")
+        self._bdm_store_url = url
+
+    @property
+    def settings(self) -> bdms.BudManSettings:
+        """Return the application settings."""
+        return self._settings
+    @settings.setter
+    def settings(self, settings: bdms.BudManSettings) -> None:
+        """Set the application settings."""
+        if not isinstance(settings, bdms.BudManSettings):
+            raise TypeError("settings must be a BudManSettings instance")
+        self._settings = settings
+
+    @property
+    def initialized(self) -> bool:
+        """Return True if the ViewModel is initialized."""
+        return self._initialized
+    @initialized.setter
+    def initialized(self, value: bool) -> None:
+        """Set the initialized property."""
+        if not isinstance(value, bool):
+            raise ValueError("initialized must be a boolean value.")
+        self._initialized = value
+
+    #endregion BudManViewModel Class Properties                                +
     # ------------------------------------------------------------------------ +
     #endregion BudManViewModel class intrinsics
     # ======================================================================== +
@@ -492,60 +479,9 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
-    #endregion ViewModelCommandProcessor_Base cp_initialize_cmd_map() method+
-    #region    cp_execute_cmd() Command Processor method
-    def cp_execute_cmd(self, 
-                         cmd : Dict = None,
-                         raise_error : bool = False) -> p3m.CMD_RESULT_TYPE:
-        """Execute a command for the View Model.
-
-        This method executes a command for the Budget Model View Model. 
-        Commands and common argument values are validated. This method is the
-        primary interface to the ViewModel, hence, it will return a result
-        and not raise exceptions. When errors are caught, the result will 
-        indicate an error occurred and have an error message.
-
-        Arguments:
-            cmd (Dict): A valid BudMan View Model Command object.
-            raise_errors (bool): If True, raise any errors encountered.
-        
-        Returns:
-            Tuple[success : bool, result : Any]: The outcome of the command 
-            execution. If success is True, result contains result of the 
-            command, if False, a description of the error.
-
-        Raises:
-            If raise-errors is True, RuntimeError: A description of the
-            root error is contained in the exception message.
-        """
-        try:
-            st = p3u.start_timer()
-            logger.info(f"Start Command: {cmd}")
-            success, result = self.cp_validate_cmd(cmd)
-            if not success: return success, result
-            # if cp_validate_cmd() is good, continue.
-            exec_func: Callable = cmd[p3m.CK_CMD_EXEC_FUNC]
-            function_name = exec_func.__name__
-            validate_only: bool = self.cp_cmd_attr_get(cmd, cp.CK_VALIDATE_ONLY)
-            if validate_only:
-                result = f"vo-command: {function_name}({str(cmd)})"
-                logger.info(result)
-                return True, result
-            logger.info(f"Executing command: {function_name}({str(cmd)})")
-            # Execute a cmd with its associated exec_func from the cmd_map.
-            cmd_result: p3m.CMD_RESULT_TYPE = exec_func(cmd)
-            # status, result = self.cp_cmd_map.get(full_cmd_key)(cmd)
-            logger.info(f"Complete Command: [{p3u.stop_timer(st)}] "
-                        f"{(cmd_result[p3m.CMD_RESULT_STATUS])}")
-            return cmd_result
-        except Exception as e:
-            cmd_result = p3m.create_CMD_RESULT_ERROR(cmd, e)
-            if raise_error:
-                raise RuntimeError(cmd_result[p3m.CMD_RESULT_MESSAGE]) from e
-            return cmd_result
-    #endregion cp_execute_cmd() Command Processor method
+    #endregion cp_initialize_cmd_map() method
     #region    cp_validate_cmd() Command Processor method
-    def cp_validate_cmd(self, cmd : Dict = None,
+    def cp_validate_cmd(self, cmd : p3m.CMD_OBJECT_TYPE = None,
                         validate_all : bool = False) -> p3m.CMD_RESULT_TYPE:
         """BudMan-App-specific: Validate the cmd object for cmd_key and parameters.
 
@@ -567,8 +503,15 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
         """
         try:
             self.cp_validate_cmd_object(cmd, raise_error = True)
-            # After cp_validate_cmd_object() returns, cmd dict has 
+            # If cp_validate_cmd_object() returns, CMD_OBJECT has 
             # content to examine and validate.
+            # Setup a CMD_RESULT object to return.
+            cmd_result : p3m.CMD_RESULT_TYPE = p3m.create_CMD_RESULT_OBJECT(
+                cmd_result_status=False, 
+                result_content_type=p3m.CMD_STRING_OUTPUT,
+                result_content="Command validation failed.",
+                cmd_object=cmd
+            )
             # For a few args, apply the DC values if no value given in the cmd.
             if self.cp_cmd_attr_get(cmd, cp.CK_FI_KEY) is None:
                 self.cp_cmd_attr_set(cmd, cp.CK_FI_KEY,
@@ -576,9 +519,8 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             if self.cp_cmd_attr_get(cmd, cp.CK_WF_KEY) is None:
                 self.cp_cmd_attr_set(cmd, cp.CK_WF_KEY,
                                     self.dc_WF_KEY)
+            # If validate_all, check all cmd args before return. 
             validate_all: bool = self.cp_cmd_attr_get(cmd, cp.CK_VALIDATE_ONLY)
-            # If validate_all, then don't return a result until all cmd args 
-            # are validated.
             all_results : str = "All Results:\n" if validate_all else ""
             result = "It's all good." 
             if validate_all:
@@ -588,9 +530,6 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             for key, value in cmd.items():
                 if key == cmd[cp.p3m.CK_CMD_KEY]: 
                     continue
-                # elif key == cp.CK_ALL_WBS:
-                #     cmd[cp.CK_WB_INDEX] = -1
-                #     cmd[cp.CK_WB_LIST] = None
                 elif key == cp.CK_WB_LIST:
                     for wb_index in cmd[cp.CK_WB_LIST]:
                         if not self.dc_WB_INDEX_validate(wb_index):
@@ -641,7 +580,9 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                 # continue validating all cmd args.
                 if not validate_all and not success:
                     # Without validate_all, if error, return, else continue
-                    return success, result
+                    cmd_result[p3m.CMD_RESULT_STATUS] = success
+                    cmd_result[p3m.CMD_RESULT_CONTENT] = result
+                    return cmd_result
                 else:
                     # If validate_all, accumulate results.
                     all_results += f"{P2}{result}\n"
@@ -650,144 +591,21 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                 m = (f"Command validated - cmd_key: '{cmd[cp.p3m.CK_CMD_KEY]}' "
                             f"subcmd_key: {str(cmd[cp.p3m.CK_SUBCMD_KEY])}")
                 logger.info(m)
-                return success, m # The happy path return 
+                cmd_result[p3m.CMD_RESULT_STATUS] = success
+                cmd_result[p3m.CMD_RESULT_CONTENT] = m
+                return cmd_result # The happy path return 
             if validate_all:
-                return success, all_results
-            return success, result
+                cmd_result[p3m.CMD_RESULT_STATUS] = success
+                cmd_result[p3m.CMD_RESULT_CONTENT] = all_results
+                return cmd_result # The happy path return 
+            cmd_result[p3m.CMD_RESULT_STATUS] = success
+            cmd_result[p3m.CMD_RESULT_CONTENT] = result
+            return cmd_result
         except Exception as e:
             m = f"Error validating command: {str(cmd)}: {p3u.exc_err_msg(e)}"
             logger.error(m)
             return False, m
     #endregion cp_validate_cmd() Command Processor method
-    #region    cp_validate_cmd_object() Command Processor method
-    def cp_validate_cmd_object(self, 
-                               cmd : Dict = None,
-                               raise_error:bool=False) -> bool:
-        """Validate Command Processor is initialized and the cmd object is valid.
-
-        Test self.initialized property, must be True to proceed.
-
-        Verify the cmd object is a dictionary, not None and not 0 length.
-
-        Arguments:
-            cmd (Dict): A candidate Command object to validate.
-            raise_error (bool): If True, raise any errors encountered. 
-
-        returns:
-            bool: True if Command Processor is initialized, and cmd object is 
-            a dictionary, False otherwise.
-
-        Raise:
-            RuntimeError: If raise_error is True, a RunTimeError is raised 
-            with an error message.
-        """
-        # Primary Concern: Validate the cmd object is ready for parameter
-        # validation. The current validation rules are:
-        # 1. CommandProcessor is initialized, i.e., self.initialized is True.
-        # 2. cmd is a dictionary, not None and not empty.
-        # 3. cmd dictionary contains mandatory CK_CMD_KEY. There may be an 
-        #    optional CK_SUBCMD_KEY, but it is not required.
-        try:
-            pfx = f"{self.__class__.__name__}.{self.cp_validate_cmd_object.__name__}: "
-            logger.debug(f"Before Validating cmd object: {str(cmd)}")
-            if not self.initialized:
-                m = f"Command Processor is not initialized."
-                logger.error(m)
-                if raise_error:
-                    raise RuntimeError(m)
-                return False
-            if p3u.is_not_obj_of_type("cmd",cmd,dict,pfx):
-                cmd_type = type(cmd).__name__
-                m = f"Invalid cmd object type: '{cmd_type}', no action taken."
-                logger.error(m)
-                if raise_error:
-                    raise RuntimeError(m)
-                return False
-            if len(cmd) == 0:
-                m = f"Command object is empty, no action taken."
-                logger.error(m)
-                if raise_error:
-                    raise RuntimeError(m)
-                return False
-            # Examine the cmd object for the required cmd values.
-            # If necessary, try transitioning from the old cmd_key approach to 
-            # the current one.
-            success : bool = False
-            cmd_exec_func : Callable = None
-            # Check for the current cmd keys.
-            cmd_key:str = cmd.get(cp.p3m.CK_CMD_KEY, None)
-            cmd_name:str = cmd.get(cp.p3m.CK_CMD_NAME, None)
-            subcmd_name:str = cmd.get(cp.p3m.CK_SUBCMD_NAME, None)
-            subcmd_key:str = cmd.get(cp.p3m.CK_SUBCMD_KEY, None)
-            # Bind the command execution function, using subcmd_key first,
-            # then cmd_key, then the UNKNOWN_cmd function.
-            if subcmd_key:
-                cmd_exec_func = self.cp_exec_func_binding(subcmd_key, None)
-            if cmd_key and cmd_exec_func is None:
-                cmd_exec_func = self.cp_exec_func_binding(cmd_key, self.UNKNOWN_cmd)
-            # Add it to the cmd object.
-            cmd[cp.p3m.CK_CMD_EXEC_FUNC] = cmd_exec_func
-            return True
-        except Exception as e:
-            logger.error(p3u.exc_err_msg(e))
-            raise
-    #endregion cp_validate_cmd_object() Command Processor method
-    #region    cp_exec_func_binding() Command Processor method
-    def cp_exec_func_binding(self, cmd_key : str, default:Callable) -> Callable:
-        """Get the command function for a given command key.
-
-        This method retrieves the command function from the command map
-        using the provided command key. If the command key is not found,
-        it returns a function that handles unknown command cmd objects.
-
-        Arguments:
-            cmd_key (str): The command key to look up in the command map.
-
-        Returns:
-            Callable: The function associated with the command key, or an 
-            UNKNOWN_cmd function if the key is not found.
-        """
-        if not p3u.str_notempty(cmd_key):
-            raise ValueError("cmd_key must be a non-empty string.")
-        exec_func : Callable = self.cp_cmd_map.get(cmd_key, None)
-        if exec_func is None:
-            # If no exec_func found, use the default UNKNOWN_cmd function.
-            exec_func = default if default else None
-        return exec_func
-    #endregion cp_exec_func_binding() Command Processor method
-    #region    cp_cmd_attr_get() Command Processor method
-    def cp_cmd_attr_get(self, cmd: Dict,
-                       key_name: str, default_value: Any = None) -> Any:
-        """Use cmd attr key_name to get value or return default."""                  
-        if not isinstance(cmd, dict):
-            raise TypeError("cmd must be a dictionary.")    
-        if not isinstance(key_name, str):
-            raise TypeError("arg_name must be a string.")
-        if key_name not in cmd:
-            return default_value
-        value = cmd.get(key_name, default_value)
-        if value is None:
-            return default_value
-        return value
-    #endregion cp_cmd_attr_get() Command Processor method
-    #region    cp_cmd_attr_set() Command Processor method
-    def cp_cmd_attr_set(self, cmd: Dict,
-                       arg_name: str, value: Any) -> None:
-        """Set a command argument value in the cmd dictionary."""
-        if not isinstance(cmd, dict):
-            raise TypeError("cmd must be a dictionary.")
-        if not isinstance(arg_name, str):
-            raise TypeError("arg_name must be a string.")
-        if arg_name not in cp.BUDMAN_VALID_CK_ATTRS:
-            raise ValueError(f"Command argument '{arg_name}' is not a valid "
-                             f"BudMan command argument. Valid arguments are: "
-                             f"{cp.BUDMAN_VALID_CK_ATTRS}")
-        if not isinstance(value, (str, int, float, bool, type(None))):
-            raise TypeError(f"Command argument '{arg_name}' must be a string, "
-                            f"int, float, or bool, not {type(value)}.")
-        # Set the value in the cmd dictionary.
-        cmd[arg_name] = value
-    #endregion cp_cmd_attr_set() Command Processor method
     # ------------------------------------------------------------------------ +
     #                                                                          +
     #endregion BudManViewModel CommandProcessor_Base Override methods          +
@@ -902,7 +720,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
     #endregion FI_init_cmd() command method
     # ------------------------------------------------------------------------ +
     #region LIST_cmd() command > show dc
-    def LIST_cmd(self, cmd : Dict) -> BUDMAN_RESULT_TYPE:
+    def LIST_cmd(self, cmd : Dict) -> p3m.CMD_RESULT_TYPE:
         """List requested info from Budget Manager Data Context.
 
         Arguments:
@@ -930,7 +748,8 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             cmd_result: p3m.CMD_RESULT_TYPE = p3m.create_CMD_RESULT_OBJECT(
                 cmd_result_status=False,
                 result_content_type=p3m.CMD_STRING_OUTPUT,
-                result_content="No result content."
+                result_content="No result content.",
+                cmd_object=cmd
             )
             if cmd[cp.p3m.CK_CMD_KEY] != cp.CV_LIST_CMD_KEY:
                 # Invalid cmd_key
@@ -941,17 +760,18 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
 
             #region list workbooks
             if cmd[cp.p3m.CK_SUBCMD_NAME] == cp.CV_WORKBOOKS_SUBCMD_NAME:
-                # List the workbooks selected by list command line arguments.
-                # Tree or Table formats are available.
-                selected_bdm_wb_list : List[BDMWorkbook] = None
-                selected_bdm_wb_list = self.process_selected_workbook_input(cmd)
                 bdm_tree : bool = self.cp_cmd_attr_get(cmd, cp.CK_BDM_TREE, False)
                 if bdm_tree:
-                    # If bdm_tree option is True, output the BDM tree.
+                    # list workbooks -t
+                    # If bdm_tree option is True, output the whole BDM tree.
                     # tree = cp.extract_bdm_tree(self.DC)
                     # cmd_result = cp.output_tree_view(tree)
+                    # TODO: clean up to cmd_result etc.
                     cp.output_model_tree(self.DC)
                 else:
+                    # List the workbooks selected by list command line arguments.
+                    selected_bdm_wb_list : List[BDMWorkbook] = None
+                    selected_bdm_wb_list = self.process_selected_workbook_input(cmd)
                     # Collect the wb info for workbooks in the selected_bdm_wb_list.
                     # Construct the output dictionary result
                     cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = p3m.CMD_WORKBOOK_INFO_TABLE
@@ -971,12 +791,15 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
 
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             cmd_result[p3m.CMD_RESULT_STATUS] = True
-            return True, cmd_result
+            return cmd_result
         except Exception as e:
             m = (f"Error executing cmd: {cmd[cp.p3m.CK_CMD_NAME]} {cmd[cp.p3m.CK_SUBCMD_NAME]}: "
                  f"{p3u.exc_err_msg(e)}")
+            cmd_result[p3m.CMD_RESULT_STATUS] = False
+            cmd_result[p3m.CMD_RESULT_CONTENT] = m
+            cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = p3m.CMD_ERROR_STRING_OUTPUT
             logger.error(m)
-            return False, m
+            return cmd_result
     #endregion SHOW_cmd() method
     # ------------------------------------------------------------------------ +
     #region BDM_STORE_save_cmd() command > save bms
@@ -1707,34 +1530,6 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
         """
     #endregion WORKFLOW_reload_cmd() method
     # ------------------------------------------------------------------------ +
-    #region UNKNOWN_cmd() command > wf cat 2
-    def UNKNOWN_cmd(self, cmd : Dict) -> BUDMAN_RESULT_TYPE:
-        """A cmd received that is not found in the current cmd map.
-
-        A CHANGE_cmd command uses the wb_ref arg parameter.
-
-        Arguments:
-            cmd (Dict): A BudManCommand object. 
-
-        Returns:
-            BUDMAN_RESULT_TYPE:Tuple[success : bool, result : Any]: 
-            success: False, Result: message about the cmd object content.
-            
-        Raises:
-            RuntimeError: A description of the
-            root error is contained in the exception message.
-        """
-        try:
-            logger.info(f"Start: ...")
-            func_name = self.UNKNOWN_cmd.__name__
-            result = f"{func_name}(): Received unknown cmd object: {str(cmd)})"
-            logger.warning(result)
-            return False, result
-        except Exception as e:
-            logger.error(p3u.exc_err_msg(e))
-            raise
-    #endregion CHANGE_cmd() method
-    # ------------------------------------------------------------------------ +
     #                                                                          +
     #endregion Command Execution Methods                                       +
     # ======================================================================== +
@@ -1745,16 +1540,13 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
     #region process_workbook_input()
     def process_selected_workbook_input(self, cmd: p3m.CMD_OBJECT_TYPE) -> List[BDMWorkbook]:
         """Process the workbook input from the command, return a list of 
-        BDMWorkbooks.
+        BDMWorkbooks, which may be empty.
 
         Arguments:
             cmd (Dict): A p3m.CMD_OBJECT.
 
         Returns:
             List[BDMWorkbook]: A list of BDMWorkbook objects.
-
-        Raises:
-            RuntimeError: If no workbooks are selected.
         """
         try:
             # Extract common command attributes to select workbooks for task action.
@@ -1770,11 +1562,8 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                     bdm_wb = self.dc_WORKBOOK_by_index(wb_index)
                     selected_bdm_wb_list.append(bdm_wb)
             else:
-                ...
-            if len(selected_bdm_wb_list) == 0:
-                m = f"No action taken. No workbooks selected for processing: {cmd}"
-                logger.warning(m)
-                raise RuntimeError(m)
+                # No workbooks selected by the command parameters.
+                return selected_bdm_wb_list
             for bdm_wb in selected_bdm_wb_list:
                 bdm_wb_abs_path = bdm_wb.abs_path()
                 if bdm_wb_abs_path is None:

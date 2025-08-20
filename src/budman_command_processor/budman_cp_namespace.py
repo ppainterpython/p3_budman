@@ -73,9 +73,9 @@ CV_PARSE_ONLY_SUBCMD_NAME = "parse_only"
 CV_PARSE_ONLY_SUBCMD_KEY = CV_VAL_CMD_KEY + "_" + CV_PARSE_ONLY_SUBCMD_NAME
 
 # Common argument optional flag attribute keys, used in parsers
-CK_PARSE_ONLY = "parse_only"          # --parse_only  -po
-CK_VALIDATE_ONLY = "validate_only"    # --validate_only  -vo
-CK_WHAT_IF = "what_if"                # --what_if  -wi
+CK_PARSE_ONLY = p3m.CK_PARSE_ONLY          # --parse_only  -po
+CK_VALIDATE_ONLY = p3m.CK_VALIDATE_ONLY    # --validate_only  -vo
+CK_WHAT_IF = p3m.CK_WHAT_IF                # --what_if  -wi
 CK_ALL_WBS = "all_wbs"                # --all_wbs  -all
 CK_LOAD_WORKBOOK = "load_workbook"
 CK_FIX_SWITCH = "fix_switch"

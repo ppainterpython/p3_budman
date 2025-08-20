@@ -130,7 +130,9 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
     def cp_initialize_cmd_map(self) -> None:
         """Application-specific: Initialize the cp_cmd_map."""
         try:
-            self.cp_cmd_map = {}
+            self.cp_cmd_map = {
+                CV_P3_UNKNOWN_CMD_KEY: self.UNKNOWN_cmd
+            }
             logger.debug(f"CommandProcessor cmd_map initialized.")
             return self
         except Exception as e:
@@ -139,7 +141,7 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
     #endregion cp_initialize_cmd_map() method
     # ------------------------------------------------------------------------ +
     #region cp_execute_cmd() method
-    def cp_execute_cmd(self, cmd : Dict = None,
+    def cp_execute_cmd(self, cmd : CMD_OBJECT_TYPE = None,
                        raise_error : bool = False) -> CMD_RESULT_TYPE:
         """Execute a command within the command processor.
 
@@ -156,16 +158,16 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
         try:
             st = p3u.start_timer()
             logger.info(f"Start Command: {cmd}")
-            success, result = self.cp_validate_cmd(cmd)
-            if not success: return success, result
+            cmd_result: CMD_RESULT_TYPE = self.cp_validate_cmd(cmd)
+            if not cmd_result[CMD_RESULT_STATUS]: return cmd_result
             # if cp_validate_cmd() is good, continue.
             exec_func: Callable = cmd[CK_CMD_EXEC_FUNC]
             function_name = exec_func.__name__
-            # validate_only: bool = self.cp_cmd_attr_get(cmd, cp.CK_VALIDATE_ONLY)
-            # if validate_only:
-            #     result = f"vo-command: {function_name}({str(cmd)})"
-            #     logger.info(result)
-            #     return True, result
+            validate_only: bool = self.cp_cmd_attr_get(cmd, CK_VALIDATE_ONLY)
+            if validate_only:
+                result = f"vo-command: {function_name}({str(cmd)})"
+                logger.info(result)
+                return True, result
             logger.info(f"Executing command: {function_name}({str(cmd)})")
             # Execute a cmd with its associated exec_func from the cmd_map.
             cmd_result: CMD_RESULT_TYPE = exec_func(cmd)
@@ -180,7 +182,207 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
             return cmd_result
     #endregion cp_execute_cmd() method
     # ------------------------------------------------------------------------ +
+    #region cp_validate_cmd() method
+    def cp_validate_cmd(self, 
+                        cmd : CMD_OBJECT_TYPE = None,
+                        validate_all : bool = False) -> CMD_RESULT_TYPE:
+        """Validate the CMD_OBJECT for cmd_key and parameters.
+
+        Override this method to provide application-specific validation logic.
+        This base implementation checks if the CMD_OBJECT is valid and
+        returns a CMD_RESULT_TYPE indicating the validation result.
+
+        Arguments:
+            cmd (Dict): A candidate Command object to validate.
+            validate_all (bool): If True, validate all attributes in the cmd.
+
+        Returns:
+            CMD_RESULT_TYPE: The result of the validation.
+        """
+        try:
+            if not self.cp_validate_cmd_object(cmd, raise_error=False):
+                return create_CMD_RESULT_ERROR(cmd, "Invalid command object.")
+            # Additional validation logic can be added here.
+            return create_CMD_RESULT_OBJECT(cmd_result_status=True,
+                                            result_content_type="validation",
+                                            result_content="Command is valid.",
+                                            cmd_object=cmd)
+        except Exception as e:
+            return create_CMD_RESULT_ERROR(cmd, e)
+    #endregion cp_validate_cmd() method
+    #region    cp_validate_cmd_object() Command Processor method
+    def cp_validate_cmd_object(self, 
+                               cmd : CMD_OBJECT_TYPE = None,
+                               raise_error:bool=False) -> bool:
+        """Validate Command Processor is initialized and the CMD_OBJECT is valid.
+
+        Validation rules are:
+          1. CommandProcessor is initialized, i.e., self.initialized is True.
+          2. cmd is a CMD_OBJECT_TYPE, not None and not empty.
+          3. cmd contains mandatory CK_CMD_KEY. There may be an 
+             optional CK_SUBCMD_KEY, but it is not required.
+
+        Arguments:
+            cmd (CMD_OBJECT_TYPE): A candidate CMD_OBJECT to validate.
+            raise_error (bool): If True, raise any errors encountered. 
+
+        returns:
+            bool: True if validation rules are satisfied, False otherwise.
+
+        Raise:
+            RuntimeError: If raise_error is True, a RunTimeError is raised 
+            with an error message.
+        """
+        # Primary Concern: Validate the CMD_OBJECT is ready for parameter
+        # validation. See doc string for validation rules.
+        try:
+            pfx = f"{self.__class__.__name__}.{self.cp_validate_cmd_object.__name__}: "
+            logger.debug(f"Before Validating CMD_OBJECT: {str(cmd)}")
+            if not self.initialized:
+                m = f"Command Processor is not initialized."
+                logger.error(m)
+                if raise_error:
+                    raise RuntimeError(m)
+                return False
+            if p3u.is_not_obj_of_type("cmd",cmd,dict,pfx):
+                cmd_type = type(cmd).__name__
+                m = f"Invalid CMD_OBJECT type: '{cmd_type}', no action taken."
+                logger.error(m)
+                if raise_error:
+                    raise RuntimeError(m)
+                return False
+            if not is_CMD_OBJECT(cmd):
+                m = f"No action taken, invalid CMD_OBJECT[{str(cmd)}]."
+                logger.error(m)
+                if raise_error:
+                    raise RuntimeError(m)
+                return False
+            if len(cmd) == 0:
+                m = f"CMD_OBJECT is empty, no action taken."
+                logger.error(m)
+                if raise_error:
+                    raise RuntimeError(m)
+                return False
+            # Examine the CMD_OBJECT for the required cmd values.
+            success : bool = False
+            cmd_exec_func : Callable = None
+            # Check for the current cmd keys.
+            cmd_key:str = cmd.get(CK_CMD_KEY, None)
+            if not p3u.str_notempty(cmd_key):
+                m = f"CMD_OBJECT is missing required key '{CK_CMD_KEY}'."
+                logger.error(m)
+                if raise_error:
+                    raise RuntimeError(m)
+                return False
+            cmd_name:str = cmd.get(CK_CMD_NAME, None)
+            subcmd_name:str = cmd.get(CK_SUBCMD_NAME, None)
+            subcmd_key:str = cmd.get(CK_SUBCMD_KEY, None)
+            # Bind the command execution function, using subcmd_key first,
+            # then cmd_key, then the UNKNOWN_cmd function.
+            if subcmd_key:
+                cmd_exec_func = self.cp_exec_func_binding(subcmd_key, None)
+            if cmd_key and cmd_exec_func is None:
+                cmd_exec_func = self.cp_exec_func_binding(cmd_key, self.UNKNOWN_cmd)
+            # Set the command key CK_CMD_EXEC_FUNC in the CMD_OBJECT.
+            cmd[CK_CMD_EXEC_FUNC] = cmd_exec_func
+            logger.debug(f"Success validating CMD_OBJECT: {str(cmd)}")
+            return True
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion cp_validate_cmd_object() Command Processor method
+    #region    cp_exec_func_binding() Command Processor method
+    def cp_exec_func_binding(self, cmd_key : str, default:Callable) -> Callable:
+        """Get the command function for a given command key.
+
+        This method retrieves the CMD_EXEC_FUNC from the CommandProcessor's
+        command map (cp_cmd_map) using the provided command key. If the command
+        key is not found, and a default function is provided, it returns that
+        function. Otherwise, it returns None.
+
+        Arguments:
+            cmd_key (str): The command key to look up in the command map.
+
+        Returns:
+            Callable: The function associated with the command key, or a 
+            provided default function if the key is not found.
+        """
+        if not p3u.str_notempty(cmd_key):
+            raise ValueError("cmd_key must be a non-empty string.")
+        if self.cp_cmd_map is None:
+            raise ValueError("cp_cmd_map must be initialized.")
+        exec_func : Callable = self.cp_cmd_map.get(cmd_key, None)
+        if exec_func is None:
+            # If no exec_func found, use the provided default function or None.
+            exec_func = default if default else None
+        return exec_func
+    #endregion cp_exec_func_binding() Command Processor method
+    #region    cp_cmd_attr_get() Command Processor method
+    def cp_cmd_attr_get(self, cmd: Dict,
+                       key_name: str, default_value: Any = None) -> Any:
+        """Use cmd attr key_name to get value or return default."""                  
+        if not isinstance(cmd, dict):
+            raise TypeError("cmd must be a dictionary.")    
+        if not isinstance(key_name, str):
+            raise TypeError("arg_name must be a string.")
+        if key_name not in cmd:
+            return default_value
+        value = cmd.get(key_name, default_value)
+        if value is None:
+            return default_value
+        return value
+    #endregion cp_cmd_attr_get() Command Processor method
+    #region    cp_cmd_attr_set() Command Processor method
+    def cp_cmd_attr_set(self, cmd: Dict,
+                       arg_name: str, value: Any) -> None:
+        """Set a command argument value in the cmd dictionary."""
+        if not isinstance(cmd, dict):
+            raise TypeError("cmd must be a dictionary.")
+        if not isinstance(arg_name, str):
+            raise TypeError("arg_name must be a string.")
+        # if arg_name not in cp.BUDMAN_VALID_CK_ATTRS:
+        #     raise ValueError(f"Command argument '{arg_name}' is not a valid "
+        #                      f"BudMan command argument. Valid arguments are: "
+        #                      f"{cp.BUDMAN_VALID_CK_ATTRS}")
+        if not isinstance(value, (str, int, float, bool, type(None))):
+            raise TypeError(f"Command argument '{arg_name}' must be a string, "
+                            f"int, float, or bool, not {type(value)}.")
+        # Set the value in the cmd dictionary.
+        cmd[arg_name] = value
+    #endregion cp_cmd_attr_set() Command Processor method
     #endregion Command_Processor_Base Methods
+    # ------------------------------------------------------------------------ +
+    #region UNKNOWN_cmd() 
+    def UNKNOWN_cmd(self, cmd : Dict) -> CMD_RESULT_TYPE:
+        """A cmd received that is not found in the current cmd map.
+
+        This is an error handling command to fall back too when
+        the CommandProcessor cannot find a valid EXEC_FUNC for a cmd_key in the 
+        cmd_map.
+
+        Arguments:
+            cmd (Dict): A CMD_OBJECT object. 
+
+        Returns:
+            CMD_RESULT_TYPE: 
+            
+        Raises:
+            RuntimeError: A description of the
+            root error is contained in the exception message.
+        """
+        try:
+            logger.info(f"Start: ...")
+            func_name = self.UNKNOWN_cmd.__name__
+            result = f"{func_name}(): Received unknown CMD_OBJECT: {str(cmd)})"
+            logger.warning(result)
+            return create_CMD_RESULT_OBJECT(False, 
+                                           result_content_type=CMD_ERROR_STRING_OUTPUT,
+                                           result_content=result,
+                                           cmd_object=cmd)
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion UNKNOWN_cmd() method
     # ------------------------------------------------------------------------ +
 #endregion CommandProcessor class
 # ---------------------------------------------------------------------------- +
@@ -192,18 +394,18 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
 def create_CMD_OBJECT(
     cmd_name: str = None,
     cmd_key: str = None,
+    cmd_exec_func: Callable = None,
     subcmd_name: str = None,
     subcmd_key: str = None,
-    cmd_exec_func: Callable = None,
     other_attrs: Optional[Dict[str, Any]] = None
 ) -> CMD_OBJECT_TYPE:
     """Create a command object."""
     cmd_obj = {
         CK_CMD_NAME: cmd_name,
         CK_CMD_KEY: cmd_key,
+        CK_CMD_EXEC_FUNC: cmd_exec_func,
         CK_SUBCMD_NAME: subcmd_name,
-        CK_SUBCMD_KEY: subcmd_key,
-        CK_CMD_EXEC_FUNC: cmd_exec_func
+        CK_SUBCMD_KEY: subcmd_key
     }
     if other_attrs:
         # Perform non-destructive merge, adding keys from other_attrs not present
@@ -211,6 +413,15 @@ def create_CMD_OBJECT(
         cmd_obj.update({k: v for k, v in other_attrs.items() if k not in cmd_obj})
     return cmd_obj.copy()
 #endregion create_CMD_OBJECT()
+# ---------------------------------------------------------------------------- +
+#region is_CMD_OBJECT() function
+def is_CMD_OBJECT(cmd_object: Any) -> bool:
+    """Check if the cmd_object parameter is a valid command object."""
+    if (isinstance(cmd_object, dict) and
+        all(k in cmd_object for k in REQUIRED_CMD_OBJECT_KEYS)):
+        return True
+    return False
+#endregion is_CMD_RESULT() function
 # ---------------------------------------------------------------------------- +
 #region validate_cmd_key_with_name() function
 def validate_cmd_key_with_name(cmd_name: str, cmd_key: str) -> bool:
@@ -253,10 +464,9 @@ def create_CMD_RESULT_OBJECT(
 #region is_CMD_RESULT() function
 def is_CMD_RESULT(cmd_result: Any) -> bool:
     """Check if the cmd_result parameter is a valid command result."""
-    if isinstance(cmd_result, dict):
-        return (CMD_RESULT_CONTENT_TYPE in cmd_result and  
-                CMD_RESULT_CONTENT in cmd_result and 
-                CMD_RESULT_STATUS in cmd_result)
+    if (isinstance(cmd_result, dict) and
+        all(k in cmd_result for k in REQUIRED_CMD_RESULT_KEYS)):
+        return True
     return False
 #endregion is_CMD_RESULT() function
 # ---------------------------------------------------------------------------- +

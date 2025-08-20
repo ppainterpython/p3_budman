@@ -48,7 +48,6 @@ class BudManApp(metaclass=BDMSingletonMeta):
         self._view : Optional[object] = None  # type: ignore
         self._view_model : Optional[object] = None  # type: ignore
         self._data_context : Optional[object] = None  # type: ignore
-        self._command_processor : Optional[object] = None  # type: ignore
         self._WF_CATEGORY_MANAGER : Optional[object] = None  # type: ignore
         self._app_name : Optional[str] = None
         self._start_time : float = start_time
@@ -100,17 +99,6 @@ class BudManApp(metaclass=BDMSingletonMeta):
         if not isinstance(data_context, object):
             raise TypeError("data_context must be an object")
         self._data_context = data_context
-
-    @property
-    def CP(self) -> object:
-        """Return the command processor."""
-        return self._command_processor
-    @CP.setter
-    def CP(self, command_processor: object) -> None:
-        """Set the command processor."""
-        if not isinstance(command_processor, object):
-            raise TypeError("command_processor must be an object")
-        self._command_processor = command_processor
 
     @property
     def WF_CATEGORY_MANAGER(self) -> Optional[object]:
@@ -252,19 +240,8 @@ class BudManApp(metaclass=BDMSingletonMeta):
             # So, first setup the app_service, which can work with different
             # VIEW implementations.
             _ = self.budman_app_service_setup(bdms_url, testmode)
-
-            # Next, create the CommandProcessor_Binding (client) object.
-            # TODO: convert BudManCLICommandProcessor_Binding to 
-            # ViewModelCommandProcessor_Binding and have BudManCLIView
-            # subclass that.
-            self.CP = BudManCLICommandProcessor_Binding()
-            # Next, bind the VIEW_MODEL as the concrete CommandProcessor_Base.
-            # self.CP is this views binding to the CommandProcessor_Base. 
-            # self.CP.CP is the function provided by the _Base to execute a 
-            # command. The _Binding is a proxy to the _Base.
-            self.CP.CP = self.view_model.cp_execute_cmd 
-            # Next, create the VIEW with the CommandProcessor.
-            self.view = BudManCLIView(self.CP,self.app_name,self.settings)
+            # Next, create the VIEW with the view_model as CommandProcessor.
+            self.view = BudManCLIView(self.view_model,self.app_name,self.settings)
             # Next, bind the DATA_CONTEXT to the VIEW.
             self.view.DC = self.DC
             # Next, initialize the view.

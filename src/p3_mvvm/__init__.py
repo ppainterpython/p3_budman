@@ -53,13 +53,18 @@ from .mvvm_namespace import (
     # Types
     CMD_OBJECT_TYPE,
     CMD_RESULT_TYPE,
-    # Constants
+    # CMD_OBJECT Constants
     CMD_KEY_SUFFIX,
     CK_CMD_NAME,
     CK_CMD_KEY,
     CK_SUBCMD_NAME,
     CK_SUBCMD_KEY,
     CK_CMD_EXEC_FUNC,
+    # Builtin CMD_OBJECT paramenter constants
+    CK_PARSE_ONLY,
+    CK_VALIDATE_ONLY,
+    CK_WHAT_IF,
+    # CMD_RESULT Constants
     CMD_RESULT_STATUS,
     CMD_RESULT_CONTENT_TYPE,
     CMD_RESULT_CONTENT,
@@ -87,12 +92,18 @@ __all__ = [
     "CMD_OBJECT_TYPE",
     "CMD_RESULT_TYPE",
     # Command Processor Constants
+    #     CMD_OBJECT Constants
     "CMD_KEY_SUFFIX",
     "CK_CMD_NAME",
     "CK_CMD_KEY",
     "CK_SUBCMD_NAME",
     "CK_SUBCMD_KEY",
     "CK_CMD_EXEC_FUNC",
+    #     Builtin CMD_OBJECT paramenter constants
+    "CK_PARSE_ONLY",
+    "CK_VALIDATE_ONLY",
+    "CK_WHAT_IF",
+    #     CMD_RESULT Constants
     "CMD_RESULT_STATUS",
     "CMD_RESULT_CONTENT_TYPE",
     "CMD_RESULT_CONTENT",

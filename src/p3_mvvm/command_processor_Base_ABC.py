@@ -56,7 +56,7 @@ class CommandProcessor_Base(ABC):
         pass
 
     @abstractmethod
-    def cp_execute_cmd(self, cmd : Dict = None, raise_error:bool=False) -> CMD_RESULT_TYPE:
+    def cp_execute_cmd(self, cmd : CMD_OBJECT_TYPE = None, raise_error:bool=False) -> CMD_RESULT_TYPE:
         """Execute a command.
 
         The command processor is a callable object.
@@ -71,14 +71,14 @@ class CommandProcessor_Base(ABC):
         pass
 
     @abstractmethod
-    def cp_validate_cmd(self, cmd : Dict = None,
-                        validate_all : bool = False) -> Any:
+    def cp_validate_cmd(self, cmd : CMD_OBJECT_TYPE = None,
+                        validate_all : bool = False) -> CMD_RESULT_TYPE:
         """Validate a command."""
         pass
 
     @abstractmethod
     def cp_validate_cmd_object(self, 
-                               cmd : Dict = None,
+                               cmd : CMD_OBJECT_TYPE = None,
                                raise_error:bool=False) -> bool:
         """Validate Command Processor is initialized and the cmd object is valid.
 
@@ -118,13 +118,13 @@ class CommandProcessor_Base(ABC):
         pass
 
     @abstractmethod
-    def cp_cmd_attr_get(self, cmd: Dict,
+    def cp_cmd_attr_get(self, cmd: CMD_OBJECT_TYPE,
                     key_name: str, default_value: Any = None) -> Any:
         """Use cmd attr key_name to get value or return default."""
         pass
     
     @abstractmethod
-    def cp_cmd_attr_set(self, cmd: Dict, key_name: str, value: Any) -> None:
+    def cp_cmd_attr_set(self, cmd: CMD_OBJECT_TYPE, key_name: str, value: Any) -> None:
         """Set the cmd attribute key_name to value."""
         pass
 
