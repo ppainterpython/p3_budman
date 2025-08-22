@@ -459,13 +459,12 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
         try:
             # Use the following cmd_map to dispatch the command for execution.
             self.cp_cmd_map = {
-                "init_cmd_fin_inst": self.FI_init_cmd,
                 cp.CV_LIST_CMD_KEY: self.LIST_cmd,
-                "load_cmd_BDM_STORE": self.BDM_STORE_load_cmd,
-                "save_cmd_BDM_STORE": self.BDM_STORE_save_cmd,
-                "show_cmd_DATA_CONTEXT": self.DATA_CONTEXT_show_cmd,
-                "load_cmd_workbooks": self.WORKBOOKS_load_cmd,
-                "save_cmd_workbooks": self.WORKBOOKS_save_cmd,
+                cp.CV_LOAD_BDM_STORE_SUBCMD_KEY: self.BDM_STORE_load_cmd,
+                cp.CV_SAVE_BDM_STORE_SUBCMD_KEY: self.BDM_STORE_save_cmd,
+                cp.CV_SHOW_DATA_CONTEXT_SUBCMD_KEY: self.DATA_CONTEXT_show_cmd,
+                cp.CV_LOAD_WORKBOOKS_SUBCMD_KEY: self.WORKBOOKS_load_cmd,
+                cp.CV_SAVE_WORKBOOKS_SUBCMD_KEY: self.WORKBOOKS_save_cmd,
                 cp.CV_CHANGE_WORKBOOKS_SUBCMD_KEY: self.CHANGE_cmd,
                 cp.CV_CATEGORIZATION_SUBCMD_KEY: self.WORKFLOW_categorization_cmd,
                 cp.CV_WORKFLOW_CMD_KEY: self.WORKFLOW_cmd,
@@ -645,102 +644,18 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
     # ======================================================================== +
     #region    Command Execution Methods                                       +
     # ======================================================================== +
-    #region FI_init_cmd() command > init FI boa
-    def FI_init_cmd(self, cmd : Dict = None) -> Tuple[bool, str]: 
-        """Execute FI_init command for one fi_key or 'all'.
-        
-        This command initializes the Data Context aspects of the View Model to
-        contain the current information for the specified financial
-        institution (FI) which may be 'all' or a specific FI key. When completed 
-        successfully, returns a string representation of the following FI data 
-        for each applicable financial institution:
-        - fi_key: The key for the financial institution.
-        - wf_key: The key for the workflow.
-        - wb_type: The type of workbooks, either input or output.
-        - wb_name: The name of the workbooks within each type.
-
-        Arguments:
-            cmd (Dict): A valid BudMan View Model Command object.
-
-        Returns:
-            Tuple[success : bool, result : Any]: The outcome of the command 
-            execution. If success is True, result contains result of the 
-            command, if False, a description of the error.
-            
-        Raises:
-            RuntimeError: A description of the
-            root error is contained in the exception message.
-        """
-        try:
-            # TODO: prefix of the command, like "init FI boa" 
-            result = "no result"
-            if p3u.is_not_obj_of_type("cmd",cmd,dict):
-                m = f"Invalid cmd object, no action taken."
-                logger.error(m)
-                raise RuntimeError(f"{m}")
-            fi_key = cmd.get(cp.CK_FI_KEY, None)
-            wf_key = cmd.get(cp.CK_WF_KEY, EXAMPLE_BDM_WF_CATEGORIZATION)
-            wf_purpose = cmd.get(cp.CK_WF_PURPOSE, WF_WORKING)
-            wb_type = cmd.get(cp.CK_WB_TYPE, WF_WORKING)
-            wb_name = cmd.get(cp.CK_WB_NAME, None)
-            # TODO: Enable defaults for fi_key, wf_key, wb_type, wb_name in
-            # settings.toml
-            logger.info(f"Start: {str(cmd)}")
-            if not p3u.is_non_empty_str("fi_key",fi_key):
-                m = f"fi_key is None, no action taken."
-                logger.error(m)
-                raise RuntimeError(f"{m}")
-            # Check for 'all'
-            if fi_key == "all":
-                raise NotImplementedError(f"fi_key 'all' not implemented.")
-            # Check if valid fi_key            
-            try:
-                _ = self.dc_FI_KEY_validate(fi_key)
-                # _ = self.budget_domain_model.bdm_FI_KEY_validate(fi_key)
-            except ValueError as e:
-                m = f"ValueError({str(e)})"
-                logger.error(m)
-                raise RuntimeError(f"{m}")
-            # Load the workbooks for the FI,WF specified in the DC.
-            # lwbl = self.DC.bdmwd_FI_WORKBOOKS_load(fi_key, wf_key, wb_type)
-            # Set last values of FI_init_cmd in the DC.
-            self.dc_FI_KEY = fi_key
-            self.dc_WF_KEY = wf_key
-            self.dc_WF_PURPOSE = wf_purpose
-            self.dc_WB_TYPE = wb_type
-            self.dc_WB_NAME = wb_name
-            # Create result
-            lwbl_names = list(self.dc_LOADED_WORKBOOKS.keys())
-            result = f"Loaded {len(lwbl_names)} Workbooks: {str(lwbl_names)}"
-            return True, result
-        except Exception as e:
-            m = p3u.exc_err_msg(e)
-            logger.error(m)
-            return False, m
-    #endregion FI_init_cmd() command method
-    # ------------------------------------------------------------------------ +
     #region LIST_cmd() command > show dc
-    def LIST_cmd(self, cmd : Dict) -> p3m.CMD_RESULT_TYPE:
+    def LIST_cmd(self, cmd : p3m.CMD_OBJECT_TYPE) -> p3m.CMD_RESULT_TYPE:
         """List requested info from Budget Manager Data Context.
 
         Arguments:
-            cmd (Dict): A valid BudMan View Model Command object. 
-    
-        Required cmd object attributes:
-            cmd_name: CV_LIST_CMD_NAME
-            cmd_key: CV_LIST_CMD_KEY 
-        Optional cmd object attributes:
-            subcmd_name: CV_LIST_SUBCMD_name
+            cmd (CMD_OBJECT_TYPE): 
+                A validated CommandProcessor CMD_OBJECT_TYPE. Contains
+                the command attributes and parameters to execute.
 
         Returns:
-            BUDMAN_RESULT_TYPE: Tuple[success : bool, result : CMD_RESULT]: 
-            The outcome of the command execution. If success is True, 
-            result contains result of the CMD_RESULT object, 
-            if success is False, a description of the error.
-
-        Raises:
-            RuntimeError: A description of the
-            root error is contained in the exception message.
+            p3m.CMD_RESULT_TYPE:
+            The outcome of the command execution. 
         """
         try:
             st = p3u.start_timer()
@@ -751,7 +666,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                 result_content="No result content.",
                 cmd_object=cmd
             )
-            if cmd[cp.p3m.CK_CMD_KEY] != cp.CV_LIST_CMD_KEY:
+            if cmd[p3m.CK_CMD_KEY] != cp.CV_LIST_CMD_KEY:
                 # Invalid cmd_key
                 cmd_result[p3m.CMD_RESULT_CONTENT] = f"LIST_cmd() Invalid cmd_key: {cmd[cp.p3m.CK_CMD_KEY]}"
                 logger.error(cmd_result[p3m.CMD_RESULT_CONTENT])
@@ -759,7 +674,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             # Dispatch based on the subcmd_key and/or subcmd_name
 
             #region list workbooks
-            if cmd[cp.p3m.CK_SUBCMD_NAME] == cp.CV_WORKBOOKS_SUBCMD_NAME:
+            if cmd[p3m.CK_SUBCMD_NAME] == cp.CV_WORKBOOKS_SUBCMD_NAME:
                 bdm_tree : bool = self.cp_cmd_attr_get(cmd, cp.CK_BDM_TREE, False)
                 if bdm_tree:
                     # list workbooks -t
@@ -1167,7 +1082,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             success: bool = False
             result: Any = None
             subcmd_name = cmd[cp.p3m.CK_SUBCMD_NAME]
-            if subcmd_name == cp.CV_LOG_SUBCMD:
+            if subcmd_name == cp.CV_LOG_SUBCMD_NAME:
                 # Show the current log level.
                 return True, "App Log cmd."
             elif subcmd_name == cp.CV_RELOAD_SUBCMD_NAME:
@@ -1206,7 +1121,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                     m = f"Error reloading target: {reload_target}: {p3u.exc_err_msg(e)}"
                     logger.error(m)
                     return False, m
-            elif subcmd_name == cp.CV_DELETE_SUBCMD:
+            elif subcmd_name == cp.CV_DELETE_SUBCMD_NAME:
                 try:
                     delete_target = self.cp_cmd_attr_get(cmd, cp.CK_DELETE_TARGET, -1)
                     if self.dc_WB_INDEX_validate(delete_target):
@@ -1323,35 +1238,30 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
     #endregion WORKFLOW_categorization_cmd() method
     # ------------------------------------------------------------------------ +
     #region WORKFLOW_cmd() command > wf cat 2
-    def WORKFLOW_cmd(self, cmd : Dict) -> BUDMAN_RESULT_TYPE:
-        """Execute a workflow task subcmd.
+    def WORKFLOW_cmd(self, cmd : p3m.CMD_OBJECT_TYPE) -> p3m.CMD_RESULT_TYPE:
+        """Execute a workflow task.
 
         Arguments:
-            cmd (Dict): A valid BudMan View Model Command object. 
-    
-        Required cmd object attributes:
-            cmd_key: 'workflow_cmd' 
-        Optional cmd object attributes:
-            cmd_name: CV_WORKFLOW_CMD
-            Valid subcommands:
-                subcmd_key: CV_LIST_SUBCMD_KEY
-                subcmd_name: CV_LIST_SUBCMD_NAME
+            cmd (CMD_OBJECT_TYPE): 
+                A validated CommandProcessor CMD_OBJECT_TYPE. Contains
+                the command attributes and parameters to execute.
 
         Returns:
-            Tuple[success : bool, result : CMD_RESULT]: The outcome of the 
-            command execution. If success is True, result contains a CMD_RESULT
-            object, if False, a description of the error.
-            
-        Raises:
-            RuntimeError: A description of the
-            root error is contained in the exception message.
+            p3m.CMD_RESULT_TYPE:
+                The outcome of the command execution. 
         """
         try:
             st = p3u.start_timer()
             logger.debug(f"Start: ...")
-            success, result = WORKFLOW_TASK_process(cmd, self.DC)
+            cmd_result: p3m.CMD_RESULT_TYPE = p3m.create_CMD_RESULT_OBJECT(
+                cmd_result_status=False,
+                result_content_type=p3m.CMD_STRING_OUTPUT,
+                result_content="No result content.",
+                cmd_object=cmd
+            )
+            cmd_result = WORKFLOW_TASK_process(cmd, self.DC)
             logger.info(f"Complete: {p3u.stop_timer(st)}")
-            return success, result
+            return cmd_result
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise

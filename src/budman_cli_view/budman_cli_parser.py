@@ -62,16 +62,21 @@ class BudManCLIParser():
             parser.prog = app_name
             title = self.app_cmd_parser_setup.__doc__
             subparsers = parser.add_subparsers(title=title) #, dest="app_cmd")
-            parser.set_defaults(cmd_key=cp.CV_APP_CMD_KEY,
-                                cmd_name=cp.CV_APP_CMD_NAME)
+            app_cmd_defaults = {
+                p3m.CK_CMD_KEY: cp.CV_APP_CMD_KEY,
+                p3m.CK_CMD_NAME: cp.CV_APP_CMD_NAME
+            }
+            parser.set_defaults(**app_cmd_defaults)
 
             # app exit subcommand
             exit_parser = subparsers.add_parser(
                 cp.CV_EXIT_SUBCMD_NAME,
                 aliases=["quit"],
                 help="Exit the application.")
-            exit_parser.set_defaults(subcmd_name=cp.CV_EXIT_SUBCMD_NAME,
-                                     subcmd_key=cp.CV_EXIT_SUBCMD_KEY)
+            exit_parser_defaults = {
+                p3m.CK_SUBCMD_NAME: cp.CV_EXIT_SUBCMD_NAME,
+                p3m.CK_SUBCMD_KEY: cp.CV_EXIT_SUBCMD_KEY}
+            exit_parser.set_defaults(**exit_parser_defaults)
             exit_parser.add_argument(
                 f"--{cp.CK_NO_SAVE}",
                 action="store_true",
@@ -79,27 +84,30 @@ class BudManCLIParser():
             self.add_common_args(exit_parser)
 
             # app delete subcommand
-            exit_parser = subparsers.add_parser(
-                "delete",
+            delete_parser = subparsers.add_parser(
+                p3m.CK_SUBCMD_NAM,
                 aliases=["del"],
                 help="Delete a module.")
-            exit_parser.set_defaults(subcmd_name="delete",
-                                     subcmd_key="app_cmd_delete")
-            exit_parser.add_argument(
+            delete_parser_defaults = {
+                p3m.CK_SUBCMD_NAME: cp.CV_DELETE_SUBCMD_NAME,
+                p3m.CK_SUBCMD_KEY: cp.CV_DELETE_SUBCMD_KEY}
+            delete_parser.set_defaults(**delete_parser_defaults)
+            delete_parser.add_argument(
                 "delete_target", nargs="?",
                 type=int, 
                 default= -1,
                 help="wb_index to delete.")
-            self.add_common_args(exit_parser)
+            self.add_common_args(delete_parser)
 
             # app reload subcommand
             reload_parser = subparsers.add_parser(
                 cp.CV_RELOAD_SUBCMD_NAME,
                 aliases=["r"], 
                 help="Reload objects like modules and data.")
-            reload_parser.set_defaults(
-                subcmd_name=cp.CV_RELOAD_SUBCMD_NAME,
-                subcmd_key=cp.CV_RELOAD_SUBCMD_KEY)
+            reload_parser_defaults = {
+                p3m.CK_SUBCMD_NAME: cp.CV_RELOAD_SUBCMD_NAME,
+                p3m.CK_SUBCMD_KEY: cp.CV_RELOAD_SUBCMD_KEY}
+            reload_parser.set_defaults(**reload_parser_defaults)
             reload_parser.add_argument(
                 cp.CK_RELOAD_TARGET, 
                 nargs="?",
@@ -112,11 +120,13 @@ class BudManCLIParser():
 
             # app log [handler-name] [--list] [--level [level-value]] [--rollover]
             log_subcmd_parser = subparsers.add_parser(
-                "log", 
+                cp.CV_LOG_SUBCMD_NAME, 
                 # aliases=["log"], 
                 help="Workbook reference wb_name, wb_index, or 'all'.")
-            log_subcmd_parser.set_defaults(subcmd_name="log",
-                                           subcmd_key="app_cmd_log")
+            log_subcmd_parser_defaults = {
+                p3m.CK_SUBCMD_NAME: cp.CV_LOG_SUBCMD_NAME,
+                p3m.CK_SUBCMD_KEY: cp.CV_LOG_SUBCMD_KEY}
+            log_subcmd_parser.set_defaults(**log_subcmd_parser_defaults)
             log_subcmd_parser.add_argument(
                 "handler_name", nargs="?", 
                 default = None,
@@ -247,7 +257,7 @@ class BudManCLIParser():
             self.add_common_args(bdm_store_subcmd_parser)
 
             # wb_subcmd_parser subcmd parser
-            # list workbooks [wb_list | -all] [-t]
+            # list workbooks  [-t] [wb_list | -all]
             wb_subcmd_parser  = subparsers.add_parser(
                 cp.CV_WORKBOOKS_SUBCMD_NAME,
                 aliases=["wb", "WB"], 
@@ -439,6 +449,11 @@ class BudManCLIParser():
             d += "available workbooks. Each task is associated with a "
             d += "subcommand used to present the arguments relevant for the task."
             subparsers = parser.add_subparsers()
+            workflow_cmd_defaults = {
+                p3m.CK_CMD_KEY: cp.CV_WORKFLOW_CMD_KEY,   # new way
+                p3m.CK_CMD_NAME: cp.CV_WORKFLOW_CMD_NAME,
+            }
+            parser.set_defaults(**workflow_cmd_defaults)
             
             #region workflow set subcommand
             set_parser = self.add_set_subparser(subparsers)
@@ -453,11 +468,10 @@ class BudManCLIParser():
                 cp.CV_CATEGORIZATION_SUBCMD_NAME,
                 aliases=["cat", "CAT", "c"], 
                 help="Apply Categorization workflow.")
-            categorization_parser.set_defaults(
-                cmd_key=cp.CV_WORKFLOW_CMD_KEY,   # new way
-                cmd_name=cp.CV_WORKFLOW_CMD_NAME, 
-                subcmd_name=cp.CV_CATEGORIZATION_SUBCMD_NAME,
-                subcmd_key=cp.CV_CATEGORIZATION_SUBCMD_KEY)
+            categorization_parser_defaults = {
+                p3m.CK_SUBCMD_NAME: cp.CV_CATEGORIZATION_SUBCMD_NAME,
+                p3m.CK_SUBCMD_KEY: cp.CV_CATEGORIZATION_SUBCMD_KEY}
+            categorization_parser.set_defaults(**categorization_parser_defaults)
             self.add_wb_list_argument(categorization_parser)
             categorization_parser.add_argument(
                 f"--{cp.CK_LOAD_WORKBOOK}","-l", "-load", 
@@ -477,14 +491,13 @@ class BudManCLIParser():
             
             #region Workflow 'check' subcommand
             check_parser = subparsers.add_parser(
-                "check",
+                cp.CV_CHECK_SUBCMD_NAME,
                 aliases=["ch"], 
                 help="Check some aspect of the workflow data or processing.")
-            check_parser.set_defaults(
-                cmd_key=cp.CV_WORKFLOW_CMD_KEY,   # new way
-                cmd_name=cp.CV_WORKFLOW_CMD_NAME, 
-                subcmd_name=cp.CV_CHECK_SUBCMD_NAME,
-                subcmd_key=cp.CV_CHECK_SUBCMD_KEY)
+            check_parser_defaults = {
+                p3m.CK_SUBCMD_NAME: cp.CV_CHECK_SUBCMD_NAME,
+                p3m.CK_SUBCMD_KEY: cp.CV_CHECK_SUBCMD_KEY}
+            check_parser.set_defaults(**check_parser_defaults)
             self.add_wb_list_argument(check_parser)
             self.add_load_workbook_argument(check_parser)
             self.add_fix_argument(check_parser)
@@ -497,14 +510,13 @@ class BudManCLIParser():
 
             #region Workflow task sub-command: task
             task_parser = subparsers.add_parser(
-                "task",
+                cp.CV_TASK_SUBCMD_NAME,
                 aliases=["t"], 
                 help="Task: Perform a specific workflow task on workbooks.")
-            task_parser.set_defaults(
-                cmd_key="workflow_cmd",   # new way
-                cmd_name="workflow", 
-                subcmd_name="task",
-                subcmd_key="workflow_cmd_task")
+            task_parser_defaults = {
+                p3m.CK_SUBCMD_NAME: cp.CV_TASK_SUBCMD_NAME,
+                p3m.CK_SUBCMD_KEY: cp.CV_TASK_SUBCMD_KEY}
+            task_parser.set_defaults(**task_parser_defaults)
             task_name_choices = cp.VALID_TASK_NAMES
             task_parser.add_argument(
                 cp.CK_TASK_NAME, nargs="?",

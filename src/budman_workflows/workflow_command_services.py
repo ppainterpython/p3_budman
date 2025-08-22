@@ -14,7 +14,7 @@ from treelib import Tree
 from datetime import datetime as dt
 
 # third-party modules and packages
-import p3_utils as p3u, pyjson5, p3logging as p3l
+import p3_utils as p3u, pyjson5, p3logging as p3l, p3_mvvm as p3m
 from openpyxl import Workbook, load_workbook
 
 # local modules and packages
@@ -35,16 +35,19 @@ logger = logging.getLogger(__name__)
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
 #region WORKFLOW_TASK_process() function
-def WORKFLOW_TASK_process(cmd: Dict[str, Any], 
-                       bdm_DC: BudManAppDataContext_Base) -> bdm.BUDMAN_RESULT_TYPE:
+def WORKFLOW_TASK_process(cmd: p3m.CMD_OBJECT_TYPE, 
+                       bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
     """Process workflow tasks.
 
-    This function processes various worklow tasks.
+    This function processes various worklow tasks as requested in the validated
+    CMD_OBJECT.
 
     Args:
-        cmd (Dict[str, Any]): A valid BudMan View Model Command object.
-        bdm_DC (BudManAppDataContext_Base): The data context for the 
-            BudMan application.
+        cmd (CMD_OBJECT_TYPE): 
+            A validated CommandProcessor CMD_OBJECT_TYPE. Contains
+            the command attributes and parameters to execute.
+        bdm_DC (BudManAppDataContext_Base): 
+            The data context for the BudMan application.
     """
     try:
         # Assuming the cmd parameters have been validated before reaching this point.
@@ -104,48 +107,63 @@ def WORKFLOW_TASK_set_value(cmd: Dict[str, Any],
 # ---------------------------------------------------------------------------- +
 #region WORKFLOW_TASK_list_folder_tree() function
 def WORKFLOW_TASK_list_folder_tree(cmd: Dict[str, Any],
-                      bdm_DC: BudManAppDataContext_Base) -> bdm.BUDMAN_RESULT_TYPE:
+                      bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
     """List all files from an indicated workflow folder under current DC FI_KEY.
 
     Args:
-        cmd (Dict[str, Any]): A valid BudMan View Model Command object.
-        bdm_DC (BudManAppDataContext_Base): The data context for the 
-            BudMan application.
-
+        cmd (CMD_OBJECT_TYPE): 
+            A validated CommandProcessor CMD_OBJECT_TYPE. Contains
+            the command attributes and parameters to execute.
+        bdm_DC (BudManAppDataContext_Base): 
+            The data context for the BudMan application.
         cmd should contain:
             - cp.CK_CMDLINE_WF_KEY: The wf_key of interest.
             - cp.CK_CMDLINE_WF_PURPOSE: The wf_purpose of interest.
 
-    Returns:
-        BUDMAN_RESULT_TYPE: Tuple[bool, CMD_RESULT]:
+        Returns:
+            p3m.CMD_RESULT_TYPE:
+                The outcome of the command execution. 
     """
     try:
+        cmd_result: p3m.CMD_RESULT_TYPE = p3m.create_CMD_RESULT_OBJECT(
+            cmd_result_status=False,
+            result_content_type=p3m.CMD_STRING_OUTPUT,
+            result_content="No result content.",
+            cmd_object=cmd
+        )
         wf_key: str = cmd.get(cp.CK_CMDLINE_WF_KEY, None)
         if not wf_key:
             # No wf_key in cmdline, try DC
             wf_key = bdm_DC.dc_WF_KEY
             if not wf_key:
                 # No wf_key to work with
-                m = "No wf_key from cmd args or DC."
-                logger.error(m)
-                return False, m
+                cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = p3m.CMD_ERROR_STRING_OUTPUT
+                cmd_result[p3m.CMD_RESULT_CONTENT] = "No wf_key from cmd args or DC."
+                logger.error(cmd_result[p3m.CMD_RESULT_CONTENT])
+                return cmd_result
         wf_purpose: str = cmd.get(cp.CK_CMDLINE_WF_PURPOSE, None)
         if not wf_purpose:
             # No wf_purpose in cmdline, try DC
             wf_purpose = bdm_DC.dc_WF_PURPOSE
             if not wf_purpose:
                 # No wf_purpose to work with
-                m = "No wf_purpose from cmd args or DC."
-                logger.error(m)
-                return False, m
+                cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = p3m.CMD_ERROR_STRING_OUTPUT
+                cmd_result[p3m.CMD_RESULT_CONTENT] = "No wf_purpose from cmd args or DC."
+                logger.error(cmd_result[p3m.CMD_RESULT_CONTENT])
+                return cmd_result
         fi_key: str = bdm_DC.dc_FI_KEY
         folder_tree: Tree = WORKFLOW_get_folder_tree(fi_key, wf_key, wf_purpose, bdm_DC)
         if not folder_tree:
-            m = f"No wf_folder found for FI_KEY: '{fi_key}', WF_KEY: '{wf_key}', WF_PURPOSE: '{wf_purpose}'"
-            logger.error(m)
-            return False, m
+            cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = p3m.CMD_ERROR_STRING_OUTPUT
+            cmd_result[p3m.CMD_RESULT_CONTENT] = (
+                f"No wf_folder found for FI_KEY: "
+                f"'{fi_key}', WF_KEY: '{wf_key}', WF_PURPOSE: '{wf_purpose}'"
+            )
+            logger.error(cmd_result[p3m.CMD_RESULT_CONTENT])
+            return cmd_result
         msg = f"Workflow Folder Tree for WORKFLOW('{wf_key}') "
         msg += f"PURPOSE('{wf_purpose}')"
+        # TODO: Convert return to cmd_result
         return cp.output_tree_view(msg, folder_tree)
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
