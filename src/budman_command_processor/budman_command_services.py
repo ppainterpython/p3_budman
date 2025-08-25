@@ -1,6 +1,26 @@
 # ---------------------------------------------------------------------------- +
 #region budman_command_services.py module
 """ budman_command_services.py implements functions for BudMan app commands.
+
+    The budman_command_processor package provides modules with functions
+    to execute validated commands within the BudMan application. In general,
+    a CMD_OBJECT is dispatched to the appropriate command handler for execution.
+    A handler will decompose a CMD_OBJECT into a series of CMD tasks to be
+    executed.
+
+    In general, services should return either data objects or command result 
+    objects. Leave it to the caller, such as a View, or ViewMModel to handle 
+    additional services, such as a pipeline, or to perform output functions.
+
+    A key aspect of the BudMan application patterns is the treatement of 
+    workbooks versus files. Workbooks returned in lists or tree objects are
+    in the Budget Domain Model (BDM) abstraction, with the container structure
+    being bdm_folder, bdm_FI_FOLDER, and wf_folders bases on wf_key and 
+    wf_purpose. CMDs associated with workbooks use the "workbooks" parameter.
+
+    Some CMDs are aimed at the files in the Budget Storage Model (BSM). Files
+    returned in lists or tree objects are based on the configured storage model,
+    but are the usual hierarchy of folders and files.
 """
 #endregion budman_command_services.py module
 # ---------------------------------------------------------------------------- +
@@ -36,6 +56,53 @@ logger = logging.getLogger(__name__)
 console = Console(force_terminal=True, width=bdm.BUDMAN_WIDTH, highlight=True,
                   soft_wrap=False)
 #endregion Globals and Constants
+# ---------------------------------------------------------------------------- +
+#region CMD_TASK_process() function
+def CMD_TASK_process(cmd: p3m.CMD_OBJECT_TYPE,
+                     bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
+    """Process a CMD_TASK command.
+
+    Args:
+        cmd (CMD_OBJECT_TYPE): The command object to process.
+        bdm_DC (BudManAppDataContext_Base): The data context for the command.
+
+    Returns:
+        CMD_RESULT_TYPE: The result of the command processing.
+    """
+    try:
+        # Assuming the CMD_OBJECT has been validated before reaching this point.
+        cmd_result: p3m.CMD_RESULT_TYPE = p3m.create_CMD_RESULT_OBJECT(
+            cmd_result_status=False,
+            result_content_type=p3m.CMD_STRING_OUTPUT,
+            result_content="No result content.",
+            cmd_object=cmd
+        )
+        # Process the CMD_OBJECT based on its cmd_key and subcmd_key.
+        if cmd[p3m.CK_CMD_KEY] == cp.CV_LIST_CMD_KEY:
+            if cmd[p3m.CK_SUBCMD_KEY] == cp.CV_LIST_WORKBOOKS_SUBCMD_KEY:
+                bdm_tree: bool = cmd.get(cp.CK_BDM_TREE, False)
+                if bdm_tree:
+                    result_tree: RichTree = CMD_TASK_get_model_tree(bdm_DC)
+                    if result_tree is None:
+                        # Failed to construct the model_tree for workbooks
+                        cmd_result[p3m.CMD_RESULT_CONTENT] = "Model workbooks tree not constructed."
+                        cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = p3m.CMD_ERROR_STRING_OUTPUT
+                        logger.error(cmd_result[p3m.CMD_RESULT_CONTENT])
+                        return cmd_result
+                    # Success for model_tree
+                    cmd_result[p3m.CMD_RESULT_STATUS] = True
+                    cmd_result[p3m.CMD_RESULT_CONTENT] = result_tree
+                    cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = p3m.CMD_WORKBOOK_TREE_OBJECT
+                    return cmd_result
+                else:
+                    ...
+        else:
+            ...
+        return cmd_result
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion CMD_TASK_process() function
 # ---------------------------------------------------------------------------- +
 #region extract_bdm_tree() function
 def extract_bdm_tree(bdm_DC: BudManAppDataContext_Base) -> Tree:
@@ -101,9 +168,9 @@ def extract_bdm_tree(bdm_DC: BudManAppDataContext_Base) -> Tree:
         raise
 #endregion extract_bdm_tree() function
 # ---------------------------------------------------------------------------- +
-#region output_model_tree() methond
-def output_model_tree(bdm_DC: BudManAppDataContext_Base) -> None:
-    """Output a rich tree for the model to the console."""
+#region CMD_TASK_get_model_tree() methond
+def CMD_TASK_get_model_tree(bdm_DC: BudManAppDataContext_Base) -> RichTree:
+    """Return a RichTree for the BDM workbooks in bdm_DC."""
     try:
         st = p3u.start_timer()
         logger.debug(f"Start.")
@@ -112,8 +179,7 @@ def output_model_tree(bdm_DC: BudManAppDataContext_Base) -> None:
         model:BudgetDomainModel = bdm_DC.model
         now_str = dt.now().strftime("%Y-%m-%d %I:%M:%S %p")
         if not model:
-            console.print(f"[red]Error:[/red] No model to display.")
-            return
+            return None
         settings = bdms.BudManSettings()
         p3u.is_not_obj_of_type("settings", settings, bdms.BudManSettings, raise_error=True)
         bdm_store_full_filename = (settings[bdms.BDM_STORE_FILENAME] +
@@ -171,14 +237,12 @@ def output_model_tree(bdm_DC: BudManAppDataContext_Base) -> None:
                                 f"[bold green]:page_facing_up: '{wb_name}' (wb_name)",
                             )
         logger.debug(f"Complete.")
-        print(model_tree)
-        return
+        return model_tree
     except Exception as e:
         m = p3u.exc_err_msg(e)
         logger.error(m)
-        console.print(f"[red]Error:[/red] {m}")
-        return
-#endregion output_model_tree
+        return None
+#endregion CMD_TASK_get_model_tree
 # ---------------------------------------------------------------------------- +    
 #region workbook_names() function
 def workbook_names(wdc: bdm.WORKBOOK_DATA_COLLECTION_TYPE, wf_key: str, wf_purpose: str) -> List[str]:
@@ -204,26 +268,4 @@ def workbook_names(wdc: bdm.WORKBOOK_DATA_COLLECTION_TYPE, wf_key: str, wf_purpo
         logger.error(m)
         return []
 #endregion workbook_names() function
-# ---------------------------------------------------------------------------- +
-#region output_tree_view() function
-def output_tree_view(tree_view:Tree=None) -> p3m.CMD_RESULT_TYPE:
-    """Create p3_mvvm.CMD_RESULT_TYPE with the content of the tree view."""
-    try:
-        # Format the tree for output
-        original_stdout = sys.stdout  # Save the original stdout
-        buffer = io.StringIO()
-        sys.stdout = buffer  # Redirect stdout to capture tree output
-        tree_view.show()
-        sys.stdout = original_stdout  # Reset stdout
-        cmd_result = p3m.create_CMD_RESULT_OBJECT(
-            cmd_result_status=True,
-            result_content_type=bdm.CLIVIEW_WORKBOOK_TREE_VIEW,
-            result_content=buffer.getvalue()
-        )
-        return cmd_result
-    except Exception as e:
-        m = p3u.exc_err_msg(e)
-        logger.error(m)
-        return m
-#endregion output_tree_view() function
 # ---------------------------------------------------------------------------- +

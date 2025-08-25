@@ -21,7 +21,7 @@ from budman_settings import *
 import budman_namespace as bdm
 from budman_namespace import BDMSingletonMeta
 import budman_command_processor.budman_cp_namespace as cp
-from budman_view_model import (BudManViewModel, BudManCLICommandProcessor_Binding)
+from budman_view_model import BudManViewModel
 from budman_cli_view import BudManCLIView
 from budget_domain_model import (BudgetDomainModel)
 from budman_data_context import BDMDataContext

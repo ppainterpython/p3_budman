@@ -95,10 +95,12 @@ REQUIRED_CMD_RESULT_KEYS = [
     CMD_OBJECT_VALUE
 ]
 # CMD_RESULT_CONTENT_TYPE values
+# CMD_TREE_OBJECT is a treeblib.Tree object.
 CMD_STRING_OUTPUT = "string_output"
 CMD_JSON_OUTPUT = "json_output"
+CMD_TREE_OBJECT = "tree_object"
 CMD_WORKBOOK_INFO_TABLE = "workbook_info_table_output"
-CMD_WORKBOOK_TREE_VIEW = "workbook_tree_view_output"
-CMD_FILE_TREE_VIEW = "file_tree_view_output"
+CMD_WORKBOOK_TREE_OBJECT = "workbook_tree_object"
+CMD_FILE_TREE_OBJECT = "file_tree_object"
 CMD_ERROR_STRING_OUTPUT = "error_string_output"
 #endregion Types and Constants

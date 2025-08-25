@@ -71,9 +71,10 @@ from .mvvm_namespace import (
     CMD_OBJECT_VALUE,
     CMD_STRING_OUTPUT,
     CMD_JSON_OUTPUT,
+    CMD_TREE_OBJECT,
     CMD_WORKBOOK_INFO_TABLE,
-    CMD_WORKBOOK_TREE_VIEW,
-    CMD_FILE_TREE_VIEW,
+    CMD_WORKBOOK_TREE_OBJECT,
+    CMD_FILE_TREE_OBJECT,
     CMD_ERROR_STRING_OUTPUT
 )
 # target for 'from budman_app import *'
@@ -110,9 +111,10 @@ __all__ = [
     "create_CMD_OBJECT",
     "CMD_STRING_OUTPUT",
     "CMD_JSON_OUTPUT",
+    "CMD_TREE_OBJECT",
     "CMD_WORKBOOK_INFO_TABLE",
-    "CMD_WORKBOOK_TREE_VIEW",
-    "CMD_FILE_TREE_VIEW",
+    "CMD_WORKBOOK_TREE_OBJECT",
+    "CMD_FILE_TREE_OBJECT",
     "CMD_ERROR_STRING_OUTPUT",
     # Command Processor Functions
     "create_CMD_OBJECT",

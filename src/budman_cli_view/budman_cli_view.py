@@ -531,12 +531,11 @@ class BudManCLIView(cmd2.Cmd, BudManAppDataContext_Binding,
                 return
             # Submit the command to the command processor.
             cmd_result: p3m.CMD_RESULT_TYPE  = self.cp_execute_cmd(cmd)
-            # Render the result.
-            if cmd_result[p3m.CMD_RESULT_STATUS]:
-                cli_view_cmd_output(cmd, cmd_result[p3m.CMD_RESULT_DATA])
-            else:
-                console.print(f"[red]Error:[/red] {cmd_result[p3m.CMD_RESULT_ERROR]}")
+            # Output the result.
+            cli_view_cmd_output(cmd, cmd_result)
         except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
             self.pexcept(e)
     #endregion do_workflow command
     # ------------------------------------------------------------------------ +

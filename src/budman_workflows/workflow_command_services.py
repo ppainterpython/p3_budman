@@ -2,6 +2,10 @@
 #region workflow_command_services.py module
 """ workflow_command_services.py implements functions for BudMan app
 workflow-related commands.
+
+In general, services should return either data objects or command result objects.
+Leave it to the caller, such as a View, or ViewMModel to handle additional
+services, such as a pipeline, or to perform output functions.
 """
 #endregion workflow_command_services.py module
 # ---------------------------------------------------------------------------- +
@@ -63,9 +67,14 @@ def WORKFLOW_TASK_process(cmd: p3m.CMD_OBJECT_TYPE,
             recon: bool = cmd.get(cp.CK_RECONCILE, False)
             return WORKFLOW_TASK_sync_wdc(recon, bdm_DC)
         else:
-            m = f"Unknown workflow task: {cmd[cp.p3m.CK_SUBCMD_KEY]}"
-            logger.error(m)
-            return False, m
+            cmd_result: p3m.CMD_RESULT_TYPE = p3m.create_CMD_RESULT_OBJECT(
+                cmd_result_status=False,
+                result_content_type=p3m.CMD_ERROR_STRING_OUTPUT,
+                result_content=f"Unknown workflow task: {cmd[cp.p3m.CK_SUBCMD_KEY]}",
+                cmd_object=cmd
+            )
+            logger.error(cmd_result[p3m.CMD_RESULT_CONTENT])
+            return cmd_result
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
@@ -106,7 +115,7 @@ def WORKFLOW_TASK_set_value(cmd: Dict[str, Any],
 #endregion WORKFLOW_TASK_set_value() function
 # ---------------------------------------------------------------------------- +
 #region WORKFLOW_TASK_list_folder_tree() function
-def WORKFLOW_TASK_list_folder_tree(cmd: Dict[str, Any],
+def WORKFLOW_TASK_list_folder_tree(cmd: p3m.CMD_OBJECT_TYPE,
                       bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
     """List all files from an indicated workflow folder under current DC FI_KEY.
 
@@ -125,6 +134,8 @@ def WORKFLOW_TASK_list_folder_tree(cmd: Dict[str, Any],
                 The outcome of the command execution. 
     """
     try:
+        # Assume cmd is valid.
+        # Create a CMD_RESULT object for return.
         cmd_result: p3m.CMD_RESULT_TYPE = p3m.create_CMD_RESULT_OBJECT(
             cmd_result_status=False,
             result_content_type=p3m.CMD_STRING_OUTPUT,
@@ -161,10 +172,12 @@ def WORKFLOW_TASK_list_folder_tree(cmd: Dict[str, Any],
             )
             logger.error(cmd_result[p3m.CMD_RESULT_CONTENT])
             return cmd_result
-        msg = f"Workflow Folder Tree for WORKFLOW('{wf_key}') "
-        msg += f"PURPOSE('{wf_purpose}')"
-        # TODO: Convert return to cmd_result
-        return cp.output_tree_view(msg, folder_tree)
+        cmd_result[p3m.CMD_RESULT_STATUS] = True
+        cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = p3m.CMD_FILE_TREE_OBJECT
+        cmd_result[p3m.CMD_RESULT_CONTENT] = folder_tree
+        # msg = f"Workflow Folder Tree for WORKFLOW('{wf_key}') "
+        # msg += f"PURPOSE('{wf_purpose}')"
+        return cmd_result
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise

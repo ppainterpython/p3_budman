@@ -85,7 +85,7 @@ class BudManCLIParser():
 
             # app delete subcommand
             delete_parser = subparsers.add_parser(
-                p3m.CK_SUBCMD_NAM,
+                p3m.CK_SUBCMD_NAME,
                 aliases=["del"],
                 help="Delete a module.")
             delete_parser_defaults = {

@@ -11,10 +11,13 @@ __description__ = "Command Processor pattern implementation for BudMan."
 __license__ = "MIT"
 
 from .budman_cp_namespace import *
-from .budman_command_services import *
+from .budman_command_services import (
+    CMD_TASK_process
+)
 
 # target for 'from budman_app import *'
 __all__ = [
-    "BudManApp"
+    "BudManApp",
+    "CMD_TASK_process"
 ]
 

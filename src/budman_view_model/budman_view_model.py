@@ -644,7 +644,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
     # ======================================================================== +
     #region    Command Execution Methods                                       +
     # ======================================================================== +
-    #region LIST_cmd() command > show dc
+    #region LIST_cmd() execution method
     def LIST_cmd(self, cmd : p3m.CMD_OBJECT_TYPE) -> p3m.CMD_RESULT_TYPE:
         """List requested info from Budget Manager Data Context.
 
@@ -660,30 +660,31 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
         try:
             st = p3u.start_timer()
             logger.debug(f"Start: ...")
+            # Should be called only for list cmd.
+            if cmd[p3m.CK_CMD_KEY] != cp.CV_LIST_CMD_KEY:
+                # Invalid cmd_key
+                cmd_result[p3m.CMD_RESULT_CONTENT] = (f"LIST_cmd() Invalid "
+                                        f"cmd_key: {cmd[cp.p3m.CK_CMD_KEY]}")
+                cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = p3m.CMD_ERROR_STRING_OUTPUT
+                logger.error(cmd_result[p3m.CMD_RESULT_CONTENT])
+                return cmd_result
+            cmd_result = cp.CMD_TASK_process(cmd, self.DC)
+            if cmd_result[p3m.CMD_RESULT_STATUS]:
+                return cmd_result
             cmd_result: p3m.CMD_RESULT_TYPE = p3m.create_CMD_RESULT_OBJECT(
                 cmd_result_status=False,
                 result_content_type=p3m.CMD_STRING_OUTPUT,
                 result_content="No result content.",
                 cmd_object=cmd
             )
-            if cmd[p3m.CK_CMD_KEY] != cp.CV_LIST_CMD_KEY:
-                # Invalid cmd_key
-                cmd_result[p3m.CMD_RESULT_CONTENT] = f"LIST_cmd() Invalid cmd_key: {cmd[cp.p3m.CK_CMD_KEY]}"
-                logger.error(cmd_result[p3m.CMD_RESULT_CONTENT])
-                return False, cmd_result
             # Dispatch based on the subcmd_key and/or subcmd_name
-
             #region list workbooks
             if cmd[p3m.CK_SUBCMD_NAME] == cp.CV_WORKBOOKS_SUBCMD_NAME:
                 bdm_tree : bool = self.cp_cmd_attr_get(cmd, cp.CK_BDM_TREE, False)
                 if bdm_tree:
-                    # list workbooks -t
-                    # If bdm_tree option is True, output the whole BDM tree.
-                    # tree = cp.extract_bdm_tree(self.DC)
-                    # cmd_result = cp.output_tree_view(tree)
-                    # TODO: clean up to cmd_result etc.
-                    cp.output_model_tree(self.DC)
+                    ...
                 else:
+                    # TODO: Move to CMD_TASK_process()
                     # List the workbooks selected by list command line arguments.
                     selected_bdm_wb_list : List[BDMWorkbook] = None
                     selected_bdm_wb_list = self.process_selected_workbook_input(cmd)
@@ -715,9 +716,9 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = p3m.CMD_ERROR_STRING_OUTPUT
             logger.error(m)
             return cmd_result
-    #endregion SHOW_cmd() method
+    #endregion SHOW_cmd() execution method
     # ------------------------------------------------------------------------ +
-    #region BDM_STORE_save_cmd() command > save bms
+    #region BDM_STORE_save_cmd() execution method
     def BDM_STORE_save_cmd(self, cmd : Dict) -> None:
         """Save the Budget Manager store (BDM_STORE) file with the BSM.
 
@@ -747,9 +748,9 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
-    #endregion BDM_STORE_save_cmd() method
+    #endregion BDM_STORE_save_cmd() execution method
     # ------------------------------------------------------------------------ +
-    #region BDM_STORE_load_cmd() command > load bms 
+    #region BDM_STORE_load_cmd() execution method
     def BDM_STORE_load_cmd(self, cmd : Dict) -> Tuple[bool, str]:
         """Load the Budget Manager store (BDM_STORE) file from the BSM.
 
@@ -786,9 +787,9 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
-    #endregion BDM_STORE_load_cmd() method
+    #endregion BDM_STORE_load_cmd() execution method
     # ------------------------------------------------------------------------ +
-    #region DATA_CONTEXT_show_cmd() command > show dc
+    #region DATA_CONTEXT_show_cmd() execution method
     def DATA_CONTEXT_show_cmd(self, cmd : Dict) -> BUDMAN_RESULT_TYPE:
         """Show information in the Budget Manager Data Context.
 
@@ -838,9 +839,9 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             m = f"Error showing Data Context: {p3u.exc_err_msg(e)}"
             logger.error(m)
             return False, m
-    #endregion DATA_CONTEXT_show_cmd() method
+    #endregion DATA_CONTEXT_show_cmd() execution method
     # ------------------------------------------------------------------------ +
-    #region SHOW_cmd() command > show dc
+    #region SHOW_cmd() execution method
     def SHOW_cmd(self, cmd : Dict) -> BUDMAN_RESULT_TYPE:
         """Show requested info from Budget Manager Data Context.
 
@@ -882,9 +883,9 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                  f"{p3u.exc_err_msg(e)}")
             logger.error(m)
             return False, m
-    #endregion SHOW_cmd() method
+    #endregion SHOW_cmd() execution method
     # ------------------------------------------------------------------------ +
-    #region WORKBOOKS_load_cmd() command > load wb 0
+    #region WORKBOOKS_load_cmd() execution method
     def WORKBOOKS_load_cmd(self, cmd : Dict) -> BUDMAN_RESULT_TYPE:
         """Model-aware: Load workbook content for one or more WORKBOOKS in the DC.
 
@@ -930,9 +931,9 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
-    #endregion WORKBOOKS_load_cmd() method
+    #endregion WORKBOOKS_load_cmd() execution method
     # ------------------------------------------------------------------------ +
-    #region WORKBOOKS_save_cmd() command > save wb 3
+    #region WORKBOOKS_save_cmd() execution method
     def WORKBOOKS_save_cmd(self, cmd : Dict) -> BUDMAN_RESULT_TYPE: 
         """Model-Aware: Execute save command for one WB_INDEX or ALL_WBS.
         In BudMan, loaded workbook content is maintained in the 
@@ -973,9 +974,9 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
-    #endregion WORKBOOKS_save_cmd() command method
+    #endregion WORKBOOKS_save_cmd() execution method
     # ------------------------------------------------------------------------ +
-    #region CHANGE_cmd() command > wf cat 2
+    #region CHANGE_cmd() execution method
     def CHANGE_cmd(self, cmd : Dict) -> Tuple[bool, str]:
         """Change aspects of the Data Context.
 
@@ -1044,9 +1045,9 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
-    #endregion CHANGE_cmd() method
+    #endregion CHANGE_cmd() execution method
     # ------------------------------------------------------------------------ +
-    #region APP_cmd() command > wf cat 2
+    #region APP_cmd() execution method
     def APP_cmd(self, cmd : Dict) -> BUDMAN_RESULT_TYPE:
         """App commands to manipulate app values and settings.
 
@@ -1139,9 +1140,9 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             m += p3u.exc_err_msg(e)
             logger.error(m)
             return False, m
-    #endregion APP_cmd() method
+    #endregion APP_cmd() execution method
     # ------------------------------------------------------------------------ +
-    #region WORKFLOW_categorization_cmd() command > wf cat 2
+    #region WORKFLOW_categorization_cmd() execution method
     def WORKFLOW_categorization_cmd(self, cmd : Dict) -> BUDMAN_RESULT_TYPE:
         """Apply categorization workflow to one or more WORKBOOKS in the DC.
 
@@ -1235,9 +1236,9 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
-    #endregion WORKFLOW_categorization_cmd() method
+    #endregion WORKFLOW_categorization_cmd() execution method
     # ------------------------------------------------------------------------ +
-    #region WORKFLOW_cmd() command > wf cat 2
+    #region WORKFLOW_cmd() execution method
     def WORKFLOW_cmd(self, cmd : p3m.CMD_OBJECT_TYPE) -> p3m.CMD_RESULT_TYPE:
         """Execute a workflow task.
 
@@ -1253,21 +1254,15 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
         try:
             st = p3u.start_timer()
             logger.debug(f"Start: ...")
-            cmd_result: p3m.CMD_RESULT_TYPE = p3m.create_CMD_RESULT_OBJECT(
-                cmd_result_status=False,
-                result_content_type=p3m.CMD_STRING_OUTPUT,
-                result_content="No result content.",
-                cmd_object=cmd
-            )
             cmd_result = WORKFLOW_TASK_process(cmd, self.DC)
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             return cmd_result
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
-    #endregion WORKFLOW_cmd() method
+    #endregion WORKFLOW_cmd() execution method
     # ------------------------------------------------------------------------ +
-    #region WORKFLOW_apply_cmd() command > wf cat 2
+    #region WORKFLOW_apply_cmd() execution method
     def WORKFLOW_apply_cmd(self, cmd : Dict) -> BUDMAN_RESULT_TYPE:
         """Apply workflow tasks to WORKBOOKS.
 
@@ -1303,9 +1298,9 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
-    #endregion WORKFLOW_apply_cmd() method
+    #endregion WORKFLOW_apply_cmd() execution method
     # ------------------------------------------------------------------------ +
-    #region WORKFLOW_intake_cmd() command > wf cat 2
+    #region WORKFLOW_intake_cmd() execution method
     def WORKFLOW_intake_cmd(self, cmd : Dict) -> Tuple[bool, str]:
         """Execute workflow intake tasks.
 
@@ -1347,9 +1342,9 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
-    #endregion WORKFLOW_intake_cmd() method
+    #endregion WORKFLOW_intake_cmd() execution method
     # ------------------------------------------------------------------------ +
-    #region WORKFLOW_check() command > wf check 2 
+    #region WORKFLOW_check() execution method 
     def WORKFLOW_check_cmd(self, cmd : Dict) -> BUDMAN_RESULT_TYPE:
         """Apply workflow to one or more WORKBOOKS in the DC.
 
@@ -1415,9 +1410,9 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
-    #endregion WORKFLOW_check_cmd() method
+    #endregion WORKFLOW_check_cmd() execution method
     # ------------------------------------------------------------------------ +
-    #region WORKFLOW_reload_cmd() command > wf check 3
+    #region WORKFLOW_reload_cmd() execution method
     def WORKFLOW_reload_cmd(self, cmd : Dict) -> Tuple[bool, str]:
         """Reload code modules to support dev.
 
@@ -1438,7 +1433,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             RuntimeError: A description of the
             root error is contained in the exception message.
         """
-    #endregion WORKFLOW_reload_cmd() method
+    #endregion WORKFLOW_reload_cmd() execution method
     # ------------------------------------------------------------------------ +
     #                                                                          +
     #endregion Command Execution Methods                                       +
