@@ -118,6 +118,7 @@ def CMD_TASK_process(cmd: p3m.CMD_OBJECT_TYPE,
                 cmd_result[p3m.CMD_RESULT_CONTENT] = bdm_DC.model.bdm_BDM_STORE_json()
                 cmd_result[p3m.CMD_RESULT_STATUS] = True
                 return cmd_result
+            elif cmd[cp.p3m.CK_SUBCMD_NAME] == cp.CV_FILES_SUBCMD_NAME:
         else:
             ...
         return cmd_result
@@ -352,6 +353,32 @@ def process_selected_workbook_input(cmd: p3m.CMD_OBJECT_TYPE,
         logger.error(m)
         raise RuntimeError(m)
 #endregion process_selected_workbook_input()
-# ------------------------------------------------------------------------ +
-#endregion BudMan Application Command Helper functions
-# ---------------------------------------------------------------------------- +
+# ------------------------------------------------------------------------ +    
+#region verify_cmd_key()
+def verify_cmd_key( cmd: p3m.CMD_OBJECT_TYPE, 
+                   expected_cmd_key: str) -> p3m.CMD_RESULT_TYPE:
+    """Verify the command key in the command object.
+
+    Args:
+        cmd (Dict): A p3m.CMD_OBJECT.
+        expected_cmd_key (str): The expected command key.
+
+    Returns:
+        CMD_RESULT_TYPE: True if the command key matches, False otherwise.
+    """
+    cmd_result: p3m.CMD_RESULT_TYPE = p3m.create_CMD_RESULT_OBJECT(
+        cmd_result_status=True,
+        result_content_type=p3m.CMD_STRING_OUTPUT,
+        result_content=f"Expected cmd_key: {expected_cmd_key} is valid.",
+        cmd_object=cmd
+    )
+    actual_cmd_key = cmd.get(p3m.CK_CMD_KEY)
+    if actual_cmd_key != expected_cmd_key:
+        # Invalid cmd_key
+        m = (f"Invalid cmd_key: {cmd[p3m.CK_CMD_KEY]} "
+             f"expected: {expected_cmd_key}")
+        logger.error(m)
+        cmd_result[p3m.CMD_RESULT_STATUS] = False
+        cmd_result[p3m.CMD_RESULT_CONTENT] = m
+        cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = p3m.CMD_ERROR_STRING_OUTPUT
+    return cmd_result

@@ -12,12 +12,16 @@ __license__ = "MIT"
 
 from .budman_cp_namespace import *
 from .budman_command_services import (
-    CMD_TASK_process
+    # CMD_TASK functions
+    CMD_TASK_process,
+    # Helper functions
+    verify_cmd_key
 )
 
 # target for 'from budman_app import *'
 __all__ = [
     "BudManApp",
-    "CMD_TASK_process"
+    "CMD_TASK_process",
+    "verify_cmd_key"
 ]
 

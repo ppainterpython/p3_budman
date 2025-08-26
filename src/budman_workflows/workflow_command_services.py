@@ -55,13 +55,13 @@ def WORKFLOW_TASK_process(cmd: p3m.CMD_OBJECT_TYPE,
     """
     try:
         # Assuming the cmd parameters have been validated before reaching this point.
-        if cmd[cp.p3m.CK_SUBCMD_KEY] == cp.CV_SET_SUBCMD_KEY:
+        if cmd[p3m.CK_SUBCMD_KEY] == cp.CV_SET_SUBCMD_KEY:
             # Process the set_value task.
             return WORKFLOW_TASK_set_value(cmd, bdm_DC)
-        elif cmd[cp.p3m.CK_SUBCMD_KEY] == cp.CV_LIST_SUBCMD_KEY:
+        elif cmd[p3m.CK_SUBCMD_KEY] == cp.CV_LIST_SUBCMD_KEY:
             # Process the list_folder_tree task.
             return WORKFLOW_TASK_list_folder_tree(cmd, bdm_DC)
-        elif (cmd[cp.p3m.CK_SUBCMD_KEY] == cp.CV_TASK_SUBCMD_KEY and
+        elif (cmd[p3m.CK_SUBCMD_KEY] == cp.CV_TASK_SUBCMD_KEY and
               cmd[cp.CK_TASK_NAME] == cp.CV_SYNC):
             # Process the wf sync task.
             recon: bool = cmd.get(cp.CK_RECONCILE, False)
@@ -142,6 +142,7 @@ def WORKFLOW_TASK_list_folder_tree(cmd: p3m.CMD_OBJECT_TYPE,
             result_content="No result content.",
             cmd_object=cmd
         )
+        # If wf_key is not present in cmd, try to get it from the data context
         wf_key: str = cmd.get(cp.CK_CMDLINE_WF_KEY, None)
         if not wf_key:
             # No wf_key in cmdline, try DC
@@ -152,6 +153,7 @@ def WORKFLOW_TASK_list_folder_tree(cmd: p3m.CMD_OBJECT_TYPE,
                 cmd_result[p3m.CMD_RESULT_CONTENT] = "No wf_key from cmd args or DC."
                 logger.error(cmd_result[p3m.CMD_RESULT_CONTENT])
                 return cmd_result
+        #if wf_purpose is not present in cmd, try to get it from the data context
         wf_purpose: str = cmd.get(cp.CK_CMDLINE_WF_PURPOSE, None)
         if not wf_purpose:
             # No wf_purpose in cmdline, try DC

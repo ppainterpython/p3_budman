@@ -38,7 +38,6 @@ class BudManCLIParser():
         self.app_name = settings[APP_NAME]
         self.app_cmd = cmd2.Cmd2ArgumentParser()
         self.change_cmd = cmd2.Cmd2ArgumentParser()
-        self.init_cmd = cmd2.Cmd2ArgumentParser()
         self.list_cmd = cmd2.Cmd2ArgumentParser()
         self.load_cmd = cmd2.Cmd2ArgumentParser()
         self.save_cmd = cmd2.Cmd2ArgumentParser()
@@ -46,7 +45,6 @@ class BudManCLIParser():
         self.workflow_cmd = cmd2.Cmd2ArgumentParser()
         self.app_cmd_parser_setup(self.app_name)
         self.change_cmd_parser_setup(self.app_name)
-        self.init_cmd_parser_setup(self.app_name)
         self.list_cmd_parser_setup(self.app_name)
         self.load_cmd_parser_setup(self.app_name)
         self.save_cmd_parser_setup(self.app_name)
@@ -183,53 +181,6 @@ class BudManCLIParser():
             logger.exception(p3u.exc_err_msg(e))
             raise
 
-    def init_cmd_parser_setup(self,app_name : str = "not-set") -> None:
-        """Setup 'init' cmd argument parsers."""
-        try:
-            parser = self.init_cmd
-            parser.prog = app_name
-            title = f"Init SubCommands"
-            # init subcommands: workbooks, and fin_inst
-            subparsers = parser.add_subparsers(title=title, dest="init_cmd")
-
-            # subcommand init workbooks [wb_name] [-fi [fi_key] [-wf [wf_key]]
-            wb_subcmd_parser = subparsers.add_parser(
-                "workbooks", 
-                aliases=["wb", "WB"], 
-                help="Initialize workbook(s).")
-            wb_subcmd_parser.set_defaults(init_cmd="workbooks")
-            wb_subcmd_parser.add_argument(
-                "wb_name", nargs="?",
-                action="store", 
-                default=None,
-                help="Workbook name.")
-            self.add_common_args(wb_subcmd_parser)
-
-            # subcommand init fin_int [fi_key] [-wf [wf_key]] [-wb [wb_name]]
-            fi_subcmd_parser = subparsers.add_parser(
-                "fin_inst",
-                aliases=["fi", "FI", "financial_institutions"], 
-                help="Initialize Financial Institution(s).")
-            fi_subcmd_parser.set_defaults(init_cmd="fin_inst")
-            fi_subcmd_parser.add_argument(
-                "fi_key", nargs="?", 
-                default= "all",
-                help="FI key value.")
-            fi_subcmd_parser.add_argument(
-                "-wf", nargs="?", dest="wf_key", 
-                action="store", 
-                default = None,
-                help="Workflow key value.")
-            fi_subcmd_parser.add_argument(
-                "-wn", nargs="?", dest="wb_name", 
-                action="store", 
-                default='all',
-                help="Workbook name.")
-            self.add_common_args(fi_subcmd_parser)
-        except Exception as e:
-            logger.exception(p3u.exc_err_msg(e))
-            raise
-
     def list_cmd_parser_setup(self,app_name : str = "not-set") -> None:
         """Setup the command line argument parsers for the list command."""
         try:
@@ -243,7 +194,7 @@ class BudManCLIParser():
             }
             parser.set_defaults(**list_cmd_defaults)
 
-            # bdm_store_subcmd_parser
+            #region bdm_store_subcmd_parser
             # list BDM_STORE 
             bdm_store_subcmd_parser = subparsers.add_parser(
                 cp.CV_BDM_STORE_SUBCMD_NAME,
@@ -255,8 +206,9 @@ class BudManCLIParser():
             }
             bdm_store_subcmd_parser.set_defaults(**bdm_store_subcmd_defaults)
             self.add_common_args(bdm_store_subcmd_parser)
+            #endregion bdm_store_subcmd_parser
 
-            # wb_subcmd_parser subcmd parser
+            # region wb_subcmd_parser
             # list workbooks  [-t] [wb_list | -all]
             wb_subcmd_parser  = subparsers.add_parser(
                 cp.CV_WORKBOOKS_SUBCMD_NAME,
@@ -273,6 +225,23 @@ class BudManCLIParser():
                 help="Show the BDM tree hierarchy.")
             self.add_wb_list_argument(wb_subcmd_parser)
             self.add_common_args(wb_subcmd_parser)
+            # endregion wb_subcmd_parser
+
+            #region files_subcmd_parser
+            # list files  [--cmdline_wf_key | -w <wf_key>] [--cmdline_wf_purpose | [-p <wf_purpose> | -wi | -ww | -wo]]
+            files_subcmd_parser  = subparsers.add_parser(
+                cp.CV_FILES_SUBCMD_NAME,
+                aliases=["files", "f"], 
+                help="Select files to list.")
+            files_subcmd_defaults = {
+                p3m.CK_SUBCMD_NAME: cp.CV_FILES_SUBCMD_NAME,
+                p3m.CK_SUBCMD_KEY: cp.CV_LIST_FILES_SUBCMD_KEY
+            }
+            files_subcmd_parser.set_defaults(**files_subcmd_defaults)
+            self.add_workflow_argument(files_subcmd_parser)
+            self.add_purpose_argument(files_subcmd_parser)
+            self.add_common_args(files_subcmd_parser)
+            #endregion files_subcmd_parser
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise

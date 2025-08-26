@@ -83,9 +83,6 @@ def app_cmd_parser() -> cmd2.Cmd2ArgumentParser:
     return cli_parser.app_cmd if cli_parser else None
 def change_cmd_parser() -> cmd2.Cmd2ArgumentParser:
     return cli_parser.change_cmd if cli_parser else None
-def init_cmd_parser() -> cmd2.Cmd2ArgumentParser:
-    subcmd_parser = cli_parser.init_cmd if cli_parser else None
-    return subcmd_parser
 def list_cmd_parser() -> cmd2.Cmd2ArgumentParser:
     return cli_parser.list_cmd if cli_parser else None
 def load_cmd_parser() -> cmd2.Cmd2ArgumentParser:
@@ -368,26 +365,6 @@ class BudManCLIView(cmd2.Cmd, BudManAppDataContext_Binding,
             self.pexcept(e)
     #endregion do_change command - change attributes of workbooks and other objects.
     # ------------------------------------------------------------------------ +
-    #region do_init command - initialize aspects of the BudgetModel application.
-    @cmd2.with_argparser(init_cmd_parser()) # This decorator links cmd2 with argparse.
-    def do_init(self, opts):
-        """Initialize aspects of the Data Context for the Budget Manager application."""
-        try:
-            # Construct the command object from cmd2's argparse Namespace.
-            status, cmd = self.construct_cmd(opts)
-            if not status:
-                return
-            # Submit the command to the command processor.
-            status, result = self.cp_execute_cmd(cmd)
-            # Render the result.
-            if status:
-                console.print(result)
-            else:
-                console.print(f"[red]Error:[/red] {result}")
-        except Exception as e:
-            self.pexcept(e)
-    #endregion do_init command - initialize aspects of the BudgetModel application.
-    # ------------------------------------------------------------------------ +
     #region do_list command - workbooks, status, etc.
     @cmd2.with_argparser(list_cmd_parser())
     def do_list(self, opts):
@@ -553,8 +530,8 @@ class BudManCLIView(cmd2.Cmd, BudManAppDataContext_Binding,
         """Construct a command object from cmd2/argparse arguments."""
         try:
             cmd = self.extract_CMD_OBJECT_from_argparse_Namespace(opts)
-            parse_only:bool = self.CP.cp_cmd_attr_get(cmd, p3m.CK_PARSE_ONLY, False)
-            if parse_only: 
+            parse_only:bool = self.CP.cp_cmd_attr_get(cmd, p3m.CK_PARSE_ONLY, self.parse_only)
+            if parse_only or self.parse_only: 
                 console.print(f"parse-only: '{self.current_cmd}' {str(cmd)}")
                 return False, cp.CK_PARSE_ONLY
             return True, cmd

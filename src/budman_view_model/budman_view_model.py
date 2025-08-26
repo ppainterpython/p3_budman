@@ -661,27 +661,14 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             st = p3u.start_timer()
             logger.debug(f"Start: ...")
             # Should be called only for list cmd.
-            if cmd[p3m.CK_CMD_KEY] != cp.CV_LIST_CMD_KEY:
-                # Invalid cmd_key
-                m = (f"LIST_cmd() Invalid cmd_key: {cmd[cp.p3m.CK_CMD_KEY]}")
-                logger.error(m)
-                return p3m.create_CMD_RESULT_OBJECT(
-                    cmd_result_status=False,
-                    result_content_type=p3m.CMD_ERROR_STRING_OUTPUT,
-                    result_content=m,
-                    cmd_object=cmd
-                )
+            cmd_result : p3m.CMD_RESULT_TYPE = cp.verify_cmd_key(cmd, cp.CV_LIST_CMD_KEY)
+            if not cmd_result[p3m.CMD_RESULT_STATUS]: return cmd_result
+            # Process BudMan command tasks.
             cmd_result = cp.CMD_TASK_process(cmd, self.DC)
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             return cmd_result
         except Exception as e:
-            m = (f"Error executing cmd: {cmd[cp.p3m.CK_CMD_NAME]} {cmd[cp.p3m.CK_SUBCMD_NAME]}: "
-                 f"{p3u.exc_err_msg(e)}")
-            cmd_result[p3m.CMD_RESULT_STATUS] = False
-            cmd_result[p3m.CMD_RESULT_CONTENT] = m
-            cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = p3m.CMD_ERROR_STRING_OUTPUT
-            logger.error(m)
-            return cmd_result
+            return self.ERROR_cmd(cmd, e)
     #endregion SHOW_cmd() execution method
     # ------------------------------------------------------------------------ +
     #region BDM_STORE_save_cmd() execution method
@@ -1220,12 +1207,15 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
         try:
             st = p3u.start_timer()
             logger.debug(f"Start: ...")
+            # Should be called only for workflow cmd.
+            cmd_result : p3m.CMD_RESULT_TYPE = cp.verify_cmd_key(cmd, cp.CV_WORKFLOW_CMD_KEY)
+            if not cmd_result[p3m.CMD_RESULT_STATUS]: return cmd_result
+            # Process workflow command tasks.
             cmd_result = WORKFLOW_TASK_process(cmd, self.DC)
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             return cmd_result
         except Exception as e:
-            logger.error(p3u.exc_err_msg(e))
-            raise
+            return self.ERROR_cmd(cmd, e)
     #endregion WORKFLOW_cmd() execution method
     # ------------------------------------------------------------------------ +
     #region WORKFLOW_apply_cmd() execution method
@@ -1378,27 +1368,29 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             raise
     #endregion WORKFLOW_check_cmd() execution method
     # ------------------------------------------------------------------------ +
-    #region WORKFLOW_reload_cmd() execution method
-    def WORKFLOW_reload_cmd(self, cmd : Dict) -> Tuple[bool, str]:
-        """Reload code modules to support dev.
+    #region ERROR_cmd() execution method
+    def ERROR_cmd(self, cmd : p3m.CMD_OBJECT_TYPE, e: Exception) -> p3m.CMD_RESULT_TYPE:
+        """Retrun a CMD_RESULT based on an Exception e for the CMD_OBJECT execution.
 
-        A WORKFLOW_reload_cmd command uses the reload_target value in the cmd. 
-        Value is a module name string or 'all'.
+        Executing the cmd resulted in Execpteion e. Format and error message
+        and return it in a CMD_RESULT suitalbe to return as an error.
 
         Arguments:
-            cmd (Dict): A valid BudMan View Model Command object. For this
-            command, must contain workflow_cmd = 'reload' resulting in
-            a full command key of 'workflow_cmd_reload'.
+            cmd (Dict): A valid CMD_OBJECT_TYPE.
 
         Returns:
-            Tuple[success : bool, result : Any]: The outcome of the command 
-            execution. If success is True, result contains result of the 
-            command, if False, a description of the error.
+            CMD_RESULT_TYPE with error information and status of False.
             
-        Raises:
-            RuntimeError: A description of the
-            root error is contained in the exception message.
         """
+        m = (f"Error executing cmd: {cmd[p3m.CK_CMD_NAME]} {cmd[p3m.CK_SUBCMD_NAME]}: "
+                f"{p3u.exc_err_msg(e)}")
+        logger.error(m)
+        return p3m.create_CMD_OBJECT(
+            cmd_result_status = False,
+            result_content = m,
+            result_content_type=p3m.CMD_ERROR_STRING_OUTPUT,
+            cmd_object=cmd
+        )
     #endregion WORKFLOW_reload_cmd() execution method
     # ------------------------------------------------------------------------ +
     #                                                                          +
