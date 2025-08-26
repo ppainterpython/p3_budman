@@ -663,50 +663,16 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             # Should be called only for list cmd.
             if cmd[p3m.CK_CMD_KEY] != cp.CV_LIST_CMD_KEY:
                 # Invalid cmd_key
-                cmd_result[p3m.CMD_RESULT_CONTENT] = (f"LIST_cmd() Invalid "
-                                        f"cmd_key: {cmd[cp.p3m.CK_CMD_KEY]}")
-                cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = p3m.CMD_ERROR_STRING_OUTPUT
-                logger.error(cmd_result[p3m.CMD_RESULT_CONTENT])
-                return cmd_result
+                m = (f"LIST_cmd() Invalid cmd_key: {cmd[cp.p3m.CK_CMD_KEY]}")
+                logger.error(m)
+                return p3m.create_CMD_RESULT_OBJECT(
+                    cmd_result_status=False,
+                    result_content_type=p3m.CMD_ERROR_STRING_OUTPUT,
+                    result_content=m,
+                    cmd_object=cmd
+                )
             cmd_result = cp.CMD_TASK_process(cmd, self.DC)
-            if cmd_result[p3m.CMD_RESULT_STATUS]:
-                return cmd_result
-            cmd_result: p3m.CMD_RESULT_TYPE = p3m.create_CMD_RESULT_OBJECT(
-                cmd_result_status=False,
-                result_content_type=p3m.CMD_STRING_OUTPUT,
-                result_content="No result content.",
-                cmd_object=cmd
-            )
-            # Dispatch based on the subcmd_key and/or subcmd_name
-            #region list workbooks
-            if cmd[p3m.CK_SUBCMD_NAME] == cp.CV_WORKBOOKS_SUBCMD_NAME:
-                bdm_tree : bool = self.cp_cmd_attr_get(cmd, cp.CK_BDM_TREE, False)
-                if bdm_tree:
-                    ...
-                else:
-                    # TODO: Move to CMD_TASK_process()
-                    # List the workbooks selected by list command line arguments.
-                    selected_bdm_wb_list : List[BDMWorkbook] = None
-                    selected_bdm_wb_list = self.process_selected_workbook_input(cmd)
-                    # Collect the wb info for workbooks in the selected_bdm_wb_list.
-                    # Construct the output dictionary result
-                    cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = p3m.CMD_WORKBOOK_INFO_TABLE
-                    cmd_result[p3m.CMD_RESULT_CONTENT] = list()
-                    for wb in selected_bdm_wb_list:
-                        wb_index = self.dc_WORKBOOK_index(wb.wb_id)
-                        cmd_result[p3m.CMD_RESULT_CONTENT].append(wb.wb_info_dict(wb_index))
-                    if len(selected_bdm_wb_list) == 1:
-                            self.dc_WORKBOOK = wb
-            #endregion list workbooks
-
-            #region list BDM_STORE
-            elif cmd[cp.p3m.CK_SUBCMD_NAME] == cp.CV_BDM_STORE_SUBCMD_NAME:
-                cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = p3m.CMD_JSON_OUTPUT
-                cmd_result[p3m.CMD_RESULT_CONTENT] = self.model.bdm_BDM_STORE_json()
-            #endregion list BDM_STORE
-
             logger.info(f"Complete: {p3u.stop_timer(st)}")
-            cmd_result[p3m.CMD_RESULT_STATUS] = True
             return cmd_result
         except Exception as e:
             m = (f"Error executing cmd: {cmd[cp.p3m.CK_CMD_NAME]} {cmd[cp.p3m.CK_SUBCMD_NAME]}: "
