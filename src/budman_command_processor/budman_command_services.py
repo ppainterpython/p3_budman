@@ -49,6 +49,7 @@ import budman_settings as bdms
 from budman_namespace import BDMWorkbook
 from budget_domain_model import BudgetDomainModel
 from budman_data_context import BudManAppDataContext_Base
+from budget_storage_model import bsm_file_tree_from_folder
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -72,61 +73,196 @@ def CMD_TASK_process(cmd: p3m.CMD_OBJECT_TYPE,
         CMD_RESULT_TYPE: The result of the command processing.
     """
     try:
+        # If bdm_DC is bad, just raise an error.
+        p3u.is_not_obj_of_type("bdm_DC", bdm_DC, BudManAppDataContext_Base,
+                               raise_error= True)
         # Assuming the CMD_OBJECT has been validated before reaching this point.
+        # Construct CMD_RESULT for return.
         cmd_result: p3m.CMD_RESULT_TYPE = p3m.create_CMD_RESULT_OBJECT(
-            cmd_result_status=False,
-            result_content_type=p3m.CMD_STRING_OUTPUT,
-            result_content="No result content.",
             cmd_object=cmd
         )
         # Process the CMD_OBJECT based on its cmd_key and subcmd_key.
         if cmd[p3m.CK_CMD_KEY] == cp.CV_LIST_CMD_KEY:
             if cmd[p3m.CK_SUBCMD_KEY] == cp.CV_LIST_WORKBOOKS_SUBCMD_KEY:
-                bdm_tree: bool = cmd.get(cp.CK_BDM_TREE, False)
-                if bdm_tree:
-                    result_tree: RichTree = CMD_TASK_get_workbook_tree(bdm_DC)
-                    if result_tree is None:
-                        # Failed to construct the model_tree for workbooks
-                        cmd_result[p3m.CMD_RESULT_CONTENT] = "Model workbooks tree not constructed."
-                        cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = p3m.CMD_ERROR_STRING_OUTPUT
-                        logger.error(cmd_result[p3m.CMD_RESULT_CONTENT])
-                        return cmd_result
-                    # Success for workbook_tree
-                    cmd_result[p3m.CMD_RESULT_STATUS] = True
-                    cmd_result[p3m.CMD_RESULT_CONTENT] = result_tree
-                    cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = p3m.CMD_WORKBOOK_TREE_OBJECT
-                    return cmd_result
-                else:
-                    # TODO: Move to CMD_TASK_process()
-                    # List the workbooks selected by list command line arguments.
-                    selected_bdm_wb_list : List[BDMWorkbook] = None
-                    selected_bdm_wb_list = process_selected_workbook_input(cmd, bdm_DC)
-                    # Collect the wb info for workbooks in the selected_bdm_wb_list.
-                    # Construct the output dictionary result
-                    cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = p3m.CMD_WORKBOOK_INFO_TABLE
-                    cmd_result[p3m.CMD_RESULT_CONTENT] = list()
-                    for wb in selected_bdm_wb_list:
-                        wb_index = bdm_DC.dc_WORKBOOK_index(wb.wb_id)
-                        cmd_result[p3m.CMD_RESULT_CONTENT].append(wb.wb_info_dict(wb_index))
-                    if len(selected_bdm_wb_list) == 1:
-                            bdm_DC.dc_WORKBOOK = wb
-                    # Success for workbook_tree
-                    cmd_result[p3m.CMD_RESULT_STATUS] = True
-                    return cmd_result
+                return CMD_TASK_list_workbooks(cmd, bdm_DC)
             elif cmd[cp.p3m.CK_SUBCMD_NAME] == cp.CV_BDM_STORE_SUBCMD_NAME:
-                cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = p3m.CMD_JSON_OUTPUT
-                cmd_result[p3m.CMD_RESULT_CONTENT] = bdm_DC.model.bdm_BDM_STORE_json()
-                cmd_result[p3m.CMD_RESULT_STATUS] = True
-                return cmd_result
+                return CMD_TASK_list_bdm_store_json(cmd, bdm_DC)
             elif cmd[cp.p3m.CK_SUBCMD_NAME] == cp.CV_FILES_SUBCMD_NAME:
+               return CMD_TASK_list_files(cmd, bdm_DC)
+            else:
+                return p3m.unknown_CMD_RESULT_ERROR(cmd)
         else:
-            ...
-        return cmd_result
+            return p3m.unknown_CMD_RESULT_ERROR(cmd)
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
 #endregion CMD_TASK_process() function
 # ---------------------------------------------------------------------------- +
+#region CMD_TASK_list_workbooks()
+def CMD_TASK_list_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
+        bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
+    """List workbooks in the BudMan application data context.
+
+    Args:
+        cmd (CMD_OBJECT_TYPE): The command object to process.
+        bdm_DC (BudManAppDataContext_Base): The data context for the BudMan application.
+        CMD parameters:
+            cp.CK_BDM_TREE (bool): --bdm_tree | -t switch, dispaly result as
+            a tree, else display a table.
+    Returns:
+        p3m.CMD_RESULT_TYPE: The result of the command execution.
+    """
+    try:
+        # Construct CMD_RESULT for return.
+        cmd_result: p3m.CMD_RESULT_TYPE = p3m.create_CMD_RESULT_OBJECT(
+            cmd_object=cmd
+        )
+        # check bdm_tree flag
+        bdm_tree: bool = cmd.get(cp.CK_BDM_TREE, False)
+        if bdm_tree:
+            # Return all workbooks in a RichTree
+            result_tree: RichTree = CMD_TASK_get_workbook_tree(bdm_DC)
+            if result_tree is None:
+                # Failed to construct the model_tree for workbooks
+                cmd_result[p3m.CMD_RESULT_CONTENT] = "Model workbooks tree not constructed."
+                cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = p3m.CMD_ERROR_STRING_OUTPUT
+                logger.error(cmd_result[p3m.CMD_RESULT_CONTENT])
+                return cmd_result
+            # Success for workbook_tree
+            cmd_result[p3m.CMD_RESULT_STATUS] = True
+            cmd_result[p3m.CMD_RESULT_CONTENT] = result_tree
+            cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = p3m.CMD_WORKBOOK_TREE_OBJECT
+            return cmd_result
+        else:
+            # CMD_TASK_list_workbook_info_table()
+            # List the workbooks selected by list command line arguments.
+            selected_bdm_wb_list : List[BDMWorkbook] = None
+            selected_bdm_wb_list = process_selected_workbook_input(cmd, bdm_DC)
+            # Collect the wb info for workbooks in the selected_bdm_wb_list.
+            # Construct the output dictionary result
+            cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = p3m.CMD_WORKBOOK_INFO_TABLE
+            cmd_result[p3m.CMD_RESULT_CONTENT] = list()
+            for wb in selected_bdm_wb_list:
+                wb_index = bdm_DC.dc_WORKBOOK_index(wb.wb_id)
+                cmd_result[p3m.CMD_RESULT_CONTENT].append(wb.wb_info_dict(wb_index))
+            if len(selected_bdm_wb_list) == 1:
+                    bdm_DC.dc_WORKBOOK = wb
+            # Success for workbook_tree
+            cmd_result[p3m.CMD_RESULT_STATUS] = True
+            return cmd_result
+    except Exception as e:
+        return p3m.create_CMD_RESULT_ERROR(cmd, e)
+#endregion CMD_TASK_list_workbooks()
+# ---------------------------------------------------------------------------- +
+#region CMD_TASK_list_bdm_store_json()
+def CMD_TASK_list_bdm_store_json(cmd: p3m.CMD_OBJECT_TYPE,
+                                  bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
+    """List the BDM store in JSON format.
+    Args:
+        cmd (CMD_OBJECT_TYPE): The command object to process.
+        bdm_DC (BudManAppDataContext_Base): The data context for the BudMan application.
+        CMD parameters:
+            cp.CK_BDM_TREE (bool): --bdm_tree | -t switch, dispaly result as
+            a tree, else display a table.
+    Returns:
+        p3m.CMD_RESULT_TYPE: The result of the command execution.
+    """
+    try:
+        p3u.is_not_obj_of_type("bdm_DC", bdm_DC, BudManAppDataContext_Base,
+                               raise_error=True)
+        model: BudgetDomainModel = bdm_DC.model
+        if not model:
+            m = "No BudgetDomainModel binding in the DC."
+            logger.error(m)
+            return p3m.create_CMD_RESULT_OBJECT(
+                cmd_object=cmd,
+                cmd_result_status=False,
+                result_content_type=p3m.CMD_STRING_OUTPUT,
+                result_content=m
+            )
+        # Construct CMD_RESULT for return.
+        cmd_result: p3m.CMD_RESULT_TYPE = p3m.create_CMD_RESULT_OBJECT(
+            cmd_object=cmd
+        )
+        cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = p3m.CMD_JSON_OUTPUT
+        cmd_result[p3m.CMD_RESULT_CONTENT] = bdm_DC.model.bdm_BDM_STORE_json()
+        cmd_result[p3m.CMD_RESULT_STATUS] = True
+        return cmd_result
+    except Exception as e:
+        return p3m.create_CMD_RESULT_ERROR(cmd, e)
+#endregion CMD_TASK_list_bdm_store_json()
+# ---------------------------------------------------------------------------- +    
+#region CMD_TASK_list_files()
+def CMD_TASK_list_files(cmd: p3m.CMD_OBJECT_TYPE,
+                         bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
+    """List the files in the BDM store.
+    Args:
+        cmd (CMD_OBJECT_TYPE): The command object to process.
+        bdm_DC (BudManAppDataContext_Base): The data context for the BudMan application.
+    Returns:
+        p3m.CMD_RESULT_TYPE: The result of the command execution.
+    """
+    try:
+        p3u.is_not_obj_of_type("bdm_DC", bdm_DC, BudManAppDataContext_Base,
+                               raise_error=True)
+        # Validate DC is Model-aware
+        model: BudgetDomainModel = bdm_DC.model
+        if not model:
+            m = "No BudgetDomainModel binding in the DC."
+            logger.error(m)
+            return p3m.create_CMD_RESULT_OBJECT(
+                cmd_object=cmd,
+                cmd_result_status=False,
+                result_content_type=p3m.CMD_STRING_OUTPUT,
+                result_content=m
+            )
+        # Construct CMD_RESULT for return.
+        cmd_result: p3m.CMD_RESULT_TYPE = p3m.create_CMD_RESULT_OBJECT(
+            cmd_object=cmd
+        )
+        # If wf_key is not present in cmd, try to get it from the data context
+        wf_key: str = cmd.get(cp.CK_CMDLINE_WF_KEY, None)
+        if not wf_key:
+            # No wf_key in cmdline, try DC
+            wf_key = bdm_DC.dc_WF_KEY
+            if not wf_key:
+                # No wf_key to work with
+                cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = p3m.CMD_ERROR_STRING_OUTPUT
+                cmd_result[p3m.CMD_RESULT_CONTENT] = "No wf_key from cmd args or DC."
+                logger.error(cmd_result[p3m.CMD_RESULT_CONTENT])
+                return cmd_result
+        #if wf_purpose is not present in cmd, try to get it from the data context
+        wf_purpose: str = cmd.get(cp.CK_CMDLINE_WF_PURPOSE, None)
+        if not wf_purpose:
+            # No wf_purpose in cmdline, try DC
+            wf_purpose = bdm_DC.dc_WF_PURPOSE
+            if not wf_purpose:
+                # No wf_purpose to work with
+                cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = p3m.CMD_ERROR_STRING_OUTPUT
+                cmd_result[p3m.CMD_RESULT_CONTENT] = "No wf_purpose from cmd args or DC."
+                logger.error(cmd_result[p3m.CMD_RESULT_CONTENT])
+                return cmd_result
+        fi_key: str = bdm_DC.dc_FI_KEY
+        folder_tree: Tree = CMD_TASK_get_file_tree(fi_key, wf_key, wf_purpose, bdm_DC)
+        if not folder_tree:
+            cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = p3m.CMD_ERROR_STRING_OUTPUT
+            cmd_result[p3m.CMD_RESULT_CONTENT] = (
+                f"No wf_folder found for FI_KEY: "
+                f"'{fi_key}', WF_KEY: '{wf_key}', WF_PURPOSE: '{wf_purpose}'"
+            )
+            logger.error(cmd_result[p3m.CMD_RESULT_CONTENT])
+            return cmd_result
+        cmd_result[p3m.CMD_RESULT_STATUS] = True
+        cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = p3m.CMD_FILE_TREE_OBJECT
+        cmd_result[p3m.CMD_RESULT_CONTENT] = folder_tree
+        # msg = f"Workflow Folder Tree for WORKFLOW('{wf_key}') "
+        # msg += f"PURPOSE('{wf_purpose}')"
+
+        return cmd_result
+    except Exception as e:
+        return p3m.create_CMD_RESULT_ERROR(cmd, e)
+#endregion CMD_TASK_list_files()
+# ---------------------------------------------------------------------------- +    
 #region CMD_TASK_get_workbook_tree() method
 def CMD_TASK_get_workbook_tree(bdm_DC: BudManAppDataContext_Base) -> RichTree:
     """Return a workbook_tree (RichTree) for the BDM workbooks in bdm_DC."""
@@ -203,6 +339,45 @@ def CMD_TASK_get_workbook_tree(bdm_DC: BudManAppDataContext_Base) -> RichTree:
         return None
 #endregion CMD_TASK_get_workbook_tree
 # ---------------------------------------------------------------------------- +    
+#region CMD_TASK_get_file_tree() function
+def CMD_TASK_get_file_tree(fi_key: str, wf_key: str, wf_purpose: str, 
+                             bdm_DC: BudManAppDataContext_Base) -> Tree:
+    """Obtain a file tree based on fi_key, wf_key and wf_purpose.
+
+     A file tree is a treelib.Tree object with the folders and files from a
+     folder in the storage system.
+
+    Args:
+        cmd (Dict[str, Any]): A valid BudMan View Model Command object.
+        bdm_DC (BudManAppDataContext_Base): The data context for the 
+            BudMan application.
+
+        cmd should contain:
+            - cp.CK_CMDLINE_WF_KEY: The ID of the folder to list files from.
+            - cp.CK_CMDLINE_WF_PURPOSE: The purpose of the workflow, used to determine the folder.
+
+    Returns:
+        treelib.Tree: The folder tree for the specified workflow.
+    """
+    try:
+        # Validate the model binding.
+        model: BudgetDomainModel = bdm_DC.model
+        if not model:
+            m = "No BudgetDomainModel binding in the DC."
+            logger.error(m)
+            raise ValueError(m)
+        fi_wf_folder_url: str = model.bdm_FI_WF_FOLDER_URL(fi_key, wf_key, 
+                                                           wf_purpose, 
+                                                           raise_errors=False)
+        if not fi_wf_folder_url:
+            return None
+        folder_tree: Tree = bsm_file_tree_from_folder(fi_wf_folder_url)
+        return folder_tree
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion CMD_TASK_get_file_tree() function
+# ---------------------------------------------------------------------------- +
 #region extract_bdm_tree() function
 def extract_bdm_tree(bdm_DC: BudManAppDataContext_Base) -> Tree:
     """Return a tree structure of the BDM in the provided DataContext."""
@@ -364,7 +539,8 @@ def verify_cmd_key( cmd: p3m.CMD_OBJECT_TYPE,
         expected_cmd_key (str): The expected command key.
 
     Returns:
-        CMD_RESULT_TYPE: True if the command key matches, False otherwise.
+        CMD_RESULT_TYPE: True if the command key matches, False otherwise,
+        with a returnable CMD_RESULT_TYPE.
     """
     cmd_result: p3m.CMD_RESULT_TYPE = p3m.create_CMD_RESULT_OBJECT(
         cmd_result_status=True,
@@ -382,3 +558,4 @@ def verify_cmd_key( cmd: p3m.CMD_OBJECT_TYPE,
         cmd_result[p3m.CMD_RESULT_CONTENT] = m
         cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = p3m.CMD_ERROR_STRING_OUTPUT
     return cmd_result
+#endregion verify_cmd_key()

@@ -447,8 +447,8 @@ def validate_subcmd_key_with_name(subcmd_name: str, cmd_key: str,
 #region create_CMD_RESULT_OBJECT()
 def create_CMD_RESULT_OBJECT(
     cmd_result_status: bool = False,
-    result_content_type: str = '',
-    result_content: Optional[Any] = None,
+    result_content_type: str = CMD_STRING_OUTPUT,
+    result_content: Optional[Any] = "No result content.",
     cmd_object: Optional[CMD_OBJECT_TYPE] = None
 ) -> CMD_RESULT_TYPE:
     """Construct a CMD_RESULT_OBJECT from input parameters."""
@@ -472,16 +472,50 @@ def is_CMD_RESULT(cmd_result: Any) -> bool:
 # ---------------------------------------------------------------------------- +
 #region create_CMD_RESULT_ERROR() function
 def create_CMD_RESULT_ERROR(cmd: CMD_OBJECT_TYPE, e: Exception) -> CMD_RESULT_TYPE:
-    """Construct a CMD_RESULT_ERROR from input parameters."""
-    m = p3u.exc_err_msg(e)
-    logger.error(m)
-    cmd_result = {
-        CMD_RESULT_STATUS: False,
-        CMD_RESULT_CONTENT_TYPE: CMD_ERROR_STRING_OUTPUT,
-        CMD_RESULT_CONTENT: m,
-        CMD_OBJECT_VALUE: cmd
-    }
-    return cmd_result.copy()
+        """Return a CMD_RESULT based on an Exception e for the CMD_OBJECT execution.
+
+        Executing the cmd resulted in Exception e. Format and error message
+        and return it in a CMD_RESULT suitable to return as an error.
+
+        Arguments:
+            cmd (Dict): A valid CMD_OBJECT_TYPE.
+
+        Returns:
+            CMD_RESULT_TYPE with error information and status of False.
+            
+        """
+        m = (f"Error executing cmd: {cmd.get(CK_CMD_KEY,"Unknown cmd_key")} "
+             f"{cmd.get(CK_SUBCMD_KEY, "Unknown subcmd_key")}: "
+             f"{p3u.exc_err_msg(e)}")
+        logger.error(m)
+        return create_CMD_OBJECT(
+            cmd_result_status = False,
+            result_content = m,
+            result_content_type=CMD_ERROR_STRING_OUTPUT,
+            cmd_object=cmd
+        )
+#endregion create_CMD_RESULT_ERROR() function
+# ---------------------------------------------------------------------------- +
+#region create_CMD_RESULT_ERROR() function
+def unknown_CMD_RESULT_ERROR(cmd: CMD_OBJECT_TYPE) -> CMD_RESULT_TYPE:
+        """Return a CMD_RESULT based on unknown CK_CMD_KEY and CK_SUBCMD_KEY.
+
+        Arguments:
+            cmd (Dict): A valid CMD_OBJECT_TYPE.
+
+        Returns:
+            CMD_RESULT_TYPE with error information and status of False.
+            
+        """
+        m = (f"Error unknown {CK_CMD_KEY}: '{cmd.get(CK_CMD_KEY,None)}' "
+             f"{CK_SUBCMD_KEY}: '{cmd.get(CK_SUBCMD_KEY, None)}' ")
+        logger.error(m)
+        return create_CMD_OBJECT(
+            cmd_result_status = False,
+            result_content = m,
+            result_content_type=CMD_ERROR_STRING_OUTPUT,
+            cmd_object=cmd
+        )
 #endregion create_CMD_RESULT_ERROR() function
 # ---------------------------------------------------------------------------- +
 #endregion CMD_RESULT_OBJECT functions

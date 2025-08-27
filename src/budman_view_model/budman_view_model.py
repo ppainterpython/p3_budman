@@ -668,7 +668,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             return cmd_result
         except Exception as e:
-            return self.ERROR_cmd(cmd, e)
+            return p3m.create_CMD_RESULT_ERROR(cmd, e)
     #endregion SHOW_cmd() execution method
     # ------------------------------------------------------------------------ +
     #region BDM_STORE_save_cmd() execution method
@@ -1215,7 +1215,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             return cmd_result
         except Exception as e:
-            return self.ERROR_cmd(cmd, e)
+            return p3m.create_CMD_RESULT_ERROR(cmd, e)
     #endregion WORKFLOW_cmd() execution method
     # ------------------------------------------------------------------------ +
     #region WORKFLOW_apply_cmd() execution method
@@ -1367,31 +1367,6 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             logger.error(p3u.exc_err_msg(e))
             raise
     #endregion WORKFLOW_check_cmd() execution method
-    # ------------------------------------------------------------------------ +
-    #region ERROR_cmd() execution method
-    def ERROR_cmd(self, cmd : p3m.CMD_OBJECT_TYPE, e: Exception) -> p3m.CMD_RESULT_TYPE:
-        """Retrun a CMD_RESULT based on an Exception e for the CMD_OBJECT execution.
-
-        Executing the cmd resulted in Execpteion e. Format and error message
-        and return it in a CMD_RESULT suitalbe to return as an error.
-
-        Arguments:
-            cmd (Dict): A valid CMD_OBJECT_TYPE.
-
-        Returns:
-            CMD_RESULT_TYPE with error information and status of False.
-            
-        """
-        m = (f"Error executing cmd: {cmd[p3m.CK_CMD_NAME]} {cmd[p3m.CK_SUBCMD_NAME]}: "
-                f"{p3u.exc_err_msg(e)}")
-        logger.error(m)
-        return p3m.create_CMD_OBJECT(
-            cmd_result_status = False,
-            result_content = m,
-            result_content_type=p3m.CMD_ERROR_STRING_OUTPUT,
-            cmd_object=cmd
-        )
-    #endregion WORKFLOW_reload_cmd() execution method
     # ------------------------------------------------------------------------ +
     #                                                                          +
     #endregion Command Execution Methods                                       +

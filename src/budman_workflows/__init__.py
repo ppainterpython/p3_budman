@@ -20,7 +20,6 @@ __license__ = "MIT"
 
 from .workflow_command_services import (
     WORKFLOW_TASK_process,
-    WORKFLOW_get_folder_tree
 )
 from .budget_intake import (
     process_workflow_intake_tasks
@@ -70,7 +69,6 @@ from .budget_category_mapping import (
 __all__ = [
     # workflow_commands.py module
     "WORKFLOW_TASK_process",
-    "WORKFLOW_get_folder_tree",
     # module names
     "workflow_utils",
     # budget_intake",

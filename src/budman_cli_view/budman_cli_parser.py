@@ -428,10 +428,6 @@ class BudManCLIParser():
             set_parser = self.add_set_subparser(subparsers)
             #endregion workflow set subcommand
 
-            #region workflow list subcommand
-            list_parser = self.add_list_subparser(subparsers)
-            #endregion workflow list subcommand
-
             #region workflow categorization subcommand
             categorization_parser = subparsers.add_parser(
                 cp.CV_CATEGORIZATION_SUBCMD_NAME,
@@ -531,29 +527,6 @@ class BudManCLIParser():
             logger.exception(p3u.exc_err_msg(e))
             raise
     #endregion Command Parser Setup Methods
-    # ------------------------------------------------------------------------ +
-    #region workflow list subcommand subparser
-    def add_list_subparser(self, subparsers) -> None:
-        """Add a list subparser to the provided subparsers."""
-        try:
-            # workflow list subcommand
-            list_parser = subparsers.add_parser(
-                cp.CV_LIST_SUBCMD_NAME,
-                aliases=["ls"], 
-                help="List workflow task information.")
-            list_parser.set_defaults(
-                cmd_key=cp.CV_WORKFLOW_CMD_KEY,   # new way
-                cmd_name=cp.CV_WORKFLOW_CMD_NAME, 
-                subcmd_name=cp.CV_LIST_SUBCMD_NAME
-                )
-            self.add_workflow_argument(list_parser)
-            self.add_purpose_argument(list_parser)
-            self.add_common_args(list_parser)
-            return list_parser
-        except Exception as e:
-            logger.exception(p3u.exc_err_msg(e))
-            raise
-    #endregion workflow list subcommand subparser
     # ------------------------------------------------------------------------ +
     #region workflow set subcommand subparser
     def add_set_subparser(self, subparsers) -> None:
