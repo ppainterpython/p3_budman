@@ -804,7 +804,7 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
                 len(fi_wf_fldr_cfg_coll) == 0):
                 m = f"FI_WF_FOLDER_CONFIG_COLLECTION for fi_key('{fi_key}') "
                 m += "is empty or None."
-                logger.warning(m)
+                logger.debug(m)
                 return None
             self.bdm_WF_KEY_validate(wf_key)
             self.bdm_WF_PURPOSE_validate(wf_purpose)
@@ -812,14 +812,14 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
                 m = f"Workflow key '{wf_key}' not found in "
                 m += f"FI_WF_FOLDER_CONFIG_COLLECTION for fi_key('{fi_key}'): "
                 m += f"{list(fi_wf_fldr_cfg_coll.keys())}"
-                logger.warning(m)
+                logger.debug(m)
                 return None
             wf_fldr_cfg_list : WF_FOLDER_CONFIG_LIST_TYPE = fi_wf_fldr_cfg_coll[wf_key]
             if (wf_fldr_cfg_list is None or
                 len(wf_fldr_cfg_list) == 0):
                 m = f"Workflow folder config list for FI_KEY('{fi_key}') "
                 m += f"WF_KEY('{wf_key}') is empty or None."
-                logger.warning(m)
+                logger.debug(m)
                 return None
             for wf_folder_config in wf_fldr_cfg_list:
                 if (wf_folder_config[WF_PURPOSE] == wf_purpose):

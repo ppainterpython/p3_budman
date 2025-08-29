@@ -279,11 +279,6 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
         try:
             st = p3u.start_timer()
             logger.info(f"BizEVENT: View Model setup for '{self.app_name}'")
-            # Initialize the command map.
-            # TODO: binding for BudManCommandProcessor in the future,
-            #       for now it is built in to the View Model.
-            self.cp_initialize_cmd_map()  # TODO: move to DataContext class
-            self.initialized = True
             logger.debug(f"Complete: {p3u.stop_timer(st)}")
             return self
         except Exception as e:
@@ -373,11 +368,11 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
         self._settings = settings
 
     @property
-    def initialized(self) -> bool:
+    def cp_initialized(self) -> bool:
         """Return True if the ViewModel is initialized."""
         return self._initialized
-    @initialized.setter
-    def initialized(self, value: bool) -> None:
+    @cp_initialized.setter
+    def cp_initialized(self, value: bool) -> None:
         """Set the initialized property."""
         if not isinstance(value, bool):
             raise ValueError("initialized must be a boolean value.")

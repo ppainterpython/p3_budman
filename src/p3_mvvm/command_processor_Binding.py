@@ -34,10 +34,13 @@ class CommandProcessor_Binding(CommandProcessor_Base):
     #endregion CommandProcessor_Binding class doc string
     # ------------------------------------------------------------------------ +
     #region __init__() constructor method
-    def __init__(self) -> None:
+    def __init__(self,command_processor: CommandProcessor_Base) -> None:
         super().__init__()
-        self._initialized : bool = False
-        self._cp : CommandProcessor_Base = None  # Command Processor
+        if not isinstance(command_processor, CommandProcessor_Base):
+            raise ValueError(f"CommandProcessor_Binding: command_processor "
+                             f"must be an instance of CommandProcessor_Base., "
+                             f"not type: '{type(command_processor).__name__}'.")
+        self._cp : CommandProcessor_Base = command_processor  # Command Processor
         self._cmd_map : Dict[str, Callable] = None
     #endregion __init__() constructor method
     # ------------------------------------------------------------------------ +
@@ -54,9 +57,26 @@ class CommandProcessor_Binding(CommandProcessor_Base):
     def CP(self, value : CommandProcessor_Base) -> None:
         """Set the command processor."""
         self._cp = value
+
+    @property
+    def CP_binding(self) -> bool:
+        """Is CP binding set?"""
+        return (self._cp is not None and
+                isinstance(self._cp, CommandProcessor_Base) and
+                self.CP.cp_initialized)
     #endregion CommandProcessor_BindingProperties
     # ------------------------------------------------------------------------ +
     #region CommandProcessor_Base Properties
+    @property
+    def cp_initialized(self) -> bool:
+        """Return True if the command processor is initialized."""
+        return self.CP.cp_initialized
+
+    @cp_initialized.setter
+    def cp_initialized(self, value: bool) -> None:
+        """Set the initialized state of the command processor."""
+        self.CP.cp_initialized = value
+
     @property
     def cp_cmd_map(self) -> Dict[str, Callable]:
         """Return the command map for the command processor."""
@@ -68,6 +88,35 @@ class CommandProcessor_Binding(CommandProcessor_Base):
             raise ValueError("cp_cmd_map must be a dictionary.")
         self.CP.cp_cmd_map = value
 
+    @property
+    def cp_parse_only(self) -> bool:
+        """Return the parse_only state of the command processor."""
+        return self.CP.cp_parse_only
+
+    @cp_parse_only.setter
+    def cp_parse_only(self, value: bool) -> None:
+        """Set the parse_only state of the command processor."""
+        self.CP.cp_parse_only = value
+
+    @property
+    def cp_validate_only(self) -> bool:
+        """Return the validate_only state of the command processor."""
+        return self.CP.cp_validate_only
+
+    @cp_validate_only.setter
+    def cp_validate_only(self, value: bool) -> None:
+        """Set the validate_only state of the command processor."""
+        self.CP.cp_validate_only = value
+
+    @property
+    def cp_what_if(self) -> bool:
+        """Return the what_if state of the command processor."""
+        return self.CP.cp_what_if
+
+    @cp_what_if.setter
+    def cp_what_if(self, value: bool) -> None:
+        """Set the what_if state of the command processor."""
+        self.CP.cp_what_if = value
     #endregion CommandProcessor_BindingProperties
     # ------------------------------------------------------------------------ +
     #region CommandProcessor_Base Methods
@@ -87,7 +136,7 @@ class CommandProcessor_Binding(CommandProcessor_Base):
     def cp_initialize_cmd_map(self) -> None:
         """Application-specific: Initialize the cp_cmd_map."""
         try:
-            self.initialized = True
+            self.cp_initialized = True
             logger.debug(f"CommandProcessor cmd_map initialized.")
             return self.CP.cp_initialize_cmd_map()
         except Exception as e:

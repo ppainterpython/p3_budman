@@ -113,6 +113,9 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
     def __init__(self) -> None:
         self._initialized : bool = False
         self._cmd_map : Dict[str, Callable] = None
+        self._parse_only : bool = False
+        self._validate_only : bool = False
+        self._what_if : bool = False
     #endregion __init__() constructor method
     # ------------------------------------------------------------------------ +
     #endregion CommandProcessor class instrisics - override for app-specific
@@ -120,6 +123,16 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
 
     # ------------------------------------------------------------------------ +
     #region    CommandProcessor_Base Properties
+    @property
+    def cp_initialized(self) -> bool:
+        """Return True if the command processor is initialized."""
+        return self._initialized
+
+    @cp_initialized.setter
+    def cp_initialized(self, value: bool) -> None:
+        """Set the initialized state of the command processor."""
+        self._initialized = value
+
     @property
     def cp_cmd_map(self) -> Dict[str, Callable]:
         """Return the command map for the command processor."""
@@ -130,6 +143,36 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
         if not isinstance(value, dict):
             raise ValueError("cp_cmd_map must be a dictionary.")
         self._cmd_map = value
+
+    @property
+    def cp_parse_only(self) -> bool:
+        """Return the parse_only state of the command processor."""
+        return self._parse_only
+
+    @cp_parse_only.setter
+    def cp_parse_only(self, value: bool) -> None:
+        """Set the parse_only state of the command processor."""
+        self._parse_only = value
+
+    @property
+    def cp_validate_only(self) -> bool:
+        """Return the validate_only state of the command processor."""
+        return self._validate_only
+
+    @cp_validate_only.setter
+    def cp_validate_only(self, value: bool) -> None:
+        """Set the validate_only state of the command processor."""
+        self._validate_only = value
+
+    @property
+    def cp_what_if(self) -> bool:
+        """Return the what_if state of the command processor."""
+        return self._what_if
+
+    @cp_what_if.setter
+    def cp_what_if(self, value: bool) -> None:
+        """Set the what_if state of the command processor."""
+        self._what_if = value
     #endregion CommandProcessor_Base Properties
     # ------------------------------------------------------------------------ +
     #region    CommandProcessor_Base Methods
@@ -139,7 +182,7 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
         """Initialize the CommandProcessor."""
         try:
             self.cp_initialize_cmd_map()
-            self.initialized = True
+            self.cp_initialized = True
             logger.debug(f"CommandProcessor initialized.")
             return self
         except Exception as e:
@@ -179,7 +222,7 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
         try:
             st = p3u.start_timer()
             logger.info(f"Start Command: {cmd}")
-            parse_only: bool = self.cp_cmd_attr_get(cmd, CK_PARSE_ONLY, False)
+            parse_only: bool = self.cp_cmd_attr_get(cmd, CK_PARSE_ONLY, self.cp_parse_only)
             if parse_only:
                 cmd_string: str = f"{CK_PARSE_ONLY}: {str(cmd)}"
                 logger.info(cmd_string)
@@ -192,7 +235,7 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
             # if cp_validate_cmd() is good, continue.
             exec_func: Callable = cmd[CK_CMD_EXEC_FUNC]
             function_name = exec_func.__name__
-            validate_only: bool = self.cp_cmd_attr_get(cmd, CK_VALIDATE_ONLY)
+            validate_only: bool = self.cp_cmd_attr_get(cmd, CK_VALIDATE_ONLY, self.cp_validate_only)
             if validate_only:
                 cmd_string: str = f"{CK_VALIDATE_ONLY}: {function_name}({str(cmd)})"
                 logger.info(cmd_string)
@@ -270,7 +313,7 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
         try:
             pfx = f"{self.__class__.__name__}.{self.cp_validate_cmd_object.__name__}: "
             logger.debug(f"Before Validating CMD_OBJECT: {str(cmd)}")
-            if not self.initialized:
+            if not self.cp_initialized:
                 m = f"Command Processor is not initialized."
                 logger.error(m)
                 if raise_error:
@@ -430,16 +473,13 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
             cmd: CMD_OBJECT_TYPE = self.extract_CMD_OBJECT_from_argparse_Namespace(opts)
             # Process parameters affecting possible cmd.
             # parse_only flag can be set in the view or added to any cmd.
-            parse_only:bool = self.cp_cmd_attr_get(cmd, CK_PARSE_ONLY, self.parse_only)
-            parse_only = parse_only or self.parse_only
+            parse_only:bool = self.cp_cmd_attr_get(cmd, CK_PARSE_ONLY, self.cp_parse_only)
             self.cp_cmd_attr_set(cmd, CK_PARSE_ONLY, parse_only)
             # validate_only flag 
-            validate_only:bool = self.cp_cmd_attr_get(cmd, CK_VALIDATE_ONLY, self.validate_only)
-            validate_only = validate_only or self.validate_only
+            validate_only:bool = self.cp_cmd_attr_get(cmd, CK_VALIDATE_ONLY, self.cp_validate_only)
             self.cp_cmd_attr_set(cmd, CK_VALIDATE_ONLY, validate_only)
             # what_if flag 
-            what_if:bool = self.cp_cmd_attr_get(cmd, CK_WHAT_IF, self.what_if)
-            what_if = what_if or self.what_if
+            what_if:bool = self.cp_cmd_attr_get(cmd, CK_WHAT_IF, self.cp_what_if)
             self.cp_cmd_attr_set(cmd, CK_WHAT_IF, what_if)
             return cmd
         except SystemExit as e:

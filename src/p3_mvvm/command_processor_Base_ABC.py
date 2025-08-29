@@ -34,6 +34,16 @@ class CommandProcessor_Base(ABC):
     #region CommandProcessor_Base Properties
     @property
     @abstractmethod
+    def cp_initialized(self) -> bool:
+        """Return True if the command processor is initialized."""
+        pass
+    @cp_initialized.setter
+    def cp_initialized(self, value: bool) -> None:
+        """Set the initialized state of the command processor."""
+        pass
+
+    @property
+    @abstractmethod
     def cp_cmd_map(self) -> Dict[str, Callable]:
         """Return the command map for the command processor."""
         pass
@@ -42,6 +52,40 @@ class CommandProcessor_Base(ABC):
     def cp_cmd_map(self, value : Dict[str, Callable]) -> None:
         """Set the command map for the command processor."""
         pass
+
+    @property
+    @abstractmethod
+    def cp_parse_only(self) -> bool:
+        """Return the parse_only state of the command processor."""
+        pass
+    @cp_parse_only.setter
+    @abstractmethod
+    def cp_parse_only(self, value: bool) -> None:
+        """Set the parse_only state of the command processor."""
+        pass
+
+    @property
+    @abstractmethod
+    def cp_validate_only(self) -> bool:
+        """Return the validate_only state of the command processor."""
+        pass
+    @cp_validate_only.setter
+    @abstractmethod
+    def cp_validate_only(self, value: bool) -> None:
+        """Set the validate_only state of the command processor."""
+        pass
+
+    @property
+    @abstractmethod
+    def cp_what_if(self) -> bool:
+        """Return the what_if state of the command processor."""
+        pass
+    @cp_what_if.setter
+    @abstractmethod
+    def cp_what_if(self, value: bool) -> None:
+        """Set the what_if state of the command processor."""
+        pass
+
     #endregion CommandProcessor_Base Properties
     # ------------------------------------------------------------------------ +
     #region CommandProcessor methods
