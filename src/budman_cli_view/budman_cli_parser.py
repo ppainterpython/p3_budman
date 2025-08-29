@@ -324,8 +324,11 @@ class BudManCLIParser():
             parser = self.show_cmd
             parser.prog = app_name
             subparsers = self.show_cmd.add_subparsers()
-            parser.set_defaults(cmd_key=cp.CV_SHOW_CMD_KEY,
-                                cmd_name=cp.CV_SHOW_CMD_NAME)
+            show_cmd_defaults = {
+                p3m.CK_CMD_KEY: cp.CV_SHOW_CMD_KEY,
+                p3m.CK_CMD_NAME: cp.CV_SHOW_CMD_NAME
+            }
+            parser.set_defaults(**show_cmd_defaults)
 
             # show subcommands: categories, datacontext, workbooks, fin_inst, 
             # workflows
@@ -359,29 +362,27 @@ class BudManCLIParser():
 
             #region show DataContext subcommand
             datacontext_subcmd_parser = subparsers.add_parser(
-                "DATA_CONTEXT",
+                cp.CV_DATA_CONTEXT_SUBCMD_NAME,
                 aliases=["dc", "DC"],
                 help="Show the data context information.")
-            datacontext_subcmd_parser.set_defaults(
-                show_cmd="DATA_CONTEXT", # old way
-                cmd_key="show_cmd",   # new way
-                cmd_name="show", 
-                subcmd_name="DATA_CONTEXT",
-                subcmd_key="show_cmd_DATA_CONTEXT")
+            datacontext_subcmd_defaults = {
+                p3m.CK_SUBCMD_NAME: cp.CV_DATA_CONTEXT_SUBCMD_NAME,
+                p3m.CK_SUBCMD_KEY: cp.CV_SHOW_DATA_CONTEXT_SUBCMD_KEY
+            }
+            datacontext_subcmd_parser.set_defaults(**datacontext_subcmd_defaults)
             self.add_common_args(datacontext_subcmd_parser)
             #endregion show DataContext subcommand
 
             #region show Financial Institution subcommand [fi_key] [-wf [wf_key]] [-wb [wb_name]]
             fi_subcmd_parser = subparsers.add_parser(
-                "fin_inst",
+                cp.CV_FIN_INST_SUBCMD_NAME,
                 aliases=["fi", "FI", "financial_institutions"], 
                 help="Show Financial Institution information.")
-            fi_subcmd_parser.set_defaults(
-                show_cmd="fin_inst",
-                cmd_key="show_cmd",   # new way
-                cmd_name="show", 
-                subcmd_name="fin_inst",
-                subcmd_key="show_cmd_fin_inst")
+            fi_subcmd_defaults = {
+                p3m.CK_SUBCMD_NAME: cp.CV_FIN_INST_SUBCMD_NAME,
+                p3m.CK_SUBCMD_KEY: cp.CV_FIN_INST_SUBCMD_KEY
+            }
+            fi_subcmd_parser.set_defaults(**fi_subcmd_defaults)
             fi_subcmd_parser.add_argument(
                 "fi_key", nargs="?", 
                 default= "all",
@@ -391,10 +392,14 @@ class BudManCLIParser():
 
             #region show workflows subcommand
             wf_subcmd_parser  = subparsers.add_parser(
-                "workflows",
+                cp.CV_WORKFLOWS_SUBCMD_NAME,
                 aliases=["wf", "WF"], 
                 help="Show Workflow information.")
-            wf_subcmd_parser.set_defaults(show_cmd="workflows")
+            wf_subcmd_defaults = {
+                p3m.CK_SUBCMD_NAME: cp.CV_WORKFLOWS_SUBCMD_NAME,
+                p3m.CK_SUBCMD_KEY: cp.CV_WORKFLOWS_SUBCMD_KEY
+            }
+            wf_subcmd_parser.set_defaults(**wf_subcmd_defaults)
             wf_subcmd_parser.add_argument(
                 "wf_key", nargs="?", 
                 action="store", 

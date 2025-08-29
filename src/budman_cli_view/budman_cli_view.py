@@ -325,22 +325,16 @@ class BudManCLIView(cmd2.Cmd, BudManAppDataContext_Binding,
         """
         try:
             # Construct the command object from cmd2's argparse Namespace.
-            status, cmd = self.construct_cmd(opts)
-            if not status:
-                return
             # If app exit cmd, handle here.
-            if cmd[cp.p3m.CK_SUBCMD_KEY] == cp.CV_EXIT_SUBCMD_KEY:
+            if cmd[p3m.CK_SUBCMD_KEY] == cp.CV_EXIT_SUBCMD_KEY:
                 # Handle the --no_save switch
                 self.save_on_exit = not cmd[cp.CK_NO_SAVE]
                 console.print("Exiting Budget Manager CLI.")
                 return True
             # Submit the command to the command processor.
-            status, result = self.cp_execute_cmd(cmd)
+            cmd_result: p3m.CMD_RESULT_TYPE = self.cp_execute_cmd(cmd)
             # Render the result.
-            if status:
-                console.print(result)
-            else:
-                console.print(f"[red]Error:[/red] {result}")
+            cli_view_cmd_output(cmd, cmd_result)
         except Exception as e:
             self.pexcept(e)
     #endregion do_app command
@@ -351,16 +345,11 @@ class BudManCLIView(cmd2.Cmd, BudManAppDataContext_Binding,
         """Change (ch) attributes of workbooks and other objects in the Data Context for the Budget Manager application."""
         try:
             # Construct the command object from cmd2's argparse Namespace.
-            status, cmd = self.construct_cmd(opts)
-            if not status:
-                return
+            cmd: p3m.CMD_OBJECT_TYPE = self.construct_cmd_from_argparse(opts)
             # Submit the command to the command processor.
-            status, result = self.cp_execute_cmd(cmd)
+            cmd_result: p3m.CMD_RESULT_TYPE = self.cp_execute_cmd(cmd)
             # Render the result.
-            if status:
-                console.print(result)
-            else:
-                console.print(f"[red]Error:[/red] {result}")
+            cli_view_cmd_output(cmd, cmd_result)
         except Exception as e:
             self.pexcept(e)
     #endregion do_change command - change attributes of workbooks and other objects.
@@ -377,16 +366,11 @@ class BudManCLIView(cmd2.Cmd, BudManAppDataContext_Binding,
         """
         try:
             # Construct the command object from cmd2's argparse Namespace.
-            status, cmd = self.construct_cmd(opts)
-            if not status:
-                return
+            cmd: p3m.CMD_OBJECT_TYPE = self.construct_cmd_from_argparse(opts)
             # Submit the command to the command processor.
             cmd_result: p3m.CMD_RESULT_TYPE = self.cp_execute_cmd(cmd)
             # Render the result.
-            if cmd_result[p3m.CMD_RESULT_STATUS]:
-                cli_view_cmd_output(cmd, cmd_result)
-            else:
-                console.print(f"[red]Error:[/red] {cmd_result[p3m.CMD_RESULT_CONTENT]}")
+            cli_view_cmd_output(cmd, cmd_result)
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
@@ -405,16 +389,11 @@ class BudManCLIView(cmd2.Cmd, BudManAppDataContext_Binding,
         """
         try:
             # Construct the command object from cmd2's argparse Namespace.
-            status, cmd = self.construct_cmd(opts)
-            if not status:
-                return
+            cmd: p3m.CMD_OBJECT_TYPE = self.construct_cmd_from_argparse(opts)
             # Submit the command to the command processor.
-            status, result = self.cp_execute_cmd(cmd)
+            cmd_result: p3m.CMD_RESULT_TYPE = self.cp_execute_cmd(cmd)
             # Render the result.
-            if status:
-                console.print(result)
-            else:
-                console.print(f"[red]Error:[/red] {result}")
+            cli_view_cmd_output(cmd, cmd_result)
         except Exception as e:
             self.pexcept(e)
     #endregion do_load command - load workbooks
@@ -445,16 +424,10 @@ class BudManCLIView(cmd2.Cmd, BudManAppDataContext_Binding,
         """
         try:
             # Construct the command object from cmd2's argparse Namespace.
-            status, cmd = self.construct_cmd(opts)
-            if not status:
-                return
-            # Submit the command to the command processor.
+            cmd: p3m.CMD_OBJECT_TYPE = self.construct_cmd_from_argparse(opts)
             cmd_result: p3m.CMD_RESULT_TYPE  = self.cp_execute_cmd(cmd)
             # Render the result.
-            if cmd_result[p3m.CMD_RESULT_STATUS]:
-                cli_view_cmd_output(cmd, cmd_result[p3m.CMD_RESULT_DATA])
-            else:
-                console.print(f"[red]Error:[/red] {cmd_result[p3m.CMD_RESULT_ERROR]}")
+            cli_view_cmd_output(cmd, cmd_result[p3m.CMD_RESULT_DATA])
         except Exception as e:
             self.pexcept(e)
     #endregion do_show command
@@ -471,16 +444,11 @@ class BudManCLIView(cmd2.Cmd, BudManAppDataContext_Binding,
         """
         try:
             # Construct the command object from cmd2's argparse Namespace.
-            status, cmd = self.construct_cmd(opts)
-            if not status:
-                return
-            # Submit the command to the command processor.
-            status, result = self.cp_execute_cmd(cmd)
+            cmd: p3m.CMD_OBJECT_TYPE = self.construct_cmd_from_argparse(opts)
+           # Submit the command to the command processor.
+            cmd_result: p3m.CMD_RESULT_TYPE = self.cp_execute_cmd(cmd)
             # Render the result.
-            if status:
-                console.print(result)
-            else:
-                console.print(f"[red]Error:[/red] {result}")
+            cli_view_cmd_output(cmd, cmd_result[p3m.CMD_RESULT_DATA])
         except Exception as e:
             self.pexcept(e)
     #endregion do_save command - save workbooks
@@ -503,9 +471,7 @@ class BudManCLIView(cmd2.Cmd, BudManAppDataContext_Binding,
         """
         try:
             # Construct the command object from cmd2's argparse Namespace.
-            status, cmd = self.construct_cmd(opts)
-            if not status:
-                return
+            cmd: p3m.CMD_OBJECT_TYPE = self.construct_cmd_from_argparse(opts)
             # Submit the command to the command processor.
             cmd_result: p3m.CMD_RESULT_TYPE  = self.cp_execute_cmd(cmd)
             # Output the result.
@@ -525,88 +491,92 @@ class BudManCLIView(cmd2.Cmd, BudManAppDataContext_Binding,
     # ------------------------------------------------------------------------ +
     #
     # ------------------------------------------------------------------------ +
-    #region construct_cmd
-    def construct_cmd(self, opts : argparse.Namespace) -> Tuple[bool, Any]:
-        """Construct a command object from cmd2/argparse arguments."""
-        try:
-            cmd = self.extract_CMD_OBJECT_from_argparse_Namespace(opts)
-            parse_only:bool = self.CP.cp_cmd_attr_get(cmd, p3m.CK_PARSE_ONLY, self.parse_only)
-            if parse_only or self.parse_only: 
-                console.print(f"parse-only: '{self.current_cmd}' {str(cmd)}")
-                return False, cp.CK_PARSE_ONLY
-            return True, cmd
-        except SystemExit as e:
-            # Handle the case where argparse exits the program
-            self.pwarning(BMCLI_SYSTEM_EXIT_WARNING)
-        except Exception as e:
-            m = p3u.exc_err_msg(e)
-            logger.error(m)
-            self.pexcept(m)
-    #endregion construct_cmd
+    #region construct_cmd_from_argparse
+    # def construct_cmd_from_argparse(self, opts : argparse.Namespace) -> Tuple[bool, Any]:
+    #     """Construct a valid cmd object from cmd2/argparse arguments or raise error."""
+    #     try:
+    #         # Process cmd object core values, either return a valid command 
+    #         # object or raise an error.
+    #         cmd: p3m.CMD_OBJECT_TYPE = self.extract_CMD_OBJECT_from_argparse_Namespace(opts)
+    #         # Process parameters affecting possible cmd.
+    #         # parse_only flag can be set in the view or added to any cmd.
+    #         parse_only:bool = self.CP.cp_cmd_attr_get(cmd, p3m.CK_PARSE_ONLY, self.parse_only)
+    #         parse_only = parse_only or self.parse_only
+    #         self.CP.cp_cmd_attr_set(cmd, p3m.CK_PARSE_ONLY, parse_only)
+    #         # validate_only flag 
+    #         return cmd
+    #     except SystemExit as e:
+    #         # Handle the case where argparse exits the program
+    #         self.pwarning(BMCLI_SYSTEM_EXIT_WARNING)
+    #     except Exception as e:
+    #         m = p3u.exc_err_msg(e)
+    #         logger.error(m)
+    #         self.pexcept(m)
+    #endregion construct_cmd_from_argparse
     # ------------------------------------------------------------------------ +
     #region extract_CMD_OBJECT_from_argparse_Namespace
-    def extract_CMD_OBJECT_from_argparse_Namespace(self, opts : argparse.Namespace) -> Dict[str, Any]:
-        """Create a CommandProcessor cmd dictionary from argparse.Namespace.
+    # def extract_CMD_OBJECT_from_argparse_Namespace(self, opts : argparse.Namespace) -> p3m.CMD_OBJECT_TYPE:
+    #     """Create a CommandProcessor cmd dictionary from argparse.Namespace.
         
-        This method is specific to BudManCLIView which utilizes argparse for 
-        command line argument parsing integrated with cmd2.cmd for command help
-        and execution. It converts the argparse.Namespace object into a
-        dictionary suitable for the command processor to execute, but 
-        independent of the cmd2.cmd structure and argparse specifics.
+    #     This method is specific to BudManCLIView which utilizes argparse for 
+    #     command line argument parsing integrated with cmd2.cmd for command help
+    #     and execution. It converts the argparse.Namespace object into a
+    #     dictionary suitable for the command processor to execute, but 
+    #     independent of the cmd2.cmd structure and argparse specifics.
 
-        A ViewModelCommandProcessor_Binding implementation must provide valid
-        ViewModelCommandProcessor cmd dictionaries to the
-        ViewModelCommandProcessor interface. This method is used to convert
-        the cmd2.cmd arguments into a dictionary that can be used by the
-        ViewModelCommandProcessor_Binding implementation.
-        """
-        try:
-            if not isinstance(opts, argparse.Namespace):
-                raise TypeError("opts must be an instance of argparse.Namespace.")
-            cmd2_cmd_name: str = ''
-            cmd_name: str = ''
-            cmd_key: str = ''
-            subcmd_name: str = ''
-            subcmd_key: str = ''
-            cmd_exec_func: Optional[Callable] = None
+    #     A ViewModelCommandProcessor_Binding implementation must provide valid
+    #     ViewModelCommandProcessor cmd dictionaries to the
+    #     ViewModelCommandProcessor interface. This method is used to convert
+    #     the cmd2.cmd arguments into a dictionary that can be used by the
+    #     ViewModelCommandProcessor_Binding implementation.
+    #     """
+    #     try:
+    #         if not isinstance(opts, argparse.Namespace):
+    #             raise TypeError("opts must be an instance of argparse.Namespace.")
+    #         cmd2_cmd_name: str = ''
+    #         cmd_name: str = ''
+    #         cmd_key: str = ''
+    #         subcmd_name: str = ''
+    #         subcmd_key: str = ''
+    #         cmd_exec_func: Optional[Callable] = None
 
-            # Convert to dict, remove two common cmd2 attributes, if present.
-            # see bottom of https://cmd2.readthedocs.io/en/latest/features/argument_processing/#decorator-order
-            opts_dict = vars(opts).copy()
-            cmd2_statement: cmd2.Statement = opts_dict.pop('cmd2_statement', None).get()
-            cmd2_handler = opts_dict.pop('cmd2_handler', None).get()
-            if cmd2_statement is not None:
-                # A valid cmd2.cmd will provide a cmd_name, at a minimum.
-                # see https://cmd2.readthedocs.io/en/latest/features/commands/#statements
-                cmd2_cmd_name = cmd2_statement.command
-            # Collect the command attributes present (or not) in the opts_dict.
-            cmd_name = opts_dict.get(p3m.CK_CMD_NAME, cmd2_cmd_name) 
-            if p3u.str_empty(cmd_name):
-                # Must have cmd_name
-                raise ValueError("Invalid: No command name provided.")
-            cmd_key = opts_dict.get(p3m.CK_CMD_KEY, f"{cmd_name}{p3m.CMD_KEY_SUFFIX}")
-            subcmd_name = opts_dict.get(p3m.CK_SUBCMD_NAME, None)
-            subcmd_key = opts_dict.get(p3m.CK_SUBCMD_KEY, 
-                    f"{cmd_key}_{subcmd_name}" if subcmd_name else None)
-            cmd_exec_func = opts_dict.get(p3m.CK_CMD_EXEC_FUNC, None)
-            # Validate CMD_OBJECT requirements.
-            if not p3m.validate_cmd_key_with_name(cmd_name, cmd_key):
-                raise ValueError(f"Invalid: cmd_key '{cmd_key}' does not match cmd_name '{cmd_name}'.")
-            if (p3u.str_notempty(subcmd_name) and 
-                not p3m.validate_subcmd_key_with_name(subcmd_name, cmd_key, subcmd_key)):
-                raise ValueError(f"Invalid: subcmd_key '{subcmd_key}' does not "
-                                f"match subcmd_name '{subcmd_name}'.")
-            cmd = p3m.create_CMD_OBJECT(
-                cmd_name=cmd_name,
-                cmd_key=cmd_key,
-                subcmd_name=subcmd_name,
-                subcmd_key=subcmd_key,
-                cmd_exec_func=cmd_exec_func,
-                other_attrs=opts_dict)
-            return cmd
-        except Exception as e:
-            logger.exception(p3u.exc_err_msg(e))
-            raise ValueError(f"Failed to create command object from cmd2:opts: {e}")
+    #         # Convert to dict, remove two common cmd2 attributes, if present.
+    #         # see bottom of https://cmd2.readthedocs.io/en/latest/features/argument_processing/#decorator-order
+    #         opts_dict = vars(opts).copy()
+    #         cmd2_statement: cmd2.Statement = opts_dict.pop('cmd2_statement', None).get()
+    #         cmd2_handler = opts_dict.pop('cmd2_handler', None).get()
+    #         if cmd2_statement is not None:
+    #             # A valid cmd2.cmd will provide a cmd_name, at a minimum.
+    #             # see https://cmd2.readthedocs.io/en/latest/features/commands/#statements
+    #             cmd2_cmd_name = cmd2_statement.command
+    #         # Collect the command attributes present (or not) in the opts_dict.
+    #         cmd_name = opts_dict.get(p3m.CK_CMD_NAME, cmd2_cmd_name) 
+    #         if p3u.str_empty(cmd_name):
+    #             # Must have cmd_name
+    #             raise ValueError("Invalid: No command name provided.")
+    #         cmd_key = opts_dict.get(p3m.CK_CMD_KEY, f"{cmd_name}{p3m.CMD_KEY_SUFFIX}")
+    #         subcmd_name = opts_dict.get(p3m.CK_SUBCMD_NAME, None)
+    #         subcmd_key = opts_dict.get(p3m.CK_SUBCMD_KEY, 
+    #                 f"{cmd_key}_{subcmd_name}" if subcmd_name else None)
+    #         cmd_exec_func = opts_dict.get(p3m.CK_CMD_EXEC_FUNC, None)
+    #         # Validate CMD_OBJECT requirements.
+    #         if not p3m.validate_cmd_key_with_name(cmd_name, cmd_key):
+    #             raise ValueError(f"Invalid: cmd_key '{cmd_key}' does not match cmd_name '{cmd_name}'.")
+    #         if (p3u.str_notempty(subcmd_name) and 
+    #             not p3m.validate_subcmd_key_with_name(subcmd_name, cmd_key, subcmd_key)):
+    #             raise ValueError(f"Invalid: subcmd_key '{subcmd_key}' does not "
+    #                             f"match subcmd_name '{subcmd_name}'.")
+    #         cmd = p3m.create_CMD_OBJECT(
+    #             cmd_name=cmd_name,
+    #             cmd_key=cmd_key,
+    #             subcmd_name=subcmd_name,
+    #             subcmd_key=subcmd_key,
+    #             cmd_exec_func=cmd_exec_func,
+    #             other_attrs=opts_dict)
+    #         return cmd
+    #     except Exception as e:
+    #         logger.exception(p3u.exc_err_msg(e))
+    #         raise ValueError(f"Failed to create command object from cmd2:opts: {e}")
     #endregion extract_CMD_OBJECT_from_argparse_Namespace
     # ------------------------------------------------------------------------ +    
     #region _onchange_parse_only

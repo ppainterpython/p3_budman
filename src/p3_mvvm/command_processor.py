@@ -58,6 +58,25 @@
     - 'cmd_result_content': Any  The content returned by the command execution. 
       If cmd_result_success is True, this can be any type of object. If False,
       this is typically a string error message.
+
+    Command_Processor supports builtin parameter flags which can be added to any
+    cmd string or possibly set as flags affecting all cmds.
+    - parse_only: bool - If True, the command will only be parsed, the resulting
+    attributes are displayed, but the cmd is not executed. WHen parse_only 
+    is used, the cp_execute_cmd() method will construct a CMD_RESULT_TYPE object
+    with a simple string out showing the content of the CMD_OBJECT_TYPE object
+    and return it prior to any other actions in the Command_Processor
+    pipeline interface.
+    - validate_only : bool - If True, the command will be fully validated, but 
+    not executed. The cmd parameters with possible validation messages is 
+    displayed. Command_Processor pipeline stops after calling the 
+    cp_validate_cmd_object() method in the Command_Processor pipeline interface.
+    - what_if : bool - If True, the command will be executed in a "what if"
+    mode, where the effects of the command are simulated but not applied. Output
+    about possible impact of the cmd is displayed. Not supported by all cmds.
+
+    Command_Processor includes optional support for building CMD_OBJECTs from
+    command lines parsed by cmd2, arparse for convenience.
 """
 #endregion command_processor.py module
 # ---------------------------------------------------------------------------- +
@@ -67,6 +86,7 @@ import logging
 from typing import List, Type, Generator, Dict, Tuple, Any, Callable, Optional
 # third-party modules and packages
 from h11 import Data
+import cmd2, argparse
 import p3_utils as p3u, pyjson5, p3logging as p3l
 # local modules and packages
 from .mvvm_namespace import *
@@ -76,13 +96,14 @@ from .data_context_binding import DataContext_Binding
 # ---------------------------------------------------------------------------- +
 #region Globals
 logger = logging.getLogger(__name__)
+BMCLI_SYSTEM_EXIT_WARNING = "Not exiting due to SystemExit"
 # ---------------------------------------------------------------------------- +
 #endregion Globals
 # ---------------------------------------------------------------------------- +
-#region CommandProcessor class
+#region    CommandProcessor class
 class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
     # ------------------------------------------------------------------------ +
-    #region CommandProcessor class instrisics - override for app-specific
+    #region    CommandProcessor class instrisics - override for app-specific
     # ------------------------------------------------------------------------ +
     #region CommandProcessor class doc string
     """Concrete Class for CommandProcessor_Base."""
@@ -98,7 +119,7 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
     # ------------------------------------------------------------------------ +
 
     # ------------------------------------------------------------------------ +
-    #region CommandProcessor_Base Properties
+    #region    CommandProcessor_Base Properties
     @property
     def cp_cmd_map(self) -> Dict[str, Callable]:
         """Return the command map for the command processor."""
@@ -111,9 +132,9 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
         self._cmd_map = value
     #endregion CommandProcessor_Base Properties
     # ------------------------------------------------------------------------ +
-    #region CommandProcessor_Base Methods
+    #region    CommandProcessor_Base Methods
     # ------------------------------------------------------------------------ +
-    #region cp_initialize() method
+    #region    cp_initialize() method
     def cp_initialize(self) -> "CommandProcessor":
         """Initialize the CommandProcessor."""
         try:
@@ -126,7 +147,7 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
             raise
     #endregion cp_initialize() method
     # ------------------------------------------------------------------------ +
-    #region cp_initialize_cmd_map() method
+    #region    cp_initialize_cmd_map() method
     def cp_initialize_cmd_map(self) -> None:
         """Application-specific: Initialize the cp_cmd_map."""
         try:
@@ -140,7 +161,7 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
             raise
     #endregion cp_initialize_cmd_map() method
     # ------------------------------------------------------------------------ +
-    #region cp_execute_cmd() method
+    #region    cp_execute_cmd() method
     def cp_execute_cmd(self, cmd : CMD_OBJECT_TYPE = None,
                        raise_error : bool = False) -> CMD_RESULT_TYPE:
         """Execute a command within the command processor.
@@ -158,6 +179,14 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
         try:
             st = p3u.start_timer()
             logger.info(f"Start Command: {cmd}")
+            parse_only: bool = self.cp_cmd_attr_get(cmd, CK_PARSE_ONLY, False)
+            if parse_only:
+                cmd_string: str = f"{CK_PARSE_ONLY}: {str(cmd)}"
+                logger.info(cmd_string)
+                return create_CMD_RESULT_OBJECT(cmd_result_status=True,
+                                                 result_content_type=CMD_STRING_OUTPUT,
+                                                 result_content=cmd_string,
+                                                 cmd_object=cmd)
             cmd_result: CMD_RESULT_TYPE = self.cp_validate_cmd(cmd)
             if not cmd_result[CMD_RESULT_STATUS]: return cmd_result
             # if cp_validate_cmd() is good, continue.
@@ -165,9 +194,12 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
             function_name = exec_func.__name__
             validate_only: bool = self.cp_cmd_attr_get(cmd, CK_VALIDATE_ONLY)
             if validate_only:
-                result = f"vo-command: {function_name}({str(cmd)})"
-                logger.info(result)
-                return True, result
+                cmd_string: str = f"{CK_VALIDATE_ONLY}: {function_name}({str(cmd)})"
+                logger.info(cmd_string)
+                return create_CMD_RESULT_OBJECT(cmd_result_status=True,
+                                                 result_content_type=CMD_STRING_OUTPUT,
+                                                 result_content=cmd_string,
+                                                 cmd_object=cmd)
             logger.info(f"Executing command: {function_name}({str(cmd)})")
             # Execute a cmd with its associated exec_func from the cmd_map.
             cmd_result: CMD_RESULT_TYPE = exec_func(cmd)
@@ -182,7 +214,7 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
             return cmd_result
     #endregion cp_execute_cmd() method
     # ------------------------------------------------------------------------ +
-    #region cp_validate_cmd() method
+    #region    cp_validate_cmd() method
     def cp_validate_cmd(self, 
                         cmd : CMD_OBJECT_TYPE = None,
                         validate_all : bool = False) -> CMD_RESULT_TYPE:
@@ -350,9 +382,8 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
         # Set the value in the cmd dictionary.
         cmd[arg_name] = value
     #endregion cp_cmd_attr_set() Command Processor method
-    #endregion Command_Processor_Base Methods
     # ------------------------------------------------------------------------ +
-    #region UNKNOWN_cmd() 
+    #region    UNKNOWN_cmd() 
     def UNKNOWN_cmd(self, cmd : Dict) -> CMD_RESULT_TYPE:
         """A cmd received that is not found in the current cmd map.
 
@@ -384,6 +415,111 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
             raise
     #endregion UNKNOWN_cmd() method
     # ------------------------------------------------------------------------ +
+    #endregion Command_Processor_Base Methods
+    # ------------------------------------------------------------------------ +
+
+    # ------------------------------------------------------------------------ +
+    #region CommandProcessor argparse support methods
+    # ------------------------------------------------------------------------ +
+    #region construct_cmd_from_argparse
+    def construct_cmd_from_argparse(self, opts : argparse.Namespace) -> CMD_OBJECT_TYPE:
+        """Construct a valid cmd object from cmd2/argparse arguments or raise error."""
+        try:
+            # Process cmd object core values, either return a valid command 
+            # object or raise an error.
+            cmd: CMD_OBJECT_TYPE = self.extract_CMD_OBJECT_from_argparse_Namespace(opts)
+            # Process parameters affecting possible cmd.
+            # parse_only flag can be set in the view or added to any cmd.
+            parse_only:bool = self.cp_cmd_attr_get(cmd, CK_PARSE_ONLY, self.parse_only)
+            parse_only = parse_only or self.parse_only
+            self.cp_cmd_attr_set(cmd, CK_PARSE_ONLY, parse_only)
+            # validate_only flag 
+            validate_only:bool = self.cp_cmd_attr_get(cmd, CK_VALIDATE_ONLY, self.validate_only)
+            validate_only = validate_only or self.validate_only
+            self.cp_cmd_attr_set(cmd, CK_VALIDATE_ONLY, validate_only)
+            # what_if flag 
+            what_if:bool = self.cp_cmd_attr_get(cmd, CK_WHAT_IF, self.what_if)
+            what_if = what_if or self.what_if
+            self.cp_cmd_attr_set(cmd, CK_WHAT_IF, what_if)
+            return cmd
+        except SystemExit as e:
+            # Handle the case where argparse exits the program
+            self.pwarning(BMCLI_SYSTEM_EXIT_WARNING)
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise
+    #endregion construct_cmd_from_argparse
+    # ------------------------------------------------------------------------ +
+    #region extract_CMD_OBJECT_from_argparse_Namespace
+    def extract_CMD_OBJECT_from_argparse_Namespace(self, opts : argparse.Namespace) -> CMD_OBJECT_TYPE:
+        """Create a CommandProcessor cmd dictionary from argparse.Namespace.
+        
+        This method is specific to BudManCLIView which utilizes argparse for 
+        command line argument parsing integrated with cmd2.cmd for command help
+        and execution. It converts the argparse.Namespace object into a
+        dictionary suitable for the command processor to execute, but 
+        independent of the cmd2.cmd structure and argparse specifics.
+
+        A ViewModelCommandProcessor_Binding implementation must provide valid
+        ViewModelCommandProcessor cmd dictionaries to the
+        ViewModelCommandProcessor interface. This method is used to convert
+        the cmd2.cmd arguments into a dictionary that can be used by the
+        ViewModelCommandProcessor_Binding implementation.
+        """
+        try:
+            if not isinstance(opts, argparse.Namespace):
+                raise TypeError("opts must be an instance of argparse.Namespace.")
+            cmd2_cmd_name: str = ''
+            cmd_name: str = ''
+            cmd_key: str = ''
+            subcmd_name: str = ''
+            subcmd_key: str = ''
+            cmd_exec_func: Optional[Callable] = None
+
+            # Convert to dict, remove two common cmd2 attributes, if present.
+            # see bottom of https://cmd2.readthedocs.io/en/latest/features/argument_processing/#decorator-order
+            opts_dict = vars(opts).copy()
+            cmd2_statement: cmd2.Statement = opts_dict.pop('cmd2_statement', None).get()
+            cmd2_handler = opts_dict.pop('cmd2_handler', None).get()
+            if cmd2_statement is not None:
+                # A valid cmd2.cmd will provide a cmd_name, at a minimum.
+                # see https://cmd2.readthedocs.io/en/latest/features/commands/#statements
+                cmd2_cmd_name = cmd2_statement.command
+            # Collect the command attributes present (or not) in the opts_dict.
+            cmd_name = opts_dict.get(CK_CMD_NAME, cmd2_cmd_name) 
+            if p3u.str_empty(cmd_name):
+                # Must have cmd_name
+                raise ValueError("Invalid: No command name provided.")
+            cmd_key = opts_dict.get(CK_CMD_KEY, f"{cmd_name}{CMD_KEY_SUFFIX}")
+            subcmd_name = opts_dict.get(CK_SUBCMD_NAME, None)
+            subcmd_key = opts_dict.get(CK_SUBCMD_KEY, 
+                    f"{cmd_key}_{subcmd_name}" if subcmd_name else None)
+            cmd_exec_func = opts_dict.get(CK_CMD_EXEC_FUNC, None)
+            # Validate CMD_OBJECT requirements.
+            if not validate_cmd_key_with_name(cmd_name, cmd_key):
+                raise ValueError(f"Invalid: cmd_key '{cmd_key}' does not match cmd_name '{cmd_name}'.")
+            if (p3u.str_notempty(subcmd_name) and 
+                not validate_subcmd_key_with_name(subcmd_name, cmd_key, subcmd_key)):
+                raise ValueError(f"Invalid: subcmd_key '{subcmd_key}' does not "
+                                f"match subcmd_name '{subcmd_name}'.")
+            cmd = create_CMD_OBJECT(
+                cmd_name=cmd_name,
+                cmd_key=cmd_key,
+                subcmd_name=subcmd_name,
+                subcmd_key=subcmd_key,
+                cmd_exec_func=cmd_exec_func,
+                other_attrs=opts_dict)
+            return cmd
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise ValueError(f"Failed to create command object from cmd2:opts: {e}")
+    #endregion extract_CMD_OBJECT_from_argparse_Namespace
+
+    # ------------------------------------------------------------------------ +
+    #endregion CommandProcessor argparse support methods
+    # ------------------------------------------------------------------------ +
+
 #endregion CommandProcessor class
 # ---------------------------------------------------------------------------- +
 

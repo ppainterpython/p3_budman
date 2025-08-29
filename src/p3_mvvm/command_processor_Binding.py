@@ -12,6 +12,7 @@ implementation for a View class.
 import logging
 from typing import List, Type, Generator, Dict, Tuple, Any, Callable, Optional
 # third-party modules and packages
+import cmd2, argparse
 import p3_utils as p3u, pyjson5, p3logging as p3l
 # local modules and packages
 from .mvvm_namespace import *
@@ -176,4 +177,32 @@ class CommandProcessor_Binding(CommandProcessor_Base):
     #endregion cp_cmd_attr_set() command method
     # ------------------------------------------------------------------------ +
     #endregion CommandProcessor_Base Methods                                   +
+    # ------------------------------------------------------------------------ +
+
+    # ------------------------------------------------------------------------ +
+    #region CommandProcessor argparse support methods
+    # ------------------------------------------------------------------------ +
+    #region construct_cmd_from_argparse
+    def construct_cmd_from_argparse(self, opts : argparse.Namespace) -> CMD_OBJECT_TYPE:
+        """Construct a valid cmd object from cmd2/argparse arguments or raise error."""
+        try:
+            return self.CP.construct_cmd_from_argparse(opts)
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise
+    #endregion construct_cmd_from_argparse
+    # ------------------------------------------------------------------------ +
+    #region extract_CMD_OBJECT_from_argparse_Namespace
+    def extract_CMD_OBJECT_from_argparse_Namespace(self, opts : argparse.Namespace) -> CMD_OBJECT_TYPE:
+        """Construct a valid cmd object from cmd2/argparse arguments or raise error."""
+        try:
+            return self.CP.extract_CMD_OBJECT_from_argparse_Namespace(opts)
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise
+    #endregion extract_CMD_OBJECT_from_argparse_Namespace
+    # ------------------------------------------------------------------------ +
+    #endregion CommandProcessor argparse support methods
     # ------------------------------------------------------------------------ +

@@ -743,7 +743,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
     #endregion BDM_STORE_load_cmd() execution method
     # ------------------------------------------------------------------------ +
     #region DATA_CONTEXT_show_cmd() execution method
-    def DATA_CONTEXT_show_cmd(self, cmd : Dict) -> BUDMAN_RESULT_TYPE:
+    def DATA_CONTEXT_show_cmd(self, cmd : p3m.CMD_OBJECT_TYPE) -> p3m.CMD_RESULT_TYPE:
         """Show information in the Budget Manager Data Context.
 
         Arguments:
@@ -787,7 +787,12 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             success, wdc_result = self.get_workbook_data_collection_info_str()
             result += wdc_result
             logger.info(f"Complete: {p3u.stop_timer(st)}")
-            return True, result
+            return p3m.create_CMD_RESULT_OBJECT(
+                cmd_result_status=True,
+                result_content=result,
+                result_content_type=p3m.CMD_STRING_OUTPUT,
+                cmd_object=cmd
+            )
         except Exception as e:
             m = f"Error showing Data Context: {p3u.exc_err_msg(e)}"
             logger.error(m)
