@@ -3,44 +3,98 @@
 """ budman_view_model.py implements the BudManViewModel class.
 
     In MVVM, the ViewModel is the interface between the View and the Model. As
-    such, it must provide the inherent View Model behavior, a Command Pattern,
-    and a Data Context Pattern for the View. Also, it requires the services
-    from one or more Model objects, in this case, the Budget Domain Model.
+    such, it provides the inherent View Model behavior, a CommandProcessor
+    Pattern, and a Data Context Pattern for the View. It also consumes the 
+    services from one or more Model objects, in this case, the Budget Domain Model.
 
-    Provided Interfaces:
-    --------------------
-       1. ViewModel - the behavior of a View Model in MVVM.
-       2. ViewModelCommandProcessor - the Command Pattern.
-       3. ViewModelDataContext - the Data Context Pattern.
+    Typically, an mvvm application implements the user interface with the View 
+    and data models and storage with the Model. A ViewModel is a middle ground
+    where requests from a user or client module are submitted by the View for
+    processing. A ViewModel directs the actions to fulfill the request and
+    accesses the Model for retrieval and storage of data.
 
-    Required Interfaces:
-    --------------------
-        1. BDMClient - the Budget Domain Model provider.
+    Our mvvm provides a CommandProcessor as an abstract to represent the requests
+    submitted by the View for processing. A command a format for such a request
+    and will contain a command action or verb, perhaps a subcommand noun for 
+    an object or other information used in the the request along with various
+    parameters and option flags to more clearly specify the intent and scope of
+    the request.
 
-    ViewModelCommandProcessor
+    Lastly this mvvm design supports a Data Context as a data model shareable 
+    between the View and ViewModel, typically application-specific in nature, but
+    designed as a simple abstraction of the application data model and state.
+
+    This ViewModel inherits classes implementing a CommandProcessor, DataContext, 
+    and Model. The classes used are subclasses of the basic View, ViewModel and 
+    Model abstractions from the p3_mvvm package.
+
+    Inherited Class Interfaces:
+    ---------------------------
+       1. DataContext - BudManAAppDataContext_Binding.
+       2. CommandProcessor - p3m.CommandProcessor.
+       3. Model - p3m.Model_Binding.
+
+    p3m is an abbreviation for the p3_mvvm package, indicating that classes
+    from that base package are subclassed directly. BudManAppDataContext_Binding
+    is a class within the BudMan application which specializes other super 
+    classes.
+
+    Each of the classes mentioned is a concrete implementation of one or more
+    abstract base class (ABC) interface. Some objects implement the ABC interface
+    directly as a concrete object inherited by the BudManViewModel class. Others,
+    indicated by the _Binding suffix, provide a concrete implementation of an ABC
+    interface which is bound at runtime to an instance of a class that implements
+    the necessary ABC interface. This is known as Dependency Injection enabling 
+    a late binding of a configured concrete class to provide a dependent 
+    interface, but constructed at runtime during setup and initialization.
+
+    Basic Application Startup
     -------------------------
 
-    - Provides Command Processor for the command pattern, used by Views and
-      other upstream clients to submit commands to the ViewModel. The command
-    - Provides the Command Binding Implementations. The cmd_map property 
-      holds a map from the supported command_keys to the methods that
-      implement them. This map binds the commands to the code that implements
-      each Command.
+    When the BudMan Application is started, the BudManViewModel is instantiated
+    first based on a provided path to a configuration file and an application
+    settings file. Both files are loaded into the ViewModel. Since the 
+    BudManViewModel class inherits the p3m.CommandProcessor class, it will serve
+    as the CommandProcessor for the mvvm pattern. During the setup process, 
+    Dependency Injection is implemented by steps to instantiate the
+    Model and "bind" it to the ViewModel to initialize the p3m.Model_Binding. 
+    Likewise, the BDMDataContext class is instantiated and bound to the ViewModel
+    to initialize the p3m.DataContext_Binding. Lastly, the View is instantiated
+    as the BudManCLIView class with the BudManViewModel instance bound as the 
+    CommandProcessor for the View. The same DataContext intance is also bound to
+    the View, completing the Dependency Injection setup of the application.
 
-    ViewModelDataContext
-    --------------------
+    Basic Command Flow
+    ------------------
 
-    - Provides Data Context access to the ViewModel. This interface is
-      functional, not requiring the upstream caller to know much about the
-      data apart from attribute names. It uses dict objects to represent
-      objects.
+    As a CLI user interface, the View class, BudManCLIView, takes input from the
+    user and parses it into p3m.CMD_OBJECT_TYPE objects. Each CMD_OBJECT is
+    configured in the View CLI parsing structure to ensure only allowed commands
+    and parameters are entered. When a user submits a command line, the View
+    passes the command object to the CommandProcessor for validation and
+    execution. Command validation covers all parameter values and options to be
+    validated and looks up the configured execution function to process the
+    command using a command map configured in the CommandProcessor. Finally,
+    the CommandProcessor invokes the command execution function using the ViewModel
+    to route the command to various modules configured to process commands.
 
-    In View Model form, these methods provide an Interface for executing
-    Commands as a design pattern. Commands take actions for a command 
-    initiated by an upstream View, or other client caller. Of course, 
-    the upstream caller is mapping their specific domain of focus to the View Model
-    interface. In general, there are a Command methods and other "Data Context"
-    methods in a subsequent section.
+    The general pattern for command execution is to have a module associated with
+    a command that decomposes the command into one or more execution Tasks and
+    dispatches the sequence of Tasks for execution. As output is provided, it is
+    captured and returned in a p3m.CMD_RESULT_TYPE object to the CommandProcessor
+    and subsequently returned back to the View for handling output to the user.
+
+    DataContext Usage
+    -----------------
+
+    When a command is dispatched for execution, the CMD_OBJECT and THe 
+    DataContext object are provided to the top-level command execution function.
+    That way, a common data model state is maintained with application-specific
+    support as needed. A DataContext may be Model-Aware or not, based on the
+    designers approach. A Model-Aware DC can access the Model for data
+    retrieval and storage while hiding that complexity from the ViewModel and
+    View. In other cases, command execution functions are free to directly 
+    access the Model.
 
     Throughout the BudgetModel (budman) application, a design language is
     used as a convention for naming within the code-base. 
@@ -229,7 +283,6 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor, 
                       p3m.Model_Binding): 
-
     # ======================================================================== +
     #region BudManViewModel_Base class intrinsics                              +
     # ======================================================================== +
@@ -335,7 +388,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             raise
     #endregion BudManViewModel Class save_model() method                       +
     # ------------------------------------------------------------------------ +
-    #region    BudManViewModel Class Properties     
+    #region    BudManViewModel Class Properties
     @property
     def app_name(self) -> str:
         """Return the application name."""

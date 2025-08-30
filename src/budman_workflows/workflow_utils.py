@@ -281,18 +281,6 @@ def workbook_names(wdc: bdm.WORKBOOK_DATA_COLLECTION_TYPE, wf_key: str, wf_folde
         return []
 #endregion workbook_names() function
 # ---------------------------------------------------------------------------- +
-#region outout_bdm_tree() function
-# def output_bdm_tree(bdm_DC: BudManAppDataContext_Base) -> str:
-#     """Output the BDM tree to the console."""
-#     try:
-#         tree = extract_bdm_tree(bdm_DC)
-#         return tree.show(stdout=False) if tree else "No BDM tree found."
-#     except Exception as e:
-#         m = p3u.exc_err_msg(e)
-#         logger.error(m)
-#         return m
-#endregion outout_bdm_tree() function
-# ---------------------------------------------------------------------------- +
 #region extract_txn_categories() method
 def extract_txn_categories() -> bdm.DATA_OBJECT_TYPE:
     """Extract transaction categories from the category_map in 
