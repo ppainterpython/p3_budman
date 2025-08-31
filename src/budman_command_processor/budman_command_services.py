@@ -33,6 +33,7 @@ from datetime import datetime as dt
 
 # third-party modules and packages
 from arrow import now
+from budman_workflows.workflow_utils import output_category_tree
 import p3_utils as p3u, pyjson5, p3logging as p3l, p3_mvvm as p3m
 from openpyxl import Workbook, load_workbook
 from treelib import Tree
@@ -45,6 +46,7 @@ from rich.table import Table
 # local modules and packages
 import budman_command_processor as cp
 import budman_namespace as bdm
+from budman_namespace import (P2, P4)
 import budman_settings as bdms
 from budman_namespace import BDMWorkbook
 from budget_domain_model import BudgetDomainModel
@@ -89,6 +91,13 @@ def CMD_TASK_process(cmd: p3m.CMD_OBJECT_TYPE,
                 return CMD_TASK_list_bdm_store_json(cmd, bdm_DC)
             elif cmd[cp.p3m.CK_SUBCMD_NAME] == cp.CV_FILES_SUBCMD_NAME:
                return CMD_TASK_list_files(cmd, bdm_DC)
+            else:
+                return p3m.unknown_CMD_RESULT_ERROR(cmd)
+        elif cmd[p3m.CK_CMD_KEY] == cp.CV_SHOW_CMD_KEY:
+            if cmd[p3m.CK_SUBCMD_KEY] == cp.CV_SHOW_DATA_CONTEXT_SUBCMD_KEY:
+                return CMD_TASK_show_DATA_CONTEXT(cmd, bdm_DC)
+            elif cmd[p3m.CK_SUBCMD_KEY] == cp.CV_SHOW_BUDGET_CATEGORIES_SUBCMD_KEY:
+                return CMD_TASK_show_BUDGET_CATEGORIES(cmd, bdm_DC)
             else:
                 return p3m.unknown_CMD_RESULT_ERROR(cmd)
         else:
@@ -442,6 +451,64 @@ def extract_bdm_tree(bdm_DC: BudManAppDataContext_Base) -> Tree:
         raise
 #endregion extract_bdm_tree() function
 # ---------------------------------------------------------------------------- +
+#region CMD_TASK_show_DATA_CONTEXT()
+def CMD_TASK_show_DATA_CONTEXT(cmd: p3m.CMD_OBJECT_TYPE,
+                                bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
+    """Show the data context for the command."""
+    try:
+        # Gather the current content of the DATA_CONTEXT.
+        bs = bdm_DC.dc_BDM_STORE
+        bs_str = p3u.first_n(str(bs))
+        # Prepare the Command output result
+        result = f"Budget Manager Data Context:"
+        result += f"{P2}{bdm.DC_INITIALIZED}: {bdm_DC.dc_INITIALIZED}\n"
+        result += f"{P2}{bdm.DC_BDM_STORE}: {bs_str}"
+        result += ( f"{P2}{bdm.FI_KEY}: {bdm_DC.dc_FI_KEY}"
+                    f"{P2}{bdm.WF_KEY}: {bdm_DC.dc_WF_KEY}"
+                    f"{P2}{bdm.WF_PURPOSE}: {bdm_DC.dc_WF_PURPOSE}\n")
+        wb:BDMWorkbook = bdm_DC.dc_WORKBOOK
+        if wb:
+            result += (f"{P2}{bdm.WB_ID}: {bdm_DC.dc_WB_ID}"
+                        f"{P2}{bdm.WB_INDEX}: {bdm_DC.dc_WB_INDEX}"
+                        f"{P2}{bdm.WB_NAME}: {bdm_DC.dc_WB_NAME}"
+                        f"{P2}{bdm.WB_TYPE}: {bdm_DC.dc_WB_TYPE}\n")
+        else:
+            result += (f"{P2}{bdm.WB_ID}: ..."
+                        f"{P2}{bdm.WB_INDEX}: ..."
+                        f"{P2}{bdm.WB_NAME}: ..."
+                        f"{P2}{bdm.WB_TYPE}: ...\n")
+        _, wdc_result = get_workbook_data_collection_info_str(bdm_DC)
+        result += wdc_result
+        return p3m.create_CMD_RESULT_OBJECT(
+            cmd_result_status=True,
+            result_content=result,
+            result_content_type=p3m.CMD_STRING_OUTPUT,
+            cmd_object=cmd
+        )
+    except Exception as e:
+        return p3m.create_CMD_RESULT_ERROR(cmd, e)
+#endregion CMD_TASK_show_DATA_CONTEXT()
+# ---------------------------------------------------------------------------- +
+#region CMD_TASK_show_BUDGET_CATEGORIES()
+def CMD_TASK_show_BUDGET_CATEGORIES(cmd: p3m.CMD_OBJECT_TYPE,
+                                      bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
+    """Show the budget categories for the command."""
+    try:
+        result: str = "no result"
+        # Show the budget categories.
+        cat_list = cmd.get(cp.CK_CAT_LIST, [])
+        tree_level = cmd.get(cp.CK_LEVEL, 2)
+        result = output_category_tree(level=tree_level, cat_list=cat_list)
+        return p3m.create_CMD_RESULT_OBJECT(
+            cmd_result_status=True,
+            result_content=result,
+            result_content_type=p3m.CMD_TREE_OBJECT,
+            cmd_object=cmd
+        )
+    except Exception as e:
+        return p3m.create_CMD_RESULT_ERROR(cmd, e)
+#endregion CMD_TASK_show_BUDGET_CATEGORIES()
+# ---------------------------------------------------------------------------- +
 #endregion BudMan Application Command Task functions
 # ---------------------------------------------------------------------------- +
 
@@ -529,6 +596,34 @@ def process_selected_workbook_input(cmd: p3m.CMD_OBJECT_TYPE,
         raise RuntimeError(m)
 #endregion process_selected_workbook_input()
 # ------------------------------------------------------------------------ +    
+#region get_workbook_data_collection_info_str() method
+def get_workbook_data_collection_info_str(bdm_DC: BudManAppDataContext_Base) -> Tuple[bool,Any]: 
+    """Construct an outout string with information about the WORKBOOKS."""
+    try:
+        logger.debug(f"Start: ...")
+        # Be workbook-centric is this view of the DC
+        wdc = bdm_DC.dc_WORKBOOK_DATA_COLLECTION
+        wdc_count = len(wdc) if wdc else 0
+        lwbc = bdm_DC.dc_LOADED_WORKBOOKS
+
+        # Prepare the output result
+        result = f"{P2}{bdm.FI_WORKBOOK_DATA_COLLECTION}: {wdc_count}\n"
+        result += f"{P4}{bdm.WB_INDEX:6}{P2}{bdm.WB_ID:50}{P2}"
+        result += f"{bdm.WB_TYPE:15}{P2}{bdm.WB_CONTENT:30}"
+        result += "\n"
+        bdm_wb : BDMWorkbook = None
+        if wdc_count > 0:
+            for i, bdm_wb in enumerate(wdc.values()):
+                r = f"{bdm_wb.wb_index_display_str(i)}"
+                result += r + "\n"
+        logger.info(f"Complete:")
+        return True, result
+    except Exception as e:
+        m = p3u.exc_err_msg(e)
+        logger.error(m)
+        return False, m
+#endregion get_workbook_data_collection_info_str() method
+# ------------------------------------------------------------------------ +
 #region verify_cmd_key()
 def verify_cmd_key( cmd: p3m.CMD_OBJECT_TYPE, 
                    expected_cmd_key: str) -> p3m.CMD_RESULT_TYPE:

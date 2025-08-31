@@ -260,10 +260,9 @@ from budman_workflows import (
     check_sheet_schema, check_sheet_columns, 
     validate_budget_categories, process_budget_category,
     output_category_tree,
-    WORKFLOW_TASK_process, process_workflow_intake_tasks
+    WORKFLOW_TASK_process, process_workflow_intake_tasks,
+    budget_category_mapping
     )
-from budman_workflows import budget_category_mapping
-
 from budget_domain_model import (
     BudgetDomainModel, 
     BDMConfig
@@ -510,7 +509,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                 cp.CV_LIST_CMD_KEY: self.LIST_cmd,
                 cp.CV_LOAD_BDM_STORE_SUBCMD_KEY: self.BDM_STORE_load_cmd,
                 cp.CV_SAVE_BDM_STORE_SUBCMD_KEY: self.BDM_STORE_save_cmd,
-                cp.CV_SHOW_DATA_CONTEXT_SUBCMD_KEY: self.DATA_CONTEXT_show_cmd,
+                # cp.CV_SHOW_DATA_CONTEXT_SUBCMD_KEY: self.DATA_CONTEXT_show_cmd,
                 cp.CV_LOAD_WORKBOOKS_SUBCMD_KEY: self.WORKBOOKS_load_cmd,
                 cp.CV_SAVE_WORKBOOKS_SUBCMD_KEY: self.WORKBOOKS_save_cmd,
                 cp.CV_CHANGE_WORKBOOKS_SUBCMD_KEY: self.CHANGE_cmd,
@@ -707,7 +706,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
         """
         try:
             st = p3u.start_timer()
-            logger.debug(f"Start: ...")
+            logger.debug(f"Start: ...{P2}")
             # Should be called only for list cmd.
             cmd_result : p3m.CMD_RESULT_TYPE = cp.verify_cmd_key(cmd, cp.CV_LIST_CMD_KEY)
             if not cmd_result[p3m.CMD_RESULT_STATUS]: return cmd_result
@@ -791,60 +790,35 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
     #endregion BDM_STORE_load_cmd() execution method
     # ------------------------------------------------------------------------ +
     #region DATA_CONTEXT_show_cmd() execution method
-    def DATA_CONTEXT_show_cmd(self, cmd : p3m.CMD_OBJECT_TYPE) -> p3m.CMD_RESULT_TYPE:
-        """Show information in the Budget Manager Data Context.
+    # def DATA_CONTEXT_show_cmd(self, cmd : p3m.CMD_OBJECT_TYPE) -> p3m.CMD_RESULT_TYPE:
+    #     """Show information in the Budget Manager Data Context.
 
-        Arguments:
-            cmd (Dict): A valid BudMan View Model Command object. For this
-            command, must contain show_cmd = 'DATA_CONTEXT' resulting in
-            a full command key of 'show_cmd_DATA_CONTEXT'.
+    #     Arguments:
+    #         cmd (Dict): A valid BudMan View Model Command object. For this
+    #         command, must contain show_cmd = 'DATA_CONTEXT' resulting in
+    #         a full command key of 'show_cmd_DATA_CONTEXT'.
 
-        Returns:
-            Tuple[success : bool, result : Any]: The outcome of the command 
-            execution. If success is True, result contains result of the 
-            command, if False, a description of the error.
+    #     Returns:
+    #         Tuple[success : bool, result : Any]: The outcome of the command 
+    #         execution. If success is True, result contains result of the 
+    #         command, if False, a description of the error.
             
-        Raises:
-            RuntimeError: A description of the
-            root error is contained in the exception message.
-        """
-        try:
-            st = p3u.start_timer()
-            logger.debug(f"Start: ...")
-            # Gather the current content of the DATA_CONTEXT.
-            bs = self.dc_BDM_STORE
-            bs_str = p3u.first_n(str(bs))
-            # Prepare the Command output result
-            result = f"Budget Manager Data Context:"
-            result += f"{P2}{DC_INITIALIZED}: {self.dc_INITIALIZED}\n"
-            result += f"{P2}{DC_BDM_STORE}: {bs_str}"
-            result += ( f"{P2}{FI_KEY}: {self.dc_FI_KEY}"
-                        f"{P2}{WF_KEY}: {self.dc_WF_KEY}"
-                        f"{P2}{WF_PURPOSE}: {self.dc_WF_PURPOSE}\n")
-            wb:BDMWorkbook = self.dc_WORKBOOK
-            if wb:
-                result += (f"{P2}{WB_ID}: {self.dc_WB_ID}"
-                            f"{P2}{WB_INDEX}: {self.dc_WB_INDEX}"
-                            f"{P2}{WB_NAME}: {self.dc_WB_NAME}"
-                            f"{P2}{WB_TYPE}: {self.dc_WB_TYPE}\n")
-            else:
-                result += (f"{P2}{WB_ID}: ..."
-                            f"{P2}{WB_INDEX}: ..."
-                            f"{P2}{WB_NAME}: ..."
-                            f"{P2}{WB_TYPE}: ...\n")
-            success, wdc_result = self.get_workbook_data_collection_info_str()
-            result += wdc_result
-            logger.info(f"Complete: {p3u.stop_timer(st)}")
-            return p3m.create_CMD_RESULT_OBJECT(
-                cmd_result_status=True,
-                result_content=result,
-                result_content_type=p3m.CMD_STRING_OUTPUT,
-                cmd_object=cmd
-            )
-        except Exception as e:
-            m = f"Error showing Data Context: {p3u.exc_err_msg(e)}"
-            logger.error(m)
-            return False, m
+    #     Raises:
+    #         RuntimeError: A description of the
+    #         root error is contained in the exception message.
+    #     """
+    #     try:
+    #         st = p3u.start_timer()
+    #         logger.debug(f"Start: ...")
+    #         # Should be called only for show cmd.
+    #         cmd_result : p3m.CMD_RESULT_TYPE = cp.verify_cmd_key(cmd, cp.CV_SHOW_CMD_KEY)
+    #         if not cmd_result[p3m.CMD_RESULT_STATUS]: return cmd_result
+    #         # Process BudMan command tasks.
+    #         cmd_result = cp.CMD_TASK_process(cmd, self.DC)
+    #         logger.info(f"Complete: {p3u.stop_timer(st)}")
+    #         return cmd_result
+    #     except Exception as e:
+    #         return p3m.create_CMD_RESULT_ERROR(cmd, e)
     #endregion DATA_CONTEXT_show_cmd() execution method
     # ------------------------------------------------------------------------ +
     #region SHOW_cmd() execution method
@@ -874,16 +848,13 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
         try:
             st = p3u.start_timer()
             logger.debug(f"Start: ...")
-            result: str = "no result"
-            if cmd[cp.p3m.CK_SUBCMD_NAME] == cp.CV_BUDGET_CATEGORIES_SUBCMD:
-                # Show the budget categories.
-                cat_list = self.cp_cmd_attr_get(cmd, cp.CK_CAT_LIST, [])
-                tree_level = self.cp_cmd_attr_get(cmd, cp.CK_LEVEL, 2)
-                result = output_category_tree(level=tree_level, cat_list=cat_list)
-            elif cmd[cp.p3m.CK_SUBCMD_NAME] == cp.CV_BDM_STORE_SUBCMD_NAME:
-                result = self.model.bdm_BDM_STORE_json()
+            # Should be called only for show cmd.
+            cmd_result : p3m.CMD_RESULT_TYPE = cp.verify_cmd_key(cmd, cp.CV_SHOW_CMD_KEY)
+            if not cmd_result[p3m.CMD_RESULT_STATUS]: return cmd_result
+            # Process BudMan command tasks.
+            cmd_result = cp.CMD_TASK_process(cmd, self.DC)
             logger.info(f"Complete: {p3u.stop_timer(st)}")
-            return True, result
+            return cmd_result
         except Exception as e:
             m = (f"Error executing cmd: {cmd[cp.p3m.CK_CMD_NAME]} {cmd[cp.p3m.CK_SUBCMD_NAME]}: "
                  f"{p3u.exc_err_msg(e)}")
@@ -1482,35 +1453,6 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             logger.error(m)
             raise RuntimeError(m)
     #endregion process_workbook_input()
-    # ------------------------------------------------------------------------ +
-    #region get_workbook_data_collection_info_str() method
-    def get_workbook_data_collection_info_str(self) -> BUDMAN_RESULT_TYPE: 
-        """Construct an outout string with information about the WORKBOOKS."""
-        try:
-            logger.debug(f"Start: ...")
-            # Be workbook-centric is this view of the DC
-            wdc = self.dc_WORKBOOK_DATA_COLLECTION
-            wdc_count = len(wdc) if wdc else 0
-            lwbc = self.dc_LOADED_WORKBOOKS
-
-            # Prepare the output result
-            result = f"{P2}{FI_WORKBOOK_DATA_COLLECTION}: {wdc_count}\n"
-            result += f"{P4}{WB_INDEX:6}{P2}{WB_ID:50}{P2}"
-            result += f"{WB_TYPE:15}{P2}{WB_CONTENT:30}"
-            # print(result)
-            result += "\n"
-            bdm_wb : BDMWorkbook = None
-            if wdc_count > 0:
-                for i, bdm_wb in enumerate(wdc.values()):
-                    r = f"{bdm_wb.wb_index_display_str(i)}"
-                    result += r + "\n"
-            logger.info(f"Complete:")
-            return True, result
-        except Exception as e:
-            m = p3u.exc_err_msg(e)
-            logger.error(m)
-            return False, m
-    #endregion get_workbook_data_collection_info_str() method
     # ------------------------------------------------------------------------ +
     #region    wb_ref_not_valid() method
     def recon_cmd_args_to_DC(self, cmd: dict) -> bool:

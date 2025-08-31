@@ -335,15 +335,14 @@ class BudManCLIParser():
 
             #region Show Categories subcommand
             categories_subcmd_parser = subparsers.add_parser(
-                "BUDGET_CATEGORIES",
+                cp.CV_BUDGET_CATEGORIES_SUBCMD_NAME,
                 aliases=["cat", "budget_categories"],
                 help="Show the Budget Categories.")
-            categories_subcmd_parser.set_defaults(
-                show_cmd="BUDGET_CATEGORIES", # old way
-                cmd_key="show_cmd",   # new way
-                cmd_name="show", 
-                subcmd_name="BUDGET_CATEGORIES",
-                subcmd_key="show_cmd_BUDGET_CATEGORIES")
+            categories_subcmd_defaults = {
+                p3m.CK_SUBCMD_NAME: cp.CV_BUDGET_CATEGORIES_SUBCMD_NAME,
+                p3m.CK_SUBCMD_KEY: cp.CV_SHOW_BUDGET_CATEGORIES_SUBCMD_KEY
+            }
+            categories_subcmd_parser.set_defaults(**categories_subcmd_defaults)
             categories_subcmd_parser.add_argument(
                 "cat_list", nargs="*",
                 # "-i", "--include", nargs="*",
