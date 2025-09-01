@@ -260,7 +260,7 @@ from budman_workflows import (
     check_sheet_schema, check_sheet_columns, 
     validate_budget_categories, process_budget_category,
     output_category_tree,
-    WORKFLOW_TASK_process, process_workflow_intake_tasks,
+    WORKFLOW_TASK_process,
     budget_category_mapping
     )
 from budget_domain_model import (
@@ -509,7 +509,6 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                 cp.CV_LIST_CMD_KEY: self.LIST_cmd,
                 cp.CV_LOAD_BDM_STORE_SUBCMD_KEY: self.BDM_STORE_load_cmd,
                 cp.CV_SAVE_BDM_STORE_SUBCMD_KEY: self.BDM_STORE_save_cmd,
-                # cp.CV_SHOW_DATA_CONTEXT_SUBCMD_KEY: self.DATA_CONTEXT_show_cmd,
                 cp.CV_LOAD_WORKBOOKS_SUBCMD_KEY: self.WORKBOOKS_load_cmd,
                 cp.CV_SAVE_WORKBOOKS_SUBCMD_KEY: self.WORKBOOKS_save_cmd,
                 cp.CV_CHANGE_WORKBOOKS_SUBCMD_KEY: self.CHANGE_cmd,
@@ -517,7 +516,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                 cp.CV_WORKFLOW_CMD_KEY: self.WORKFLOW_cmd,
                 cp.CV_APPLY_SUBCMD_KEY: self.WORKFLOW_apply_cmd,
                 cp.CV_CHECK_SUBCMD_KEY: self.WORKFLOW_check_cmd,
-                cp.CV_INTAKE_SUBCMD_KEY: self.WORKFLOW_intake_cmd,
+                # cp.CV_WORKFLOW_INTAKE_SUBCMD_KEY: self.WORKFLOW_intake_cmd,
                 cp.CV_SHOW_CMD_KEY: self.SHOW_cmd,
                 cp.CV_CHANGE_CMD_KEY: self.CHANGE_cmd,
                 cp.CV_APP_CMD_KEY: self.APP_cmd,
@@ -711,7 +710,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             cmd_result : p3m.CMD_RESULT_TYPE = cp.verify_cmd_key(cmd, cp.CV_LIST_CMD_KEY)
             if not cmd_result[p3m.CMD_RESULT_STATUS]: return cmd_result
             # Process BudMan command tasks.
-            cmd_result = cp.CMD_TASK_process(cmd, self.DC)
+            cmd_result = cp.BUDMAN_CMD_TASK_process(cmd, self.DC)
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             return cmd_result
         except Exception as e:
@@ -719,7 +718,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
     #endregion SHOW_cmd() execution method
     # ------------------------------------------------------------------------ +
     #region BDM_STORE_save_cmd() execution method
-    def BDM_STORE_save_cmd(self, cmd : Dict) -> None:
+    def BDM_STORE_save_cmd(self, cmd : p3m.CMD_OBJECT_TYPE) -> None:
         """Save the Budget Manager store (BDM_STORE) file with the BSM.
 
         Returns:
@@ -751,7 +750,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
     #endregion BDM_STORE_save_cmd() execution method
     # ------------------------------------------------------------------------ +
     #region BDM_STORE_load_cmd() execution method
-    def BDM_STORE_load_cmd(self, cmd : Dict) -> Tuple[bool, str]:
+    def BDM_STORE_load_cmd(self, cmd : p3m.CMD_OBJECT_TYPE) -> Tuple[bool, str]:
         """Load the Budget Manager store (BDM_STORE) file from the BSM.
 
         Arguments:
@@ -789,40 +788,8 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             raise
     #endregion BDM_STORE_load_cmd() execution method
     # ------------------------------------------------------------------------ +
-    #region DATA_CONTEXT_show_cmd() execution method
-    # def DATA_CONTEXT_show_cmd(self, cmd : p3m.CMD_OBJECT_TYPE) -> p3m.CMD_RESULT_TYPE:
-    #     """Show information in the Budget Manager Data Context.
-
-    #     Arguments:
-    #         cmd (Dict): A valid BudMan View Model Command object. For this
-    #         command, must contain show_cmd = 'DATA_CONTEXT' resulting in
-    #         a full command key of 'show_cmd_DATA_CONTEXT'.
-
-    #     Returns:
-    #         Tuple[success : bool, result : Any]: The outcome of the command 
-    #         execution. If success is True, result contains result of the 
-    #         command, if False, a description of the error.
-            
-    #     Raises:
-    #         RuntimeError: A description of the
-    #         root error is contained in the exception message.
-    #     """
-    #     try:
-    #         st = p3u.start_timer()
-    #         logger.debug(f"Start: ...")
-    #         # Should be called only for show cmd.
-    #         cmd_result : p3m.CMD_RESULT_TYPE = cp.verify_cmd_key(cmd, cp.CV_SHOW_CMD_KEY)
-    #         if not cmd_result[p3m.CMD_RESULT_STATUS]: return cmd_result
-    #         # Process BudMan command tasks.
-    #         cmd_result = cp.CMD_TASK_process(cmd, self.DC)
-    #         logger.info(f"Complete: {p3u.stop_timer(st)}")
-    #         return cmd_result
-    #     except Exception as e:
-    #         return p3m.create_CMD_RESULT_ERROR(cmd, e)
-    #endregion DATA_CONTEXT_show_cmd() execution method
-    # ------------------------------------------------------------------------ +
     #region SHOW_cmd() execution method
-    def SHOW_cmd(self, cmd : Dict) -> BUDMAN_RESULT_TYPE:
+    def SHOW_cmd(self, cmd : p3m.CMD_OBJECT_TYPE) -> BUDMAN_RESULT_TYPE:
         """Show requested info from Budget Manager Data Context.
 
         Arguments:
@@ -852,7 +819,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             cmd_result : p3m.CMD_RESULT_TYPE = cp.verify_cmd_key(cmd, cp.CV_SHOW_CMD_KEY)
             if not cmd_result[p3m.CMD_RESULT_STATUS]: return cmd_result
             # Process BudMan command tasks.
-            cmd_result = cp.CMD_TASK_process(cmd, self.DC)
+            cmd_result = cp.BUDMAN_CMD_TASK_process(cmd, self.DC)
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             return cmd_result
         except Exception as e:
@@ -863,7 +830,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
     #endregion SHOW_cmd() execution method
     # ------------------------------------------------------------------------ +
     #region WORKBOOKS_load_cmd() execution method
-    def WORKBOOKS_load_cmd(self, cmd : Dict) -> BUDMAN_RESULT_TYPE:
+    def WORKBOOKS_load_cmd(self, cmd : p3m.CMD_OBJECT_TYPE) -> BUDMAN_RESULT_TYPE:
         """Model-aware: Load workbook content for one or more WORKBOOKS in the DC.
 
         A load_cmd_workbooks command will use the wb_ref value in the cmd. 
@@ -911,7 +878,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
     #endregion WORKBOOKS_load_cmd() execution method
     # ------------------------------------------------------------------------ +
     #region WORKBOOKS_save_cmd() execution method
-    def WORKBOOKS_save_cmd(self, cmd : Dict) -> BUDMAN_RESULT_TYPE: 
+    def WORKBOOKS_save_cmd(self, cmd : p3m.CMD_OBJECT_TYPE) -> BUDMAN_RESULT_TYPE: 
         """Model-Aware: Execute save command for one WB_INDEX or ALL_WBS.
         In BudMan, loaded workbook content is maintained in the 
         dc_LOADED_WORKBOOKS collection. This command will cause that content
@@ -954,7 +921,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
     #endregion WORKBOOKS_save_cmd() execution method
     # ------------------------------------------------------------------------ +
     #region CHANGE_cmd() execution method
-    def CHANGE_cmd(self, cmd : Dict) -> Tuple[bool, str]:
+    def CHANGE_cmd(self, cmd : p3m.CMD_OBJECT_TYPE) -> Tuple[bool, str]:
         """Change aspects of the Data Context.
 
         A CHANGE_cmd command uses the wb_ref arg parameter.
@@ -1025,7 +992,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
     #endregion CHANGE_cmd() execution method
     # ------------------------------------------------------------------------ +
     #region APP_cmd() execution method
-    def APP_cmd(self, cmd : Dict) -> BUDMAN_RESULT_TYPE:
+    def APP_cmd(self, cmd : p3m.CMD_OBJECT_TYPE) -> BUDMAN_RESULT_TYPE:
         """App commands to manipulate app values and settings.
 
         The APP_cmd command can use a variety of other command line arguments.
@@ -1120,7 +1087,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
     #endregion APP_cmd() execution method
     # ------------------------------------------------------------------------ +
     #region WORKFLOW_categorization_cmd() execution method
-    def WORKFLOW_categorization_cmd(self, cmd : Dict) -> BUDMAN_RESULT_TYPE:
+    def WORKFLOW_categorization_cmd(self, cmd : p3m.CMD_OBJECT_TYPE) -> BUDMAN_RESULT_TYPE:
         """Apply categorization workflow to one or more WORKBOOKS in the DC.
 
         As a workflow process, the WORKFLOW_categorization_cmd method has the
@@ -1243,7 +1210,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
     #endregion WORKFLOW_cmd() execution method
     # ------------------------------------------------------------------------ +
     #region WORKFLOW_apply_cmd() execution method
-    def WORKFLOW_apply_cmd(self, cmd : Dict) -> BUDMAN_RESULT_TYPE:
+    def WORKFLOW_apply_cmd(self, cmd : p3m.CMD_OBJECT_TYPE) -> BUDMAN_RESULT_TYPE:
         """Apply workflow tasks to WORKBOOKS.
 
         A WORKFLOW_apply_cmd command will use the wb_ref value in the cmd. 
@@ -1281,51 +1248,51 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
     #endregion WORKFLOW_apply_cmd() execution method
     # ------------------------------------------------------------------------ +
     #region WORKFLOW_intake_cmd() execution method
-    def WORKFLOW_intake_cmd(self, cmd : Dict) -> Tuple[bool, str]:
-        """Execute workflow intake tasks.
+    # def WORKFLOW_intake_cmd(self, cmd : p3m.CMD_OBJECT_TYPE) -> Tuple[bool, str]:
+    #     """Execute workflow intake tasks.
 
-        A WORKFLOW_intake_cmd command processes workbooks that have just
-        arrived.
+    #     A WORKFLOW_intake_cmd command processes workbooks that have just
+    #     arrived.
 
-        Tasks:
-            0. Show input folder content file list with index (map to raw_input).
-               Just list of file names, not workbooks yet, never modify.
-            0. Workflow/task journal: task, timestamp, input, output action, workflow
-            0. Import new input file to working folder, set filename convention
-            1. Load a new csv_txns workbook.
-            2. Convert to excel_txns workbook.
-            3. Validate columns.
-            4. Save the workbook.
+    #     Tasks:
+    #         0. Show input folder content file list with index (map to raw_input).
+    #            Just list of file names, not workbooks yet, never modify.
+    #         0. Workflow/task journal: task, timestamp, input, output action, workflow
+    #         0. Import new input file to working folder, set filename convention
+    #         1. Load a new csv_txns workbook.
+    #         2. Convert to excel_txns workbook.
+    #         3. Validate columns.
+    #         4. Save the workbook.
 
-        Arguments:
-            cmd (Dict): A valid BudMan View Model Command object. 
+    #     Arguments:
+    #         cmd (Dict): A valid BudMan View Model Command object. 
     
-        Required cmd object attributes:
-            cmd_key: CV_WORKFLOW_CMD_KEY 
-        Optional cmd object attributes:
-            cmd_name: CV_WORKFLOW_CMD
-            subcmd_key: CV_INTAKE_SUBCMD_KEY
-            subcmd_name: CV_INTAKE_SUBCMD
+    #     Required cmd object attributes:
+    #         cmd_key: CV_WORKFLOW_CMD_KEY 
+    #     Optional cmd object attributes:
+    #         cmd_name: CV_WORKFLOW_CMD
+    #         subcmd_key: CV_INTAKE_SUBCMD_KEY
+    #         subcmd_name: CV_INTAKE_SUBCMD
 
-        Returns:
-            Tuple[success : bool, result : Any]: The outcome of the command 
-            execution. If success is True, result contains result of the 
-            command, if False, a description of the error.
+    #     Returns:
+    #         Tuple[success : bool, result : Any]: The outcome of the command 
+    #         execution. If success is True, result contains result of the 
+    #         command, if False, a description of the error.
             
-        Raises:
-            RuntimeError: A description of the
-            root error is contained in the exception message.
-        """
-        try:
-            logger.debug(f"Start: process_txn_intake...")
-            return process_workflow_intake_tasks(cmd, self.DC)
-        except Exception as e:
-            logger.error(p3u.exc_err_msg(e))
-            raise
+    #     Raises:
+    #         RuntimeError: A description of the
+    #         root error is contained in the exception message.
+    #     """
+    #     try:
+    #         logger.debug(f"Start: process_txn_intake...")
+    #         return process_workflow_intake_tasks(cmd, self.DC)
+    #     except Exception as e:
+    #         logger.error(p3u.exc_err_msg(e))
+    #         raise
     #endregion WORKFLOW_intake_cmd() execution method
     # ------------------------------------------------------------------------ +
     #region WORKFLOW_check() execution method 
-    def WORKFLOW_check_cmd(self, cmd : Dict) -> BUDMAN_RESULT_TYPE:
+    def WORKFLOW_check_cmd(self, cmd : p3m.CMD_OBJECT_TYPE) -> BUDMAN_RESULT_TYPE:
         """Apply workflow to one or more WORKBOOKS in the DC.
 
         A WORKFLOW_categorization_cmd command will use the wb_ref value in the cmd. 

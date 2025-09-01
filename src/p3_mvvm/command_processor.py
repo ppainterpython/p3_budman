@@ -686,7 +686,7 @@ def unknown_CMD_RESULT_ERROR(cmd: CMD_OBJECT_TYPE) -> CMD_RESULT_TYPE:
         m = (f"Error unknown {CK_CMD_KEY}: '{cmd.get(CK_CMD_KEY,None)}' "
              f"{CK_SUBCMD_KEY}: '{cmd.get(CK_SUBCMD_KEY, None)}' ")
         logger.error(m)
-        return create_CMD_OBJECT(
+        return create_CMD_RESULT_OBJECT(
             cmd_result_status = False,
             result_content = m,
             result_content_type=CMD_ERROR_STRING_OUTPUT,

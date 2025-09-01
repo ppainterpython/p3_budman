@@ -29,6 +29,7 @@ import budman_namespace.design_language_namespace as bdm
 from budman_namespace.bdm_workbook_class import BDMWorkbook
 from budget_domain_model import BudgetDomainModel
 from budman_data_context import BudManAppDataContext_Base
+from .budget_intake import *
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -51,24 +52,30 @@ def WORKFLOW_TASK_process(cmd: p3m.CMD_OBJECT_TYPE,
             The data context for the BudMan application.
     """
     try:
+        # If bdm_DC is bad, just raise an error.
+        p3u.is_not_obj_of_type("bdm_DC", bdm_DC, BudManAppDataContext_Base,
+                               raise_error= True)
+        # Should be called only for workflow cmd.
+        cmd_result : p3m.CMD_RESULT_TYPE = cp.verify_cmd_key(cmd, cp.CV_WORKFLOW_CMD_KEY)
+        if not cmd_result[p3m.CMD_RESULT_STATUS]: return cmd_result
         # Assuming the cmd parameters have been validated before reaching this point.
-        if cmd[p3m.CK_SUBCMD_KEY] == cp.CV_SET_SUBCMD_KEY:
+        # Process the CMD_OBJECT based on its CK_SUBCMD_KEY.
+        # workflow intake command
+        if cmd[p3m.CK_SUBCMD_KEY] == cp.CV_WORKFLOW_INTAKE_SUBCMD_KEY:
+            return process_workflow_intake_tasks(cmd, bdm_DC)
+        # workflow set command
+        elif cmd[p3m.CK_SUBCMD_KEY] == cp.CV_SET_SUBCMD_KEY:
             # Process the set_value task.
             return WORKFLOW_TASK_set_value(cmd, bdm_DC)
+        # workflow task sync command
         elif (cmd[p3m.CK_SUBCMD_KEY] == cp.CV_TASK_SUBCMD_KEY and
               cmd[cp.CK_TASK_NAME] == cp.CV_SYNC):
             # Process the wf sync task.
             recon: bool = cmd.get(cp.CK_RECONCILE, False)
             return WORKFLOW_TASK_sync_wdc(recon, bdm_DC)
+        # workflow unknown command
         else:
-            cmd_result: p3m.CMD_RESULT_TYPE = p3m.create_CMD_RESULT_OBJECT(
-                cmd_result_status=False,
-                result_content_type=p3m.CMD_ERROR_STRING_OUTPUT,
-                result_content=f"Unknown workflow task: {cmd[cp.p3m.CK_SUBCMD_KEY]}",
-                cmd_object=cmd
-            )
-            logger.error(cmd_result[p3m.CMD_RESULT_CONTENT])
-            return cmd_result
+            return p3m.unknown_CMD_RESULT_ERROR(cmd)
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise

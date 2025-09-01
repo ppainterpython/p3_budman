@@ -96,8 +96,9 @@ def workflow_cmd_parser() -> cmd2.Cmd2ArgumentParser:
 
 #endregion Configure the CLI parser 
 # ---------------------------------------------------------------------------- +
-class BudManCLIView(cmd2.Cmd, BudManAppDataContext_Binding,
-                    p3m.CommandProcessor_Binding): # , DataContext_Binding 
+class BudManCLIView(cmd2.Cmd, 
+                    BudManAppDataContext_Binding,
+                    p3m.CommandProcessor_Binding): 
     # ======================================================================== +
     #region BudManCLIView class intrinsics
     # ------------------------------------------------------------------------ +
@@ -162,10 +163,12 @@ class BudManCLIView(cmd2.Cmd, BudManAppDataContext_Binding,
         self._settings : bdms.BudManSettings = settings if settings else bdms.BudManSettings()
         self._current_cmd :Optional[str] = None
         self._save_on_exit : bool = True
-        # CommandProcessor_Binding super().__init__().
+
+        # Setup CommandProcessor_Binding 
         p3m.CommandProcessor_Binding.__init__(self, command_processor)
         self.cp_initialized : bool = False
-        # Next, setup and initialize cmd2.cmd cli parser
+
+        # Setup and initialize cmd2.cmd cli parser
         shortcuts = dict(cmd2.DEFAULT_SHORTCUTS)
         shortcuts.update({'wf': 'workflow'})
         hfn = self._settings[BUDMAN_CMD_HISTORY_FILENAME]
@@ -182,7 +185,6 @@ class BudManCLIView(cmd2.Cmd, BudManAppDataContext_Binding,
                           self, onchange_cb=self._onchange_parse_only)
         )
         self.set_prompt()
-        # BudManCLIView.update_terminal_title(f"{TERM_TITLE}")
     #endregion __init__() method
     # ------------------------------------------------------------------------ +
     #region    BudManCLIView Methods

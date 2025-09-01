@@ -62,8 +62,8 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 #region BudMan Application Command Task functions
 # ---------------------------------------------------------------------------- +
-#region CMD_TASK_process() function
-def CMD_TASK_process(cmd: p3m.CMD_OBJECT_TYPE,
+#region BUDMAN_CMD_TASK_process() function
+def BUDMAN_CMD_TASK_process(cmd: p3m.CMD_OBJECT_TYPE,
                      bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
     """Process a CMD_TASK command.
 
@@ -79,36 +79,35 @@ def CMD_TASK_process(cmd: p3m.CMD_OBJECT_TYPE,
         p3u.is_not_obj_of_type("bdm_DC", bdm_DC, BudManAppDataContext_Base,
                                raise_error= True)
         # Assuming the CMD_OBJECT has been validated before reaching this point.
-        # Construct CMD_RESULT for return.
-        cmd_result: p3m.CMD_RESULT_TYPE = p3m.create_CMD_RESULT_OBJECT(
-            cmd_object=cmd
-        )
         # Process the CMD_OBJECT based on its cmd_key and subcmd_key.
+        # List command
         if cmd[p3m.CK_CMD_KEY] == cp.CV_LIST_CMD_KEY:
             if cmd[p3m.CK_SUBCMD_KEY] == cp.CV_LIST_WORKBOOKS_SUBCMD_KEY:
-                return CMD_TASK_list_workbooks(cmd, bdm_DC)
+                return BUDMAN_CMD_TASK_list_workbooks(cmd, bdm_DC)
             elif cmd[cp.p3m.CK_SUBCMD_NAME] == cp.CV_BDM_STORE_SUBCMD_NAME:
-                return CMD_TASK_list_bdm_store_json(cmd, bdm_DC)
+                return BUDMAN_CMD_TASK_list_bdm_store_json(cmd, bdm_DC)
             elif cmd[cp.p3m.CK_SUBCMD_NAME] == cp.CV_FILES_SUBCMD_NAME:
-               return CMD_TASK_list_files(cmd, bdm_DC)
+               return BUDMAN_CMD_TASK_list_files(cmd, bdm_DC)
             else:
                 return p3m.unknown_CMD_RESULT_ERROR(cmd)
+        # Show command
         elif cmd[p3m.CK_CMD_KEY] == cp.CV_SHOW_CMD_KEY:
             if cmd[p3m.CK_SUBCMD_KEY] == cp.CV_SHOW_DATA_CONTEXT_SUBCMD_KEY:
-                return CMD_TASK_show_DATA_CONTEXT(cmd, bdm_DC)
+                return BUDMAN_CMD_TASK_show_DATA_CONTEXT(cmd, bdm_DC)
             elif cmd[p3m.CK_SUBCMD_KEY] == cp.CV_SHOW_BUDGET_CATEGORIES_SUBCMD_KEY:
-                return CMD_TASK_show_BUDGET_CATEGORIES(cmd, bdm_DC)
+                return BUDMAN_CMD_TASK_show_BUDGET_CATEGORIES(cmd, bdm_DC)
             else:
                 return p3m.unknown_CMD_RESULT_ERROR(cmd)
+        # Unknown command
         else:
             return p3m.unknown_CMD_RESULT_ERROR(cmd)
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
-#endregion CMD_TASK_process() function
+#endregion BUDMAN_CMD_TASK_process() function
 # ---------------------------------------------------------------------------- +
-#region CMD_TASK_list_workbooks()
-def CMD_TASK_list_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
+#region BUDMAN_CMD_TASK_list_workbooks()
+def BUDMAN_CMD_TASK_list_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
         bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
     """List workbooks in the BudMan application data context.
 
@@ -130,7 +129,7 @@ def CMD_TASK_list_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
         bdm_tree: bool = cmd.get(cp.CK_BDM_TREE, False)
         if bdm_tree:
             # Return all workbooks in a RichTree
-            result_tree: RichTree = CMD_TASK_get_workbook_tree(bdm_DC)
+            result_tree: RichTree = BUDMAN_CMD_TASK_get_workbook_tree(bdm_DC)
             if result_tree is None:
                 # Failed to construct the model_tree for workbooks
                 cmd_result[p3m.CMD_RESULT_CONTENT] = "Model workbooks tree not constructed."
@@ -161,10 +160,10 @@ def CMD_TASK_list_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
             return cmd_result
     except Exception as e:
         return p3m.create_CMD_RESULT_ERROR(cmd, e)
-#endregion CMD_TASK_list_workbooks()
+#endregion BUDMAN_CMD_TASK_list_workbooks()
 # ---------------------------------------------------------------------------- +
-#region CMD_TASK_list_bdm_store_json()
-def CMD_TASK_list_bdm_store_json(cmd: p3m.CMD_OBJECT_TYPE,
+#region BUDMAN_CMD_TASK_list_bdm_store_json()
+def BUDMAN_CMD_TASK_list_bdm_store_json(cmd: p3m.CMD_OBJECT_TYPE,
                                   bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
     """List the BDM store in JSON format.
     Args:
@@ -199,10 +198,10 @@ def CMD_TASK_list_bdm_store_json(cmd: p3m.CMD_OBJECT_TYPE,
         return cmd_result
     except Exception as e:
         return p3m.create_CMD_RESULT_ERROR(cmd, e)
-#endregion CMD_TASK_list_bdm_store_json()
+#endregion BUDMAN_CMD_TASK_list_bdm_store_json()
 # ---------------------------------------------------------------------------- +    
-#region CMD_TASK_list_files()
-def CMD_TASK_list_files(cmd: p3m.CMD_OBJECT_TYPE,
+#region BUDMAN_CMD_TASK_list_files()
+def BUDMAN_CMD_TASK_list_files(cmd: p3m.CMD_OBJECT_TYPE,
                          bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
     """List the files in the BDM store.
     Args:
@@ -252,7 +251,7 @@ def CMD_TASK_list_files(cmd: p3m.CMD_OBJECT_TYPE,
                 logger.error(cmd_result[p3m.CMD_RESULT_CONTENT])
                 return cmd_result
         fi_key: str = bdm_DC.dc_FI_KEY
-        folder_tree: Tree = CMD_TASK_get_file_tree(fi_key, wf_key, wf_purpose, bdm_DC)
+        folder_tree: Tree = BUDMAN_CMD_TASK_get_file_tree(fi_key, wf_key, wf_purpose, bdm_DC)
         if not folder_tree:
             cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = p3m.CMD_ERROR_STRING_OUTPUT
             cmd_result[p3m.CMD_RESULT_CONTENT] = (
@@ -270,10 +269,10 @@ def CMD_TASK_list_files(cmd: p3m.CMD_OBJECT_TYPE,
         return cmd_result
     except Exception as e:
         return p3m.create_CMD_RESULT_ERROR(cmd, e)
-#endregion CMD_TASK_list_files()
+#endregion BUDMAN_CMD_TASK_list_files()
 # ---------------------------------------------------------------------------- +    
-#region CMD_TASK_get_workbook_tree() method
-def CMD_TASK_get_workbook_tree(bdm_DC: BudManAppDataContext_Base) -> RichTree:
+#region BUDMAN_CMD_TASK_get_workbook_tree() method
+def BUDMAN_CMD_TASK_get_workbook_tree(bdm_DC: BudManAppDataContext_Base) -> RichTree:
     """Return a workbook_tree (RichTree) for the BDM workbooks in bdm_DC."""
     try:
         st = p3u.start_timer()
@@ -346,10 +345,10 @@ def CMD_TASK_get_workbook_tree(bdm_DC: BudManAppDataContext_Base) -> RichTree:
         m = p3u.exc_err_msg(e)
         logger.error(m)
         return None
-#endregion CMD_TASK_get_workbook_tree
+#endregion BUDMAN_CMD_TASK_get_workbook_tree
 # ---------------------------------------------------------------------------- +    
-#region CMD_TASK_get_file_tree() function
-def CMD_TASK_get_file_tree(fi_key: str, wf_key: str, wf_purpose: str, 
+#region BUDMAN_CMD_TASK_get_file_tree() function
+def BUDMAN_CMD_TASK_get_file_tree(fi_key: str, wf_key: str, wf_purpose: str, 
                              bdm_DC: BudManAppDataContext_Base) -> Tree:
     """Obtain a file tree based on fi_key, wf_key and wf_purpose.
 
@@ -385,7 +384,67 @@ def CMD_TASK_get_file_tree(fi_key: str, wf_key: str, wf_purpose: str,
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
-#endregion CMD_TASK_get_file_tree() function
+#endregion BUDMAN_CMD_TASK_get_file_tree() function
+# ---------------------------------------------------------------------------- +
+#region BUDMAN_CMD_TASK_show_DATA_CONTEXT()
+def BUDMAN_CMD_TASK_show_DATA_CONTEXT(cmd: p3m.CMD_OBJECT_TYPE,
+                                bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
+    """Show the data context for the command."""
+    try:
+        # Gather the current content of the DATA_CONTEXT.
+        bs = bdm_DC.dc_BDM_STORE
+        bs_str = p3u.first_n(str(bs))
+        # Prepare the Command output result
+        result = f"Budget Manager Data Context:"
+        result += f"{P2}{bdm.DC_INITIALIZED}: {bdm_DC.dc_INITIALIZED}\n"
+        result += f"{P2}{bdm.DC_BDM_STORE}: {bs_str}\n"
+        result += "Current Workflow Location:"
+        result += ( f"{P2}{bdm.FI_KEY}: {bdm_DC.dc_FI_KEY}"
+                    f"{P2}{bdm.WF_KEY}: {bdm_DC.dc_WF_KEY}"
+                    f"{P2}{bdm.WF_PURPOSE}: {bdm_DC.dc_WF_PURPOSE}\n")
+        result += "Current Workbook:"
+        wb:BDMWorkbook = bdm_DC.dc_WORKBOOK
+        if wb:
+            result += (f"{P2}{bdm.WB_ID}: {bdm_DC.dc_WB_ID}"
+                        f"{P2}{bdm.WB_INDEX}: {bdm_DC.dc_WB_INDEX}"
+                        f"{P2}{bdm.WB_NAME}: {bdm_DC.dc_WB_NAME}"
+                        f"{P2}{bdm.WB_TYPE}: {bdm_DC.dc_WB_TYPE}\n")
+        else:
+            result += (f"{P2}{bdm.WB_ID}: ..."
+                        f"{P2}{bdm.WB_INDEX}: ..."
+                        f"{P2}{bdm.WB_NAME}: ..."
+                        f"{P2}{bdm.WB_TYPE}: ...\n")
+        _, wdc_result = get_workbook_data_collection_info_str(bdm_DC)
+        result += wdc_result
+        return p3m.create_CMD_RESULT_OBJECT(
+            cmd_result_status=True,
+            result_content=result,
+            result_content_type=p3m.CMD_STRING_OUTPUT,
+            cmd_object=cmd
+        )
+    except Exception as e:
+        return p3m.create_CMD_RESULT_ERROR(cmd, e)
+#endregion BUDMAN_CMD_TASK_show_DATA_CONTEXT()
+# ---------------------------------------------------------------------------- +
+#region BUDMAN_CMD_TASK_show_BUDGET_CATEGORIES()
+def BUDMAN_CMD_TASK_show_BUDGET_CATEGORIES(cmd: p3m.CMD_OBJECT_TYPE,
+                                      bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
+    """Show the budget categories for the command."""
+    try:
+        result: str = "no result"
+        # Show the budget categories.
+        cat_list = cmd.get(cp.CK_CAT_LIST, [])
+        tree_level = cmd.get(cp.CK_LEVEL, 2)
+        result: str = output_category_tree(level=tree_level, cat_list=cat_list)
+        return p3m.create_CMD_RESULT_OBJECT(
+            cmd_result_status=True,
+            result_content=result,
+            result_content_type=p3m.CMD_STRING_OUTPUT,
+            cmd_object=cmd
+        )
+    except Exception as e:
+        return p3m.create_CMD_RESULT_ERROR(cmd, e)
+#endregion BUDMAN_CMD_TASK_show_BUDGET_CATEGORIES()
 # ---------------------------------------------------------------------------- +
 #region extract_bdm_tree() function
 def extract_bdm_tree(bdm_DC: BudManAppDataContext_Base) -> Tree:
@@ -450,64 +509,6 @@ def extract_bdm_tree(bdm_DC: BudManAppDataContext_Base) -> Tree:
         logger.error(m)
         raise
 #endregion extract_bdm_tree() function
-# ---------------------------------------------------------------------------- +
-#region CMD_TASK_show_DATA_CONTEXT()
-def CMD_TASK_show_DATA_CONTEXT(cmd: p3m.CMD_OBJECT_TYPE,
-                                bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
-    """Show the data context for the command."""
-    try:
-        # Gather the current content of the DATA_CONTEXT.
-        bs = bdm_DC.dc_BDM_STORE
-        bs_str = p3u.first_n(str(bs))
-        # Prepare the Command output result
-        result = f"Budget Manager Data Context:"
-        result += f"{P2}{bdm.DC_INITIALIZED}: {bdm_DC.dc_INITIALIZED}\n"
-        result += f"{P2}{bdm.DC_BDM_STORE}: {bs_str}"
-        result += ( f"{P2}{bdm.FI_KEY}: {bdm_DC.dc_FI_KEY}"
-                    f"{P2}{bdm.WF_KEY}: {bdm_DC.dc_WF_KEY}"
-                    f"{P2}{bdm.WF_PURPOSE}: {bdm_DC.dc_WF_PURPOSE}\n")
-        wb:BDMWorkbook = bdm_DC.dc_WORKBOOK
-        if wb:
-            result += (f"{P2}{bdm.WB_ID}: {bdm_DC.dc_WB_ID}"
-                        f"{P2}{bdm.WB_INDEX}: {bdm_DC.dc_WB_INDEX}"
-                        f"{P2}{bdm.WB_NAME}: {bdm_DC.dc_WB_NAME}"
-                        f"{P2}{bdm.WB_TYPE}: {bdm_DC.dc_WB_TYPE}\n")
-        else:
-            result += (f"{P2}{bdm.WB_ID}: ..."
-                        f"{P2}{bdm.WB_INDEX}: ..."
-                        f"{P2}{bdm.WB_NAME}: ..."
-                        f"{P2}{bdm.WB_TYPE}: ...\n")
-        _, wdc_result = get_workbook_data_collection_info_str(bdm_DC)
-        result += wdc_result
-        return p3m.create_CMD_RESULT_OBJECT(
-            cmd_result_status=True,
-            result_content=result,
-            result_content_type=p3m.CMD_STRING_OUTPUT,
-            cmd_object=cmd
-        )
-    except Exception as e:
-        return p3m.create_CMD_RESULT_ERROR(cmd, e)
-#endregion CMD_TASK_show_DATA_CONTEXT()
-# ---------------------------------------------------------------------------- +
-#region CMD_TASK_show_BUDGET_CATEGORIES()
-def CMD_TASK_show_BUDGET_CATEGORIES(cmd: p3m.CMD_OBJECT_TYPE,
-                                      bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
-    """Show the budget categories for the command."""
-    try:
-        result: str = "no result"
-        # Show the budget categories.
-        cat_list = cmd.get(cp.CK_CAT_LIST, [])
-        tree_level = cmd.get(cp.CK_LEVEL, 2)
-        result = output_category_tree(level=tree_level, cat_list=cat_list)
-        return p3m.create_CMD_RESULT_OBJECT(
-            cmd_result_status=True,
-            result_content=result,
-            result_content_type=p3m.CMD_TREE_OBJECT,
-            cmd_object=cmd
-        )
-    except Exception as e:
-        return p3m.create_CMD_RESULT_ERROR(cmd, e)
-#endregion CMD_TASK_show_BUDGET_CATEGORIES()
 # ---------------------------------------------------------------------------- +
 #endregion BudMan Application Command Task functions
 # ---------------------------------------------------------------------------- +

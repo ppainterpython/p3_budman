@@ -21,18 +21,17 @@ from typing import Dict, Any, Optional, Union, List
 from dataclasses import dataclass
 
 # third-party modules and packages
-import p3logging as p3l, p3_utils as p3u
+import p3logging as p3l, p3_utils as p3u, p3_mvvm as p3m
 from openpyxl import Workbook, load_workbook
 from openpyxl.worksheet.worksheet import Worksheet
 from openpyxl.cell.cell import Cell
 from treelib import Tree
 
 # local modules and packages
-import budman_command_processor.budman_cp_namespace as cp
+import budman_command_processor as cp
 import budman_namespace.design_language_namespace as bdm
 from budman_namespace.bdm_workbook_class import BDMWorkbook
 from budman_data_context import BudManAppDataContext_Base
-from .workflow_command_services import *
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -40,8 +39,8 @@ logger = logging.getLogger(__name__)
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
 #region process_workflow_intake_tasks() function
-def process_workflow_intake_tasks(cmd: Dict[str, Any], 
-                       bdm_DC: BudManAppDataContext_Base) -> bdm.BUDMAN_RESULT_TYPE:
+def process_workflow_intake_tasks(cmd: p3m.CMD_OBJECT_TYPE, 
+             bdm_DC: BudManAppDataContext_Base) -> bdm.BUDMAN_RESULT_TYPE:
     """Process workflow intake tasks.
 
     This function processes a transaction intake task command.
@@ -67,7 +66,7 @@ def process_workflow_intake_tasks(cmd: Dict[str, Any],
 # ---------------------------------------------------------------------------- +
 #region INTAKE_PROCESS_copy_file_to_WF_WORKING_folder() function
 def INTAKE_PROCESS_copy_file_to_WF_WORKING_folder(
-        cmd: Dict[str, Any], 
+        cmd: p3m.CMD_OBJECT_TYPE, 
         bdm_DC: BudManAppDataContext_Base) -> bdm.BUDMAN_RESULT_TYPE:
     """INTAKE_PROCESS_TASK: copy a file to the WF_WORKING folder.
 
@@ -81,7 +80,7 @@ def INTAKE_PROCESS_copy_file_to_WF_WORKING_folder(
     """
     try:
         # Assume the cmd parameters have been validated before reaching this point.
-        # Current DC values of wf_key and wf_purpose are are the destination 
+        # Current DC values of wf_key and wf_purpose are the destination 
         # folder for the file to be copied. CMDLINE file_index, wf_key and 
         # wf_purpose identify the file to copy. 
         # Source file parameters
@@ -89,7 +88,7 @@ def INTAKE_PROCESS_copy_file_to_WF_WORKING_folder(
         src_wf_purpose: str = cmd[cp.CK_CMDLINE_WF_PURPOSE]
         src_file_index: int = cmd[cp.CK_FILE_INDEX]
         fi_key:str = bdm_DC.dc_FI_KEY
-        src_folder_tree = WORKFLOW_get_folder_tree(fi_key, src_wf_key, 
+        src_folder_tree = cp.BUDMAN_CMD_TASK_get_file_tree(fi_key, src_wf_key, 
                                                    src_wf_purpose, bdm_DC)
         # Destination workflow folder
         dst_wf_key = bdm_DC.dc_WF_KEY
@@ -103,7 +102,7 @@ def INTAKE_PROCESS_copy_file_to_WF_WORKING_folder(
 #endregion process_workflow_intake_tasks() function
 # ---------------------------------------------------------------------------- +
 #region process_txn_intake() function
-def process_txn_intake(cmd: Dict[str, Any], 
+def process_txn_intake(cmd: p3m.CMD_OBJECT_TYPE, 
                        bdm_DC: BudManAppDataContext_Base) -> bdm.BUDMAN_RESULT_TYPE:
     """Process a transaction intake tasks.
 
@@ -209,7 +208,7 @@ def convert_csv_txns_to_excel_txns(csv_txns: BDMWorkbook) -> Union[bool, str]:
 #endregion convert_csv_txns_to_excel_txns() function
 # ---------------------------------------------------------------------------- +
 #region check_schema_intake() function
-def check_schema_intake(cmd: Dict[str, Any], bdm_DC: BudManAppDataContext_Base) -> bdm.BUDMAN_RESULT_TYPE:
+def check_schema_intake(cmd: p3m.CMD_OBJECT_TYPE, bdm_DC: BudManAppDataContext_Base) -> bdm.BUDMAN_RESULT_TYPE:
     """Check the schema of an intake workbook.
 
     For one or more designated workbooks, check their schema for their

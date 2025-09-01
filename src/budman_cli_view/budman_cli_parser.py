@@ -330,10 +330,10 @@ class BudManCLIParser():
             }
             parser.set_defaults(**show_cmd_defaults)
 
-            # show subcommands: categories, datacontext, workbooks, fin_inst, 
-            # workflows
+            # show subcommands: 
+            #     categories, datacontext, workbooks, fin_inst, workflows
 
-            #region Show Categories subcommand
+            #region Show Budget Categories subcommand
             categories_subcmd_parser = subparsers.add_parser(
                 cp.CV_BUDGET_CATEGORIES_SUBCMD_NAME,
                 aliases=["cat", "budget_categories"],
@@ -379,7 +379,7 @@ class BudManCLIParser():
                 help="Show Financial Institution information.")
             fi_subcmd_defaults = {
                 p3m.CK_SUBCMD_NAME: cp.CV_FIN_INST_SUBCMD_NAME,
-                p3m.CK_SUBCMD_KEY: cp.CV_FIN_INST_SUBCMD_KEY
+                p3m.CK_SUBCMD_KEY: cp.CV_SHOW_FIN_INST_SUBCMD_KEY
             }
             fi_subcmd_parser.set_defaults(**fi_subcmd_defaults)
             fi_subcmd_parser.add_argument(
@@ -392,11 +392,11 @@ class BudManCLIParser():
             #region show workflows subcommand
             wf_subcmd_parser  = subparsers.add_parser(
                 cp.CV_WORKFLOWS_SUBCMD_NAME,
-                aliases=["wf", "WF"], 
+                aliases=["wf", "WF", "workflows"], 
                 help="Show Workflow information.")
             wf_subcmd_defaults = {
                 p3m.CK_SUBCMD_NAME: cp.CV_WORKFLOWS_SUBCMD_NAME,
-                p3m.CK_SUBCMD_KEY: cp.CV_WORKFLOWS_SUBCMD_KEY
+                p3m.CK_SUBCMD_KEY: cp.CV_SHOW_WORKFLOWS_SUBCMD_KEY
             }
             wf_subcmd_parser.set_defaults(**wf_subcmd_defaults)
             wf_subcmd_parser.add_argument(
@@ -568,17 +568,17 @@ class BudManCLIParser():
                 cmd_key=cp.CV_WORKFLOW_CMD_KEY,   # new way
                 cmd_name=cp.CV_WORKFLOW_CMD_NAME, 
                 subcmd_name=cp.CV_INTAKE_SUBCMD_NAME,
-                subcmd_key=cp.CV_INTAKE_SUBCMD_KEY)
+                subcmd_key=cp.CV_WORKFLOW_INTAKE_SUBCMD_KEY)
             intake_subparsers = intake_parser.add_subparsers(
                 dest=cp.CK_INTAKE_TASK, required=True)
-            # workflow intake move file_index
+            # workflow intake copy file_index
             copy_parser = intake_subparsers.add_parser( cp.CV_INTAKE_COPY_TASK, 
                         help=("Copy a file to process working folder."))
             copy_parser.add_argument(
                 cp.CK_FILE_INDEX, nargs="?",
                 action="store",
                 type=int, 
-                help=("Index of file to move."))
+                help=("Index of file to copy."))
             self.add_workflow_argument(copy_parser)
             self.add_purpose_argument(copy_parser)
             self.add_common_args(copy_parser)
@@ -649,7 +649,7 @@ class BudManCLIParser():
             logger.exception(p3u.exc_err_msg(e))
             raise
 
-    def add_file_index_argument(self, parser) -> None:
+    def add_file_list_argument(self, parser) -> None:
         """Add one or more file_index numbers from a file list.""" 
         try:
             parser.add_argument(
