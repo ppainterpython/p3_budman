@@ -17,7 +17,7 @@ import p3_utils as p3u, pyjson5, p3logging as p3l
 # local modules and packages
 from .mvvm_namespace import *
 from .command_processor_Base_ABC import CommandProcessor_Base
-from .command_processor import create_CMD_RESULT_ERROR
+from .command_processor import create_CMD_RESULT_EXCEPTION
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -163,7 +163,7 @@ class CommandProcessor_Binding(CommandProcessor_Base):
         try:
             return self.CP.cp_execute_cmd(cmd)
         except Exception as e:
-            cmd_result = create_CMD_RESULT_ERROR(cmd, e)
+            cmd_result = create_CMD_RESULT_EXCEPTION(cmd, e)
             m = cmd_result[CMD_RESULT_CONTENT]
             if raise_error:
                 raise RuntimeError(m)
@@ -180,7 +180,7 @@ class CommandProcessor_Binding(CommandProcessor_Base):
         try:
             return self.CP.cp_validate_cmd(cmd, validate_all)
         except Exception as e:
-            cmd_result = create_CMD_RESULT_ERROR(cmd, e)
+            cmd_result = create_CMD_RESULT_EXCEPTION(cmd, e)
             return cmd_result
     #endregion cp_validate_cmd() command method
     # ------------------------------------------------------------------------ +

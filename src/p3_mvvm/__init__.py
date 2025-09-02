@@ -47,6 +47,7 @@ from .command_processor import (
     validate_subcmd_key_with_name,
     create_CMD_RESULT_OBJECT,
     is_CMD_RESULT,
+    create_CMD_RESULT_EXCEPTION,
     create_CMD_RESULT_ERROR,
     unknown_CMD_RESULT_ERROR
 )
@@ -123,6 +124,7 @@ __all__ = [
     "validate_subcmd_key_with_name",
     "create_CMD_RESULT_OBJECT",
     "is_CMD_RESULT",
+    "create_CMD_RESULT_EXCEPTION",
     "create_CMD_RESULT_ERROR",
     "unknown_CMD_RESULT_ERROR"
 ]

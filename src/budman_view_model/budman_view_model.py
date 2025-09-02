@@ -714,7 +714,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             return cmd_result
         except Exception as e:
-            return p3m.create_CMD_RESULT_ERROR(cmd, e)
+            return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
     #endregion SHOW_cmd() execution method
     # ------------------------------------------------------------------------ +
     #region BDM_STORE_save_cmd() execution method
@@ -1206,7 +1206,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             return cmd_result
         except Exception as e:
-            return p3m.create_CMD_RESULT_ERROR(cmd, e)
+            return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
     #endregion WORKFLOW_cmd() execution method
     # ------------------------------------------------------------------------ +
     #region WORKFLOW_apply_cmd() execution method

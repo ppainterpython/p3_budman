@@ -62,7 +62,7 @@ def WORKFLOW_TASK_process(cmd: p3m.CMD_OBJECT_TYPE,
         # Process the CMD_OBJECT based on its CK_SUBCMD_KEY.
         # workflow intake command
         if cmd[p3m.CK_SUBCMD_KEY] == cp.CV_WORKFLOW_INTAKE_SUBCMD_KEY:
-            return process_workflow_intake_tasks(cmd, bdm_DC)
+            return INTAKE_TASK_process(cmd, bdm_DC)
         # workflow set command
         elif cmd[p3m.CK_SUBCMD_KEY] == cp.CV_SET_SUBCMD_KEY:
             # Process the set_value task.

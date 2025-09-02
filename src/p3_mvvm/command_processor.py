@@ -251,7 +251,7 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
                         f"{(cmd_result[CMD_RESULT_STATUS])}")
             return cmd_result
         except Exception as e:
-            cmd_result = create_CMD_RESULT_ERROR(cmd, e)
+            cmd_result = create_CMD_RESULT_EXCEPTION(cmd, e)
             if raise_error:
                 raise RuntimeError(cmd_result[CMD_RESULT_CONTENT]) from e
             return cmd_result
@@ -276,14 +276,14 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
         """
         try:
             if not self.cp_validate_cmd_object(cmd, raise_error=False):
-                return create_CMD_RESULT_ERROR(cmd, "Invalid command object.")
+                return create_CMD_RESULT_EXCEPTION(cmd, "Invalid command object.")
             # Additional validation logic can be added here.
             return create_CMD_RESULT_OBJECT(cmd_result_status=True,
                                             result_content_type="validation",
                                             result_content="Command is valid.",
                                             cmd_object=cmd)
         except Exception as e:
-            return create_CMD_RESULT_ERROR(cmd, e)
+            return create_CMD_RESULT_EXCEPTION(cmd, e)
     #endregion cp_validate_cmd() method
     #region    cp_validate_cmd_object() Command Processor method
     def cp_validate_cmd_object(self, 
@@ -647,10 +647,10 @@ def is_CMD_RESULT(cmd_result: Any) -> bool:
 #endregion is_CMD_RESULT() function
 # ---------------------------------------------------------------------------- +
 #region create_CMD_RESULT_ERROR() function
-def create_CMD_RESULT_ERROR(cmd: CMD_OBJECT_TYPE, e: Exception) -> CMD_RESULT_TYPE:
-        """Return a CMD_RESULT based on an Exception e for the CMD_OBJECT execution.
+def create_CMD_RESULT_ERROR(cmd: CMD_OBJECT_TYPE, msg: str) -> CMD_RESULT_TYPE:
+        """Return a CMD_RESULT based on an Error msg.
 
-        Executing the cmd resulted in Exception e. Format and error message
+        Executing the cmd resulted in Error. Wrap the error message
         and return it in a CMD_RESULT suitable to return as an error.
 
         Arguments:
@@ -661,8 +661,7 @@ def create_CMD_RESULT_ERROR(cmd: CMD_OBJECT_TYPE, e: Exception) -> CMD_RESULT_TY
             
         """
         m = (f"Error executing cmd: {cmd.get(CK_CMD_KEY,"Unknown cmd_key")} "
-             f"{cmd.get(CK_SUBCMD_KEY, "Unknown subcmd_key")}: "
-             f"{p3u.exc_err_msg(e)}")
+             f"{cmd.get(CK_SUBCMD_KEY, "Unknown subcmd_key")}: {msg}")
         logger.error(m)
         return create_CMD_OBJECT(
             cmd_result_status = False,
@@ -671,6 +670,28 @@ def create_CMD_RESULT_ERROR(cmd: CMD_OBJECT_TYPE, e: Exception) -> CMD_RESULT_TY
             cmd_object=cmd
         )
 #endregion create_CMD_RESULT_ERROR() function
+# ---------------------------------------------------------------------------- +
+#region create_CMD_RESULT_EXCEPTION() function
+def create_CMD_RESULT_EXCEPTION(cmd: CMD_OBJECT_TYPE, e: Exception) -> CMD_RESULT_TYPE:
+        """Return a CMD_RESULT based on an Exception e for the CMD_OBJECT execution.
+
+        Executing the cmd resulted in Exception e. Format an error message
+        and return it in a CMD_RESULT suitable to return as an error.
+
+        Arguments:
+            cmd (Dict): A valid CMD_OBJECT_TYPE.
+            e (Exception): The exception that occurred.
+
+        Returns:
+            CMD_RESULT_TYPE with error information and status of False.
+            
+        """
+        m = (f"Exception executing cmd: {cmd.get(CK_CMD_KEY,"Unknown cmd_key")} "
+             f"{cmd.get(CK_SUBCMD_KEY, "Unknown subcmd_key")}: "
+             f"{p3u.exc_err_msg(e)}")
+        logger.error(m)
+        return create_CMD_RESULT_ERROR(cmd, m)
+#endregion create_CMD_RESULT_EXCEPTION() function
 # ---------------------------------------------------------------------------- +
 #region create_CMD_RESULT_ERROR() function
 def unknown_CMD_RESULT_ERROR(cmd: CMD_OBJECT_TYPE) -> CMD_RESULT_TYPE:

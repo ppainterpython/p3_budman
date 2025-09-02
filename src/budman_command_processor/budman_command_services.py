@@ -159,7 +159,7 @@ def BUDMAN_CMD_TASK_list_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
             cmd_result[p3m.CMD_RESULT_STATUS] = True
             return cmd_result
     except Exception as e:
-        return p3m.create_CMD_RESULT_ERROR(cmd, e)
+        return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
 #endregion BUDMAN_CMD_TASK_list_workbooks()
 # ---------------------------------------------------------------------------- +
 #region BUDMAN_CMD_TASK_list_bdm_store_json()
@@ -197,7 +197,7 @@ def BUDMAN_CMD_TASK_list_bdm_store_json(cmd: p3m.CMD_OBJECT_TYPE,
         cmd_result[p3m.CMD_RESULT_STATUS] = True
         return cmd_result
     except Exception as e:
-        return p3m.create_CMD_RESULT_ERROR(cmd, e)
+        return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
 #endregion BUDMAN_CMD_TASK_list_bdm_store_json()
 # ---------------------------------------------------------------------------- +    
 #region BUDMAN_CMD_TASK_list_files()
@@ -268,7 +268,7 @@ def BUDMAN_CMD_TASK_list_files(cmd: p3m.CMD_OBJECT_TYPE,
 
         return cmd_result
     except Exception as e:
-        return p3m.create_CMD_RESULT_ERROR(cmd, e)
+        return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
 #endregion BUDMAN_CMD_TASK_list_files()
 # ---------------------------------------------------------------------------- +    
 #region BUDMAN_CMD_TASK_get_workbook_tree() method
@@ -423,7 +423,7 @@ def BUDMAN_CMD_TASK_show_DATA_CONTEXT(cmd: p3m.CMD_OBJECT_TYPE,
             cmd_object=cmd
         )
     except Exception as e:
-        return p3m.create_CMD_RESULT_ERROR(cmd, e)
+        return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
 #endregion BUDMAN_CMD_TASK_show_DATA_CONTEXT()
 # ---------------------------------------------------------------------------- +
 #region BUDMAN_CMD_TASK_show_BUDGET_CATEGORIES()
@@ -443,7 +443,7 @@ def BUDMAN_CMD_TASK_show_BUDGET_CATEGORIES(cmd: p3m.CMD_OBJECT_TYPE,
             cmd_object=cmd
         )
     except Exception as e:
-        return p3m.create_CMD_RESULT_ERROR(cmd, e)
+        return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
 #endregion BUDMAN_CMD_TASK_show_BUDGET_CATEGORIES()
 # ---------------------------------------------------------------------------- +
 #region extract_bdm_tree() function
@@ -515,6 +515,22 @@ def extract_bdm_tree(bdm_DC: BudManAppDataContext_Base) -> Tree:
 
 # ---------------------------------------------------------------------------- +
 #region BudMan Application Command Helper functions
+# ---------------------------------------------------------------------------- +
+#region get_filename_from_file_tree()
+def get_filename_from_file_tree(file_tree: Tree, file_index: int) -> Optional[str]:
+    """Get the filename from the file tree for a given file_index."""
+    try:
+        p3u.is_not_obj_of_type("file_tree", file_tree, Tree, raise_error=True)
+        for node_id in file_tree.expand_tree():
+            if file_tree[node_id].is_leaf():
+                this_index: int = file_tree[node_id].data.get("file_index", -1)
+                if this_index == file_index:
+                    return file_tree[node_id].identifier
+        return None
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion get_filename_from_file_tree()
 # ---------------------------------------------------------------------------- +
 #region workbook_names() function
 def workbook_names(wdc: bdm.WORKBOOK_DATA_COLLECTION_TYPE, wf_key: str, wf_purpose: str) -> List[str]:

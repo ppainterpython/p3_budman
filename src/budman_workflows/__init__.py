@@ -22,7 +22,7 @@ from .workflow_command_services import (
     WORKFLOW_TASK_process,
 )
 from .budget_intake import (
-    process_workflow_intake_tasks
+    INTAKE_TASK_process
 )
 from .workflow_utils import (
     extract_category_tree, 
@@ -72,7 +72,7 @@ __all__ = [
     # module names
     "workflow_utils",
     # budget_intake",
-    "process_workflow_intake_tasks",
+    "INTAKE_TASK_process",
     # txn_category.py module
     "BDMTXNCategory",
     "TXNCategoryCatalog",

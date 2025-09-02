@@ -38,12 +38,14 @@ from budman_data_context import BudManAppDataContext_Base
 logger = logging.getLogger(__name__)
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
-#region process_workflow_intake_tasks() function
-def process_workflow_intake_tasks(cmd: p3m.CMD_OBJECT_TYPE, 
-             bdm_DC: BudManAppDataContext_Base) -> bdm.BUDMAN_RESULT_TYPE:
-    """Process workflow intake tasks.
+#region INTAKE_TASK_process() function
+def INTAKE_TASK_process(cmd: p3m.CMD_OBJECT_TYPE, 
+             bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
+    """Process workflow intake subcmd tasks.
 
-    This function processes a transaction intake task command.
+    This function processes a workflow intake subcmd. Depending on the subcmd type,
+    it delegates the processing to the appropriate task functions. There could
+    be a variety of tasks depending on the value of the CK_INTAKE_TASK key.
 
     Args:
         cmd (Dict[str, Any]): A valid BudMan View Model Command object.
@@ -53,33 +55,39 @@ def process_workflow_intake_tasks(cmd: p3m.CMD_OBJECT_TYPE,
     try:
         # Assuming the cmd parameters have been validated before reaching this point.
         if cmd[cp.CK_INTAKE_TASK] == cp.CV_INTAKE_COPY_TASK:
-            # Process the copy task.
-            return INTAKE_PROCESS_copy_file_to_WF_WORKING_folder(cmd, bdm_DC)
+            # Process the copy task. 
+            return INTAKE_TASK_copy_file_to_wf_folder(cmd, bdm_DC)
         else:
             m = f"Unknown intake task: {cmd[cp.CK_INTAKE_TASK]}"
-            logger.error(m)
-            return False, m
+            return p3m.create_CMD_RESULT_ERROR(cmd, m)
     except Exception as e:
-        logger.error(p3u.exc_err_msg(e))
-        raise
-#endregion process_workflow_intake_tasks() function
+        return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
+#endregion INTAKE_TASK_process() function
 # ---------------------------------------------------------------------------- +
-#region INTAKE_PROCESS_copy_file_to_WF_WORKING_folder() function
-def INTAKE_PROCESS_copy_file_to_WF_WORKING_folder(
+#region INTAKE_TASK_copy_file_to_wf_folder() function
+def INTAKE_TASK_copy_file_to_wf_folder(
         cmd: p3m.CMD_OBJECT_TYPE, 
-        bdm_DC: BudManAppDataContext_Base) -> bdm.BUDMAN_RESULT_TYPE:
-    """INTAKE_PROCESS_TASK: copy a file to the WF_WORKING folder.
+        bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
+    """INTAKE_TASK: copy a file to a specified destination wf_folder.
 
-    Workflow Intake Task to copy a file from the WF_INPUT folder to the
-    WF_WORKING folder. The cmd object has the parameters to identify the file
-    to be copied.
+    Workflow Intake Task to copy a file from the source wf_folder location 
+    indicated by the cmd parameters CK_CMDLINE_WF_KEY and CK_CMDLINE_WF_PURPOSE
+    using the CK_FILE_INDEX to identify the file to be copied. The destination
+    wf_folder is specified by the current DC values for WF_KEY and WF_PURPOSE.
+
     Args:
-        cmd (Dict[str, Any]): A valid BudMan View Model Command object.
+        cmd (CMD_OBJECT_TYPE): A valid BudMan View Model Command object.
         bdm_DC (BudManAppDataContext_Base): The data context for the 
             BudMan application.
     """
     try:
         # Assume the cmd parameters have been validated before reaching this point.
+        cmd_result : p3m.CMD_RESULT_TYPE = p3m.create_CMD_RESULT_OBJECT(
+            cmd_result_status = True,
+            result_content_type = p3m.CMD_STRING_OUTPUT,
+            result_content = "",
+            cmd_object = cmd
+        )
         # Current DC values of wf_key and wf_purpose are the destination 
         # folder for the file to be copied. CMDLINE file_index, wf_key and 
         # wf_purpose identify the file to copy. 
@@ -90,16 +98,22 @@ def INTAKE_PROCESS_copy_file_to_WF_WORKING_folder(
         fi_key:str = bdm_DC.dc_FI_KEY
         src_folder_tree = cp.BUDMAN_CMD_TASK_get_file_tree(fi_key, src_wf_key, 
                                                    src_wf_purpose, bdm_DC)
+        p3u.is_not_obj_of_type("src_folder_tree", src_folder_tree, Tree, raise_error=True)
+        src_file_name = cp.get_filename_from_file_tree(src_folder_tree, src_file_index)
+        if not src_file_name:
+            msg = f"Source file not found in folder tree: {src_folder_tree.root}"
+            logger.error(msg)
+            return p3m.create_CMD_RESULT_ERROR(cmd, msg)
         # Destination workflow folder
         dst_wf_key = bdm_DC.dc_WF_KEY
         dst_wf_purpose = bdm_DC.dc_WF_PURPOSE
         msg:str = f"copy file_index {src_file_index} from {src_wf_key} "
         msg += f"to {dst_wf_key} for {dst_wf_purpose}"
-        return True, msg
+        cmd_result[p3m.CMD_RESULT_CONTENT] = msg
+        return cmd_result
     except Exception as e:
-        logger.error(p3u.exc_err_msg(e))
-        raise
-#endregion process_workflow_intake_tasks() function
+        return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
+#endregion INTAKE_TASK_copy_file_to_wf_folder() function
 # ---------------------------------------------------------------------------- +
 #region process_txn_intake() function
 def process_txn_intake(cmd: p3m.CMD_OBJECT_TYPE, 
