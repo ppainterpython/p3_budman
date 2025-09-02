@@ -1247,50 +1247,6 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             raise
     #endregion WORKFLOW_apply_cmd() execution method
     # ------------------------------------------------------------------------ +
-    #region WORKFLOW_intake_cmd() execution method
-    # def WORKFLOW_intake_cmd(self, cmd : p3m.CMD_OBJECT_TYPE) -> Tuple[bool, str]:
-    #     """Execute workflow intake tasks.
-
-    #     A WORKFLOW_intake_cmd command processes workbooks that have just
-    #     arrived.
-
-    #     Tasks:
-    #         0. Show input folder content file list with index (map to raw_input).
-    #            Just list of file names, not workbooks yet, never modify.
-    #         0. Workflow/task journal: task, timestamp, input, output action, workflow
-    #         0. Import new input file to working folder, set filename convention
-    #         1. Load a new csv_txns workbook.
-    #         2. Convert to excel_txns workbook.
-    #         3. Validate columns.
-    #         4. Save the workbook.
-
-    #     Arguments:
-    #         cmd (Dict): A valid BudMan View Model Command object. 
-    
-    #     Required cmd object attributes:
-    #         cmd_key: CV_WORKFLOW_CMD_KEY 
-    #     Optional cmd object attributes:
-    #         cmd_name: CV_WORKFLOW_CMD
-    #         subcmd_key: CV_INTAKE_SUBCMD_KEY
-    #         subcmd_name: CV_INTAKE_SUBCMD
-
-    #     Returns:
-    #         Tuple[success : bool, result : Any]: The outcome of the command 
-    #         execution. If success is True, result contains result of the 
-    #         command, if False, a description of the error.
-            
-    #     Raises:
-    #         RuntimeError: A description of the
-    #         root error is contained in the exception message.
-    #     """
-    #     try:
-    #         logger.debug(f"Start: process_txn_intake...")
-    #         return process_workflow_intake_tasks(cmd, self.DC)
-    #     except Exception as e:
-    #         logger.error(p3u.exc_err_msg(e))
-    #         raise
-    #endregion WORKFLOW_intake_cmd() execution method
-    # ------------------------------------------------------------------------ +
     #region WORKFLOW_check() execution method 
     def WORKFLOW_check_cmd(self, cmd : p3m.CMD_OBJECT_TYPE) -> BUDMAN_RESULT_TYPE:
         """Apply workflow to one or more WORKBOOKS in the DC.

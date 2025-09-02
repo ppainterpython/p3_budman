@@ -16,7 +16,6 @@ from .budman_command_services import (
     BUDMAN_CMD_TASK_process,
     BUDMAN_CMD_TASK_get_file_tree,
     # Helper functions
-    get_filename_from_file_tree,
     verify_cmd_key
 )
 
@@ -25,7 +24,6 @@ __all__ = [
     "BudManApp",
     "BUDMAN_CMD_TASK_process",
     "BUDMAN_CMD_TASK_get_file_tree",
-    "get_filename_from_file_tree",
     "verify_cmd_key"
 ]
 
