@@ -206,6 +206,8 @@ WF_INPUT = "wf_input"
 WF_WORKING = "wf_working" 
 WF_OUTPUT ="wf_output" 
 VALID_WF_PURPOSE_VALUES = (WF_INPUT, WF_WORKING, WF_OUTPUT)
+VALID_WF_PURPOSE_CHOICES = ["input", "working", "output"]
+VALID_WF_PURPOSE_MAP = dict(zip(VALID_WF_PURPOSE_CHOICES, VALID_WF_PURPOSE_VALUES))
 
 # NEW Workbook Type Constants. These define the types of workbooks that
 # might be stored in a storage system, such as a file system or a database.

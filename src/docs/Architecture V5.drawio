@@ -1,6 +1,6 @@
 <mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/28.1.2 Chrome/138.0.7204.243 Electron/37.4.0 Safari/537.36" version="28.1.2">
   <diagram id="N458_lr4ttNGEyz7QCCE" name="Page-1">
-    <mxGraphModel dx="6531" dy="9936" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
+    <mxGraphModel dx="8325" dy="10956" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -5590,7 +5590,7 @@
           <mxGeometry x="710" y="1440" width="1150" height="50" as="geometry" />
         </mxCell>
         <mxCell id="QGntIHunnyA1WiAcTs19-6" value="&lt;font face=&quot;Lucida Console&quot; style=&quot;font-size: 20px;&quot;&gt;categorization | cat&amp;nbsp; wb_index [--load_workbook | -l | -load] [-log_all | -la]&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;spacingLeft=4;" parent="QGntIHunnyA1WiAcTs19-1" vertex="1">
-          <mxGeometry x="710" y="1380" width="1010" height="30" as="geometry" />
+          <mxGeometry x="710" y="1310" width="1010" height="30" as="geometry" />
         </mxCell>
         <mxCell id="QGntIHunnyA1WiAcTs19-9" value="&lt;font face=&quot;Lucida Console&quot; style=&quot;font-size: 20px;&quot;&gt;intake | &quot;in&quot; | &quot;i&quot; copy file_index&amp;nbsp;&lt;/font&gt;&lt;font style=&quot;font-size: 20px;&quot; face=&quot;Lucida Console&quot;&gt;--cmdline_wf_key | -w &amp;lt;&#39;intake&#39; | &#39;categorize_transactions&#39; | &#39;budget&#39;&amp;gt;&amp;nbsp;&lt;/font&gt;&lt;div&gt;&lt;font style=&quot;font-size: 20px;&quot; face=&quot;Lucida Console&quot;&gt;&amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; --cmdline_wf_purpose | [-p &amp;lt;&#39;wf_input&#39; | &#39;wf_working&#39; | &#39;wf_output&#39;&amp;gt; | -wi | -ww | -wo]&lt;/font&gt;&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;spacingLeft=4;" parent="QGntIHunnyA1WiAcTs19-1" vertex="1">
           <mxGeometry x="710" y="1590" width="1580" height="60" as="geometry" />
@@ -5875,6 +5875,15 @@
           <mxGeometry relative="1" as="geometry">
             <mxPoint x="530" y="575" as="sourcePoint" />
             <mxPoint x="710" y="435" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="4qXqIjn3d0RYpy4iUURr-29" value="&lt;font face=&quot;Lucida Console&quot; style=&quot;font-size: 20px;&quot;&gt;intake | &quot;in&quot; | &quot;i&quot; copy file_index&amp;nbsp;&lt;/font&gt;&lt;font style=&quot;font-size: 20px;&quot; face=&quot;Lucida Console&quot;&gt;--cmdline_wf_key | -w &amp;lt;&#39;intake&#39; | &#39;categorize_transactions&#39; | &#39;budget&#39;&amp;gt;&amp;nbsp;&lt;/font&gt;&lt;div&gt;&lt;font style=&quot;font-size: 20px;&quot; face=&quot;Lucida Console&quot;&gt;&amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; --cmdline_wf_purpose | [-p &amp;lt;&#39;wf_input&#39; | &#39;wf_working&#39; | &#39;wf_output&#39;&amp;gt; | -wi | -ww | -wo]&lt;/font&gt;&lt;/div&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;spacingLeft=4;" vertex="1" parent="QGntIHunnyA1WiAcTs19-1">
+          <mxGeometry x="710" y="1360" width="1580" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="4qXqIjn3d0RYpy4iUURr-30" style="edgeStyle=entityRelationEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.25;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="QGntIHunnyA1WiAcTs19-1" source="QGntIHunnyA1WiAcTs19-2" target="4qXqIjn3d0RYpy4iUURr-29">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="525" y="1595" as="sourcePoint" />
+            <mxPoint x="720" y="1463" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         <mxCell id="QGntIHunnyA1WiAcTs19-83" value="&lt;font color=&quot;#007fff&quot;&gt;&lt;span style=&quot;font-size: 36px;&quot;&gt;budman_command_processor&lt;/span&gt;&lt;/font&gt;" style="swimlane;whiteSpace=wrap;html=1;strokeColor=#FFFFFF;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=12;fontColor=default;fontStyle=1;fillColor=default;startSize=60;swimlaneFillColor=none;strokeWidth=5;" parent="1" vertex="1">
