@@ -36,7 +36,7 @@ from typing import List, Type, Generator, Dict, Tuple, Any, Callable, Optional
 
 type CMD_OBJECT_TYPE = Dict[str, Any]  # type hint for a CMD_OBJECT dictionary.
 type CMD_RESULT_TYPE = Dict[str, Any]  # type hint for a CMD_RESULT dictionary.
-
+type CMD_ARGS_TYPE = Dict[str, Any]    # type hint for command arguments dict.
 # ---------------------------------------------------------------------------- +
 # A CMD_OBJECT dictionary has keys and values per basic Python. 
 # Naming Convention for Constants: 

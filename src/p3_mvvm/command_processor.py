@@ -562,6 +562,15 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
 
 #endregion CommandProcessor class
 # ---------------------------------------------------------------------------- +
+#region CMDValidationException class
+class CMDValidationException(Exception):
+    """Exception raised for errors in the command validation process."""
+    def __init__(self, message: str, cmd_result_error: CMD_RESULT_TYPE = None):
+        self.message = message
+        self.cmd_result_error = cmd_result_error
+        super().__init__(self.message)
+#endregion CMDValidationException class
+# ---------------------------------------------------------------------------- +
 
 # --------------------------------------------------------------------------- +
 #region CMD_OBJECT functions

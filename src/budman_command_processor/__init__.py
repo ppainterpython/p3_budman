@@ -16,7 +16,9 @@ from .budman_command_services import (
     BUDMAN_CMD_TASK_process,
     BUDMAN_CMD_TASK_get_file_tree,
     # Helper functions
-    verify_cmd_key
+    verify_cmd_key,
+    verify_subcmd_key,
+    validate_cmd_components
 )
 
 # target for 'from budman_app import *'
@@ -24,6 +26,8 @@ __all__ = [
     "BudManApp",
     "BUDMAN_CMD_TASK_process",
     "BUDMAN_CMD_TASK_get_file_tree",
-    "verify_cmd_key"
+    "verify_cmd_key",
+    "verify_subcmd_key",
+    "validate_cmd_components"
 ]
 

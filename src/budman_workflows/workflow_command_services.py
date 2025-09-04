@@ -61,6 +61,8 @@ def WORKFLOW_TASK_process(cmd: p3m.CMD_OBJECT_TYPE,
         # Assuming the cmd parameters have been validated before reaching this point.
         # Process the CMD_OBJECT based on its CK_SUBCMD_KEY.
         # workflow intake command
+        if cmd[p3m.CK_SUBCMD_KEY] == cp.CV_WORKFLOW_TRANSFER_SUBCMD_KEY:
+            return WORKFLOW_TASK_transfer(cmd, bdm_DC)
         if cmd[p3m.CK_SUBCMD_KEY] == cp.CV_WORKFLOW_INTAKE_SUBCMD_KEY:
             return INTAKE_TASK_process(cmd, bdm_DC)
         # workflow set command
@@ -80,6 +82,43 @@ def WORKFLOW_TASK_process(cmd: p3m.CMD_OBJECT_TYPE,
         logger.error(p3u.exc_err_msg(e))
         raise
 #endregion WORKFLOW_TASK_process() function
+# ---------------------------------------------------------------------------- +
+#region WORKFLOW_TASK_transfer() function
+def WORKFLOW_TASK_transfer(cmd: Dict[str, Any], 
+                       bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE
+    """WORKFLOW_TRANSFER_subcmd: Transfer data between workflows.
+    """
+    try:
+        cmd_args: p3m.CMD_ARGS_TYPE = cp.validate_cmd_components(
+            cmd=cmd, 
+            bdm_DC=bdm_DC,
+            cmd_key=cp.CV_WORKFLOW_CMD_KEY, 
+            subcmd_key=cp.CV_WORKFLOW_TRANSFER_SUBCMD_KEY,
+            required_args=[
+                cp.CK_SRC_WF_KEY,
+                cp.CK_DST_WF_KEY,
+                cp.CK_FILE_INDEX,
+                cp.CK_DST_WF_PURPOSE,
+                cp.CK_DST_WB_TYPE
+            ]
+        )
+        # Extract and validate required parameters from the command.
+        src_wf_key = cmd_args.get(cp.CK_SRC_WF_KEY)
+        dst_wf_key = cmd_args.get(cp.CK_DST_WF_KEY)
+        src_file_index = cmd_args.get(cp.CK_FILE_INDEX)
+        dst_wf_key = cmd_args.get(cp.CK_DST_WF_KEY)
+        dst_wf_purpose = cmd_args.get(cp.CK_DST_WF_PURPOSE)
+        dst_wb_type = cmd_args.get(cp.CK_DST_WB_TYPE)
+
+        # Perform the data transfer operation tasks.
+        return True # TODO incomplete
+    except p3m.CMDValidationException as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion WORKFLOW_TASK_transfer() function
 # ---------------------------------------------------------------------------- +
 #region WORKFLOW_TASK_set_value() function
 def WORKFLOW_TASK_set_value(cmd: Dict[str, Any], 

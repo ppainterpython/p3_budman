@@ -117,10 +117,12 @@ CK_FILE_LIST = "file_list"
 CK_WB_REF = "wb_ref"
 CK_WB_INFO = "wb_info"
 CK_WF_TASK = "wf_task"
-CK_SRC_WF_KEY = "src_wf_key"
-CK_DST_WF_KEY = "dst_wf_key"
-CK_SRC_WF_PURPOSE = "src_wf_purpose"
-CK_DST_WF_PURPOSE = "dst_wf_purpose"
+CK_SRC_WF_KEY = "src_" + bdm.WF_KEY
+CK_DST_WF_KEY = "dst_" + bdm.WF_KEY
+CK_SRC_WF_PURPOSE = "src_" + bdm.WF_PURPOSE
+CK_DST_WF_PURPOSE = "dst_" + bdm.WF_PURPOSE
+CK_SRC_WB_TYPE = "src_" + bdm.WB_TYPE
+CK_DST_WB_TYPE = "dst_" + bdm.WB_TYPE
 
 # subcmd_key CV_TASK_SUBCMD_KEY argument constants
 

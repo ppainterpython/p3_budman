@@ -655,3 +655,122 @@ def verify_cmd_key( cmd: p3m.CMD_OBJECT_TYPE,
         cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = p3m.CMD_ERROR_STRING_OUTPUT
     return cmd_result
 #endregion verify_cmd_key()
+# ---------------------------------------------------------------------------- +
+#region verify_subcmd_key()
+def verify_subcmd_key( cmd: p3m.CMD_OBJECT_TYPE, 
+                   expected_subcmd_key: str) -> p3m.CMD_RESULT_TYPE:
+    """Verify the subcommand key in the command object.
+
+    Args:
+        cmd (Dict): A p3m.CMD_OBJECT.
+        expected_subcmd_key (str): The expected subcommand key.
+
+    Returns:
+        CMD_RESULT_TYPE: True if the command key matches, False otherwise,
+        with a returnable CMD_RESULT_TYPE.
+    """
+    cmd_result: p3m.CMD_RESULT_TYPE = p3m.create_CMD_RESULT_OBJECT(
+        cmd_result_status=True,
+        result_content_type=p3m.CMD_STRING_OUTPUT,
+        result_content=f"Expected subcmd_key: {expected_subcmd_key} is valid.",
+        cmd_object=cmd
+    )
+    actual_subcmd_key = cmd.get(p3m.CK_SUBCMD_KEY)
+    if actual_subcmd_key != expected_subcmd_key:
+        # Invalid subcmd_key
+        m = (f"Invalid subcmd_key: {cmd[p3m.CK_SUBCMD_KEY]} "
+             f"expected: {expected_subcmd_key}")
+        logger.error(m)
+        cmd_result[p3m.CMD_RESULT_STATUS] = False
+        cmd_result[p3m.CMD_RESULT_CONTENT] = m
+        cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = p3m.CMD_ERROR_STRING_OUTPUT
+    return cmd_result
+#endregion verify_cmd_key()
+# ---------------------------------------------------------------------------- +
+#region 
+#endregion
+# ---------------------------------------------------------------------------- +
+#region validate_cmd_components()
+def validate_cmd_components(cmd: p3m.CMD_OBJECT_TYPE,
+                            bdm_DC: BudManAppDataContext_Base,
+                            cmd_key: str,
+                            subcmd_key: str,
+                            required_args: List[str]) -> p3m.CMD_ARGS_TYPE
+    """Validate the components of the command object.
+
+    Args:
+        cmd (CMD_OBJECT_TYPE): The command object to validate.
+        bdm_DC (BudManAppDataContext_Base): The data context for the command.
+        required_args (List[str]): A list of required argument cmd keys (CK_).
+
+    Returns:
+        cmd_args: p3m.CMD_ARGS_TYPE: The resulting cmd arg from the validation.
+    """
+    try:
+        try:
+            p3u.is_not_obj_of_type("cmd", cmd, dict, raise_error=True)
+            p3u.is_not_obj_of_type("bdm_DC", bdm_DC, BudManAppDataContext_Base,
+                                raise_error=True)
+        except Exception as e:
+            msg = f"Error validating command components: {str(e)}"
+            cmd_result: p3m.CMD_RESULT_TYPE = p3m.create_CMD_RESULT_ERROR(
+                cmd=cmd, msg=msg
+            )
+            logger.error(msg)
+            raise p3m.CMDValidationException(cmd=cmd, 
+                                             msg=msg,
+                                             cmd_result_error=cmd_result)
+        # Should be indicated cmd_key.
+        cmd_result : p3m.CMD_RESULT_TYPE = cp.verify_cmd_key(cmd, cmd_key)
+        if not cmd_result[p3m.CMD_RESULT_STATUS]: 
+            raise p3m.CMDValidationException(cmd=cmd, 
+                                             msg=cmd_result[p3m.CMD_RESULT_CONTENT],
+                                             cmd_result_error=cmd_result)
+        # Should be indicated subcmd_key.
+        cmd_result : p3m.CMD_RESULT_TYPE = cp.verify_subcmd_key(cmd, subcmd_key)
+        if not cmd_result[p3m.CMD_RESULT_STATUS]: 
+            raise p3m.CMDValidationException(cmd=cmd, 
+                                             msg=cmd_result[p3m.CMD_RESULT_CONTENT],
+                                             cmd_result_error=cmd_result)
+        # Check for required command key arguments (CK_) in the command object
+        cmd_args: p3m.CMD_ARGS_TYPE = {}
+        cmd_args[p3m.CK_CMD_KEY] = cmd[p3m.CK_CMD_KEY]
+        cmd_args[p3m.CK_SUBCMD_KEY] = cmd[p3m.CK_SUBCMD_KEY]    
+        required_keys = [p3m.CK_CMD_KEY, p3m.CK_SUBCMD_KEY]
+        missing_arg_error_msg: str = "Required arguments validation:"
+        missing_arg_list = []
+        missing_arg_count = 0
+        for key in required_keys:
+            if key not in cmd:
+                m = f"Missing required command argument key: {key}"
+                logger.error(m)
+                missing_arg_error_msg += f"{m}\n"
+                missing_arg_count += 1
+                missing_arg_list.append(key)
+            else:
+                cmd_args[key] = cmd[key]
+        if missing_arg_count > 0:
+            m = (f"Missing {missing_arg_count} required arguments: "
+                 f"{missing_arg_list}")
+            logger.error(m)
+            cmd_result = p3m.create_CMD_RESULT_OBJECT(
+                cmd_result_status=False,
+                result_content_type=p3m.CMD_ERROR_STRING_OUTPUT,
+                result_content=missing_arg_error_msg,
+                cmd_object=cmd
+                )
+            raise p3m.CMDValidationException(cmd=cmd, 
+                                             msg=cmd_result[p3m.CMD_RESULT_CONTENT],
+                                             cmd_result_error=cmd_result)
+        return cmd_args
+    except p3m.CMDValidationException as ve:
+        raise
+    except Exception as e:
+        logger.error(f"Error validating command components: {e}")
+        return p3m.create_CMD_RESULT_OBJECT(
+            cmd_result_status=False,
+            result_content_type=p3m.CMD_ERROR_STRING_OUTPUT,
+            result_content=str(e),
+            cmd_object=cmd
+        )
+#endregion validate_cmd_components()

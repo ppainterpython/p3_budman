@@ -41,6 +41,7 @@ from .command_processor_Base_ABC import (
 from .command_processor import (
     # Classes
     CommandProcessor,
+    CMDValidationException,
     # Functions
     create_CMD_OBJECT, 
     validate_cmd_key_with_name,
@@ -49,12 +50,14 @@ from .command_processor import (
     is_CMD_RESULT,
     create_CMD_RESULT_EXCEPTION,
     create_CMD_RESULT_ERROR,
-    unknown_CMD_RESULT_ERROR
+    unknown_CMD_RESULT_ERROR, 
+    CMDValidationException
 )
 from .mvvm_namespace import (
     # Types
     CMD_OBJECT_TYPE,
     CMD_RESULT_TYPE,
+    CMD_ARGS_TYPE,
     # CMD_OBJECT Constants
     CMD_KEY_SUFFIX,
     CK_CMD_NAME,
@@ -92,8 +95,10 @@ __all__ = [
     "CommandProcessor_Binding",
     "CommandProcessor_Base",
     "CommandProcessor",
+    "CMDValidationException",
     "CMD_OBJECT_TYPE",
     "CMD_RESULT_TYPE",
+    "CMD_ARGS_TYPE",
     # Command Processor Constants
     #     CMD_OBJECT Constants
     "CMD_KEY_SUFFIX",

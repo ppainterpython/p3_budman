@@ -31,6 +31,13 @@ class WideHelpFormatter(Cmd2HelpFormatter):
         kwargs['width'] = None  # Set desired width here
         kwargs['max_help_position'] = 60  # Set desired width here
         super().__init__(*args, **kwargs)
+class UnwrappedPositionalHelpFormatter(Cmd2HelpFormatter):
+    def _format_action_invocation(self, action):
+        if not action.option_strings:
+            # Positional argument — use full metavar without truncation
+            metavar = self._metavar_formatter(action, action.dest)(1)[0]
+            return metavar
+        return super()._format_action_invocation(action)
 class BudManCLIParser():
     #region class BudManCLIParser initialization
     """A class to parse command line arguments for the BudgetModelCLIView class.
@@ -50,7 +57,7 @@ class BudManCLIParser():
         self.show_cmd = cmd2.Cmd2ArgumentParser()
         self.workflow_cmd = cmd2.Cmd2ArgumentParser(
             description="Workflow management commands.",
-            formatter_class=WideHelpFormatter
+            formatter_class=UnwrappedPositionalHelpFormatter
         )
         self.app_cmd_parser_setup(self.app_name)
         self.change_cmd_parser_setup(self.app_name)
@@ -580,28 +587,34 @@ class BudManCLIParser():
                 subcmd_name=cp.CV_TRANSFER_SUBCMD_NAME,
                 subcmd_key=cp.CV_WORKFLOW_TRANSFER_SUBCMD_KEY)
             transfer_parser.add_argument(
+                # src_wf_key
                 cp.CK_SRC_WF_KEY,
                 choices=bdm.VALID_BDM_WORKFLOWS,
-                help="Specify the workflow key.")
+                help="Specify the source workflow key.")
             transfer_parser.add_argument(
+                # src_wf_purpose
                 cp.CK_SRC_WF_PURPOSE,
                 choices=bdm.VALID_WF_PURPOSE_CHOICES,
-                help="Specify the workflow purpose.")
+                help="Specify the source workflow purpose.")
             transfer_parser.add_argument(
+                # src_file_index
                 cp.CK_FILE_INDEX, nargs=1,
                 action="store",
                 type=int, 
-                help=("Index of file to copy."))
+                help=("Index of source file."))
             transfer_parser.add_argument(
+                # dst_wf_key
                 cp.CK_DST_WF_KEY,
                 choices=bdm.VALID_BDM_WORKFLOWS,
-                default="categorize_transactions",
-                help="Specify the workflow key.")
+                help="Specify the destination workflow key.")
             transfer_parser.add_argument(
                 cp.CK_DST_WF_PURPOSE,
                 choices=bdm.VALID_WF_PURPOSE_CHOICES,
-                default="working",
-                help="Specify the workflow purpose.")
+                help="Specify the destination workflow purpose.")
+            transfer_parser.add_argument(
+                cp.CK_DST_WB_TYPE,
+                choices=bdm.VALID_WB_TYPE_VALUES,
+                help="Specify the destination workbook type.")
             self.add_common_args(transfer_parser)
             return transfer_parser
         except Exception as e:
