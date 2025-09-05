@@ -84,40 +84,55 @@ def WORKFLOW_TASK_process(cmd: p3m.CMD_OBJECT_TYPE,
 #endregion WORKFLOW_TASK_process() function
 # ---------------------------------------------------------------------------- +
 #region WORKFLOW_TASK_transfer() function
-def WORKFLOW_TASK_transfer(cmd: Dict[str, Any], 
-                       bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE
+def WORKFLOW_TASK_transfer(cmd: p3m.CMD_OBJECT_TYPE, 
+                    bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
     """WORKFLOW_TRANSFER_subcmd: Transfer data between workflows.
     """
     try:
-        cmd_args: p3m.CMD_ARGS_TYPE = cp.validate_cmd_components(
+        cmd_args: p3m.CMD_ARGS_TYPE = cp.validate_cmd_arguments(
             cmd=cmd, 
             bdm_DC=bdm_DC,
             cmd_key=cp.CV_WORKFLOW_CMD_KEY, 
             subcmd_key=cp.CV_WORKFLOW_TRANSFER_SUBCMD_KEY,
             required_args=[
                 cp.CK_SRC_WF_KEY,
+                cp.CK_SRC_WF_PURPOSE,
+                cp.CK_FILE_LIST,
                 cp.CK_DST_WF_KEY,
-                cp.CK_FILE_INDEX,
                 cp.CK_DST_WF_PURPOSE,
                 cp.CK_DST_WB_TYPE
             ]
         )
         # Extract and validate required parameters from the command.
         src_wf_key = cmd_args.get(cp.CK_SRC_WF_KEY)
-        dst_wf_key = cmd_args.get(cp.CK_DST_WF_KEY)
-        src_file_index = cmd_args.get(cp.CK_FILE_INDEX)
+        src_wf_purpose = cmd_args.get(cp.CK_SRC_WF_PURPOSE)
+        src_file_list = cmd_args.get(cp.CK_FILE_LIST)
         dst_wf_key = cmd_args.get(cp.CK_DST_WF_KEY)
         dst_wf_purpose = cmd_args.get(cp.CK_DST_WF_PURPOSE)
         dst_wb_type = cmd_args.get(cp.CK_DST_WB_TYPE)
 
+        # Validate the files indicated for transfer
+        cmd_result = cp.validate_wf_folder_file_list(cmd, bdm_DC, src_file_list,
+                                                     src_wf_key, src_wf_purpose)
+
         # Perform the data transfer operation tasks.
-        return True # TODO incomplete
+        return p3m.create_CMD_RESULT_OBJECT(
+            cmd_object=cmd,
+            cmd_result_status=True,
+            result_content_type=p3m.CMD_DICT_OUTPUT,
+            result_content=file_urls
+        )
     except p3m.CMDValidationException as e:
-        logger.error(p3u.exc_err_msg(e))
+        logger.error(e.message)
         raise
     except Exception as e:
-        logger.error(p3u.exc_err_msg(e))
-        raise
+        m = p3u.exc_err_msg(e)
+        err_msg = (f"Exception during WORKFLOW_TASK_transfer: {m}")
+        logger.error(err_msg)
+        cmd_result_error = p3m.create_CMD_RESULT_ERROR(cmd, err_msg)
+        raise p3m.CMDValidationException(cmd=cmd, 
+                                         msg=err_msg,
+                                         cmd_result_error=cmd_result_error)
 #endregion WORKFLOW_TASK_transfer() function
 # ---------------------------------------------------------------------------- +
 #region WORKFLOW_TASK_set_value() function

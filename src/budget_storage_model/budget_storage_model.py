@@ -874,6 +874,14 @@ class BSMFile:
     def abs_path(self) -> Optional[Path]:
         """Return the absolute file path."""
         return Path.from_uri(self.file_url) if self.file_url else None
+    def verify_url(self) -> Optional[Path]:
+        """Verify the file URL."""
+        try:
+            file_abs_path = bsm_WB_URL_verify_file_scheme(self.file_url)
+            return file_abs_path
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            return False
 #endregion BSMFile Class
 # ---------------------------------------------------------------------------- +
 #region    bsm_file_tree_from_folder()

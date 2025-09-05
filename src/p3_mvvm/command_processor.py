@@ -656,7 +656,7 @@ def is_CMD_RESULT(cmd_result: Any) -> bool:
 #endregion is_CMD_RESULT() function
 # ---------------------------------------------------------------------------- +
 #region create_CMD_RESULT_ERROR() function
-def create_CMD_RESULT_ERROR(cmd: CMD_OBJECT_TYPE, msg: str) -> CMD_RESULT_TYPE:
+def create_CMD_RESULT_ERROR(cmd: Optional[CMD_OBJECT_TYPE] = None, msg: Optional[str] = None) -> CMD_RESULT_TYPE:
         """Return a CMD_RESULT based on an Error msg.
 
         Executing the cmd resulted in Error. Wrap the error message
@@ -672,7 +672,7 @@ def create_CMD_RESULT_ERROR(cmd: CMD_OBJECT_TYPE, msg: str) -> CMD_RESULT_TYPE:
         m = (f"Error executing cmd: {cmd.get(CK_CMD_KEY,"Unknown cmd_key")} "
              f"{cmd.get(CK_SUBCMD_KEY, "Unknown subcmd_key")}: {msg}")
         logger.error(m)
-        return create_CMD_OBJECT(
+        return create_CMD_RESULT_OBJECT(
             cmd_result_status = False,
             result_content = m,
             result_content_type=CMD_ERROR_STRING_OUTPUT,

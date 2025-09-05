@@ -100,13 +100,14 @@ def INTAKE_TASK_copy_file_to_wf_folder(
         src_wf_purpose: str = cmd[cp.CK_CMDLINE_WF_PURPOSE]
         src_file_index: int = cmd[cp.CK_FILE_INDEX]
         fi_key:str = bdm_DC.dc_FI_KEY
-        src_folder_tree = cp.BUDMAN_CMD_TASK_get_file_tree(fi_key, src_wf_key, 
+        file_tree = cp.BUDMAN_CMD_TASK_get_file_tree(fi_key, src_wf_key, 
                                                    src_wf_purpose, bdm_DC)
-        p3u.is_not_obj_of_type("src_folder_tree", src_folder_tree, Tree, raise_error=True)
+        p3u.is_not_obj_of_type("src_folder_tree", file_tree, Tree, raise_error=True)
         # file_trees are a BSM concern
-        src_file: BSMFile = bsm_get_BSMFile_from_file_tree(src_folder_tree, src_file_index)
+        src_file: BSMFile = bsm_get_BSMFile_from_file_tree(file_tree, src_file_index)
         if not src_file:
-            msg = f"Source file not found in folder tree: {src_folder_tree.root}"
+            msg = f"Source file_index '{src_file_index}' not found "
+            msg += f"in folder tree: {file_tree.root}"
             logger.error(msg)
             return p3m.create_CMD_RESULT_ERROR(cmd, msg)
         # Destination workflow folder

@@ -18,7 +18,8 @@ from .budman_command_services import (
     # Helper functions
     verify_cmd_key,
     verify_subcmd_key,
-    validate_cmd_components
+    validate_cmd_arguments,
+    validate_wf_folder_file_list
 )
 
 # target for 'from budman_app import *'
@@ -28,6 +29,7 @@ __all__ = [
     "BUDMAN_CMD_TASK_get_file_tree",
     "verify_cmd_key",
     "verify_subcmd_key",
-    "validate_cmd_components"
+    "validate_cmd_arguments",
+    "validate_wf_folder_file_list"
 ]
 

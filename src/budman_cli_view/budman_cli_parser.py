@@ -598,8 +598,7 @@ class BudManCLIParser():
                 help="Specify the source workflow purpose.")
             transfer_parser.add_argument(
                 # src_file_index
-                cp.CK_FILE_INDEX, nargs=1,
-                action="store",
+                cp.CK_FILE_LIST, nargs='+',
                 type=int, 
                 help=("Index of source file."))
             transfer_parser.add_argument(

@@ -33,6 +33,7 @@ from datetime import datetime as dt
 
 # third-party modules and packages
 from arrow import now
+from budget_storage_model.budget_storage_model import BSMFile, bsm_get_BSMFile_from_file_tree
 from budman_workflows.workflow_utils import output_category_tree
 import p3_utils as p3u, pyjson5, p3logging as p3l, p3_mvvm as p3m
 from openpyxl import Workbook, load_workbook
@@ -687,15 +688,12 @@ def verify_subcmd_key( cmd: p3m.CMD_OBJECT_TYPE,
     return cmd_result
 #endregion verify_cmd_key()
 # ---------------------------------------------------------------------------- +
-#region 
-#endregion
-# ---------------------------------------------------------------------------- +
 #region validate_cmd_components()
-def validate_cmd_components(cmd: p3m.CMD_OBJECT_TYPE,
+def validate_cmd_arguments(cmd: p3m.CMD_OBJECT_TYPE,
                             bdm_DC: BudManAppDataContext_Base,
                             cmd_key: str,
                             subcmd_key: str,
-                            required_args: List[str]) -> p3m.CMD_ARGS_TYPE
+                            required_args: List[str]) -> p3m.CMD_ARGS_TYPE:
     """Validate the components of the command object.
 
     Args:
@@ -735,12 +733,11 @@ def validate_cmd_components(cmd: p3m.CMD_OBJECT_TYPE,
         # Check for required command key arguments (CK_) in the command object
         cmd_args: p3m.CMD_ARGS_TYPE = {}
         cmd_args[p3m.CK_CMD_KEY] = cmd[p3m.CK_CMD_KEY]
-        cmd_args[p3m.CK_SUBCMD_KEY] = cmd[p3m.CK_SUBCMD_KEY]    
-        required_keys = [p3m.CK_CMD_KEY, p3m.CK_SUBCMD_KEY]
+        cmd_args[p3m.CK_SUBCMD_KEY] = cmd[p3m.CK_SUBCMD_KEY]
         missing_arg_error_msg: str = "Required arguments validation:"
         missing_arg_list = []
         missing_arg_count = 0
-        for key in required_keys:
+        for key in required_args:
             if key not in cmd:
                 m = f"Missing required command argument key: {key}"
                 logger.error(m)
@@ -774,3 +771,75 @@ def validate_cmd_components(cmd: p3m.CMD_OBJECT_TYPE,
             cmd_object=cmd
         )
 #endregion validate_cmd_components()
+#region validate_file_list()
+def validate_wf_folder_file_list(cmd: p3m.CMD_OBJECT_TYPE,
+                                 bdm_DC: BudManAppDataContext_Base,
+                                 file_list: List[int], 
+                                 wf_key:str, 
+                                 wf_purpose:str) -> p3m.CMD_RESULT_TYPE:
+    """Validate the list of file_index values for a specified wf_folder.
+
+    Args:
+        file_list (List[int]): The list of file indexes to validate.
+        wf_key (str): The workflow key.
+        wf_purpose (str): The workflow purpose.
+
+    Returns:
+        bool: True if all files are valid, False otherwise.
+    """
+    try:
+        err_msg: str = ""
+        cmd_result_error: p3m.CMD_RESULT_TYPE = None
+        # Validate wf_key
+        if not bdm_DC.dc_WF_KEY_validate(wf_key):
+            err_msg = f"Invalid wf_key: {wf_key}"
+            logger.error(err_msg)
+            cmd_result_error = p3m.create_CMD_RESULT_ERROR(cmd, err_msg)
+            raise p3m.CMDValidationException(cmd=cmd, 
+                                            msg=err_msg,
+                                            cmd_result_error=cmd_result_error)
+        # Validate wf_purpose
+        if not bdm_DC.dc_WF_PURPOSE_validate(wf_purpose):
+            err_msg = f"Invalid wf_purpose: {wf_purpose}"
+            logger.error(err_msg)
+            cmd_result_error = p3m.create_CMD_RESULT_ERROR(cmd, err_msg)
+            raise p3m.CMDValidationException(cmd=cmd, 
+                                            msg=err_msg,
+                                            cmd_result_error=cmd_result_error)
+        fi_key: str = bdm_DC.dc_FI_KEY
+        file_tree: Tree = cp.BUDMAN_CMD_TASK_get_file_tree(fi_key, wf_key, 
+                                                           wf_purpose, bdm_DC)
+        # Validate the file_index values, capture the file_url for each.
+        file_urls: Dict[int, str] = {}
+        for file_index in file_list:
+            bsm_file: BSMFile = bsm_get_BSMFile_from_file_tree(file_tree, file_index)
+            if not bsm_file:
+                err_msg = f"File_index '{file_index}' not found in file tree: {file_tree.root}"
+                logger.error(err_msg)
+                cmd_result_error = p3m.create_CMD_RESULT_ERROR(cmd, err_msg)
+                raise p3m.CMDValidationException(cmd=cmd, 
+                                                 msg=err_msg,
+                                                 cmd_result_error=cmd_result_error)
+            if not bsm_file.verify_url():
+                err_msg = f"File_index '{file_index}' has an invalid URL: {bsm_file.file_url}"
+                logger.error(err_msg)
+                cmd_result_error = p3m.create_CMD_RESULT_ERROR(cmd, err_msg)
+                raise p3m.CMDValidationException(cmd=cmd, 
+                                                 msg=err_msg,
+                                                 cmd_result_error=cmd_result_error)
+            file_urls[file_index] = bsm_file.file_url
+        return p3m.create_CMD_RESULT_OBJECT(
+                cmd_result_status=True, result_content_type=p3m.CMD_DICT_OUTPUT,
+                result_content=file_urls, cmd_object=cmd)
+    except p3m.CMDValidationException as e:
+        logger.error(e.message)
+        raise
+    except Exception as e:
+        m = p3u.exc_err_msg(e)
+        err_msg = (f"Exception validating wf_folder_file_list: {m}")
+        logger.error(err_msg)
+        cmd_result_error = p3m.create_CMD_RESULT_ERROR(cmd, err_msg)
+        raise p3m.CMDValidationException(cmd=cmd, 
+                                        msg=err_msg,
+                                        cmd_result_error=cmd_result_error)
+#endregion validate_file_list()
