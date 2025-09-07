@@ -15,6 +15,12 @@ from .budman_command_services import (
     # BUDMAN_CMD_TASK functions
     BUDMAN_CMD_TASK_process,
     BUDMAN_CMD_TASK_get_file_tree,
+    # BudMan Command File Services
+    BSMFile,
+    BUDMAN_CMD_FILE_SERVICE_file_tree,
+    BUDMAN_CMD_FILE_SERVICE_get_BSMFile,
+    BUDMAN_CMD_FILE_SERVICE_get_full_filename,
+
     # Helper functions
     verify_cmd_key,
     verify_subcmd_key,
@@ -27,6 +33,11 @@ __all__ = [
     "BudManApp",
     "BUDMAN_CMD_TASK_process",
     "BUDMAN_CMD_TASK_get_file_tree",
+    # BudMan Command File Services
+    "BSMFile",
+    "BUDMAN_CMD_FILE_SERVICE_file_tree",
+    "BUDMAN_CMD_FILE_SERVICE_get_BSMFile",
+    "BUDMAN_CMD_FILE_SERVICE_get_full_filename",
     "verify_cmd_key",
     "verify_subcmd_key",
     "validate_cmd_arguments",

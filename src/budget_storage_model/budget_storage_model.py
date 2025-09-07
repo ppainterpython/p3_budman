@@ -51,7 +51,6 @@ import logging, os, time, toml
 from pathlib import Path
 from urllib.parse import urlparse, urlunparse, urlsplit, ParseResult
 from typing import Dict, List, Any, Union, Optional
-from treelib import Tree, Node
 
 # third-party modules and packages
 import p3_utils as p3u, pyjson5, p3logging as p3l
@@ -829,8 +828,8 @@ def bsm_file_url_abs_path(file_url: str) -> Path:
         raise
 #endregion bsm_file_url_abs_path()
 # ---------------------------------------------------------------------------- +
-#region    bsm_file_full_filename()
-def bsm_file_full_filename(file_url: str) -> str:
+#region    bsm_file_url_full_filename()
+def bsm_file_url_full_filename(file_url: str) -> str:
     """Convert a file URL to an absolute file path."""
     try:
         p3u.is_not_non_empty_str("file_url", file_url, raise_error=True)
@@ -839,142 +838,7 @@ def bsm_file_full_filename(file_url: str) -> str:
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
-#endregion bsm_file_full_filename()
-# ---------------------------------------------------------------------------- +
-#region    BSMFile Class
-class BSMFile:
-    BSM_FILE = "file"
-    BSM_FOLDER = "folder"
-    def __init__(self, 
-                 type:str=BSM_FILE, 
-                 dir_index:int=-1, 
-                 file_index:int=-1, 
-                 file_url:Optional[str]=None):
-        self.type = type
-        self.dir_index = dir_index
-        self.file_index = file_index
-        self.file_url = file_url
-
-    def __str__(self) -> str:
-        return self.full_filename
-
-    @property
-    def full_filename(self) -> Optional[str]:
-        """Return the full filename (with extension) of the file."""
-        return Path.from_uri(self.file_url).name if self.file_url else None
-    @property
-    def filename(self) -> Optional[str]:
-        """Return the filename (without extension)."""
-        return Path.from_uri(self.file_url).stem if self.file_url else None
-    @property
-    def extension(self) -> Optional[str]:
-        """Return the file extension."""
-        return Path.from_uri(self.file_url).suffix if self.file_url else None
-    @property
-    def abs_path(self) -> Optional[Path]:
-        """Return the absolute file path."""
-        return Path.from_uri(self.file_url) if self.file_url else None
-    def verify_url(self) -> Optional[Path]:
-        """Verify the file URL."""
-        try:
-            file_abs_path = bsm_WB_URL_verify_file_scheme(self.file_url)
-            return file_abs_path
-        except Exception as e:
-            logger.error(p3u.exc_err_msg(e))
-            return False
-#endregion BSMFile Class
-# ---------------------------------------------------------------------------- +
-#region    bsm_file_tree_from_folder()
-def bsm_file_tree_from_folder(wf_folder_url:str) -> Tree:
-    """Create a file_tree structure from a folder URL."""
-    p3u.is_not_non_empty_str("wf_folder_url", wf_folder_url, raise_error=True)
-    wf_folder_abs_path: Path = Path.from_uri(wf_folder_url)
-    bsm_verify_folder(wf_folder_abs_path, create=False, raise_errors=True)
-    file_index:int = 0
-    dir_index:int = 0
-    file_tree = Tree()
-    tag = f"{dir_index:2} {wf_folder_abs_path.name}"
-    # Root node
-    file_tree.create_node(tag=tag, identifier=str(wf_folder_abs_path),
-                          data=BSMFile(BSMFile.BSM_FOLDER, dir_index, -1, wf_folder_url))  
-
-    def add_nodes(current_path: Path, parent_id: str, 
-                  file_index: int = 0, dir_index:int = 0) -> int:
-        """Recursive scan directory current_path. Depth-first, using Path.iterdir()"""
-        try:
-            if not current_path.is_dir():
-                raise ValueError(f"Path is not a directory: {current_path}")
-            dir_index += 1
-            # iterdir() returns "arbitrary order, may need to sort."
-            for item in current_path.iterdir():
-                node_id = str(item.resolve())
-                if item.is_dir():
-                    # Folder
-                    tag = f"{dir_index:2} {item.name}"
-                    file_tree.create_node(tag=tag, identifier=node_id, 
-                          parent=parent_id, 
-                          data=BSMFile(BSMFile.BSM_FOLDER, dir_index, 
-                                       -1, item.as_uri()))
-                    file_index = add_nodes(item, node_id, 
-                                           file_index, dir_index)
-                else:
-                    # File
-                    tag = f"{file_index:2} {item.name}"
-                    file_tree.create_node(tag=tag, identifier=node_id, 
-                                    parent=parent_id, 
-                                    data=BSMFile(BSMFile.BSM_FILE, dir_index, 
-                                                 file_index, item.as_uri()))
-                    file_index += 1
-            return file_index
-        except Exception as e:
-            logger.error(p3u.exc_err_msg(e))
-            raise
-
-    try:
-        add_nodes(wf_folder_abs_path, str(wf_folder_abs_path), file_index, dir_index)
-        return file_tree
-    except Exception as e:
-        logger.error(p3u.exc_err_msg(e))
-        raise
-#endregion bsm_file_tree_from_folder()
-# ---------------------------------------------------------------------------- +
-#region bsm_get_BSMFile_from_file_tree()
-def bsm_get_BSMFile_from_file_tree(file_tree: Tree, file_index: int) -> Optional[BSMFile]:
-    """Get the BSMFile object from the file tree for a given file_index."""
-    try:
-        p3u.is_not_obj_of_type("file_tree", file_tree, Tree, raise_error=True)
-        for node_id in file_tree.expand_tree():
-            file_node: Node = file_tree.get_node(node_id)
-            if file_node.is_leaf(): # only look at file nodes, which are leafs
-                if (file_node.data and isinstance(file_node.data, BSMFile)):
-                    bsm_file: BSMFile = file_node.data
-                    this_index: int = bsm_file.file_index
-                    if this_index == file_index:
-                        return bsm_file
-        return None
-    except Exception as e:
-        logger.error(p3u.exc_err_msg(e))
-        raise
-#endregion bsm_get_BSMFile_from_file_tree()
-# ---------------------------------------------------------------------------- +
-#region bsm_get_full_filename_from_file_tree()
-def bsm_get_full_filename_from_file_tree(file_tree: Tree, file_index: int) -> Optional[str]:
-    """Get the filename from the file tree for a given file_index."""
-    try:
-        p3u.is_not_obj_of_type("file_tree", file_tree, Tree, raise_error=True)
-        for node_id in file_tree.expand_tree():
-            file_node: Node = file_tree.get_node(node_id)
-            if file_node.is_leaf(): # only look at file nodes, which are leafs
-                if (file_node.data and isinstance(file_node.data, BSMFile)):
-                    bsm_file: BSMFile = file_node.data
-                    this_index: int = bsm_file.file_index
-                    if this_index == file_index:
-                        return bsm_file.full_filename
-        return None
-    except Exception as e:
-        logger.error(p3u.exc_err_msg(e))
-        raise
-#endregion bsm_get_full_filename_from_file_tree()
+#endregion bsm_file_url_full_filename()
 # ---------------------------------------------------------------------------- +
 #region    bsm_BDM_STORE_to_json()
 def bsm_BDM_STORE_to_json(bdm_store_dict: bdm.BDM_STORE_TYPE) -> str:

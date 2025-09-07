@@ -180,8 +180,8 @@ class BudManApp(metaclass=BDMSingletonMeta):
             raise
     #endregion budman_app_exit_handler() function
     # ------------------------------------------------------------------------ +
-    #region budman_app_service_setup() function
-    def budman_app_service_setup(self, bdms_url : str = None, testmode : bool = False):
+    #region budman_app_service_dependency_injection() function
+    def budman_app_service_dependency_injection(self, bdms_url : str = None, testmode : bool = False):
         """Assemble the application for startup. Do Dependency Injection.
                 
         Args:
@@ -200,12 +200,12 @@ class BudManApp(metaclass=BDMSingletonMeta):
             self.model = self.view_model.initialize_model(bdms_url)
             # Next, bind the MODEL to the VIEW_MODEL.
             self.view_model.model = self.model
-            # Next, create the DATA_CONTEXT for the VIEW_MODEL, using the
-            # BDMWorkingData class.
+            # Next, instantiate the BDMDataContext to serve as the 
+            # DATA_CONTEXT for the VIEW_MODEL
             self.DC : BDMDataContext = BDMDataContext()
-            # Next, create the workflow category manager service.
+            # Next, instantiate the BDMTXNCategoryManager service.
             self.WF_CATEGORY_MANAGER = BDMTXNCategoryManager(self.settings)
-            # Stash it in the DC, a sort of service registry.
+            # Bind it to the DC, a sort of service registry.
             self.DC.WF_CATEGORY_MANAGER = self.WF_CATEGORY_MANAGER
             # Next, bind the MODEL to the DATA_CONTEXT.
             self.DC.model = self.model
@@ -223,7 +223,7 @@ class BudManApp(metaclass=BDMSingletonMeta):
             m = exc_err_msg(e)
             logger.error(m)
             raise
-    #endregion budman_app_service_setup() function
+    #endregion budman_app_service_dependency_injection() function
     # ------------------------------------------------------------------------ +
     #region budman_app_setup() function
     def budman_app_setup(self, bdms_url : str = None, testmode : bool = False):
@@ -239,9 +239,12 @@ class BudManApp(metaclass=BDMSingletonMeta):
             # MODEL, DATA_CONTEXT and COMMAND_PROCESSOR.
             # So, first setup the app_service, which can work with different
             # VIEW implementations.
-            _ = self.budman_app_service_setup(bdms_url, testmode)
-            # Next, create the VIEW with the view_model as CommandProcessor.
-            self.view = BudManCLIView(self.view_model,self.app_name,self.settings)
+            _ = self.budman_app_service_dependency_injection(bdms_url, testmode)
+            # Next, instantiate the BudManCLIView class to server as the VIEW 
+            # for the application. The VIEW_MODEL is bound as the CommandProcessor.
+            self.view = BudManCLIView(command_processor=self.view_model,
+                                      app_name=self.app_name,
+                                      settings=self.settings)
             # Next, bind the DATA_CONTEXT to the VIEW.
             self.view.DC = self.DC
             # Next, initialize the view.

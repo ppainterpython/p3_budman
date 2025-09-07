@@ -180,6 +180,8 @@ class BudManCLIView(cmd2.Cmd,
         self.allow_style = ansi.AllowStyle.TERMINAL
         self.register_precmd_hook(self.precmd_hook)
         self.register_postcmd_hook(self.postcmd_hook)
+        self.register_postparsing_hook(self.postparsing_hook)
+        # Configure set cmd parameters
         self.add_settable(
             cmd2.Settable(cp.CK_PARSE_ONLY, str, 'parse_only mode: on|off|toggle',
                           self, onchange_cb=self._onchange_parse_only)
@@ -221,6 +223,20 @@ class BudManCLIView(cmd2.Cmd,
             logger.exception(p3u.exc_err_msg(e))
             raise
     #endregion BudManCLIView Methods
+    # ------------------------------------------------------------------------ +
+    #region   postparsing_hook() Methods
+    def postparsing_hook(self, data: cmd2.plugin.PostparsingData) -> cmd2.plugin.PostparsingData:
+        """Tweak the cmd args after parsing complete()."""
+        try:
+            logger.debug(f"Start:")
+            # self.cli_parser.view_cmd = self
+            self.current_cmd = data.statement.raw
+            logger.debug(f"Complete:")
+            return data
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise
+    #endregion postparsing_hook Methods
     # ------------------------------------------------------------------------ +
     #region   precmd_hook() Methods
     def precmd_hook(self, data: cmd2.plugin.PrecommandData) -> cmd2.plugin.PrecommandData:

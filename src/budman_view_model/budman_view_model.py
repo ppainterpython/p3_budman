@@ -317,12 +317,13 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
     #region    BudManViewModel Class __init__() constructor method             +
     def __init__(self, bdms_url : str = None, settings : bdms.BudManSettings = None) -> None:
         super().__init__()
+        self._initialized : bool = False
         self._bdm_store_url : str = bdms_url
         self._settings = settings
         self._initialized : bool = False
         self._BDM_STORE_loaded : bool = False
+        # Dependency Injection: p3m.Model_Binding model() method backing value
         self._budget_domain_model : BudgetDomainModel = None
-        self._cmd_map : Dict[str, Callable] = None
     #endregion __init__() constructor method
     # ------------------------------------------------------------------------ +
     #region    BudManViewModel Class initialize() method                       +
@@ -331,6 +332,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
         try:
             st = p3u.start_timer()
             logger.info(f"BizEVENT: View Model setup for '{self.app_name}'")
+            self._initialized = False
             logger.debug(f"Complete: {p3u.stop_timer(st)}")
             return self
         except Exception as e:
@@ -420,15 +422,26 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
         self._settings = settings
 
     @property
-    def cp_initialized(self) -> bool:
+    def initialized(self) -> bool:
         """Return True if the ViewModel is initialized."""
         return self._initialized
-    @cp_initialized.setter
-    def cp_initialized(self, value: bool) -> None:
+    @initialized.setter
+    def initialized(self, value: bool) -> None:
         """Set the initialized property."""
         if not isinstance(value, bool):
             raise ValueError("initialized must be a boolean value.")
         self._initialized = value
+
+    @property
+    def budget_domain_model(self) -> BudgetDomainModel:
+        """Dependency Injection: Return the BudgetDomainModel instance."""
+        return self._budget_domain_model
+    @budget_domain_model.setter
+    def budget_domain_model(self, value: BudgetDomainModel) -> None:
+        """Dependency Injection: Set the BudgetModel binding."""
+        if not isinstance(value, BudgetDomainModel):
+            raise ValueError("budget_model must be a BudgetModel instance.")
+        self._budget_domain_model = value
 
     #endregion BudManViewModel Class Properties                                +
     # ------------------------------------------------------------------------ +
@@ -436,7 +449,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
     # ======================================================================== +
 
     # ======================================================================== +
-    #region    BudManViewModel CommandProcessor_Base Override methods          +
+    #region    BudManViewModel p3m.CommandProcessor super class Override methods          +
     # ======================================================================== +
     #region    Design Notes                                                    +
     """ ViewModelCommandProcessor Design Notes (future ABC)
@@ -502,7 +515,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
     # ------------------------------------------------------------------------ +
     #region    cp_initialize_cmd_map() method+
     def cp_initialize_cmd_map(self) -> None:
-        """BudManApp-Specific Override: Initialize the cmd_map dictionary."""
+        """Override: BudManApp-Specific Initialize the cmd_map dictionary."""
         try:
             # Use the following cmd_map to dispatch the command for execution.
             self.cp_cmd_map = {
@@ -591,15 +604,25 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                     continue
                 elif key == cp.CK_WB_NAME:
                     continue
-                elif key == cp.CK_WF_KEY:
+                elif (key == cp.CK_WF_KEY or
+                      key == cp.CK_SRC_WF_KEY or
+                      key == cp.CK_DST_WF_KEY):
                     if not self.dc_WF_KEY_validate(value):
                         result = f"Invalid wf_key value: '{value}'."
                         success = False 
                         logger.error(result)
-                    if value == cp.CK_ALL_WBS:
-                        logger.warning(f"wf_key: '{cp.CK_ALL_WBS}' not implemented."
-                                    f" Defaulting to {EXAMPLE_BDM_WF_CATEGORIZATION}.")
-                        cmd[key] = EXAMPLE_BDM_WF_CATEGORIZATION
+                    continue
+                elif (key == cp.CK_WF_PURPOSE or
+                      key == cp.CK_SRC_WF_PURPOSE or
+                      key == cp.CK_DST_WF_PURPOSE):
+                    if self.cp_cmd_attr_get(cmd, key) in VALID_WF_PURPOSE_CHOICES:
+                        # Map the choices value to actual value
+                        value = VALID_WF_PURPOSE_MAP[value]
+                    if not self.dc_WF_PURPOSE_validate(value):
+                        result = f"Invalid wf_purpose value: '{value}'."
+                        success = False 
+                        logger.error(result)
+                    self.cp_cmd_attr_set(cmd,key,value)
                     continue
                 elif key == cp.CK_WB_ID:
                     if not self.dc_WB_ID_validate(value):
@@ -653,38 +676,27 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
     #endregion cp_validate_cmd() Command Processor method
     # ------------------------------------------------------------------------ +
     #                                                                          +
-    #endregion BudManViewModel CommandProcessor_Base Override methods          +
+    #endregion BudManViewModel p3mCommandProcessor super class Override methods          +
     # ======================================================================== +
  
     # ======================================================================== +
-    #region    Model_Binding to BudgetDomainModel                              + 
+    #region    Model_Binding super class overrides for BudgetDomainModel                              + 
     # ======================================================================== +
     #                                                                          +
     # ------------------------------------------------------------------------ +
     #region    Model_Binding Properties                                        +
     @property
-    def budget_domain_model(self) -> BudgetDomainModel:
-        """Return the BudgetModel instance."""
-        return self._budget_domain_model
-    @budget_domain_model.setter
-    def budget_domain_model(self, value: BudgetDomainModel) -> None:
-        """Set the BudgetModel instance."""
-        if not isinstance(value, BudgetDomainModel):
-            raise ValueError("budget_model must be a BudgetModel instance.")
-        self._budget_domain_model = value
-
-    @property
-    def model(self) -> p3m.Model_Base:
-        """Return the model object reference."""
+    def model(self) -> BudgetDomainModel:
+        """Override: Return the model object reference from Dependency Injection."""
         return self._budget_domain_model
     @model.setter
-    def model(self, bdm: p3m.Model_Base) -> None:
-        """Set the model object reference."""
-        if not isinstance(bdm, p3m.Model_Base):
-            raise TypeError("model must be a BDMBaseInterface instance")
+    def model(self, bdm: BudgetDomainModel) -> None:
+        """Override: Dependency Injection: Set the model object binding reference."""
+        if not isinstance(bdm, BudgetDomainModel):
+            raise TypeError("model must be a BudgetDomainModel instance")
         self._budget_domain_model = bdm
     #endregion Model_Binding Properties                                        +
-    #endregion Model_Binding to BudgetDomainModel               +
+    #endregion Model_Binding super class overrides for BudgetDomainModel               +
     # ======================================================================== +
 
     # ======================================================================== +

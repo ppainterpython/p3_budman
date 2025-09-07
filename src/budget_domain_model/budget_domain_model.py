@@ -922,29 +922,6 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
             raise ValueError(m)
         return True
 
-    # def bdm_WF_PURPOSE_FOLDER_MAP(self, wf_key:str, wf_purpose:str=None) -> str|dict:
-    #     """Map a WF_PURPOSE value to folder key name (folder-id).
-        
-    #     The WF_PURPOSE_FOLDER_MAP relates a WF_PURPOSE to the key for
-    #     a folder name in the WF_OBJECT. At present, there are 3
-    #     values for WF_PURPOSE and one each corresponding key in the 
-    #     WF_OBJECT. The point is in the BDM_STORE file, the folders can
-    #     be mapped by purpose to various folders per the user's configuration.
-
-    #     Returns:
-    #         str: Given both wf_key and valid wf_purpose, returns the mapping
-    #         to a folder-id, the name of the key to use for the folder name in
-    #         the wf_object. If wf_purpose is omitted, None, the map dictionary
-    #         is returned.
-        
-    #     """
-    #     _ = self.bdm_WF_KEY_validate(wf_key)
-    #     wf_pf_map : Dict = self.bdm_WF_OBJECT(wf_key)[WF_PURPOSE_FOLDER_MAP]
-    #     if wf_pf_map is None: return None
-    #     if wf_purpose is None:
-    #         return wf_pf_map
-    #     return wf_pf_map[wf_purpose]
-
     #endregion bdm_WF_OBJECT_TYPE pseudo-Object properties
     # ------------------------------------------------------------------------ +
     #endregion BDM - Budget Domain Model methods
