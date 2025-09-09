@@ -260,7 +260,7 @@ from budman_workflows import (
     check_sheet_schema, check_sheet_columns, 
     validate_budget_categories, process_budget_category,
     output_category_tree,
-    WORKFLOW_TASK_process,
+    WORKFLOW_CMD_process,
     budget_category_mapping
     )
 from budget_domain_model import (
@@ -722,7 +722,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             cmd_result : p3m.CMD_RESULT_TYPE = cp.verify_cmd_key(cmd, cp.CV_LIST_CMD_KEY)
             if not cmd_result[p3m.CMD_RESULT_STATUS]: return cmd_result
             # Process BudMan command tasks.
-            cmd_result = cp.BUDMAN_CMD_TASK_process(cmd, self.DC)
+            cmd_result = cp.BUDMAN_CMD_process(cmd, self.DC)
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             return cmd_result
         except Exception as e:
@@ -831,7 +831,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             cmd_result : p3m.CMD_RESULT_TYPE = cp.verify_cmd_key(cmd, cp.CV_SHOW_CMD_KEY)
             if not cmd_result[p3m.CMD_RESULT_STATUS]: return cmd_result
             # Process BudMan command tasks.
-            cmd_result = cp.BUDMAN_CMD_TASK_process(cmd, self.DC)
+            cmd_result = cp.BUDMAN_CMD_process(cmd, self.DC)
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             return cmd_result
         except Exception as e:
@@ -1214,7 +1214,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             cmd_result : p3m.CMD_RESULT_TYPE = cp.verify_cmd_key(cmd, cp.CV_WORKFLOW_CMD_KEY)
             if not cmd_result[p3m.CMD_RESULT_STATUS]: return cmd_result
             # Process workflow command tasks.
-            cmd_result = WORKFLOW_TASK_process(cmd, self.DC)
+            cmd_result = WORKFLOW_CMD_process(cmd, self.DC)
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             return cmd_result
         except Exception as e:

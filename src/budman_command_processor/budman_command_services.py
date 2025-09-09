@@ -59,10 +59,10 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 
 # ---------------------------------------------------------------------------- +
-#region BudMan Application Command Task functions
+#region BudMan Application CMD_ functions
 # ---------------------------------------------------------------------------- +
-#region BUDMAN_CMD_TASK_process() function
-def BUDMAN_CMD_TASK_process(cmd: p3m.CMD_OBJECT_TYPE,
+#region BUDMAN_CMD_process() function
+def BUDMAN_CMD_process(cmd: p3m.CMD_OBJECT_TYPE,
                      bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
     """Process a CMD_TASK command.
 
@@ -82,11 +82,14 @@ def BUDMAN_CMD_TASK_process(cmd: p3m.CMD_OBJECT_TYPE,
         # List command
         if cmd[p3m.CK_CMD_KEY] == cp.CV_LIST_CMD_KEY:
             if cmd[p3m.CK_SUBCMD_KEY] == cp.CV_LIST_WORKBOOKS_SUBCMD_KEY:
-                return BUDMAN_CMD_TASK_list_workbooks(cmd, bdm_DC)
+                # List workbooks
+                return BUDMAN_CMD_list_workbooks(cmd, bdm_DC)
             elif cmd[cp.p3m.CK_SUBCMD_NAME] == cp.CV_BDM_STORE_SUBCMD_NAME:
-                return BUDMAN_CMD_TASK_list_bdm_store_json(cmd, bdm_DC)
-            elif cmd[cp.p3m.CK_SUBCMD_NAME] == cp.CV_FILES_SUBCMD_NAME:
-               return BUDMAN_CMD_TASK_list_files(cmd, bdm_DC)
+                # List BDM_STORE as JSON
+                return BUDMAN_CMD_list_bdm_store_json(cmd, bdm_DC)
+            elif cmd[cp.p3m.CK_SUBCMD_KEY] == cp.CV_LIST_FILES_SUBCMD_KEY:
+                # List files in the BDM store
+                return BUDMAN_CMD_list_files(cmd, bdm_DC)
             else:
                 return p3m.unknown_CMD_RESULT_ERROR(cmd)
         # Show command
@@ -103,10 +106,10 @@ def BUDMAN_CMD_TASK_process(cmd: p3m.CMD_OBJECT_TYPE,
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
-#endregion BUDMAN_CMD_TASK_process() function
+#endregion BUDMAN_CMD_process() function
 # ---------------------------------------------------------------------------- +
-#region BUDMAN_CMD_TASK_list_workbooks()
-def BUDMAN_CMD_TASK_list_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
+#region BUDMAN_CMD_list_workbooks()
+def BUDMAN_CMD_list_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
         bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
     """List workbooks in the BudMan application data context.
 
@@ -159,10 +162,10 @@ def BUDMAN_CMD_TASK_list_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
             return cmd_result
     except Exception as e:
         return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
-#endregion BUDMAN_CMD_TASK_list_workbooks()
+#endregion BUDMAN_CMD_list_workbooks()
 # ---------------------------------------------------------------------------- +
-#region BUDMAN_CMD_TASK_list_bdm_store_json()
-def BUDMAN_CMD_TASK_list_bdm_store_json(cmd: p3m.CMD_OBJECT_TYPE,
+#region BUDMAN_CMD_list_bdm_store_json()
+def BUDMAN_CMD_list_bdm_store_json(cmd: p3m.CMD_OBJECT_TYPE,
                                   bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
     """List the BDM store in JSON format.
     Args:
@@ -197,10 +200,10 @@ def BUDMAN_CMD_TASK_list_bdm_store_json(cmd: p3m.CMD_OBJECT_TYPE,
         return cmd_result
     except Exception as e:
         return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
-#endregion BUDMAN_CMD_TASK_list_bdm_store_json()
+#endregion BUDMAN_CMD_list_bdm_store_json()
 # ---------------------------------------------------------------------------- +    
-#region BUDMAN_CMD_TASK_list_files()
-def BUDMAN_CMD_TASK_list_files(cmd: p3m.CMD_OBJECT_TYPE,
+#region BUDMAN_CMD_list_files()
+def BUDMAN_CMD_list_files(cmd: p3m.CMD_OBJECT_TYPE,
                          bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
     """List the files in the BDM store.
     Args:
@@ -210,9 +213,20 @@ def BUDMAN_CMD_TASK_list_files(cmd: p3m.CMD_OBJECT_TYPE,
         p3m.CMD_RESULT_TYPE: The result of the command execution.
     """
     try:
-        p3u.is_not_obj_of_type("bdm_DC", bdm_DC, BudManAppDataContext_Base,
-                               raise_error=True)
-        # Validate DC is Model-aware
+        # Validate the cmd argsuments.
+        cmd_args: p3m.CMD_ARGS_TYPE = cp.validate_cmd_arguments(
+            cmd=cmd, 
+            bdm_DC=bdm_DC,
+            cmd_key=cp.CV_LIST_CMD_KEY, 
+            subcmd_key=cp.CV_LIST_FILES_SUBCMD_KEY,
+            required_args=[
+                cp.CK_ALL_FILES,
+                cp.CK_WF_FOLDER,
+                cp.CK_SRC_WF_KEY,
+                cp.CK_SRC_WF_PURPOSE
+            ]
+        )
+        # Validate DC is Model-aware with a modle binding.
         model: BudgetDomainModel = bdm_DC.model
         if not model:
             m = "No BudgetDomainModel binding in the DC."
@@ -227,9 +241,12 @@ def BUDMAN_CMD_TASK_list_files(cmd: p3m.CMD_OBJECT_TYPE,
         cmd_result: p3m.CMD_RESULT_TYPE = p3m.create_CMD_RESULT_OBJECT(
             cmd_object=cmd
         )
+        # List files all_files | wf_folder
+        all_files: bool = cmd_args.get(cp.CK_ALL_FILES, False)
+        wf_folder: bool = cmd_args.get(cp.CK_WF_FOLDER, False)
         # If wf_key is not present in cmd, try to get it from the data context
-        wf_key: str = cmd.get(cp.CK_CMDLINE_WF_KEY, None)
-        if not wf_key:
+        wf_key: str = cmd_args.get(cp.CK_SRC_WF_KEY, None)
+        if not wf_key and wf_folder:
             # No wf_key in cmdline, try DC
             wf_key = bdm_DC.dc_WF_KEY
             if not wf_key:
@@ -239,8 +256,8 @@ def BUDMAN_CMD_TASK_list_files(cmd: p3m.CMD_OBJECT_TYPE,
                 logger.error(cmd_result[p3m.CMD_RESULT_CONTENT])
                 return cmd_result
         #if wf_purpose is not present in cmd, try to get it from the data context
-        wf_purpose: str = cmd.get(cp.CK_CMDLINE_WF_PURPOSE, None)
-        if not wf_purpose:
+        wf_purpose: str = cmd_args.get(cp.CK_SRC_WF_PURPOSE, None)
+        if not wf_purpose and wf_folder:
             # No wf_purpose in cmdline, try DC
             wf_purpose = bdm_DC.dc_WF_PURPOSE
             if not wf_purpose:
@@ -250,6 +267,7 @@ def BUDMAN_CMD_TASK_list_files(cmd: p3m.CMD_OBJECT_TYPE,
                 logger.error(cmd_result[p3m.CMD_RESULT_CONTENT])
                 return cmd_result
         fi_key: str = bdm_DC.dc_FI_KEY
+        # TODO: handle all_files to use model.bdm_url abs_path for folder
         folder_tree: Tree = BUDMAN_CMD_TASK_get_file_tree(fi_key, wf_key, wf_purpose, bdm_DC)
         if not folder_tree:
             cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = p3m.CMD_ERROR_STRING_OUTPUT
@@ -268,7 +286,13 @@ def BUDMAN_CMD_TASK_list_files(cmd: p3m.CMD_OBJECT_TYPE,
         return cmd_result
     except Exception as e:
         return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
-#endregion BUDMAN_CMD_TASK_list_files()
+#endregion BUDMAN_CMD_list_files()
+# ---------------------------------------------------------------------------- +    
+#endregion BudMan Application CMD_ functions
+# ---------------------------------------------------------------------------- +    
+
+# --------------------------------------------------------------------------- +
+#region BudMan Application CMD_TASK_ functions
 # ---------------------------------------------------------------------------- +    
 #region BUDMAN_CMD_TASK_get_workbook_tree() method
 def BUDMAN_CMD_TASK_get_workbook_tree(bdm_DC: BudManAppDataContext_Base) -> RichTree:
@@ -463,14 +487,10 @@ def BUDMAN_CMD_TASK_construct_dst_file_url(cmd: p3m.CMD_OBJECT_TYPE,
 
     """
     try:
-        # Extract filename components.
-        filename_components = BUDMAN_CMD_TASK_extract_filename_components(cmd, bdm_DC, bsm_file)
-        if not filename_components:
-            raise ValueError("Failed to extract filename components.")
-
         # Construct the destination file URL.
-        dst_file_url = f"{filename_components['wf_prefix']}{filename_components['wb_name']}" \
-                       f"{filename_components['wb_type']}.{filename_components['extension']}"
+        # nedd dst_prefix, dst_wb_type, dst_folder_abs_path
+        dst_file_url = f"{bsm_file.wf_prefix}{bsm_file.wb_name}" \
+                       f"{bsm_file.wb_type}.{bsm_file.extension}"
 
         return p3m.create_CMD_RESULT_OBJECT(
             cmd_result_status=True,
@@ -546,7 +566,7 @@ def extract_bdm_tree(bdm_DC: BudManAppDataContext_Base) -> Tree:
         raise
 #endregion extract_bdm_tree() function
 # ---------------------------------------------------------------------------- +
-#endregion BudMan Application Command Task functions
+#endregion BudMan Application CMD_TASK_ functions
 # ---------------------------------------------------------------------------- +
 
 # ---------------------------------------------------------------------------- +
@@ -611,7 +631,7 @@ class BSMFile:
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             return False
-    def update(self) -> None
+    def update(self) -> None:
         """Update the prefix and wb_type properties based on the filename."""
         if not self.file_url:
             return

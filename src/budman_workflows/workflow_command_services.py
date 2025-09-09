@@ -26,7 +26,6 @@ import budman_command_processor as cp
 import budman_namespace as bdm
 from budman_namespace import BDMWorkbook
 from budget_domain_model import BudgetDomainModel
-from budget_storage_model import BSMFile
 from budman_data_context import BudManAppDataContext_Base
 from .budget_intake import *
 #endregion Imports
@@ -35,8 +34,8 @@ from .budget_intake import *
 logger = logging.getLogger(__name__)
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
-#region WORKFLOW_TASK_process() function
-def WORKFLOW_TASK_process(cmd: p3m.CMD_OBJECT_TYPE, 
+#region WORKFLOW_CMD_process() function
+def WORKFLOW_CMD_process(cmd: p3m.CMD_OBJECT_TYPE, 
                        bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
     """Process workflow tasks.
 
@@ -80,7 +79,7 @@ def WORKFLOW_TASK_process(cmd: p3m.CMD_OBJECT_TYPE,
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
-#endregion WORKFLOW_TASK_process() function
+#endregion WORKFLOW_CMD_process() function
 # ---------------------------------------------------------------------------- +
 #region WORKFLOW_TASK_transfer() function
 def WORKFLOW_TASK_transfer(cmd: p3m.CMD_OBJECT_TYPE, 
@@ -130,6 +129,7 @@ def WORKFLOW_TASK_transfer(cmd: p3m.CMD_OBJECT_TYPE,
         p3m.CMDValidationException: For unrecoverable errors.
     """
     try:
+        # Validate the cmd argsuments.
         cmd_args: p3m.CMD_ARGS_TYPE = cp.validate_cmd_arguments(
             cmd=cmd, 
             bdm_DC=bdm_DC,

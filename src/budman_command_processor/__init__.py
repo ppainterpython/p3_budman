@@ -13,7 +13,7 @@ __license__ = "MIT"
 from .budman_cp_namespace import *
 from .budman_command_services import (
     # BUDMAN_CMD_TASK functions
-    BUDMAN_CMD_TASK_process,
+    BUDMAN_CMD_process,
     BUDMAN_CMD_TASK_get_file_tree,
     # BudMan Command File Services
     BSMFile,
@@ -31,7 +31,7 @@ from .budman_command_services import (
 # target for 'from budman_app import *'
 __all__ = [
     "BudManApp",
-    "BUDMAN_CMD_TASK_process",
+    "BUDMAN_CMD_process",
     "BUDMAN_CMD_TASK_get_file_tree",
     # BudMan Command File Services
     "BSMFile",

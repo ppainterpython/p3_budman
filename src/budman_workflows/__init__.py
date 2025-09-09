@@ -19,7 +19,7 @@ __description__ = "Budget Manager (BudMan) Workflow process implementation."
 __license__ = "MIT"
 
 from .workflow_command_services import (
-    WORKFLOW_TASK_process,
+    WORKFLOW_CMD_process,
 )
 from .budget_intake import (
     INTAKE_TASK_process
@@ -68,7 +68,7 @@ from .budget_category_mapping import (
 # symbols for "from budman_model import *"
 __all__ = [
     # workflow_commands.py module
-    "WORKFLOW_TASK_process",
+    "WORKFLOW_CMD_process",
     # module names
     "workflow_utils",
     # budget_intake",

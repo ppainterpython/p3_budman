@@ -32,10 +32,6 @@ import budman_command_processor as cp
 import budman_namespace.design_language_namespace as bdm
 from budman_namespace.bdm_workbook_class import BDMWorkbook
 from budman_data_context import BudManAppDataContext_Base
-from budget_storage_model import (
-    BSMFile,
-    bsm_get_BSMFile_from_file_tree,   
-    bsm_get_full_filename_from_file_tree)
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -104,7 +100,7 @@ def INTAKE_TASK_copy_file_to_wf_folder(
                                                    src_wf_purpose, bdm_DC)
         p3u.is_not_obj_of_type("src_folder_tree", file_tree, Tree, raise_error=True)
         # file_trees are a BSM concern
-        src_file: BSMFile = bsm_get_BSMFile_from_file_tree(file_tree, src_file_index)
+        src_file: cp.BSMFile = cp.BUDMAN_CMD_FILE_SERVICE_get_BSMFile(file_tree, src_file_index)
         if not src_file:
             msg = f"Source file_index '{src_file_index}' not found "
             msg += f"in folder tree: {file_tree.root}"
