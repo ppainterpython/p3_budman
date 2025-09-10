@@ -95,7 +95,7 @@ class BudManCLIParser():
                 f"--{cp.CK_NO_SAVE}",
                 action="store_true",
                 help="Do NOT save BDM_STORE on exit.")
-            self.add_common_args(exit_parser)
+            self.add_common_optional_args(exit_parser)
 
             # app delete subcommand
             delete_parser = subparsers.add_parser(
@@ -111,7 +111,7 @@ class BudManCLIParser():
                 type=int, 
                 default= -1,
                 help="wb_index to delete.")
-            self.add_common_args(delete_parser)
+            self.add_common_optional_args(delete_parser)
 
             # app reload subcommand
             reload_parser = subparsers.add_parser(
@@ -130,7 +130,7 @@ class BudManCLIParser():
                          cp.CV_WORKFLOWS_MODULE],
                 default=cp.CV_CATEGORY_MAP,
                 help="Name of object to reload, pick from choices.")
-            self.add_common_args(reload_parser)
+            self.add_common_optional_args(reload_parser)
 
             # app log [handler-name] [--list] [--level [level-value]] [--rollover]
             log_subcmd_parser = subparsers.add_parser(
@@ -158,7 +158,7 @@ class BudManCLIParser():
                 "--rollover", "-r", dest="rollover_switch", 
                 action = 'store_true',
                 help="Cause file loggers to rollover now.")
-            self.add_common_args(log_subcmd_parser)
+            self.add_common_optional_args(log_subcmd_parser)
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise
@@ -192,7 +192,7 @@ class BudManCLIParser():
                 help="Specify the workbook type to apply.")
             self.add_workflow_optional_argument(workbook_subcmd_parser)
             self.add_purpose_optional_argument(workbook_subcmd_parser)
-            self.add_common_args(workbook_subcmd_parser)
+            self.add_common_optional_args(workbook_subcmd_parser)
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise
@@ -221,7 +221,7 @@ class BudManCLIParser():
                 p3m.CK_SUBCMD_KEY: cp.CV_LIST_BDM_STORE_SUBCMD_KEY
             }
             bdm_store_subcmd_parser.set_defaults(**bdm_store_subcmd_defaults)
-            self.add_common_args(bdm_store_subcmd_parser)
+            self.add_common_optional_args(bdm_store_subcmd_parser)
             #endregion bdm_store_subcmd_parser
 
             # region wb_subcmd_parser
@@ -240,7 +240,7 @@ class BudManCLIParser():
                 action="store_true",
                 help="Show the BDM tree hierarchy.")
             self.add_wb_list_or_all_argument(wb_subcmd_parser)
-            self.add_common_args(wb_subcmd_parser)
+            self.add_common_optional_args(wb_subcmd_parser)
             # endregion wb_subcmd_parser
 
             #region files_subcmd_parser
@@ -264,30 +264,31 @@ class BudManCLIParser():
                 help="Specify all files.")
             all_files_parser_defaults = { 
                 cp.CK_ALL_FILES: True,
-                cp.CK_WF_FOLDER: False,
+                cp.CK_SRC_WF_FOLDER: False,
                 cp.CK_SRC_WF_KEY: None,
                 cp.CK_SRC_WF_PURPOSE: None}
             all_files_parser.set_defaults(**all_files_parser_defaults)
-            self.add_common_args(all_files_parser)
+            self.add_common_optional_args(all_files_parser)
 
-            wf_folder_parser = files_subcmd_subparsers.add_parser(
-                cp.CK_WF_FOLDER,
-                aliases=["WF_FOLDER", "wf"],
-                help="Specify WF_FOLDER with WF_KEY WF_PURPOSE value.")
-            wf_folder_parser_defaults = {
-                cp.CK_ALL_FILES: False, 
-                cp.CK_WF_FOLDER: True,
-                cp.CK_SRC_WF_KEY: None,
-                cp.CK_SRC_WF_PURPOSE: None
-            }
-            wf_folder_parser.set_defaults(**wf_folder_parser_defaults)
-            self.add_workflow_positional_argument(wf_folder_parser)
-            self.add_purpose_positional_argument(wf_folder_parser)
-            self.add_common_args(wf_folder_parser)
+            self.add_src_wf_folder_subparser(files_subcmd_subparsers)
+            # wf_folder_parser = files_subcmd_subparsers.add_parser(
+            #     cp.CK_WF_FOLDER,
+            #     aliases=["WF_FOLDER", "wf"],
+            #     help="Specify WF_FOLDER with WF_KEY WF_PURPOSE value.")
+            # wf_folder_parser_defaults = {
+            #     cp.CK_ALL_FILES: False, 
+            #     cp.CK_WF_FOLDER: True,
+            #     cp.CK_SRC_WF_KEY: None,
+            #     cp.CK_SRC_WF_PURPOSE: None
+            # }
+            # wf_folder_parser.set_defaults(**wf_folder_parser_defaults)
+            # self.add_src_wf_key_positional_arg(wf_folder_parser)
+            # self.add_src_wf_purpose_positional_arg(wf_folder_parser)
+            # self.add_common_optional_args(wf_folder_parser)
 
             # self.add_workflow_optional_argument(files_subcmd_parser)
             # self.add_purpose_optional_argument(files_subcmd_parser)
-            self.add_common_args(files_subcmd_parser)
+            self.add_common_optional_args(files_subcmd_parser)
             #endregion files_subcmd_parser
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
@@ -312,7 +313,7 @@ class BudManCLIParser():
             bdm_store_subcmd_parser.set_defaults(
                 subcmd_name=cp.CV_BDM_STORE_SUBCMD_NAME,
                 subcmd_key=cp.CV_LOAD_BDM_STORE_SUBCMD_KEY)
-            self.add_common_args(bdm_store_subcmd_parser)
+            self.add_common_optional_args(bdm_store_subcmd_parser)
 
             # wb_subcmd_parser
             # load workbooks [wb_index | -all | --all_wbs]
@@ -324,7 +325,7 @@ class BudManCLIParser():
                 subcmd_name=cp.CV_WORKBOOKS_SUBCMD_NAME,
                 subcmd_key=cp.CV_LOAD_WORKBOOKS_SUBCMD_KEY)
             self.add_wb_list_or_all_argument(wb_subcmd_parser)
-            self.add_common_args(wb_subcmd_parser)
+            self.add_common_optional_args(wb_subcmd_parser)
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise
@@ -348,7 +349,7 @@ class BudManCLIParser():
             bdm_store_subcmd_parser.set_defaults(
                 subcmd_name=cp.CV_BDM_STORE_SUBCMD_NAME,
                 subcmd_key=cp.CV_SAVE_BDM_STORE_SUBCMD_KEY)
-            self.add_common_args(bdm_store_subcmd_parser)
+            self.add_common_optional_args(bdm_store_subcmd_parser)
 
             # wb_subcmd_parser
             # save workbooks [wb_index | -all | --all_wbs]
@@ -360,7 +361,7 @@ class BudManCLIParser():
                 subcmd_name=cp.CV_WORKBOOKS_SUBCMD_NAME,
                 subcmd_key=cp.CV_SAVE_WORKBOOKS_SUBCMD_KEY)
             self.add_wb_list_or_all_argument(wb_subcmd_parser)
-            self.add_common_args(wb_subcmd_parser)
+            self.add_common_optional_args(wb_subcmd_parser)
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise
@@ -403,7 +404,7 @@ class BudManCLIParser():
                 type=int,
                 default=2, 
                 help="Level to display in category hierarchy, max 3.") 
-            self.add_common_args(categories_subcmd_parser)
+            self.add_common_optional_args(categories_subcmd_parser)
             #endregion Show Categories subcommand
 
             #region show DataContext subcommand
@@ -416,7 +417,7 @@ class BudManCLIParser():
                 p3m.CK_SUBCMD_KEY: cp.CV_SHOW_DATA_CONTEXT_SUBCMD_KEY
             }
             datacontext_subcmd_parser.set_defaults(**datacontext_subcmd_defaults)
-            self.add_common_args(datacontext_subcmd_parser)
+            self.add_common_optional_args(datacontext_subcmd_parser)
             #endregion show DataContext subcommand
 
             #region show Financial Institution subcommand [fi_key] [-wf [wf_key]] [-wb [wb_name]]
@@ -433,7 +434,7 @@ class BudManCLIParser():
                 "fi_key", nargs="?", 
                 default= "all",
                 help="FI key value.") 
-            self.add_common_args(fi_subcmd_parser)
+            self.add_common_optional_args(fi_subcmd_parser)
             #endregion show Financial Institution subcommand [fi_key] [-wf [wf_key]] [-wb [wb_name]]
 
             #region show workflows subcommand
@@ -451,7 +452,7 @@ class BudManCLIParser():
                 action="store", 
                 default = None,
                 help="Workflow key value.")
-            self.add_common_args(wf_subcmd_parser)
+            self.add_common_optional_args(wf_subcmd_parser)
             #endregion show workflows subcommand
 
         except Exception as e:
@@ -498,7 +499,7 @@ class BudManCLIParser():
                 f"--{cp.CK_LOG_ALL}", "-log_all", "-la", 
                 action="store_true", 
                 help="Log every catalog pattern match step.")
-            self.add_common_args(categorization_parser)
+            self.add_common_optional_args(categorization_parser)
             #endregion workflow categorization subcommand
 
             #region workflow intake subcommand
@@ -525,7 +526,7 @@ class BudManCLIParser():
                 f"--{cp.CK_VALIDATE_CATEGORIES}", "-val", "-v", 
                 action="store_true", 
                 help="Validate the budget categories.")
-            self.add_common_args(check_parser)
+            self.add_common_optional_args(check_parser)
             #endregion Workflow 'check' subcommand
 
             #region Workflow task sub-command: task
@@ -576,7 +577,7 @@ class BudManCLIParser():
                 action="store", 
                 default=None,
                 help="a wb_ref to a check register(s). wb_index, wb_name or 'all'.")
-            self.add_common_args(apply_parser)
+            self.add_common_optional_args(apply_parser)
             #endregion workflow 'apply' subcommand
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
@@ -597,7 +598,7 @@ class BudManCLIParser():
                 subcmd_key=cp.CV_SET_SUBCMD_KEY)
             self.add_workflow_optional_argument(set_parser)
             self.add_purpose_optional_argument(set_parser)
-            self.add_common_args(set_parser)
+            self.add_common_optional_args(set_parser)
             return set_parser
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
@@ -646,7 +647,7 @@ class BudManCLIParser():
                 cp.CK_DST_WB_TYPE,
                 choices=bdm.VALID_WB_TYPE_VALUES,
                 help="Specify the destination workbook type.")
-            self.add_common_args(transfer_parser)
+            self.add_common_optional_args(transfer_parser)
             return transfer_parser
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
@@ -679,7 +680,7 @@ class BudManCLIParser():
                 help=("Index of file to copy."))
             self.add_workflow_optional_argument(copy_parser)
             self.add_purpose_optional_argument(copy_parser)
-            self.add_common_args(copy_parser)
+            self.add_common_optional_args(copy_parser)
             return intake_parser
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
@@ -728,7 +729,30 @@ class BudManCLIParser():
             logger.exception(p3u.exc_err_msg(e))
             raise
 
-    def add_workflow_positional_argument(self, parser) -> None:
+    def add_src_wf_folder_subparser(self, subparsers) -> None:
+        """Add a src_wf_folder subparser as a positional argument to capture 
+        src_wf_key and src_wf_purpose."""
+        try:
+            src_wf_folder_parser = subparsers.add_parser(
+                cp.CK_SRC_WF_FOLDER,
+                aliases=["SRC_WF_FOLDER", "src"],
+                help="Specify SRC_WF_FOLDER with SRC_WF_KEY SRC_WF_PURPOSE value.")
+            src_wf_folder_parser_defaults = {
+                cp.CK_ALL_FILES: False, 
+                cp.CK_SRC_WF_FOLDER: True,
+                cp.CK_SRC_WF_KEY: None,
+                cp.CK_SRC_WF_PURPOSE: None
+            }
+            src_wf_folder_parser.set_defaults(**src_wf_folder_parser_defaults)
+            self.add_src_wf_key_positional_arg(src_wf_folder_parser)
+            self.add_src_wf_purpose_positional_arg(src_wf_folder_parser)
+            self.add_common_optional_args(src_wf_folder_parser)
+            return
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise
+
+    def add_src_wf_key_positional_arg(self, parser) -> None:
         """Add a workflow positional argument to the provided parser."""
         try:
             parser.add_argument(
@@ -740,7 +764,7 @@ class BudManCLIParser():
             logger.exception(p3u.exc_err_msg(e))
             raise
 
-    def add_purpose_positional_argument(self, parser) -> None:
+    def add_src_wf_purpose_positional_arg(self, parser) -> None:
         """Add a workflow purpose positional argument to the provided parser."""
         try:
             parser.add_argument(
@@ -809,7 +833,7 @@ class BudManCLIParser():
             logger.exception(p3u.exc_err_msg(e))
             raise
 
-    def add_common_args(self, parser: cmd2.Cmd2ArgumentParser) -> object:
+    def add_common_optional_args(self, parser: cmd2.Cmd2ArgumentParser) -> object:
         """Add common arguments to the provided parser."""
         try:
             common_args = parser.add_argument_group(

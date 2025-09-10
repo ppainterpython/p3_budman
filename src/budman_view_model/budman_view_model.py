@@ -607,6 +607,9 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                 elif (key == cp.CK_WF_KEY or
                       key == cp.CK_SRC_WF_KEY or
                       key == cp.CK_DST_WF_KEY):
+                    if value is None:
+                        # No further validation if value is None
+                        continue
                     if not self.dc_WF_KEY_validate(value):
                         result = f"Invalid wf_key value: '{value}'."
                         success = False 
@@ -615,6 +618,9 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                 elif (key == cp.CK_WF_PURPOSE or
                       key == cp.CK_SRC_WF_PURPOSE or
                       key == cp.CK_DST_WF_PURPOSE):
+                    if value is None:
+                        # No further validation if value is None
+                        continue
                     if self.cp_cmd_attr_get(cmd, key) in VALID_WF_PURPOSE_CHOICES:
                         # Map the choices value to actual value
                         value = VALID_WF_PURPOSE_MAP[value]

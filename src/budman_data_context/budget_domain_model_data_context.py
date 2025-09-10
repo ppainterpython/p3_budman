@@ -75,14 +75,14 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
     # ------------------------------------------------------------------------ +
     #region    Model_Binding Interface Properties
     @property
-    def model(self) -> MODEL_OBJECT:
+    def model(self) -> BudgetDomainModel:
         """Return the model object reference."""
         return self._model
     @model.setter
-    def model(self, bdm: MODEL_OBJECT) -> None:
+    def model(self, bdm: BudgetDomainModel) -> None:
         """Set the model object reference."""
-        if not isinstance(bdm, MODEL_OBJECT):
-            raise TypeError(f"model must be a {MODEL_OBJECT} instance")
+        if not isinstance(bdm, BudgetDomainModel):
+            raise TypeError(f"model must be a BudgetDomainModel instance")
         self._model = bdm
     #endregion Model_Binding Interface Properties
     # ------------------------------------------------------------------------ +

@@ -1079,6 +1079,9 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
     def bsm_BDM_FOLDER_abs_path_str(self) -> str:
         """str of self.bsm_BDM_FOLDER_abs_path()."""
         return str(self.bsm_BDM_FOLDER_abs_path())
+    def bsm_BDM_FOLDER_url(self) -> str:
+        """URL str of self.bsm_BDM_FOLDER_abs_path()."""
+        return self.bsm_BDM_FOLDER_abs_path().as_uri()
     def bsm_BDM_FOLDER_resolve(self, 
                               create_missing_folders : bool=True,
                               raise_errors : bool=True) -> None:

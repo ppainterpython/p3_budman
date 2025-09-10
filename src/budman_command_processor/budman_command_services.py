@@ -221,54 +221,53 @@ def BUDMAN_CMD_list_files(cmd: p3m.CMD_OBJECT_TYPE,
             subcmd_key=cp.CV_LIST_FILES_SUBCMD_KEY,
             required_args=[
                 cp.CK_ALL_FILES,
-                cp.CK_WF_FOLDER,
+                cp.CK_SRC_WF_FOLDER,
                 cp.CK_SRC_WF_KEY,
                 cp.CK_SRC_WF_PURPOSE
             ]
         )
-        # Validate DC is Model-aware with a modle binding.
-        model: BudgetDomainModel = bdm_DC.model
-        if not model:
-            m = "No BudgetDomainModel binding in the DC."
-            logger.error(m)
-            return p3m.create_CMD_RESULT_OBJECT(
-                cmd_object=cmd,
-                cmd_result_status=False,
-                result_content_type=p3m.CMD_STRING_OUTPUT,
-                result_content=m
-            )
+        cmd_result: p3m.CMD_RESULT_TYPE = validate_model_binding(bdm_DC)
+        # Validate DC is Model-aware with a model binding.
+        if not cmd_result[p3m.CMD_RESULT_STATUS]:
+            return cmd_result
+        model: BudgetDomainModel = cmd_result[p3m.CMD_RESULT_CONTENT]
         # Construct CMD_RESULT for return.
-        cmd_result: p3m.CMD_RESULT_TYPE = p3m.create_CMD_RESULT_OBJECT(
+        cmd_result = p3m.create_CMD_RESULT_OBJECT(
             cmd_object=cmd
         )
         # List files all_files | wf_folder
         all_files: bool = cmd_args.get(cp.CK_ALL_FILES, False)
-        wf_folder: bool = cmd_args.get(cp.CK_WF_FOLDER, False)
-        # If wf_key is not present in cmd, try to get it from the data context
-        wf_key: str = cmd_args.get(cp.CK_SRC_WF_KEY, None)
-        if not wf_key and wf_folder:
-            # No wf_key in cmdline, try DC
-            wf_key = bdm_DC.dc_WF_KEY
+        src_wf_folder: bool = cmd_args.get(cp.CK_SRC_WF_FOLDER, False)
+        # If wf_folder, then will need wf_key and wf_purpose.
+        if src_wf_folder:
+            wf_key: str = cmd_args.get(cp.CK_SRC_WF_KEY, None)
             if not wf_key:
-                # No wf_key to work with
-                cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = p3m.CMD_ERROR_STRING_OUTPUT
-                cmd_result[p3m.CMD_RESULT_CONTENT] = "No wf_key from cmd args or DC."
-                logger.error(cmd_result[p3m.CMD_RESULT_CONTENT])
-                return cmd_result
-        #if wf_purpose is not present in cmd, try to get it from the data context
-        wf_purpose: str = cmd_args.get(cp.CK_SRC_WF_PURPOSE, None)
-        if not wf_purpose and wf_folder:
-            # No wf_purpose in cmdline, try DC
-            wf_purpose = bdm_DC.dc_WF_PURPOSE
+                # If wf_key is not present in cmd, try to get it from the data context
+                # No wf_key in cmdline, try DC
+                wf_key = bdm_DC.dc_WF_KEY
+                if not wf_key:
+                    # No wf_key to work with
+                    cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = p3m.CMD_ERROR_STRING_OUTPUT
+                    cmd_result[p3m.CMD_RESULT_CONTENT] = "No wf_key from cmd args or DC."
+                    logger.error(cmd_result[p3m.CMD_RESULT_CONTENT])
+                    return cmd_result
+            wf_purpose: str = cmd_args.get(cp.CK_SRC_WF_PURPOSE, None)
             if not wf_purpose:
-                # No wf_purpose to work with
-                cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = p3m.CMD_ERROR_STRING_OUTPUT
-                cmd_result[p3m.CMD_RESULT_CONTENT] = "No wf_purpose from cmd args or DC."
-                logger.error(cmd_result[p3m.CMD_RESULT_CONTENT])
-                return cmd_result
-        fi_key: str = bdm_DC.dc_FI_KEY
-        # TODO: handle all_files to use model.bdm_url abs_path for folder
-        folder_tree: Tree = BUDMAN_CMD_TASK_get_file_tree(fi_key, wf_key, wf_purpose, bdm_DC)
+                # If wf_purpose is not present in cmd, try to get it from the data context
+                # No wf_purpose in cmdline, try DC
+                wf_purpose = bdm_DC.dc_WF_PURPOSE
+                if not wf_purpose:
+                    # No wf_purpose to work with
+                    cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = p3m.CMD_ERROR_STRING_OUTPUT
+                    cmd_result[p3m.CMD_RESULT_CONTENT] = "No wf_purpose from cmd args or DC."
+                    logger.error(cmd_result[p3m.CMD_RESULT_CONTENT])
+                    return cmd_result
+        if all_files:
+            # List all files in the BDM store.
+            folder_tree: Tree = BUDMAN_CMD_TASK_get_bdm_file_tree(bdm_DC)
+        if src_wf_folder and not all_files:
+            fi_key: str = bdm_DC.dc_FI_KEY
+            folder_tree: Tree = BUDMAN_CMD_TASK_get_file_tree(fi_key, wf_key, wf_purpose, bdm_DC)
         if not folder_tree:
             cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = p3m.CMD_ERROR_STRING_OUTPUT
             cmd_result[p3m.CMD_RESULT_CONTENT] = (
@@ -391,12 +390,10 @@ def BUDMAN_CMD_TASK_get_file_tree(fi_key: str, wf_key: str, wf_purpose: str,
         treelib.Tree: The folder tree for the specified workflow.
     """
     try:
-        # Validate the model binding.
-        model: BudgetDomainModel = bdm_DC.model
-        if not model:
-            m = "No BudgetDomainModel binding in the DC."
-            logger.error(m)
-            raise ValueError(m)
+        # Validate DC is Model-aware with a model binding.
+        cmd_result: p3m.CMD_RESULT_TYPE = validate_model_binding( bdm_DC, 
+                                                                 raise_error=True)
+        model: BudgetDomainModel = cmd_result[p3m.CMD_RESULT_CONTENT]
         # From the Model, get the wf_folder_url for an fi_key, wf_key, wf_purpose
         fi_wf_folder_url: str = model.bdm_FI_WF_FOLDER_URL(fi_key, wf_key, 
                                                            wf_purpose, 
@@ -409,6 +406,31 @@ def BUDMAN_CMD_TASK_get_file_tree(fi_key: str, wf_key: str, wf_purpose: str,
         logger.error(p3u.exc_err_msg(e))
         raise
 #endregion BUDMAN_CMD_TASK_get_file_tree() function
+# ---------------------------------------------------------------------------- +
+#region BUDMAN_CMD_TASK_get_bdm_file_tree() function
+def BUDMAN_CMD_TASK_get_bdm_file_tree(bdm_DC: BudManAppDataContext_Base) -> Tree:
+    """Obtain a file tree for the whole bdm model.
+
+     A file tree is a treelib.Tree object with the folders and files from a
+     folder in the storage system.
+
+    Args:
+        cmd (Dict[str, Any]): A valid BudMan View Model Command object.
+        bdm_DC (BudManAppDataContext_Base): The data context for the 
+            BudMan application.
+
+    Returns:
+        treelib.Tree: The folder tree for the specified workflow.
+    """
+    try:
+        # Construct the file url to the bdm_folder from the model.
+        bdm_folder_url: str = bdm_DC.model.bsm_BDM_FOLDER_url()
+        folder_tree: Tree = BUDMAN_CMD_FILE_SERVICE_file_tree(bdm_folder_url)
+        return folder_tree
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion BUDMAN_CMD_TASK_get_bdm_file_tree() function
 # ---------------------------------------------------------------------------- +
 #region BUDMAN_CMD_TASK_show_DATA_CONTEXT()
 def BUDMAN_CMD_TASK_show_DATA_CONTEXT(cmd: p3m.CMD_OBJECT_TYPE,
@@ -670,9 +692,9 @@ def BUDMAN_CMD_FILE_SERVICE_file_tree(wf_folder_url:str) -> Tree:
     file_tree.create_node(tag=tag, identifier=str(wf_folder_abs_path),
                           data=BSMFile(BSMFile.BSM_FOLDER, dir_index, -1, wf_folder_url))  
 
-    def add_nodes(current_path: Path, parent_id: str, 
-                  file_index: int = 0, dir_index:int = 0) -> int:
+    def add_nodes(current_path: Path, parent_id: str) -> None:
         """Recursive scan directory current_path. Depth-first, using Path.iterdir()"""
+        nonlocal dir_index, file_index
         try:
             if not current_path.is_dir():
                 raise ValueError(f"Path is not a directory: {current_path}")
@@ -682,13 +704,15 @@ def BUDMAN_CMD_FILE_SERVICE_file_tree(wf_folder_url:str) -> Tree:
                 node_id = str(item.resolve())
                 if item.is_dir():
                     # Folder
+                    if item.stem in ["backup", "test", "draft", 
+                                     "copies","__pycache__", "personal"]:
+                        continue
                     tag = f"{dir_index:2} {item.name}"
                     file_tree.create_node(tag=tag, identifier=node_id, 
                           parent=parent_id, 
                           data=BSMFile(BSMFile.BSM_FOLDER, dir_index, 
                                        -1, item.as_uri()))
-                    file_index = add_nodes(item, node_id, 
-                                           file_index, dir_index)
+                    add_nodes(item, node_id)
                 else:
                     # File
                     tag = f"{file_index:2} {item.name}"
@@ -697,13 +721,13 @@ def BUDMAN_CMD_FILE_SERVICE_file_tree(wf_folder_url:str) -> Tree:
                                     data=BSMFile(BSMFile.BSM_FILE, dir_index, 
                                                  file_index, item.as_uri()))
                     file_index += 1
-            return file_index
+            return
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
 
     try:
-        add_nodes(wf_folder_abs_path, str(wf_folder_abs_path), file_index, dir_index)
+        add_nodes(wf_folder_abs_path, str(wf_folder_abs_path))
         return file_tree
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
@@ -1068,6 +1092,64 @@ def validate_wf_folder_file_list(cmd: p3m.CMD_OBJECT_TYPE,
                                         msg=err_msg,
                                         cmd_result_error=cmd_result_error)
 #endregion validate_file_list()
+# ---------------------------------------------------------------------------- +
+#region validate_model_binding()
+def validate_model_binding(bdm_DC: BudManAppDataContext_Base,
+                           raise_error: bool = False) -> p3m.CMD_RESULT_TYPE:
+    """Validate that the BudManAppDataContext has a valid BudgetDomainModel binding.
+
+    Args:
+        bdm_DC (BudManAppDataContext_Base): The data context to validate.
+
+    Returns:
+        CMD_RESULT_TYPE: The result of the validation.
+            .result_content: True if the model is valid, False otherwise.
+    """
+    try:
+        p3u.is_not_obj_of_type("bdm_DC", bdm_DC, BudManAppDataContext_Base,
+                               raise_error=True)
+        model: BudgetDomainModel = bdm_DC.model
+        if not model:
+            m = "No BudgetDomainModel binding in the DC."
+            logger.error(m)
+            if raise_error:
+                raise ValueError(m)
+            return p3m.create_CMD_RESULT_OBJECT(
+                cmd_result_status=False,
+                result_content=m,
+                result_content_type=p3m.CMD_ERROR_STRING_OUTPUT,
+                cmd_object=None
+            )
+        if not isinstance(model, BudgetDomainModel):
+            m = f"Invalid BudgetDomainModel binding in the DC: {type(model)}"
+            logger.error(m)
+            if raise_error:
+                raise ValueError(m)
+            return p3m.create_CMD_RESULT_OBJECT(
+                cmd_result_status=False,
+                result_content=m,
+                result_content_type=p3m.CMD_ERROR_STRING_OUTPUT,
+                cmd_object=None
+            )
+        # Model is valid
+        return p3m.create_CMD_RESULT_OBJECT(
+            cmd_result_status=True,
+            result_content=model,
+            result_content_type=p3m.CMD_BDM_MODEL_OBJECT,
+            cmd_object=None
+        )
+    except Exception as e:
+        m = p3u.exc_err_msg(e)
+        logger.error(m)
+        if raise_error:
+            raise
+        return p3m.create_CMD_RESULT_OBJECT(
+            cmd_result_status=False,
+            result_content=m,
+            result_content_type=p3m.CMD_ERROR_STRING_OUTPUT,
+            cmd_object=None
+        )
+#ednregion validate_model_binding()
 # ---------------------------------------------------------------------------- +
 #endregion BudMan Application Command Helper functions
 # ---------------------------------------------------------------------------- +
