@@ -178,8 +178,8 @@ def bsm_WORKBOOK_CONTENT_url_get(wb_content_url: str,
         bsm_WB_URL_TYPE_validate(wb_content_url, wb_type)
         # All is good, wb_type compatible with wb_content_url.
         # Since right now we only support file:// URLs, proceed on that basis.
-        wb_content_abs_path: Path = bsm_WB_URL_verify_file_scheme(wb_content_url, 
-                                                                  test=True)
+        wb_content_abs_path: Path = bsm_URL_verify_file_scheme(wb_content_url, 
+                                                                  test_exists=True)
         logger.debug(f"Loading WORKBOOK_CONTENT from path: "
                      f"'{wb_content_abs_path}' for URL: '{wb_content_url}'")
         wb_content: bdm.WORKBOOK_CONTENT_TYPE = None
@@ -217,8 +217,8 @@ def bsm_WORKBOOK_CONTENT_url_put(wb_content: bdm.WORKBOOK_CONTENT_TYPE,
         bsm_WB_URL_TYPE_validate(wb_content_url, wb_type)
         # All is good, wb_type compatible with wb_content_url.
         # Since right now we only support file:// URLs, proceed on that basis.
-        wb_content_abs_path: Path = bsm_WB_URL_verify_file_scheme(wb_content_url,
-                                                                  test=False)
+        wb_content_abs_path: Path = bsm_URL_verify_file_scheme(wb_content_url,
+                                                                  test_exists=False)
         logger.debug(f"Saving WORKBOOK_CONTENT to path: "
                      f"'{wb_content_abs_path}' for URL: '{wb_content_url}'")
         bsm_WORKBOOK_CONTENT_file_save(wb_content, wb_content_abs_path, wb_type,
@@ -579,7 +579,7 @@ def bsm_WB_TYPE(wb_url : str, wb_filetype:str) -> Any:
         for wb_type in bdm.VALID_WB_TYPE_VALUES:
             if wb_type.lower() + wb_filetype.lower() in wb_url.lower():
                 return wb_type
-        wb_abs_path = bsm_WB_URL_verify_file_scheme(wb_url, test=True)
+        wb_abs_path = bsm_URL_verify_file_scheme(wb_url, test_exists=True)
         wb_filetype = wb_abs_path.suffix.lower()
         # Suss it out based on filetype.
         if wb_filetype not in [bdm.WB_FILETYPE_XLSX, bdm.WB_FILETYPE_CSV, 
@@ -621,7 +621,7 @@ def bsm_WB_URL_verify(wb_url: str,test:bool=True) -> Any:
     At present, only file scheme is supported."""
     try:
         p3u.is_non_empty_str("wb_url", wb_url, raise_error=True)
-        return bsm_WB_URL_verify_file_scheme(wb_url, test=test)
+        return bsm_URL_verify_file_scheme(wb_url, test_exists=test)
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
@@ -686,7 +686,7 @@ def bsm_WB_URL_TYPE_validate(wb_content_url: str, wb_type: str,
         # wb_type is valid, how about the wb_url?
         parsed_url: ParseResult = bsm_WB_URL_validate(wb_content_url,result=True)
         # wb_url is valid, but can it be supported for the wb_type?
-        wb_abs_path: Path = bsm_WB_URL_verify_file_scheme(parsed_url, test=False)
+        wb_abs_path: Path = bsm_URL_verify_file_scheme(parsed_url, test_exists=False)
         if wb_filetype not in wb_abs_path.suffix.lower():
             m = f"wb_content_url filetype '{wb_abs_path.suffix}' does not match " \
                 f"wb_type '{wb_type}' filetype '{wb_filetype}'."
@@ -697,27 +697,29 @@ def bsm_WB_URL_TYPE_validate(wb_content_url: str, wb_type: str,
         raise
 #endregion bsm_WB_TYPE_validate() function
 # ---------------------------------------------------------------------------- +
-#region    bsm_WB_URL_verify_file_scheme(url: str) function 
-def bsm_WB_URL_verify_file_scheme(wb_url: Union[str,ParseResult], test:bool=True) -> Path:
-    """Verify wb_url is a valid file url and path, return it as a Path object."""
+#region    bsm_URL_verify_file_scheme(url: str) function 
+def bsm_URL_verify_file_scheme(file_url: Union[str,ParseResult], 
+                               test_exists:bool=True, 
+                               raise_error:bool=False) -> Path:
+    """Verify file_url is a valid file url and path, return it as a Path object."""
     try:
-        if (not p3u.is_non_empty_str("wb_url", wb_url) and 
-            not isinstance(wb_url, (str, ParseResult))):
-            raise TypeError(f"wb_url must be a non-empty str or ParseResult, "
-                            f"got: {type(wb_url).__name__}")
-        parsed_url: ParseResult = wb_url if isinstance(wb_url, ParseResult) else urlparse(wb_url)
+        if (not p3u.is_non_empty_str("file_url", file_url) and 
+            not isinstance(file_url, (str, ParseResult))):
+            raise TypeError(f"file_url must be a non-empty str or ParseResult, "
+                            f"got: {type(file_url).__name__}")
+        parsed_url: ParseResult = file_url if isinstance(file_url, ParseResult) else urlparse(file_url)
         if not isinstance(parsed_url, ParseResult) or parsed_url.scheme != "file":
             raise ValueError(f"Only URL scheme: 'file' supported, "
                              f"but got: {parsed_url.scheme}")
         orig_url: str = urlunparse(parsed_url)
         file_path: Path = Path().from_uri(orig_url)
-        if test and not file_path.exists():
+        if test_exists and not file_path.exists():
             raise FileNotFoundError(f"File does not exist: {file_path}")
         return file_path
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
-#endregion bsm_WB_URL_verify_file_scheme(url: str) function
+#endregion bsm_URL_verify_file_scheme(url: str) function
 # ---------------------------------------------------------------------------- +
 #region    bsm_verify_folder(ap: Path, create:bool=True, raise_errors:bool=True) -> bool
 def bsm_verify_folder(ap: Path, create:bool=True, raise_errors:bool=True) -> bool:

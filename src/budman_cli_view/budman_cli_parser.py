@@ -258,37 +258,8 @@ class BudManCLIParser():
 
             # For files subcommand, next arg is either all_files or 
             # wf_folder specified as wf_key and wf_purpose values.
-            all_files_parser = files_subcmd_subparsers.add_parser(
-                cp.CK_ALL_FILES,
-                aliases=["all"],
-                help="Specify all files.")
-            all_files_parser_defaults = { 
-                cp.CK_ALL_FILES: True,
-                cp.CK_SRC_WF_FOLDER: False,
-                cp.CK_SRC_WF_KEY: None,
-                cp.CK_SRC_WF_PURPOSE: None}
-            all_files_parser.set_defaults(**all_files_parser_defaults)
-            self.add_common_optional_args(all_files_parser)
-
+            self.add_all_files_subparser(files_subcmd_subparsers)
             self.add_src_wf_folder_subparser(files_subcmd_subparsers)
-            # wf_folder_parser = files_subcmd_subparsers.add_parser(
-            #     cp.CK_WF_FOLDER,
-            #     aliases=["WF_FOLDER", "wf"],
-            #     help="Specify WF_FOLDER with WF_KEY WF_PURPOSE value.")
-            # wf_folder_parser_defaults = {
-            #     cp.CK_ALL_FILES: False, 
-            #     cp.CK_WF_FOLDER: True,
-            #     cp.CK_SRC_WF_KEY: None,
-            #     cp.CK_SRC_WF_PURPOSE: None
-            # }
-            # wf_folder_parser.set_defaults(**wf_folder_parser_defaults)
-            # self.add_src_wf_key_positional_arg(wf_folder_parser)
-            # self.add_src_wf_purpose_positional_arg(wf_folder_parser)
-            # self.add_common_optional_args(wf_folder_parser)
-
-            # self.add_workflow_optional_argument(files_subcmd_parser)
-            # self.add_purpose_optional_argument(files_subcmd_parser)
-            self.add_common_optional_args(files_subcmd_parser)
             #endregion files_subcmd_parser
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
@@ -724,6 +695,25 @@ class BudManCLIParser():
                 dest=cp.CK_CMDLINE_WF_PURPOSE,
                 const=cp.CK_WF_OUTPUT,
                 help="Use workflow folder purpose: wf_output.")
+            return
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise
+
+    def add_all_files_subparser(self, subparsers) -> None:
+        """Add all_files subparser as a positional argument."""
+        try:
+            all_files_parser = subparsers.add_parser(
+                cp.CK_ALL_FILES,
+                aliases=["all"],
+                help="Specify all files.")
+            all_files_parser_defaults = { 
+                cp.CK_ALL_FILES: True,
+                cp.CK_SRC_WF_FOLDER: False,
+                cp.CK_SRC_WF_KEY: None,
+                cp.CK_SRC_WF_PURPOSE: None}
+            all_files_parser.set_defaults(**all_files_parser_defaults)
+            self.add_common_optional_args(all_files_parser)
             return
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))

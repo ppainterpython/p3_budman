@@ -49,7 +49,9 @@ from budman_namespace import (BDMWorkbook, P2, P4)
 import budman_settings as bdms
 from budget_domain_model import BudgetDomainModel
 from budman_data_context import BudManAppDataContext_Base
-from budget_storage_model import (bsm_verify_folder, bsm_WB_URL_verify_file_scheme,)
+from budget_storage_model import (
+    BSMFile, BSMFileTree,
+    bsm_verify_folder, bsm_URL_verify_file_scheme,)
 from budman_workflows.workflow_utils import output_category_tree
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -594,144 +596,12 @@ def extract_bdm_tree(bdm_DC: BudManAppDataContext_Base) -> Tree:
 # ---------------------------------------------------------------------------- +
 #region BudMan Application Command File Services
 # ---------------------------------------------------------------------------- +
-#region    BSMFile Class
-class BSMFile:
-    BSM_FILE = "file"
-    BSM_FOLDER = "folder"
-    def __init__(self, 
-                 type:str=BSM_FILE, 
-                 dir_index:int=-1, 
-                 file_index:int=-1, 
-                 file_url:Optional[str]=None,
-                 valid_prefixes:List[str]=[],
-                 valid_wb_types:List[str]=[]) -> None:
-        self.type: str = type
-        self.dir_index: int = dir_index
-        self.file_index: int = file_index
-        self.file_url: Optional[str] = file_url
-        self._valid_prefixes: List[str] = valid_prefixes if valid_prefixes else []
-        self._valid_wb_types: List[str] = valid_wb_types if valid_wb_types else []
-        self._path: Path = None
-        self._full_filename: Optional[str] = None
-        self._filename: Optional[str] = None
-        self._extension: Optional[str] = None
-        self._prefix: Optional[str] = None
-        self._wb_type: Optional[str] = None
-        self.update()
-
-    def __str__(self) -> str:
-        return self.full_filename
-
-    @property
-    def full_filename(self) -> Optional[str]:
-        """Return the full filename (with extension) of the file."""
-        return self._full_filename
-    @property
-    def filename(self) -> Optional[str]:
-        """Return the filename (without extension)."""
-        return Path.from_uri(self.file_url).stem if self.file_url else None
-    @property
-    def extension(self) -> Optional[str]:
-        """Return the file extension."""
-        return self._extension
-    @property
-    def abs_path(self) -> Optional[Path]:
-        """Return the absolute file path."""
-        return self._path
-    @property
-    def prefix(self) -> Optional[str]:
-        """Return the workflow prefix from the filename."""
-        return self._prefix
-    @property
-    def wb_type(self) -> Optional[str]:
-        """Return the workbook type from the filename."""
-        return self._wb_type
-    def verify_url(self) -> Optional[Path]:
-        """Verify the file URL."""
-        try:
-            return bsm_WB_URL_verify_file_scheme(self.file_url)
-        except Exception as e:
-            logger.error(p3u.exc_err_msg(e))
-            return False
-    def update(self) -> None:
-        """Update the prefix and wb_type properties based on the filename."""
-        if not self.file_url:
-            return
-        self._path = Path.from_uri(self.file_url)
-        self._full_filename = self._path.name
-        self._filename = self._path.stem
-        self._extension = self._path.suffix
-        filename_sans_prefix: str = self._filename
-        for prefix in self._valid_prefixes:
-            # prefix must be at the start of the filename
-            if self._filename.startswith(prefix):
-                self._prefix = prefix
-                self._filename = self._filename[len(prefix):]
-                break
-
-        for wb_type in self._valid_wb_types:
-            # wb_type must be at the end of the filename_sans_prefix
-            if self._filename.endswith(wb_type):
-                self._wb_type = wb_type
-                self._filename = self._filename[:-len(wb_type)]
-                break
-
-#endregion BSMFile Class
-# ---------------------------------------------------------------------------- +
 #region    BUDMAN_CMD_FILE_SERVICE_file_tree()
 def BUDMAN_CMD_FILE_SERVICE_file_tree(wf_folder_url:str) -> Tree:
     """Create a file_tree structure from a folder URL."""
     p3u.is_not_non_empty_str("wf_folder_url", wf_folder_url, raise_error=True)
-    wf_folder_abs_path: Path = Path.from_uri(wf_folder_url)
-    bsm_verify_folder(wf_folder_abs_path, create=False, raise_errors=True)
-    file_index:int = 0
-    dir_index:int = 0
-    file_tree = Tree()
-    tag = f"{dir_index:2} {wf_folder_abs_path.name}"
-    # Root node
-    file_tree.create_node(tag=tag, identifier=str(wf_folder_abs_path),
-                          data=BSMFile(BSMFile.BSM_FOLDER, dir_index, -1, wf_folder_url))  
-
-    def add_nodes(current_path: Path, parent_id: str) -> None:
-        """Recursive scan directory current_path. Depth-first, using Path.iterdir()"""
-        nonlocal dir_index, file_index
-        try:
-            if not current_path.is_dir():
-                raise ValueError(f"Path is not a directory: {current_path}")
-            dir_index += 1
-            # iterdir() returns "arbitrary order, may need to sort."
-            for item in current_path.iterdir():
-                node_id = str(item.resolve())
-                if item.is_dir():
-                    # Folder
-                    if item.stem in ["backup", "test", "draft", 
-                                     "copies","__pycache__", "personal"]:
-                        continue
-                    tag = f"{dir_index:2} {item.name}"
-                    file_tree.create_node(tag=tag, identifier=node_id, 
-                          parent=parent_id, 
-                          data=BSMFile(BSMFile.BSM_FOLDER, dir_index, 
-                                       -1, item.as_uri()))
-                    add_nodes(item, node_id)
-                else:
-                    # File
-                    tag = f"{file_index:2} {item.name}"
-                    file_tree.create_node(tag=tag, identifier=node_id, 
-                                    parent=parent_id, 
-                                    data=BSMFile(BSMFile.BSM_FILE, dir_index, 
-                                                 file_index, item.as_uri()))
-                    file_index += 1
-            return
-        except Exception as e:
-            logger.error(p3u.exc_err_msg(e))
-            raise
-
-    try:
-        add_nodes(wf_folder_abs_path, str(wf_folder_abs_path))
-        return file_tree
-    except Exception as e:
-        logger.error(p3u.exc_err_msg(e))
-        raise
+    bsm_file_tree: BSMFileTree = BSMFileTree(wf_folder_url)
+    return bsm_file_tree.file_tree
 #endregion BUDMAN_CMD_FILE_SERVICE_file_tree()
 # ---------------------------------------------------------------------------- +
 #region BUDMAN_CMD_FILE_SERVICE_get_BSMFile()
