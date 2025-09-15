@@ -259,12 +259,6 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
             raise ValueError(m)
         return False
 
-    def dc_WF_PURPOSE_FOLDER_MAP(self, wf_key: str, wf_purpose:str) -> bool:
-        """Model-Aware: Return the wf_folder_id from the provided WF_KEY & WF_PURPOSE.
-        """
-        self.not_dc_INITIALIZED()
-        return self.model.bdm_WF_PURPOSE_FOLDER_MAP(wf_key, wf_purpose)
-
     def dc_WORKBOOK_validate(self, bdm_wb : WORKBOOK_OBJECT_TYPE) -> bool:
         """Model-Aware: Validate the type of WORKBOOK_OBJECT.
         Abstract: sub-class hook to test specialized WORKBOOK_OBJECT types.

@@ -19,7 +19,7 @@ from budman_namespace import (
     FI_NAME, FI_FOLDER,BDM_WF_COLLECTION,
     WF_INPUT_FOLDER,WF_WORKING_FOLDER, WF_OUTPUT_FOLDER,WF_NAME,
     WF_KEY, WF_FOLDER_ID, WB_NAME,
-    WF_INPUT, WF_WORKING, WF_OUTPUT, WF_PURPOSE_FOLDER_MAP, BDM_DATA_CONTEXT
+    WF_INPUT, WF_WORKING, WF_OUTPUT, BDM_DATA_CONTEXT
     )
 from budget_storage_model import bsm_BDM_STORE_url_get, bsm_BDM_STORE_url_put
 from budman_namespace.bdm_workbook_class import BDMWorkbook
@@ -56,60 +56,6 @@ def configure_logging(logger_name : str = __name__, logtest : bool = False) -> N
         logger.error(p3u.exc_err_msg(e))
         raise
 #endregion configure_logging() function
-# ------------------------------------------------------------------------ +
-#region wf_tree() function
-def wf_tree():
-    wb_url = "file:///C:/Users/ppain/OneDrive/budget/p3_budget_manager_ca063e8b.jsonc"
-    cr_url = "file:///C:/Users/ppain/OneDrive/budget/boa/data/new/CheckRegister_ToDate20250609.csv"
-    try:
-        wb_path = p3u.verify_url_file_path(cr_url, test=False)
-        # wb_path.parent  = abs_path to the parent directory
-        # wb_path.stem = filename
-        # wb_path.suffix = filetype
-        # wb_path.name = full_filename
-        # path mapping:  
-        # BDM: FI: bdm_id / fi_folder(fi_key) / fi_data_coll(wf_key) / workbook_list(wf_purpose) / (wb_name.wb_type, wb_url)
-        # bsm:   '~/budget/'              'boa/'                                        'data/new/' data.xlsx
-        #      WF: bdm_id \ wf_key \  wf_folder(wf_purpose) \ wb_name.wb_type
-        #bdm_folder
-        #
-        bdms = bsm_BDM_STORE_url_get(wb_url)
-        fi_folders = list(bdms[BDM_FI_COLLECTION].keys())     
-        bdm_folder = bdms[BDM_FOLDER]
-        all_paths = []
-        fi_col = bdms[BDM_FI_COLLECTION]
-        wf_col = bdms[BDM_WF_COLLECTION]
-        for fi_key, fi_obj in bdms[BDM_FI_COLLECTION].items():
-            fi_folder = fi_obj[FI_FOLDER]
-            fi_name = fi_obj[FI_NAME]
-            print(f"'{fi_folder}' [{fi_key}]'{fi_name}'")
-            if fi_obj[FI_WORKBOOK_DATA_COLLECTION] is None:
-                logger.warning(f"FI_DATA_COLLECTION is None for FI_KEY: {fi_key}")
-                continue
-            for wf_key, data_obj in fi_obj[FI_WORKBOOK_DATA_COLLECTION].items():
-                wf_obj = wf_col[wf_key]
-                wf_name = wf_obj[WF_NAME] 
-                # print(f"  '{wf_key}' wf_name: '{wf_obj[WF_NAME]}'")
-                wf_folders = {}
-                wf_folders[WF_INPUT] = wf_obj[WF_INPUT_FOLDER]
-                wf_folders[WF_WORKING] = wf_obj[WF_WORKING_FOLDER]
-                wf_folders[WF_OUTPUT] = wf_obj[WF_OUTPUT_FOLDER]
-                for wf_purpose, tuple_list in data_obj.items():
-                    f = wf_folders[wf_purpose]
-                    tm = wf_obj[WF_PURPOSE_FOLDER_MAP][wf_purpose]
-                    print(f"  '{f}' [{wf_key}]'{tm}' ")
-                    for tup in tuple_list:
-                        print(f"     '{tup[0]}' wb_path: {tup[1]}")
-
-
-        logger.info(f"wb_path: '{wb_path}' url:'{wb_url}'")
-
-    except Exception as e:
-        m = p3u.exc_err_msg(e)
-        logger.error(m)
-    # bdm = bdms.bsm_BDM_STORE_url_load(bdms_url)
-    logger.info(f"Complete.")
-#endregion wf_tree() function
 # ------------------------------------------------------------------------ +
 #region bdm_store_change() function
 def bdm_store_change(bdms:BDM_STORE_TYPE):
@@ -256,7 +202,6 @@ if __name__ == "__main__":
         configure_logging(__name__, logtest=False)
         # extract_bdm_tree().show()
         # print(output_bdm_tree())
-        # wf_tree()
         # wb_path = p3u.verify_url_file_path(cr_url, test=False)
         bdms = bsm_BDM_STORE_url_get(wb_url)
         # bdmc = BDMConfig.BDM_STORE_url_get(wb_url)

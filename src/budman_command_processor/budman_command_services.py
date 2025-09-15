@@ -232,7 +232,10 @@ def BUDMAN_CMD_list_files(cmd: p3m.CMD_OBJECT_TYPE,
         # Validate DC is Model-aware with a model binding.
         if not cmd_result[p3m.CMD_RESULT_STATUS]:
             return cmd_result
-        model: BudgetDomainModel = cmd_result[p3m.CMD_RESULT_CONTENT]
+        model: BudgetDomainModel = bdm_DC.model
+        bsm_file_tree : BSMFileTree = model.bsm_file_tree
+        file_tree: Tree = None
+        err_msg:str = ""
         # Construct CMD_RESULT for return.
         cmd_result = p3m.create_CMD_RESULT_OBJECT(
             cmd_object=cmd
@@ -266,21 +269,29 @@ def BUDMAN_CMD_list_files(cmd: p3m.CMD_OBJECT_TYPE,
                     return cmd_result
         if all_files:
             # List all files in the BDM store.
-            folder_tree: Tree = BUDMAN_CMD_TASK_get_bdm_file_tree(bdm_DC)
+            file_tree = bsm_file_tree.file_tree
+            if not file_tree:
+                err_msg = "No file_tree available from the model."
         if src_wf_folder and not all_files:
             fi_key: str = bdm_DC.dc_FI_KEY
-            folder_tree: Tree = BUDMAN_CMD_TASK_get_file_tree(fi_key, wf_key, wf_purpose, bdm_DC)
-        if not folder_tree:
+            # From the Model, get the wf_folder_url for an fi_key, wf_key, wf_purpose
+            fi_wf_folder_url: str = model.bdm_FI_WF_FOLDER_CONFIG_ATTRIBUTE(
+                fi_key=fi_key, wf_key=wf_key, wf_purpose=wf_purpose, 
+                attribute=bdm.WF_FOLDER_URL, raise_errors=False)
+            # No retrieve the sbu tree for that folder_url
+            if fi_wf_folder_url:
+                file_tree: Tree = bsm_file_tree.get_sub_file_tree(fi_wf_folder_url)
+                if not file_tree:
+                    err_msg = (f"No wf_folder found for FI_KEY: "
+                               f"'{fi_key}', WF_KEY: '{wf_key}', WF_PURPOSE: '{wf_purpose}'")
+        if not file_tree:
             cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = p3m.CMD_ERROR_STRING_OUTPUT
-            cmd_result[p3m.CMD_RESULT_CONTENT] = (
-                f"No wf_folder found for FI_KEY: "
-                f"'{fi_key}', WF_KEY: '{wf_key}', WF_PURPOSE: '{wf_purpose}'"
-            )
+            cmd_result[p3m.CMD_RESULT_CONTENT] = err_msg
             logger.error(cmd_result[p3m.CMD_RESULT_CONTENT])
             return cmd_result
         cmd_result[p3m.CMD_RESULT_STATUS] = True
         cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = p3m.CMD_FILE_TREE_OBJECT
-        cmd_result[p3m.CMD_RESULT_CONTENT] = folder_tree
+        cmd_result[p3m.CMD_RESULT_CONTENT] = file_tree
         # msg = f"Workflow Folder Tree for WORKFLOW('{wf_key}') "
         # msg += f"PURPOSE('{wf_purpose}')"
 
@@ -371,69 +382,6 @@ def BUDMAN_CMD_TASK_get_workbook_tree(bdm_DC: BudManAppDataContext_Base) -> Rich
         return None
 #endregion BUDMAN_CMD_TASK_get_workbook_tree
 # ---------------------------------------------------------------------------- +    
-#region BUDMAN_CMD_TASK_get_file_tree() function
-def BUDMAN_CMD_TASK_get_file_tree(fi_key: str, wf_key: str, wf_purpose: str, 
-                             bdm_DC: BudManAppDataContext_Base) -> Tree:
-    """Obtain a file tree based on fi_key, wf_key and wf_purpose.
-
-     A file tree is a treelib.Tree object with the folders and files from a
-     folder in the storage system.
-
-    Args:
-        cmd (Dict[str, Any]): A valid BudMan View Model Command object.
-        bdm_DC (BudManAppDataContext_Base): The data context for the 
-            BudMan application.
-
-        cmd should contain:
-            - cp.CK_CMDLINE_WF_KEY: The ID of the folder to list files from.
-            - cp.CK_CMDLINE_WF_PURPOSE: The purpose of the workflow, used to determine the folder.
-
-    Returns:
-        treelib.Tree: The folder tree for the specified workflow.
-    """
-    try:
-        # Validate DC is Model-aware with a model binding.
-        cmd_result: p3m.CMD_RESULT_TYPE = validate_model_binding( bdm_DC, 
-                                                                 raise_error=True)
-        model: BudgetDomainModel = cmd_result[p3m.CMD_RESULT_CONTENT]
-        # From the Model, get the wf_folder_url for an fi_key, wf_key, wf_purpose
-        fi_wf_folder_url: str = model.bdm_FI_WF_FOLDER_URL(fi_key, wf_key, 
-                                                           wf_purpose, 
-                                                           raise_errors=False)
-        if not fi_wf_folder_url:
-            return None
-        folder_tree: Tree = BUDMAN_CMD_FILE_SERVICE_file_tree(fi_wf_folder_url)
-        return folder_tree
-    except Exception as e:
-        logger.error(p3u.exc_err_msg(e))
-        raise
-#endregion BUDMAN_CMD_TASK_get_file_tree() function
-# ---------------------------------------------------------------------------- +
-#region BUDMAN_CMD_TASK_get_bdm_file_tree() function
-def BUDMAN_CMD_TASK_get_bdm_file_tree(bdm_DC: BudManAppDataContext_Base) -> Tree:
-    """Obtain a file tree for the whole bdm model.
-
-     A file tree is a treelib.Tree object with the folders and files from a
-     folder in the storage system.
-
-    Args:
-        cmd (Dict[str, Any]): A valid BudMan View Model Command object.
-        bdm_DC (BudManAppDataContext_Base): The data context for the 
-            BudMan application.
-
-    Returns:
-        treelib.Tree: The folder tree for the specified workflow.
-    """
-    try:
-        # Construct the file url to the bdm_folder from the model.
-        bdm_folder_url: str = bdm_DC.model.bsm_BDM_FOLDER_url()
-        folder_tree: Tree = BUDMAN_CMD_FILE_SERVICE_file_tree(bdm_folder_url)
-        return folder_tree
-    except Exception as e:
-        logger.error(p3u.exc_err_msg(e))
-        raise
-#endregion BUDMAN_CMD_TASK_get_bdm_file_tree() function
-# ---------------------------------------------------------------------------- +
 #region BUDMAN_CMD_TASK_show_DATA_CONTEXT()
 def BUDMAN_CMD_TASK_show_DATA_CONTEXT(cmd: p3m.CMD_OBJECT_TYPE,
                                 bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
@@ -596,28 +544,13 @@ def extract_bdm_tree(bdm_DC: BudManAppDataContext_Base) -> Tree:
 # ---------------------------------------------------------------------------- +
 #region BudMan Application Command File Services
 # ---------------------------------------------------------------------------- +
-#region    BUDMAN_CMD_FILE_SERVICE_file_tree()
-def BUDMAN_CMD_FILE_SERVICE_file_tree(wf_folder_url:str) -> Tree:
-    """Create a file_tree structure from a folder URL."""
-    p3u.is_not_non_empty_str("wf_folder_url", wf_folder_url, raise_error=True)
-    bsm_file_tree: BSMFileTree = BSMFileTree(wf_folder_url)
-    return bsm_file_tree.file_tree
-#endregion BUDMAN_CMD_FILE_SERVICE_file_tree()
-# ---------------------------------------------------------------------------- +
 #region BUDMAN_CMD_FILE_SERVICE_get_BSMFile()
-def BUDMAN_CMD_FILE_SERVICE_get_BSMFile(file_tree: Tree, file_index: int) -> Optional[BSMFile]:
+def BUDMAN_CMD_FILE_SERVICE_get_BSMFile(bdm_DC: BudManAppDataContext_Base, file_index: int) -> Optional[BSMFile]:
     """Get the BSMFile object from the file tree for a given file_index."""
     try:
-        p3u.is_not_obj_of_type("file_tree", file_tree, Tree, raise_error=True)
-        for node_id in file_tree.expand_tree():
-            file_node: Node = file_tree.get_node(node_id)
-            if file_node.is_leaf(): # only look at file nodes, which are leafs
-                if (file_node.data and isinstance(file_node.data, BSMFile)):
-                    bsm_file: BSMFile = file_node.data
-                    this_index: int = bsm_file.file_index
-                    if this_index == file_index:
-                        return bsm_file
-        return None
+        # Return the bsm_file_tree from the model via the DC.
+        bsm_file_tree: BSMFileTree = bdm_DC.model.bsm_file_tree
+        return bsm_file_tree.get_BSMFile(file_index)
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
@@ -824,7 +757,8 @@ def validate_cmd_arguments(cmd: p3m.CMD_OBJECT_TYPE,
                             bdm_DC: BudManAppDataContext_Base,
                             cmd_key: str,
                             subcmd_key: str,
-                            required_args: List[str]) -> p3m.CMD_ARGS_TYPE:
+                            required_args: List[str],
+                            model_aware:bool=True) -> p3m.CMD_ARGS_TYPE:
     """Validate the components of the command object.
 
     Args:
@@ -849,18 +783,25 @@ def validate_cmd_arguments(cmd: p3m.CMD_OBJECT_TYPE,
             raise p3m.CMDValidationException(cmd=cmd, 
                                              msg=msg,
                                              cmd_result_error=cmd_result)
+        cmd_result : p3m.CMD_RESULT_TYPE = None
         # Should be indicated cmd_key.
-        cmd_result : p3m.CMD_RESULT_TYPE = cp.verify_cmd_key(cmd, cmd_key)
+        cmd_result = cp.verify_cmd_key(cmd, cmd_key)
         if not cmd_result[p3m.CMD_RESULT_STATUS]: 
             raise p3m.CMDValidationException(cmd=cmd, 
                                              msg=cmd_result[p3m.CMD_RESULT_CONTENT],
                                              cmd_result_error=cmd_result)
         # Should be indicated subcmd_key.
-        cmd_result : p3m.CMD_RESULT_TYPE = cp.verify_subcmd_key(cmd, subcmd_key)
+        cmd_result = cp.verify_subcmd_key(cmd, subcmd_key)
         if not cmd_result[p3m.CMD_RESULT_STATUS]: 
             raise p3m.CMDValidationException(cmd=cmd, 
                                              msg=cmd_result[p3m.CMD_RESULT_CONTENT],
                                              cmd_result_error=cmd_result)
+        if model_aware:
+            cmd_result = validate_model_binding(bdm_DC)
+            # Validate DC is Model-aware with a model binding.
+            if not cmd_result[p3m.CMD_RESULT_STATUS]:
+                return cmd_result
+        model: BudgetDomainModel = bdm_DC.model
         # Check for required command key arguments (CK_) in the command object
         cmd_args: p3m.CMD_ARGS_TYPE = {}
         cmd_args[p3m.CK_CMD_KEY] = cmd[p3m.CK_CMD_KEY]
@@ -902,66 +843,6 @@ def validate_cmd_arguments(cmd: p3m.CMD_OBJECT_TYPE,
             cmd_object=cmd
         )
 #endregion validate_cmd_arguments()
-# ---------------------------------------------------------------------------- +
-#region validate_file_list()
-def validate_wf_folder_file_list(cmd: p3m.CMD_OBJECT_TYPE,
-                                 bdm_DC: BudManAppDataContext_Base,
-                                 file_list: List[int], 
-                                 wf_key:str, 
-                                 wf_purpose:str) -> p3m.CMD_RESULT_TYPE:
-    """Validate the list of file_index values for a specified wf_folder.
-
-    Args:
-        file_list (List[int]): The list of file indexes to validate.
-        wf_key (str): The workflow key.
-        wf_purpose (str): The workflow purpose.
-
-    Returns:
-        bool: True if all files are valid, False otherwise.
-    Raises:
-        p3m.CMDValidationException: If any file is invalid.
-    """
-    # All cmd parameters validated by CommandProcessor before here.
-    try:
-        err_msg: str = ""
-        cmd_result_error: p3m.CMD_RESULT_TYPE = None
-        fi_key: str = bdm_DC.dc_FI_KEY
-        file_tree: Tree = cp.BUDMAN_CMD_TASK_get_file_tree(fi_key, wf_key, 
-                                                           wf_purpose, bdm_DC)
-        # Validate the file_index values, capture the file_url for each.
-        bsm_files: List[BSMFile] = []
-        for file_index in file_list:
-            bsm_file: BSMFile = BUDMAN_CMD_FILE_SERVICE_get_BSMFile(file_tree, file_index)
-            if not bsm_file:
-                err_msg = f"File_index '{file_index}' not found in file tree: {file_tree.root}"
-                logger.error(err_msg)
-                cmd_result_error = p3m.create_CMD_RESULT_ERROR(cmd, err_msg)
-                raise p3m.CMDValidationException(cmd=cmd, 
-                                                 msg=err_msg,
-                                                 cmd_result_error=cmd_result_error)
-            if not bsm_file.verify_url():
-                err_msg = f"File_index '{file_index}' has an invalid URL: {bsm_file.file_url}"
-                logger.error(err_msg)
-                cmd_result_error = p3m.create_CMD_RESULT_ERROR(cmd, err_msg)
-                raise p3m.CMDValidationException(cmd=cmd, 
-                                                 msg=err_msg,
-                                                 cmd_result_error=cmd_result_error)
-            bsm_files.append(bsm_file)
-        return p3m.create_CMD_RESULT_OBJECT(
-                cmd_result_status=True, result_content_type=p3m.CMD_DICT_OUTPUT,
-                result_content=bsm_files, cmd_object=cmd)
-    except p3m.CMDValidationException as e:
-        logger.error(e.message)
-        raise
-    except Exception as e:
-        m = p3u.exc_err_msg(e)
-        err_msg = (f"Exception validating wf_folder_file_list: {m}")
-        logger.error(err_msg)
-        cmd_result_error = p3m.create_CMD_RESULT_ERROR(cmd, err_msg)
-        raise p3m.CMDValidationException(cmd=cmd, 
-                                        msg=err_msg,
-                                        cmd_result_error=cmd_result_error)
-#endregion validate_file_list()
 # ---------------------------------------------------------------------------- +
 #region validate_model_binding()
 def validate_model_binding(bdm_DC: BudManAppDataContext_Base,

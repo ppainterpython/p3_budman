@@ -105,6 +105,7 @@ BDM_CREATED_DATE = "_created_date"             # Type: str - ISO date string
 BDM_LAST_MODIFIED_DATE = "_last_modified_date" # Type: str - ISO date string
 BDM_LAST_MODIFIED_BY = "_last_modified_by"     # Type: str - user name
 BDM_DATA_CONTEXT = "_data_context"             # Type: DATA_CONTEXT
+BSM_FILE_TREE = "_bsm_file_tree"               # Type: BSMFileTree, not persisted
 # BDMConfig class Property name Constants (same as BudgetDomainModel)
 # but with BDM_CONFIG_OBJECT instead of BDM_STORE_OBJECT.
 BDM_CONFIG_OBJECT = "_bdm_config_object"       # Type: BDM_CONFIG
@@ -114,7 +115,7 @@ VALID_BDM_PROPERTIES = (
     BDM_FILENAME, BDM_FILETYPE, BDM_FOLDER, 
     BDM_URL, BDM_FI_COLLECTION, BDM_WF_COLLECTION, BDM_OPTIONS,
     BDM_CREATED_DATE, BDM_LAST_MODIFIED_DATE, 
-    BDM_LAST_MODIFIED_BY, BDM_DATA_CONTEXT)
+    BDM_LAST_MODIFIED_BY, BDM_DATA_CONTEXT, BSM_FILE_TREE)
 BSM_PERSISTED_PROPERTIES = (
     BDM_ID, BDM_FILENAME, BDM_FILETYPE, BDM_FOLDER, 
     BDM_URL, BDM_FI_COLLECTION, BDM_WF_COLLECTION,  
@@ -165,21 +166,15 @@ VALID_BDM_WORKFLOWS = (EXAMPLE_BDM_WF_INTAKE, EXAMPLE_BDM_WF_CATEGORIZATION, EXA
 WF_KEY = WF_KEY #common
 WF_NAME = "wf_name"  
 WF_FOLDER_CONFIG_LIST = "wf_folder_config_list" 
-# WF_INPUT_FOLDER = "wf_input_folder" # also used as key in FI_DATA_COLLECTION.
-# WF_WORKING_FOLDER = "wf_working_folder" # also used as key in FI_DATA_COLLECTION.
-# WF_OUTPUT_FOLDER = "wf_output_folder" # also used as key in FI_DATA_COLLECTION.
-# WF_PREFIX_IN = "wf_prefix_in"
-# WF_PREFIX_WORKING = "wf_prefix_working"
-# WF_PREFIX_OUT = "wf_prefix_out"
-WF_PURPOSE_FOLDER_MAP = "wf_purpose_folder_map" # map of workbook names to paths
+VALID_WF_OBJECT_ATTR_KEYS = (WF_KEY, WF_NAME, WF_FOLDER_CONFIG_LIST)
 # WF_FOLDER_CONFIG_TYPE workflow folder definition object (Dictionary key names)
 WF_FOLDER = WF_FOLDER # common
 WF_PURPOSE = WF_PURPOSE # common
 WF_PREFIX = WF_PREFIX # common  
 WF_FOLDER_URL = WF_FOLDER_URL # common 
 # Additional WF_OBJECT-related constants
-VALID_WF_OBJECT_ATTR_KEYS = (WF_KEY, WF_NAME, WF_FOLDER_CONFIG_LIST,
-                        WF_PURPOSE_FOLDER_MAP)
+VALID_WF_FOLDER_CONFIG_OBJECT_ATTR_KEYS = (WF_FOLDER, WF_PURPOSE,
+                                           WF_PREFIX, WF_FOLDER_URL)
 # ---------------------------------------------------------------------------- +
 # Some data values are used in conjunction with Path objects,
 # as elements of a pathname, such as folders and file names.

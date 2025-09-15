@@ -78,6 +78,7 @@ from openpyxl import Workbook, load_workbook
 from budman_namespace import *
 from .budget_domain_model_config import BDMConfig
 from budget_storage_model import (
+    BSMFileTree,
     bsm_verify_folder, 
     bsm_BDM_STORE_url_put,
     bsm_get_workbook_names,
@@ -135,6 +136,7 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
         setattr(self, BDM_LAST_MODIFIED_DATE, self._created_date)
         setattr(self, BDM_LAST_MODIFIED_BY, getpass.getuser())
         setattr(self, BDM_DATA_CONTEXT, {})  
+        setattr(self, BSM_FILE_TREE, None)  
         logger.debug("Complete:")
     #endregion BudgetDomainModel class constructor __init__()
     # ------------------------------------------------------------------------ +
@@ -353,6 +355,17 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
         """Set the budget domain model working data."""
         self._data_context = value
 
+    @property
+    def bsm_file_tree(self) -> BSMFileTree:
+        """The BSMFileTree object representing the file tree of the budget folder."""
+        return self._bsm_file_tree
+    @bsm_file_tree.setter
+    def bsm_file_tree(self, value: BSMFileTree) -> None:
+        """Set the BSMFileTree object."""
+        if not (value is None or isinstance(value, BSMFileTree)):
+            raise ValueError(f"bsm_file_tree must be a BSMFileTree or None: {value}")
+        self._bsm_file_tree = value
+
     #BDMBaseInterface properties
     @property
     def model_id(self) -> str:
@@ -522,9 +535,11 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
             self.bsm_initialize(create_missing_folders, raise_errors)
             # When the BDM is constructed and then initialized, the assumption 
             # is that data was marshalled from a storage format such as json.
-            # bdm_rehydrate() reinstates andy native class objects based from 
+            # bdm_rehydrate() reinstates any native class objects based from 
             # the persisted storage format.
             self.bdm_rehydrate()
+            # Load the BSM_FILE_TREE
+            self.bsm_file_tree = BSMFileTree(self.bsm_BDM_FOLDER_url())
             # Initialization complete.
             self.bdm_initialized = True
             logger.debug(f"Complete: {p3u.stop_timer(st)}")   
@@ -580,9 +595,10 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
                     # Convert the WORKBOOK_ITEM to a WORKBOOK_OBJECT.
                     wb_object = BDMWorkbook(**wb_data_2)
                     # Get the wf_folder_url expected for this workbook.
-                    wb_folder_url = self.bdm_FI_WF_FOLDER_URL(wb_object.fi_key, 
-                                                              wb_object.wf_key, 
-                                                              wb_object.wf_purpose)
+                    wb_folder_url = self.bdm_FI_WF_FOLDER_CONFIG_ATTRIBUTE(
+                        fi_key=wb_object.fi_key, wf_key=wb_object.wf_key,
+                        wf_purpose=wb_object.wf_purpose, attribute=WF_FOLDER_URL,
+                        raise_errors=True)
                     if wb_folder_url is None:
                         # wb_folder_url not found in the fi_wf_folder_config_collection
                         # which means the fi_workbook_data_collection is out of
@@ -793,7 +809,9 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
             logger.error(m)
             raise ValueError(m)
         return True
-
+    #endregion bdm_FI_OBJECT_TYPE methods
+    # ------------------------------------------------------------------------ +
+    #region    bdm_FI_WF_FOLDER_CONFIG & _ATTRIBUTE methods:
     def bdm_FI_WF_FOLDER_CONFIG(self, fi_key:str, 
                              wf_key:str, wf_purpose:str) -> Optional[str]:
         """Return the FI_WF_FOLDER_CONFIG for a given fi_key, wf_key and wf_purpose."""
@@ -830,11 +848,13 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
             logger.error(m)
             raise ValueError(m)
         
-    def bdm_FI_WF_FOLDER_URL(self, fi_key:str, 
-                             wf_key:str, 
-                             wf_purpose:str,
+    def bdm_FI_WF_FOLDER_CONFIG_ATTRIBUTE(self, 
+                                          fi_key:str, 
+                                          wf_key:str, 
+                                          wf_purpose:str,
+                                          attribute:str,
                              raise_errors: bool =  True) -> Optional[str]:
-        """Return the FI_WF_FOLDER_URL for a given fi_key, wf_key and wf_purpose."""
+        """Return an attribute value from the workflow folder config."""
         try:
             wf_folder_config: Optional[WF_FOLDER_CONFIG_TYPE] = None
             wf_folder_config = self.bdm_FI_WF_FOLDER_CONFIG(fi_key, wf_key, wf_purpose)
@@ -845,20 +865,27 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
                 if raise_errors:
                     raise ValueError(m)
                 return None
-            return_url: str = wf_folder_config.get(WF_FOLDER_URL, None)
-            if return_url is None:
-                m = f"Workflow folder config for FI_KEY('{fi_key}'), "
-                m += f"WF_KEY('{wf_key}'), WF_PURPOSE('{wf_purpose}') does not "
-                m += "have a WF_FOLDER_URL."
+            if attribute not in VALID_WF_FOLDER_CONFIG_OBJECT_ATTR_KEYS:
+                m = f"Attribute '{attribute}' is not a valid workflow folder config attribute."
                 logger.warning(m)
                 if raise_errors:
                     raise ValueError(m)
-            return return_url
+                return None
+            attribute_value: str = wf_folder_config.get(attribute, None)
+
+            if attribute_value is None:
+                m = f"Workflow folder config for FI_KEY('{fi_key}'), "
+                m += f"WF_KEY('{wf_key}'), WF_PURPOSE('{wf_purpose}') has no value "
+                m += f"for attribute '{attribute}'."
+                logger.warning(m)
+                if raise_errors:
+                    raise ValueError(m)
+            return attribute_value
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise ValueError(m)
-    #endregion bdm_FI_OBJECT_TYPE methods
+    #endregion bdm_FI_WF_FOLDER_CONFIG methods
     # ------------------------------------------------------------------------ +
     #region    bdm_WF_OBJECT_TYPE Dict attribute getter methods
     def bdm_WF_OBJECT(self, wf_key:str) -> WF_OBJECT_TYPE:
@@ -999,14 +1026,6 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
     to data for a workflow. A wb_data_collection is retrieved with the 
     bdm_FI_WF_DATA_OBJECT() method which could return other types of 
     DATA_OBJECTs in the future. These methods are BSM-related.
-
-    With the BSM, the wb_data_collection properties relating to the storage 
-    model are based on the workflow purpose values: WF_INPUT_FOLDER, WF_INPUT, 
-    WF_WORKING_FOLDER, WF_WORKING, WF_OUTPUT_FOLDER and WF_OUTPUT. These 
-    concern actual access to data in the storage system. 3 workflow purposes
-    are defined for each workflow and have corresponding folders mapped to them.
-    The WF_PURPOSE_FOLDER_MAP contains the mapping of workflow_purpose to
-    workflow_folder, used to map to actual folder paths in a storage system.
 
     """
     #endregion BSM Design Notes

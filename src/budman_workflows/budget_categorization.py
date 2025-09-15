@@ -18,7 +18,8 @@
 # ---------------------------------------------------------------------------- +
 #region Imports
 # python standard library modules and packages
-import re, pathlib as Path, logging, time, hashlib, datetime
+import re, logging, time, hashlib, datetime
+from pathlib import Path
 from dataclasses import dataclass, field
 
 # third-party modules and packages

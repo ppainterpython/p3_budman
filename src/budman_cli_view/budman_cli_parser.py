@@ -584,38 +584,27 @@ class BudManCLIParser():
             transfer_parser = subparsers.add_parser(
                 cp.CV_TRANSFER_SUBCMD_NAME,
                 aliases=["tr"], 
-                help="Apply Transfer workflow tasks.")
+                help="Transfer files to a workflow with a specific purpose.")
             transfer_parser.set_defaults(
                 # cmd_key=cp.CV_WORKFLOW_CMD_KEY,   # new way
                 # cmd_name=cp.CV_WORKFLOW_CMD_NAME, 
                 subcmd_name=cp.CV_TRANSFER_SUBCMD_NAME,
                 subcmd_key=cp.CV_WORKFLOW_TRANSFER_SUBCMD_KEY)
             transfer_parser.add_argument(
-                # src_wf_key
-                cp.CK_SRC_WF_KEY,
-                choices=bdm.VALID_BDM_WORKFLOWS,
-                help="Specify the source workflow key.")
+                # selected files: file_list
+                cp.CK_FILE_LIST, nargs='*',
+                type=int, default=[], 
+                help=("One or more file index values from file_list."))
             transfer_parser.add_argument(
-                # src_wf_purpose
-                cp.CK_SRC_WF_PURPOSE,
-                choices=bdm.VALID_WF_PURPOSE_CHOICES,
-                help="Specify the source workflow purpose.")
-            transfer_parser.add_argument(
-                # src_file_index
-                cp.CK_FILE_LIST, nargs='+',
-                type=int, 
-                help=("Index of source file."))
-            transfer_parser.add_argument(
-                # dst_wf_key
-                cp.CK_DST_WF_KEY,
+                f"--{cp.CK_WF_KEY}", "-w",
                 choices=bdm.VALID_BDM_WORKFLOWS,
                 help="Specify the destination workflow key.")
             transfer_parser.add_argument(
-                cp.CK_DST_WF_PURPOSE,
+                f"--{cp.CK_WF_PURPOSE}", "-p",
                 choices=bdm.VALID_WF_PURPOSE_CHOICES,
-                help="Specify the destination workflow purpose.")
+                help="Specify the workflow purpose.")
             transfer_parser.add_argument(
-                cp.CK_DST_WB_TYPE,
+                f"--{cp.CK_WB_TYPE}", "-t",
                 choices=bdm.VALID_WB_TYPE_VALUES,
                 help="Specify the destination workbook type.")
             self.add_common_optional_args(transfer_parser)

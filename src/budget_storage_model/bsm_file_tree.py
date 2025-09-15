@@ -28,6 +28,7 @@ from typing import Dict, List, Any, Union, Optional
 # third-party modules and packages
 import p3_utils as p3u, p3logging as p3l
 from treelib import Tree, Node
+
 # local modules and packages
 from budget_storage_model.bsm_file import BSMFile
 import budman_namespace.design_language_namespace as bdm
@@ -133,5 +134,68 @@ class BSMFileTree:
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
-#endregion BUDMAN_CMD_FILE_SERVICE_file_tree()
+
+    def get_BSMFile(self, file_index: int) -> Optional[BSMFile]:
+        """Get the BSMFile object given file_index."""
+        try:
+            for node_id in self.file_tree.expand_tree():
+                file_node: Node = self.file_tree.get_node(node_id)
+                if file_node.is_leaf(): # only look at file nodes, which are leafs
+                    if (file_node.data and isinstance(file_node.data, BSMFile)):
+                        bsm_file: BSMFile = file_node.data
+                        this_index: int = bsm_file.file_index
+                        if this_index == file_index:
+                            return bsm_file
+            return None
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+
+    def get_sub_file_tree(self, file_url: str) -> Optional[Tree]:
+        """Return the sub tree corresponding to a directory at file_url."""
+        try:
+            p3u.is_not_non_empty_str("file_url", file_url, raise_error=True)
+            for node_id in self.file_tree.expand_tree(mode=Tree.WIDTH):
+                file_node: Node = self.file_tree.get_node(node_id)
+                if not file_node.is_leaf(): # only look at file nodes, which are leafs
+                    if (file_node.data and isinstance(file_node.data, BSMFile)):
+                        bsm_file: BSMFile = file_node.data
+                        if file_url == bsm_file.file_url:
+                            # Return a deep copy of the sub tree at file_url
+                            sub_tree:Tree = self.file_tree.subtree(node_id)
+                            return Tree(sub_tree,deep=True)
+            return None
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+
+    def validate_file_list(self, file_list: List[int], file_url: Optional[str] = None) -> Optional[List[BSMFile]]:
+        """Validate a list of file_index values for a sub tree for file_url.
+            Consider leaf files only, no directories."""
+        try:
+            p3u.is_not_obj_of_type("file_list", file_list, list, raise_error=True)
+            if p3u.str_empty(file_url):
+                sub_tree = self.file_tree
+            else:
+                sub_tree: Tree = self.get_sub_file_tree(file_url)
+                if sub_tree is None:
+                    raise ValueError(f"No sub tree found for file_url: {file_url}")
+            bsm_files: List[BSMFile] = []
+            for fi in file_list:
+                for node_id in sub_tree.expand_tree(mode=Tree.WIDTH):
+                    file_node: Node = sub_tree.get_node(node_id)
+                    if file_node.is_leaf(): # only look at file nodes, which are leafs
+                        if (file_node.data and isinstance(file_node.data, BSMFile) and
+                            file_node.data.file_index == fi):
+                            # Matched fi to validate
+                            bsm_file: BSMFile = file_node.data
+                            if not bsm_file.verify_url():
+                                err_msg = f"File_index '{fi}' has an invalid URL: {bsm_file.file_url}"
+                                logger.error(err_msg)
+                                raise RuntimeError(err_msg)
+                            bsm_files.append(bsm_file)
+            return bsm_files
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
 # ---------------------------------------------------------------------------- +

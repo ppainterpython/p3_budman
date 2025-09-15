@@ -753,8 +753,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             logger.info(f"Start: ...")
             # Save the BDM_STORE file with the BSM.
             # Get a Dict of the BudgetModel to store.
-            bdm_dict = BDMConfig.BDM_STORE_dehydrate(self.budget_domain_model)
-            # budget_model_dict = self.budget_domain_model.to_dict()
+            bdm_dict = self.budget_domain_model.bdm_dehydrate()
             # Save the BDM_STORE file.
             bdm_url = self.dc_BDM_STORE[BDM_URL]
             bsm_BDM_STORE_url_put(bdm_dict, bdm_url)
@@ -991,12 +990,14 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                     new_wf_purpose = self.cp_cmd_attr_get(cmd, cp.CK_CMDLINE_WF_PURPOSE, None)
                     if new_wf_purpose is not None:
                         wf_key = new_wf_key or bdm_wb.wf_key
-                        folder_id = self.dc_WF_PURPOSE_FOLDER_MAP(wf_key, new_wf_purpose)
-                        if folder_id != bdm_wb.wf_folder_id:
-                            bdm_wb.wf_folder_id = folder_id
-                            m = f", wf_folder_id: '{folder_id}' "
-                        else:
-                            m = ""
+                        # DEPRECATED, refactor to change wf_purpose without folder_id
+                        # folder_id = self.dc_WF_PURPOSE__FOLDER_MAP(wf_key, new_wf_purpose)
+                        # if folder_id != bdm_wb.wf_folder_id:
+                        #     bdm_wb.wf_folder_id = folder_id
+                        #     m = f", wf_folder_id: '{folder_id}' "
+                        # else:
+                        #     m = ""
+                        m = "fix me"
                         bdm_wb.wf_purpose = new_wf_purpose
                         result += (f"\n{P4}Changed wf_purpose: '{new_wf_purpose}'"
                                    f" {m} for wb_index: "
@@ -1073,8 +1074,9 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                             else:
                                 return False, "Failed to reload category_map_module"
                     if reload_target == cp.CV_FI_WORKBOOK_DATA_COLLECTION:
-                        wdc: WORKBOOK_DATA_COLLECTION_TYPE = None
-                        wdc, m = self.model.bsm_FI_WORKBOOK_DATA_COLLECTION_resolve(self.dc_FI_KEY)
+                        m = "deprecated"
+                        # wdc: WORKBOOK_DATA_COLLECTION_TYPE = None
+                        # wdc, m = self.model.bsm_FI_WORKBOOK_DATA_COLLECTION_resolve(self.dc_FI_KEY)
                         return True, m
                     if reload_target == cp.CV_WORKFLOWS_MODULE:
                         importlib.reload(budman_workflows.workflow_utils)

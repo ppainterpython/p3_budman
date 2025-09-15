@@ -16,7 +16,8 @@
 # ---------------------------------------------------------------------------- +
 #region Imports
 # python standard library modules and packages
-import re, pathlib as Path, logging, time, hashlib, datetime
+from pathlib import Path
+import re, logging, time, hashlib, datetime
 from typing import Dict, Any, Optional, Union, List
 from dataclasses import dataclass
 
