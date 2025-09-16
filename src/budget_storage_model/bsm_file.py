@@ -73,7 +73,7 @@ class BSMFile:
     @property
     def filename(self) -> Optional[str]:
         """Return the filename (without extension)."""
-        return Path.from_uri(self.file_url).stem if self.file_url else None
+        return self._filename
     @property
     def extension(self) -> Optional[str]:
         """Return the file extension."""

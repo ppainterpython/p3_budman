@@ -234,7 +234,7 @@ class BudManAppDataContext(BudManAppDataContext_Base):
         """
         wb = self.dc_WORKBOOK
         if not wb: return ""
-        if self.dc_WORKBOOK_has_property(wb,WB_TYPE) and WB_TYPE in wb:
+        if self.dc_WORKBOOK_has_property(wb,WB_TYPE):
             return wb[WB_TYPE]
         return None
     @dc_WB_TYPE.setter
@@ -253,7 +253,7 @@ class BudManAppDataContext(BudManAppDataContext_Base):
         """
         wb = self.dc_WORKBOOK
         if not wb: return None
-        if self.dc_WORKBOOK_has_property(wb,WB_NAME) and WB_NAME in wb:
+        if self.dc_WORKBOOK_has_property(wb,WB_NAME):
             return wb[WB_NAME]
         return None
     @dc_WB_NAME.setter
@@ -273,7 +273,7 @@ class BudManAppDataContext(BudManAppDataContext_Base):
         wb = self.dc_WORKBOOK
         if not wb: return -1
         wb_id = self.dc_WB_ID
-        return self.dc_WORKBOOK_index(wb) if wb_id else -1
+        return self.dc_WORKBOOK_index(wb_id) if wb_id else -1
     @dc_WB_INDEX.setter
     def dc_WB_INDEX(self, value: int) -> None:
         """DC-Only: dc_WB_INDEX setter not supported, set the dc_WORKBOOK property."""

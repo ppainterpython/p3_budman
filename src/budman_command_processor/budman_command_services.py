@@ -663,7 +663,7 @@ def process_selected_workbook_input(cmd: p3m.CMD_OBJECT_TYPE,
 #endregion process_selected_workbook_input()
 # ------------------------------------------------------------------------ +    
 #region get_workbook_data_collection_info_str() method
-def get_workbook_data_collection_info_str(bdm_DC: BudManAppDataContext_Base) -> Tuple[bool,Any]: 
+def get_workbook_data_collection_info_str(bdm_DC: BudManAppDataContext_Base) -> bdm.BUDMAN_RESULT_TYPE:
     """Construct an outout string with information about the WORKBOOKS."""
     try:
         logger.debug(f"Start: ...")

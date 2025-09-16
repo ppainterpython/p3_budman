@@ -7,6 +7,7 @@
 #region Imports
 
 # python standard library modules and packages
+from email import parser
 import logging, shutil
 from typing import List
 # third-party modules and packages
@@ -581,34 +582,84 @@ class BudManCLIParser():
         """Add a transfer subparser to the provided subparsers."""
         try:
             # workflow transfer subcommand
-            transfer_parser = subparsers.add_parser(
+            transfer_subcmd_parser = subparsers.add_parser(
                 cp.CV_TRANSFER_SUBCMD_NAME,
                 aliases=["tr"], 
                 help="Transfer files to a workflow with a specific purpose.")
-            transfer_parser.set_defaults(
-                # cmd_key=cp.CV_WORKFLOW_CMD_KEY,   # new way
-                # cmd_name=cp.CV_WORKFLOW_CMD_NAME, 
+            transfer_subcmd_parser.set_defaults(
                 subcmd_name=cp.CV_TRANSFER_SUBCMD_NAME,
                 subcmd_key=cp.CV_WORKFLOW_TRANSFER_SUBCMD_KEY)
-            transfer_parser.add_argument(
+            # transfer subcmd subparsers
+            transfer_subparsers = transfer_subcmd_parser.add_subparsers()
+
+            # workflow transfer files subcommand subparser
+            files_parser = transfer_subparsers.add_parser(
+                cp.CV_FILES_SUBCMD_NAME,
+                aliases=["FILES"],
+                help="Specifies transfer of files.")
+            files_parser_defaults = {
+                cp.CK_TRANSFER_FILES: True, 
+                cp.CK_TRANSFER_WORKBOOKS: False,
+                cp.CK_FILE_LIST: [],
+                cp.CK_WF_KEY: None,
+                cp.CK_WF_PURPOSE: None,
+                cp.CK_WB_TYPE: None
+            }
+            files_parser.set_defaults(**files_parser_defaults)
+
+            files_parser.add_argument(
                 # selected files: file_list
                 cp.CK_FILE_LIST, nargs='*',
                 type=int, default=[], 
                 help=("One or more file index values from file_list."))
-            transfer_parser.add_argument(
+            files_parser.add_argument(
                 f"--{cp.CK_WF_KEY}", "-w",
                 choices=bdm.VALID_BDM_WORKFLOWS,
                 help="Specify the destination workflow key.")
-            transfer_parser.add_argument(
+            files_parser.add_argument(
                 f"--{cp.CK_WF_PURPOSE}", "-p",
                 choices=bdm.VALID_WF_PURPOSE_CHOICES,
                 help="Specify the workflow purpose.")
-            transfer_parser.add_argument(
+            files_parser.add_argument(
                 f"--{cp.CK_WB_TYPE}", "-t",
                 choices=bdm.VALID_WB_TYPE_VALUES,
                 help="Specify the destination workbook type.")
-            self.add_common_optional_args(transfer_parser)
-            return transfer_parser
+            self.add_common_optional_args(files_parser)
+
+            # workflow transfer workbooks subcommand subparser
+            workbooks_parser = transfer_subparsers.add_parser(
+                cp.CV_WORKBOOKS_SUBCMD_NAME,
+                aliases=["WORKBOOKS"],
+                help="Specifies transfer of workbooks.")
+            workbooks_parser_defaults = {
+                cp.CK_TRANSFER_FILES: False,
+                cp.CK_TRANSFER_WORKBOOKS: True,
+                cp.CK_WB_LIST: [],
+                cp.CK_WF_KEY: None,
+                cp.CK_WF_PURPOSE: None,
+                cp.CK_WB_TYPE: None
+            }
+            workbooks_parser.set_defaults(**workbooks_parser_defaults)
+            workbooks_parser.add_argument(
+                # selected workbooks: wb_list
+                cp.CK_WB_LIST, nargs='*',
+                type=int, default=[], 
+                help=("One or more workbook index values from wb_list."))
+            workbooks_parser.add_argument(
+                f"--{cp.CK_WF_KEY}", "-w",
+                choices=bdm.VALID_BDM_WORKFLOWS,
+                help="Specify the destination workflow key.")
+            workbooks_parser.add_argument(
+                f"--{cp.CK_WF_PURPOSE}", "-p",
+                choices=bdm.VALID_WF_PURPOSE_CHOICES,
+                help="Specify the workflow purpose.")
+            workbooks_parser.add_argument(
+                f"--{cp.CK_WB_TYPE}", "-t",
+                choices=bdm.VALID_WB_TYPE_VALUES,
+                help="Specify the destination workbook type.")
+            self.add_common_optional_args(workbooks_parser)
+
+            return transfer_subcmd_parser
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise

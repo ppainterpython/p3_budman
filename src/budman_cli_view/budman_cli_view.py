@@ -467,7 +467,7 @@ class BudManCLIView(cmd2.Cmd,
            # Submit the command to the command processor.
             cmd_result: p3m.CMD_RESULT_TYPE = self.cp_execute_cmd(cmd)
             # Render the result.
-            cli_view_cmd_output(cmd, cmd_result[p3m.CMD_RESULT_DATA])
+            cli_view_cmd_output(cmd, cmd_result)
         except Exception as e:
             self.pexcept(e)
     #endregion do_save command - save workbooks

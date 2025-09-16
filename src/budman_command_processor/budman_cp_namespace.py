@@ -102,7 +102,7 @@ CK_NO_SAVE = "no_save"
 CK_RECONCILE = "reconcile"
 CK_JSON = "json"
 
-# Common positional argument attribute keys, used in parsers
+# Common positional argument or sub-parser attribute keys, used in parsers
 CK_WB_INDEX = bdm.WB_INDEX
 CK_WB_LIST = "wb_list"
 CK_FI_KEY = bdm.FI_KEY
@@ -127,6 +127,8 @@ CK_SRC_WF_PURPOSE = "src_" + bdm.WF_PURPOSE
 CK_DST_WF_PURPOSE = "dst_" + bdm.WF_PURPOSE
 CK_SRC_WB_TYPE = "src_" + bdm.WB_TYPE
 CK_DST_WB_TYPE = "dst_" + bdm.WB_TYPE
+CK_TRANSFER_FILES = "transfer_files"
+CK_TRANSFER_WORKBOOKS = "transfer_workbooks"
 
 # subcmd_key CV_TASK_SUBCMD_KEY argument constants
 

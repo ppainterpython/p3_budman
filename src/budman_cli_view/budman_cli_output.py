@@ -29,14 +29,14 @@ console = Console(force_terminal=True, width=bdm.BUDMAN_WIDTH, highlight=True,
 # ---------------------------------------------------------------------------- +
 
 #region cli_view_cmd_output(status: bool, result: Any) -> None
-def cli_view_cmd_output(cmd: p3m.CMD_OBJECT_TYPE, result: p3m.CMD_RESULT_TYPE ) -> None:
+def cli_view_cmd_output(cmd: p3m.CMD_OBJECT_TYPE, cmd_result: p3m.CMD_RESULT_TYPE ) -> None:
     """Output in the View any output based on the command result."""
-    if p3m.is_CMD_RESULT(result):
+    if p3m.is_CMD_RESULT(cmd_result):
         # A CMD_RESULT_OBJECT was returned.
-        CMD_RESULT_output(result)
+        CMD_RESULT_output(cmd_result)
     else:
         # Fall back, try to show something.
-        console.print(str(result))
+        console.print(str(cmd_result))
 # ---------------------------------------------------------------------------- +
 #region dispatch_CMD_RESULT() function
 def CMD_RESULT_output(cmd_result: p3m.CMD_RESULT_TYPE) -> None:
@@ -51,49 +51,48 @@ def CMD_RESULT_output(cmd_result: p3m.CMD_RESULT_TYPE) -> None:
             err_output(cmd_result)
             return
         result_type = cmd_result.get(p3m.CMD_RESULT_CONTENT_TYPE, None)
+        result_content: Any = cmd_result.get(p3m.CMD_RESULT_CONTENT, "")
         # CMD_STRING_OUTPUT
         if result_type == p3m.CMD_STRING_OUTPUT:
             # OUTPUT_STRING input is a simple string.
-            result_content = cmd_result.get(p3m.CMD_RESULT_CONTENT, "")
             console.print(result_content)
+        # CMD_DICT_OUTPUT
+        elif result_type == p3m.CMD_DICT_OUTPUT:
+            # Python dictionary (dict) input object.
+            output_str: str = p3u.first_n(str(result_content), 100)
+            console.print(output_str)
         # CMD_JSON_OUTPUT
         elif result_type == p3m.CMD_JSON_OUTPUT:
             # JSON_STRING input is a JSON string.
-            result_content = cmd_result.get(p3m.CMD_RESULT_CONTENT, "")
             console.print_json(result_content)
         # CMD_TREE_OBJECT
         elif result_type == p3m.CMD_TREE_OBJECT:
             # CMD_RESULT content is a treelib.Tree.
-            result_tree = cmd_result.get(p3m.CMD_RESULT_CONTENT, "")
-            formatted_tree = format_tree_view(result_tree)
+            formatted_tree = format_tree_view(result_content)
             console.print(formatted_tree)
         # CMD_FILE_TREE_OBJECT
         elif result_type == p3m.CMD_FILE_TREE_OBJECT:
             # CMD_RESULT content is a treelib.Tree with file information.
-            result_tree = cmd_result.get(p3m.CMD_RESULT_CONTENT, "")
-            formatted_tree = format_tree_view(result_tree)
+            formatted_tree = format_tree_view(result_content)
             console.print(formatted_tree)
         # CMD_WORKBOOK_TREE_OBJECT
         elif result_type == p3m.CMD_WORKBOOK_TREE_OBJECT:
             # CMD_WORKBOOK_TREE_OBJECT input is a treelib.Tree with workbook information.
-            result_tree = cmd_result.get(p3m.CMD_RESULT_CONTENT, "")
-            console.print(result_tree)
+            formatted_tree = format_tree_view(result_content)
+            console.print(formatted_tree)
         # CMD_WORKBOOK_INFO_TABLE
         elif result_type == p3m.CMD_WORKBOOK_INFO_TABLE:
             # INFO_TABLE input is an array dictionaries.
-            result_table = cmd_result.get(p3m.CMD_RESULT_CONTENT, [])
-            hdr = list(result_table[0].keys()) if result_table else []
+            hdr = list(result_content[0].keys()) if result_content else []
             table = Table(*hdr, show_header=True, header_style="bold green")
-            for row in result_table:
+            for row in result_content:
                 table.add_row(*[str(cell) for cell in row.values()])
             console.print(table)
         elif result_type == p3m.CMD_WORKBOOK_TREE_OBJECT:
             # TREE_VIEW input is a string representation of a tree view.
-            result_tree = cmd_result.get(p3m.CMD_RESULT_CONTENT, "")
-            console.print(result_tree)
+            console.print(result_content)
         else:
             logger.warning(f"Unknown command result type: {result_type}")
-            result_content = str(cmd_result.get(p3m.CMD_RESULT_CONTENT, ""))
             console.print(result_content)
     except Exception as e:
         err_output(f"Error processing command result: {e}") 
