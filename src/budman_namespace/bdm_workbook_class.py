@@ -95,8 +95,13 @@ class BDMWorkbook:
     # ------------------------------------------------------------------------ +
     #region internal methods: to_dict(self)
     def to_dict(self) -> dict[str, Any]:
-        """Convert the BDMWorkbook instance to a dictionary."""
-        return asdict(self)
+        """Convert the BDMWorkbook instance to a dictionary.
+        Always excludes the wb_content attribute to avoid serialization issues."""
+        tmp_obj: Any = self.wb_content
+        self.wb_content = None
+        ret_dict = asdict(self)
+        self.wb_content = tmp_obj
+        return ret_dict
     #endregion internal methods: to_dict(self)
     # ------------------------------------------------------------------------ +
     #region BDMWorkbook properties

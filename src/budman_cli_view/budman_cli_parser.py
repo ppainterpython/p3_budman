@@ -448,9 +448,7 @@ class BudManCLIParser():
             }
             parser.set_defaults(**workflow_cmd_defaults)
             
-            #region workflow set subcommand
-            set_parser = self.add_set_subparser(subparsers)
-            #endregion workflow set subcommand
+            transfer_parser = self.add_transfer_subparser(subparsers)
 
             #region workflow categorization subcommand
             categorization_parser = subparsers.add_parser(
@@ -473,14 +471,6 @@ class BudManCLIParser():
                 help="Log every catalog pattern match step.")
             self.add_common_optional_args(categorization_parser)
             #endregion workflow categorization subcommand
-
-            #region workflow intake subcommand
-            intake_parser = self.add_intake_subparser(subparsers)
-            #endregion workflow intake subcommand
-
-            #region workflow transfer subcommand
-            transfer_parser = self.add_transfer_subparser(subparsers)
-            #endregion workflow transfer subcommand
 
             #region Workflow 'check' subcommand
             check_parser = subparsers.add_parser(
@@ -551,6 +541,8 @@ class BudManCLIParser():
                 help="a wb_ref to a check register(s). wb_index, wb_name or 'all'.")
             self.add_common_optional_args(apply_parser)
             #endregion workflow 'apply' subcommand
+            set_parser = self.add_set_subparser(subparsers)
+            intake_parser = self.add_intake_subparser(subparsers)
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise

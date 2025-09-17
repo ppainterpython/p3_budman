@@ -106,7 +106,7 @@ def WORKFLOW_TASK_transfer_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
         cmd (CMD_OBJECT_TYPE): The command object to process.
         bdm_DC (BudManAppDataContext_Base): The data context for the BudMan application.
         Required cmd arguments:
-            cp.CK_WB_LIST - list of wb_index values from the DC workbook_data_collection
+            cp.CK_WB_LIST - list of src wb_index values from the DC workbook_data_collection
             cp.CK_WF_KEY - wf_folder wf_key
             cp.CK_WF_PURPOSE - wf_folder wf_purpose
             cp.CK_WB_TYPE - dst workflow workbook type
@@ -196,7 +196,7 @@ def WORKFLOW_TASK_transfer_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
                     logger.error(m)
                     continue
             src_wb_type = src_wb.wb_type
-            # Check support transfer cases.
+            # Supportted transfer cases.
             if src_wb_type == bdm.WB_TYPE_CSV_TXNS and dst_wb_type == bdm.WB_TYPE_EXCEL_TXNS:
                 # Transfer a csv_txns workbook by converting to a excel_txns workbook.
                 # Create a file_url for the new workbook being transferred.
@@ -222,6 +222,36 @@ def WORKFLOW_TASK_transfer_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
                     continue
                 dst_wb = result
                 WORKFLOW_TASK_convert_csv_txns_to_excel_txns(src_wb, dst_wb)
+                # Add the new workbook to the wdc.
+                wdc = bdm_DC.dc_WORKBOOK_DATA_COLLECTION
+                wb_id = dst_wb.wb_id
+                wdc[wb_id] = dst_wb
+            elif src_wb_type == bdm.WB_TYPE_EXCEL_TXNS and dst_wb_type == bdm.WB_TYPE_EXCEL_TXNS:
+                # Transfer a excel_txns workbook to another workflow wf_folder.
+                # Create a file_url for the new workbook file being transferred.
+                src_wb_bsm_file: BSMFile = BSMFile(
+                    file_url=src_wb.wb_url,
+                    valid_prefixes=valid_prefixes,
+                    valid_wb_types=bdm.VALID_WB_TYPE_VALUES
+                )
+                # Create a BDMWorkbook for the dst workbook.
+                success, result = WORKFLOW_TASK_construct_bdm_workbook(
+                    src_filename=src_wb_bsm_file.filename,
+                    wb_type=dst_wb_type,
+                    fi_key=fi_key,
+                    wf_key=dst_wf_key,
+                    wf_purpose=dst_wf_purpose,
+                    bdm_DC=bdm_DC
+                )
+                if not success:
+                    msg = (f"Failed to create workbook: "
+                            f"'{wb_index:2}:{src_wb.wb_name}' "
+                            f" Error: {result}")
+                    logger.error(msg)
+                    result_content += msg + "\n"
+                    continue
+                dst_wb = result
+                WORKFLOW_TASK_copy_workbook(src_wb, dst_wb)
                 # Add the new workbook to the wdc.
                 wdc = bdm_DC.dc_WORKBOOK_DATA_COLLECTION
                 wb_id = dst_wb.wb_id
@@ -254,20 +284,21 @@ def WORKFLOW_TASK_transfer_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
 #region WORKFLOW_TASK_transfer_files() function
 def WORKFLOW_TASK_transfer_files(cmd: p3m.CMD_OBJECT_TYPE, 
                     bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
-    """WORKFLOW_TRANSFER_subcmd: Transfer data files between workflows.
+    """WORKFLOW_TRANSFER_subcmd: Transfer data files into workflow workbooks.
 
     Tasks required to transfer files to a workflow for a specified purpose.
-    Processing requirements vary based on the specific workflow, purpose and 
-    workbook types.
+    This is how files from a file_list are transformed into workbooks in the
+    model. Processing requirements vary based on the specific workflow, 
+    purpose and workbook types.
 
     Arguments:
         cmd (CMD_OBJECT_TYPE): The command object to process.
         bdm_DC (BudManAppDataContext_Base): The data context for the BudMan application.
         Required cmd arguments:
-            cp.CK_FILE_LIST - list of file_index values from the file_list
-            cp.CK_WF_KEY - wf_folder wf_key
-            cp.CK_WF_PURPOSE - wf_folder wf_purpose
-            cp.CK_WB_TYPE - dst workflow workbook type
+            cp.CK_FILE_LIST - list of src file_index values from the file_list
+            cp.CK_WF_KEY - wf_folder wf_key of destination.
+            cp.CK_WF_PURPOSE - wf_folder wf_purpose of destination.
+            cp.CK_WB_TYPE - workbook type of destination.
 
     Files are in wf_folders. A list of file_index values references files to 
     transfer from a source (src) workflow folder to a destination (dst) 
@@ -473,6 +504,37 @@ def WORKFLOW_TASK_transfer_csv_file_to_workbook(src_file_url: str,
             err_msg = f"Unsupported wb_type for CSV transfer: {wb_type}"
             logger.error(err_msg)
             return False, err_msg
+    except Exception as e:
+        m = p3u.exc_err_msg(e)
+        err_msg = (f"Exception transfer_csv_file_to_workbook(): {m}")
+        logger.error(err_msg)
+        return False, err_msg
+#endregion WORKFLOW_TASK_transfer_csv_file()
+# ---------------------------------------------------------------------------- +
+#region WORKFLOW_TASK_copy_workbook()
+def WORKFLOW_TASK_copy_workbook(src_wb: BDMWorkbook,
+                                dst_wb: BDMWorkbook) -> bdm.BUDMAN_RESULT_TYPE:
+    """Copy a workbook to a new wf_folder location.
+
+    Args:
+        src_wb (BDMWorkbook): The source workbook object.
+        dst_wb (BDMWorkbook): The destination workbook object.
+
+    Returns:
+        bdm.BUDMAN_RESULT_TYPE: The result of the transfer operation.
+    """
+    try:
+        p3u.is_not_obj_of_type("src_wb", src_wb, BDMWorkbook, raise_error=True)
+        p3u.is_not_obj_of_type("dst_wb", dst_wb, BDMWorkbook, raise_error=True)
+        src: Path = Path.from_uri(src_wb.wb_url)
+        dst: Path = Path.from_uri(dst_wb.wb_url)
+        shutil.copyfile(src, dst)
+        return True, f"Copied workbook from {src_wb.wb_url} to {dst_wb.wb_url}"
+    except Exception as e:
+        m = p3u.exc_err_msg(e)
+        err_msg = (f"Exception WORKFLOW_TASK_copy_workbook(): {m}")
+        logger.error(err_msg)
+        return False, err_msg
     except Exception as e:
         m = p3u.exc_err_msg(e)
         err_msg = (f"Exception transfer_csv_file_to_workbook(): {m}")
