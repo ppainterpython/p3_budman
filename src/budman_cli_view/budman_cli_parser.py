@@ -855,7 +855,7 @@ class BudManCLIParser():
         """Add a --fix_switch argument.""" 
         try:
             parser.add_argument(
-                "--fix_switch", "-fix", 
+                f"--{cp.CK_FIX_SWITCH}", "-fix", 
                 action="store_true", 
                 help="Fix the any fixable issues.")
             return

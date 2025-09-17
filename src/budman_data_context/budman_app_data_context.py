@@ -580,12 +580,12 @@ class BudManAppDataContext(BudManAppDataContext_Base):
             raise ValueError(f"Error finding workbook by {find_key} = {value}: {e}")
 
     #region WORKBOOK_CONTENT_TYPE storage-related methods
-    def dc_WORKBOOK_CONTENT_TYPE_get(self, wb: WORKBOOK_OBJECT_TYPE) -> BUDMAN_RESULT_TYPE:
+    def dc_WORKBOOK_content_get(self, wb: WORKBOOK_OBJECT_TYPE) -> BUDMAN_RESULT_TYPE:
         """DC-Only: Get the workbook content from dc_LOADED_WORKBOOKS property
         if present. This class is not Model-Aware, so the application may
         use other means to arrange for content to be there with appropriate
         overrides or by putting the content directly with 
-        dc_WORKBOOK_CONTENT_TYPE_put. To be simple and consistent, use the 
+        dc_WORKBOOK_content_put. To be simple and consistent, use the 
         WORKBOOK_OBJECT_TYPE to access the workbook content. In other methods, 
         a wb_ref is resolved to a WORKBOOK_OBJECT_TYPE, so this method can be 
         used to get the content of a workbook by its WORKBOOK_OBJECT_TYPE.
@@ -612,7 +612,7 @@ class BudManAppDataContext(BudManAppDataContext_Base):
             logger.error(m)
             return False, m
     
-    def dc_WORKBOOK_CONTENT_TYPE_put(self, wb_content:WORKBOOK_CONTENT_TYPE, wb: WORKBOOK_OBJECT_TYPE) -> BUDMAN_RESULT_TYPE:
+    def dc_WORKBOOK_content_put(self, wb_content:WORKBOOK_CONTENT_TYPE, wb: WORKBOOK_OBJECT_TYPE) -> BUDMAN_RESULT_TYPE:
         """DC-Only: Put the workbook's content into dc_LOADED_WORKBOOKS property.
         This class is not Model-Aware, so the application may
         put content in for a WORKBOOK_OBJECT_TYPE with this method in the blind.

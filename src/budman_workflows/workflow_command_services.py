@@ -37,6 +37,8 @@ from .budget_intake import *
 logger = logging.getLogger(__name__)
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
+
+# ---------------------------------------------------------------------------- +
 #region WORKFLOW_CMD_process() function
 def WORKFLOW_CMD_process(cmd: p3m.CMD_OBJECT_TYPE, 
                        bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
@@ -154,6 +156,8 @@ def WORKFLOW_TASK_transfer_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
         )
         logger.info(f"Start: ...")
         # Extract and validate required parameters from the command.
+        model: BudgetDomainModel = bdm_DC.model
+        valid_prefixes: List[str] = model.bdm_valid_WF_PREFIX_values()
         dst_wf_key = cmd_args.get(cp.CK_WF_KEY)
         dst_wf_purpose = cmd_args.get(cp.CK_WF_PURPOSE)
         dst_wb_type = cmd_args.get(cp.CK_WB_TYPE)
@@ -181,19 +185,26 @@ def WORKFLOW_TASK_transfer_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
                 logger.error(m)
                 fr += f"\n{P4}Error: {m}"
                 continue
-            # Check cmd needs loaded workbooks to check
+            # Transfer cmd needs loaded workbooks
             if not src_wb.wb_loaded:
-                m = f"wb_name '{src_wb.wb_name}' is not loaded, no action taken."
-                logger.error(m)
-                fr += f"\n{P4}Error: {m}"
-                continue
+                # Load the workbook content if it is not loaded.
+                success, result = bdm_DC.dc_WORKBOOK_content_get(src_wb)
+                if not success:
+                    selected_bdm_wb_list.remove(src_wb)
+                    m = f"Excluded workbook: '{src_wb.wb_id}', "
+                    m += f"failed to load: {result}"
+                    logger.error(m)
+                    continue
             src_wb_type = src_wb.wb_type
             # Check support transfer cases.
             if src_wb_type == bdm.WB_TYPE_CSV_TXNS and dst_wb_type == bdm.WB_TYPE_EXCEL_TXNS:
-                # Transfer a csv_txns workbook to a excel_txns workbook.
+                # Transfer a csv_txns workbook by converting to a excel_txns workbook.
                 # Create a file_url for the new workbook being transferred.
-                # TODO: need to pass valid prefixes, and wb_types to BSMFile()
-                src_wb_bsm_file: BSMFile = BSMFile(file_url=src_wb.wb_url)
+                src_wb_bsm_file: BSMFile = BSMFile(
+                    file_url=src_wb.wb_url,
+                    valid_prefixes=valid_prefixes,
+                    valid_wb_types=bdm.VALID_WB_TYPE_VALUES
+                )
                 success, result = WORKFLOW_TASK_construct_bdm_workbook(
                     src_filename=src_wb_bsm_file.filename,
                     wb_type=dst_wb_type,
@@ -210,7 +221,11 @@ def WORKFLOW_TASK_transfer_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
                     result_content += msg + "\n"
                     continue
                 dst_wb = result
-                pass
+                WORKFLOW_TASK_convert_csv_txns_to_excel_txns(src_wb, dst_wb)
+                # Add the new workbook to the wdc.
+                wdc = bdm_DC.dc_WORKBOOK_DATA_COLLECTION
+                wb_id = dst_wb.wb_id
+                wdc[wb_id] = dst_wb
             else:
                 m = (f"Unsupported transfer from src wb_type '{src_wb_type}' "
                      f"to dst wb_type '{dst_wb_type}'")
@@ -223,50 +238,6 @@ def WORKFLOW_TASK_transfer_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
             result_content_type=p3m.CMD_DICT_OUTPUT,
             result_content="all done"
         )
-        model: BudgetDomainModel = bdm_DC.model
-        # Supported cases:
-        # 1. transfer .csv files from file_list to a .csv_txns workbooks
-        success: bool = False
-        result: str = ""
-        bsm_file: BSMFile = None
-        cvs_wb: BDMWorkbook = None
-        for bsm_file in bsm_files:
-            # Process for supported transfer dst wb_types.
-            if dst_wb_type == bdm.WB_TYPE_CSV_TXNS:
-                # Transfer a csv file to a csv_txns workbook.
-                # Input file must have .csv extension.
-                if bsm_file.extension == bdm.WB_FILETYPE_CSV:
-                    # Transfer a .csv file to a .csv_txns workbook.
-                    success, result = WORKFLOW_TASK_transfer_csv_file_to_workbook(
-                        src_file_url=bsm_file.file_url,
-                        dst_wb=csv_wb,
-                        wb_type=dst_wb_type
-                    )
-                    if not success:
-                        msg = (f"Failed to transfer file: "
-                               f"'{bsm_file.file_index:2}:{bsm_file.full_filename}' "
-                               f" to .csv_txns workbook. Error: {result}")
-                        logger.error(msg)
-                        result_content += msg + "\n"
-                        continue
-                else:
-                    # Unsupported file type for transfer.
-                    msg = (f"Unsupported source file type file "
-                            f"'{bsm_file.file_index:2}:{bsm_file.full_filename}'"
-                            f" must be .csv file.")
-                    logger.error(msg)
-                    result_content += msg + "\n"
-                    continue
-                # Add the new workbook to the wdc.
-                wdc = bdm_DC.dc_WORKBOOK_DATA_COLLECTION
-                wb_id = csv_wb.wb_id
-                wdc[wb_id] = csv_wb
-            else:
-                # Unsupported dst wb_type for transfer.
-                msg = (f"Unsupported destination workbook type for transfer: {dst_wb_type}")
-                logger.error(msg)
-                result_content += msg + "\n"
-                continue
     except p3m.CMDValidationException as e:
         logger.error(e.message)
         raise
@@ -431,6 +402,50 @@ def WORKFLOW_TASK_transfer_files(cmd: p3m.CMD_OBJECT_TYPE,
                                          msg=err_msg,
                                          cmd_result_error=cmd_result_error)
 #endregion WORKFLOW_TASK_transfer_files() function
+# ---------------------------------------------------------------------------- +
+#region process_txn_intake() function
+def WORKFLOW_TASK_convert_csv_txns_to_excel_txns(csv_wb: BDMWorkbook, 
+                                                 excel_wb: BDMWorkbook ) -> bdm.BUDMAN_RESULT_TYPE:
+    """Convert CSV transactions to Excel transactions.
+
+        Args:
+        csv_wb (BDMWorkbook): The source CSV workbook.
+        excel_wb (BDMWorkbook): The destination Excel workbook.
+    """
+    try:
+        st = p3u.start_timer()
+        fr: str = "WORKFLOW_TASK_convert_csv_txns_to_excel_txns:"
+        logger.debug(f"{fr} ")
+        csv_txns = csv_wb.wb_content
+        headers = list(csv_txns[0].keys())  # Get headers from the first row
+        
+        excel_wb.wb_content = Workbook() # Create a new Excel workbook.
+        ws: Worksheet = excel_wb.wb_content.active
+        #TODO: get the worksheet title from settings or config.
+        ws.title = "TransactionData" # Set the name of the first worksheet.
+
+        ws.append(headers)  # Write headers to the first row
+        # Need to convert date strings to datetime objects, and
+        # convert amount strings to float.
+        for row in csv_txns:
+            for key, value in row.items():
+                if key.lower() == "date":
+                    value = datetime.datetime.strptime(value, "%m/%d/%Y").date()
+                elif key.lower() == "amount":
+                    cleaned = re.sub(r'[^\d.-]', '', value)  # Remove non-numeric characters
+                    value = float(cleaned)
+                row[key] = value
+            ws.append(list(row.values()))
+        # Task 3: Save the excel_txns workbook
+        excel_wb.wb_content.save(excel_wb.abs_path())
+        logger.debug(f"Saved excel_txns to {excel_wb.abs_path() }")
+        return True, f"Converted CSV to Excel in {p3u.stop_timer(st)} "
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+                    # row[key].number_format = '#,##0.00'  # Set currency format in Excel
+                    # row[key].number_format = 'DD/MM/YYYY'  # Set date format in Excel
+#endregion process_txn_intake() function
 # ---------------------------------------------------------------------------- +
 #region WORKFLOW_TASK_transfer_csv_file()
 def WORKFLOW_TASK_transfer_csv_file_to_workbook(src_file_url: str,

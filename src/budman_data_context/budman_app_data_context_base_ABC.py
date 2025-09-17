@@ -328,12 +328,12 @@ class BudManAppDataContext_Base(DataContext_Base):
 
     #region   WORKBOOK_CONTENT_TYPE storage-related methods
     @abstractmethod
-    def dc_WORKBOOK_CONTENT_TYPE_get(self, wb: WORKBOOK_OBJECT_TYPE, load:bool=True) -> BUDMAN_RESULT_TYPE:
+    def dc_WORKBOOK_content_get(self, wb: WORKBOOK_OBJECT_TYPE, load:bool=True) -> BUDMAN_RESULT_TYPE:
         """Abstract: Get the workbook content from dc_LOADED_WORKBOOKS property,
         if present, and return as result. This abstract class is not 
         Model-Aware, so the application may use other means to arrange for 
         content to be there with appropriate overrides or by putting the 
-        content directly with dc_WORKBOOK_CONTENT_TYPE_put. To be simple and 
+        content directly with dc_WORKBOOK_content_put. To be simple and 
         consistent, use the WORKBOOK_OBJECT_TYPE to access the workbook metadata.
 
         Args:
@@ -347,7 +347,7 @@ class BudManAppDataContext_Base(DataContext_Base):
         pass
 
     @abstractmethod
-    def dc_WORKBOOK_CONTENT_TYPE_put(self, wb_content:WORKBOOK_CONTENT_TYPE, wb: WORKBOOK_OBJECT_TYPE) -> BUDMAN_RESULT_TYPE:
+    def dc_WORKBOOK_content_put(self, wb_content:WORKBOOK_CONTENT_TYPE, wb: WORKBOOK_OBJECT_TYPE) -> BUDMAN_RESULT_TYPE:
         """Abstract: Put the workbook's content to storage.
         This class is not Model-Aware, so the application may
         put content in for a WORKBOOK_OBJECT_TYPE with this method in the blind.

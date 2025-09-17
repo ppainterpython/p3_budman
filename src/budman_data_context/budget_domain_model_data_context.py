@@ -327,7 +327,7 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
             logger.error(m)
             return False, m
 
-    def dc_WORKBOOK_content_put(self,wb_content:WORKBOOK_CONTENT_TYPE, bdm_wb : BDMWorkbook) -> BUDMAN_RESULT_TYPE:
+    def dc_WORKBOOK_content_put(self, wb_content:WORKBOOK_CONTENT_TYPE, bdm_wb : BDMWorkbook) -> BUDMAN_RESULT_TYPE:
         """Model-Aware: Put the workbook content into dc_LOADED_WORKBOOKS,
         replacing previous content if present. Then, save the content. 
 

@@ -44,9 +44,12 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 #region BSMFileTree Class
 class BSMFileTree:
-    def __init__(self, folder_url:str, save_tree:bool=True) -> None:
+    def __init__(self, folder_url:str, save_tree:bool=True,
+                 valid_prefixes:List[str]=[], valid_wb_types:List[str]=[]) -> None:
         self.folder_url: str = folder_url
         self.save_tree: bool = save_tree
+        self.valid_prefixes: List[str] = valid_prefixes
+        self.valid_wb_types: List[str] = valid_wb_types
         self.folder_path: Path = bsm_URL_verify_file_scheme(folder_url, test_exists=True)
         self.file_tree: Tree = None
         self.max_file_index: int = -1
@@ -91,8 +94,10 @@ class BSMFileTree:
         file_tree = Tree()
         tag = f"{dir_index:2} {folder_abs_path.name}"
         # Root node
-        file_tree.create_node(tag=tag, identifier=str(folder_abs_path),
-                            data=BSMFile(BSMFile.BSM_FOLDER, dir_index, -1, self.folder_url))
+        bsm_file: BSMFile = BSMFile(BSMFile.BSM_FOLDER, dir_index, -1, self.folder_url,
+                                   valid_prefixes=self.valid_prefixes,
+                                   valid_wb_types=self.valid_wb_types)
+        file_tree.create_node(tag=tag, identifier=str(folder_abs_path),data=bsm_file)
 
         def add_nodes(current_path: Path, parent_id: str) -> None:
             """Recursive scan directory current_path. Depth-first, using Path.iterdir()"""
@@ -110,18 +115,22 @@ class BSMFileTree:
                                         "copies","__pycache__", "personal"]:
                             continue
                         tag = f"{dir_index:2} {item.name}"
-                        file_tree.create_node(tag=tag, identifier=node_id, 
-                            parent=parent_id, 
-                            data=BSMFile(BSMFile.BSM_FOLDER, dir_index, 
-                                        -1, item.as_uri()))
+                        folder_bsm_file: BSMFile = BSMFile(BSMFile.BSM_FOLDER, dir_index, -1, item.as_uri(),
+                                                            valid_prefixes=self.valid_prefixes,
+                                                            valid_wb_types=self.valid_wb_types)
+                        file_tree.create_node(tag=tag, identifier=node_id,
+                            parent=parent_id,
+                            data=folder_bsm_file)
                         add_nodes(item, node_id)
                     else:
                         # File
                         tag = f"{file_index:2} {item.name}"
-                        file_tree.create_node(tag=tag, identifier=node_id, 
-                                        parent=parent_id, 
-                                        data=BSMFile(BSMFile.BSM_FILE, dir_index, 
-                                                    file_index, item.as_uri()))
+                        file_bsm_file: BSMFile = BSMFile(BSMFile.BSM_FILE, dir_index, file_index, item.as_uri(),
+                                                        valid_prefixes=self.valid_prefixes,
+                                                        valid_wb_types=self.valid_wb_types)
+                        file_tree.create_node(tag=tag, identifier=node_id,
+                                        parent=parent_id,
+                                        data=file_bsm_file)
                         file_index += 1
                 return
             except Exception as e:

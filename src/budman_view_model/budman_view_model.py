@@ -1260,17 +1260,18 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             subcmd_name = cmd[cp.p3m.CK_SUBCMD_NAME]
             if subcmd_name == cp.CV_APPLY_SUBCMD_NAME:
                 # Update the txn_categories by apply the category_map.
-                return p3m.create_CMD_RESULT_OBJECT(True, p3m.CMD_STRING_OUTPUT, "Applied category_map to txn_categories.", cmd)   
+                return p3m.create_CMD_RESULT_OBJECT(True, p3m.CMD_STRING_OUTPUT,
+                                 "Applied category_map to txn_categories.", cmd)   
             return p3m.create_CMD_RESULT_OBJECT(False, p3m.CMD_STRING_OUTPUT, "", cmd)
         except Exception as e:
             return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
     #endregion WORKFLOW_apply_cmd() execution method
     # ------------------------------------------------------------------------ +
     #region WORKFLOW_check() execution method 
-    def WORKFLOW_check_cmd(self, cmd : p3m.CMD_OBJECT_TYPE) -> BUDMAN_RESULT_TYPE:
-        """Apply workflow to one or more WORKBOOKS in the DC.
+    def WORKFLOW_check_cmd(self, cmd : p3m.CMD_OBJECT_TYPE) -> p3m.CMD_RESULT_TYPE:
+        """Workflow check to one or more WORKBOOKS in the DC.
 
-        A WORKFLOW_categorization_cmd command will use the wb_ref value in the cmd. 
+        A WORKFLOW_check_cmd command will use the wb_ref value in the cmd. 
         Value is a number or a wb_name.
 
         Arguments:
@@ -1279,7 +1280,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             a full command key of 'workflow_cmd_categorization'.
 
         Returns:
-            Tuple[success : bool, result : Any]: The outcome of the command 
+            p3m.CMD_RESULT_TYPE: The outcome of the command 
             execution. If success is True, result contains result of the 
             command, if False, a description of the error.
             
@@ -1293,6 +1294,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             selected_bdm_wb_list = self.process_selected_workbook_input(cmd)
             result: str = f"Checking {len(selected_bdm_wb_list)} workbooks:"
             r: str = ""
+            success: bool = False
             for bdm_wb in selected_bdm_wb_list:
                 # Select the current workbook in the Data Context.
                 self.dc_WORKBOOK = bdm_wb
@@ -1315,7 +1317,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                     success, r = validate_budget_categories(bdm_wb, self.DC, P4)
                     result += f"\n{r}"
                     continue
-                success: bool = check_sheet_schema(bdm_wb.wb_content)
+                success = check_sheet_schema(bdm_wb.wb_content)
                 r = f"Task: check_sheet_schema workbook: Workbook: '{bdm_wb.wb_id}' "
                 if success:
                     result += f"\n{P2}{r}"
@@ -1328,7 +1330,8 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                         bdm_wb.wb_content.save(bdm_wb_abs_path)
                 result += f"\n{P2}{r}"
                 continue
-            return p3m.create_CMD_RESULT_OBJECT(success, result)
+            return p3m.create_CMD_RESULT_OBJECT(success, p3m.CMD_STRING_OUTPUT, 
+                                                result, cmd)
         except Exception as e:
             return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
     #endregion WORKFLOW_check_cmd() execution method
@@ -1392,6 +1395,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
         except Exception as e:
             m = f"Error processing workbook input: {p3u.exc_err_msg(e)}"
             logger.error(m)
+
             raise RuntimeError(m)
     #endregion process_workbook_input()
     # ------------------------------------------------------------------------ +

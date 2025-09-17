@@ -143,7 +143,7 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
     #region    BudgetDomainModel internal class methods
     def to_dict(self):
         '''Return BudgetDomainModelTemplate dictionary object. Used for serialization.'''
-        ret = {
+        bdm_obj = {
             BDM_ID: self.bdm_id,
             BDM_STORE_OBJECT: self.bdm_store_object,
             BDM_INITIALIZED: self.bdm_initialized,
@@ -159,7 +159,7 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
             BDM_LAST_MODIFIED_BY: self.bdm_last_modified_by,
             BDM_DATA_CONTEXT: self.bdm_data_context,
         }
-        return ret
+        return copy.deepcopy(bdm_obj)
     def __getitm__(self, key: str) -> Any:
         """Get an item from the BudgetDomainModel by key."""
         if hasattr(self, key):
@@ -539,6 +539,7 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
             # the persisted storage format.
             self.bdm_rehydrate()
             # Load the BSM_FILE_TREE
+            valid_prefixes: List[str] = self.bdm_valid_WF_PREFIX_values()
             self.bsm_file_tree = BSMFileTree(self.bsm_BDM_FOLDER_url())
             # Initialization complete.
             self.bdm_initialized = True
@@ -948,6 +949,25 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
             logger.error(m)
             raise ValueError(m)
         return True
+    
+    def bdm_valid_WF_PREFIX_values(self) -> List[str]:
+        """Return a list of valid WF_PREFIX values from the BDM_WF_COLLECTION."""
+        if (self.bdm_wf_collection is None or
+            len(self.bdm_wf_collection) == 0):
+            return []
+        wf_prefixes = []
+        for wf_key, wf_object in self.bdm_wf_collection.items():
+            if (wf_object is not None and
+                isinstance(wf_object, dict) and
+                WF_FOLDER_CONFIG_LIST in wf_object and
+                wf_object[WF_FOLDER_CONFIG_LIST] is not None and
+                isinstance(wf_object[WF_FOLDER_CONFIG_LIST], list) and
+                len(wf_object[WF_FOLDER_CONFIG_LIST]) > 0):
+                wf_prefixes.extend([config[WF_PREFIX] for config in wf_object[WF_FOLDER_CONFIG_LIST]
+                                    if config[WF_PREFIX] is not None and
+                                    isinstance(config[WF_PREFIX], str) and
+                                    len(config[WF_PREFIX]) > 0])
+        return wf_prefixes
 
     #endregion bdm_WF_OBJECT_TYPE pseudo-Object properties
     # ------------------------------------------------------------------------ +

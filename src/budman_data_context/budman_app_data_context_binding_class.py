@@ -342,7 +342,7 @@ class BudManAppDataContext_Binding(BudManAppDataContext_Base, p3m.DataContext_Bi
         return self.DC.dc_WORKBOOK_find(find_key, value)
 
     #region WORKBOOK_CONTENT_TYPE storage-related methods
-    def dc_WORKBOOK_CONTENT_TYPE_get(self, wb: WORKBOOK_OBJECT_TYPE) -> BUDMAN_RESULT_TYPE:
+    def dc_WORKBOOK_content_get(self, wb: WORKBOOK_OBJECT_TYPE) -> BUDMAN_RESULT_TYPE:
         """DC-Only: Get the workbook content from dc_LOADED_WORKBOOKS property
         if present. This class is not Model-Aware, so the application may
         use other means to arrange for content to be there with appropriate
@@ -358,9 +358,9 @@ class BudManAppDataContext_Binding(BudManAppDataContext_Base, p3m.DataContext_Bi
             Optional[WORKBOOK_CONTENT_TYPE]: The content of the workbook if available,
             otherwise None.
         """
-        return self.DC.dc_WORKBOOK_CONTENT_TYPE_get(wb) 
+        return self.DC.dc_WORKBOOK_content_get(wb)
 
-    def dc_WORKBOOK_CONTENT_TYPE_put(self, wb_content:WORKBOOK_CONTENT_TYPE, wb: WORKBOOK_OBJECT_TYPE) -> BUDMAN_RESULT_TYPE:
+    def dc_WORKBOOK_content_put(self, wb_content:WORKBOOK_CONTENT_TYPE, wb: WORKBOOK_OBJECT_TYPE) -> BUDMAN_RESULT_TYPE:
         """DC-Only: Put the workbook content into dc_LOADED_WORKBOOKS property.
         This class is not Model-Aware, so the application may
         put content in for a WORKBOOK_OBJECT_TYPE with this method in the blind.
@@ -373,7 +373,7 @@ class BudManAppDataContext_Binding(BudManAppDataContext_Base, p3m.DataContext_Bi
             dc_LOADED_WORKBOOKS property.
             wb (WORKBOOK_OBJECT_TYPE): The workbook object owning the content.
         """
-        return self.DC.dc_WORKBOOK_CONTENT_TYPE_put(wb_content, wb)
+        return self.DC.dc_WORKBOOK_content_put(wb_content, wb)
 
     def dc_WORKBOOK_load(self, wb_index: str) -> BUDMAN_RESULT_TYPE:
         """DC_Binding: Load the specified workbook by wb_index into dc_LOADED_WORKBOOKS.
