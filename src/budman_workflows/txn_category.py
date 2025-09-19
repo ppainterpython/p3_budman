@@ -395,7 +395,7 @@ class BDMTXNCategoryManager(metaclass=BDMSingletonMeta):
         """Load (or reload)the WB_TYPE_TXN_CATEGORIES workbook content for an FI.
 
         Load the content from the WB_TYPE_TXN_CATEGORIES workbook for the given
-        financial institution (FI). Urls from for TXN_CATEGORIES_WORKBOOK
+        financial institution (FI). Urls for TXN_CATEGORIES_WORKBOOK
         and CATEGORY_MAP_WORKBOOK files are based on settings values, configured
         for each financial institution (fi). Also, load the 
         CATEGORY_MAP_WORKBOOK file, and compile it. Create a 

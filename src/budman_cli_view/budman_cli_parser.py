@@ -469,6 +469,10 @@ class BudManCLIParser():
                 f"--{cp.CK_LOG_ALL}", "-log_all", "-la", 
                 action="store_true", 
                 help="Log every catalog pattern match step.")
+            categorization_parser.add_argument(
+                f"--{cp.CK_CLEAR_OTHER}", "-c", 
+                action="store_true", 
+                help="Clear other category workbook at start of task run.")
             self.add_common_optional_args(categorization_parser)
             #endregion workflow categorization subcommand
 

@@ -1,5 +1,35 @@
 #------------------------------------------------------------------------------+
-# txn_cats.py - a place to fool around with experiments, not a dependent.
+#region txn_cats.py - a module for managing Transaction Categories
+"""
+Transaction Categories Command Line Application.
+
+Definitions:
+------------
+    TXNCategoryCatalog - a class representing the transaction category catalog
+    for an fi_key.
+
+    CATEGORY_MAP_WORKBOOK - an fi_key-specific python file workbook defining 
+    the mapping of transaction categories to regex expressions. The user edits
+    this python to maintain the category mapping rules, regex patterns, that
+    map transaction descriptions to budget categories. 
+
+
+Commands:
+---------
+
+    catalog [-i fi_key] [-l] [-c] [-a]
+        -l - list the TXN_CATEGORYIES_WORKBOOK for each configured fi_key
+        -c - Compare the TXN_CATEGORIES_WORKBOOK to the CATEGORY_MAP_WORKBOOK and
+             show any differences. If -a, list the whole content.
+
+    config
+        Import the latest
+
+    update
+        Update the TXN_CATEGORIES_WORKBOOK for the fi_key from the 
+        CATEGORY_MAP_WORKBOOK.
+"""
+#endregion txn_cats.py - a module for managing Transaction Categories
 #------------------------------------------------------------------------------+
 #region Imports
 # python standard library modules and packages
@@ -24,12 +54,8 @@ from budman_workflows.txn_category import (
 )
 # from budman_workflows.budget_category_mapping import get_category_map
 from budget_storage_model import (
-    bsm_BDMWorkbook_load,
-    bsm_WORKBOOK_CONTENT_url_put,
-    csv_DATA_LIST_url_get, 
-    csv_DATA_LIST_file_load,
-    bsm_get_folder_structure,
-    bsm_file_tree_from_folder
+    BSMFileTree,
+    csv_DATA_LIST_file_load
 )
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -44,33 +70,33 @@ budman_settings:bdms.BudManSettings = bdms.BudManSettings()
 base_parser = cmd2.Cmd2ArgumentParser()
 base_subparsers = base_parser.add_subparsers()
 
-parser_catalog = base_subparsers.add_parser(
+catalog_subparser = base_subparsers.add_parser(
     "catalog",
     aliases=["cat"], 
     help="Manage transaction categories catalog.")
-parser_catalog.add_argument(
+catalog_subparser.add_argument(
     "-i", "--init",
     action="store_true",
     help="Initialize Catalog Manager."
 )
-parser_catalog.add_argument(
+catalog_subparser.add_argument(
     "fi_key", 
     nargs="?",
     action="store",
     default='boa',
     help="fi_key to initialize."
 )
-parser_catalog.add_argument(
+catalog_subparser.add_argument(
     "-l", "--list",
     action="store_true",
     help="List all transaction categories."
 )
-parser_catalog.add_argument(
+catalog_subparser.add_argument(
     "-c", "--check",
     action="store_true",
     help="Check the integrity of the transaction categories."
 )
-parser_catalog.add_argument(
+catalog_subparser.add_argument(
     "-a", "--all_shown",
     action="store_true",
     help="Show all transaction categories, not just problems."
@@ -155,7 +181,7 @@ class CmdLineApp(cmd2.Cmd):
     #endregion setup() method
     # ------------------------------------------------------------------------ +
     #region do_catalog()
-    @cmd2.with_argparser(parser_catalog)
+    @cmd2.with_argparser(catalog_subparser)
     def do_catalog(self, args: str) -> None:
         """Manage transaction categories catalog."""
         try:
@@ -266,8 +292,9 @@ class CmdLineApp(cmd2.Cmd):
         try:
             self.check_catalog()
             path = Path(r'C:\Users\ppain\OneDrive\budget\boa\raw_data')
-            tree = bsm_file_tree_from_folder(path)
-            tree.show()
+            path_url:str = path.as_uri()
+            bsm_file_tree: BSMFileTree = BSMFileTree(folder_url=path_url)
+            bsm_file_tree.file_tree.show()
             console.print(f"Folder structure for '{path}':")
         except Exception as e:
             m = p3u.exc_err_msg(e)

@@ -27,6 +27,7 @@ import p3logging as p3l, p3_utils as p3u
 from openpyxl import Workbook, load_workbook
 from openpyxl.worksheet.worksheet import Worksheet
 from openpyxl.cell.cell import Cell
+from pyparsing import Optional
 
 # local modules and packages
 from budman_namespace.design_language_namespace import *
@@ -584,7 +585,8 @@ def validate_budget_categories(bdm_wb:BDMWorkbook,
 #region process_budget_category() function
 def process_budget_category(bdm_wb:BDMWorkbook,
                             bdm_DC : BudManAppDataContext_Base,
-                            log_all : bool) -> BUDMAN_RESULT_TYPE:
+                            log_all : bool,
+                            clear_other : bool=False) -> BUDMAN_RESULT_TYPE:
     """Process budget categorization for the workbook.
     
     The sheet has banking transaction data in rows and columns. 
@@ -663,15 +665,11 @@ def process_budget_category(bdm_wb:BDMWorkbook,
         # give the cell from a row tuple matching the column name in hdr.
         hdr = [cell.value for cell in ws[1]] 
 
-        # Open and itialize the Other workbook to hold rows that are not mapped
-        # to a budget category. This is the 'Other' category.
-        other_wb_abs_path_str = "C:/Users/ppain/OneDrive/budget/boa/Other.excel_txns.xlsx"
-        other_wb_path: Path = Path.Path(other_wb_abs_path_str)
-        other_wb: Workbook = load_workbook(other_wb_path)
-        # Clear the other worksheet before processing.
-        clear_worksheet(other_wb, BUDMAN_SHEET_NAME)
-        other_ws: Worksheet = other_wb.active
-        other_ws.append(hdr)
+        # Open Other category workbook to save unmapped rows.
+        other_wb: Workbook = None
+        other_ws: Worksheet = None
+        other_wb, other_ws = open_other_category_workbook(hdr, 
+                                                          clear_content=clear_other)
 
         # Check if the source and destination columns are in the header row.
         if src in hdr:
@@ -760,8 +758,7 @@ def process_budget_category(bdm_wb:BDMWorkbook,
                 logger.debug(f"{row_idx:04}:{trans_str}" )
             del transaction  # Clean up the transaction object.
         time_taken = p3u.stop_timer(st)
-        other_wb.save(other_wb_path)  # Save the other workbook with 'Other' category rows.
-        other_wb.close()  # Close the other workbook.
+        close_other_category_workbook(other_wb)
         elapsed : float = time.time() - st
         per_row = elapsed / (num_rows - 1) if num_rows > 1 else 0.0
         ch = get_category_histogram() 
@@ -780,6 +777,7 @@ def clear_worksheet(workbook, sheet_name):
     workbook.remove(workbook[sheet_name])
     # Create a new worksheet with the same name
     workbook.create_sheet(sheet_name)
+    workbook.active = workbook[sheet_name]
 
 def copy_row_to_worksheet(source_row, dest_worksheet):
     # Get the next available row in the destination worksheet
@@ -803,6 +801,55 @@ def copy_row_to_worksheet(source_row, dest_worksheet):
 
 #
 #endregion process_budget_category() function
+# ---------------------------------------------------------------------------- +
+#region open_other_category_workbook() function
+def open_other_category_workbook(hdr: List[str],clear_content:bool=True) -> Tuple[Workbook, Worksheet]:
+    """Open the 'Other' category workbook.
+
+    Args:
+        hdr (List[str]): The header row for the 'Other' category workbook.
+
+    Returns:
+        Optional[BDMWorkbook]: The 'Other' category workbook, or None if not found.
+    """
+    try:
+        other_wb_abs_path_str = "C:/Users/ppain/OneDrive/budget/boa/Other.excel_txns.xlsx"
+        other_wb_path: Path = Path(other_wb_abs_path_str)
+        other_wb: Workbook = load_workbook(other_wb_path)
+        other_ws: Worksheet = other_wb.active
+        # Clear the other worksheet before processing.
+        if clear_content:
+            clear_worksheet(other_wb, BUDMAN_SHEET_NAME)
+            other_ws = other_wb.active
+            # Add the hdr row
+            other_ws.append(hdr)
+            confirm_hdr = [cell.value for cell in other_ws[1]] 
+        return other_wb, other_ws
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+
+def close_other_category_workbook(other_wb:Workbook) -> None:
+    """Close the 'Other' category workbook.
+
+    Args:
+        other_wb (Workbook): The 'Other' category workbook to close.
+
+    Returns:
+        None
+    """
+    try:
+        if p3u.is_not_obj_of_type("other_wb", other_wb, Workbook):
+            raise TypeError(f"Expected 'other_wb' to be a Workbook, got {type(other_wb)}")
+        other_wb_abs_path_str = "C:/Users/ppain/OneDrive/budget/boa/Other.excel_txns.xlsx"
+        other_wb_path: Path = Path(other_wb_abs_path_str)
+        other_wb.save(other_wb_path)  # Save the other workbook with 'Other' category rows.
+        other_wb.close()  # Close the other workbook.
+        return None
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion open_other_category_workbook() function
 # ---------------------------------------------------------------------------- +
 #region apply_check_register() function
 def apply_check_register(cr_wb_content:BDM_CHECK_REGISTER_TYPE, 

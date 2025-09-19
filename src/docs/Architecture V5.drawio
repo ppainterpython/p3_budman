@@ -1,6 +1,6 @@
 <mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/28.1.2 Chrome/138.0.7204.243 Electron/37.4.0 Safari/537.36" version="28.1.2">
   <diagram id="N458_lr4ttNGEyz7QCCE" name="Page-1">
-    <mxGraphModel dx="8146" dy="10999" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
+    <mxGraphModel dx="7679" dy="10708" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -6120,6 +6120,9 @@
             <mxPoint x="2120" y="1275" as="targetPoint" />
             <mxPoint x="2020" y="1305" as="sourcePoint" />
           </mxGeometry>
+        </mxCell>
+        <mxCell id="S9fotVSxHU3oKEdaFb9F-62" value="&lt;h1 style=&quot;margin-top: 0px;&quot;&gt;Basic Process&lt;/h1&gt;&lt;div&gt;1. Download csv files to boa/raw_input&lt;/div&gt;&lt;div&gt;2. list files - get the file_index&lt;/div&gt;&lt;div&gt;3. wf transfer files fi -w intake -p working -t .excel_txns&lt;/div&gt;&lt;div&gt;4. show dc - get the wb_index&lt;/div&gt;&lt;div&gt;5. wf check wb_index -l -f&lt;/div&gt;&lt;div&gt;6. wf transfer workbooks wb_index -w categorization -p working -t .excel_txns&amp;nbsp;&lt;/div&gt;&lt;div&gt;7. wf cat wb_list -l -c&amp;nbsp; # run categorization on txns&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;in&amp;nbsp;&lt;/div&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="QGntIHunnyA1WiAcTs19-1">
+          <mxGeometry x="8" y="1140" width="442" height="530" as="geometry" />
         </mxCell>
         <mxCell id="QGntIHunnyA1WiAcTs19-83" value="&lt;font color=&quot;#007fff&quot;&gt;&lt;span style=&quot;font-size: 36px;&quot;&gt;budman_command_processor&lt;/span&gt;&lt;/font&gt;" style="swimlane;whiteSpace=wrap;html=1;strokeColor=#FFFFFF;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=12;fontColor=default;fontStyle=1;fillColor=default;startSize=60;swimlaneFillColor=none;strokeWidth=5;" parent="1" vertex="1">
           <mxGeometry x="1855" y="-1420" width="940" height="360" as="geometry" />

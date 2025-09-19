@@ -99,6 +99,7 @@ CK_FIX_SWITCH = "fix_switch"
 CK_VALIDATE_CATEGORIES = "validate_categories"
 CK_LOG_ALL = "log_all"
 CK_NO_SAVE = "no_save"
+CK_CLEAR_OTHER = "clear_other"
 CK_RECONCILE = "reconcile"
 CK_JSON = "json"
 

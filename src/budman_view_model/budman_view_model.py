@@ -1150,6 +1150,8 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             r : str = ""
             m : str = ""
             log_all : bool = self.cp_cmd_attr_get(cmd, cp.CK_LOG_ALL, False)
+            clear_other: bool = self.cp_cmd_attr_get(cmd, cp.CK_CLEAR_OTHER, False)
+            cleared_other_now: bool = clear_other
             # Process the intended workbooks.
             for bdm_wb in selected_bdm_wb_list:
                 # Select the current workbook in the Data Context.
@@ -1175,7 +1177,9 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                          f"'{self.dc_WB_ID:<40}'")
                     logger.debug(m)
                     fr += f"\n{P2}{m}"
-                    success, r = process_budget_category(bdm_wb, self.DC, log_all)
+                    success, r = process_budget_category(bdm_wb, self.DC, 
+                                                         log_all, cleared_other_now)
+                    cleared_other_now = False # Only clear_other for first workbook
                     if not success:
                         r = (f"{P4}Task Failed: process_budget_category() Workbook: "
                              f"'{self.dc_WB_ID}'\n{P8}Result: {r}")
@@ -1395,7 +1399,6 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
         except Exception as e:
             m = f"Error processing workbook input: {p3u.exc_err_msg(e)}"
             logger.error(m)
-
             raise RuntimeError(m)
     #endregion process_workbook_input()
     # ------------------------------------------------------------------------ +

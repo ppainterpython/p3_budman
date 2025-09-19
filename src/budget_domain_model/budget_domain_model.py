@@ -667,7 +667,8 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
                         logger.debug(f" Dehydrating BDMWorkbook({wb_id}): "
                                         f"wb_content type: '{wbc_type}'")
                         bdm_wb_dict[WB_CONTENT] = None
-                        bdm_wb_dict[WB_LOADED] = False 
+                    # Always set the wb_loaded to False, never serialize True.
+                    bdm_wb_dict[WB_LOADED] = False 
                     # Replace the bdm_wb in fi_object[FI_WORKBOOK_DATA_COLLECTION]
                     fi_object[FI_WORKBOOK_DATA_COLLECTION][wb_id] = bdm_wb_dict
             logger.debug(f"Complete:")   

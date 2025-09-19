@@ -124,7 +124,7 @@ def convert_csv_txns_to_excel_txns(csv_txns: BDMWorkbook) -> Union[bool, str]:
 
     Args:
         csv_txns (BDMWorkbook): A csv transaction workbook.
-        csv_path (Path.Path): The path to the CSV file.
+        csv_path (Path): The path to the CSV file.
 
     Returns:
         Union[bool, str]: True if successful, or an error message if failed.
@@ -134,7 +134,7 @@ def convert_csv_txns_to_excel_txns(csv_txns: BDMWorkbook) -> Union[bool, str]:
             return False, "No transactions to convert or invalid data format."
         csv_path: Path = csv_txns.abs_path()
         excel_filename: str = csv_path.stem + bdm.WB_TYPE_EXCEL_TXNS + bdm.WB_FILETYPE_XLSX
-        excel_path: Path.Path = csv_path.parent / excel_filename
+        excel_path: Path = csv_path.parent / excel_filename
         
         headers = list(csv_txns[0].keys())  # Get headers from the first row
         wb = Workbook()
