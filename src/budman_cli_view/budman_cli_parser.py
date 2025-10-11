@@ -252,7 +252,11 @@ class BudManCLIParser():
                 help="Select files to list.")
             files_subcmd_defaults = {
                 p3m.CK_SUBCMD_NAME: cp.CV_FILES_SUBCMD_NAME,
-                p3m.CK_SUBCMD_KEY: cp.CV_LIST_FILES_SUBCMD_KEY
+                p3m.CK_SUBCMD_KEY: cp.CV_LIST_FILES_SUBCMD_KEY,
+                cp.CK_ALL_FILES: True,
+                cp.CK_SRC_WF_FOLDER: False,
+                cp.CK_SRC_WF_KEY: None,
+                cp.CK_SRC_WF_PURPOSE: None
             }
             files_subcmd_parser.set_defaults(**files_subcmd_defaults)
             files_subcmd_subparsers = files_subcmd_parser.add_subparsers()

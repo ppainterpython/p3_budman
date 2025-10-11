@@ -348,11 +348,11 @@ def WORKFLOW_TASK_transfer_files(cmd: p3m.CMD_OBJECT_TYPE,
         # Extract and validate required parameters from the command.
         wf_key = cmd_args.get(cp.CK_WF_KEY)
         wf_purpose = cmd_args.get(cp.CK_WF_PURPOSE)
-        src_file_list = cmd_args.get(cp.CK_FILE_LIST)
+        src_file_index_list = cmd_args.get(cp.CK_FILE_LIST)
         wb_type = cmd_args.get(cp.CK_WB_TYPE)
         fi_key: str = bdm_DC.dc_FI_KEY
-        bsm_files: List[cp.BSMFile] = []
-        bsm_files = bsm_file_tree.validate_file_list(src_file_list)
+        src_bsm_files: List[cp.BSMFile] = []
+        src_bsm_files = bsm_file_tree.validate_file_list(src_file_index_list)
         result_content: str = ""
         msg: str = ""
         # Supported cases:
@@ -361,14 +361,14 @@ def WORKFLOW_TASK_transfer_files(cmd: p3m.CMD_OBJECT_TYPE,
         result: str = ""
         bsm_file: BSMFile = None
         cvs_wb: BDMWorkbook = None
-        for bsm_file in bsm_files:
+        for bsm_file in src_bsm_files:
             # Process for supported transfer dst wb_types.
             if wb_type == bdm.WB_TYPE_CSV_TXNS:
-                # Transfer a csv file to a csv_txns workbook.
+                # Dest wb_type is csv_txns workbook.
                 # Input file must have .csv extension.
                 if bsm_file.extension == bdm.WB_FILETYPE_CSV:
                     # Transfer a .csv file to a .csv_txns workbook.
-                    # Create a file_url for the new file being transferred.
+                    # Create a BDMWorkbook for the new file being transferred.
                     success, result = WORKFLOW_TASK_construct_bdm_workbook(
                         src_filename=bsm_file.filename,
                         wb_type=wb_type,
@@ -400,8 +400,8 @@ def WORKFLOW_TASK_transfer_files(cmd: p3m.CMD_OBJECT_TYPE,
                 else:
                     # Unsupported file type for transfer.
                     msg = (f"Unsupported source file type file "
-                            f"'{bsm_file.file_index:2}:{bsm_file.full_filename}'"
-                            f" must be .csv file.")
+                           f"'{bsm_file.file_index:2}:{bsm_file.full_filename}'"
+                           f" must be .csv file.")
                     logger.error(msg)
                     result_content += msg + "\n"
                     continue
@@ -460,7 +460,7 @@ def WORKFLOW_TASK_convert_csv_txns_to_excel_txns(csv_wb: BDMWorkbook,
         # convert amount strings to float.
         for row in csv_txns:
             for key, value in row.items():
-                if key.lower() == "date":
+                if key.lower() == "date" and isinstance(value, str):
                     value = datetime.datetime.strptime(value, "%m/%d/%Y").date()
                 elif key.lower() == "amount":
                     cleaned = re.sub(r'[^\d.-]', '', value)  # Remove non-numeric characters

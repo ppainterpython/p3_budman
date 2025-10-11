@@ -262,7 +262,7 @@ def check_sheet_columns(sheet: Worksheet, add_columns: bool = True) -> bool:
 # ---------------------------------------------------------------------------- +
 #region check_sheet_schema() function
 def check_sheet_schema(wb: Workbook, correct: bool = False) -> bool:
-    """Check that the sheet is ready to process transactions.
+    """Check that the Workbook active sheet is ready to process transactions.
     
     Steps to check the active sheet of an excel workbook for BudMan processing:
     1. Should be just 1 worksheet, the active worksheet.
@@ -277,6 +277,7 @@ def check_sheet_schema(wb: Workbook, correct: bool = False) -> bool:
     """
     try:
         logger.info("Check worksheet for schema structure.")
+        p3u.is_not_obj_of_type("wb", wb, Workbook, raise_error=True)
         # Check the active worksheet.
         ws = wb.active  # Get the active worksheet.
         good_schema = True  # Assume the schema is good.
