@@ -33,14 +33,15 @@ console = Console(force_terminal=True, width=bdm.BUDMAN_WIDTH, highlight=True,
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
 #region configure_logging() method
-def configure_logging(logger_name : str, logtest : bool = True) -> None:
+def configure_logging(logger_name : str, log_config_url: str, logtest : bool = True) -> None:
     """Setup the application logger."""
     try:
+        # Convert log_config_url to a file path.
+        log_config_file = Path.from_uri(log_config_url).expanduser().resolve()
         # Configure logging
-        log_config_file = "budget_model_logging_config.jsonc"
         _ = p3l.setup_logging(
             logger_name = logger_name,
-            config_file = log_config_file
+            config_file = str(log_config_file)
             )
         p3l.set_log_flag(p3l.LOG_FLAG_PRINT_CONFIG_ERRORS, True)
         logger = logging.getLogger(logger_name)
@@ -86,7 +87,8 @@ def main(bdms_url : str = None, start_time:float = start_timer()) -> None:
         if BudManMain_settings is None:
                 raise ValueError("BudMan Settings not configured.")
         app_name = BudManMain_settings.get(APP_NAME, "BudManApp")
-        configure_logging(app_name, logtest=False)
+        logging_config_url = BudManMain_settings.logging.config_url
+        configure_logging(app_name, logging_config_url, logtest=False)
         logger.debug(msg)
         logger.debug(f"Settings and logger configured: {stop_timer(start_time)}")
         fs = ""  # from settings 
@@ -98,6 +100,9 @@ def main(bdms_url : str = None, start_time:float = start_timer()) -> None:
         logger.debug(f"{dscr(app)} created. ...")
         app.run(bdms_url)  # Start the application
         logger.debug(f"Complete:")
+        logger.info(f"BizEVENT: {Path(__file__).name} completed successfully "
+                    f"in {stop_timer(app_start_time)} seconds.")
+        return
     except Exception as e:
         print(f"An error occurred: {e}", file=sys.stderr)
         sys.exit(1)
@@ -105,6 +110,3 @@ def main(bdms_url : str = None, start_time:float = start_timer()) -> None:
 if __name__ == "__main__":
     bdms_url = None #"file:///C:/Users/ppain/OneDrive/budget/p3_budget_manager_ca063e8b.jsonc"
     main(bdms_url,start_time=app_start_time)
-    logger.info(f"BizEVENT: {Path(__file__).name} completed successfully "
-                f"in {stop_timer(app_start_time)} seconds.")
-    exit(0)

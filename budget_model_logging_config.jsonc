@@ -42,7 +42,7 @@
         // stderr to console handler
         "stdout": {
             "class": "logging.StreamHandler",
-            "level": "WARNING",
+            "level": "CRITICAL",
             "formatter": "module_or_class",
             "stream": "ext://sys.stdout"
         },

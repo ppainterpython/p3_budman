@@ -1,0 +1,110 @@
+Date : 2025-10-15 06:14:53
+Directory : c:\Users\ppain\repos\python\p3_budman
+Total : 65 files,  -5216 codes, 1479 comments, 91 blanks, all -3646 lines
+
+Languages
++------------------+------------+------------+------------+------------+------------+
+| language         | files      | code       | comment    | blank      | total      |
++------------------+------------+------------+------------+------------+------------+
+| Python           |         55 |      3,406 |      1,406 |         88 |      4,900 |
+| TOML             |          3 |        531 |         73 |          1 |        605 |
+| Markdown         |          1 |         20 |          0 |          5 |         25 |
+| pip requirements |          1 |          1 |          0 |          0 |          1 |
+| Draw.io          |          5 |     -9,174 |          0 |         -3 |     -9,177 |
++------------------+------------+------------+------------+------------+------------+
+
+Directories
++----------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                                                     | files      | code       | comment    | blank      | total      |
++----------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                                                        |         65 |     -5,216 |      1,479 |         91 |     -3,646 |
+| . (Files)                                                                                                |          5 |        540 |         64 |          2 |        606 |
+| src                                                                                                      |         59 |     -5,754 |      1,415 |         89 |     -4,250 |
+| src\budget_domain_model                                                                                  |          2 |        337 |         53 |          6 |        396 |
+| src\budget_storage_model                                                                                 |          4 |        398 |        255 |         33 |        686 |
+| src\budman_app                                                                                           |          1 |          2 |         -8 |         -2 |         -8 |
+| src\budman_cli_view                                                                                      |          4 |        306 |         61 |         18 |        385 |
+| src\budman_command_processor                                                                             |          4 |        759 |        301 |          7 |      1,067 |
+| src\budman_data_context                                                                                  |          8 |       -116 |        -31 |        -29 |       -176 |
+| src\budman_namespace                                                                                     |          3 |         29 |        -52 |         -3 |        -26 |
+| src\budman_settings                                                                                      |          2 |         -9 |         -5 |         -2 |        -16 |
+| src\budman_view_model                                                                                    |          3 |       -261 |       -334 |         -7 |       -602 |
+| src\budman_workflows                                                                                     |          7 |        897 |        462 |         20 |      1,379 |
+| src\docs                                                                                                 |          6 |     -9,154 |          0 |          2 |     -9,152 |
+| src\p3_mvvm                                                                                              |          8 |        783 |        807 |         67 |      1,657 |
+| src\scripts                                                                                              |          7 |        275 |        -94 |        -21 |        160 |
+| tests                                                                                                    |          1 |         -2 |          0 |          0 |         -2 |
+| tests\test_budman_domain_model                                                                           |          1 |         -2 |          0 |          0 |         -2 |
++----------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++----------------------------------------------------------------------------------------------------------+------------------+------------+------------+------------+------------+
+| filename                                                                                                 | language         | code       | comment    | blank      | total      |
++----------------------------------------------------------------------------------------------------------+------------------+------------+------------+------------+------------+
+| c:\Users\ppain\repos\python\p3_budman\All.category_map.toml                                              | TOML             |        530 |         73 |          1 |        604 |
+| c:\Users\ppain\repos\python\p3_budman\main.py                                                            | Python           |          8 |         -9 |          1 |          0 |
+| c:\Users\ppain\repos\python\p3_budman\requirements.txt                                                   | pip requirements |          1 |          0 |          0 |          1 |
+| c:\Users\ppain\repos\python\p3_budman\settings.toml                                                      | TOML             |        -17 |         -8 |         -5 |        -30 |
+| c:\Users\ppain\repos\python\p3_budman\settings_example.toml                                              | TOML             |         18 |          8 |          5 |         31 |
+| c:\Users\ppain\repos\python\p3_budman\src\budget_domain_model\budget_domain_model.py                     | Python           |        388 |         84 |         10 |        482 |
+| c:\Users\ppain\repos\python\p3_budman\src\budget_domain_model\budget_domain_model_config.py              | Python           |        -51 |        -31 |         -4 |        -86 |
+| c:\Users\ppain\repos\python\p3_budman\src\budget_storage_model\__init__.py                               | Python           |          8 |         12 |          0 |         20 |
+| c:\Users\ppain\repos\python\p3_budman\src\budget_storage_model\bsm_file.py                               | Python           |         82 |         45 |          9 |        136 |
+| c:\Users\ppain\repos\python\p3_budman\src\budget_storage_model\bsm_file_tree.py                          | Python           |        197 |         58 |         15 |        270 |
+| c:\Users\ppain\repos\python\p3_budman\src\budget_storage_model\budget_storage_model.py                   | Python           |        111 |        140 |          9 |        260 |
+| c:\Users\ppain\repos\python\p3_budman\src\budman_app\budman_app.py                                       | Python           |          2 |         -8 |         -2 |         -8 |
+| c:\Users\ppain\repos\python\p3_budman\src\budman_cli_view\__init__.py                                    | Python           |          5 |          0 |          0 |          5 |
+| c:\Users\ppain\repos\python\p3_budman\src\budman_cli_view\budman_cli_output.py                           | Python           |         80 |         49 |          3 |        132 |
+| c:\Users\ppain\repos\python\p3_budman\src\budman_cli_view\budman_cli_parser.py                           | Python           |        236 |         29 |         17 |        282 |
+| c:\Users\ppain\repos\python\p3_budman\src\budman_cli_view\budman_cli_view.py                             | Python           |        -15 |        -17 |         -2 |        -34 |
+| c:\Users\ppain\repos\python\p3_budman\src\budman_command_processor\__init__.py                           | Python           |         14 |          4 |          1 |         19 |
+| c:\Users\ppain\repos\python\p3_budman\src\budman_command_processor\budman_command_services.py            | Python           |        685 |        323 |         10 |      1,018 |
+| c:\Users\ppain\repos\python\p3_budman\src\budman_command_processor\budman_cp_namespace.py                | Python           |         86 |        -11 |          0 |         75 |
+| c:\Users\ppain\repos\python\p3_budman\src\budman_command_processor\workflow_commands.py                  | Python           |        -26 |        -15 |         -4 |        -45 |
+| c:\Users\ppain\repos\python\p3_budman\src\budman_data_context\budget_domain_model_data_context.py        | Python           |        229 |        187 |         14 |        430 |
+| c:\Users\ppain\repos\python\p3_budman\src\budman_data_context\budget_domain_model_working_data.py        | Python           |       -195 |       -156 |        -12 |       -363 |
+| c:\Users\ppain\repos\python\p3_budman\src\budman_data_context\budman_app_data_context.py                 | Python           |        462 |        303 |         40 |        805 |
+| c:\Users\ppain\repos\python\p3_budman\src\budman_data_context\budman_app_data_context_base_ABC.py        | Python           |        188 |        189 |         37 |        414 |
+| c:\Users\ppain\repos\python\p3_budman\src\budman_data_context\budman_app_data_context_binding_class.py   | Python           |        171 |        208 |         41 |        420 |
+| c:\Users\ppain\repos\python\p3_budman\src\budman_data_context\budman_data_context.py                     | Python           |       -520 |       -309 |        -52 |       -881 |
+| c:\Users\ppain\repos\python\p3_budman\src\budman_data_context\budman_data_context_base_ABC.py            | Python           |       -222 |       -211 |        -43 |       -476 |
+| c:\Users\ppain\repos\python\p3_budman\src\budman_data_context\budman_data_context_binding_class.py       | Python           |       -229 |       -242 |        -54 |       -525 |
+| c:\Users\ppain\repos\python\p3_budman\src\budman_namespace\__init__.py                                   | Python           |        -21 |         -1 |          0 |        -22 |
+| c:\Users\ppain\repos\python\p3_budman\src\budman_namespace\bdm_workbook_class.py                         | Python           |         63 |         32 |          2 |         97 |
+| c:\Users\ppain\repos\python\p3_budman\src\budman_namespace\design_language_namespace.py                  | Python           |        -13 |        -83 |         -5 |       -101 |
+| c:\Users\ppain\repos\python\p3_budman\src\budman_settings\budman_settings.py                             | Python           |        -13 |         -5 |          0 |        -18 |
+| c:\Users\ppain\repos\python\p3_budman\src\budman_settings\budman_settings_constants.py                   | Python           |          4 |          0 |         -2 |          2 |
+| c:\Users\ppain\repos\python\p3_budman\src\budman_view_model\__init__.py                                  | Python           |         -4 |          0 |          0 |         -4 |
+| c:\Users\ppain\repos\python\p3_budman\src\budman_view_model\budman_cli_view_command_processor_binding.py | Python           |        -63 |        -67 |         -5 |       -135 |
+| c:\Users\ppain\repos\python\p3_budman\src\budman_view_model\budman_view_model.py                         | Python           |       -194 |       -267 |         -2 |       -463 |
+| c:\Users\ppain\repos\python\p3_budman\src\budman_workflows\__init__.py                                   | Python           |          1 |          3 |          0 |          4 |
+| c:\Users\ppain\repos\python\p3_budman\src\budman_workflows\budget_categorization.py                      | Python           |        190 |         64 |          8 |        262 |
+| c:\Users\ppain\repos\python\p3_budman\src\budman_workflows\budget_category_mapping.py                    | Python           |          0 |         -4 |          0 |         -4 |
+| c:\Users\ppain\repos\python\p3_budman\src\budman_workflows\budget_intake.py                              | Python           |        -53 |         -1 |         -9 |        -63 |
+| c:\Users\ppain\repos\python\p3_budman\src\budman_workflows\txn_category.py                               | Python           |        285 |        163 |         13 |        461 |
+| c:\Users\ppain\repos\python\p3_budman\src\budman_workflows\workflow_command_services.py                  | Python           |        483 |        285 |          7 |        775 |
+| c:\Users\ppain\repos\python\p3_budman\src\budman_workflows\workflow_utils.py                             | Python           |         -9 |        -48 |          1 |        -56 |
+| c:\Users\ppain\repos\python\p3_budman\src\docs\Architecture V2.drawio                                    | Draw.io          |     -3,344 |          0 |         -1 |     -3,345 |
+| c:\Users\ppain\repos\python\p3_budman\src\docs\Architecture V3.drawio                                    | Draw.io          |     -4,087 |          0 |         -1 |     -4,088 |
+| c:\Users\ppain\repos\python\p3_budman\src\docs\Architecture V4.drawio                                    | Draw.io          |     -6,110 |          0 |         -1 |     -6,111 |
+| c:\Users\ppain\repos\python\p3_budman\src\docs\Architecture V5.drawio                                    | Draw.io          |      7,395 |          0 |          1 |      7,396 |
+| c:\Users\ppain\repos\python\p3_budman\src\docs\ArchitectureV1.drawio                                     | Draw.io          |     -3,028 |          0 |         -1 |     -3,029 |
+| c:\Users\ppain\repos\python\p3_budman\src\docs\BudgetManagerDesignLanguage.md                            | Markdown         |         20 |          0 |          5 |         25 |
+| c:\Users\ppain\repos\python\p3_budman\src\p3_mvvm\__init__.py                                            | Python           |         94 |         20 |          0 |        114 |
+| c:\Users\ppain\repos\python\p3_budman\src\p3_mvvm\command_processor.py                                   | Python           |        350 |        364 |         15 |        729 |
+| c:\Users\ppain\repos\python\p3_budman\src\p3_mvvm\command_processor_Base_ABC.py                          | Python           |         74 |         87 |         15 |        176 |
+| c:\Users\ppain\repos\python\p3_budman\src\p3_mvvm\command_processor_Binding.py                           | Python           |        132 |        114 |         12 |        258 |
+| c:\Users\ppain\repos\python\p3_budman\src\p3_mvvm\data_context.py                                        | Python           |         27 |         47 |          5 |         79 |
+| c:\Users\ppain\repos\python\p3_budman\src\p3_mvvm\data_context_base_ABC.py                               | Python           |         26 |         38 |          4 |         68 |
+| c:\Users\ppain\repos\python\p3_budman\src\p3_mvvm\data_context_binding.py                                | Python           |         42 |         76 |          6 |        124 |
+| c:\Users\ppain\repos\python\p3_budman\src\p3_mvvm\mvvm_namespace.py                                      | Python           |         38 |         61 |         10 |        109 |
+| c:\Users\ppain\repos\python\p3_budman\src\scripts\arg_lesson.py                                          | Python           |        -18 |        -24 |        -21 |        -63 |
+| c:\Users\ppain\repos\python\p3_budman\src\scripts\bdm_store.py                                           | Python           |        -34 |        -15 |         -4 |        -53 |
+| c:\Users\ppain\repos\python\p3_budman\src\scripts\bdm_workbook.py                                        | Python           |         58 |         21 |          2 |         81 |
+| c:\Users\ppain\repos\python\p3_budman\src\scripts\doit.py                                                | Python           |         44 |         19 |         -4 |         59 |
+| c:\Users\ppain\repos\python\p3_budman\src\scripts\fooey.py                                               | Python           |          1 |        -49 |         -4 |        -52 |
+| c:\Users\ppain\repos\python\p3_budman\src\scripts\richlesson.py                                          | Python           |         -6 |        -70 |          0 |        -76 |
+| c:\Users\ppain\repos\python\p3_budman\src\scripts\txn_cats.py                                            | Python           |        230 |         24 |         10 |        264 |
+| c:\Users\ppain\repos\python\p3_budman\tests\test_budman_domain_model\test_budget_domain_model.py         | Python           |         -2 |          0 |          0 |         -2 |
+| Total                                                                                                    |                  |     -5,216 |      1,479 |         91 |     -3,646 |
++----------------------------------------------------------------------------------------------------------+------------------+------------+------------+------------+------------+

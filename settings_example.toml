@@ -27,4 +27,5 @@ boa = { txn_categories_workbook_full_filename = "All_TXN_Categories.txn_categori
 [logging]
 default_handler = "file"
 default_level = "DEBUG"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+config_url = "file:///C:/Users/path/to/your/budget_folder/budget_model_logging_config.jsonc"  
 config_filename = "budget_model_logging_config.jsonc"  # logging config file

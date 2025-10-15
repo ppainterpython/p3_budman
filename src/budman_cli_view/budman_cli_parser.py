@@ -275,7 +275,8 @@ class BudManCLIParser():
                 cp.CK_ALL_FILES: True,
                 cp.CK_SRC_WF_FOLDER: False,
                 cp.CK_SRC_WF_KEY: None,
-                cp.CK_SRC_WF_PURPOSE: None
+                cp.CK_SRC_WF_PURPOSE: None,
+                cp.CK_RAW_FORMAT: False
             }
             files_subcmd_parser.set_defaults(**files_subcmd_defaults)
             files_subcmd_subparsers = files_subcmd_parser.add_subparsers()

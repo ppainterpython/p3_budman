@@ -1,0 +1,67 @@
+"filename", "language", "pip requirements", "Python", "Markdown", "TOML", "Draw.io", "comment", "blank", "total"
+"c:\Users\ppain\repos\python\p3_budman\All.category_map.toml", "TOML", 0, 0, 0, 530, 0, 73, 1, 604
+"c:\Users\ppain\repos\python\p3_budman\main.py", "Python", 0, 8, 0, 0, 0, -9, 1, 0
+"c:\Users\ppain\repos\python\p3_budman\requirements.txt", "pip requirements", 1, 0, 0, 0, 0, 0, 0, 1
+"c:\Users\ppain\repos\python\p3_budman\settings.toml", "TOML", 0, 0, 0, -17, 0, -8, -5, -30
+"c:\Users\ppain\repos\python\p3_budman\settings_example.toml", "TOML", 0, 0, 0, 18, 0, 8, 5, 31
+"c:\Users\ppain\repos\python\p3_budman\src\budget_domain_model\budget_domain_model.py", "Python", 0, 388, 0, 0, 0, 84, 10, 482
+"c:\Users\ppain\repos\python\p3_budman\src\budget_domain_model\budget_domain_model_config.py", "Python", 0, -51, 0, 0, 0, -31, -4, -86
+"c:\Users\ppain\repos\python\p3_budman\src\budget_storage_model\__init__.py", "Python", 0, 8, 0, 0, 0, 12, 0, 20
+"c:\Users\ppain\repos\python\p3_budman\src\budget_storage_model\bsm_file.py", "Python", 0, 82, 0, 0, 0, 45, 9, 136
+"c:\Users\ppain\repos\python\p3_budman\src\budget_storage_model\bsm_file_tree.py", "Python", 0, 197, 0, 0, 0, 58, 15, 270
+"c:\Users\ppain\repos\python\p3_budman\src\budget_storage_model\budget_storage_model.py", "Python", 0, 111, 0, 0, 0, 140, 9, 260
+"c:\Users\ppain\repos\python\p3_budman\src\budman_app\budman_app.py", "Python", 0, 2, 0, 0, 0, -8, -2, -8
+"c:\Users\ppain\repos\python\p3_budman\src\budman_cli_view\__init__.py", "Python", 0, 5, 0, 0, 0, 0, 0, 5
+"c:\Users\ppain\repos\python\p3_budman\src\budman_cli_view\budman_cli_output.py", "Python", 0, 80, 0, 0, 0, 49, 3, 132
+"c:\Users\ppain\repos\python\p3_budman\src\budman_cli_view\budman_cli_parser.py", "Python", 0, 236, 0, 0, 0, 29, 17, 282
+"c:\Users\ppain\repos\python\p3_budman\src\budman_cli_view\budman_cli_view.py", "Python", 0, -15, 0, 0, 0, -17, -2, -34
+"c:\Users\ppain\repos\python\p3_budman\src\budman_command_processor\__init__.py", "Python", 0, 14, 0, 0, 0, 4, 1, 19
+"c:\Users\ppain\repos\python\p3_budman\src\budman_command_processor\budman_command_services.py", "Python", 0, 685, 0, 0, 0, 323, 10, 1018
+"c:\Users\ppain\repos\python\p3_budman\src\budman_command_processor\budman_cp_namespace.py", "Python", 0, 86, 0, 0, 0, -11, 0, 75
+"c:\Users\ppain\repos\python\p3_budman\src\budman_command_processor\workflow_commands.py", "Python", 0, -26, 0, 0, 0, -15, -4, -45
+"c:\Users\ppain\repos\python\p3_budman\src\budman_data_context\budget_domain_model_data_context.py", "Python", 0, 229, 0, 0, 0, 187, 14, 430
+"c:\Users\ppain\repos\python\p3_budman\src\budman_data_context\budget_domain_model_working_data.py", "Python", 0, -195, 0, 0, 0, -156, -12, -363
+"c:\Users\ppain\repos\python\p3_budman\src\budman_data_context\budman_app_data_context.py", "Python", 0, 462, 0, 0, 0, 303, 40, 805
+"c:\Users\ppain\repos\python\p3_budman\src\budman_data_context\budman_app_data_context_base_ABC.py", "Python", 0, 188, 0, 0, 0, 189, 37, 414
+"c:\Users\ppain\repos\python\p3_budman\src\budman_data_context\budman_app_data_context_binding_class.py", "Python", 0, 171, 0, 0, 0, 208, 41, 420
+"c:\Users\ppain\repos\python\p3_budman\src\budman_data_context\budman_data_context.py", "Python", 0, -520, 0, 0, 0, -309, -52, -881
+"c:\Users\ppain\repos\python\p3_budman\src\budman_data_context\budman_data_context_base_ABC.py", "Python", 0, -222, 0, 0, 0, -211, -43, -476
+"c:\Users\ppain\repos\python\p3_budman\src\budman_data_context\budman_data_context_binding_class.py", "Python", 0, -229, 0, 0, 0, -242, -54, -525
+"c:\Users\ppain\repos\python\p3_budman\src\budman_namespace\__init__.py", "Python", 0, -21, 0, 0, 0, -1, 0, -22
+"c:\Users\ppain\repos\python\p3_budman\src\budman_namespace\bdm_workbook_class.py", "Python", 0, 63, 0, 0, 0, 32, 2, 97
+"c:\Users\ppain\repos\python\p3_budman\src\budman_namespace\design_language_namespace.py", "Python", 0, -13, 0, 0, 0, -83, -5, -101
+"c:\Users\ppain\repos\python\p3_budman\src\budman_settings\budman_settings.py", "Python", 0, -13, 0, 0, 0, -5, 0, -18
+"c:\Users\ppain\repos\python\p3_budman\src\budman_settings\budman_settings_constants.py", "Python", 0, 4, 0, 0, 0, 0, -2, 2
+"c:\Users\ppain\repos\python\p3_budman\src\budman_view_model\__init__.py", "Python", 0, -4, 0, 0, 0, 0, 0, -4
+"c:\Users\ppain\repos\python\p3_budman\src\budman_view_model\budman_cli_view_command_processor_binding.py", "Python", 0, -63, 0, 0, 0, -67, -5, -135
+"c:\Users\ppain\repos\python\p3_budman\src\budman_view_model\budman_view_model.py", "Python", 0, -194, 0, 0, 0, -267, -2, -463
+"c:\Users\ppain\repos\python\p3_budman\src\budman_workflows\__init__.py", "Python", 0, 1, 0, 0, 0, 3, 0, 4
+"c:\Users\ppain\repos\python\p3_budman\src\budman_workflows\budget_categorization.py", "Python", 0, 190, 0, 0, 0, 64, 8, 262
+"c:\Users\ppain\repos\python\p3_budman\src\budman_workflows\budget_category_mapping.py", "Python", 0, 0, 0, 0, 0, -4, 0, -4
+"c:\Users\ppain\repos\python\p3_budman\src\budman_workflows\budget_intake.py", "Python", 0, -53, 0, 0, 0, -1, -9, -63
+"c:\Users\ppain\repos\python\p3_budman\src\budman_workflows\txn_category.py", "Python", 0, 285, 0, 0, 0, 163, 13, 461
+"c:\Users\ppain\repos\python\p3_budman\src\budman_workflows\workflow_command_services.py", "Python", 0, 483, 0, 0, 0, 285, 7, 775
+"c:\Users\ppain\repos\python\p3_budman\src\budman_workflows\workflow_utils.py", "Python", 0, -9, 0, 0, 0, -48, 1, -56
+"c:\Users\ppain\repos\python\p3_budman\src\docs\Architecture V2.drawio", "Draw.io", 0, 0, 0, 0, -3344, 0, -1, -3345
+"c:\Users\ppain\repos\python\p3_budman\src\docs\Architecture V3.drawio", "Draw.io", 0, 0, 0, 0, -4087, 0, -1, -4088
+"c:\Users\ppain\repos\python\p3_budman\src\docs\Architecture V4.drawio", "Draw.io", 0, 0, 0, 0, -6110, 0, -1, -6111
+"c:\Users\ppain\repos\python\p3_budman\src\docs\Architecture V5.drawio", "Draw.io", 0, 0, 0, 0, 7395, 0, 1, 7396
+"c:\Users\ppain\repos\python\p3_budman\src\docs\ArchitectureV1.drawio", "Draw.io", 0, 0, 0, 0, -3028, 0, -1, -3029
+"c:\Users\ppain\repos\python\p3_budman\src\docs\BudgetManagerDesignLanguage.md", "Markdown", 0, 0, 20, 0, 0, 0, 5, 25
+"c:\Users\ppain\repos\python\p3_budman\src\p3_mvvm\__init__.py", "Python", 0, 94, 0, 0, 0, 20, 0, 114
+"c:\Users\ppain\repos\python\p3_budman\src\p3_mvvm\command_processor.py", "Python", 0, 350, 0, 0, 0, 364, 15, 729
+"c:\Users\ppain\repos\python\p3_budman\src\p3_mvvm\command_processor_Base_ABC.py", "Python", 0, 74, 0, 0, 0, 87, 15, 176
+"c:\Users\ppain\repos\python\p3_budman\src\p3_mvvm\command_processor_Binding.py", "Python", 0, 132, 0, 0, 0, 114, 12, 258
+"c:\Users\ppain\repos\python\p3_budman\src\p3_mvvm\data_context.py", "Python", 0, 27, 0, 0, 0, 47, 5, 79
+"c:\Users\ppain\repos\python\p3_budman\src\p3_mvvm\data_context_base_ABC.py", "Python", 0, 26, 0, 0, 0, 38, 4, 68
+"c:\Users\ppain\repos\python\p3_budman\src\p3_mvvm\data_context_binding.py", "Python", 0, 42, 0, 0, 0, 76, 6, 124
+"c:\Users\ppain\repos\python\p3_budman\src\p3_mvvm\mvvm_namespace.py", "Python", 0, 38, 0, 0, 0, 61, 10, 109
+"c:\Users\ppain\repos\python\p3_budman\src\scripts\arg_lesson.py", "Python", 0, -18, 0, 0, 0, -24, -21, -63
+"c:\Users\ppain\repos\python\p3_budman\src\scripts\bdm_store.py", "Python", 0, -34, 0, 0, 0, -15, -4, -53
+"c:\Users\ppain\repos\python\p3_budman\src\scripts\bdm_workbook.py", "Python", 0, 58, 0, 0, 0, 21, 2, 81
+"c:\Users\ppain\repos\python\p3_budman\src\scripts\doit.py", "Python", 0, 44, 0, 0, 0, 19, -4, 59
+"c:\Users\ppain\repos\python\p3_budman\src\scripts\fooey.py", "Python", 0, 1, 0, 0, 0, -49, -4, -52
+"c:\Users\ppain\repos\python\p3_budman\src\scripts\richlesson.py", "Python", 0, -6, 0, 0, 0, -70, 0, -76
+"c:\Users\ppain\repos\python\p3_budman\src\scripts\txn_cats.py", "Python", 0, 230, 0, 0, 0, 24, 10, 264
+"c:\Users\ppain\repos\python\p3_budman\tests\test_budman_domain_model\test_budget_domain_model.py", "Python", 0, -2, 0, 0, 0, 0, 0, -2
+"Total", "-", 1, 3406, 20, 531, -9174, 1479, 91, -3646
