@@ -50,8 +50,7 @@ from .command_processor import (
     is_CMD_RESULT,
     create_CMD_RESULT_EXCEPTION,
     create_CMD_RESULT_ERROR,
-    unknown_CMD_RESULT_ERROR, 
-    CMDValidationException
+    unknown_CMD_RESULT_ERROR
 )
 from .mvvm_namespace import (
     # Types

@@ -102,6 +102,7 @@ def CMD_RESULT_output(cmd_result: p3m.CMD_RESULT_TYPE) -> None:
 def format_tree_view(tree_view:Tree=None) -> str:
     """Format a Tree object for console output."""
     try:
+        p3u.is_not_obj_of_type("tree_view", tree_view, Tree, raise_error=True) 
         # Format the tree for console output
         original_stdout = sys.stdout  # Save the original stdout
         buffer = io.StringIO()

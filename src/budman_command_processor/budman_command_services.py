@@ -102,6 +102,13 @@ def BUDMAN_CMD_process(cmd: p3m.CMD_OBJECT_TYPE,
                 return BUDMAN_CMD_TASK_show_BUDGET_CATEGORIES(cmd, bdm_DC)
             else:
                 return p3m.unknown_CMD_RESULT_ERROR(cmd)
+        # App command
+        elif cmd[p3m.CK_CMD_KEY] == cp.CV_APP_CMD_KEY:
+            if cmd[p3m.CK_SUBCMD_KEY] == cp.CV_SYNC_SUBCMD_KEY:
+                # App Sync the BDM_STORE to the BSM.
+                return BUDMAN_CMD_sync(cmd, bdm_DC)
+            else:
+                return p3m.unknown_CMD_RESULT_ERROR(cmd)
         # Unknown command
         else:
             return p3m.unknown_CMD_RESULT_ERROR(cmd)
@@ -225,7 +232,8 @@ def BUDMAN_CMD_list_files(cmd: p3m.CMD_OBJECT_TYPE,
                 cp.CK_ALL_FILES,
                 cp.CK_SRC_WF_FOLDER,
                 cp.CK_SRC_WF_KEY,
-                cp.CK_SRC_WF_PURPOSE
+                cp.CK_SRC_WF_PURPOSE,
+                cp.CK_RAW_FORMAT
             ]
         )
         cmd_result: p3m.CMD_RESULT_TYPE = validate_model_binding(bdm_DC)
@@ -235,6 +243,7 @@ def BUDMAN_CMD_list_files(cmd: p3m.CMD_OBJECT_TYPE,
         model: BudgetDomainModel = bdm_DC.model
         bsm_file_tree : BSMFileTree = model.bsm_file_tree
         file_tree: Tree = None
+        cmd_err: bool = False
         err_msg:str = ""
         # Construct CMD_RESULT for return.
         cmd_result = p3m.create_CMD_RESULT_OBJECT(
@@ -243,7 +252,8 @@ def BUDMAN_CMD_list_files(cmd: p3m.CMD_OBJECT_TYPE,
         # List files all_files | wf_folder
         all_files: bool = cmd_args.get(cp.CK_ALL_FILES, False)
         src_wf_folder: bool = cmd_args.get(cp.CK_SRC_WF_FOLDER, False)
-        # If wf_folder, then will need wf_key and wf_purpose.
+        raw_format: bool = cmd_args.get(cp.CK_RAW_FORMAT, False)
+        # If src_wf_folder, then will need wf_key and wf_purpose.
         if src_wf_folder:
             wf_key: str = cmd_args.get(cp.CK_SRC_WF_KEY, None)
             if not wf_key:
@@ -270,21 +280,30 @@ def BUDMAN_CMD_list_files(cmd: p3m.CMD_OBJECT_TYPE,
         if all_files:
             # List all files in the BDM store.
             file_tree = bsm_file_tree.file_tree
+            if file_tree and raw_format:
+                # Return a raw list of file URLs
+                file_list = bsm_file_tree.output_all_files()
+                cmd_result[p3m.CMD_RESULT_STATUS] = True
+                cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = p3m.CMD_STRING_OUTPUT
+                cmd_result[p3m.CMD_RESULT_CONTENT] = file_list
+                return cmd_result
             if not file_tree:
                 err_msg = "No file_tree available from the model."
+                cmd_err = True
         if src_wf_folder and not all_files:
             fi_key: str = bdm_DC.dc_FI_KEY
             # From the Model, get the wf_folder_url for an fi_key, wf_key, wf_purpose
             fi_wf_folder_url: str = model.bdm_FI_WF_FOLDER_CONFIG_ATTRIBUTE(
                 fi_key=fi_key, wf_key=wf_key, wf_purpose=wf_purpose, 
                 attribute=bdm.WF_FOLDER_URL, raise_errors=False)
-            # No retrieve the sbu tree for that folder_url
+            # Retrieve the sub tree for that folder_url
             if fi_wf_folder_url:
                 file_tree: Tree = bsm_file_tree.get_sub_file_tree(fi_wf_folder_url)
                 if not file_tree:
                     err_msg = (f"No wf_folder found for FI_KEY: "
                                f"'{fi_key}', WF_KEY: '{wf_key}', WF_PURPOSE: '{wf_purpose}'")
-        if not file_tree:
+                    cmd_err = True
+        if cmd_err:
             cmd_result[p3m.CMD_RESULT_CONTENT_TYPE] = p3m.CMD_ERROR_STRING_OUTPUT
             cmd_result[p3m.CMD_RESULT_CONTENT] = err_msg
             logger.error(cmd_result[p3m.CMD_RESULT_CONTENT])
@@ -300,11 +319,101 @@ def BUDMAN_CMD_list_files(cmd: p3m.CMD_OBJECT_TYPE,
         return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
 #endregion BUDMAN_CMD_list_files()
 # ---------------------------------------------------------------------------- +    
+#region BUDMAN_CMD_sync()
+def BUDMAN_CMD_sync(cmd: p3m.CMD_OBJECT_TYPE,
+                         bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
+    """Sync the BDM store to the BSM.
+    
+        Compare the files in model.bsm_file_tree to the workbooks in 
+        model overall (all FI's). Prepare collections of BDMWorkbooks found in
+        BSM but are missing from BDM, and BDMWorkbooks found in BDM but
+        missing from BSM. Depending on the cmd args, apply changes or not.
+    Args:
+        cmd (CMD_OBJECT_TYPE): The command object to process.
+        bdm_DC (BudManAppDataContext_Base): The data context for the BudMan application.
+        CMD Args:
+            cp.CK_SAVE (bool): --save | -s switch, if present, save the BDM_STORE.
+            cp.CK_FIX_SWITCH (bool): --fix_switch | -f switch, if present,  fix
+            discrepancies between BDM and BSM.
+    Returns:
+        p3m.CMD_RESULT_TYPE: The result of the command execution.
+    """
+    try:
+        # Validate the cmd argsuments.
+        cmd_args: p3m.CMD_ARGS_TYPE = cp.validate_cmd_arguments(
+            cmd=cmd, 
+            bdm_DC=bdm_DC,
+            cmd_key=cp.CV_APP_CMD_KEY, 
+            subcmd_key=cp.CV_SYNC_SUBCMD_KEY,
+            required_args=[cp.CK_SAVE, cp.CK_FIX_SWITCH]
+        )
+        cmd_result: p3m.CMD_RESULT_TYPE = validate_model_binding(bdm_DC)
+        # Validate DC is Model-aware with a model binding.
+        if not cmd_result[p3m.CMD_RESULT_STATUS]:
+            return cmd_result
+        model: BudgetDomainModel = bdm_DC.model
+        bsm_file_tree : BSMFileTree = model.bsm_file_tree
+        # Sync the BDM_STORE to the BSM.
+        wb: BDMWorkbook = None
+        for bsm_file in bsm_file_tree.all_workbooks():
+            logger.debug(f"BSM file_url: '{bsm_file.file_url}'")
+            wb = model.bdm_WORKBOOK_DATA_COLLECTION_find(bdm.WB_URL,
+                                                          bsm_file.file_url)
+            if wb:
+                logger.debug(f"Found matching BDMWorkbook: '{wb.wb_id}'")
+        # Success
+        return p3m.create_CMD_RESULT_OBJECT(
+            cmd_object=None,
+            cmd_result_status=True,
+            result_content_type=p3m.CMD_STRING_OUTPUT,
+            result_content="foo"
+        )
+    except Exception as e:
+        return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
+#endregion BUDMAN_CMD_sync()
+# ---------------------------------------------------------------------------- +    
 #endregion BudMan Application CMD_ functions
 # ---------------------------------------------------------------------------- +    
 
 # --------------------------------------------------------------------------- +
 #region BudMan Application CMD_TASK_ functions
+# ---------------------------------------------------------------------------- +    
+#region BUDMAN_CMD_TASK_sync_BDM_STORE_to_BSM()
+def BUDMAN_CMD_TASK_sync_BDM_STORE_to_BSM(bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:        
+    """Sync the BDM_STORE to the BSM.
+
+    Args:
+        bdm_DC (BudManAppDataContext_Base): The data context for the BudMan application.
+
+    Returns:
+        p3m.CMD_RESULT_TYPE: The result of the command execution.
+    """
+    try:
+        # Validate DC is Model-aware with a model binding.
+        cmd_result: p3m.CMD_RESULT_TYPE = validate_model_binding(bdm_DC)
+        if not cmd_result[p3m.CMD_RESULT_STATUS]:
+            return cmd_result
+        model: BudgetDomainModel = bdm_DC.model
+        # Sync the BDM_STORE to the BSM.
+        sync_result: Tuple[bool, str] = model.bdm_sync_BDM_STORE_to_BSM()
+        if not sync_result[0]:
+            # Sync failed
+            return p3m.create_CMD_RESULT_OBJECT(
+                cmd_object=None,
+                cmd_result_status=False,
+                result_content_type=p3m.CMD_STRING_OUTPUT,
+                result_content=sync_result[1]
+            )
+        # Success
+        return p3m.create_CMD_RESULT_OBJECT(
+            cmd_object=None,
+            cmd_result_status=True,
+            result_content_type=p3m.CMD_STRING_OUTPUT,
+            result_content=sync_result[1]
+        )
+    except Exception as e:
+        return p3m.create_CMD_RESULT_EXCEPTION(None, e)
+#endregion BUDMAN_CMD_TASK_sync_BDM_STORE_to_BSM()
 # ---------------------------------------------------------------------------- +    
 #region BUDMAN_CMD_TASK_get_workbook_tree() method
 def BUDMAN_CMD_TASK_get_workbook_tree(bdm_DC: BudManAppDataContext_Base) -> RichTree:
@@ -674,7 +783,7 @@ def get_workbook_data_collection_info_str(bdm_DC: BudManAppDataContext_Base) -> 
 
         # Prepare the output result
         result = f"{P2}{bdm.FI_WORKBOOK_DATA_COLLECTION}: {wdc_count}\n"
-        result += f"{P4}{bdm.WB_INDEX:6}{P2}{bdm.WB_ID:50}{P2}"
+        result += f"{P4}{bdm.WB_INDEX:6}{P2}{bdm.WB_ID:55}{P2}"
         result += f"{bdm.WB_TYPE:15}{P2}{bdm.WB_CONTENT:30}"
         result += "\n"
         bdm_wb : BDMWorkbook = None
@@ -828,7 +937,7 @@ def validate_cmd_arguments(cmd: p3m.CMD_OBJECT_TYPE,
                 result_content=missing_arg_error_msg,
                 cmd_object=cmd
                 )
-            raise p3m.CMDValidationException(cmd=cmd, 
+            raise p3m.CMDValidationException(cmd=cmd,
                                              msg=cmd_result[p3m.CMD_RESULT_CONTENT],
                                              cmd_result_error=cmd_result)
         return cmd_args
@@ -901,6 +1010,8 @@ def validate_model_binding(bdm_DC: BudManAppDataContext_Base,
             cmd_object=None
         )
 #ednregion validate_model_binding()
+# ---------------------------------------------------------------------------- +
+#endregion BudMan Application Command Helper functions
 # ---------------------------------------------------------------------------- +
 #endregion BudMan Application Command Helper functions
 # ---------------------------------------------------------------------------- +

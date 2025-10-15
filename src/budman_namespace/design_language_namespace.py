@@ -106,6 +106,8 @@ BDM_LAST_MODIFIED_DATE = "_last_modified_date" # Type: str - ISO date string
 BDM_LAST_MODIFIED_BY = "_last_modified_by"     # Type: str - user name
 BDM_DATA_CONTEXT = "_data_context"             # Type: DATA_CONTEXT
 BSM_FILE_TREE = "_bsm_file_tree"               # Type: BSMFileTree, not persisted
+BDM_VALID_PREFIXES = "_valid_prefixes"          # Type: List[str]
+BDM_VALID_WB_TYPES = "_valid_wb_types"          # Type: List[str
 # BDMConfig class Property name Constants (same as BudgetDomainModel)
 # but with BDM_CONFIG_OBJECT instead of BDM_STORE_OBJECT.
 BDM_CONFIG_OBJECT = "_bdm_config_object"       # Type: BDM_CONFIG
@@ -215,13 +217,13 @@ WB_TYPE_CSV_TXNS = ".csv_txns"
 WB_TYPE_TXN_CATEGORIES = ".txn_categories"
 WB_TYPE_CATEGORY_MAP = "_category_map"
 WB_TYPE_BUDGET = ".budget"
-VALID_WB_TYPE_VALUES = (
+VALID_WB_TYPE_VALUES = [
     WB_TYPE_BDM_STORE, WB_TYPE_BDM_CONFIG,
     WB_TYPE_TXN_REGISTER, WB_TYPE_EXCEL_TXNS,
     WB_TYPE_CSV_TXNS, WB_TYPE_BUDGET, 
     WB_TYPE_TXN_CATEGORIES,
     WB_TYPE_CATEGORY_MAP,
-    )
+]
 WB_TYPE_UNKNOWN = ".unknown_type"
 # Workbook Filetype Constants
 WB_FILETYPE_CSV = ".csv"

@@ -269,7 +269,7 @@ def WORKFLOW_TASK_transfer_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
             result_content="all done"
         )
     except p3m.CMDValidationException as e:
-        logger.error(e.message)
+        logger.error(e.msg)
         raise
     except Exception as e:
         m = p3u.exc_err_msg(e)
@@ -422,7 +422,7 @@ def WORKFLOW_TASK_transfer_files(cmd: p3m.CMD_OBJECT_TYPE,
             result_content="all done"
         )
     except p3m.CMDValidationException as e:
-        logger.error(e.message)
+        logger.error(e.msg)
         raise
     except Exception as e:
         m = p3u.exc_err_msg(e)

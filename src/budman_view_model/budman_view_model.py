@@ -783,12 +783,10 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
         try:
             st = p3u.start_timer()
             logger.info(f"Start: ...")
-            # Load the BDM_STORE file with the BSM.
             # Use the BDM_STORE configured in BUDMAN_SETTINGS.
             bdm_url = self.dc_BDM_STORE[BDM_URL]
-            # Load the BDM_STORE file.
-            budman_store_dict = bsm_BDM_STORE_url_get(bdm_url)
-            self.dc_BDM_STORE = budman_store_dict
+            # Load the BDM_STORE file again and re-init everything.
+            self.model.bdm_store_object = BDMConfig.BDM_STORE_url_get(bdm_url)
             # Now refresh the model state to reflect the BDM_STORE content.
             model_refresh: BudgetDomainModel = self.model.bdm_initialize()
             view_model_refresh: BudManViewModel = self.dc_initialize()
@@ -796,7 +794,8 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             self.dc_BDM_STORE_changed = False
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             return p3m.create_CMD_RESULT_OBJECT(True, p3m.CMD_DICT_OUTPUT, 
-                                                budman_store_dict, cmd)
+                                                self.model.bdm_store_object, 
+                                                cmd)
         except Exception as e:
             return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
     #endregion BDM_STORE_load_cmd() execution method
@@ -929,7 +928,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
     #endregion WORKBOOKS_save_cmd() execution method
     # ------------------------------------------------------------------------ +
     #region CHANGE_cmd() execution method
-    def CHANGE_cmd(self, cmd : p3m.CMD_OBJECT_TYPE) -> Tuple[bool, str]:
+    def CHANGE_cmd(self, cmd : p3m.CMD_OBJECT_TYPE) -> p3m.CMD_RESULT_TYPE:
         """Change aspects of the Data Context.
 
         A CHANGE_cmd command uses the wb_ref arg parameter.
@@ -1001,7 +1000,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
     #endregion CHANGE_cmd() execution method
     # ------------------------------------------------------------------------ +
     #region APP_cmd() execution method
-    def APP_cmd(self, cmd : p3m.CMD_OBJECT_TYPE) -> BUDMAN_RESULT_TYPE:
+    def APP_cmd(self, cmd : p3m.CMD_OBJECT_TYPE) -> p3m.CMD_RESULT_TYPE:
         """App commands to manipulate app values and settings.
 
         The APP_cmd command can use a variety of other command line arguments.
@@ -1030,12 +1029,26 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             root error is contained in the exception message.
         """
         try:
-            r_msg: str = "Start:"
-            m:Optional[str] = None
+            st = p3u.start_timer()
+            r_msg: str = "Start: ...{P2}"
             logger.debug(r_msg)
+            # Should be called only for App cmd.
+            cmd_result : p3m.CMD_RESULT_TYPE = cp.verify_cmd_key(cmd, cp.CV_APP_CMD_KEY)
+            if not cmd_result[p3m.CMD_RESULT_STATUS]: return cmd_result
+            subcmd_name = cmd[cp.p3m.CK_SUBCMD_NAME]
+
+            # Transitioning to using the BudMan Command Processor
+            if subcmd_name == cp.CV_SYNC_SUBCMD_NAME: 
+                cmd_result = cp.BUDMAN_CMD_process(cmd, self.DC)
+                logger.debug(f"Complete: {p3u.stop_timer(st)}")
+                return cmd_result
+
+            # Process the old way
+            # TODO: Move these to budman_command_services.py
             success: bool = False
             result: Any = None
-            subcmd_name = cmd[cp.p3m.CK_SUBCMD_NAME]
+            m:Optional[str] = None
+            logger.debug(r_msg)
             if subcmd_name == cp.CV_LOG_SUBCMD_NAME:
                 # Show the current log level.
                 return p3m.create_CMD_RESULT_OBJECT(True, p3m.CMD_STRING_OUTPUT, 

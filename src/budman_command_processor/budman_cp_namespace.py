@@ -81,6 +81,8 @@ CV_RELOAD_SUBCMD_NAME = "reload"
 CV_RELOAD_SUBCMD_KEY = CV_APP_CMD_KEY + "_" + CV_RELOAD_SUBCMD_NAME
 CV_LOG_SUBCMD_NAME = "log"
 CV_LOG_SUBCMD_KEY = CV_APP_CMD_KEY + "_" + CV_LOG_SUBCMD_NAME
+CV_SYNC_SUBCMD_NAME = "sync"
+CV_SYNC_SUBCMD_KEY = CV_APP_CMD_KEY  + "_" + CV_SYNC_SUBCMD_NAME 
 CV_TASK_SUBCMD_NAME = "task"
 CV_TASK_SUBCMD_KEY = CV_WORKFLOW_CMD_KEY + "_" + CV_TASK_SUBCMD_NAME
 CV_CHANGE_WORKBOOKS_SUBCMD_KEY = CV_CHANGE_CMD_KEY + "_" + CV_WORKBOOKS_SUBCMD_NAME
@@ -98,6 +100,7 @@ CK_LOAD_WORKBOOK = "load_workbook"
 CK_FIX_SWITCH = "fix_switch"
 CK_VALIDATE_CATEGORIES = "validate_categories"
 CK_LOG_ALL = "log_all"
+CK_SAVE = "save"
 CK_NO_SAVE = "no_save"
 CK_CLEAR_OTHER = "clear_other"
 CK_RECONCILE = "reconcile"
@@ -130,6 +133,7 @@ CK_SRC_WB_TYPE = "src_" + bdm.WB_TYPE
 CK_DST_WB_TYPE = "dst_" + bdm.WB_TYPE
 CK_TRANSFER_FILES = "transfer_files"
 CK_TRANSFER_WORKBOOKS = "transfer_workbooks"
+CK_RAW_FORMAT = "raw_format"
 
 # subcmd_key CV_TASK_SUBCMD_KEY argument constants
 

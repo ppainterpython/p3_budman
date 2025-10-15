@@ -83,6 +83,25 @@ class BudManCLIParser():
             }
             parser.set_defaults(**app_cmd_defaults)
 
+            # app sync BDM_STORE
+            sync_parser = subparsers.add_parser(
+                cp.CV_SYNC_SUBCMD_NAME,
+                help="Sync the BDM_STORE with the file system.")
+            sync_parser_defaults = {
+                p3m.CK_SUBCMD_NAME: cp.CV_SYNC_SUBCMD_NAME,
+                p3m.CK_SUBCMD_KEY: cp.CV_SYNC_SUBCMD_KEY,
+                cp.CK_FIX_SWITCH: False,
+                cp.CK_SAVE: False}
+            sync_parser.set_defaults(**sync_parser_defaults)
+            sync_parser.add_argument(
+                f"--{cp.CK_SAVE}", "-s",
+                action="store_true",
+                help="Save BDM_STORE on completion.")
+            sync_parser.add_argument(
+                f"--{cp.CK_FIX_SWITCH}", "-f",
+                action="store_true",
+                help="Fix any discovered discrepancies.")
+
             # app exit subcommand
             exit_parser = subparsers.add_parser(
                 cp.CV_EXIT_SUBCMD_NAME,
@@ -751,8 +770,14 @@ class BudManCLIParser():
                 cp.CK_ALL_FILES: True,
                 cp.CK_SRC_WF_FOLDER: False,
                 cp.CK_SRC_WF_KEY: None,
-                cp.CK_SRC_WF_PURPOSE: None}
+                cp.CK_SRC_WF_PURPOSE: None,
+                cp.CK_RAW_FORMAT: False}
             all_files_parser.set_defaults(**all_files_parser_defaults)
+            all_files_parser.add_argument(
+                f"--{cp.CK_RAW_FORMAT}", "-r", 
+                dest=cp.CK_RAW_FORMAT, 
+                action="store_true",
+                help="Output file info in raw format.")
             self.add_common_optional_args(all_files_parser)
             return
         except Exception as e:
@@ -771,11 +796,17 @@ class BudManCLIParser():
                 cp.CK_ALL_FILES: False, 
                 cp.CK_SRC_WF_FOLDER: True,
                 cp.CK_SRC_WF_KEY: None,
-                cp.CK_SRC_WF_PURPOSE: None
+                cp.CK_SRC_WF_PURPOSE: None,
+                cp.CK_RAW_FORMAT: False
             }
             src_wf_folder_parser.set_defaults(**src_wf_folder_parser_defaults)
             self.add_src_wf_key_positional_arg(src_wf_folder_parser)
             self.add_src_wf_purpose_positional_arg(src_wf_folder_parser)
+            src_wf_folder_parser.add_argument(
+                f"--{cp.CK_RAW_FORMAT}", "-r", 
+                dest=cp.CK_RAW_FORMAT, 
+                action="store_true",
+                help="Output file info in raw format.")
             self.add_common_optional_args(src_wf_folder_parser)
             return
         except Exception as e:

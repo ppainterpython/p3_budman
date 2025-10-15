@@ -182,7 +182,7 @@ class BDMWorkbook:
             wb_status = self.get_wb_content_repr()
         else:
             wb_status = "unloaded"
-        s = f"{str(self.wb_id):50}{P2}{str(self.wb_type):15}{P2}{wb_status:30}{P2}"
+        s = f"{str(self.wb_id):55}{P2}{str(self.wb_type):15}{P2}{wb_status:30}{P2}"
         return s
     #endregion wb_info_display_str
     # ------------------------------------------------------------------------ +

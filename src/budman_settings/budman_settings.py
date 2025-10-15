@@ -24,10 +24,7 @@ class BudManSettings(Dynaconf,metaclass=BDMSingletonMeta):
     # Hide use of Dynaconf from the rest of the application.
     def __init__(self) -> None:
         """Initialize the BudManSettings instance."""
-        super().__init__(
-                envvar_prefix="DYNACONF",
-                settings_files=[BUDMAN_SETTINGS, '.secrets.toml'],
-            )
+        super().__init__()
 
     def __repr__(self) -> str:
         return f"<BudManSettings: {self.to_dict()}>"

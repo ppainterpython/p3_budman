@@ -13,8 +13,12 @@ app_start_time : float = time.time()  # Start time for the application
 # python standard library modules and packages
 import sys, logging
 from pathlib import Path
+# third-party modules and packages
+from rich.console import Console
 import p3logging as p3l
 from p3_utils import exc_err_msg, dscr, start_timer, stop_timer
+# local modules and packages
+import budman_namespace as bdm
 from budman_settings.budman_settings_constants import *
 from budman_settings.budman_settings import BudManSettings
 from src.budman_app.budman_app import BudManApp
@@ -23,6 +27,8 @@ from src.budman_app.budman_app import BudManApp
 #region Globals and Constants
 logger = logging.getLogger(__name__)
 sys.stdout.reconfigure(encoding='utf-8')  # Ensure stdout uses UTF-8 encoding
+console = Console(force_terminal=True, width=bdm.BUDMAN_WIDTH, highlight=True,
+                  soft_wrap=False)
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
@@ -46,6 +52,11 @@ def configure_logging(logger_name : str, logtest : bool = True) -> None:
         logger.info(f"+ {60 * '-'} +")
         if(logtest): 
             p3l.quick_logging_test(logger_name, log_config_file, reload = False)
+
+        root_logger = logging.getLogger()  # or logging.getLogger("root")
+        console.print("Logging configuration:")
+        for handler in root_logger.handlers:
+            console.print(f"  Handler: '{handler.name}' {handler}, Level: {handler.level}, Type: {type(handler)}")
     except Exception as e:
         logger.error(exc_err_msg(e))
         raise

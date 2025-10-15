@@ -61,6 +61,7 @@ class BSMFile:
         self._extension: Optional[str] = None
         self._prefix: Optional[str] = None
         self._wb_type: Optional[str] = None
+        self._in_bdm: bool = False
         self.update()
 
     def __str__(self) -> str:
@@ -90,6 +91,16 @@ class BSMFile:
     def wb_type(self) -> Optional[str]:
         """Return the workbook type from the filename."""
         return self._wb_type
+    @property
+    def in_bdm(self) -> bool:
+        """Return True if the file is in the BDM_STORE."""
+        return self._in_bdm
+    @in_bdm.setter
+    def in_bdm(self, value: bool) -> None:
+        """Set the in_bdm property."""
+        if not isinstance(value, bool):
+            raise ValueError("in_bdm must be a boolean value.")
+        self._in_bdm = value
     def verify_url(self) -> Optional[Path]:
         """Verify the file URL."""
         try:

@@ -23,7 +23,7 @@
 # python standard library modules and packages
 import logging, os, time, toml
 from pathlib import Path
-from typing import Dict, List, Any, Union, Optional
+from typing import Dict, List, Any, Union, Optional, Generator
 
 # third-party modules and packages
 import p3_utils as p3u, p3logging as p3l
@@ -44,6 +44,11 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 #region BSMFileTree Class
 class BSMFileTree:
+    """
+    A file_tree is a treelib.Tree populated from the BSM folders and files. 
+    BSMFile objects are stored in the node.data attribute of each node and contain
+    additional information about the file or folder.
+    """
     def __init__(self, folder_url:str, save_tree:bool=True,
                  valid_prefixes:List[str]=[], valid_wb_types:List[str]=[]) -> None:
         self.folder_url: str = folder_url
@@ -207,4 +212,58 @@ class BSMFileTree:
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
+
+    def output_all_files(self) -> str:
+        """Return a str of all file info in the file_tree."""
+        try:
+            file_info_list: str = ""
+            file_info_list += f"{'in_bdm':<6} "
+            file_info_list += f"{'full_filename':<50} "
+            file_info_list += f"{'prefix':<15}   "
+            file_info_list += f"{'wb_type':<15} "
+            file_info_list += f"file_url\n"
+            for node_id in self.file_tree.expand_tree():
+                file_node: Node = self.file_tree.get_node(node_id)
+                if file_node.is_leaf(): # only look at file nodes, which are leafs
+                    if (file_node.data and isinstance(file_node.data, BSMFile)):
+                        bsm_file: BSMFile = file_node.data
+                        file_info_list += f"{str(bsm_file.in_bdm):<6} "
+                        file_info_list += f"{bsm_file.full_filename or 'N/A':<50} "
+                        file_info_list += f"'{bsm_file.prefix or 'N/A':<15}' "
+                        file_info_list += f"'{bsm_file.wb_type or 'N/A':<15}' "
+                        file_info_list += f"{bsm_file.file_url}\n"
+            return file_info_list
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+
+    def all_workbooks(self) -> Generator[BSMFile, None, None]:
+        """Generate all the workbooks in the file tree."""
+        try:
+            file_info_list: str = ""
+            for node_id in self.file_tree.expand_tree():
+                file_node: Node = self.file_tree.get_node(node_id)
+                if file_node.is_leaf(): # only look at file nodes, which are leafs
+                    if (file_node.data and isinstance(file_node.data, BSMFile)):
+                        bsm_file: BSMFile = file_node.data
+                        if bsm_file.wb_type in self.valid_wb_types:
+                            yield bsm_file
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+
+    def all_files(self) -> Generator[BSMFile, None, None]:
+        """Generate all the files in the file tree."""
+        try:
+            file_info_list: str = ""
+            for node_id in self.file_tree.expand_tree():
+                file_node: Node = self.file_tree.get_node(node_id)
+                if file_node.is_leaf(): # only look at file nodes, which are leafs
+                    if (file_node.data and isinstance(file_node.data, BSMFile)):
+                        bsm_file: BSMFile = file_node.data
+                        yield bsm_file
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+
 # ---------------------------------------------------------------------------- +

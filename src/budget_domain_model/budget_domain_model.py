@@ -136,7 +136,10 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
         setattr(self, BDM_LAST_MODIFIED_DATE, self._created_date)
         setattr(self, BDM_LAST_MODIFIED_BY, getpass.getuser())
         setattr(self, BDM_DATA_CONTEXT, {})  
-        setattr(self, BSM_FILE_TREE, None)  
+        # Unpersisted attributes
+        setattr(self, BSM_FILE_TREE, None)
+        setattr(self, BDM_VALID_PREFIXES, None)
+        setattr(self, BDM_VALID_WB_TYPES, None)
         logger.debug("Complete:")
     #endregion BudgetDomainModel class constructor __init__()
     # ------------------------------------------------------------------------ +
@@ -366,6 +369,28 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
             raise ValueError(f"bsm_file_tree must be a BSMFileTree or None: {value}")
         self._bsm_file_tree = value
 
+    @property
+    def bdm_valid_prefixes(self) -> List[str]:
+        """The valid workbook prefixes for the budget model."""
+        return self._valid_prefixes
+    @bdm_valid_prefixes.setter
+    def bdm_valid_prefixes(self, value: List[str]) -> None:
+        """Set the valid workbook prefixes for the budget model."""
+        if not (value is None or isinstance(value, list)):
+            raise ValueError(f"bdm_valid_prefixes must be a list or None: {value}")
+        self._valid_prefixes = value
+
+    @property
+    def bdm_valid_wb_types(self) -> List[str]:
+        """The valid workbook types for the budget model."""
+        return self._valid_wb_types
+    @bdm_valid_wb_types.setter
+    def bdm_valid_wb_types(self, value: List[str]) -> None:
+        """Set the valid workbook types for the budget model."""
+        if not (value is None or isinstance(value, list)):
+            raise ValueError(f"bdm_valid_wb_types must be a list or None: {value}")
+        self._valid_wb_types = value
+
     #BDMBaseInterface properties
     @property
     def model_id(self) -> str:
@@ -538,9 +563,18 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
             # bdm_rehydrate() reinstates any native class objects based from 
             # the persisted storage format.
             self.bdm_rehydrate()
-            # Load the BSM_FILE_TREE
-            valid_prefixes: List[str] = self.bdm_valid_WF_PREFIX_values()
-            self.bsm_file_tree = BSMFileTree(self.bsm_BDM_FOLDER_url())
+            # Set some values gathered from BDM configuration.
+            self.bdm_valid_prefixes = self.bdm_configured_prefixes()
+            self.bdm_valid_wb_types = VALID_WB_TYPE_VALUES
+            # Load the BSM_FILE_TREE, scanning the BDM_FOLDER_URL
+            self.bsm_file_tree = BSMFileTree(
+                folder_url=self.bsm_BDM_FOLDER_url(),
+                valid_prefixes=self.bdm_valid_prefixes,
+                valid_wb_types=self.bdm_valid_wb_types)
+            # Update the in_bdm flag for the files in the BSM_FILE_TREE.
+            for bsm_file in self.bsm_file_tree.all_files():
+                wb = self.bdm_WORKBOOK_DATA_COLLECTION_find(WB_URL, bsm_file.file_url)
+                bsm_file.in_bdm = wb is not None
             # Initialization complete.
             self.bdm_initialized = True
             logger.debug(f"Complete: {p3u.stop_timer(st)}")   
@@ -550,6 +584,15 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
             logger.error(m)
             raise
     #endregion bdm_initialize(self, bsm_init, ...) 
+    # ------------------------------------------------------------------------ +
+    #region    bdm_configured_prefixes() method
+    def bdm_configured_prefixes(self) -> List[str]:
+        """Get the valid workbook prefixes for all configured FI's in the budget model."""
+        valid_prefixes: List[str] = []
+        for fi_key in self.bdm_fi_collection.keys():
+            valid_prefixes.extend(self.bdm_FI_configured_prefixes(fi_key))
+        return valid_prefixes
+    #endregion bdm_configured_prefixes() method
     # ------------------------------------------------------------------------ +
     #region    bdm_rehydrate() method
     def bdm_rehydrate(self) -> None:
@@ -586,8 +629,8 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
                             _ = p3u.verify_url_file_path(wb_url)
                         except Exception as e: 
                             m = p3u.exc_err_msg(e)
-                            logger.error(f"Error verifying WORKBOOK URL "
-                                         f"'{wb_url}': {m} ")
+                            logger.error(m)
+                            logger.error(f"Error verifying WORKBOOK URL: '{wb_url}'")
                             logger.error(f"Skipping: FI_KEY('{fi_key}') WB_ID('{wb_id}')")
                             continue
                     # Check the wb_data content for schema compliance with
@@ -710,6 +753,26 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
             raise ValueError(m)
     #endregion bdm_BDM_STORE_json() method
     # ------------------------------------------------------------------------ +
+    #region bdm_WORKBOOK_DATA_COLLECTION_find() method
+    def bdm_WORKBOOK_DATA_COLLECTION_find(self, search_key: str, 
+                                             search_value:DATA_COLLECTION_TYPE) -> BDMWorkbook:
+        """Search all FI WDC for matching search_key with search_value.
+        
+        Return the first matching BDMWorkbook or None if not found.
+        """
+        try:
+            for fi_key in self.bdm_fi_collection.keys():
+                found: BDMWorkbook = self.bdm_FI_WORKBOOK_DATA_COLLECTION_find(
+                    fi_key, search_key, search_value)
+                if found is not None:
+                    return found
+            return None
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise ValueError(m)
+    #endregion bdm_WORKBOOK_DATA_COLLECTION_find() method
+    # ------------------------------------------------------------------------ +
     #region    bdm_FI_OBJECT_TYPE methods
     def bdm_FI_OBJECT(self, fi_key:str) -> FI_OBJECT_TYPE:
         """Return the FI_OBJECT for fi_key."""
@@ -787,6 +850,29 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
             logger.error(m)
             raise ValueError(m)
 
+    def bdm_FI_WORKBOOK_DATA_COLLECTION_find(self, fi_key:str, search_key: str, 
+                                             search_value:DATA_COLLECTION_TYPE) -> BDMWorkbook:
+        """Search WDC for fi_key matching search_key with search_value.
+        
+        Return the first matching BDMWorkbook or None if not found.
+        """
+        try:
+            wdc: WORKBOOK_DATA_COLLECTION_TYPE = self.bdm_FI_OBJECT(fi_key)[FI_WORKBOOK_DATA_COLLECTION]
+            if wdc is None:
+                return None
+            if not hasattr(BDMWorkbook, search_key):
+                m = f"search_key('{search_key}') not BDMWorkbook attribute: "
+                logger.debug(m)
+                return None
+            for wb_id, wb in wdc.items():
+                if getattr(wb,search_key) == search_value:
+                    return wb
+            return None
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise ValueError(m)
+
     def bdm_FI_KEY_validate(self, fi_key:str) -> bool:
         """Validate the financial institution key as a member of the
         BDM_FI_COLLECTION and referencing a valid FI_OBJECT dict."""
@@ -811,6 +897,34 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
             logger.error(m)
             raise ValueError(m)
         return True
+    
+    def bdm_FI_configured_prefixes(self, fi_key:str) -> List[str]:
+        """Return a list of configured WF_PREFIX values for fi_key."""
+        try:
+            fi_wf_fldr_cfg_coll: FI_WF_FOLDER_CONFIG_COLLECTION_TYPE = None
+            fi_wf_fldr_cfg_coll = self.bdm_FI_WF_FOLDER_CONFIG_COLLECTION(fi_key)
+            if (fi_wf_fldr_cfg_coll is None or
+                len(fi_wf_fldr_cfg_coll) == 0):
+                m = f"FI_WF_FOLDER_CONFIG_COLLECTION for fi_key('{fi_key}') "
+                m += "is empty or None."
+                logger.debug(m)
+                return []
+            prefixes: List[str] = []
+            for wf_key, wf_fldr_cfg_list in fi_wf_fldr_cfg_coll.items():
+                if (wf_fldr_cfg_list is None or
+                    len(wf_fldr_cfg_list) == 0):
+                    continue
+                for wf_folder_config in wf_fldr_cfg_list:
+                    prefix = wf_folder_config.get(WF_PREFIX, None)
+                    if (prefix is not None and 
+                        isinstance(prefix, str) and
+                        prefix not in prefixes):
+                        prefixes.append(prefix)
+            return prefixes
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise ValueError(m)
     #endregion bdm_FI_OBJECT_TYPE methods
     # ------------------------------------------------------------------------ +
     #region    bdm_FI_WF_FOLDER_CONFIG & _ATTRIBUTE methods:
@@ -1236,22 +1350,24 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
     #endregion bsm_FI_initialize() method
     # ------------------------------------------------------------------------ +    
     #region bsm_FI_WORKBOOK_DATA_COLLECTION_resolve() method
-    def bsm_FI_WORKBOOK_DATA_COLLECTION_resolve(self, fi_key:str,
+    def bsm_FI_WORKBOOK_DATA_COLLECTION_resolve(self, 
                                                 reconcile:bool = False) -> Tuple[WORKBOOK_DATA_COLLECTION_TYPE, str]:
-        """Discover all actual WORKBOOKS in storage for the FI. Return a 
-        WORKBOOK_DATA_COLLECTION of BDMWorkbook objects, an inventory of
-        what is actually in storage.
-
-        Use the configured Workflows for the storage structure in terms of
-        folders associated with the fi_key. All configured workflows apply to 
-        each financial institution and have WORKFLOW_DATA_FOLDERS in storage
-        that might contain workbooks. The goal is to find all workbooks and
-        based on their location, will in the metadata about WF_KEY, WF_FOLDER,
-        WF_PURPOSE, and WF_FOLDER_ID.
-
-        A WORKFLOW_DATA_FOLDER pathname is constructed from the path elements
-        in the workflow configuration.
+        """Discover all actual WORKBOOKS in storage for the BDM. 
+        Return a file_tree with just workbook files found in the BSM storage.
         """
+        bsm_file_tree : BSMFileTree = self.bsm_file_tree
+        if bsm_file_tree is None:
+            m = "BSMFileTree is not initialized, cannot resolve workbooks in storage."
+            logger.error(m)
+            raise ValueError(m)
+        # Re-write:
+        #    1. Traverse the file tree.
+        #    2. Duplicate the tree but add only workbook files from the bsm_file_tree.
+        #    3. If reconcile, then verify that each located workbook file has an
+        #       entry in the BDM_STORE, adding it if necessary.
+        #    4. If reconcile, then verify that each workbook in the BDM_STORE is
+        #       present in the file tree, removing it from the BDM_STORE if not.
+
         discovered_wdc: WORKBOOK_DATA_COLLECTION_TYPE = {}
         wf_object: WF_OBJECT_TYPE = None
         r_msg: str = ""
