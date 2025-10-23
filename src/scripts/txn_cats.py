@@ -19,8 +19,8 @@ Commands:
 
     catalog [-i fi_key] [-l] [-c] [-a]
         -l - list the TXN_CATEGORYIES_WORKBOOK for each configured fi_key
-        -c - Compare the TXN_CATEGORIES_WORKBOOK to the CATEGORY_MAP_WORKBOOK and
-             show any differences. If -a, list the whole content.
+        -c - Compare the TXN_CATEGORIES_WORKBOOK to the CATEGORY_MAP_WORKBOOK 
+             and show any differences. If -a, list the whole content.
 
     config
         Import the latest

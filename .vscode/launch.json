@@ -14,6 +14,7 @@
             "env": {
                 "PYTHONPATH": "${workspaceFolder};${workspaceFolder}/src"
             },
+            "envFile": "${workspaceFolder}/.env",
             "autoReload": {
                 "enable": true,  // Enable auto-reload
                 "onChange": true,  // Reload on file changes
@@ -30,6 +31,7 @@
             "env": {
                 "PYTHONPATH": "${workspaceFolder};${workspaceFolder}/src"
             },
+            "envFile": "${workspaceFolder}/.env",
             "autoReload": {
                 "enable": true,  // Enable auto-reload
                 "onChange": true,  // Reload on file changes
@@ -43,6 +45,7 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true,  // Allows stepping into third-party or library code
+            "envFile": "${workspaceFolder}/.env",
             "env": {
                 "PYTHONPATH": "${workspaceFolder};${workspaceFolder}/src"
             }
