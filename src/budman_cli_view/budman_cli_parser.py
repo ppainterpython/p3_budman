@@ -202,7 +202,7 @@ class BudManCLIParser():
             workbook_subcmd_parser.set_defaults(
                 subcmd_name=cp.CV_WORKBOOKS_SUBCMD_NAME,
                 subcmd_key=cp.CV_CHANGE_WORKBOOKS_SUBCMD_KEY)
-            self.add_wb_list_or_all_argument(workbook_subcmd_parser)
+            self.add_wb_list_or_all_mutually_exclusive_group(workbook_subcmd_parser)
             wb_type_choices = bdm.VALID_WB_TYPE_VALUES
             workbook_subcmd_parser.add_argument(
                 "-t", f"--{cp.CK_CMDLINE_WB_TYPE}",
@@ -255,11 +255,11 @@ class BudManCLIParser():
                 p3m.CK_SUBCMD_KEY: cp.CV_LIST_WORKBOOKS_SUBCMD_KEY
             }
             wb_subcmd_parser.set_defaults(**wb_subcmd_defaults)
+            self.add_wb_list_or_all_mutually_exclusive_group(wb_subcmd_parser)
             wb_subcmd_parser.add_argument(
                 "-t", f"--{cp.CK_BDM_TREE}", 
                 action="store_true",
                 help="Show the BDM tree hierarchy.")
-            self.add_wb_list_or_all_argument(wb_subcmd_parser)
             self.add_common_optional_args(wb_subcmd_parser)
             # endregion wb_subcmd_parser
 
@@ -267,7 +267,7 @@ class BudManCLIParser():
             # list files  [--cmdline_wf_key | -w <wf_key>] [--cmdline_wf_purpose | [-p <wf_purpose> | -wi | -ww | -wo]]
             files_subcmd_parser  = list_subparsers.add_parser(
                 cp.CV_FILES_SUBCMD_NAME,
-                aliases=["files", "f"], 
+                aliases=["f"], 
                 help="Select files to list.")
             files_subcmd_defaults = {
                 p3m.CK_SUBCMD_NAME: cp.CV_FILES_SUBCMD_NAME,
@@ -320,7 +320,7 @@ class BudManCLIParser():
             wb_subcmd_parser.set_defaults(
                 subcmd_name=cp.CV_WORKBOOKS_SUBCMD_NAME,
                 subcmd_key=cp.CV_LOAD_WORKBOOKS_SUBCMD_KEY)
-            self.add_wb_list_or_all_argument(wb_subcmd_parser)
+            self.add_wb_list_or_all_mutually_exclusive_group(wb_subcmd_parser)
             self.add_common_optional_args(wb_subcmd_parser)
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
@@ -356,7 +356,7 @@ class BudManCLIParser():
             wb_subcmd_parser.set_defaults(
                 subcmd_name=cp.CV_WORKBOOKS_SUBCMD_NAME,
                 subcmd_key=cp.CV_SAVE_WORKBOOKS_SUBCMD_KEY)
-            self.add_wb_list_or_all_argument(wb_subcmd_parser)
+            self.add_wb_list_or_all_mutually_exclusive_group(wb_subcmd_parser)
             self.add_common_optional_args(wb_subcmd_parser)
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
@@ -483,12 +483,8 @@ class BudManCLIParser():
                 p3m.CK_SUBCMD_NAME: cp.CV_CATEGORIZATION_SUBCMD_NAME,
                 p3m.CK_SUBCMD_KEY: cp.CV_CATEGORIZATION_SUBCMD_KEY}
             categorization_parser.set_defaults(**categorization_parser_defaults)
-            self.add_wb_list_or_all_argument(categorization_parser)
-            categorization_parser.add_argument(
-                f"--{cp.CK_LOAD_WORKBOOK}","-l", "-load", 
-                action="store_true", 
-                default=True,
-                help="Load the workbook if not yet loaded.")
+            self.add_wb_list_or_all_mutually_exclusive_group(categorization_parser)
+            self.add_load_workbook_argument(categorization_parser)
             categorization_parser.add_argument(
                 f"--{cp.CK_LOG_ALL}", "-log_all", "-la", 
                 action="store_true", 
@@ -509,7 +505,7 @@ class BudManCLIParser():
                 p3m.CK_SUBCMD_NAME: cp.CV_CHECK_SUBCMD_NAME,
                 p3m.CK_SUBCMD_KEY: cp.CV_CHECK_SUBCMD_KEY}
             check_parser.set_defaults(**check_parser_defaults)
-            self.add_wb_list_or_all_argument(check_parser)
+            self.add_wb_list_or_all_mutually_exclusive_group(check_parser)
             self.add_load_workbook_argument(check_parser)
             self.add_fix_argument(check_parser)
             check_parser.add_argument(
@@ -569,8 +565,10 @@ class BudManCLIParser():
                 help="a wb_ref to a check register(s). wb_index, wb_name or 'all'.")
             self.add_common_optional_args(apply_parser)
             #endregion workflow 'apply' subcommand
+
             set_parser = self.add_set_subparser(subparsers)
             intake_parser = self.add_intake_subparser(subparsers)
+
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise
@@ -597,7 +595,7 @@ class BudManCLIParser():
             raise
     #endregion workflow set subcommand subparser
     # ------------------------------------------------------------------------ +
-    #region transfer subcommand subparser
+    #region add_transfer_subparser()
     def add_transfer_subparser(self, subparsers) -> None:
         """Add a transfer subparser to the provided subparsers."""
         try:
@@ -683,7 +681,7 @@ class BudManCLIParser():
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise
-    #endregion transfer subcommand subparser
+    #endregion add_transfer_subparser()
     # ------------------------------------------------------------------------ +
     #region intake subcommand subparser
     def add_intake_subparser(self, subparsers) -> None:
@@ -838,7 +836,7 @@ class BudManCLIParser():
             logger.exception(p3u.exc_err_msg(e))
             raise
 
-    def add_wb_list_or_all_argument(self, parser) -> None:
+    def add_wb_list_or_all_mutually_exclusive_group(self, parser) -> None:
         """Add a wb_list or all_wbs arguments."""
         try:
             group = parser.add_mutually_exclusive_group(required=False)
