@@ -128,5 +128,6 @@
         "webcolors",
         "webencodings",
         "xmlfile"
-    ]
+    ],
+    "cursorpyright.analysis.autoImportCompletions": false
 }

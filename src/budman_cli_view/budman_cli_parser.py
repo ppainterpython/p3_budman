@@ -234,7 +234,7 @@ class BudManCLIParser():
             # list BDM_STORE 
             bdm_store_subcmd_parser = list_subparsers.add_parser(
                 cp.CV_BDM_STORE_SUBCMD_NAME,
-                aliases=["bdm_store", "bms", "BMS", "budget_manager_store"], 
+                aliases=["bdm_store", "bms"], 
                 help="List the Budget Manager Store file.")
             bdm_store_subcmd_defaults = {
                 p3m.CK_SUBCMD_NAME: cp.CV_BDM_STORE_SUBCMD_NAME,
@@ -304,7 +304,7 @@ class BudManCLIParser():
             # load BDM_STORE 
             bdm_store_subcmd_parser = subparsers.add_parser(
                 cp.CV_BDM_STORE_SUBCMD_NAME,
-                aliases=["bdm_store", "bms", "BMS", "budget_manager_store"], 
+                aliases=["bdm_store", "bms"], 
                 help="Load the Budget Manager Store file.")
             bdm_store_subcmd_parser.set_defaults(
                 subcmd_name=cp.CV_BDM_STORE_SUBCMD_NAME,
@@ -314,7 +314,7 @@ class BudManCLIParser():
             # wb_subcmd_parser
             # load workbooks [wb_index | -all | --all_wbs]
             wb_subcmd_parser  = subparsers.add_parser(
-                "workbooks",
+                cp.CV_WORKBOOKS_SUBCMD_NAME,
                 aliases=["wb", "WB"], 
                 help="Select workbooks for loading.")
             wb_subcmd_parser.set_defaults(
