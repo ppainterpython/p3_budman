@@ -83,6 +83,17 @@ class BudManCLIParser():
             }
             parser.set_defaults(**app_cmd_defaults)
 
+            # app gui subcommand
+            gui_parser = subparsers.add_parser(
+                cp.CV_GUI_SUBCMD_NAME,
+                help="Launch the GUI application.")
+            gui_parser_defaults = {
+                p3m.CK_SUBCMD_NAME: cp.CV_GUI_SUBCMD_NAME,
+                p3m.CK_SUBCMD_KEY: cp.CV_GUI_SUBCMD_KEY
+            }
+            parser.set_defaults(**gui_parser_defaults)
+            self.add_common_optional_args(gui_parser)
+
             # app sync BDM_STORE
             sync_parser = subparsers.add_parser(
                 cp.CV_SYNC_SUBCMD_NAME,

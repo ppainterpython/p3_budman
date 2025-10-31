@@ -274,6 +274,7 @@ from budget_storage_model import (
 from budman_data_context.budman_app_data_context_binding_class import BudManAppDataContext_Binding
 from budman_data_context.budget_domain_model_data_context import BDMDataContext
 from budman_cli_view import budman_cli_parser, budman_cli_view
+from budman_gui_view import BudManGUIApp
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -1042,6 +1043,9 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                 cmd_result = cp.BUDMAN_CMD_process(cmd, self.DC)
                 logger.debug(f"Complete: {p3u.stop_timer(st)}")
                 return cmd_result
+            if subcmd_name == cp.CV_GUI_SUBCMD_NAME:
+                gui_app: BudManGUIApp = BudManGUIApp()
+                return gui_app.run()
 
             # Process the old way
             # TODO: Move these to budman_command_services.py

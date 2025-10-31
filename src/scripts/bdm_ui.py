@@ -1,17 +1,9 @@
-import tkinter as tk
-
-class Application(tk.Tk):
-    def __init__(self, master=None):
-        tk.Frame.__init__(self, master)
-        self.grid()
-        self.createWidgets()
-
-    def createWidgets(self):
-        self.quitButton = tk.Button(self, text='Quit', command=self.quit)
-        self.quitButton.grid()
+import p3_utils as p3u, p3logging as p3l, p3_mvvm as p3m
+from budman_gui_view  import BudManGUIApp
 
 if __name__ == "__main__":
-    app = Application()
-    app.master.title('Simple Tkinter App')
-    app.mainloop()
+    gui_app: BudManGUIApp = BudManGUIApp()
+    cmd_result: p3m.CMD_RESULT_TYPE = None
+    cmd_result = gui_app.run()
+    print(f"Application finished with result: {cmd_result}")
     
