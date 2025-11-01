@@ -3,6 +3,7 @@ import logging
 import tkinter as tk
 from tkinter import EventType, scrolledtext, StringVar, BooleanVar
 from tkinter import ttk
+import ttkbootstrap as tb  # tb.Window used for root window only
 from budman_gui_view.constants import *
 
 ATV_DEFAULT_FILEPATH = "~/activity.json"  # default filename for saving
@@ -16,6 +17,15 @@ class BudManGUIFrame(ttk.Frame):
         The BudManViewFrame class is a subclass of the ttkbootstrap class and 
         implements the primary user interface for the application.
 
+        Frame Layout
+        ------------
+        BudManGUIFrame(ttk.Frame)
+            3 rows, 5 columns
+            Row 0: Filepath label, entry, autosave checkbox
+            Row 1: Button frame with Save, Load, Quit buttons
+            Row 2: Paned window with workbook treeview and text area. This
+            enables the treeview and text area to be resized vertically together.
+
         Properties
         ----------
         datacontext : object
@@ -25,86 +35,51 @@ class BudManGUIFrame(ttk.Frame):
     #--------------------------------------------------------------------------+
     #region BudManViewFrame class
     #--------------------------------------------------------------------------+
-    # DataContext property
-    datacontext: object = None    # BudManViewModel object used as datacontext
 
-    # Widget value binding properties
-    # These properties are bound to the UI widgets in the frame
-    filepath_value: tk.StringVar  # file path for the budget manager data file
-    autosave_value: tk.BooleanVar # auto save flag for the budget manager data
-
-    # UI widgets in the frame
-    root : object = None # root window
-    filepath_label: ttk.Label = None
-    filepath_entry: tk.Entry = None
-    autosave_checkbutton: ttk.Checkbutton = None
-    button_frame: ttk.Frame = None
-    save_button : tk.Button = None
-    load_button : tk.Button = None
-    quit_button: tk.Button = None
-    text_frame : tk.Frame = None
-    text_area: scrolledtext.ScrolledText = None
-
-    def __init__(self, root): # self is tk.Tk root window
+    def __init__(self, parent_frame:tk.Frame, root_window:tb.Window, datacontext:object=None): # self is tk.Tk root window
         # init super class (tk.Frame)
         super().__init__()
 
-        # init value properties
-        self.root = root # reference to the root window
-        self.datacontext = root.datacontext # reference to the datacontext
-        self.filepath_value = tk.StringVar(self,value=ATV_DEFAULT_FILEPATH)
-        self.autosave_value = tk.BooleanVar(self)
+        # BudMan Application Attributes
+        self.datacontext = datacontext    # BudManViewModel object used as datacontext
+        self.filepath_value = tk.StringVar(self,value=ATV_DEFAULT_FILEPATH)  # file path for the budget manager data file
+        self.autosave_value = tk.BooleanVar(self) # auto save flag for the budget manager data
         self.autosave_value.set(False) # default for autosave
 
-        # init widgets in ATViewFrame
-        self.create_atviewframe_widgets() # setup atviewframe widgets
-        self.layout_atviewframe_widgets() # layout atviewframe widgets
-        self.bind_atviewframe_widgets()   # bind atviewframe widgets to events
+        # tkinter configuration
+        self.parent = parent_frame # reference to the parent frame
+        self.root = root_window   # reference to the root window
+        self.filepath_label: ttk.Label = None
+        self.filepath_entry: tk.Entry = None
+        self.autosave_checkbutton: ttk.Checkbutton = None
+        self.button_frame: ttk.Frame = None
+        self.save_button : tk.Button = None
+        self.load_button : tk.Button = None
+        self.quit_button: tk.Button = None
+        self.paned_window: ttk.Panedwindow = None
+        self.wb_tree: ttk.Treeview = None
+        self.text_frame : tk.Frame = None
+        self.text_area: scrolledtext.ScrolledText = None
+        # init widgets in BudManGUIFrame
+        self.create_BudManGUIFrame_widgets() # setup BudManGUIFrame widgets
+        self.layout_BudManGUIFrame_widgets() # layout BudManGUIFrame widgets
+        self.bind_BudManGUIFrame_widgets()   # bind BudManGUIFrame widgets to events
+        self.load_sample_data()              # load sample data into widgets for testing
 
-        # ...existing code...
-        self._destroyed = False
-        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
-    #endregion ATViewFrame class
-
-    def on_closing(self):
-        """Handle application closing properly"""
-        self._destroyed = True
-        # Cancel any pending after() calls
-        if hasattr(self, '_after_jobs'):
-            for job in self._after_jobs:
-                self.root.after_cancel(job)
-        # Destroy the window
-        self.root.destroy()
-    
-    def safe_after(self, delay, callback):
-        """Safe wrapper for after() calls"""
-        if not self._destroyed:
-            job = self.root.after(delay, callback)
-            if not hasattr(self, '_after_jobs'):
-                self._after_jobs = []
-            self._after_jobs.append(job)
-            return job
     #--------------------------------------------------------------------------+
-    #region ATViewFrame class methods
+    #region BudManGUIFrame class methods
     #--------------------------------------------------------------------------+
-    def create_atviewframe_widgets(self):
-        '''Create the ATViewFrame widgets with minimal configuration,
+    def create_BudManGUIFrame_widgets(self):
+        '''Create the BudManGUIFrame widgets with minimal configuration,
         applying any style overrides.'''
-        # Configure some style overrides for ATViewFrame
-        style = ttk.Style(self)
-        font_style = ('Segoe UI', 12)
-        style.configure('TFrame', background=BMV_FAINT_GRAY, font=font_style)
-        style.configure('AT.TCheckbutton', background=BMV_FAINT_GRAY, font=font_style)
-        style.configure('AT.TLabel', background=BMV_FAINT_GRAY, font=font_style)
-        style.configure('AT.TEntry', background=BMV_FAINT_GRAY, font=font_style)
-
 
         # Construct the widgets
-        # Basic design: root window -> ATViewFrame -> ATViewFrame widgets
+        # Basic design: root window -> BudManGUIFrame -> BudManGUIFrame widgets
         # button frame holds the buttons arranged horizontally
-        self.filepath_label = ttk.Label(self, text="File Path:")
+        self.filepath_label = ttk.Label(self, text="BDM Store URL:")
         self.filepath_label.configure(style='AT.TLabel') # set style for label
-        self.filepath_entry = tk.Entry(self,textvariable=self.filepath_value, font=font_style) 
+        self.filepath_entry = tk.Entry(self,textvariable=self.filepath_value) 
+        # self.filepath_entry.configure(style='AT.TEntry')  # set style for entry
         self.autosave_checkbutton = \
             ttk.Checkbutton(self,text="Auto Save",offvalue=False,onvalue=True, \
                            variable=self.autosave_value,style='AT.TCheckbutton')
@@ -113,45 +88,45 @@ class BudManGUIFrame(ttk.Frame):
         self.save_button = tk.Button(self.button_frame,text="Save", width=10)
         self.load_button = tk.Button(self.button_frame,text="Load", width=10)
         self.quit_button = tk.Button(self.button_frame,text="Quit", width=10)
-        self.text_frame = tk.Frame(self)
+        self.paned_window = ttk.Panedwindow(self, orient=tk.VERTICAL)
+        self.wb_tree = ttk.Treeview(self.paned_window, 
+                                    columns=('wb_index', 'wf_key', 'Status'), 
+                                    show='tree headings')
+        # self.wb_tree.configure(style='AT.Treeview')  # set style for treeview
+        self.paned_window.add(self.wb_tree, weight=2)
+        self.wb_tree.heading('#0', text='Workbook/Folder Name', anchor='w')
+        self.wb_tree.heading('wb_index', text='wb_index', anchor='w')
+        self.wb_tree.heading('wf_key', text='wf_key', anchor='w')
+        self.wb_tree.heading('Status', text='Status', anchor='w')
+        self.text_frame = tk.Frame(self.paned_window)
         self.text_area = scrolledtext.ScrolledText(self.text_frame,wrap=tk.WORD, 
                                                    width=40, height=10)
+        self.paned_window.add(self.text_frame, weight=3)
+
+    def load_sample_data(self):
+        '''Load sample data into the BudManGUIFrame widgets for testing purposes.'''
+        fi_entry = self.wb_tree.insert('', 'end', text="boa", values=("", "", ""))
+        wf_entry = self.wb_tree.insert(fi_entry, 'end', text="new", values=("", "", ""))
+        self.wb_tree.insert(wf_entry, 'end', text="workbook 1", values=('0', 'Input', 'Loaded'))
+        self.wb_tree.insert(wf_entry, 'end', text="workbook 2", values=('1', 'Working', 'Not Loaded'))
+
         self.text_area.insert(tk.END, "Line 1:\n")
         self.text_area.insert(tk.END, "Line 2:\n")
         self.text_area.insert(tk.END, "Line 3:\n")
         self.text_area.yview(tk.END)
 
-        self.wb_tree = ttk.Treeview(self)
-        self.wb_tree['columns'] = ('wb_index', 'wf_key', 'Status')
-        self.wb_tree.heading('#0', text='Workbook Name', anchor='w')
-        self.wb_tree.heading('wb_index', text='wb_index')
-        self.wb_tree.heading('wf_key', text='wf_key')
-        self.wb_tree.heading('Status', text='Status')
-        self.wb_tree.insert('', 'end', text='Workbook 1', values=('0', 'Input', 'Loaded'))
-        self.wb_tree.insert('', 'end', text='Workbook 2', values=('1', 'Working', 'Not Loaded'))
-        #debug layout
-        # tk.Label(self, text="Cell 3,0").grid(row=3, column=0, columnspan=1, \
-        #                                      sticky="nsew", padx=5, pady=5)
-        # tk.Label(self, text="Cell 3,1").grid(row=3, column=1, columnspan=1, \
-        #                                      sticky="nsew", padx=5, pady=5)
-        # tk.Label(self, text="Cell 3,2").grid(row=3, column=2, columnspan=1, \
-        #                                      sticky="nsew", padx=5, pady=5)
-        # tk.Label(self, text="Cell 3,3").grid(row=3, column=3, columnspan=1, \
-        #                                      sticky="nsew", padx=5, pady=5)
-        # tk.Label(self, text="Cell 3,4").grid(row=3, column=4, columnspan=1, \
-        #                                      sticky="nsew", padx=5, pady=5)
-
-    def layout_atviewframe_widgets(self):
-        '''Configure the ATViewFrame child widgets layout grid configuration'''
-        # Use Pack layout for the ATViewFrame in the root window
-        # The ATViewFrame should expand to fill the root window
+    def layout_BudManGUIFrame_widgets(self):
+        '''Configure the BudManGUIFrame child widgets layout grid configuration'''
+        # Use Pack layout for the BudManGUIFrame in the root window
+        # The BudManGUIFrame should expand to fill the root window
         self.configure(style='TFrame') # set style for the frame
-        self.pack(side='top',  fill="both", expand=True,ipady=20) # pack layout for the frame
+        # self.pack(side='top',  fill="both", expand=True,ipady=20) # pack layout for the frame
 
         # Configure the grid layout for the frame: 4 rows by 5 columns,
         # equal weight for all rows and columns.
         self.columnconfigure((0,1,2,3,4), weight=1)
-        self.rowconfigure(3, weight=2,uniform="b")
+        self.rowconfigure(2, weight=1,uniform="b")
+        # self.rowconfigure(3, weight=2,uniform="b")
 
         # Layout the widgets in the grid
         # row 0: filepath label, entry, autosave checkbutton
@@ -166,15 +141,13 @@ class BudManGUIFrame(ttk.Frame):
         self.load_button.pack(side="right", padx=5, pady=5)
         self.save_button.pack(side="right", padx=5, pady=5)
 
-        # row 2: text area for activity entries
-        self.text_frame.grid(row=2, column=0, columnspan=5, sticky="nsew", padx=5, pady=5)
-        self.text_area.grid(row=0, column=0, sticky="nsew")
+        # row 2: paned window with workbook treeview and text area
+        self.paned_window.grid(row=2, column=0, columnspan=5, sticky="nsew")
         self.text_frame.columnconfigure(0, weight=1)
         self.text_frame.rowconfigure(0, weight=1)
+        self.text_area.grid(row=0, column=0, sticky="nsew")
 
-        # row 3: workbook treeview
-        self.wb_tree.grid(row=3, column=0, columnspan=5, sticky="nsew", padx=5, pady=5)
-    def bind_atviewframe_widgets(self):
+    def bind_BudManGUIFrame_widgets(self):
         ''' Bind the widgets in the frame to their respective event handlers.
         A set up specific key bindings.'''
         # bind event handlers
@@ -187,11 +160,11 @@ class BudManGUIFrame(ttk.Frame):
         self.filepath_entry.bind("<Return>", self.on_filepath_changed)
         self.filepath_entry.bind("<Tab>", self.on_filepath_changed)
         self.filepath_entry.bind("<FocusOut>", self.on_filepath_changed)
-    #endregion ATViewFrame class methods
+    #endregion BudManGUIFrame class methods
     #--------------------------------------------------------------------------+
 
     #--------------------------------------------------------------------------+
-    #region ATViewFrame properties
+    #region BudManGUIFrame properties
     def set_datacontext(self, datacontext: object):
         self.datacontext = datacontext
 
@@ -200,11 +173,11 @@ class BudManGUIFrame(ttk.Frame):
 
     def set_filepath(self, filepath: str):
         self.filepath_value.set(filepath)
-    #endregion ATViewFrame properties
+    #endregion BudManGUIFrame properties
     #--------------------------------------------------------------------------+
 
     #--------------------------------------------------------------------------+
-    #region ATViewFrame event handlers
+    #region BudManGUIFrame event handlers
     #--------------------------------------------------------------------------+
     def on_filepath_changed(self, event):
         """ Event handler for when the user presses the Enter key in the filepath entry. """
@@ -217,17 +190,17 @@ class BudManGUIFrame(ttk.Frame):
             "<FocusOut> event" if event.type == EventType.FocusOut else "Unknown event"
         # TODO: how to signal event to ViewModel?
         #self.datacontext.ativity_store_uri.set(v) # signal ViewModel of change
-        print(f"ATView.ATVFrame.filepath changed to: {v} after: {s}")
+        print(f"BudManGUIWindow.BudManGUIFrame.filepath changed to: {v} after: {s}")
 
     def on_save_button_clicked(self):
         """ Event handler for when the user clicks the save button. """
         v = self.filepath_value.get()
-        print(f"ATView.ATVFrame.save_button clicked with filepath: {v}")
+        print(f"BudManGUIWindow.BudManGUIFrame.save_button clicked with filepath: {v}")
 
     def on_load_button_clicked(self):
         """ Event handler for when the user clicks the load button. """
         v = self.filepath_value.get()
-        print(f"ATView.ATVFrame.load_button clicked with filepath: {v}")
+        print(f"BudManGUIWindow.BudManGUIFrame.load_button clicked with filepath: {v}")
 
     def on_autosave_changed(self):
         """ Event handler for when the user checks or unchecks the 
