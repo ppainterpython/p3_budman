@@ -14,8 +14,9 @@ from typing import List, Optional, Type, Generator, Dict, Tuple, Any, TYPE_CHECK
 import p3_utils as p3u, pyjson5, p3logging as p3l, p3_mvvm as p3m
 # local modules and packages
 import budman_command_processor as cp
+from .budman_gui_style_registry  import StyleRegistry
 from .budman_gui_window  import BudManGUIWindow
-
+from .budman_gui_constants import *
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -34,16 +35,13 @@ class BudManGUIApp:
 
     # Class constructor
     def __init__(self):
-        bmv: BudManGUIWindow = None
+        self.root: BudManGUIWindow = BudManGUIWindow(themename='cosmo')
         logger.info(f"Initializing BudMan GUI Application")
-
-        # Create the BudManView for a UX
-        self.bmv = BudManGUIWindow()
         logger.debug(f"BudManView created")
 
     def run(self) -> p3m.CMD_RESULT_TYPE:
         """Run the BudManView application loop"""
-        self.bmv.mainloop()
+        self.root.mainloop()
         cmd_result: p3m.CMD_RESULT_TYPE = p3m.create_CMD_RESULT_OBJECT(
             cmd_result_status=True,
             result_content_type=p3m.CMD_STRING_OUTPUT,

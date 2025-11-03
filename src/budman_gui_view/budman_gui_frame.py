@@ -1,14 +1,16 @@
 #------------------------------------------------------------------------------+
 import logging
 import tkinter as tk
+import tkinter.font as tkFont
 from tkinter import EventType, scrolledtext, StringVar, BooleanVar
 from tkinter import ttk
 import ttkbootstrap as tb  # tb.Window used for root window only
-from budman_gui_view.constants import *
+from .budman_gui_style_registry import StyleRegistry
+from budman_gui_view.budman_gui_constants import *
 
 ATV_DEFAULT_FILEPATH = "~/activity.json"  # default filename for saving
 
-logger = logging.getLogger(BMV_WINDOW_TITLE)  # create logger for the module
+logger = logging.getLogger(BMG_WINDOW_TITLE)  # create logger for the module
 logger.debug(f"Imported module: {__name__}")
 logger.debug(f"{__name__} Logger name: {logger.name}, Level: {logger.level}")
 
@@ -36,9 +38,9 @@ class BudManGUIFrame(ttk.Frame):
     #region BudManViewFrame class
     #--------------------------------------------------------------------------+
 
-    def __init__(self, parent_frame:tk.Frame, root_window:tb.Window, datacontext:object=None): # self is tk.Tk root window
+    def __init__(self, parent:tb.Window, style_registry: StyleRegistry, datacontext:object=None): # self is tk.Tk root window
         # init super class (tk.Frame)
-        super().__init__()
+        super().__init__(parent,style="BMG.TFrame")
 
         # BudMan Application Attributes
         self.datacontext = datacontext    # BudManViewModel object used as datacontext
@@ -47,8 +49,7 @@ class BudManGUIFrame(ttk.Frame):
         self.autosave_value.set(False) # default for autosave
 
         # tkinter configuration
-        self.parent = parent_frame # reference to the parent frame
-        self.root = root_window   # reference to the root window
+        self.parent = parent   # reference to the root window
         self.filepath_label: ttk.Label = None
         self.filepath_entry: tk.Entry = None
         self.autosave_checkbutton: ttk.Checkbutton = None
@@ -61,6 +62,7 @@ class BudManGUIFrame(ttk.Frame):
         self.text_frame : tk.Frame = None
         self.text_area: scrolledtext.ScrolledText = None
         # init widgets in BudManGUIFrame
+        self.configure(style="BMG.TFrame")
         self.create_BudManGUIFrame_widgets() # setup BudManGUIFrame widgets
         self.layout_BudManGUIFrame_widgets() # layout BudManGUIFrame widgets
         self.bind_BudManGUIFrame_widgets()   # bind BudManGUIFrame widgets to events
@@ -77,28 +79,38 @@ class BudManGUIFrame(ttk.Frame):
         # Basic design: root window -> BudManGUIFrame -> BudManGUIFrame widgets
         # button frame holds the buttons arranged horizontally
         self.filepath_label = ttk.Label(self, text="BDM Store URL:")
-        self.filepath_label.configure(style='AT.TLabel') # set style for label
-        self.filepath_entry = tk.Entry(self,textvariable=self.filepath_value) 
-        # self.filepath_entry.configure(style='AT.TEntry')  # set style for entry
+        self.filepath_label.configure(style='BMG.TLabel') # set style for label
+        entry_font = tkFont.Font(family="Segoe UI", size=12)
+        self.filepath_entry = ttk.Entry(self,textvariable=self.filepath_value,font=entry_font) 
+        # self.filepath_entry.configure(style='BMG.TEntry')  # set style for entry
         self.autosave_checkbutton = \
             ttk.Checkbutton(self,text="Auto Save",offvalue=False,onvalue=True, \
-                           variable=self.autosave_value,style='AT.TCheckbutton')
-        self.autosave_checkbutton.configure(style='AT.TCheckbutton')  
+                           variable=self.autosave_value,style='BMG.TCheckbutton')
+        self.autosave_checkbutton.configure(style='BMG.TCheckbutton')  
         self.button_frame = ttk.Frame(self)
+        self.button_frame.configure(style='BMG.TFrame')  # set style for button frame
         self.save_button = tk.Button(self.button_frame,text="Save", width=10)
         self.load_button = tk.Button(self.button_frame,text="Load", width=10)
         self.quit_button = tk.Button(self.button_frame,text="Quit", width=10)
+
         self.paned_window = ttk.Panedwindow(self, orient=tk.VERTICAL)
+        self.paned_window.configure(style='BMG.TPanedwindow')  # set style for panedwindow
         self.wb_tree = ttk.Treeview(self.paned_window, 
                                     columns=('wb_index', 'wf_key', 'Status'), 
                                     show='tree headings')
-        # self.wb_tree.configure(style='AT.Treeview')  # set style for treeview
+        self.wb_tree.configure(style='BMG.Treeview')
+        # self.wb_tree.configure(style='BMG.Treeview.Heading')
         self.paned_window.add(self.wb_tree, weight=2)
         self.wb_tree.heading('#0', text='Workbook/Folder Name', anchor='w')
+        self.wb_tree.column('#0', anchor='w', width=200)
         self.wb_tree.heading('wb_index', text='wb_index', anchor='w')
+        self.wb_tree.column('wb_index', anchor='w', width=80)
         self.wb_tree.heading('wf_key', text='wf_key', anchor='w')
+        self.wb_tree.column('wf_key', anchor='w', width=80)
         self.wb_tree.heading('Status', text='Status', anchor='w')
+        self.wb_tree.column('Status', anchor='w', width=80)
         self.text_frame = tk.Frame(self.paned_window)
+        self.text_frame.configure(bg=BMG_FAINT_GRAY)
         self.text_area = scrolledtext.ScrolledText(self.text_frame,wrap=tk.WORD, 
                                                    width=40, height=10)
         self.paned_window.add(self.text_frame, weight=3)
@@ -119,7 +131,7 @@ class BudManGUIFrame(ttk.Frame):
         '''Configure the BudManGUIFrame child widgets layout grid configuration'''
         # Use Pack layout for the BudManGUIFrame in the root window
         # The BudManGUIFrame should expand to fill the root window
-        self.configure(style='TFrame') # set style for the frame
+        self.configure(style='BMG.TFrame') # set style for the frame
         # self.pack(side='top',  fill="both", expand=True,ipady=20) # pack layout for the frame
 
         # Configure the grid layout for the frame: 4 rows by 5 columns,
@@ -151,7 +163,7 @@ class BudManGUIFrame(ttk.Frame):
         ''' Bind the widgets in the frame to their respective event handlers.
         A set up specific key bindings.'''
         # bind event handlers
-        self.quit_button.configure(command=self.root.destroy) # close the app
+        self.quit_button.configure(command=self.parent.destroy) # close the app
         self.autosave_checkbutton.configure(command=self.on_autosave_changed)
         self.save_button.configure(command=self.on_save_button_clicked)
         self.load_button.configure(command=self.on_load_button_clicked)
