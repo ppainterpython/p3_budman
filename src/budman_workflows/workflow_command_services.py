@@ -463,8 +463,9 @@ def WORKFLOW_TASK_convert_csv_txns_to_excel_txns(csv_wb: BDMWorkbook,
                 if key.lower() == "date" and isinstance(value, str):
                     value = datetime.datetime.strptime(value, "%m/%d/%Y").date()
                 elif key.lower() == "amount":
-                    cleaned = re.sub(r'[^\d.-]', '', value)  # Remove non-numeric characters
-                    value = float(cleaned)
+                    if not isinstance(value, float):
+                        cleaned = re.sub(r'[^\d.-]', '', value)  # Remove non-numeric characters
+                        value = float(cleaned)
                 row[key] = value
             ws.append(list(row.values()))
         # Task 3: Save the excel_txns workbook
