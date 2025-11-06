@@ -13,14 +13,15 @@ from typing import List, Optional, Type, Generator, Dict, Tuple, Any, TYPE_CHECK
 # third-party modules and packages
 import p3_utils as p3u, pyjson5, p3logging as p3l, p3_mvvm as p3m
 # local modules and packages
-from .budman_gui_style_registry  import StyleRegistry
-from .budman_gui_window  import BudManGUIWindow
-from .budman_gui_constants import *
 import budman_namespace as bdm
 import budman_settings as bdms
-from budman_settings.budman_settings_constants import BUDMAN_CMD_HISTORY_FILENAME
 from budman_data_context import BudManAppDataContext_Binding
 import budman_command_processor as cp
+# bugman_gui_view modules and packages
+from .budman_gui_style_registry  import StyleRegistry
+from .budman_gui_window  import BudManGUIWindow
+from .budman_gui_frame   import BudManGUIFrame
+from .budman_gui_constants import *
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -30,37 +31,77 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 class BudManGUIView(BudManAppDataContext_Binding,
                     p3m.CommandProcessor_Binding):
+    #--------------------------------------------------------------------------+
+    #region BudManGuiView class Intrinsics
+    #--------------------------------------------------------------------------+
+    #region BudManGuiView doc string
     """ Budget Manager GUI View class.
         The BudManGuiView class sets up and runs the BudManGuiView.
     """
-    #region BudManGuiView class Intricsics
+    #endregion BudManGuiView doc string
     #--------------------------------------------------------------------------+
-    #region __init__() 
+    #region    __init__() 
     def __init__(self, 
+                 budman_settings : Optional[bdms.BudManSettings] = None,
                  command_processor : Optional[p3m.CommandProcessor_Binding] = None,
                  data_context : Optional[BudManAppDataContext_Binding] = None,
-                 app_name : str = "P3 Budget Manager GUI View",
-                 settings : Optional[bdms.BudManSettings] = None) -> None:
+                 app_name : str = "P3 Budget Manager GUI View",) -> None:
+        self.root: BudManGUIWindow = None  # type: ignore
         self._app_name = app_name
-        self._settings : bdms.BudManSettings = settings if settings else bdms.BudManSettings()
+        self._settings : bdms.BudManSettings = budman_settings if budman_settings else bdms.BudManSettings()
         self._current_cmd :Optional[str] = None
         self._save_on_exit : bool = True
+        self._dc_binding:bool = False
+        self._cp_binding:bool = False
 
-        # Setup DataContext_Binding
-        self.DC = data_context
+        try:
+            # Setup DataContext_Binding
+            if data_context is not None:
+                self.DC = data_context 
+                self.dc_binding = True
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            logger.debug("BudMaGUIView configured with no DataContext.")
 
-        # Setup CommandProcessor_Binding 
-        self.CP = command_processor
+        try:
+            # Setup CommandProcessor_Binding 
+            if command_processor is not None:
+                self.CP = command_processor if command_processor else None
+                self.cp_binding = True
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            logger.debug("BudMaGUIView configured with no CommandProcessor.")
 
         # Setup the root window
-        self.root: BudManGUIWindow = BudManGUIWindow(themename='cosmo',
-                                                    command_processor=self.CP,
-                                                    data_context=self.DC)
+        self.root = BudManGUIWindow(themename='cosmo',
+                                    budman_settings=self.settings,
+                                    command_processor=command_processor,
+                                    data_context=data_context)
         logger.info(f"Initializing BudMan GUI View")
         logger.debug(f"BudManGUIView created")
     #endregion __init__()
     # ------------------------------------------------------------------------ +
-    #region   BudManGUIView class properties
+    #region    BudManGUIView class properties
+    @property
+    def dc_binding(self) -> bool:
+        """Get the dc_binding property."""
+        return self._dc_binding
+    @dc_binding.setter
+    def dc_binding(self, value: bool) -> None:
+        """Set the dc_binding property."""
+        if not isinstance(value, bool):
+            raise TypeError("dc_binding must be a boolean.")
+        self._dc_binding = value
+    @property
+    def cp_binding(self) -> bool:
+        """Get the cp_binding property."""
+        return self._cp_binding
+    @cp_binding.setter
+    def cp_binding(self, value: bool) -> None:
+        """Set the cp_binding property."""
+        if not isinstance(value, bool):
+            raise TypeError("cp_binding must be a boolean.")
+        self._cp_binding = value
     @property
     def save_on_exit(self) -> bool:
         """Get the save_on_exit property."""
@@ -111,6 +152,10 @@ class BudManGUIView(BudManAppDataContext_Binding,
         logger.debug(f"Settings updated: {self._settings}")
     #endregion BudManGUIView class properties
     #--------------------------------------------------------------------------+
+    #endregion BudManGuiView class Intricsics
+    #--------------------------------------------------------------------------+
+
+    #--------------------------------------------------------------------------+
     #region    BudManGUIView class methods
     def initialize(self) -> None:
         """Initialize the BudManGUIView class."""
@@ -133,8 +178,6 @@ class BudManGUIView(BudManAppDataContext_Binding,
         )
         logger.debug(f"Finished BudManGuiApp.run()") # pragma: no cover
         return cmd_result
+
     #endregion    BudManGUIView class methods
     #--------------------------------------------------------------------------+
-    #endregion BudManGuiView class Intricsics
-    #--------------------------------------------------------------------------+
-    # Event Handler Methods

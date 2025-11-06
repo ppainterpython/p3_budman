@@ -1049,7 +1049,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                 # Create the gui_view and run it
                 gui_view: BudManGUIView = BudManGUIView(command_processor=self,
                                                         data_context=self.DC,
-                                                        settings=self.settings)
+                                                        budman_settings=self.settings)
                 gui_view.initialize()
                 cmd_result = gui_view.run()
                 del gui_view

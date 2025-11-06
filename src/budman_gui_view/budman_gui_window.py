@@ -8,16 +8,20 @@
 # python standard library modules and packages
 import logging
 from typing import Optional
+import tkinter as tk
+import tkinter.font as tkFont
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
 # third-party modules and packages
 import p3_utils as p3u, pyjson5, p3logging as p3l, p3_mvvm as p3m
 # local modules and packages
+import budman_settings as bdms
+from budman_data_context import BudManAppDataContext_Binding
+import budman_command_processor as cp
+# bugman_gui_view modules and packages
 from .budman_gui_style_registry import StyleRegistry
 from .budman_gui_frame import BudManGUIFrame
 from .budman_gui_constants import *
-from budman_data_context import BudManAppDataContext_Binding
-import budman_command_processor as cp
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -29,6 +33,10 @@ logger.debug(f"{__name__} Logger name: {logger.name}, Level: {logger.level}")
 class BudManGUIWindow(ttk.Window, 
                       BudManAppDataContext_Binding,
                       p3m.CommandProcessor_Binding):
+    #--------------------------------------------------------------------------+
+    #region BudManGUIWindow class Intrinsics
+    #--------------------------------------------------------------------------+
+    #region BudManGUIWindow doc string
     """ Budget Manager GUI Window class.
         The BudManGUIWindow class is a subclass of the tb.Window class and 
         implements the entire GUI user interface for the Budget Manager 
@@ -51,29 +59,44 @@ class BudManGUIWindow(ttk.Window,
         datacontext : object
             The data context object for the view. 
     """
-    #region ATView class
+    #endregion BudManGUIWindow doc string
     #--------------------------------------------------------------------------+
     #region __init__() 
     def __init__(self, 
                  themename: str,
+                 budman_settings : Optional[bdms.BudManSettings] = None,
                  command_processor : Optional[p3m.CommandProcessor_Binding] = None,
                  data_context : Optional[BudManAppDataContext_Binding] = None,
                  ) -> None:
         # init root window
         super().__init__(themename=themename)
+        self._settings : bdms.BudManSettings = budman_settings if budman_settings else bdms.BudManSettings()
+        self._dc_binding:bool = False
+        self._cp_binding:bool = False
 
-        # Setup DataContext_Binding
-        self.DC = data_context
-
-        # Setup CommandProcessor_Binding 
-        self.CP = command_processor
+        try:
+            # Setup DataContext_Binding
+            if data_context is not None:
+                self.DC = data_context
+                self.dc_binding = True
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            logger.debug("BudManGUIWindow configured with no DataContext.")
+        try:
+            # Setup CommandProcessor_Binding
+            if command_processor is not None:
+                self.CP = command_processor
+                self.cp_binding = True
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            logger.debug("BudManGUIWindow configured with no CommandProcessor.")
 
         # Setup the View window
         self.style_registry = StyleRegistry(themename=themename)
         self.title( BMG_WINDOW_TITLE)
         self.geometry(f"{BMG_MIN_WINDOW_WIDTH}x{BMG_MIN_WINDOW_HEIGHT}")
         self.themename: str = themename
-        self.budman_gui_frame: ttk.Frame = None
+        self.budman_gui_frame: BudManGUIFrame = None
         self.status_bar: ttk.Frame = None
         self.status_label: ttk.Label = None
         self.progress: ttk.Progressbar = None
@@ -92,8 +115,8 @@ class BudManGUIWindow(ttk.Window,
         # Create the BudManGUIFrame for the main view (row 0)
         self.budman_gui_frame = BudManGUIFrame(self, 
                                                self.style_registry, 
-                                               command_processor=self.CP,
-                                               data_context=self.DC) 
+                                               command_processor=command_processor,
+                                               data_context=data_context) 
         self.budman_gui_frame.grid(row=0, column=0, sticky="nsew", padx=2, pady=2)
 
         # Create the status bar for the bottom of the window (row 1)
@@ -107,7 +130,45 @@ class BudManGUIWindow(ttk.Window,
         # All done
         logger.debug("BudManView initialized")
     #endregion __init__() 
+    # -------------------------------------------------------------------------- +
+    #region   BudManGUIWindow class properties
+    @property
+    def dc_binding(self) -> bool:
+        """Get the dc_binding property."""
+        return self._dc_binding
+    @dc_binding.setter
+    def dc_binding(self, value: bool) -> None:
+        """Set the dc_binding property."""
+        if not isinstance(value, bool):
+            raise TypeError("dc_binding must be a boolean.")
+        self._dc_binding = value
+    @property
+    def cp_binding(self) -> bool:
+        """Get the cp_binding property."""
+        return self._cp_binding
+    @cp_binding.setter
+    def cp_binding(self, value: bool) -> None:
+        """Set the cp_binding property."""
+        if not isinstance(value, bool):
+            raise TypeError("cp_binding must be a boolean.")
+        self._cp_binding = value
+    @property
+    def settings(self) -> bdms.BudManSettings:
+        """Get the settings property."""
+        return self._settings
+    @settings.setter
+    def settings(self, value: bdms.BudManSettings) -> None:
+        """Set the settings property."""
+        if not isinstance(value, bdms.BudManSettings):
+            raise TypeError("settings must be a BudManSettings instance.")
+        self._settings = value
+        logger.debug(f"Settings updated: {self._settings}")
+    #endregion   BudManGUIWindow class properties
     # ------------------------------------------------------------------------ +
+    #endregion BudManGUIWindow class Intrinsics
+    #--------------------------------------------------------------------------+
+
+    #--------------------------------------------------------------------------+
     #region    BudManGUIView class methods
     def initialize(self) -> None:
         """Initialize the BudManGUIView class."""
@@ -166,33 +227,27 @@ class BudManGUIWindow(ttk.Window,
         self.user_label.configure(style="BMG.TLabel")
         self.user_label.grid(row=0, column=2, sticky="e", padx=(10, 5))
 
+    def load_sample_data(self):
+        '''Load sample data into the BudManGUIFrame widgets for testing purposes.'''
+        gui_frame: BudManGUIFrame = self.budman_gui_frame
+        fi_entry = gui_frame.file_tree.insert('', 'end', text="boa", values=("", "", ""))
+        wf_entry = gui_frame.file_tree.insert(fi_entry, 'end', text="new", values=("", "", ""))
+        gui_frame.file_tree.insert(wf_entry, 'end', text="workbook 1", values=('0', 'Input', 'Loaded'))
+        gui_frame.file_tree.insert(wf_entry, 'end', text="workbook 2", values=('1', 'Working', 'Not Loaded'))
+
+        gui_frame.text_area.insert(tk.END, "Line 1:\n")
+        gui_frame.text_area.insert(tk.END, "Line 2:\n")
+        gui_frame.text_area.insert(tk.END, "Line 3:\n")
+        gui_frame.text_area.yview(tk.END)
+        bdm_store_url = self.settings[bdms.BDM_STORE_URL]
+        gui_frame.filepath = bdm_store_url  
+        print("pause")
+
     #endregion BudManGUIView class methods
     #--------------------------------------------------------------------------+
-    # Status bar utility methods
-    
-    def update_status(self, message: str):
-        """Update the status message"""
-        if not self._destroyed and self.status_label.winfo_exists():
-            self.status_label.config(text=message)
-    
-    def update_progress(self, value: int):
-        """Update the progress bar (0-100)"""
-        if not self._destroyed and self.progress.winfo_exists():
-            self.progress["value"] = max(0, min(100, value))
-    
-    def update_window_size(self, width: int, height: int):
-        """Update the window size label"""
-        if not self._destroyed and self.window_size.winfo_exists():
-            self.window_size.config(text=f"Size: {width}x{height}")
-
-    def update_user(self, user: str):
-        """Update the user label"""
-        if not self._destroyed and self.user_label.winfo_exists():
-            self.user_label.config(text=f"User: {user}")
 
     #--------------------------------------------------------------------------+
-    # Event Handler Methods
-
+    #region    BudManGUIWindow Event Handler Methods
     def on_datacontext_changed(self, viewmodel):
         raise NotImplementedError("on_datacontext_change must be implemented in the subclass")
     
@@ -221,5 +276,34 @@ class BudManGUIWindow(ttk.Window,
                 self._after_jobs = []
             self._after_jobs.append(job)
             return job
+    #endregion BudManGUIWindow Event Handler Methods
+    #--------------------------------------------------------------------------+
+
+    #--------------------------------------------------------------------------+
+    #region    Status bar utility methods
+    
+    def update_status(self, message: str):
+        """Update the status message"""
+        if not self._destroyed and self.status_label.winfo_exists():
+            self.status_label.config(text=message)
+    
+    def update_progress(self, value: int):
+        """Update the progress bar (0-100)"""
+        if not self._destroyed and self.progress.winfo_exists():
+            self.progress["value"] = max(0, min(100, value))
+    
+    def update_window_size(self, width: int, height: int):
+        """Update the window size label"""
+        if not self._destroyed and self.window_size.winfo_exists():
+            self.window_size.config(text=f"Size: {width}x{height}")
+
+    def update_user(self, user: str):
+        """Update the user label"""
+        if not self._destroyed and self.user_label.winfo_exists():
+            self.user_label.config(text=f"User: {user}")
+
+    #endregion Status bar utility methods
+    #--------------------------------------------------------------------------+
+
 
 #------------------------------------------------------------------------------+

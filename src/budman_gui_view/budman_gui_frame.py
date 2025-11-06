@@ -23,7 +23,6 @@ import budman_command_processor as cp
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
-ATV_DEFAULT_FILEPATH = "~/activity.json"  # default filename for saving
 logger = logging.getLogger(BMG_WINDOW_TITLE)  # create logger for the module
 logger.debug(f"Imported module: {__name__}")
 logger.debug(f"{__name__} Logger name: {logger.name}, Level: {logger.level}")
@@ -32,6 +31,10 @@ logger.debug(f"{__name__} Logger name: {logger.name}, Level: {logger.level}")
 class BudManGUIFrame(ttk.Frame, 
                       BudManAppDataContext_Binding,
                       p3m.CommandProcessor_Binding):
+    #--------------------------------------------------------------------------+
+    #region BudManViewFrame class intrinsics
+    #--------------------------------------------------------------------------+
+    #region BudMagGUIFram doc string
     """ Budget Manager View Frame class.
         The BudManViewFrame class is a subclass of the ttkbootstrap class and 
         implements the primary user interface for the application.
@@ -51,8 +54,7 @@ class BudManGUIFrame(ttk.Frame,
             The data context for the view, typically a ViewModel object. 
             Just maintain a reference to the datacontext from root.
     """
-    #--------------------------------------------------------------------------+
-    #region BudManViewFrame class
+    #endregion BudMagGUIFram doc string
     #--------------------------------------------------------------------------+
     #region __init__() 
     def __init__(self, 
@@ -63,17 +65,30 @@ class BudManGUIFrame(ttk.Frame,
                  ) -> None:
         # init super class (tk.Frame)
         super().__init__(parent,style="BMG.TFrame")
+        self._dc_binding:bool = False
+        self._cp_binding:bool = False
+        try:
+            # Setup DataContext_Binding
+            if data_context is not None:
+                self.DC = data_context
+                self.dc_binding = True
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            logger.debug("BudManGUIFrame configured with no DataContext.")
 
-        # Setup DataContext_Binding
-        self.DC = data_context
-
-        # Setup CommandProcessor_Binding 
-        self.CP = command_processor
+        try:
+            # Setup CommandProcessor_Binding
+            if command_processor is not None:
+                self.CP = command_processor
+                self.cp_binding = True
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            logger.debug("BudManGUIFrame configured with no CommandProcessor.")
 
         # BudMan Application Attributes
-        self.filepath_value = tk.StringVar(self,value=ATV_DEFAULT_FILEPATH)  # file path for the budget manager data file
-        self.autosave_value = tk.BooleanVar(self) # auto save flag for the budget manager data
-        self.autosave_value.set(False) # default for autosave
+        self._filepath_value = tk.StringVar(self,value="default")  # file path for the budget manager data file
+        self._autosave_value = tk.BooleanVar(self) # auto save flag for the budget manager data
+        self._autosave_value.set(False) # default for autosave
 
         # tkinter configuration
         self.parent = parent   # reference to the root window
@@ -85,16 +100,62 @@ class BudManGUIFrame(ttk.Frame,
         self.load_button : tk.Button = None
         self.quit_button: tk.Button = None
         self.paned_window: ttk.Panedwindow = None
-        self.wb_tree: ttk.Treeview = None
+        self.file_tree: ttk.Treeview = None
         self.text_frame : tk.Frame = None
         self.text_area: scrolledtext.ScrolledText = None
+
         # init widgets in BudManGUIFrame
         self.configure(style="BMG.TFrame")
         self.create_BudManGUIFrame_widgets() # setup BudManGUIFrame widgets
         self.layout_BudManGUIFrame_widgets() # layout BudManGUIFrame widgets
         self.bind_BudManGUIFrame_widgets()   # bind BudManGUIFrame widgets to events
-        self.load_sample_data()              # load sample data into widgets for testing
     #endregion __init__()
+    #--------------------------------------------------------------------------+
+    #region BudManGUIFrame properties
+    @property
+    def dc_binding(self) -> bool:
+        """Get the dc_binding property."""
+        return self._dc_binding
+    @dc_binding.setter
+    def dc_binding(self, value: bool) -> None:
+        """Set the dc_binding property."""
+        if not isinstance(value, bool):
+            raise TypeError("dc_binding must be a boolean.")
+        self._dc_binding = value
+    @property
+    def cp_binding(self) -> bool:
+        """Get the cp_binding property."""
+        return self._cp_binding
+    @cp_binding.setter
+    def cp_binding(self, value: bool) -> None:
+        """Set the cp_binding property."""
+        if not isinstance(value, bool):
+            raise TypeError("cp_binding must be a boolean.")
+        self._cp_binding = value
+
+    @property
+    def filepath(self) -> str:
+        """Get the filepath property."""
+        return self._filepath_value.get()
+
+    @filepath.setter
+    def filepath(self, filepath: str) -> None:
+        """Set the filepath property."""
+        self._filepath_value.set(filepath)
+
+    @property
+    def autosave(self) -> bool:
+        """Get the autosave property."""
+        return self._autosave_value.get()
+    @autosave.setter
+    def autosave(self, autosave: bool) -> None:
+        """Set the autosave property."""
+        self._autosave_value.set(autosave)
+    #endregion BudManGUIFrame properties
+    #--------------------------------------------------------------------------+
+    #endregion BudManGUIFrame class intrinsics
+    #--------------------------------------------------------------------------+
+
     #--------------------------------------------------------------------------+
     #region BudManGUIFrame class methods
     def initialize(self) -> None:
@@ -116,52 +177,42 @@ class BudManGUIFrame(ttk.Frame,
         # button frame holds the buttons arranged horizontally
         self.filepath_label = ttk.Label(self, text="BDM Store URL:")
         self.filepath_label.configure(style='BMG.TLabel') # set style for label
-        entry_font = tkFont.Font(family="Segoe UI", size=12)
-        self.filepath_entry = ttk.Entry(self,textvariable=self.filepath_value,font=entry_font) 
-        # self.filepath_entry.configure(style='BMG.TEntry')  # set style for entry
+        # entry_font = tkFont.Font(family="Segoe UI", size=12)
+        self.filepath_entry = ttk.Entry(self, textvariable=self._filepath_value) #,font=entry_font) 
+        self.filepath_entry.configure(style='BMG.TEntry')  # set style for entry
         self.autosave_checkbutton = \
             ttk.Checkbutton(self,text="Auto Save",offvalue=False,onvalue=True, \
-                           variable=self.autosave_value,style='BMG.TCheckbutton')
+                           variable=self._autosave_value,style='BMG.TCheckbutton')
         self.autosave_checkbutton.configure(style='BMG.TCheckbutton')  
         self.button_frame = ttk.Frame(self)
         self.button_frame.configure(style='BMG.TFrame')  # set style for button frame
-        self.save_button = tk.Button(self.button_frame,text="Save", width=10)
-        self.load_button = tk.Button(self.button_frame,text="Load", width=10)
-        self.quit_button = tk.Button(self.button_frame,text="Quit", width=10)
+        self.save_button = ttk.Button(self.button_frame,text="Save")
+        self.save_button.configure(style='BMG.TButton')  # set style for button
+        self.load_button = ttk.Button(self.button_frame,text="Load")
+        self.load_button.configure(style='BMG.TButton')  # set style for button 
+        self.quit_button = ttk.Button(self.button_frame,text="Quit")
+        self.quit_button.configure(style='BMG.TButton')  # set style for button
 
         self.paned_window = ttk.Panedwindow(self, orient=tk.VERTICAL)
         self.paned_window.configure(style='BMG.TPanedwindow')  # set style for panedwindow
-        self.wb_tree = ttk.Treeview(self.paned_window, 
-                                    columns=('wb_index', 'wf_key', 'Status'), 
+        self.file_tree = ttk.Treeview(self.paned_window, 
+                                    columns=('file_index', 'wf_key', 'Status'), 
                                     show='tree headings')
-        self.wb_tree.configure(style='BMG.Treeview')
-        # self.wb_tree.configure(style='BMG.Treeview.Heading')
-        self.paned_window.add(self.wb_tree, weight=2)
-        self.wb_tree.heading('#0', text='Workbook/Folder Name', anchor='w')
-        self.wb_tree.column('#0', anchor='w', width=200)
-        self.wb_tree.heading('wb_index', text='wb_index', anchor='w')
-        self.wb_tree.column('wb_index', anchor='w', width=80)
-        self.wb_tree.heading('wf_key', text='wf_key', anchor='w')
-        self.wb_tree.column('wf_key', anchor='w', width=80)
-        self.wb_tree.heading('Status', text='Status', anchor='w')
-        self.wb_tree.column('Status', anchor='w', width=80)
+        self.file_tree.configure(style='BMG.Treeview')
+        self.paned_window.add(self.file_tree, weight=2)
+        self.file_tree.heading('#0', text='Name', anchor='w')
+        self.file_tree.column('#0', anchor='w', width=200)
+        self.file_tree.heading('file_index', text='File Index', anchor='w')
+        self.file_tree.column('file_index', anchor='w', width=40)
+        self.file_tree.heading('wf_key', text='wf_key', anchor='w')
+        self.file_tree.column('wf_key', anchor='w', width=80)
+        self.file_tree.heading('Status', text='Status', anchor='w')
+        self.file_tree.column('Status', anchor='w', width=80)
         self.text_frame = tk.Frame(self.paned_window)
         self.text_frame.configure(bg=BMG_FAINT_GRAY)
         self.text_area = scrolledtext.ScrolledText(self.text_frame,wrap=tk.WORD, 
                                                    width=40, height=10)
         self.paned_window.add(self.text_frame, weight=3)
-
-    def load_sample_data(self):
-        '''Load sample data into the BudManGUIFrame widgets for testing purposes.'''
-        fi_entry = self.wb_tree.insert('', 'end', text="boa", values=("", "", ""))
-        wf_entry = self.wb_tree.insert(fi_entry, 'end', text="new", values=("", "", ""))
-        self.wb_tree.insert(wf_entry, 'end', text="workbook 1", values=('0', 'Input', 'Loaded'))
-        self.wb_tree.insert(wf_entry, 'end', text="workbook 2", values=('1', 'Working', 'Not Loaded'))
-
-        self.text_area.insert(tk.END, "Line 1:\n")
-        self.text_area.insert(tk.END, "Line 2:\n")
-        self.text_area.insert(tk.END, "Line 3:\n")
-        self.text_area.yview(tk.END)
 
     def layout_BudManGUIFrame_widgets(self):
         '''Configure the BudManGUIFrame child widgets layout grid configuration'''
@@ -172,16 +223,18 @@ class BudManGUIFrame(ttk.Frame,
 
         # Configure the grid layout for the frame: 4 rows by 5 columns,
         # equal weight for all rows and columns.
-        self.columnconfigure((0,1,2,3,4), weight=1)
-        self.rowconfigure(2, weight=1,uniform="b")
+        self.columnconfigure(0, minsize=100)
+        self.columnconfigure((1,2,3), weight=1)
+        self.columnconfigure(4, minsize=50)
+        self.rowconfigure(2, weight=1, uniform="b")
         # self.rowconfigure(3, weight=2,uniform="b")
 
         # Layout the widgets in the grid
         # row 0: filepath label, entry, autosave checkbutton
-        self.filepath_label.grid(row=0, column=0, sticky="e", padx=5, pady=5)
+        self.filepath_label.grid(row=0, column=0, sticky="w", padx=5, pady=5)
         self.filepath_entry.grid(row=0, column=1, columnspan=3, sticky="ew")
         self.autosave_checkbutton.grid(row=0, column=4, padx=5, pady=5, \
-                                       sticky="w")
+                                       sticky="e")
 
         # row 1: button frame with save, load, quit buttons
         self.button_frame.grid(row=1, column=0, columnspan=5, sticky="nse")
@@ -212,19 +265,6 @@ class BudManGUIFrame(ttk.Frame,
     #--------------------------------------------------------------------------+
 
     #--------------------------------------------------------------------------+
-    #region BudManGUIFrame properties
-    def set_datacontext(self, datacontext: object):
-        self.datacontext = datacontext
-
-    def get_filepath(self):
-        return self.filepath_value.get()
-
-    def set_filepath(self, filepath: str):
-        self.filepath_value.set(filepath)
-    #endregion BudManGUIFrame properties
-    #--------------------------------------------------------------------------+
-
-    #--------------------------------------------------------------------------+
     #region BudManGUIFrame event handlers
     #--------------------------------------------------------------------------+
     def on_filepath_changed(self, event):
@@ -232,7 +272,7 @@ class BudManGUIFrame(ttk.Frame,
         # for <Return> key event, event.keysym = 'Return'
         # for <Tab> key event, event.keysym = 'Tab'
         # for <FocusOut> event, event.type = 'EventType.FocusOut'
-        v = self.filepath_value.get()
+        v = self.filepath
         s = "<Return> key event" if event.keysym == 'Return' else \
             "<Tab> key event" if event.keysym == 'Tab' else \
             "<FocusOut> event" if event.type == EventType.FocusOut else "Unknown event"
@@ -242,21 +282,37 @@ class BudManGUIFrame(ttk.Frame,
 
     def on_save_button_clicked(self):
         """ Event handler for when the user clicks the save button. """
-        v = self.filepath_value.get()
+        v = self.filepath
         print(f"BudManGUIWindow.BudManGUIFrame.save_button clicked with filepath: {v}")
 
     def on_load_button_clicked(self):
         """ Event handler for when the user clicks the load button. """
-        v = self.filepath_value.get()
+        v = self.filepath
+        if self.button_is_enabled(self.save_button):
+            self.disable_button(self.save_button)
+        else:   
+            self.enable_button(self.save_button)
         print(f"BudManGUIWindow.BudManGUIFrame.load_button clicked with filepath: {v}")
 
     def on_autosave_changed(self):
         """ Event handler for when the user checks or unchecks the 
         autosave checkbox. """
         # v = self.autosave_value.get()
-        print(f"BudManView.BudManViewFrame.autosave_value is to: {self.autosave_value.get()}" + \
+        print(f"BudManView.BudManViewFrame.autosave_value is to: {self.autosave}" + \
               f" with autosave_checkbutton.state(): {self.autosave_checkbutton.state()}")
     #endregion BudManViewFrame event handlers
     #--------------------------------------------------------------------------+
     
+    #------------------------------------------------------------------------------+
+    #region BudManGUIFrame support methods
+    def disable_button(self, button:ttk.Button) -> None:
+        """Disable a button widget."""
+        button.state(["disabled"])
+    def enable_button(self, button:ttk.Button) -> None:
+        """Enable a button widget."""
+        button.state(["!disabled"])
+    def button_is_enabled(self, button:ttk.Button) -> bool:
+        """Check if a button widget is enabled."""
+        return button.instate(["!disabled"])    
+    #endrgion BudManGUIFrame support methods
 #------------------------------------------------------------------------------+
