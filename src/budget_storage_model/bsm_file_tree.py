@@ -46,8 +46,15 @@ logger = logging.getLogger(__name__)
 class BSMFileTree:
     """
     A file_tree is a treelib.Tree populated from the BSM folders and files. 
-    BSMFile objects are stored in the node.data attribute of each node and contain
-    additional information about the file or folder.
+    BSMFile objects are stored in the node.data attribute of each node and 
+    contain additional information about the file or folder.
+
+    Arguments
+    ----------
+    folder_url : str - The URL of the root folder for the file tree.
+    save_tree : bool - Whether to save the file tree to a .json file.
+    valid_prefixes : List[str] - List of valid file prefixes to consider.
+    valid_wb_types : List[str] - List of valid workbook types to consider.
     """
     def __init__(self, folder_url:str, save_tree:bool=True,
                  valid_prefixes:List[str]=[], valid_wb_types:List[str]=[]) -> None:
@@ -84,13 +91,13 @@ class BSMFileTree:
             # Save the file_tree to a .json file
             if self.save_tree and self.file_tree_json_file:
                 logger.debug(f"Saving file_tree to {self.file_tree_json_file}")
-                # self.file_tree.save2file(str(self.file_tree_json_file))
+                self.file_tree.save2file(str(self.file_tree_json_file))
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
 
     def construct_file_tree(self) -> Tree:
-        """Create a file_tree structure from a folder's content specified by URL."""
+        """Create a file_tree structure from the url-specified folder's content."""
         p3u.is_not_non_empty_str("folder_url", self.folder_url, raise_error=True)
         folder_abs_path: Path = Path.from_uri(self.folder_url)
         bsm_verify_folder(folder_abs_path, create=False, raise_errors=True)

@@ -301,11 +301,11 @@ def WORKFLOW_TASK_transfer_files(cmd: p3m.CMD_OBJECT_TYPE,
             cp.CK_WB_TYPE - workbook type of destination.
 
     Files are in wf_folders. A list of file_index values references files to 
-    transfer from a source (src) workflow folder to a destination (dst) 
-    wf_folder. Depending on the dst wf_key and wf_purpose, naming conventions 
-    applied to the files being transferred. The dst wb_type also impacts the 
-    dst filename and possible conversion, or transformation tasks applied during
-    the transfer operation.
+    transfer from their current (src) workflow folder to specified a destination
+    (dst) wf_folder. Depending on the dst wf_key and wf_purpose, naming 
+    conventions are applied to the files being transferred. The dst wb_type also
+    impacts the dst filename and possible conversion, or transformation tasks 
+    applied during the transfer operation.
 
     At present, the workflow processes are fixed: intake, categorize_transactions,
     and budget. Each workflow may have up to three wf_folders configured for
@@ -326,6 +326,16 @@ def WORKFLOW_TASK_transfer_files(cmd: p3m.CMD_OBJECT_TYPE,
 
     Raises:
         p3m.CMDValidationException: For unrecoverable errors.
+
+    Currently, only 'boa' fi_key .csv file can be transferred into a workflow.
+    This is how the initial transactions are orchestrated into the process.
+    Eventually, the FI_KEY will specify different schemas for incoming data
+    files to be transformed into common formats used within BudMan workflows. 
+    For now, the schema is a bit hard-coded.
+
+    For future work, anticipate that .csv files downloaded from different
+    financial institutions will have different schemas, column headings, needing
+    to be mapped to a common workbook schema.
     """
     try:
         # Validate the cmd argsuments.
@@ -346,10 +356,10 @@ def WORKFLOW_TASK_transfer_files(cmd: p3m.CMD_OBJECT_TYPE,
         model: BudgetDomainModel = bdm_DC.model
         bsm_file_tree : BSMFileTree = model.bsm_file_tree
         # Extract and validate required parameters from the command.
-        wf_key = cmd_args.get(cp.CK_WF_KEY)
+        dst_wf_key = cmd_args.get(cp.CK_WF_KEY)
         wf_purpose = cmd_args.get(cp.CK_WF_PURPOSE)
         src_file_index_list = cmd_args.get(cp.CK_FILE_LIST)
-        wb_type = cmd_args.get(cp.CK_WB_TYPE)
+        dst_wb_type = cmd_args.get(cp.CK_WB_TYPE)
         fi_key: str = bdm_DC.dc_FI_KEY
         src_bsm_files: List[cp.BSMFile] = []
         src_bsm_files = bsm_file_tree.validate_file_list(src_file_index_list)
@@ -359,40 +369,40 @@ def WORKFLOW_TASK_transfer_files(cmd: p3m.CMD_OBJECT_TYPE,
         # 1. transfer .csv files from file_list to a .csv_txns workbooks
         success: bool = False
         result: str = ""
-        bsm_file: BSMFile = None
+        src_bsm_file: BSMFile = None
         cvs_wb: BDMWorkbook = None
-        for bsm_file in src_bsm_files:
+        for src_bsm_file in src_bsm_files:
             # Process for supported transfer dst wb_types.
-            if wb_type == bdm.WB_TYPE_CSV_TXNS:
+            if dst_wb_type == bdm.WB_TYPE_CSV_TXNS:
                 # Dest wb_type is csv_txns workbook.
                 # Input file must have .csv extension.
-                if bsm_file.extension == bdm.WB_FILETYPE_CSV:
+                if src_bsm_file.extension == bdm.WB_FILETYPE_CSV:
                     # Transfer a .csv file to a .csv_txns workbook.
                     # Create a BDMWorkbook for the new file being transferred.
                     success, result = WORKFLOW_TASK_construct_bdm_workbook(
-                        src_filename=bsm_file.filename,
-                        wb_type=wb_type,
+                        src_filename=src_bsm_file.filename,
+                        wb_type=dst_wb_type,
                         fi_key=fi_key,
-                        wf_key=wf_key,
+                        wf_key=dst_wf_key,
                         wf_purpose=wf_purpose,
                         bdm_DC=bdm_DC
                     )
                     if not success:
                         msg = (f"Failed to construct file URL for file: "
-                               f"'{bsm_file.file_index:2}:{bsm_file.full_filename}'"
+                               f"'{src_bsm_file.file_index:2}:{src_bsm_file.full_filename}'"
                                f" Error: {result}")
                         logger.error(msg)
                         result_content += msg + "\n"
                         continue
                     csv_wb = result
                     success, result = WORKFLOW_TASK_transfer_csv_file_to_workbook(
-                        src_file_url=bsm_file.file_url,
+                        src_file_url=src_bsm_file.file_url,
                         dst_wb=csv_wb,
-                        wb_type=wb_type
+                        wb_type=dst_wb_type
                     )
                     if not success:
                         msg = (f"Failed to transfer file: "
-                               f"'{bsm_file.file_index:2}:{bsm_file.full_filename}' "
+                               f"'{src_bsm_file.file_index:2}:{src_bsm_file.full_filename}' "
                                f" to .csv_txns workbook. Error: {result}")
                         logger.error(msg)
                         result_content += msg + "\n"
@@ -400,7 +410,7 @@ def WORKFLOW_TASK_transfer_files(cmd: p3m.CMD_OBJECT_TYPE,
                 else:
                     # Unsupported file type for transfer.
                     msg = (f"Unsupported source file type file "
-                           f"'{bsm_file.file_index:2}:{bsm_file.full_filename}'"
+                           f"'{src_bsm_file.file_index:2}:{src_bsm_file.full_filename}'"
                            f" must be .csv file.")
                     logger.error(msg)
                     result_content += msg + "\n"
@@ -411,7 +421,7 @@ def WORKFLOW_TASK_transfer_files(cmd: p3m.CMD_OBJECT_TYPE,
                 wdc[wb_id] = csv_wb
             else:
                 # Unsupported dst wb_type for transfer.
-                msg = (f"Unsupported destination workbook type for transfer: {wb_type}")
+                msg = (f"Unsupported destination workbook type for transfer: {dst_wb_type}")
                 logger.error(msg)
                 result_content += msg + "\n"
                 continue

@@ -41,7 +41,7 @@ class CommandProcessor_Binding(CommandProcessor_Base):
                              f"must be an instance of CommandProcessor_Base., "
                              f"not type: '{type(command_processor).__name__}'.")
         self._cp : CommandProcessor_Base = command_processor  # Command Processor
-        self._cmd_map : Dict[str, Callable] = None
+        # self._cmd_map : Dict[str, Callable] = None
     #endregion __init__() constructor method
     # ------------------------------------------------------------------------ +
     #endregion CommandProcessor_Binding class instrisics - override for app-specific

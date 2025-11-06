@@ -6,12 +6,12 @@ __name__ = "budman_gui_view"
 __description__ = "Budget Manager GUI View."
 __license__ = "MIT"
 
-from .budman_gui_app import BudManGUIApp
+from .budman_gui_view import BudManGUIView
 from .budman_gui_window import BudManGUIWindow
 from .budman_gui_frame import BudManGUIFrame
 from .budman_gui_constants import *
 __all__ = [
-    "BudManGUIApp",
+    "BudManGUIView",
     "BudManGUIWindow",
     "BudManGUIFrame",
     BMG_FAINT_GRAY,

@@ -1,20 +1,37 @@
+# ---------------------------------------------------------------------------- +
+#region budman_gui_frame.py module
+""" budman_gui_frame.py implements the class BudManGuiFrame.
+"""
+#endregion budman_gui_app.py module
 #------------------------------------------------------------------------------+
+#region Imports
+# python standard library modules and packages
 import logging
+from typing import Optional
 import tkinter as tk
 import tkinter.font as tkFont
 from tkinter import EventType, scrolledtext, StringVar, BooleanVar
 from tkinter import ttk
 import ttkbootstrap as tb  # tb.Window used for root window only
+# third-party modules and packages
+import p3_utils as p3u, pyjson5, p3logging as p3l, p3_mvvm as p3m
+# local modules and packages
 from .budman_gui_style_registry import StyleRegistry
 from budman_gui_view.budman_gui_constants import *
-
+from budman_data_context import BudManAppDataContext_Binding
+import budman_command_processor as cp
+#endregion Imports
+# ---------------------------------------------------------------------------- +
+#region Globals and Constants
 ATV_DEFAULT_FILEPATH = "~/activity.json"  # default filename for saving
-
 logger = logging.getLogger(BMG_WINDOW_TITLE)  # create logger for the module
 logger.debug(f"Imported module: {__name__}")
 logger.debug(f"{__name__} Logger name: {logger.name}, Level: {logger.level}")
-
-class BudManGUIFrame(ttk.Frame):
+#endregion Globals and Constants
+# ---------------------------------------------------------------------------- +
+class BudManGUIFrame(ttk.Frame, 
+                      BudManAppDataContext_Binding,
+                      p3m.CommandProcessor_Binding):
     """ Budget Manager View Frame class.
         The BudManViewFrame class is a subclass of the ttkbootstrap class and 
         implements the primary user interface for the application.
@@ -37,13 +54,23 @@ class BudManGUIFrame(ttk.Frame):
     #--------------------------------------------------------------------------+
     #region BudManViewFrame class
     #--------------------------------------------------------------------------+
-
-    def __init__(self, parent:tb.Window, style_registry: StyleRegistry, datacontext:object=None): # self is tk.Tk root window
+    #region __init__() 
+    def __init__(self, 
+                 parent:tb.Window, 
+                 style_registry: StyleRegistry, 
+                 command_processor : Optional[p3m.CommandProcessor_Binding] = None,
+                 data_context : Optional[BudManAppDataContext_Binding] = None,
+                 ) -> None:
         # init super class (tk.Frame)
         super().__init__(parent,style="BMG.TFrame")
 
+        # Setup DataContext_Binding
+        self.DC = data_context
+
+        # Setup CommandProcessor_Binding 
+        self.CP = command_processor
+
         # BudMan Application Attributes
-        self.datacontext = datacontext    # BudManViewModel object used as datacontext
         self.filepath_value = tk.StringVar(self,value=ATV_DEFAULT_FILEPATH)  # file path for the budget manager data file
         self.autosave_value = tk.BooleanVar(self) # auto save flag for the budget manager data
         self.autosave_value.set(False) # default for autosave
@@ -67,10 +94,19 @@ class BudManGUIFrame(ttk.Frame):
         self.layout_BudManGUIFrame_widgets() # layout BudManGUIFrame widgets
         self.bind_BudManGUIFrame_widgets()   # bind BudManGUIFrame widgets to events
         self.load_sample_data()              # load sample data into widgets for testing
-
+    #endregion __init__()
     #--------------------------------------------------------------------------+
     #region BudManGUIFrame class methods
-    #--------------------------------------------------------------------------+
+    def initialize(self) -> None:
+        """Initialize the BudManGUIView class."""
+        try:
+            # Setup the file tree here from self.DC.model.bsm_file_tree
+            logger.debug(f"BudManGUIFrame: Initializing BudManGUIFrame widgets.")
+            return self
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise
+
     def create_BudManGUIFrame_widgets(self):
         '''Create the BudManGUIFrame widgets with minimal configuration,
         applying any style overrides.'''

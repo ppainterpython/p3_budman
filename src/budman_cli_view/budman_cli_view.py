@@ -189,6 +189,58 @@ class BudManCLIView(cmd2.Cmd,
         self.set_prompt()
     #endregion __init__() method
     # ------------------------------------------------------------------------ +
+    #region   BudManCLIView class properties
+    @property
+    def save_on_exit(self) -> bool:
+        """Get the save_on_exit property."""
+        return self._save_on_exit
+    @save_on_exit.setter
+    def save_on_exit(self, value: bool) -> None:
+        """Set the save_on_exit property."""
+        if not isinstance(value, bool):
+            raise TypeError("save_on_exit must be a boolean.")
+        self._save_on_exit = value
+
+    @property
+    def app_name(self) -> str:
+        """Get the app_name property."""
+        return self._app_name
+    @app_name.setter
+    def app_name(self, value: str) -> None:
+        """Set the app_name property."""
+        if not isinstance(value, str):
+            raise TypeError("app_name must be a string.")
+        self._app_name = value
+        BudManCLIView.prompt = PO_ON_PROMPT if self.cp_parse_only else PO_OFF_PROMPT
+
+    @property
+    def current_cmd(self) -> Optional[str]:
+        """Get the current_cmd property."""
+        return self._current_cmd
+    @current_cmd.setter
+    def current_cmd(self, value: Optional[str]) -> None:
+        """Set the current_cmd property."""
+        if value is not None and not isinstance(value, str):
+            raise TypeError("current_cmd must be a string or None.")
+        self._current_cmd = value
+        if value:
+            logger.debug(f"Current command set to: {value}")
+        else:
+            logger.debug("Current command cleared.")
+
+    @property
+    def settings(self) -> bdms.BudManSettings:
+        """Get the settings property."""
+        return self._settings
+    @settings.setter
+    def settings(self, value: bdms.BudManSettings) -> None:
+        """Set the settings property."""
+        if not isinstance(value, bdms.BudManSettings):
+            raise TypeError("settings must be a BudManSettings instance.")
+        self._settings = value
+        logger.debug(f"Settings updated: {self._settings}")
+    #endregion BudManCLIView class properties
+    # ------------------------------------------------------------------------ +
     #region    BudManCLIView Methods
     def initialize(self) -> None:
         """Initialize the BudManCLIView class."""
@@ -268,59 +320,6 @@ class BudManCLIView(cmd2.Cmd,
             logger.exception(p3u.exc_err_msg(e))
             raise
     #endregion postcmd_hook Methods
-    # ------------------------------------------------------------------------ +
-    #region   BudManCLIView class properties
-    
-    @property
-    def save_on_exit(self) -> bool:
-        """Get the save_on_exit property."""
-        return self._save_on_exit
-    @save_on_exit.setter
-    def save_on_exit(self, value: bool) -> None:
-        """Set the save_on_exit property."""
-        if not isinstance(value, bool):
-            raise TypeError("save_on_exit must be a boolean.")
-        self._save_on_exit = value
-
-    @property
-    def app_name(self) -> str:
-        """Get the app_name property."""
-        return self._app_name
-    @app_name.setter
-    def app_name(self, value: str) -> None:
-        """Set the app_name property."""
-        if not isinstance(value, str):
-            raise TypeError("app_name must be a string.")
-        self._app_name = value
-        BudManCLIView.prompt = PO_ON_PROMPT if self.cp_parse_only else PO_OFF_PROMPT
-
-    @property
-    def current_cmd(self) -> Optional[str]:
-        """Get the current_cmd property."""
-        return self._current_cmd
-    @current_cmd.setter
-    def current_cmd(self, value: Optional[str]) -> None:
-        """Set the current_cmd property."""
-        if value is not None and not isinstance(value, str):
-            raise TypeError("current_cmd must be a string or None.")
-        self._current_cmd = value
-        if value:
-            logger.debug(f"Current command set to: {value}")
-        else:
-            logger.debug("Current command cleared.")
-
-    @property
-    def settings(self) -> bdms.BudManSettings:
-        """Get the settings property."""
-        return self._settings
-    @settings.setter
-    def settings(self, value: bdms.BudManSettings) -> None:
-        """Set the settings property."""
-        if not isinstance(value, bdms.BudManSettings):
-            raise TypeError("settings must be a BudManSettings instance.")
-        self._settings = value
-        logger.debug(f"Settings updated: {self._settings}")
-    #endregion BudManCLIView class properties
     # ------------------------------------------------------------------------ +
     #endregion BudManCLIView class  intrinsics
     # ======================================================================== +

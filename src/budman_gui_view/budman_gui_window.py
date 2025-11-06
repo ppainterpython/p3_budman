@@ -1,17 +1,34 @@
-#-----------------------------------------------------------------------------+
+# ---------------------------------------------------------------------------- +
+#region budman_gui_window.py module
+""" budman_gui_window.py implements the class BudManGuiWindow.
+"""
+#endregion budman_gui_app.py module
+# ---------------------------------------------------------------------------- +
+#region Imports
+# python standard library modules and packages
 import logging
+from typing import Optional
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
-# import ttkbootstrap as tb  # tb.Window used for root window only
+# third-party modules and packages
+import p3_utils as p3u, pyjson5, p3logging as p3l, p3_mvvm as p3m
+# local modules and packages
 from .budman_gui_style_registry import StyleRegistry
 from .budman_gui_frame import BudManGUIFrame
 from .budman_gui_constants import *
-
+from budman_data_context import BudManAppDataContext_Binding
+import budman_command_processor as cp
+#endregion Imports
+# ---------------------------------------------------------------------------- +
+#region Globals and Constants
 logger = logging.getLogger(__name__)  # create logger for the module
 logger.debug(f"Imported module: {__name__}")
 logger.debug(f"{__name__} Logger name: {logger.name}, Level: {logger.level}")
-
-class BudManGUIWindow(ttk.Window):
+#endregion Globals and Constants
+# ---------------------------------------------------------------------------- +
+class BudManGUIWindow(ttk.Window, 
+                      BudManAppDataContext_Binding,
+                      p3m.CommandProcessor_Binding):
     """ Budget Manager GUI Window class.
         The BudManGUIWindow class is a subclass of the tb.Window class and 
         implements the entire GUI user interface for the Budget Manager 
@@ -36,10 +53,22 @@ class BudManGUIWindow(ttk.Window):
     """
     #region ATView class
     #--------------------------------------------------------------------------+
-    # Class constructor
-    def __init__(self, themename: str, datacontext:object = None ):
+    #region __init__() 
+    def __init__(self, 
+                 themename: str,
+                 command_processor : Optional[p3m.CommandProcessor_Binding] = None,
+                 data_context : Optional[BudManAppDataContext_Binding] = None,
+                 ) -> None:
         # init root window
         super().__init__(themename=themename)
+
+        # Setup DataContext_Binding
+        self.DC = data_context
+
+        # Setup CommandProcessor_Binding 
+        self.CP = command_processor
+
+        # Setup the View window
         self.style_registry = StyleRegistry(themename=themename)
         self.title( BMG_WINDOW_TITLE)
         self.geometry(f"{BMG_MIN_WINDOW_WIDTH}x{BMG_MIN_WINDOW_HEIGHT}")
@@ -50,9 +79,6 @@ class BudManGUIWindow(ttk.Window):
         self.progress: ttk.Progressbar = None
         self.user_label: ttk.Label = None
         
-        # BudMan Application Attributes
-        self.datacontext: object = datacontext    # datacontext object
-
         # Configure main window grid
         self._destroyed: bool = False
         self.minsize(BMG_MIN_WINDOW_WIDTH, BMG_MIN_WINDOW_HEIGHT)
@@ -64,7 +90,10 @@ class BudManGUIWindow(ttk.Window):
         self.grid_columnconfigure(0, weight=1) # Full width
 
         # Create the BudManGUIFrame for the main view (row 0)
-        self.budman_gui_frame = BudManGUIFrame(self, self.style_registry, self.datacontext) 
+        self.budman_gui_frame = BudManGUIFrame(self, 
+                                               self.style_registry, 
+                                               command_processor=self.CP,
+                                               data_context=self.DC) 
         self.budman_gui_frame.grid(row=0, column=0, sticky="nsew", padx=2, pady=2)
 
         # Create the status bar for the bottom of the window (row 1)
@@ -77,6 +106,18 @@ class BudManGUIWindow(ttk.Window):
 
         # All done
         logger.debug("BudManView initialized")
+    #endregion __init__() 
+    # ------------------------------------------------------------------------ +
+    #region    BudManGUIView class methods
+    def initialize(self) -> None:
+        """Initialize the BudManGUIView class."""
+        try:
+            logger.debug(f"BudManGUIWindow: Initializing BudManGUIFrame widgets.")
+            self.budman_gui_frame.initialize()
+            return self
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise
 
     def _create_status_bar(self):
         """Creates a persistent status bar at the bottom of the window."""
@@ -125,6 +166,7 @@ class BudManGUIWindow(ttk.Window):
         self.user_label.configure(style="BMG.TLabel")
         self.user_label.grid(row=0, column=2, sticky="e", padx=(10, 5))
 
+    #endregion BudManGUIView class methods
     #--------------------------------------------------------------------------+
     # Status bar utility methods
     
