@@ -88,8 +88,6 @@ __all__ = [
     "VALID_BDM_PROPERTIES",
     "BSM_PERSISTED_PROPERTIES",
     "VALID_BSM_BDM_STORE_FILETYPES",
-    # Well-known column names for banking transactions workbooks.
-    "BUDGET_CATEGORY_COL",
     # BDM_OPTIONS Budget Model Options (BMO)Constants
     "BDMO_LOG_CONFIG",
     "BDMO_LOG_LEVEL",
@@ -101,6 +99,9 @@ __all__ = [
     "FI_NAME",
     "FI_TYPE",
     "FI_FOLDER",
+    "FI_TRANSACTION_DESCRIPTION_COLUMN",
+    "FI_TRANSACTION_BUDGET_CATEGORY_COLUMN",
+    "FI_TRANSACTION_WORKSHEET_NAME",
     "FI_WF_FOLDER_CONFIG_COLLECTION",
     "FI_WORKBOOK_DATA_COLLECTION", 
     # Additional FI_DATA-related constants

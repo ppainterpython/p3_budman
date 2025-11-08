@@ -35,7 +35,7 @@ from .workflow_utils import (
 from .budget_categorization import (
     check_sheet_columns, 
     check_sheet_schema, 
-    ORIGINAL_DESCRIPTION_COL_NAME, 
+    TRANSACTION_DESCRIPTION_COL_NAME, 
     validate_budget_categories,
     process_budget_category,
     apply_check_register
@@ -87,7 +87,7 @@ __all__ = [
     # budget_categorization.py module
     "check_sheet_columns",
     "check_sheet_schema",
-    "ORIGINAL_DESCRIPTION_COL_NAME",
+    "TRANSACTION_DESCRIPTION_COL_NAME",
     "validate_budget_categories",
     "process_budget_category",
     "apply_check_register",

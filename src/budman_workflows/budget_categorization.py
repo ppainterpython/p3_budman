@@ -75,6 +75,17 @@ BOA_WB_COLUMNS = [
     "Simple Description"
     ]
 
+# The following columns are not needed and can be removed
+BOA_WB_COLUMNS_TO_REMOVE = [
+    "Status", 
+    "Split Type", 
+    "Category", 
+    "User Description", 
+    "Memo", 
+    "Classification"
+    ]
+
+
 # BudMan adds additional columns prior to processing transactions. These
 # columns are filled by BudMan workflows, such as categorization.
 BUDGET_CATEGORY_COL_NAME = "Budget Category"  
@@ -90,17 +101,17 @@ RULE_COL_NAME = "Rule"
 
 # BudMan utilizes the following columns from the BOA side:
 DATE_COL_NAME = BOA_DATE_COL_NAME 
-ORIGINAL_DESCRIPTION_COL_NAME = BOA_ORIGINAL_DESCRIPTION_COL_NAME
+TRANSACTION_DESCRIPTION_COL_NAME = BOA_ORIGINAL_DESCRIPTION_COL_NAME
 CURRENCY_COL_NAME = BOA_CURRENCY_COL_NAME
 AMOUNT_COL_NAME = BOA_AMOUNT_COL_NAME 
 ACCOUNT_NAME_COL_NAME = BOA_ACCOUNT_NAME_COL_NAME  
 
-# BudMan processes the original .csv file from BOA to product an excel
-# workbook will then have the following columns:
+# BudMan processes the original .csv file from BOA to produce an excel
+# transactions workbook with the following columns:
 BUDMAN_WB_COLUMNS = [
     "Status", 
     DATE_COL_NAME, 
-    ORIGINAL_DESCRIPTION_COL_NAME,
+    TRANSACTION_DESCRIPTION_COL_NAME,
     "Split Type", 
     "Category", 
     CURRENCY_COL_NAME, 
@@ -131,7 +142,7 @@ BUDGET_CATEGORY_COL_INDEX = 12
 
 BOA_WB_COL_DIMENSIONS = {
     DATE_COL_NAME: 12,
-    ORIGINAL_DESCRIPTION_COL_NAME: 95,
+    TRANSACTION_DESCRIPTION_COL_NAME: 95,
     CURRENCY_COL_NAME: 9,
     AMOUNT_COL_NAME: 14,
     ACCOUNT_NAME_COL_NAME: 68,
@@ -148,7 +159,7 @@ BUDMAN_SHEET_NAME = "TransactionData"
 
 BUDMAN_REQUIRED_COLUMNS = [
     DATE_COL_NAME, 
-    ORIGINAL_DESCRIPTION_COL_NAME, 
+    TRANSACTION_DESCRIPTION_COL_NAME, 
     CURRENCY_COL_NAME,
     AMOUNT_COL_NAME, 
     ACCOUNT_CODE_COL_NAME, 
@@ -200,12 +211,14 @@ class TransactionData:
 #endregion dataclasses
 # ---------------------------------------------------------------------------- +
 #region check_sheet_columns() function
-def check_sheet_columns(sheet: Worksheet, add_columns: bool = True) -> bool:
+def check_sheet_columns(sheet: Worksheet, 
+                        trans_desc: str,
+                        add_columns: bool = True) -> bool:
     """Check that the sheet is ready to process transactions.
     
     BudMan uses these columns to process transactions in a sheet:
     DATE_COL_NAME - date of the transaction.
-    ORIGINAL_DESCRIPTION_COL_NAME - the description of the transaction.
+    TRANSACTION_DESCRIPTION_COL_NAME - the description of the transaction.
     CURRENCY_COL_NAME - the unit of currency, USD, EUR, etc.
     AMOUNT_COL_NAME - the amount of the transaction, as a float.
     ACCOUNT_CODE_COL_NAME - the short-name of the account for the transaction. 
@@ -234,10 +247,17 @@ def check_sheet_columns(sheet: Worksheet, add_columns: bool = True) -> bool:
         # Check if all required columns are present
         missing_columns = [col for col in BUDMAN_REQUIRED_COLUMNS if col not in col_names]
         
-        if not missing_columns:
-            logger.info(f"Required columns are present:('{sheet.title}')")
-            return True
+        if missing_columns is not None and len(missing_columns) > 0:
+            # If the trans_desc column is missing, cannot continue.
+            if trans_desc in missing_columns:
+                m = f"Source transaction description column '{trans_desc}' not found in header row."
+                logger.error(m)
+                return False
+            logger.error(f"Some required columns are present in sheet:('{sheet.title}')")
+            logger.error(f"  Missing Columns: '{missing_columns}'")
         
+        missing_count = len(missing_columns)
+        added_count = 0
         if add_columns:
             # Add missing columns to the sheet to the right.
             for col_name in missing_columns:
@@ -249,8 +269,9 @@ def check_sheet_columns(sheet: Worksheet, add_columns: bool = True) -> bool:
                 sheet.column_dimensions[sheet.cell(row=1, column=i).column_letter].width = width
                 logger.debug(f"Column '{col_name}' added at index = {i}, "
                             f"column_letter = '{sheet.cell(row =1, column=i).column_letter}'")
-            logger.info(f"Added missing columns: {', '.join(missing_columns)}")
-        else:
+                added_count += 1
+            logger.info(f"Added '{added_count}' of '{missing_count}' missing columns from: {', '.join(missing_columns)}")
+        if added_count < missing_count:
             logger.error(f"Sheet('{sheet.title}') missing required columns: {', '.join(missing_columns)}")
             return False
         logger.info("Completed checks for required columns.")
@@ -386,7 +407,7 @@ def WORKSHEET_row_data(row:tuple,hdr:list=BUDMAN_WB_COLUMNS) -> TransactionData:
 
         # Extract some of the values as strings to generate a hash from
         t_date_str = p3u.iso_date_only_string(row_dict[DATE_COL_NAME])
-        t_desc = row_dict[ORIGINAL_DESCRIPTION_COL_NAME]
+        t_desc = row_dict[TRANSACTION_DESCRIPTION_COL_NAME]
         t_currency = row_dict[CURRENCY_COL_NAME]
         t_amt_str = str(row_dict[AMOUNT_COL_NAME])
         t_acct_str = row_dict[ACCOUNT_NAME_COL_NAME]
@@ -396,7 +417,7 @@ def WORKSHEET_row_data(row:tuple,hdr:list=BUDMAN_WB_COLUMNS) -> TransactionData:
         transaction = TransactionData(
             tid=t_id,
             date=row_dict[DATE_COL_NAME],
-            description=row_dict[ORIGINAL_DESCRIPTION_COL_NAME],
+            description=row_dict[TRANSACTION_DESCRIPTION_COL_NAME],
             currency=row_dict[CURRENCY_COL_NAME],
             amount=row_dict[AMOUNT_COL_NAME],
             account_code=row_dict[ACCOUNT_CODE_COL_NAME],
@@ -415,7 +436,7 @@ def WORKSHEET_row_data(row:tuple,hdr:list=BUDMAN_WB_COLUMNS) -> TransactionData:
 # ---------------------------------------------------------------------------- +
 #region col_i() function
 def col_i(col_name:str, hdr:list) -> int:
-    """Get the 0-based index of a column name in a header row.
+    """Get the 0-based index of a column name in a header list.
     
     Args:
         col_name (str): The name of the column to find.
@@ -670,12 +691,18 @@ def process_budget_category(bdm_wb:BDMWorkbook,
                  f"no action taken.")
             logger.error(m)
             return False, m
-        # For the FI_KEY, get the name of the transaction workbook 
-        # column used to map budget categories. Map 'src_column' to column in 
+        # For the FI_KEY, get the name of the workbook column used as the 
+        # transaction description (trans_desc) which is mapped to a budget 
+        # category (bud_cat). Map 'trans_desc' column to 'bud_cat' column in 
         # the workbook being category mapped.
-        src_column = fi_obj[FI_TRANSACTION_DESCRIPTION_COLUMN]
-        if not p3u.is_non_empty_str("src", src_column):
-            m = f"Source categry mapping column name '{str(src_column)}' is not valid."
+        trans_desc = fi_obj[FI_TRANSACTION_DESCRIPTION_COLUMN]
+        if not p3u.is_non_empty_str("src", trans_desc):
+            m = f"Source transaction description column name '{str(trans_desc)}' is not valid."
+            logger.error(m)
+            return False, m
+        bud_cat = fi_obj[FI_TRANSACTION_BUDGET_CATEGORY_COLUMN]
+        if not p3u.is_non_empty_str("bud_cat", bud_cat):
+            m = f"Destination budget category column name '{str(bud_cat)}' is not valid."
             logger.error(m)
             return False, m
         # Now get the name of the worksheet in the workbook containung the
@@ -696,49 +723,27 @@ def process_budget_category(bdm_wb:BDMWorkbook,
         #endregion FI-specific data needed for the workbook
 
         # The workbooks's transaction worksheet is now available as ws.
-        if not check_sheet_columns(ws, add_columns=False):
+        # Check that the required columns are present.
+        if not check_sheet_columns(ws, trans_desc, add_columns=False):
             m = (f"Sheet '{ws.title}' cannot be mapped due to "
                     f"missing required columns.")
             logger.error(m)
             return False, m
 
-        # An openpyxl Worksheet is an array of tupes, 1-based index.
-        # A row is a tuple of the Cell objects in the row. Tuples are 0-based
-        # hdr is a list, also 0-based. So, using the index(name) will 
-        # give the cell from a row tuple matching the column name in hdr.
-        hdr = [cell.value for cell in ws[1]] 
+        # An openpyxl Worksheet is an array of tuples, 1-based index.
+        # A row is a tuple of the Cell objects in the row. Tuples are 0-based.
+        # The first row is the header row, hdr, a list, also 0-based. So, using 
+        # the index of the column name from the hdr gives the cell from a 
+        # row tuple matching the column name in hdr.
+        hdr = [cell.value for cell in ws[1]] # Extract hdr col names. 
 
-        # Open Other category workbook to save unmapped rows.
-        other_wb: Workbook = None
-        other_ws: Worksheet = None
-        other_wb, other_ws = open_other_category_workbook(hdr, 
-                                                          clear_content=clear_other)
-
-        # Check if the source and destination columns are in the header row.
-        # General model:
-        #   Map the text in a "Transaction Description" column to a
-        #   "Budget Category" column. The exact columns to use for each are 
-        #   part of the configuratoin for a financial institution. Here, we 
-        #   to the transaction description trans_desc and the budget catgegory
-        #   bud_cat.
-        if src_column in hdr:
-            src_col_index = hdr.index(src_column)
-        else:
-            m = f"Source column '{src_column}' not found in header row."
-            logger.error(m)
-            return False, m
-        dst = BUDGET_CATEGORY_COL
-        if dst in hdr:
-            dst_col_index = hdr.index(dst)
-        else:
-            m = f"Destination column '{dst}' not found in header row."
-            logger.error(m)
-            return False, m       
         # TODO: need to refactor this to do replacements by col_name or something.
         # This is specific to the Budget Category mapping, which now is to be
         # split into 3 levels: Level1, Level2, Level3.
 
-        # These are values to set in the rows.
+        # Setup index values for each hdr column of interest.
+        trans_desc_i = col_i(trans_desc,hdr)
+        bud_cat_i = col_i(bud_cat,hdr)
         date_i = col_i(DATE_COL_NAME,hdr)
         l1_i = col_i(LEVEL_1_COL_NAME,hdr)
         l2_i = col_i(LEVEL_2_COL_NAME,hdr)
@@ -753,12 +758,18 @@ def process_budget_category(bdm_wb:BDMWorkbook,
         essential_i = col_i(ESSENTIAL_COL_NAME,hdr)
         rule_i = col_i(RULE_COL_NAME,hdr)
 
-        logger.debug(f"Mapping '{src_column}'({src_col_index}) to "
-                    f"'{dst}'({dst_col_index})")
+        logger.debug(f"Mapping '{trans_desc}'({trans_desc_i}) to "
+                    f"'{bud_cat}'({bud_cat_i})")
         num_rows = ws.max_row # or set a smaller limit
         other_count = 0
         ch = clear_category_histogram()  # Clear the category histogram.
         rules_count = category_map_count()
+        # Open Other category workbook to save unmapped rows.
+        other_wb: Workbook = None
+        other_ws: Worksheet = None
+        other_wb, other_ws = open_other_category_workbook(hdr, 
+                                                          clear_content=clear_other)
+
         task_name = "process_budget_category()"
         logger.info(f"Start Task: {task_name}: Apply '{rules_count}' budget category mapping rules "
                     f"to {ws.max_row-1} rows in workbook: '{bdm_wb.wb_id}' "
@@ -767,19 +778,24 @@ def process_budget_category(bdm_wb:BDMWorkbook,
         for row in ws.iter_rows(min_row=2):
             # row is a 'tuple' of Cell objects, 0-based index
             row_idx = row[0].row  # Get the row index, the row number, 1-based.
-            # Do the mapping from src to dst.
-            dst_cell = row[dst_col_index]
-            src_value = row[src_col_index].value 
+            # Do the mapping from trans_desc to bud_cat columns.
+            bud_cat_cell = row[bud_cat_i]
+            trans_desc_value = row[trans_desc_i].value 
             if log_all:
-                logger.debug(f"{P2}Row({row_idx}): Description: '{src_value}'")
-            dst_value, payee, rule_index = categorize_transaction(src_value, 
-                                                      fi_txn_catalog, log_all)
-            dst_cell.value = dst_value 
+                logger.debug(f"{P2}Row({row_idx}): Transaction Description: '{trans_desc_value}'")
+            rule_value = row[rule_i].value if rule_i != -1 else None
+            if isinstance(rule_value, int) and rule_value > 20200000:
+                continue # skip due to manual category settings in workbook
+            bud_cat_value, payee, rule_index = categorize_transaction(
+                trans_desc_value, 
+                fi_txn_catalog, 
+                log_all)
+            bud_cat_cell.value = bud_cat_value # Capture bud_cat mapping 
             # Set the additional values for BudMan in the row
             date_val = row[date_i].value
             year_month: str = year_month_str(date_val) if date_val else None
             row[year_month_i].value = year_month
-            l1, l2, l3 = p3u.split_parts(dst_value)
+            l1, l2, l3 = p3u.split_parts(bud_cat_value)
             row[l1_i].value = l1 if l1_i != -1 else None
             row[l2_i].value = l2 if l2_i != -1 else None
             row[l3_i].value = l3 if l3_i != -1 else None
@@ -790,17 +806,17 @@ def process_budget_category(bdm_wb:BDMWorkbook,
             if payee is not None:
                 row[payee_i].value = payee if payee_i != -1 else None
             essential_value = False
-            if (dst_value != 'Other' and 
-                dst_value in fi_txn_catalog.category_collection):
-                essential_value = fi_txn_catalog.category_collection[dst_value].essential
+            if (bud_cat_value != 'Other' and 
+                bud_cat_value in fi_txn_catalog.category_collection):
+                essential_value = fi_txn_catalog.category_collection[bud_cat_value].essential
             else:
-                logger.warning(f"'{dst_value}' not found in category collection.")
+                logger.warning(f"'{bud_cat_value}' not found in category collection.")
             row[essential_i].value = essential_value if essential_i != -1 else None
             row[rule_i].value = rule_index if rule_i != -1 else None
             # Capture 'Other' category transactions.
             transaction = WORKSHEET_row_data(row,hdr) 
             trans_str = transaction.data_str()
-            if dst_value == 'Other':
+            if bud_cat_value == 'Other':
                 copy_row_to_worksheet(row, other_ws)
                 other_count += 1
                 # if abs(transaction.amount) > 100:
@@ -931,7 +947,7 @@ def apply_check_register(cr_wb_content:BDM_CHECK_REGISTER_TYPE,
         # give the cell from a row tuple matching the column name in hdr.
         hdr = [cell.value for cell in sh[1]] 
         budget_cat = hdr.index(BUDGET_CATEGORY_COL_NAME)
-        orig_desc = hdr.index(ORIGINAL_DESCRIPTION_COL_NAME)
+        orig_desc = hdr.index(TRANSACTION_DESCRIPTION_COL_NAME)
 
         # For each check, with the check number and the Budget Category
         # 'Banking.Checks to Categorize', find the row in the worksheet to modify.

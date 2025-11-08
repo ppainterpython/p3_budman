@@ -125,8 +125,6 @@ BSM_PERSISTED_PROPERTIES = (
     BDM_DATA_CONTEXT)
 # ---------------------------------------------------------------------------- +
 VALID_BSM_BDM_STORE_FILETYPES = (".json", ".jsonc")
-# Well-known column names for banking transactions workbooks.
-BUDGET_CATEGORY_COL = "Budget Category"
 # ---------------------------------------------------------------------------- +
 #
 # BDMO_OBJECT Budget Domain Model Options pseudo-Object (Dictionary key names)
@@ -144,6 +142,7 @@ FI_NAME = "fi_name"
 FI_TYPE = "fi_type"
 FI_FOLDER = "fi_folder" 
 FI_TRANSACTION_DESCRIPTION_COLUMN = "fi_transaction_description_column"
+FI_TRANSACTION_BUDGET_CATEGORY_COLUMN = "fi_transaction_budget_category_column"
 FI_TRANSACTION_WORKSHEET_NAME = "fi_transaction_worksheet_name"
 FI_WF_FOLDER_CONFIG_COLLECTION = "fi_wf_folder_config_collection" 
 FI_WORKBOOK_DATA_COLLECTION = "fi_workbook_data_collection" 
