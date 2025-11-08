@@ -1401,6 +1401,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                 return selected_bdm_wb_list
             for bdm_wb in selected_bdm_wb_list:
                 bdm_wb_abs_path = bdm_wb.abs_path()
+                wb_index = self.dc_WORKBOOK_index(bdm_wb.wb_id)
                 if bdm_wb_abs_path is None:
                     selected_bdm_wb_list.remove(bdm_wb)
                     m = f"Excluded workbook: '{bdm_wb.wb_id}', "
@@ -1412,8 +1413,8 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                     success, result = self.dc_WORKBOOK_content_get(bdm_wb)
                     if not success:
                         selected_bdm_wb_list.remove(bdm_wb)
-                        m = f"Excluded workbook: '{bdm_wb.wb_id}', "
-                        m += f"failed to load: {result}"
+                        m = f"Excluded wb_index: '{wb_index}' '{bdm_wb.wb_id}', "
+                        m += f"failed to load wb_content: {result}"
                         logger.error(m)
                         continue
                     if not bdm_wb.wb_loaded:

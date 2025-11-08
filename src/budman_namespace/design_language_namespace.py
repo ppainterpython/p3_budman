@@ -144,10 +144,12 @@ FI_NAME = "fi_name"
 FI_TYPE = "fi_type"
 FI_FOLDER = "fi_folder" 
 FI_TRANSACTION_DESCRIPTION_COLUMN = "fi_transaction_description_column"
+FI_TRANSACTION_WORKSHEET_NAME = "fi_transaction_worksheet_name"
 FI_WF_FOLDER_CONFIG_COLLECTION = "fi_wf_folder_config_collection" 
 FI_WORKBOOK_DATA_COLLECTION = "fi_workbook_data_collection" 
 VALID_FI_OBJECT_ATTR_KEYS = (FI_KEY, FI_NAME, FI_TYPE, FI_FOLDER, 
                              FI_WF_FOLDER_CONFIG_COLLECTION, 
+                             FI_TRANSACTION_WORKSHEET_NAME,
                              FI_WORKBOOK_DATA_COLLECTION)
 # Other FI-related constants
 VALID_FI_KEYS = ("boa", "merrill")

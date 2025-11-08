@@ -44,8 +44,10 @@ def WORKFLOW_CMD_process(cmd: p3m.CMD_OBJECT_TYPE,
                        bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
     """Process workflow tasks.
 
-    This function processes various worklow tasks as requested in the validated
-    CMD_OBJECT.
+    Process the workflow command based on the cmd arguments provided from the 
+    View (user interface or some other upstream caller). The CMD_OBJECT 
+    determines what tasks are performed with all data used from the supplied
+    data context.
 
     Args:
         cmd (CMD_OBJECT_TYPE): 
@@ -63,8 +65,10 @@ def WORKFLOW_CMD_process(cmd: p3m.CMD_OBJECT_TYPE,
         if not cmd_result[p3m.CMD_RESULT_STATUS]: return cmd_result
         # Assuming the cmd parameters have been validated before reaching this point.
         # Process the CMD_OBJECT based on its CK_SUBCMD_KEY.
-        # workflow transfer subcmd
+
+        # Subcmd: "workflow transfer"
         if cmd[p3m.CK_SUBCMD_KEY] == cp.CV_WORKFLOW_TRANSFER_SUBCMD_KEY:
+            # Either transfer Files or Workbooks
             transfer_files: bool = cmd.get(cp.CK_TRANSFER_FILES, False)
             if transfer_files:
                 return WORKFLOW_TASK_transfer_files(cmd, bdm_DC)
@@ -72,20 +76,24 @@ def WORKFLOW_CMD_process(cmd: p3m.CMD_OBJECT_TYPE,
             if transfer_workbooks:
                 return WORKFLOW_TASK_transfer_workbooks(cmd, bdm_DC)
             return p3m.unknown_CMD_RESULT_ERROR(cmd)
-        # workflow intake subcmd
+
+        # Subcmd: "workflow intake"
         elif cmd[p3m.CK_SUBCMD_KEY] == cp.CV_WORKFLOW_INTAKE_SUBCMD_KEY:
             return INTAKE_TASK_process(cmd, bdm_DC)
-        # workflow set subcmd
+
+        # Subcmd: "workflow set"
         elif cmd[p3m.CK_SUBCMD_KEY] == cp.CV_SET_SUBCMD_KEY:
             # Process the set_value task.
             return WORKFLOW_TASK_set_value(cmd, bdm_DC)
-        # workflow task sync subcmd
+        
+        # Subcmd: "workflow sync"
         elif (cmd[p3m.CK_SUBCMD_KEY] == cp.CV_TASK_SUBCMD_KEY and
               cmd[cp.CK_TASK_NAME] == cp.CV_SYNC):
             # Process the wf sync task.
             recon: bool = cmd.get(cp.CK_RECONCILE, False)
             return WORKFLOW_TASK_sync_wdc(recon, bdm_DC)
-        # workflow unknown subcmd
+
+        # Subcmd: "workflow unknown"
         else:
             return p3m.unknown_CMD_RESULT_ERROR(cmd)
     except Exception as e:
@@ -287,9 +295,10 @@ def WORKFLOW_TASK_transfer_files(cmd: p3m.CMD_OBJECT_TYPE,
     """WORKFLOW_TRANSFER_subcmd: Transfer data files into workflow workbooks.
 
     Tasks required to transfer files to a workflow for a specified purpose.
-    This is how files from a file_list are transformed into workbooks in the
-    model. Processing requirements vary based on the specific workflow, 
-    purpose and workbook types.
+    This is how raw input files from a file_list are transformed into workbooks 
+    in the model. Processing requirements vary based on the specific workflow, 
+    purpose and workbook types. This task uses file_indexes to indetify input
+    files. Files are not yet workbooks and have no wb_index, just a file_index.
 
     Arguments:
         cmd (CMD_OBJECT_TYPE): The command object to process.
@@ -300,6 +309,15 @@ def WORKFLOW_TASK_transfer_files(cmd: p3m.CMD_OBJECT_TYPE,
             cp.CK_WF_PURPOSE - wf_folder wf_purpose of destination.
             cp.CK_WB_TYPE - workbook type of destination.
 
+    Returns:
+        p3m.CMD_RESULT_TYPE: The result of the command processing.
+
+    Raises:
+        p3m.CMDValidationException: For unrecoverable errors.
+
+    Notes:
+    ------
+    
     Files are in wf_folders. A list of file_index values references files to 
     transfer from their current (src) workflow folder to specified a destination
     (dst) wf_folder. Depending on the dst wf_key and wf_purpose, naming 
@@ -321,12 +339,6 @@ def WORKFLOW_TASK_transfer_files(cmd: p3m.CMD_OBJECT_TYPE,
     The dst_filename is constructed considering the dst_wf_prefix and dst_wb_type.
     The extension is determined by the wb_type.
 
-    Returns:
-        p3m.CMD_RESULT_TYPE: The result of the command processing.
-
-    Raises:
-        p3m.CMDValidationException: For unrecoverable errors.
-
     Currently, only 'boa' fi_key .csv file can be transferred into a workflow.
     This is how the initial transactions are orchestrated into the process.
     Eventually, the FI_KEY will specify different schemas for incoming data
@@ -336,6 +348,11 @@ def WORKFLOW_TASK_transfer_files(cmd: p3m.CMD_OBJECT_TYPE,
     For future work, anticipate that .csv files downloaded from different
     financial institutions will have different schemas, column headings, needing
     to be mapped to a common workbook schema.
+
+     This cmd does not modify the content of the input .csv file. It will 
+     contain all of the columns from the original download. Each financial 
+     institution has its own schema. Modifying this schema occurs in later 
+     commands and tasks.
     """
     try:
         # Validate the cmd argsuments.
@@ -358,6 +375,7 @@ def WORKFLOW_TASK_transfer_files(cmd: p3m.CMD_OBJECT_TYPE,
         # Extract and validate required parameters from the command.
         dst_wf_key = cmd_args.get(cp.CK_WF_KEY)
         wf_purpose = cmd_args.get(cp.CK_WF_PURPOSE)
+        # Can be 1 or a list of file_indexes provided.
         src_file_index_list = cmd_args.get(cp.CK_FILE_LIST)
         dst_wb_type = cmd_args.get(cp.CK_WB_TYPE)
         fi_key: str = bdm_DC.dc_FI_KEY

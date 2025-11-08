@@ -597,70 +597,112 @@ def process_budget_category(bdm_wb:BDMWorkbook,
     TODO: pass in a mapper function to map the src text to a budget category.
 
     Args:
-        sheet (openpyxl.worksheet): The worksheet to map.
-        src (str): The source column to map from.
-        dst (str): The destination column to map to. 
+        bdm_wb (BDMWorkbook): The workbook with an excel workbook.
+        bdm_DC (BudManAppDataContext_Base): The data context for the budget.
+        log_all (bool): Whether to log all mappings or just unmapped.
+        clear_other (bool): Whether to clear the Other category workbook content.
     """
     try:
-        # Validate the input parameters.
+        #region Validate all required information is accessible.
+        #
+        # Validatethe input parameters.
         _ = p3u.is_not_obj_of_type("wb_object", bdm_wb, BDMWorkbook,
                                    raise_error=True)
         _ = p3u.is_not_obj_of_type("bdm_DC", bdm_DC, BudManAppDataContext_Base,
                                    raise_error=True)
         success : bool = False
+        # Validate applicable WB_TYPE_EXCEL_TXNS workbooks
         if bdm_wb.wb_type != WB_TYPE_EXCEL_TXNS:
             # This is not a transactions workbook, no action taken.
             m = (f"Workbook '{bdm_wb.wb_id}' is not wb_type: "
                  f"'{WB_TYPE_EXCEL_TXNS}', no action taken.")
             logger.error(m)
             return False, m
-        # Access the category manager for the FI in the data context.
-        # Obtain the compiled category map (ccm) for the FI by FI_KEY.
+        # Validate the workbook is loaded.
+        if not bdm_wb.wb_loaded:
+            # Load the workbook from the data context.
+            m = f"Workbook '{bdm_wb.wb_id}' is not loaded, no action taken."
+            logger.error(m)
+            return False, m
+        if p3u.is_not_obj_of_type("wb", bdm_wb.wb_content, Workbook):
+            m = f"Error accessing wb_content for workbook: '{bdm_wb.wb_id}'."
+            logger.error(m)
+            return False, m
+        #
+        #endregion Validate all required information is accessible.
+
+        #region FI-specific data needed for the workbook 
+        #
+        # Validate category manager to get to the appropriate category_map.
+        # Use the bdm_wb fi_key to access the category manager for the FI in 
+        # the data context. Obtain the compiled category map (ccm) for the 
+        # FI by FI_KEY. Uses the current FI_OBJECT in the supplied DC.
+        fi_key: str = bdm_wb.fi_key
+        if not p3u.is_non_empty_str("fi_key", fi_key):
+            m = f"Invalid fi_key: '{fi_key}' in workbook '{bdm_wb.wb_id}'."
+            logger.error(m)
+            return False, m
+        fi_obj: dict = bdm_DC.dc_FI_OBJECT
+        if fi_key != fi_obj[FI_KEY]:
+            m = (f"FI_Key: '{fi_key}' from workbook does not match FI_Key "
+                 f"from current DC FI_OBJECT: '{fi_obj[FI_KEY]}'.")
+            logger.error(m)
+            return False, m
+        # Process the Category Managers with the fi_key
         catman : BDMTXNCategoryManager = bdm_DC.WF_CATEGORY_MANAGER
-        if bdm_wb.fi_key not in catman.catalogs:
+        if fi_key not in catman.catalogs:
             # No WB_TYPE_TXN_CATEGORIES dictionary for this FI, no action taken.
-            m = (f"WB_TYPE_TXN_CATEGORIES dictionary not found for FI '{bdm_wb.fi_key}', "
+            m = (f"WB_TYPE_TXN_CATEGORIES dictionary not found for FI '{fi_key}', "
                  f"no action taken.")
             logger.error(m)
             return False, m
-        fi_txn_catalog : TXNCategoryCatalog = catman.catalogs[bdm_wb.fi_key]
+        fi_txn_catalog : TXNCategoryCatalog = catman.catalogs[fi_key]
         if not fi_txn_catalog:
             # No TXNCategoryCatalogItem for this FI, no action taken.
-            m = (f"TXNCategoryCatalogItem not found for FI '{bdm_wb.fi_key}', "
+            m = (f"TXNCategoryCatalogItem not found for FI '{fi_key}', "
                  f"no action taken.")
             logger.error(m)
             return False, m
         ccm : Dict[str, re.Pattern] = fi_txn_catalog.compiled_category_map
         if not ccm:
             # No compiled category map for this FI, no action taken.
-            m = (f"Compiled category map not found for FI '{bdm_wb.fi_key}', "
+            m = (f"Compiled category map not found for FI '{fi_key}', "
                  f"no action taken.")
             logger.error(m)
             return False, m
-        # Model-Aware: For the FI currently in the focus of the DC, we need
-        # some FI-specific info, the name of the transaction workbook 
-        # column used to map budget categories, the source.
-        src = bdm_DC.dc_FI_OBJECT[FI_TRANSACTION_DESCRIPTION_COLUMN]
-        if not p3u.is_non_empty_str("src", src):
-            m = f"Source column name '{str(src)}' is not valid."
+        # For the FI_KEY, get the name of the transaction workbook 
+        # column used to map budget categories. Map 'src_column' to column in 
+        # the workbook being category mapped.
+        src_column = fi_obj[FI_TRANSACTION_DESCRIPTION_COLUMN]
+        if not p3u.is_non_empty_str("src", src_column):
+            m = f"Source categry mapping column name '{str(src_column)}' is not valid."
             logger.error(m)
             return False, m
-        if not bdm_wb.wb_loaded:
-            # Load the workbook from the data context.
-            m = f"Workbook '{bdm_wb.wb_id}' is not loaded, no action taken."
+        # Now get the name of the worksheet in the workbook containung the
+        # transactions for catgegory mapping.
+        ws_name = fi_obj[FI_TRANSACTION_WORKSHEET_NAME]
+        if not p3u.is_non_empty_str("ws_name", ws_name):
+            m = f"For FI_KEY: '{fi_key}', Transaction worksheet name '{str(ws_name)}' is not valid."
             logger.error(m)
             return False, m
-        # wb_content : Workbook = bdm_DC.dc_LOADED_WORKBOOKS[bdm_wb.wb_id]
-        if p3u.is_not_obj_of_type("wb", bdm_wb.wb_content, Workbook):
-            m = f"Error accessing wb_content for workbook: '{bdm_wb.wb_id}'."
+        #
+        # Access the named worksheet from the wb_content
+        ws : Worksheet = bdm_wb.wb_content[ws_name] 
+        if ws is None or not isinstance(ws, Worksheet):
+            m = (f"Worksheet '{ws_name}' not found in workbook '{bdm_wb.wb_id}'.")
             logger.error(m)
             return False, m
-        ws : Worksheet = bdm_wb.wb_content.active  # Get the active worksheet.
+        #
+        #endregion FI-specific data needed for the workbook
+
+        # The workbooks's transaction worksheet is now available as ws.
         if not check_sheet_columns(ws, add_columns=False):
             m = (f"Sheet '{ws.title}' cannot be mapped due to "
                     f"missing required columns.")
             logger.error(m)
             return False, m
+
+        # An openpyxl Worksheet is an array of tupes, 1-based index.
         # A row is a tuple of the Cell objects in the row. Tuples are 0-based
         # hdr is a list, also 0-based. So, using the index(name) will 
         # give the cell from a row tuple matching the column name in hdr.
@@ -673,10 +715,16 @@ def process_budget_category(bdm_wb:BDMWorkbook,
                                                           clear_content=clear_other)
 
         # Check if the source and destination columns are in the header row.
-        if src in hdr:
-            src_col_index = hdr.index(src)
+        # General model:
+        #   Map the text in a "Transaction Description" column to a
+        #   "Budget Category" column. The exact columns to use for each are 
+        #   part of the configuratoin for a financial institution. Here, we 
+        #   to the transaction description trans_desc and the budget catgegory
+        #   bud_cat.
+        if src_column in hdr:
+            src_col_index = hdr.index(src_column)
         else:
-            m = f"Source column '{src}' not found in header row."
+            m = f"Source column '{src_column}' not found in header row."
             logger.error(m)
             return False, m
         dst = BUDGET_CATEGORY_COL
@@ -705,7 +753,7 @@ def process_budget_category(bdm_wb:BDMWorkbook,
         essential_i = col_i(ESSENTIAL_COL_NAME,hdr)
         rule_i = col_i(RULE_COL_NAME,hdr)
 
-        logger.debug(f"Mapping '{src}'({src_col_index}) to "
+        logger.debug(f"Mapping '{src_column}'({src_col_index}) to "
                     f"'{dst}'({dst_col_index})")
         num_rows = ws.max_row # or set a smaller limit
         other_count = 0
