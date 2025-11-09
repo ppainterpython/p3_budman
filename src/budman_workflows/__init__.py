@@ -28,16 +28,16 @@ from .workflow_utils import (
     extract_category_tree, 
     output_category_tree,
     category_tree_to_csv,
-    categorize_transaction,
     category_map_count,
     clear_category_map
 )
 from .budget_categorization import (
-    check_sheet_columns, 
+    WORKFLOW_TASK_check_sheet_columns, 
     check_sheet_schema, 
     TRANSACTION_DESCRIPTION_COL_NAME, 
     validate_budget_categories,
-    process_budget_category,
+    WORKFLOW_TASK_process_budget_category,
+    WORKFLOW_TASK_categorize_transaction,
     apply_check_register
 )
 from .txn_category import (
@@ -81,15 +81,15 @@ __all__ = [
     "extract_category_tree",
     "output_category_tree",
     "category_tree_to_csv",
-    "categorize_transaction",
     "category_map_count",
     "clear_category_map",
     # budget_categorization.py module
-    "check_sheet_columns",
+    "WORKFLOW_TASK_check_sheet_columns",
     "check_sheet_schema",
     "TRANSACTION_DESCRIPTION_COL_NAME",
     "validate_budget_categories",
-    "process_budget_category",
+    "WORKFLOW_TASK_process_budget_category",
+    "WORKFLOW_TASK_categorize_transaction",
     "apply_check_register",
     # budget_category_mapping.py module
     "check_register_map",

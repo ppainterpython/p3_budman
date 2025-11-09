@@ -37,7 +37,8 @@ from .budget_category_mapping import (
     clear_category_histogram
 )
 from .workflow_utils import (
-    categorize_transaction, category_map_count, check_register_map,
+    category_map_count, 
+    check_register_map,
     get_category_histogram,
 )
 from .txn_category import (BDMTXNCategoryManager, TXNCategoryCatalog)
@@ -198,6 +199,8 @@ class TransactionData:
     year_month: str = None  # Formant 'YYYY-MM-mmm' e.g., 2025-01-Jan
     essential: bool = False
     payee: str = field(default="")
+    rule: int = field(default=-1)
+    manual: bool = field(default=False)
     
     def data_str(self) -> str:
         """Return a string representation of the transaction data."""
@@ -210,8 +213,8 @@ class TransactionData:
     
 #endregion dataclasses
 # ---------------------------------------------------------------------------- +
-#region check_sheet_columns() function
-def check_sheet_columns(sheet: Worksheet, 
+#region WORKFLOW_TASK_check_sheet_columns() function
+def WORKFLOW_TASK_check_sheet_columns(sheet: Worksheet, 
                         trans_desc: str,
                         add_columns: bool = True) -> bool:
     """Check that the sheet is ready to process transactions.
@@ -279,7 +282,7 @@ def check_sheet_columns(sheet: Worksheet,
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
-#endregion check_sheet_columns() function
+#endregion WORKFLOW_TASK_check_sheet_columns() function
 # ---------------------------------------------------------------------------- +
 #region check_sheet_schema() function
 def check_sheet_schema(wb: Workbook, correct: bool = False) -> bool:
@@ -413,6 +416,10 @@ def WORKSHEET_row_data(row:tuple,hdr:list=BUDMAN_WB_COLUMNS) -> TransactionData:
         t_acct_str = row_dict[ACCOUNT_NAME_COL_NAME]
         t_all_str = t_date_str + t_desc + t_currency + t_amt_str + t_acct_str
         t_id = p3u.gen_hash_key(t_all_str) 
+        t_manual: bool = False
+        t_rule: int = row_dict[RULE_COL_NAME] if RULE_COL_NAME in row_dict else -1
+        if isinstance(t_rule, int) and t_rule > 20200000:
+            t_manual = True
 
         transaction = TransactionData(
             tid=t_id,
@@ -426,7 +433,9 @@ def WORKSHEET_row_data(row:tuple,hdr:list=BUDMAN_WB_COLUMNS) -> TransactionData:
             level2=row_dict[LEVEL_2_COL_NAME],
             level3=row_dict[LEVEL_3_COL_NAME],
             debit_credit=row_dict[DEBIT_CREDIT_COL_NAME],
-            year_month=row_dict[YEAR_MONTH_COL_NAME]
+            year_month=row_dict[YEAR_MONTH_COL_NAME],
+            rule=row_dict[RULE_COL_NAME],
+            manual=t_manual
         )
         return transaction
     except Exception as e:
@@ -519,7 +528,7 @@ def validate_budget_categories(bdm_wb:BDMWorkbook,
             result += f"\n{pad}{m}"
             return False, result
         ws : Worksheet = bdm_wb.wb_content.active  # Get the active worksheet.
-        if not check_sheet_columns(ws, add_columns=False):
+        if not WORKFLOW_TASK_check_sheet_columns(ws, add_columns=False):
             m = (f"Sheet '{ws.title}' cannot be mapped due to "
                     f"missing required columns.")
             logger.error(m)
@@ -604,8 +613,8 @@ def validate_budget_categories(bdm_wb:BDMWorkbook,
         return False, result
 #endregion validate_budget_categories() function
 # ---------------------------------------------------------------------------- +
-#region process_budget_category() function
-def process_budget_category(bdm_wb:BDMWorkbook,
+#region WORKFLOW_TASK_process_budget_category() function
+def WORKFLOW_TASK_process_budget_category(bdm_wb:BDMWorkbook,
                             bdm_DC : BudManAppDataContext_Base,
                             log_all : bool,
                             clear_other : bool=False) -> BUDMAN_RESULT_TYPE:
@@ -724,7 +733,7 @@ def process_budget_category(bdm_wb:BDMWorkbook,
 
         # The workbooks's transaction worksheet is now available as ws.
         # Check that the required columns are present.
-        if not check_sheet_columns(ws, trans_desc, add_columns=False):
+        if not WORKFLOW_TASK_check_sheet_columns(ws, trans_desc, add_columns=False):
             m = (f"Sheet '{ws.title}' cannot be mapped due to "
                     f"missing required columns.")
             logger.error(m)
@@ -741,7 +750,7 @@ def process_budget_category(bdm_wb:BDMWorkbook,
         # This is specific to the Budget Category mapping, which now is to be
         # split into 3 levels: Level1, Level2, Level3.
 
-        # Setup index values for each hdr column of interest.
+        # Setup index values for each hdr column of interest for row access.
         trans_desc_i = col_i(trans_desc,hdr)
         bud_cat_i = col_i(bud_cat,hdr)
         date_i = col_i(DATE_COL_NAME,hdr)
@@ -770,7 +779,8 @@ def process_budget_category(bdm_wb:BDMWorkbook,
         other_wb, other_ws = open_other_category_workbook(hdr, 
                                                           clear_content=clear_other)
 
-        task_name = "process_budget_category()"
+        transactions: List[TransactionData] = []  # To hold all transactions.
+        task_name = "WORKFLOW_TASK_process_budget_category()"
         logger.info(f"Start Task: {task_name}: Apply '{rules_count}' budget category mapping rules "
                     f"to {ws.max_row-1} rows in workbook: '{bdm_wb.wb_id}' "
                     f"worksheet: '{ws.title}'")
@@ -778,20 +788,22 @@ def process_budget_category(bdm_wb:BDMWorkbook,
         for row in ws.iter_rows(min_row=2):
             # row is a 'tuple' of Cell objects, 0-based index
             row_idx = row[0].row  # Get the row index, the row number, 1-based.
-            # Do the mapping from trans_desc to bud_cat columns.
-            bud_cat_cell = row[bud_cat_i]
-            trans_desc_value = row[trans_desc_i].value 
-            if log_all:
-                logger.debug(f"{P2}Row({row_idx}): Transaction Description: '{trans_desc_value}'")
+            transaction = WORKSHEET_row_data(row,hdr) 
+            transactions.append(transaction)
+            trans_str = f"Row({row_idx}): '{transaction.data_str()}'"
             rule_value = row[rule_i].value if rule_i != -1 else None
-            if isinstance(rule_value, int) and rule_value > 20200000:
+            # Do the mapping from trans_desc to bud_cat columns.
+            if transaction.manual:
+                # Skip manually modified transactions
+                logger.debug(f"{P2}Skipping manual: {trans_str}")
                 continue # skip due to manual category settings in workbook
-            bud_cat_value, payee, rule_index = categorize_transaction(
-                trans_desc_value, 
+            logger.debug(f"{P2}{trans_str}") if log_all else None
+            bud_cat_value, payee, rule_index = WORKFLOW_TASK_categorize_transaction(
+                transaction.description, 
                 fi_txn_catalog, 
                 log_all)
-            bud_cat_cell.value = bud_cat_value # Capture bud_cat mapping 
-            # Set the additional values for BudMan in the row
+            row[bud_cat_i].value = bud_cat_value # Capture bud_cat mapping 
+            # Modify the actual row with additional values for BudMan.
             date_val = row[date_i].value
             year_month: str = year_month_str(date_val) if date_val else None
             row[year_month_i].value = year_month
@@ -814,14 +826,10 @@ def process_budget_category(bdm_wb:BDMWorkbook,
             row[essential_i].value = essential_value if essential_i != -1 else None
             row[rule_i].value = rule_index if rule_i != -1 else None
             # Capture 'Other' category transactions.
-            transaction = WORKSHEET_row_data(row,hdr) 
-            trans_str = transaction.data_str()
             if bud_cat_value == 'Other':
                 copy_row_to_worksheet(row, other_ws)
                 other_count += 1
-                # if abs(transaction.amount) > 100:
-                logger.debug(f"{row_idx:04}:{trans_str}" )
-            del transaction  # Clean up the transaction object.
+                logger.debug(f"'Other': {trans_str}" )
         time_taken = p3u.stop_timer(st)
         close_other_category_workbook(other_wb)
         elapsed : float = time.time() - st
@@ -831,6 +839,7 @@ def process_budget_category(bdm_wb:BDMWorkbook,
              f"'{len(ch)}' Categories, {per_row:6f} seconds per row, "
              f"'Other' category count: ({ch['Other']})({other_count})")
         logger.info(m)
+        del transactions 
         return True, m
     except Exception as e:
         m = p3u.exc_err_msg(e)
@@ -865,7 +874,61 @@ def copy_row_to_worksheet(source_row, dest_worksheet):
             dest_cell.alignment = cell.alignment.copy()
 
 #
-#endregion process_budget_category() function
+#endregion WORKFLOW_TASK_process_budget_category() function
+# ---------------------------------------------------------------------------- +
+#region WORKFLOW_TASK_categorize_transaction() function
+def WORKFLOW_TASK_categorize_transaction(
+        description : str, 
+        txn_catalog:TXNCategoryCatalog,
+        log_all : bool) -> Tuple[str,str]:
+    """Use txn_catalog patterns to map description text to a category."""
+    try:
+        p3u.is_non_empty_str("description", description, raise_error=True)
+        p3u.is_not_obj_of_type("txn_catalog", txn_catalog, TXNCategoryCatalog,
+                               raise_error=True)
+        txn_catalog.valid
+        fi_key: str = txn_catalog.fi_key
+        txn_category_collection = txn_catalog.txn_categories_workbook[WB_CATEGORY_COLLECTION]
+        tcc_keys = list(txn_category_collection.keys())
+        ccm: COMPLIED_CATEGORY_MAP_TYPE = txn_catalog.compiled_category_map
+        ch = get_category_histogram()
+        payee = ""
+        rule_index = 0
+        for rule_index, (pattern, category) in enumerate(ccm.items()):
+            payee = ""
+            m = pattern.search(description)
+            if m:
+                if category not in tcc_keys:
+                    logger.warning(f"FI key '{fi_key}' rule_index: '{rule_index}', "
+                                   f"Category '{category}', not found in "
+                                   f"transaction category collection.")
+                gc = len(m.groups())
+                if gc == 0 or m[1] is None:
+                    if log_all:
+                        logger.debug(f"{P2}Matched rule_index: '{rule_index}', "
+                                     f"pattern: '{pattern.pattern}' "
+                                     f"category: '{category}', "
+                                     f"groups: '{gc}', no payee found.")
+                    return ch.count(category), payee, rule_index
+                payee = m[1]
+                # print(f"Matched pattern: '{pattern.pattern}' with payee: '{payee}'")
+                if log_all:
+                    logger.debug(f"{P2}Matched rule_index: '{rule_index}', "
+                                 f"pattern: '{pattern.pattern}' "
+                                 f"category: '{category}', "
+                                 f"payee: '{payee}', groups: '{gc}'.")
+                return ch.count(category), payee, rule_index
+        logger.debug(f"{P2}No Match Description: [{description}]")
+        return ch.count('Other'), 'Other', -1  # Default category if no match is found
+    except re.PatternError as e:
+        logger.error(p3u.exc_err_msg(e))
+        logger.error(f'Pattern error: compiled_category_map dict: ' 
+                     f'{{ \"{e.pattern}\": \"{category}\" }}')
+        raise
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion WORKFLOW_TASK_categorize_transaction() function
 # ---------------------------------------------------------------------------- +
 #region open_other_category_workbook() function
 def open_other_category_workbook(hdr: List[str],clear_content:bool=True) -> Tuple[Workbook, Worksheet]:
@@ -936,7 +999,7 @@ def apply_check_register(cr_wb_content:BDM_CHECK_REGISTER_TYPE,
         # Validate the input parameters.
         cr = cr_wb_content
         sh = trans_wb_ref.active  # Get the active worksheet.
-        if not check_sheet_columns(sh, add_columns=False):
+        if not WORKFLOW_TASK_check_sheet_columns(sh, add_columns=False):
             logger.error(f"Sheet '{sh.title}' cannot be mapped due to "
                          f"missing required columns.")
             return

@@ -257,8 +257,8 @@ from budman_namespace.design_language_namespace import *
 from budman_namespace.bdm_workbook_class import BDMWorkbook
 from budman_workflows import (
     BDMTXNCategoryManager, TXNCategoryCatalog,
-    check_sheet_schema, check_sheet_columns, 
-    validate_budget_categories, process_budget_category,
+    check_sheet_schema, WORKFLOW_TASK_check_sheet_columns, 
+    validate_budget_categories, WORKFLOW_TASK_process_budget_category,
     output_category_tree,
     WORKFLOW_CMD_process,
     budget_category_mapping
@@ -1202,7 +1202,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                          f"'{self.dc_WB_ID:<40}'")
                     logger.debug(m)
                     fr += f"\n{P2}{m}"
-                    success, r = process_budget_category(bdm_wb, self.DC, 
+                    success, r = WORKFLOW_TASK_process_budget_category(bdm_wb, self.DC, 
                                                          log_all, cleared_other_now)
                     cleared_other_now = False # Only clear_other for first workbook
                     if not success:
@@ -1354,7 +1354,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                 if cmd[cp.CK_FIX_SWITCH]:
                     r = f"Task: check_sheet_columns workbook: Workbook: '{bdm_wb.wb_id}' "
                     ws = bdm_wb.wb_content.active
-                    success = check_sheet_columns(ws, add_columns=True)
+                    success = WORKFLOW_TASK_check_sheet_columns(ws, add_columns=True)
                     if success: 
                         bdm_wb.wb_content.save(bdm_wb_abs_path)
                 result += f"\n{P2}{r}"
