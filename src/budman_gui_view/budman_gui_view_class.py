@@ -19,6 +19,7 @@ from budman_data_context import BudManAppDataContext_Binding
 import budman_command_processor as cp
 # bugman_gui_view modules and packages
 from .budman_gui_style_registry  import StyleRegistry
+from .budman_gui_command_processor import BudManGUICommandProcessor
 from .budman_gui_window  import BudManGUIWindow
 from .budman_gui_frame   import BudManGUIFrame
 from .budman_gui_constants import *
@@ -47,6 +48,7 @@ class BudManGUIView(BudManAppDataContext_Binding,
                  data_context : Optional[BudManAppDataContext_Binding] = None,
                  app_name : str = "P3 Budget Manager GUI View",) -> None:
         self.root: BudManGUIWindow = None  # type: ignore
+        self.budman_gui_command_processor: BudManGUICommandProcessor = None  # type: ignore
         self._app_name = app_name
         self._settings : bdms.BudManSettings = budman_settings if budman_settings else bdms.BudManSettings()
         self._current_cmd :Optional[str] = None
@@ -66,7 +68,10 @@ class BudManGUIView(BudManAppDataContext_Binding,
         try:
             # Setup CommandProcessor_Binding 
             if command_processor is not None:
-                self.CP = command_processor if command_processor else None
+                self.budman_gui_command_processor = BudManGUICommandProcessor(
+                    command_processor=command_processor,
+                    data_context=data_context)
+                self.CP = self.budman_gui_command_processor
                 self.cp_binding = True
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))

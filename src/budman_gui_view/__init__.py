@@ -9,11 +9,15 @@ __license__ = "MIT"
 from .budman_gui_view_class import BudManGUIView
 from .budman_gui_window import BudManGUIWindow
 from .budman_gui_frame import BudManGUIFrame
+from .budman_gui_command_processor import BudManGUICommandProcessor
+from .budman_gui_style_registry import StyleRegistry
 from .budman_gui_constants import *
 __all__ = [
     "BudManGUIView",
     "BudManGUIWindow",
     "BudManGUIFrame",
+    "BudManGUICommandProcessor",
+    "StyleRegistry",
     BMG_FAINT_GRAY,
     BMG_BUTTON_WIDTH,
     BMG_WINDOW_TITLE,

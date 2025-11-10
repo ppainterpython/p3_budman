@@ -7,10 +7,10 @@
 # ---------------------------------------------------------------------------- +
 #region Imports
 # python standard library modules and packages
-
-# third-party modules and packages
 import re
 from typing import Dict, List, Tuple, Any, Type, TYPE_CHECKING, Union
+
+# third-party modules and packages
 import openpyxl
 from openpyxl import Workbook
 import openpyxl.worksheet.worksheet
@@ -57,6 +57,10 @@ type WF_COLLECTION_TYPE = DATA_COLLECTION_TYPE
 type WF_FOLDER_CONFIG_TYPE = DATA_OBJECT_TYPE
 type WF_FOLDER_CONFIG_LIST_TYPE = List[WF_FOLDER_CONFIG_TYPE]
 type FI_WF_FOLDER_CONFIG_COLLECTION_TYPE = Dict[str, WF_FOLDER_CONFIG_LIST_TYPE]
+# ---------------------------------------------------------------------------- +
+# Budget Manager (BudMan) application constants
+BUDMAN_FOLDER_ENV_VAR = "ROOT_PATH_FOR_BUDMAN_FOLDER"
+BUDMAN_SETTINGS_FILES_ENV_VAR = "SETTINGS_FILE_FOR_BUDMAN"
 # ---------------------------------------------------------------------------- +
 # Budget Storage Model (BSM) constants
 BSM_SUPPORTED_URL_SCHEMES = ("file") #, "http", "https")

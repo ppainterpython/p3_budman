@@ -2,18 +2,18 @@
 #region    bsm_file_tree.py module
 """ Implements BSMFileTree Class.
 
-    The BDM uses a "file tree" as a shortcut to locate files in the budget
-    domain model. BDM assumes that files are stored in folders in a storage 
-    system, which might be a cloud storage system, a local file system, or
-    a hybrid of both. The Budget Storage Model handles actual binding to a
-    a particular storage system.
+    The BudMan Data Context uses a "file tree" as a data structure to represent
+    folders and files from a storage system. BudMan assumes that files are 
+    stored in folders, which might be a cloud storage system, a local file 
+    system, or a hybrid of both. Systems downstream from the Data Context 
+    handles actual binding to a particular storage system.
 
-    For CLI and other simple user interfaces, a file tree is a tree structure
+    For Views (CLI, GUI or upstream API clients), a file tree is a tree structure
     based on the Treelib module. This module provides a simple API to create 
     and update a file tree for a specified budget domain model based on a url.
 
-    Once initialized, the file_tree is saved in a .json file in the root of the
-    bdm_store folder. Other functions are used to look up information from the
+    Once initialized, the file_tree is saved in a .json file in the root 
+    BDM_FOLDER of BudMan. Other functions are used to look up information from the
     file_tree about folders and files using an int file_index or dir_index. The 
     index values are unique to the entire tree. 
 """

@@ -14,7 +14,7 @@ from tkinter import EventType, scrolledtext, StringVar, BooleanVar
 from tkinter import ttk
 import ttkbootstrap as tb  # tb.Window used for root window only
 # third-party modules and packages
-import p3_utils as p3u, pyjson5, p3logging as p3l, p3_mvvm as p3m
+import p3_utils as p3u, p3logging as p3l, p3_mvvm as p3m
 # local modules and packages
 from .budman_gui_style_registry import StyleRegistry
 from budman_gui_view.budman_gui_constants import *
@@ -161,8 +161,19 @@ class BudManGUIFrame(ttk.Frame,
     def initialize(self) -> None:
         """Initialize the BudManGUIView class."""
         try:
-            # Setup the file tree here from self.DC.model.bsm_file_tree
+            # Setup the file tree here 
+            self.initialize_file_tree()
             logger.debug(f"BudManGUIFrame: Initializing BudManGUIFrame widgets.")
+            return self
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise
+    
+    def initialize_file_tree(self) -> None:
+        """Initialize the file treeview widget from the data context."""
+        try:
+            logger.debug(f"BudManGUIFrame: Initializing file treeview widget.")
+            bsm_file_tree = self.DC.model.bsm_file_tree
             return self
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))

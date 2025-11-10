@@ -10,8 +10,7 @@ THIS_APP_AUTHOR = "Paul Painter"
 THIS_APP_COPYRIGHT = "2025 Paul Painter"
 # ---------------------------------------------------------------------------- +
 # BUDMAN_SETTINGS property name constants used in settings.toml configuration file
-BUDMAN_SETTINGS = "settings.toml"
-BUDMAN_SETTINGS 
+BUDMAN_SETTINGS = "budman_settings.toml"
 # Settings file keyname constants
 
 # root level

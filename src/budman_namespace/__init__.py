@@ -46,6 +46,9 @@ __all__ = [
     "WF_FOLDER_CONFIG_TYPE",
     "WF_FOLDER_CONFIG_LIST_TYPE",
     "FI_WF_FOLDER_CONFIG_COLLECTION_TYPE",
+    # Budget Manager (BudMan) application constants
+    "BUDMAN_FOLDER_ENV_VAR",
+    "BUDMAN_SETTINGS_FILES_ENV_VAR",
     # Valid data store file types for the Budget Storage Model (BSM).
     "BSM_DATA_COLLECTION_CSV_STORE_FILETYPES",
     # Budget Model Filesystem Path default constants
