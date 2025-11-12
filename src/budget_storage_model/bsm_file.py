@@ -61,6 +61,7 @@ class BSMFile:
         self._extension: Optional[str] = None
         self._prefix: Optional[str] = None
         self._wb_type: Optional[str] = None
+        self._wf_key: Optional[str] = None
         self._in_bdm: bool = False
         self.update()
 
@@ -115,6 +116,14 @@ class BSMFile:
     def wb_type(self, value: str) -> None:
         """Set the workbook type property."""
         self._wb_type = value
+    @property
+    def wf_key(self) -> Optional[str]:
+        """Return the workflow key."""
+        return self._wf_key
+    @wf_key.setter
+    def wf_key(self, value: str) -> None:
+        """Set the workflow key property."""
+        self._wf_key = value
     @property
     def in_bdm(self) -> bool:
         """Return True if the file is in the BDM_STORE."""
