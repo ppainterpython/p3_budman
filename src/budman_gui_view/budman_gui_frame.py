@@ -392,9 +392,14 @@ class BudManGUIFrame(ttk.Frame,
                 # node.tag = "nnn name" where nnn is the file or folder index
                 #            and name is the file or folder name.
                 for file_tree_node in file_tree.children(parent_file_tree_node_id):
-                    item_type = ""
-                    workflow_value = ""
-                    purpose_value = ""
+                    item_info = self.dc_FILE_TREE_node_info(file_tree_node)
+                    item_type = "unknown"
+                    workflow_value = "unknown"
+                    purpose_value = "unknown"
+                    if item_info is not None:
+                        item_type = item_info.get(FILE_TREE_NODE_TYPE_KEY, item_type)
+                        workflow_value = item_info.get(FILE_TREE_NODE_WF_KEY, workflow_value)
+                        purpose_value = item_info.get(FILE_TREE_NODE_WF_PURPOSE, purpose_value)
                     item_id = self.file_treeview.insert(
                         parent_file_treeview_node_id,
                         tk.END,

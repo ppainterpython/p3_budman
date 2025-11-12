@@ -429,46 +429,30 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
 
     def dc_FILE_TREE_node_info(self, node: Node) -> Dict[str,str]:
         """Model-Aware: Return info about the specified file tree node."""
-        if not self.dc_VALID:
-            logger.error("Data context is not valid.")
-            return {}
-        if self.dc_FILE_TREE is None:
-            logger.error("Data context FILE_TREE is not set.")
-            return {}
-        if node is None:
-            logger.error("Node is None.")
-            return {}
-        bsm_file: bsm.BSMFile = node.data
-        if bsm_file.type == bsm.BSMFile.BSM_FILE:
+        try:
+            if not self.dc_VALID:
+                logger.error("Data context is not valid.")
+                return {}
+            if self.dc_FILE_TREE is None:
+                logger.error("Data context FILE_TREE is not set.")
+                return {}
+            if node is None:
+                logger.error("Node is None.")
+                return {}
+            bsm_file: bsm.BSMFile = node.data
+            node_type = bsm_file.type
+            wf_key = bsm_file.wf_key
+            wf_purpose = bsm_file.wf_purpose
             info = {
-                "identifier": str(node.identifier),
-                "tag": str(node.tag),
-                "data": str(node.data),
-                "is_leaf": str(node.is_leaf),
-                "depth": str(node.depth),
-                "num_children": str(len(node.children)),
-                "filename": str(bsm_file.filename),
-                "extension": str(bsm_file.extension),
-                "prefix": str(bsm_file.prefix),
-                "wb_type": str(bsm_file.wb_type),
-                "in_bdm": str(bsm_file.in_bdm),
+                FILE_TREE_NODE_TYPE_KEY: node_type,
+                FILE_TREE_NODE_WF_KEY: wf_key,
+                FILE_TREE_NODE_WF_PURPOSE: wf_purpose
             }
             return info
-        elif bsm_file.type == bsm.BSMFile.BSM_FOLDER:
-            info = {
-                "identifier": str(node.identifier),
-                "tag": str(node.tag),
-                "data": str(node.data),
-                "is_leaf": str(node.is_leaf),
-                "depth": str(node.depth),
-                "num_children": str(len(node.children)),
-                "folder_name": str(bsm_file.folder_name),
-                "in_bdm": str(bsm_file.in_bdm),
-            }
-            return info
-        else:
-            raise ValueError(f"Unknown BSMFile type: {bsm_file.type}")
-
+        except Exception as e:
+            m = f"Error retrieving node info: {p3u.exc_err_msg(e)}"
+            logger.error(m)
+            return {}
     #endregion BudManDataContext Method Overrides.
     # ------------------------------------------------------------------------ +
     #endregion BudManDataContext (Interface) Property/Method Overrides.

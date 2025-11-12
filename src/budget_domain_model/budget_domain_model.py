@@ -581,58 +581,64 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
     #region    bdm_FILE_LIST_refresh()
     def bdm_FILE_TREE_refresh(self) -> None:
         """Refresh the BSM file tree."""
-        if self.bsm_file_tree is not None:
-            del self.bsm_file_tree
-        # Build a list of all FI_FOLDER urls
-        fi_folder_urls: List[str] = []
-        for fi_key in self.bdm_fi_collection.keys():
-            fi_folder_url = self.bsm_FI_FOLDER_abs_path(fi_key).as_uri()
-            fi_folder_urls.append(fi_folder_url)
-        # Stash the BDM_FOLDER url
-        bdm_folder_url = self.bsm_BDM_FOLDER_url()
+        try:
+            if self.bsm_file_tree is not None:
+                del self.bsm_file_tree
+            # Build a list of all FI_FOLDER urls
+            fi_folder_urls: List[str] = []
+            for fi_key in self.bdm_fi_collection.keys():
+                fi_folder_url = self.bsm_FI_FOLDER_abs_path(fi_key).as_uri()
+                fi_folder_urls.append(fi_folder_url)
+            # Stash the BDM_FOLDER url
+            bdm_folder_url = self.bsm_BDM_FOLDER_url()
 
-        # Build a registry of all the WF_FOLDER meta data by url
-        wf_folder_config_metadata : Dict[str, Dict[str,str]] = {}
-        for fi_key, fi_obj in self.bdm_fi_collection.items():
-            fi_folder_url = self.bsm_FI_FOLDER_abs_path(fi_key).as_uri()
-            if fi_obj[FI_WF_FOLDER_CONFIG_COLLECTION] is None:
-                continue
-            for wf_key, wfc_list in fi_obj[FI_WF_FOLDER_CONFIG_COLLECTION].items():
-                for wfc in wfc_list:
-                    wf_folder = wfc[WF_FOLDER]
-                    wf_purpose = wfc[WF_PURPOSE]
-                    wf_prefix = wfc[WF_PREFIX]
-                    wf_folder_url = wfc[WF_FOLDER_URL]
-                    md = dict(WF_KEY=wf_key,WF_PURPOSE=wf_purpose)
-                    wf_folder_config_metadata[wf_folder_url] = md
+            # Build a registry of all the WF_FOLDER meta data by url
+            wf_folder_config_metadata : Dict[str, Dict[str,str]] = {}
+            for fi_key, fi_obj in self.bdm_fi_collection.items():
+                fi_folder_url = self.bsm_FI_FOLDER_abs_path(fi_key).as_uri()
+                if fi_obj[FI_WF_FOLDER_CONFIG_COLLECTION] is None:
+                    continue
+                for wf_key, wfc_list in fi_obj[FI_WF_FOLDER_CONFIG_COLLECTION].items():
+                    for wfc in wfc_list:
+                        wf_folder = wfc[WF_FOLDER]
+                        wf_purpose = wfc[WF_PURPOSE]
+                        wf_prefix = wfc[WF_PREFIX]
+                        wf_folder_url = wfc[WF_FOLDER_URL]
+                        md = {WF_KEY: wf_key, WF_PURPOSE: wf_purpose}
+                        wf_folder_config_metadata[wf_folder_url] = md
 
-        # Rebuild the BSM_FILE_TREE
-        self.bsm_file_tree = BSMFileTree(
-            folder_url=bdm_folder_url,
-            valid_prefixes=self.bdm_valid_prefixes,
-            valid_wb_types=self.bdm_valid_wb_types)
-        
-        # Update the BSMFile metadata with more analysis
-        for bsm_file in self.bsm_file_tree.all_files():
-            # Update the in_bdm flag for the files in the BSM_FILE_TREE.
-            wb = self.bdm_WORKBOOK_DATA_COLLECTION_find(WB_URL, bsm_file.file_url)
-            if wb is not None:
-                bsm_file.in_bdm = wb is not None
-                bsm_file.wb_type = wb.wb_type
-                bsm_file.type = "BDM_WORKBOOK"
+            # Rebuild the BSM_FILE_TREE
+            self.bsm_file_tree = BSMFileTree(
+                folder_url=bdm_folder_url,
+                valid_prefixes=self.bdm_valid_prefixes,
+                valid_wb_types=self.bdm_valid_wb_types)
+            
+            # Update the BSMFile metadata with more analysis
+            for bsm_file in self.bsm_file_tree.all_files():
+                wb = self.bdm_WORKBOOK_DATA_COLLECTION_find(WB_URL, bsm_file.file_url)
+                if wb is not None:
+                    bsm_file.in_bdm = wb is not None
+                    bsm_file.wb_type = wb.wb_type
+                    bsm_file.type = BDMWorkbook.__name__
+                    bsm_file.wf_key = wb.wf_key
+                    bsm_file.wf_purpose = wb.wf_purpose
 
-        for bsm_folder in self.bsm_file_tree.all_folders():
-            # Update the workflow metadata for the folders in the BSM_FILE_TREE.
-            if bsm_folder.file_url in fi_folder_urls:
-                bsm_folder.type = "FI_FOLDER"
-            elif bsm_folder.file_url == bdm_folder_url:
-                bsm_folder.type = "BDM_FOLDER"
-            elif bsm_folder.file_url in wf_folder_config_metadata:
-                md = wf_folder_config_metadata[bsm_folder.file_url]
-                bsm_folder.type = "WF_FOLDER"
-                bsm_folder.wf_key = md[WF_KEY]
-                bsm_folder.wf_purpose = md[WF_PURPOSE]  
-        return
+            for bsm_folder in self.bsm_file_tree.all_folders():
+                # Update the workflow metadata for the folders in the BSM_FILE_TREE.
+                if bsm_folder.file_url in fi_folder_urls:
+                    bsm_folder.type = FI_FOLDER
+                elif bsm_folder.file_url == bdm_folder_url:
+                    bsm_folder.type = "BDM_FOLDER"
+                elif bsm_folder.file_url in wf_folder_config_metadata:
+                    md = wf_folder_config_metadata[bsm_folder.file_url]
+                    bsm_folder.type = "WF_FOLDER"
+                    bsm_folder.wf_key = md[WF_KEY]
+                    bsm_folder.wf_purpose = md[WF_PURPOSE]  
+            return
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise
     #endregion bdm_FILE_LIST_refresh()
     # ------------------------------------------------------------------------ +
     #region    bdm_configured_prefixes() method

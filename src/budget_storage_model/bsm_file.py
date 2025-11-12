@@ -28,6 +28,7 @@ from typing import Dict, List, Any, Union, Optional
 import p3_utils as p3u, p3logging as p3l
 
 # local modules and packages
+from budman_namespace import WB_TYPE_UNKNOWN
 from budget_storage_model import (bsm_URL_verify_file_scheme,)
 
 #endregion Imports
@@ -60,7 +61,9 @@ class BSMFile:
         self._filename: Optional[str] = None
         self._extension: Optional[str] = None
         self._prefix: Optional[str] = None
-        self._wb_type: Optional[str] = None
+        self._wb_type: Optional[str] = WB_TYPE_UNKNOWN
+        self._wf_key: Optional[str] = "n/a"
+        self._wf_purpose: Optional[str] = "User-Defined"
         self._in_bdm: bool = False
         self.update()
 
@@ -75,6 +78,7 @@ class BSMFile:
     def full_filename(self, value: str) -> None:
         """Set the full filename (with extension) of the file."""
         self._full_filename = value
+
     @property
     def filename(self) -> Optional[str]:
         """Return the filename (without extension)."""
@@ -83,6 +87,7 @@ class BSMFile:
     def filename(self, value: str) -> None:
         """Set the filename (without extension)."""
         self._filename = value
+
     @property
     def extension(self) -> Optional[str]:
         """Return the file extension."""
@@ -91,6 +96,7 @@ class BSMFile:
     def extension(self, value: str) -> None:
         """Set the file extension."""
         self._extension = value
+
     @property
     def abs_path(self) -> Optional[Path]:
         """Return the absolute file path."""
@@ -99,6 +105,7 @@ class BSMFile:
     def abs_path(self, value: Path) -> None:
         """Set the absolute file path."""
         self._path = value
+
     @property
     def prefix(self) -> Optional[str]:
         """Return the workflow prefix from the filename."""
@@ -107,6 +114,7 @@ class BSMFile:
     def prefix(self, value: str) -> None:
         """Set the prefix property."""
         self._prefix = value
+
     @property
     def wb_type(self) -> Optional[str]:
         """Return the workbook type from the filename."""
@@ -115,6 +123,25 @@ class BSMFile:
     def wb_type(self, value: str) -> None:
         """Set the workbook type property."""
         self._wb_type = value
+
+    @property
+    def wf_key(self) -> Optional[str]:
+        """Return the workflow key based on the prefix."""
+        return self._wf_key
+    @wf_key.setter
+    def wf_key(self, value: str) -> None:
+        """Set the workflow key property."""
+        self._wf_key = value
+
+    @property
+    def wf_purpose(self) -> Optional[str]:
+        """Return the workflow purpose based on the prefix."""
+        return self._wf_purpose
+    @wf_purpose.setter
+    def wf_purpose(self, value: str) -> None:
+        """Set the workflow purpose property."""
+        self._wf_purpose = value
+
     @property
     def in_bdm(self) -> bool:
         """Return True if the file is in the BDM_STORE."""
