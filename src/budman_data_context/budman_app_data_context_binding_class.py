@@ -45,6 +45,7 @@ from abc import ABC, abstractmethod
 from typing import Tuple, Union, Dict, Optional
 # third-party modules and packages
 from openpyxl import Workbook
+from treelib import Tree, Node
 import p3_utils as p3u, p3_mvvm as p3m
 
 # local modules and packages
@@ -245,6 +246,11 @@ class BudManAppDataContext_Binding(BudManAppDataContext_Base, p3m.DataContext_Bi
         self.DC.dc_LOADED_WORKBOOKS = value
 
     @property
+    def dc_FILE_TREE(self) -> Optional[Tree]:
+        """DC_Binding: Return the BDM_STORE file tree."""
+        return self.DC.dc_FILE_TREE
+
+    @property
     def WF_CATEGORY_MANAGER(self) -> Optional[object]:
         """Return the current category manager in the DC.
 
@@ -414,6 +420,10 @@ class BudManAppDataContext_Binding(BudManAppDataContext_Base, p3m.DataContext_Bi
     def dc_BDM_STORE_save(self, file_path: str) -> None:
         """DC_Binding: Save the BDM_STORE to the specified file path."""
         return self.DC.dc_BDM_STORE_save(file_path)
+    
+    def dc_FILE_TREE_node_info(self, node: Node) -> Dict[str,str]:
+        """DC_Binding: Return a dictionary of info about the given file tree node."""
+        return self.DC.dc_FILE_TREE_node_info(node)
     
     #endregion BudManAppDataContext_Base Methods (concrete)
     # ------------------------------------------------------------------------ +

@@ -14,12 +14,15 @@ from tkinter import EventType, scrolledtext, StringVar, BooleanVar
 from tkinter import ttk
 import ttkbootstrap as tb  # tb.Window used for root window only
 # third-party modules and packages
+from treelib import Tree, Node
 import p3_utils as p3u, p3logging as p3l, p3_mvvm as p3m
 # local modules and packages
-from .budman_gui_style_registry import StyleRegistry
-from budman_gui_view.budman_gui_constants import *
+from budman_namespace import (FILE_TREE_NODE_TYPE_KEY, FILE_TREE_NODE_WF_KEY,
+                              FILE_TREE_NODE_WF_PURPOSE)
 from budman_data_context import BudManAppDataContext_Binding
 import budman_command_processor as cp
+from .budman_gui_style_registry import StyleRegistry
+from .budman_gui_constants import *
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -67,6 +70,7 @@ class BudManGUIFrame(ttk.Frame,
         super().__init__(parent,style="BMG.TFrame")
         self._dc_binding:bool = False
         self._cp_binding:bool = False
+        self._file_tree: Optional[Tree] = None
         try:
             # Setup DataContext_Binding
             if data_context is not None:
@@ -100,7 +104,7 @@ class BudManGUIFrame(ttk.Frame,
         self.load_button : tk.Button = None
         self.quit_button: tk.Button = None
         self.paned_window: ttk.Panedwindow = None
-        self.file_tree: ttk.Treeview = None
+        self.file_treeview: ttk.Treeview = None
         self.text_frame : tk.Frame = None
         self.text_area: scrolledtext.ScrolledText = None
 
@@ -151,6 +155,17 @@ class BudManGUIFrame(ttk.Frame,
     def autosave(self, autosave: bool) -> None:
         """Set the autosave property."""
         self._autosave_value.set(autosave)
+
+    @property 
+    def file_tree(self) -> Optional[Tree]:
+        """Get the file_tree property."""
+        return self._file_tree
+    @file_tree.setter
+    def file_tree(self, file_tree: Optional[Tree]) -> None:
+        """Set the file_tree property."""
+        if not isinstance(file_tree, (Tree, type(None))):
+            raise TypeError("file_tree must be a Tree or None.")
+        self._file_tree = file_tree
     #endregion BudManGUIFrame properties
     #--------------------------------------------------------------------------+
     #endregion BudManGUIFrame class intrinsics
@@ -173,7 +188,10 @@ class BudManGUIFrame(ttk.Frame,
         """Initialize the file treeview widget from the data context."""
         try:
             logger.debug(f"BudManGUIFrame: Initializing file treeview widget.")
-            bsm_file_tree = self.DC.model.bsm_file_tree
+            if self.dc_binding:
+                # User the dc_FILE_TREE from the data context
+                self.file_tree = self.dc_FILE_TREE
+                self.refresh_file_treeview()
             return self
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
@@ -204,26 +222,40 @@ class BudManGUIFrame(ttk.Frame,
         self.quit_button = ttk.Button(self.button_frame,text="Quit")
         self.quit_button.configure(style='BMG.TButton')  # set style for button
 
+        # Paned window with TreeView and Frame:ScrolledText widget
         self.paned_window = ttk.Panedwindow(self, orient=tk.VERTICAL)
         self.paned_window.configure(style='BMG.TPanedwindow')  # set style for panedwindow
-        self.file_tree = ttk.Treeview(self.paned_window, 
-                                    columns=('file_index', 'wf_key', 'Status'), 
-                                    show='tree headings')
-        self.file_tree.configure(style='BMG.Treeview')
-        self.paned_window.add(self.file_tree, weight=2)
-        self.file_tree.heading('#0', text='Name', anchor='w')
-        self.file_tree.column('#0', anchor='w', width=200)
-        self.file_tree.heading('file_index', text='File Index', anchor='w')
-        self.file_tree.column('file_index', anchor='w', width=40)
-        self.file_tree.heading('wf_key', text='wf_key', anchor='w')
-        self.file_tree.column('wf_key', anchor='w', width=80)
-        self.file_tree.heading('Status', text='Status', anchor='w')
-        self.file_tree.column('Status', anchor='w', width=80)
+        self.file_treeview = self.create_file_treeview()
+        self.paned_window.add(self.file_treeview, weight=2)
+        # Text frame and area
         self.text_frame = tk.Frame(self.paned_window)
         self.text_frame.configure(bg=BMG_FAINT_GRAY)
         self.text_area = scrolledtext.ScrolledText(self.text_frame,wrap=tk.WORD, 
                                                    width=40, height=10)
         self.paned_window.add(self.text_frame, weight=3)
+
+    def create_file_treeview(self) -> ttk.Treeview:
+        """Create a file treeview widget."""
+        try:
+            file_treeview = ttk.Treeview(self.paned_window, 
+                                    columns=(FILE_TREE_NODE_TYPE_KEY,
+                                             FILE_TREE_NODE_WF_KEY, 
+                                             FILE_TREE_NODE_WF_PURPOSE), 
+                                    show='tree headings')
+            file_treeview.configure(style='BMG.Treeview')
+            # file_treeview config: headings and columns
+            file_treeview.heading('#0', text='Index:Name', anchor='w')
+            file_treeview.column('#0', anchor='w', width=200)
+            file_treeview.heading(FILE_TREE_NODE_TYPE_KEY, text='Type', anchor='w')
+            file_treeview.column(FILE_TREE_NODE_TYPE_KEY, anchor='w', width=40)
+            file_treeview.heading(FILE_TREE_NODE_WF_KEY, text='Workflow', anchor='w')
+            file_treeview.column(FILE_TREE_NODE_WF_KEY, anchor='w', width=80)
+            file_treeview.heading(FILE_TREE_NODE_WF_PURPOSE, text='Purpose', anchor='w')
+            file_treeview.column(FILE_TREE_NODE_WF_PURPOSE, anchor='w', width=80)
+            return file_treeview
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
 
     def layout_BudManGUIFrame_widgets(self):
         '''Configure the BudManGUIFrame child widgets layout grid configuration'''
@@ -267,11 +299,13 @@ class BudManGUIFrame(ttk.Frame,
         self.autosave_checkbutton.configure(command=self.on_autosave_changed)
         self.save_button.configure(command=self.on_save_button_clicked)
         self.load_button.configure(command=self.on_load_button_clicked)
-
         # do key bindings
         self.filepath_entry.bind("<Return>", self.on_filepath_changed)
         self.filepath_entry.bind("<Tab>", self.on_filepath_changed)
         self.filepath_entry.bind("<FocusOut>", self.on_filepath_changed)
+
+        # Treeview selection event binding
+        self.file_treeview.tag_bind(BMG_FTVOBJECT, "<<TreeviewSelect>>", self.on_file_treeview_select)
     #endregion BudManGUIFrame class methods
     #--------------------------------------------------------------------------+
 
@@ -311,11 +345,74 @@ class BudManGUIFrame(ttk.Frame,
         # v = self.autosave_value.get()
         print(f"BudManView.BudManViewFrame.autosave_value is to: {self.autosave}" + \
               f" with autosave_checkbutton.state(): {self.autosave_checkbutton.state()}")
+    
+    def on_file_treeview_select(self, event):
+        """ Event handler for when the user selects an item in the file treeview. """
+        selected_items = self.file_treeview.selection()
+        for item in selected_items:
+            item_text = self.file_treeview.item(item, "text")
+            print(f"BudManGUIFrame: Selected file treeview item: {item_text} (ID: {item})")
     #endregion BudManViewFrame event handlers
     #--------------------------------------------------------------------------+
     
     #------------------------------------------------------------------------------+
     #region BudManGUIFrame support methods
+    def refresh_file_treeview(self) -> None:
+        """Refresh the file treeview widget from the file_tree property."""
+        try:
+            if self.file_tree is None:
+                logger.debug("BudManGUIFrame: No file_tree to refresh.")
+                return
+            # Update the file_treeview. If one exists with content, then remove
+            # it and replace with a new one with updated content.
+            if len(self.file_treeview.children) > 0:
+                new_treeview = self.create_file_treeview()
+                self.paned_window.forget(1)
+                self.paned_window.add(1, new_treeview, weight=2)
+                self.file_treeview = new_treeview
+            # Traverse the file_tree and add items to file_treeview
+            root_file_tree_node_id: str = self.file_tree.root
+            root_file_tree_node: Node = self.file_tree[root_file_tree_node_id]
+            # Setup the root file_treeview item
+            root_file_treeview_id = self.file_treeview.insert(
+                '', 
+                tk.END, 
+                text=root_file_tree_node.tag,
+                iid=root_file_tree_node_id,
+                tags=(BMG_FTVOBJECT,),
+                values=("BDM_FOLDER", "root", "All"))
+
+            # # Populate the file_treeview with items from the file_tree
+            def add_tree_nodes(file_tree: Tree, 
+                               parent_file_tree_node_id: str,
+                               parent_file_treeview_node_id: str) -> None:
+                # for node_id in self.file_tree.expand_tree():
+                #     node = self.file_tree.get_node(node_id)
+                # node.identifier = full path of folder or file
+                # node.tag = "nnn name" where nnn is the file or folder index
+                #            and name is the file or folder name.
+                for file_tree_node in file_tree.children(parent_file_tree_node_id):
+                    item_type = ""
+                    workflow_value = ""
+                    purpose_value = ""
+                    item_id = self.file_treeview.insert(
+                        parent_file_treeview_node_id,
+                        tk.END,
+                        iid=file_tree_node.identifier,
+                        text=file_tree_node.tag,
+                        tags=(BMG_FTVOBJECT,),
+                        values=(item_type, workflow_value, purpose_value)
+                    )
+                    add_tree_nodes(self.file_tree, file_tree_node.identifier, item_id)
+
+
+            add_tree_nodes(self.file_tree, 
+                           root_file_tree_node_id, 
+                           root_file_treeview_id)
+            logger.debug("BudManGUIFrame: File treeview refreshed.")
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise
     def disable_button(self, button:ttk.Button) -> None:
         """Disable a button widget."""
         button.state(["disabled"])

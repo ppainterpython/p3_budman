@@ -11,12 +11,14 @@ import cmd
 import logging, os, getpass, time, copy
 from typing import List, Optional, Type, Generator, Dict, Tuple, Any, TYPE_CHECKING
 # third-party modules and packages
+from treelib import Tree
 import p3_utils as p3u, pyjson5, p3logging as p3l, p3_mvvm as p3m
 # local modules and packages
 import budman_namespace as bdm
 import budman_settings as bdms
 from budman_data_context import BudManAppDataContext_Binding
 import budman_command_processor as cp
+from budget_storage_model import BSMFileTree
 # bugman_gui_view modules and packages
 from .budman_gui_style_registry  import StyleRegistry
 from .budman_gui_command_processor import BudManGUICommandProcessor
@@ -55,7 +57,7 @@ class BudManGUIView(BudManAppDataContext_Binding,
         self._save_on_exit : bool = True
         self._dc_binding:bool = False
         self._cp_binding:bool = False
-
+        self._file_tree : Tree = None
         try:
             # Setup DataContext_Binding
             if data_context is not None:
@@ -155,6 +157,17 @@ class BudManGUIView(BudManAppDataContext_Binding,
             raise TypeError("settings must be a BudManSettings instance.")
         self._settings = value
         logger.debug(f"Settings updated: {self._settings}")
+
+    @property
+    def file_tree(self) -> Optional[Tree]:
+        """Get the file_tree property."""
+        return self._file_tree
+    @file_tree.setter
+    def file_tree(self, value: Optional[Tree]) -> None:
+        """Set the file_tree property."""
+        if not isinstance(value, (Tree, type(None))):
+            raise TypeError("file_tree must be a Tree instance or None.")
+        self._file_tree = value
     #endregion BudManGUIView class properties
     #--------------------------------------------------------------------------+
     #endregion BudManGuiView class Intricsics

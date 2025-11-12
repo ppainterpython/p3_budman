@@ -43,7 +43,7 @@ class StyleRegistry:
         self.style.configure('BMG.TCheckbutton', background=BMG_FAINT_GRAY, font=font_style)
         self.style.configure('BMG.TPanedwindow', background=BMG_FAINT_GRAY)
         self.style.configure('BMG.Treeview', background=BMG_FAINT_GRAY,
-                             font=font_style, rowheight=25)
+                             font=font_style, rowheight=30)
         self.style.configure("BMG.Treeview.Heading", font=('Segoe UI', 12, 'bold'))
 
     def get_style(self) -> Style:

@@ -38,6 +38,7 @@ from abc import ABC, abstractmethod
 from typing import Tuple, Any, Union, Dict, Optional
 # third-party modules and packages
 from openpyxl import Workbook
+from treelib import Tree, Node
 # local modules and packages
 from p3_mvvm import DataContext_Base
 from budman_namespace.design_language_namespace import (
@@ -244,6 +245,12 @@ class BudManAppDataContext_Base(DataContext_Base):
         """Abstract: Set the list of workbooks currently loaded in the DC.
         Loaded means a file is loaded into memory and is available."""
         pass
+
+    @property
+    @abstractmethod
+    def dc_FILE_TREE(self) -> Optional[Tree]:
+        """Abstract: Return the BDM_STORE file tree."""
+        pass
     #endregion BudManAppDataContext_Base Properties (abstract)
     # ------------------------------------------------------------------------ +
     #region BudManAppDataContext_Base Methods (abstract)
@@ -409,5 +416,9 @@ class BudManAppDataContext_Base(DataContext_Base):
         """Abstract: Save the BDM_STORE to the specified file path."""
         pass
 
+    @abstractmethod
+    def dc_FILE_TREE_node_info(self, node: Node) -> Optional[Dict[str, str]]:
+        """Abstract: Return information about a file tree node."""
+        pass
     #endregion BudManAppDataContext_Base Methods (abstract)
     # ------------------------------------------------------------------------ +

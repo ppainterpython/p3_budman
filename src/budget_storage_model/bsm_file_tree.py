@@ -86,8 +86,8 @@ class BSMFileTree:
                 if isinstance(node.data, BSMFile):
                     if node.data.file_index > self.max_file_index:
                         self.max_file_index = node.data.file_index
-                    if node.data.dir_index > self.max_dir_index:
-                        self.max_dir_index = node.data.dir_index
+                    if node.data.folder_index > self.max_dir_index:
+                        self.max_dir_index = node.data.folder_index
             # Save the file_tree to a .json file
             if self.save_tree and self.file_tree_json_file:
                 logger.debug(f"Saving file_tree to {self.file_tree_json_file}")
@@ -102,42 +102,46 @@ class BSMFileTree:
         folder_abs_path: Path = Path.from_uri(self.folder_url)
         bsm_verify_folder(folder_abs_path, create=False, raise_errors=True)
         file_index:int = 0
-        dir_index:int = 0
+        folder_index:int = 0
         file_tree = Tree()
-        tag = f"{dir_index:2} {folder_abs_path.name}"
+        tag = f"{folder_index:03}:{folder_abs_path.name}"
         # Root node
-        bsm_file: BSMFile = BSMFile(BSMFile.BSM_FOLDER, dir_index, -1, self.folder_url,
+        bsm_file: BSMFile = BSMFile(BSMFile.BSM_FOLDER, folder_index, -1, self.folder_url,
                                    valid_prefixes=self.valid_prefixes,
                                    valid_wb_types=self.valid_wb_types)
-        file_tree.create_node(tag=tag, identifier=str(folder_abs_path),data=bsm_file)
+        file_tree.create_node(tag=tag, identifier=self.folder_url,data=bsm_file)
 
         def add_nodes(current_path: Path, parent_id: str) -> None:
-            """Recursive scan directory current_path. Depth-first, using Path.iterdir()"""
-            nonlocal dir_index, file_index
+            """Recursive scan folder current_path, depth-first"""
+            nonlocal folder_index, file_index
             try:
-                if not current_path.is_dir():
-                    raise ValueError(f"Path is not a directory: {current_path}")
-                dir_index += 1
+                if not current_path.is_dir(): # Windows file system specific is_dir()
+                    raise ValueError(f"Path is not a folder: {current_path}")
+                folder_index += 1
                 # iterdir() returns "arbitrary order, may need to sort."
-                for item in current_path.iterdir():
-                    node_id = str(item.resolve())
+                for item in current_path.iterdir(): # Windows file system sprecific.
+                    node_id = item.as_uri() # str(item.resolve())
                     if item.is_dir():
                         # Folder
+                        # Apply folder exclude list
                         if item.stem in ["backup", "test", "draft", 
                                         "copies","__pycache__", "personal"]:
                             continue
-                        tag = f"{dir_index:2} {item.name}"
-                        folder_bsm_file: BSMFile = BSMFile(BSMFile.BSM_FOLDER, dir_index, -1, item.as_uri(),
-                                                            valid_prefixes=self.valid_prefixes,
-                                                            valid_wb_types=self.valid_wb_types)
+                        tag = f"{folder_index:03}:{item.name}"
+                        folder_bsm_file: BSMFile = BSMFile(BSMFile.BSM_FOLDER, 
+                                                           folder_index, 
+                                                           -1, 
+                                                           node_id,
+                                             valid_prefixes=self.valid_prefixes,
+                                             valid_wb_types=self.valid_wb_types)
                         file_tree.create_node(tag=tag, identifier=node_id,
                             parent=parent_id,
                             data=folder_bsm_file)
                         add_nodes(item, node_id)
                     else:
                         # File
-                        tag = f"{file_index:2} {item.name}"
-                        file_bsm_file: BSMFile = BSMFile(BSMFile.BSM_FILE, dir_index, file_index, item.as_uri(),
+                        tag = f"{file_index:03}:{item.name}"
+                        file_bsm_file: BSMFile = BSMFile(BSMFile.BSM_FILE, folder_index, file_index, item.as_uri(),
                                                         valid_prefixes=self.valid_prefixes,
                                                         valid_wb_types=self.valid_wb_types)
                         file_tree.create_node(tag=tag, identifier=node_id,
@@ -150,7 +154,7 @@ class BSMFileTree:
                 raise
 
         try:
-            add_nodes(folder_abs_path, str(folder_abs_path))
+            add_nodes(folder_abs_path, self.folder_url)
             return file_tree
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
@@ -273,4 +277,17 @@ class BSMFileTree:
             logger.error(p3u.exc_err_msg(e))
             raise
 
+    def all_folders(self) -> Generator[BSMFile, None, None]:
+        """Generate all the folders in the file tree."""
+        try:
+            file_info_list: str = ""
+            for node_id in self.file_tree.expand_tree():
+                file_node: Node = self.file_tree.get_node(node_id)
+                if not file_node.is_leaf(): # only look at folder nodes, which are not leafs
+                    if (file_node.data and isinstance(file_node.data, BSMFile)):
+                        bsm_file: BSMFile = file_node.data
+                        yield bsm_file
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
 # ---------------------------------------------------------------------------- +

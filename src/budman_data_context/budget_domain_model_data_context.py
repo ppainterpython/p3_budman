@@ -16,13 +16,13 @@ from pathlib import Path
 from typing import Any, Tuple, Dict, List, Optional
 # third-party modules and packages
 from openpyxl import Workbook
+from treelib import Tree, Node
 import logging, p3_utils as p3u, p3logging as p3l
 # local modules and packages for necessary classes and functions
-from budman_namespace.design_language_namespace import *
-from budman_namespace.bdm_workbook_class import BDMWorkbook
+from budman_namespace import *
 from budman_data_context import BudManAppDataContext
 from p3_mvvm import Model_Base, Model_Binding
-from budget_storage_model import (bsm_BDMWorkbook_load, bsm_BDMWorkbook_save)
+import budget_storage_model as bsm
 from budman_workflows.txn_category import BDMTXNCategoryManager
 from budget_domain_model import BudgetDomainModel
 #endregion imports
@@ -176,6 +176,7 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
     @property
     def WF_CATEGORY_MANAGER(self) -> Optional[object]:
         """Return the current category manager in the DC.
+           Currently not part of BudManApppDataContext or _Base.
 
         This is a property to register and share a reference to
         the WORKFLOW CATEGORY MANAGER service, which is needed
@@ -232,12 +233,14 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
                     m = "dc_FI_KEY is None. Cannot continue to initialize BDMDataContext."
                     logger.error(m)
                     raise ValueError(m)
-                # Complete initialization. 
+                # Set the dc_FILE_TREE binding.
+                self._dc_FILE_TREE = self.model.bsm_file_tree.file_tree
                 # The fi_key/fi_object binding to the model is the critical link
                 # between the BDMDataContext and the Model.
                 fi_object = self.model.bdm_FI_OBJECT(self._dc_FI_KEY)
                 wdc = self.model.bdm_FI_WORKBOOK_DATA_COLLECTION(self._dc_FI_KEY)
                 self._dc_FI_OBJECT = fi_object
+                # This is not DC business, but setup the WF_CATEGORY_MANAGER here.
                 if self.WF_CATEGORY_MANAGER is not None:
                     # Load the WB_TYPE_TXN_CATEGORIES for the FI.
                     wfm : BDMTXNCategoryManager = self.WF_CATEGORY_MANAGER
@@ -383,7 +386,7 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
                 logger.error(m)
                 return False, m
             # Model-aware: Load the bdm_wb WORKBOOK_CONTENT object with the BSM.
-            bsm_BDMWorkbook_load(bdm_wb)
+            bsm.bsm_BDMWorkbook_load(bdm_wb)
             # Add/update to the loaded workbooks collection.
             self.dc_LOADED_WORKBOOKS[bdm_wb.wb_id] = bdm_wb.wb_content
             self.dc_WORKBOOK = bdm_wb  # Update workbook-related DC info.
@@ -414,7 +417,7 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
                 logger.error(m)
                 return False, m
             # Save the workbook content using the BSM.
-            bsm_BDMWorkbook_save(bdm_wb)
+            bsm.bsm_BDMWorkbook_save(bdm_wb)
             # Update the dc_LOADED_WORKBOOKS with the saved content.
             self.dc_LOADED_WORKBOOKS[bdm_wb.wb_id] = bdm_wb.wb_content
             bdm_wb.wb_loaded = True
@@ -423,6 +426,49 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
             m = f"Error saving workbook '{bdm_wb.wb_id}': {p3u.exc_err_msg(e)}"
             logger.error(m)
             return False, m
+
+    def dc_FILE_TREE_node_info(self, node: Node) -> Dict[str,str]:
+        """Model-Aware: Return info about the specified file tree node."""
+        if not self.dc_VALID:
+            logger.error("Data context is not valid.")
+            return {}
+        if self.dc_FILE_TREE is None:
+            logger.error("Data context FILE_TREE is not set.")
+            return {}
+        if node is None:
+            logger.error("Node is None.")
+            return {}
+        bsm_file: bsm.BSMFile = node.data
+        if bsm_file.type == bsm.BSMFile.BSM_FILE:
+            info = {
+                "identifier": str(node.identifier),
+                "tag": str(node.tag),
+                "data": str(node.data),
+                "is_leaf": str(node.is_leaf),
+                "depth": str(node.depth),
+                "num_children": str(len(node.children)),
+                "filename": str(bsm_file.filename),
+                "extension": str(bsm_file.extension),
+                "prefix": str(bsm_file.prefix),
+                "wb_type": str(bsm_file.wb_type),
+                "in_bdm": str(bsm_file.in_bdm),
+            }
+            return info
+        elif bsm_file.type == bsm.BSMFile.BSM_FOLDER:
+            info = {
+                "identifier": str(node.identifier),
+                "tag": str(node.tag),
+                "data": str(node.data),
+                "is_leaf": str(node.is_leaf),
+                "depth": str(node.depth),
+                "num_children": str(len(node.children)),
+                "folder_name": str(bsm_file.folder_name),
+                "in_bdm": str(bsm_file.in_bdm),
+            }
+            return info
+        else:
+            raise ValueError(f"Unknown BSMFile type: {bsm_file.type}")
+
     #endregion BudManDataContext Method Overrides.
     # ------------------------------------------------------------------------ +
     #endregion BudManDataContext (Interface) Property/Method Overrides.

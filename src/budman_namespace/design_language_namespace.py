@@ -58,18 +58,6 @@ type WF_FOLDER_CONFIG_TYPE = DATA_OBJECT_TYPE
 type WF_FOLDER_CONFIG_LIST_TYPE = List[WF_FOLDER_CONFIG_TYPE]
 type FI_WF_FOLDER_CONFIG_COLLECTION_TYPE = Dict[str, WF_FOLDER_CONFIG_LIST_TYPE]
 # ---------------------------------------------------------------------------- +
-# Budget Manager (BudMan) application constants
-BUDMAN_FOLDER_ENV_VAR = "ROOT_PATH_FOR_BUDMAN_FOLDER"
-BUDMAN_SETTINGS_FILES_ENV_VAR = "SETTINGS_FILE_FOR_BUDMAN"
-# ---------------------------------------------------------------------------- +
-# Budget Storage Model (BSM) constants
-BSM_SUPPORTED_URL_SCHEMES = ("file") #, "http", "https")
-VALID_BSM_BDM_STORE_FILETYPES = (".json", ".jsonc")
-BSM_DATA_COLLECTION_CSV_STORE_FILETYPES = (".csv",".txt")
-PATH = "_path"
-ABS_PATH = "_abs" + PATH
-WORKBOOKS = "_workbooks"
-# ---------------------------------------------------------------------------- +
 # Common dictionary attribute key name constants
 FI_KEY = "fi_key"
 WF_KEY = "wf_key"
@@ -128,8 +116,6 @@ BSM_PERSISTED_PROPERTIES = (
     BDM_OPTIONS, BDM_CREATED_DATE, BDM_LAST_MODIFIED_DATE, BDM_LAST_MODIFIED_BY,
     BDM_DATA_CONTEXT)
 # ---------------------------------------------------------------------------- +
-VALID_BSM_BDM_STORE_FILETYPES = (".json", ".jsonc")
-# ---------------------------------------------------------------------------- +
 #
 # BDMO_OBJECT Budget Domain Model Options pseudo-Object (Dictionary key names)
 # TODO: Refactor this into BudManApplicationSettings, not Model Scope, no BDM_STORE
@@ -139,6 +125,18 @@ BDMO_LOG_FILE = "log_file"
 BDMO_JSON_LOG_FILE = "json_log_file_name"
 BDMO_EXPECTED_KEYS = (BDMO_LOG_CONFIG, BDMO_LOG_LEVEL, BDMO_LOG_FILE,
                     BDMO_JSON_LOG_FILE)
+# ---------------------------------------------------------------------------- +
+# Budget Storage Model (BSM) constants
+BSM_SUPPORTED_URL_SCHEMES = ("file") #, "http", "https")
+VALID_BSM_BDM_STORE_FILETYPES = (".json", ".jsonc")
+BSM_DATA_COLLECTION_CSV_STORE_FILETYPES = (".csv",".txt")
+PATH = "_path"
+ABS_PATH = "_abs" + PATH
+WORKBOOKS = "_workbooks"
+# FILE_TREE info constants
+FILE_TREE_NODE_TYPE_KEY = "node_type"
+FILE_TREE_NODE_WF_KEY = WF_KEY
+FILE_TREE_NODE_WF_PURPOSE = WF_PURPOSE
 # ---------------------------------------------------------------------------- +
 # FI_OBJECT financial institution pseudo-Object (Dictionary key names)
 FI_KEY = FI_KEY # common

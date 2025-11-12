@@ -44,13 +44,13 @@ class BSMFile:
     BSM_FOLDER = "folder"
     def __init__(self, 
                  type:str=BSM_FILE, 
-                 dir_index:int=-1, 
+                 folder_index:int=-1, 
                  file_index:int=-1, 
                  file_url:Optional[str]=None,
                  valid_prefixes:List[str]=[],
                  valid_wb_types:List[str]=[]) -> None:
         self.type: str = type
-        self.dir_index: int = dir_index
+        self.folder_index: int = folder_index
         self.file_index: int = file_index
         self.file_url: Optional[str] = file_url
         self._valid_prefixes: List[str] = valid_prefixes if valid_prefixes else []
@@ -71,26 +71,50 @@ class BSMFile:
     def full_filename(self) -> Optional[str]:
         """Return the full filename (with extension) of the file."""
         return self._full_filename
+    @full_filename.setter
+    def full_filename(self, value: str) -> None:
+        """Set the full filename (with extension) of the file."""
+        self._full_filename = value
     @property
     def filename(self) -> Optional[str]:
         """Return the filename (without extension)."""
         return self._filename
+    @filename.setter
+    def filename(self, value: str) -> None:
+        """Set the filename (without extension)."""
+        self._filename = value
     @property
     def extension(self) -> Optional[str]:
         """Return the file extension."""
         return self._extension
+    @extension.setter
+    def extension(self, value: str) -> None:
+        """Set the file extension."""
+        self._extension = value
     @property
     def abs_path(self) -> Optional[Path]:
         """Return the absolute file path."""
         return self._path
+    @abs_path.setter
+    def abs_path(self, value: Path) -> None:
+        """Set the absolute file path."""
+        self._path = value
     @property
     def prefix(self) -> Optional[str]:
         """Return the workflow prefix from the filename."""
         return self._prefix
+    @prefix.setter
+    def prefix(self, value: str) -> None:
+        """Set the prefix property."""
+        self._prefix = value
     @property
     def wb_type(self) -> Optional[str]:
         """Return the workbook type from the filename."""
         return self._wb_type
+    @wb_type.setter
+    def wb_type(self, value: str) -> None:
+        """Set the workbook type property."""
+        self._wb_type = value
     @property
     def in_bdm(self) -> bool:
         """Return True if the file is in the BDM_STORE."""
@@ -101,6 +125,7 @@ class BSMFile:
         if not isinstance(value, bool):
             raise ValueError("in_bdm must be a boolean value.")
         self._in_bdm = value
+
     def verify_url(self) -> Optional[Path]:
         """Verify the file URL."""
         try:
@@ -108,6 +133,7 @@ class BSMFile:
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             return False
+
     def update(self) -> None:
         """Update the prefix and wb_type properties based on the filename."""
         if not self.file_url:

@@ -58,9 +58,10 @@ import pyjson5 as json5, json
 import openpyxl
 from openpyxl import Workbook, load_workbook
 # local modules and packages
+import budman_settings as bdms
 import budman_namespace.design_language_namespace as bdm
 from budman_namespace.bdm_workbook_class import BDMWorkbook
-from budget_storage_model.csv_data_collection import (
+from .csv_data_collection import (
     csv_DATA_LIST_url_get, csv_DATA_LIST_url_put,
     csv_DATA_LIST_file_load, csv_DATA_LIST_file_save
     )

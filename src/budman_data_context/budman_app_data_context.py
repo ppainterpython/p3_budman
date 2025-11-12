@@ -65,6 +65,7 @@ from abc import ABC, abstractmethod
 from typing import Tuple, Any, Union, Dict, Optional
 # third-party modules and packages
 from openpyxl import Workbook
+from treelib import Tree, Node
 import logging, p3_utils as p3u, p3logging as p3l
 # local modules and packages
 from budman_namespace.design_language_namespace import (
@@ -77,10 +78,11 @@ from budman_namespace.design_language_namespace import (
     BDM_STORE_OBJECT, BDM_FOLDER,
     FI_KEY, WF_KEY, WB_ID, WB_NAME,
     WB_TYPE, WF_PURPOSE, WB_INDEX, WB_URL, WB_LOADED, WB_CONTENT,
-    BDM_DATA_CONTEXT, DC_FI_KEY, DC_WF_KEY, DC_WF_PURPOSE, DC_WB_TYPE
+    BDM_DATA_CONTEXT, DC_FI_KEY, DC_WF_KEY, DC_WF_PURPOSE, DC_WB_TYPE,
+    FILE_TREE_NODE_TYPE_KEY, FILE_TREE_NODE_WF_KEY, FILE_TREE_NODE_WF_PURPOSE
     )
+import budget_storage_model as bsm
 from budman_data_context.budman_app_data_context_base_ABC import BudManAppDataContext_Base
-from budget_storage_model import (bsm_BDM_STORE_url_get, bsm_BDM_STORE_url_put)
 #endregion imports
 # ---------------------------------------------------------------------------- +
 #region Globals
@@ -111,6 +113,7 @@ class BudManAppDataContext(BudManAppDataContext_Base):
         self._dc_WORKBOOK_DATA_COLLECTION : WORKBOOK_DATA_COLLECTION_TYPE = dict()
         self._dc_LOADED_WORKBOOKS : LOADED_WORKBOOK_COLLECTION_TYPE = dict()
         self._dc_DataContext : DATA_CONTEXT_TYPE = dict()
+        self._dc_FILE_TREE : Optional[Tree] = None
     #endregion BudManAppDataContext__init__()
     # ------------------------------------------------------------------------ +
     #region BudManAppDataContext_Base Properties (concrete) 
@@ -365,6 +368,12 @@ class BudManAppDataContext(BudManAppDataContext_Base):
         """DC-Only: Set the list of workbooks currently loaded in the DC.
         Loaded means a file is loaded into memory and is available."""
         self._dc_LOADED_WORKBOOKS = value
+
+    @property
+    def dc_FILE_TREE(self) -> Optional[Tree]:
+        """DC-Only: Requires a binding to a model or storage system.
+        This backing variable can be set by a subclass override."""
+        return self._dc_FILE_TREE
     #endregion BudManAppDataContext_Base Properties (concrete)
     # ------------------------------------------------------------------------ +
     #region BudManAppDataContext_Base Methods (concrete)
@@ -730,7 +739,7 @@ class BudManAppDataContext(BudManAppDataContext_Base):
         read the BDM_STORE from a json file in storage.
         """
         try:
-            bdm_store = bsm_BDM_STORE_url_get(bdm_url)
+            bdm_store = bsm.bsm_BDM_STORE_url_get(bdm_url)
             if bdm_store is None:
                 raise ValueError(f"Failed to load BDM_STORE from URL: {bdm_url}")
             self.dc_BDM_STORE = bdm_store
@@ -745,6 +754,11 @@ class BudManAppDataContext(BudManAppDataContext_Base):
         """Save the BDM_STORE to the specified file path."""
         logger.error("BDM_STORE_save method is not implemented in this interface.")
         return None
+    
+    def dc_FILE_TREE_node_info(self, node: Node) -> Dict[str,str]:
+        """DC-Only: Not implemented: Return info about the specified file tree node."""
+        raise NotImplementedError("dc_FILE_TREE_node_info is not implemented "
+                                  "as it requires a Model binding.")
 
     #endregion BudManAppDataContext_Base Methods (concrete)
     # ------------------------------------------------------------------------ +

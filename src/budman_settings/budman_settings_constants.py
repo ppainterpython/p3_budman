@@ -2,6 +2,10 @@
 """ constants used for budman_app"""
 #endregion budman_app_constants.py symbol constants for Types and Values.
 # ---------------------------------------------------------------------------- +
+# Budget Manager (BudMan) application environment variable constants
+BUDMAN_FOLDER_ENV_VAR = "ROOT_PATH_FOR_BUDMAN_FOLDER"
+BUDMAN_SETTINGS_FILES_ENV_VAR = "SETTINGS_FILE_FOR_BUDMAN"
+# ---------------------------------------------------------------------------- +
 # Application Constants
 THIS_APP_NAME = "p3_budget_manager" 
 THIS_APP_SHORT_NAME = "budman" 

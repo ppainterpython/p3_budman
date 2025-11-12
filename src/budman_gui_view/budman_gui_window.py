@@ -230,10 +230,12 @@ class BudManGUIWindow(ttk.Window,
     def load_sample_data(self):
         '''Load sample data into the BudManGUIFrame widgets for testing purposes.'''
         gui_frame: BudManGUIFrame = self.budman_gui_frame
-        fi_entry = gui_frame.file_tree.insert('', 'end', text="boa", values=("", "", ""))
-        wf_entry = gui_frame.file_tree.insert(fi_entry, 'end', text="new", values=("", "", ""))
-        gui_frame.file_tree.insert(wf_entry, 'end', text="workbook 1", values=('0', 'Input', 'Loaded'))
-        gui_frame.file_tree.insert(wf_entry, 'end', text="workbook 2", values=('1', 'Working', 'Not Loaded'))
+        root_folder = gui_frame.file_treeview.insert('', 'end', text="  0 budget", values=("Folder", "root", "n/a"))
+        file0_entry = gui_frame.file_treeview.insert(root_folder, 'end', text="  0 .bdm_file_tree.json", values=("File", "n/a", "n/a"))
+        file1_entry = gui_frame.file_treeview.insert(root_folder, 'end', text="  1 2025Budget.xlsx", values=("File", "n/a", "n/a"))
+        folder1_entry = gui_frame.file_treeview.insert(root_folder, 'end', text="  1 boa", values=('Folder', 'Financial Institution', 'FI_FOLDER'))
+        folder2_entry = gui_frame.file_treeview.insert(folder1_entry, 'end', text="  2 budget", values=('Folder', 'Budget', 'Working'))
+        gui_frame.file_treeview.insert(folder2_entry, 'end', text="  7 Manual-BOAChecking2023.slxs", values=('File', 'n/a', 'User-defined'))
 
         gui_frame.text_area.insert(tk.END, "Line 1:\n")
         gui_frame.text_area.insert(tk.END, "Line 2:\n")

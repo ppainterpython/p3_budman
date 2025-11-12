@@ -19,6 +19,7 @@ default_workflow = "categorization"
 default_workflow_purpose = "wf_working" 
 default_workbook_type = "transactions"
 cmd_history_filename = "budman_cmd_history.txt"  # command history file
+# TODO: Need a means to bind a storage system for the model: file system or cloud
 
 [category_catalog] # Dict[fi_key, full filename of FI's budget category defs]
 boa = { txn_categories_workbook_full_filename = "All_TXN_Categories.txn_categories.json", category_map_workbook_full_filename = "boa_category_map.py"}
