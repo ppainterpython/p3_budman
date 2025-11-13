@@ -1,7 +1,7 @@
 # ---------------------------------------------------------------------------- +
 #region test_budman_app_data_context.py
-"""DC-Only: BudManAppDataContext: A concrete implementation BudManAppDataContext_Base 
-    for the Budget Manager application. 
+"""DC-Only: BudManAppDataContext: A concrete implementation of the interface
+    defined in BudManAppDataContext_Base.
     
     A Data Context (DC) is a component of the MVVM design pattern for 
     applications. It separates concerns by Model, View Model and View object
@@ -271,7 +271,7 @@ class BudManAppDataContext(BudManAppDataContext_Base):
         
         Current means that the other data in the DC is for this workbook, and 
         that a user has specified this workbook specifically by index.
-        The index is based on the order of workbooks in the dc_WORKBOOK_DATA_COLLECTION.
+        The wb_index is based on the order of workbooks in the dc_WORKBOOK_DATA_COLLECTION.
         """
         wb = self.dc_WORKBOOK
         if not wb: return -1
@@ -502,7 +502,6 @@ class BudManAppDataContext(BudManAppDataContext_Base):
     def dc_WORKBOOK_name(self, wb_index: int) -> str:
         """DC-Only: Return wb_name for wb_index or None if does not exist."""
         try:
-            # Note: transitioning to dc_WORKBOOK_COLLECTION from dc_WORKBOOKS
             if not isinstance(wb_index, int):
                 if isinstance(wb_index, str) and wb_index.isdigit():
                     wb_index = int(wb_index)
@@ -532,7 +531,6 @@ class BudManAppDataContext(BudManAppDataContext_Base):
             int: The index of the workbook in the WORKBOOK_DATA_COLLECTION, or -1 if not found.
         """
         try:
-            # Note: transitioning to dc_WORKBOOK_COLLECTION from dc_WORKBOOKS
             wdc = self.dc_WORKBOOK_DATA_COLLECTION
             i = -1
             if wb_id is None or not isinstance(wb_id, str) or len(wb_id) == 0:

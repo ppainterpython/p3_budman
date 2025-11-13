@@ -22,13 +22,13 @@ from budman_namespace import (FILE_TREE_NODE_TYPE_KEY, FILE_TREE_NODE_WF_KEY,
 from budman_data_context import BudManAppDataContext_Binding
 import budman_command_processor as cp
 from .budman_gui_style_registry import StyleRegistry
+from .budman_gui_msg import BudManGuiMsg
 from .budman_gui_constants import *
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
 logger = logging.getLogger(BMG_WINDOW_TITLE)  # create logger for the module
-logger.debug(f"Imported module: {__name__}")
-logger.debug(f"{__name__} Logger name: {logger.name}, Level: {logger.level}")
+budman_msg = BudManGuiMsg()  # Singleton instance of BudManGuiMsg
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
 class BudManGUIFrame(ttk.Frame, 
@@ -337,6 +337,7 @@ class BudManGUIFrame(ttk.Frame,
             self.disable_button(self.save_button)
         else:   
             self.enable_button(self.save_button)
+        budman_msg.output(f"Load button clicked with filepath: {v}")
         print(f"BudManGUIWindow.BudManGUIFrame.load_button clicked with filepath: {v}")
 
     def on_autosave_changed(self):

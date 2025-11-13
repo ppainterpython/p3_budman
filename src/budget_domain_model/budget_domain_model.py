@@ -4,7 +4,35 @@
 
     Following a rough MVVM pattern, the BudgetDomainModel class is acting as 
     both the cohesive Model, representing a budget model domain in
-    memory as object API. 
+    memory as an object API. 
+
+    Key Concepts:
+    -------------
+
+    - BDM Workbooks: files such as excel or .csv files stored in folders. A 
+      workbook has the meaning that the BDM is aware of the file and there is 
+      metadata kept concerning its participation in workflow processes. There 
+      are many types of BDM Workbooks, includ json and python files in addition 
+      to excel and csv.
+    - Storage Model - a means to store files in folders. The storage model is
+      intended to be independent of local file system versus cloud storage.
+    - FILE_TREE - a data structure used to represent the content of a storage
+      model hierarchy as just folders and files, not treating one file 
+      differently if it also happens to be a BDM Workbook. Folders and files are
+      assigned an index, file_index or folder_index, used as a shorthand 
+      reference in the UX and API design. Indexes are integers and will change
+      as the content in the storage model changes dynamically. Hence, these
+      are not used as persistent references.
+    - URL - a file: URL is used as the persistent reference to folders and files
+      in a storage model.
+    - WORKBOOK_DATA_COLLECTION - a dictionary used to persist all known
+      BDM Workbooks. Each workbook has metadata associated with it which is
+      persisted in the BDM_STORE. When the application starts, the BDM_STORE is
+      read in to reinitialize the state of the BDM in memory.
+    - WB_INDEX - an integer used to refer to a BDM Workbook as a short hand
+      reference. The number will change as the content of the WDC changes
+      dynamincally. At present, the WB_INDEX is determined by the order of
+      the items in the WDC dictionary.
 
     At present, the BudgetDomainModel class is a singleton class that manages the 
     mapping of excel "workbooks" stored in the filesystem to the budget model.

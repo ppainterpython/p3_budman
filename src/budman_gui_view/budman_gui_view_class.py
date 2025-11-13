@@ -7,7 +7,9 @@
 # ---------------------------------------------------------------------------- +
 #region Imports
 # python standard library modules and packages
-import cmd
+import queue
+import tkinter as tk
+import tkinter.scrolledtext as scrolledtext
 import logging, os, getpass, time, copy
 from typing import List, Optional, Type, Generator, Dict, Tuple, Any, TYPE_CHECKING
 # third-party modules and packages
@@ -24,11 +26,13 @@ from .budman_gui_style_registry  import StyleRegistry
 from .budman_gui_command_processor import BudManGUICommandProcessor
 from .budman_gui_window  import BudManGUIWindow
 from .budman_gui_frame   import BudManGUIFrame
+from .budman_gui_msg     import BudManGuiMsg
 from .budman_gui_constants import *
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
 logger = logging.getLogger(__name__)
+budman_msg = BudManGuiMsg()  # Singleton instance of BudManGuiMsg
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
@@ -86,6 +90,7 @@ class BudManGUIView(BudManAppDataContext_Binding,
                                     data_context=data_context)
         logger.info(f"Initializing BudMan GUI View")
         logger.debug(f"BudManGUIView created")
+        budman_msg.output(f"BudManGUIView created for application '{self._app_name}'.")
     #endregion __init__()
     # ------------------------------------------------------------------------ +
     #region    BudManGUIView class properties
@@ -168,6 +173,7 @@ class BudManGUIView(BudManAppDataContext_Binding,
         if not isinstance(value, (Tree, type(None))):
             raise TypeError("file_tree must be a Tree instance or None.")
         self._file_tree = value
+
     #endregion BudManGUIView class properties
     #--------------------------------------------------------------------------+
     #endregion BudManGuiView class Intricsics

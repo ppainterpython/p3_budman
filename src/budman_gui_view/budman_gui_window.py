@@ -21,13 +21,13 @@ import budman_command_processor as cp
 # bugman_gui_view modules and packages
 from .budman_gui_style_registry import StyleRegistry
 from .budman_gui_frame import BudManGUIFrame
+from .budman_gui_msg import BudManGuiMsg
 from .budman_gui_constants import *
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
 logger = logging.getLogger(__name__)  # create logger for the module
-logger.debug(f"Imported module: {__name__}")
-logger.debug(f"{__name__} Logger name: {logger.name}, Level: {logger.level}")
+budman_msg = BudManGuiMsg()  # Singleton instance of BudManGuiMsg
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
 class BudManGUIWindow(ttk.Window, 
@@ -175,6 +175,9 @@ class BudManGUIWindow(ttk.Window,
         try:
             logger.debug(f"BudManGUIWindow: Initializing BudManGUIFrame widgets.")
             self.budman_gui_frame.initialize()
+            budman_msg.msg_widget = self.budman_gui_frame.text_area
+            budman_msg.root = self
+            budman_msg.msg_handler()
             return self
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
