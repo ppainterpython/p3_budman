@@ -12,12 +12,16 @@ from .budman_gui_frame import BudManGUIFrame
 from .budman_gui_command_processor import BudManGUICommandProcessor
 from .budman_gui_style_registry import StyleRegistry
 from .budman_gui_constants import *
+from .budman_gui_msg import BudManGuiMsg
 __all__ = [
     "BudManGUIView",
     "BudManGUIWindow",
     "BudManGUIFrame",
     "BudManGUICommandProcessor",
     "StyleRegistry",
+    "BudManGuiMsg",
+    BMG_BASIC_FIXED_FONT,
+    BMG_BASIC_FIXED_FONT_BOLD,
     BMG_FAINT_GRAY,
     BMG_BUTTON_WIDTH,
     BMG_WINDOW_TITLE,

@@ -175,7 +175,7 @@ class BudManGUIWindow(ttk.Window,
         try:
             logger.debug(f"BudManGUIWindow: Initializing BudManGUIFrame widgets.")
             self.budman_gui_frame.initialize()
-            budman_msg.msg_widget = self.budman_gui_frame.text_area
+            budman_msg.msg_widget = self.budman_gui_frame.msg_area
             budman_msg.root = self
             budman_msg.msg_handler()
             return self
@@ -240,10 +240,10 @@ class BudManGUIWindow(ttk.Window,
         folder2_entry = gui_frame.file_treeview.insert(folder1_entry, 'end', text="  2 budget", values=('Folder', 'Budget', 'Working'))
         gui_frame.file_treeview.insert(folder2_entry, 'end', text="  7 Manual-BOAChecking2023.slxs", values=('File', 'n/a', 'User-defined'))
 
-        gui_frame.text_area.insert(tk.END, "Line 1:\n")
-        gui_frame.text_area.insert(tk.END, "Line 2:\n")
-        gui_frame.text_area.insert(tk.END, "Line 3:\n")
-        gui_frame.text_area.yview(tk.END)
+        gui_frame.msg_area.insert(tk.END, "Line 1:\n")
+        gui_frame.msg_area.insert(tk.END, "Line 2:\n")
+        gui_frame.msg_area.insert(tk.END, "Line 3:\n")
+        gui_frame.msg_area.yview(tk.END)
         bdm_store_url = self.settings[bdms.BDM_STORE_URL]
         gui_frame.filepath = bdm_store_url  
         print("pause")

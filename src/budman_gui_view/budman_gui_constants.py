@@ -1,7 +1,10 @@
 #-----------------------------------------------------------------------------+
 # BMG - BudMan GUI
+BMG_BASIC_FIXED_FONT = ("Consolas", 12)
+BMG_BASIC_FIXED_FONT_BOLD = ("Consolas", 12, 'bold')
 BMG_FAINT_GRAY = '#ededed'
 BMG_LIGHT_GRAY = '#D5D6D5'
+BMG_DARK_TEXT = '#202020'
 BMG_BUTTON_FOREGROUND_ACTIVE = '#FFFFFF'
 BMG_BUTTON_FOREGROUND_ACTIVE = '#FFFFFF'
 BMG_BUTTON_FOREGROUND_DISABLED = '#8EA6B4'
@@ -18,4 +21,9 @@ BMG_STATUS_BAR_HEIGHT = 30
 #-----------------------------------------------------------------------------+
 # BMG - UI Widget Tags
 BMG_FTVOBJECT = "ftvobject"
+BMG_INFO = "INFO"
+BMG_DEBUG = "DEBUG"
+BMG_WARNING = "WARNING"
+BMG_ERROR = "ERROR"
+BMG_CRITICAL = "CRITICAL"
 

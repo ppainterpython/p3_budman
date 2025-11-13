@@ -66,22 +66,25 @@ class BudManGuiMsg(metaclass=BDMSingletonMeta):
             return
         try:
             while True:
-                msg = self._budman_msg_queue.get_nowait()
-                if msg is None:
+                msg_item = self._budman_msg_queue.get_nowait()
+                if msg_item is None:
                     break  # Exit signal
-                self.update_msg_widget(msg)
+                self.update_msg_widget(msg_item["msg"], msg_item["tag"])
         except queue.Empty:
             pass  # No message, continue waiting
         self.root.after(100, self.msg_handler)
 
-    def update_msg_widget(self, msg : str) -> None:
+    def update_msg_widget(self, msg : str, tag: str = BMG_INFO) -> None:
         """Append a message to the message widget."""
         if self._msg_widget:
-            self._msg_widget.insert(tk.END, msg)
+            self._msg_widget.insert(tk.END, msg, tag)
             self._msg_widget.see(tk.END)  # Scroll to the end
         else:
             logger.warning("Message widget is not set. Cannot append message.")
 
-    def output(self, msg : str) -> None:
+    def output(self, msg : str, tag: str = BMG_INFO) -> None:
         """Output a message to the message queue."""
-        self._budman_msg_queue.put(msg+'\n')
+        if msg is not None and isinstance(msg, str) and len(msg) > 0:
+            msg += "\n"
+            msg_item = {"msg": msg, "tag": tag}
+            self._budman_msg_queue.put(msg_item)

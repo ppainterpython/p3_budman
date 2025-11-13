@@ -96,6 +96,7 @@ class BudManGUIFrame(ttk.Frame,
 
         # tkinter configuration
         self.parent = parent   # reference to the root window
+        self.style_registry = style_registry  # reference to the style registry
         self.filepath_label: ttk.Label = None
         self.filepath_entry: tk.Entry = None
         self.autosave_checkbutton: ttk.Checkbutton = None
@@ -106,7 +107,7 @@ class BudManGUIFrame(ttk.Frame,
         self.paned_window: ttk.Panedwindow = None
         self.file_treeview: ttk.Treeview = None
         self.text_frame : tk.Frame = None
-        self.text_area: scrolledtext.ScrolledText = None
+        self.msg_area: scrolledtext.ScrolledText = None
 
         # init widgets in BudManGUIFrame
         self.configure(style="BMG.TFrame")
@@ -230,10 +231,21 @@ class BudManGUIFrame(ttk.Frame,
         # Text frame and area
         self.text_frame = tk.Frame(self.paned_window)
         self.text_frame.configure(bg=BMG_FAINT_GRAY)
-        self.text_area = scrolledtext.ScrolledText(self.text_frame,wrap=tk.WORD, 
-                                                   width=40, height=10)
+        self.msg_area = self.create_msg_area_widget()
         self.paned_window.add(self.text_frame, weight=3)
 
+    def create_msg_area_widget(self) -> scrolledtext.ScrolledText:
+        """Create a scrolled text area widget."""
+        try:
+            msg_area = scrolledtext.ScrolledText(self.text_frame,wrap=tk.WORD, 
+                                                  width=40, height=10)
+            msg_area.configure(bg=BMG_FAINT_GRAY, fg=BMG_DARK_TEXT,
+                                font=BMG_BASIC_FIXED_FONT)
+            self.style_registry.configure_tags_text(msg_area)
+            return msg_area
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
     def create_file_treeview(self) -> ttk.Treeview:
         """Create a file treeview widget."""
         try:
@@ -289,7 +301,7 @@ class BudManGUIFrame(ttk.Frame,
         self.paned_window.grid(row=2, column=0, columnspan=5, sticky="nsew")
         self.text_frame.columnconfigure(0, weight=1)
         self.text_frame.rowconfigure(0, weight=1)
-        self.text_area.grid(row=0, column=0, sticky="nsew")
+        self.msg_area.grid(row=0, column=0, sticky="nsew")
 
     def bind_BudManGUIFrame_widgets(self):
         ''' Bind the widgets in the frame to their respective event handlers.
@@ -337,7 +349,7 @@ class BudManGUIFrame(ttk.Frame,
             self.disable_button(self.save_button)
         else:   
             self.enable_button(self.save_button)
-        budman_msg.output(f"Load button clicked with filepath: {v}")
+        budman_msg.output(f"Load button clicked with filepath: {v}", BMG_DEBUG)
         print(f"BudManGUIWindow.BudManGUIFrame.load_button clicked with filepath: {v}")
 
     def on_autosave_changed(self):

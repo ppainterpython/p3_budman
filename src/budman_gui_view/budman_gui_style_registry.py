@@ -20,8 +20,8 @@ class StyleRegistry:
 
     def _define_styles(self):
         """Define the styles for the BudMan GUI application."""
-        font_style = ('Segoe UI', 12)
-        font_style_bold = ('Segoe UI', 12, 'bold')
+        font_style = BMG_BASIC_FIXED_FONT
+        font_style_bold = BMG_BASIC_FIXED_FONT_BOLD
         self.style.configure('BMG.TFrame', 
                              background=BMG_FAINT_GRAY)
         self.style.configure('BMG.TLabel', 
@@ -44,7 +44,15 @@ class StyleRegistry:
         self.style.configure('BMG.TPanedwindow', background=BMG_FAINT_GRAY)
         self.style.configure('BMG.Treeview', background=BMG_FAINT_GRAY,
                              font=font_style, rowheight=30)
-        self.style.configure("BMG.Treeview.Heading", font=('Segoe UI', 12, 'bold'))
+        self.style.configure("BMG.Treeview.Heading", font=BMG_BASIC_FIXED_FONT_BOLD)
+
+    def configure_tags_text(self, widget):
+        """Configure the tags for a scrolled text widget."""
+        widget.tag_configure(BMG_INFO, foreground=BMG_DARK_TEXT)
+        widget.tag_configure(BMG_DEBUG, foreground="blue")
+        widget.tag_configure(BMG_WARNING, foreground="orange")
+        widget.tag_configure(BMG_ERROR, foreground="red")
+        widget.tag_configure(BMG_CRITICAL, foreground="red", underline=1)
 
     def get_style(self) -> Style:
         """Get the ttk.Style object for the BudMan GUI application."""
