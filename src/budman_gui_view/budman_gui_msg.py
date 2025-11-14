@@ -21,7 +21,7 @@ from .budman_gui_constants import *
 logger = logging.getLogger(BMG_WINDOW_TITLE)  # create logger for the module
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
-class BudManGuiMsg(metaclass=BDMSingletonMeta):
+class BudManGUIMsg(metaclass=BDMSingletonMeta):
     #--------------------------------------------------------------------------+
     #region BudManGuiMsg class Intrinsics
     #--------------------------------------------------------------------------+

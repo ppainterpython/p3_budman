@@ -26,13 +26,13 @@ from .budman_gui_style_registry  import StyleRegistry
 from .budman_gui_command_processor import BudManGUICommandProcessor
 from .budman_gui_window  import BudManGUIWindow
 from .budman_gui_frame   import BudManGUIFrame
-from .budman_gui_msg     import BudManGuiMsg
+from .budman_gui_msg     import BudManGUIMsg
 from .budman_gui_constants import *
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
 logger = logging.getLogger(__name__)
-budman_msg = BudManGuiMsg()  # Singleton instance of BudManGuiMsg
+budman_msg = BudManGUIMsg()  # Singleton instance of BudManGuiMsg
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
@@ -185,6 +185,7 @@ class BudManGUIView(BudManAppDataContext_Binding,
         """Initialize the BudManGUIView class."""
         try:
             logger.info(f"BizEVENT: View setup for BudManGUIView({self._app_name}).")
+            self.root.store_url = self.settings.budman.store_url
             self.root.initialize()
             return self
         except Exception as e:

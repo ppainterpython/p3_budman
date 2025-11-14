@@ -6,7 +6,7 @@
 # ---------------------------------------------------------------------------- +
 #region Imports
 # python standard library modules and packages
-import logging
+import logging, getpass
 from typing import Optional
 import tkinter as tk
 import tkinter.font as tkFont
@@ -21,13 +21,13 @@ import budman_command_processor as cp
 # bugman_gui_view modules and packages
 from .budman_gui_style_registry import StyleRegistry
 from .budman_gui_frame import BudManGUIFrame
-from .budman_gui_msg import BudManGuiMsg
+from .budman_gui_msg import BudManGUIMsg
 from .budman_gui_constants import *
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
 logger = logging.getLogger(__name__)  # create logger for the module
-budman_msg = BudManGuiMsg()  # Singleton instance of BudManGuiMsg
+budman_msg = BudManGUIMsg()  # Singleton instance of BudManGuiMsg
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
 class BudManGUIWindow(ttk.Window, 
@@ -73,6 +73,7 @@ class BudManGUIWindow(ttk.Window,
         self._settings : bdms.BudManSettings = budman_settings if budman_settings else bdms.BudManSettings()
         self._dc_binding:bool = False
         self._cp_binding:bool = False
+        self._store_url: str = ""
 
         try:
             # Setup DataContext_Binding
@@ -125,6 +126,7 @@ class BudManGUIWindow(ttk.Window,
         # Set up proper window closing
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
         # Bind event handlers
+        self.bind("<Button-1>", self.on_quit_button_clicked)  # Focus on click anywhere
         self.bind("<Configure>", self.on_resize)
 
         # All done
@@ -163,6 +165,17 @@ class BudManGUIWindow(ttk.Window,
             raise TypeError("settings must be a BudManSettings instance.")
         self._settings = value
         logger.debug(f"Settings updated: {self._settings}")
+    @property
+    def store_url(self) -> str:
+        """Get the store_url property."""
+        return self._store_url  
+    @store_url.setter
+    def store_url(self, value: str) -> None:
+        """Set the store_url property."""
+        if not isinstance(value, str):
+            raise TypeError("store_url must be a string.")
+        self._store_url = value
+
     #endregion   BudManGUIWindow class properties
     # ------------------------------------------------------------------------ +
     #endregion BudManGUIWindow class Intrinsics
@@ -174,6 +187,7 @@ class BudManGUIWindow(ttk.Window,
         """Initialize the BudManGUIView class."""
         try:
             logger.debug(f"BudManGUIWindow: Initializing BudManGUIFrame widgets.")
+            self.budman_gui_frame.filepath = self.store_url
             self.budman_gui_frame.initialize()
             budman_msg.msg_widget = self.budman_gui_frame.msg_area
             budman_msg.root = self
@@ -215,7 +229,7 @@ class BudManGUIWindow(ttk.Window,
         # Middle section - Window size label
         self.window_size = ttk.Label(
             self.status_bar, 
-            text="Size: 800x600", 
+            text=f"Size: {BMG_MIN_WINDOW_WIDTH}x{BMG_MIN_WINDOW_HEIGHT}", 
             anchor="w"
         )
         self.window_size.configure(style="BMG.TLabel")
@@ -224,7 +238,7 @@ class BudManGUIWindow(ttk.Window,
         # Right section - User info
         self.user_label = ttk.Label(
             self.status_bar, 
-            text="User: Paul", 
+            text=f"User: {getpass.getuser()}", 
             anchor="e"
         )
         self.user_label.configure(style="BMG.TLabel")
@@ -258,10 +272,18 @@ class BudManGUIWindow(ttk.Window,
     
     def on_resize(self, event):
         """Handle window resize events"""
-        if not self._destroyed:
+        if not self._destroyed and type(event.widget).__name__ == "BudManGUIWindow":
             width = event.width
             height = event.height
             self.update_window_size(width, height)
+
+    def on_quit_button_clicked(self, event):
+        """ Event handler for when the user clicks the quit button. """
+        # bubble up to the parent
+        logger.info("BudManGUIWindow.BudManGUIFrame.quit_button clicked. Exiting application.")
+        # Dispatch the Button-1 event depending on which child widget passed it.
+        if event.widget == self.budman_gui_frame.quit_button:
+            self.on_closing()
 
     def on_closing(self):
         """Handle application closing properly"""
