@@ -44,11 +44,12 @@ class BudManGUIFrame(ttk.Frame,
 
         Frame Layout
         ------------
-        BudManGUIFrame(ttk.Frame)
-            3 rows, 5 columns
+        BudManGUIFrame(ttk.Frame) 4x5 grid
+            4 rows, 5 columns
             Row 0: Filepath label, entry
             Row 1: Button frame with Save, Load, Quit buttons
-            Row 2: Paned window with workbook treeview and text area. This
+            Row 2: dc_info_frame(ttk.Frame) 3x4 grid
+            Row 3: Paned window with workbook treeview and text area. This
             enables the treeview and text area to be resized vertically together.
 
         Properties
@@ -91,16 +92,36 @@ class BudManGUIFrame(ttk.Frame,
 
         # BudMan Application Attributes
         self._filepath_value = tk.StringVar(self,value="default")  # file path for the budget manager data file
+        self._dc_FI_KEY = tk.StringVar(self,value="")  # DataContext FI_KEY
+        self._dc_workflow = tk.StringVar(self,value="")  # DataContext workflow
+        self._dc_purpose = tk.StringVar(self,value="")  # DataContext purpose
+        self._dc_workbook = tk.StringVar(self,value="")  # DataContext workbook
+        self._dc_WF_FOLDER = tk.StringVar(self,value="")  # DataContext WF_FOLDER
+        self._dc_WB_TYPE = tk.StringVar(self,value="")  # DataContext WB_TYPE
 
         # tkinter configuration
         self.parent = parent   # reference to the root window
         self.style_registry = style_registry  # reference to the style registry
-        self.filepath_label: ttk.Label = None
-        self.filepath_entry: tk.Entry = None
-        self.button_frame: ttk.Frame = None
+        # widgets
+        self.bdm_store_url_label: ttk.Label = None
+        self.bdm_store_url_entry: tk.Entry = None
+        self.budman_cmd_button_frame: ttk.Frame = None
         self.save_button : tk.Button = None
         self.load_button : tk.Button = None
         self.quit_button: tk.Button = None
+        self.dc_info_frame: ttk.Frame = None
+        self.dc_FI_KEY_label: ttk.Label = None
+        self.dc_FI_KEY_value: ttk.Label = None
+        self.dc_workflow_label: ttk.Label = None
+        self.dc_workflow_value: ttk.Label = None
+        self.dc_purpose_label: ttk.Label = None
+        self.dc_purpose_value: ttk.Label = None
+        self.dc_workbook_label: ttk.Label = None
+        self.dc_workbook_value: ttk.Label = None
+        self.dc_WF_FOLDER_label: ttk.Label = None
+        self.dc_WF_FOLDER_value: ttk.Label = None
+        self.dc_WB_TYPE_label: ttk.Label = None
+        self.dc_WB_TYPE_value: ttk.Label = None
         self.paned_window: ttk.Panedwindow = None
         self.file_treeview: ttk.Treeview = None
         self.text_frame : tk.Frame = None
@@ -155,6 +176,54 @@ class BudManGUIFrame(ttk.Frame,
         if not isinstance(file_tree, (Tree, type(None))):
             raise TypeError("file_tree must be a Tree or None.")
         self._file_tree = file_tree
+    @property
+    def dc_FI_KEY(self) -> str:
+        """Get the dc_FI_KEY property."""
+        return self._dc_FI_KEY.get()
+    @dc_FI_KEY.setter
+    def dc_FI_KEY(self, value: str) -> None:
+        """Set the dc_FI_KEY property."""
+        self._dc_FI_KEY.set(value)
+    @property
+    def dc_workflow(self) -> str:
+        """Get the dc_workflow property."""
+        return self._dc_workflow.get()
+    @dc_workflow.setter
+    def dc_workflow(self, value: str) -> None:
+        """Set the dc_workflow property."""
+        self._dc_workflow.set(value)
+    @property
+    def dc_purpose(self) -> str:
+        """Get the dc_purpose property."""
+        return self._dc_purpose.get()
+    @dc_purpose.setter
+    def dc_purpose(self, value: str) -> None:
+        """Set the dc_purpose property."""
+        self._dc_purpose.set(value)
+    @property
+    def dc_workbook(self) -> str:
+        """Get the dc_workbook property."""
+        return self._dc_workbook.get()
+    @dc_workbook.setter
+    def dc_workbook(self, value: str) -> None:
+        """Set the dc_workbook property."""
+        self._dc_workbook.set(value)
+    @property
+    def dc_WF_FOLDER(self) -> str:
+        """Get the dc_WF_FOLDER property."""
+        return self._dc_WF_FOLDER.get()
+    @dc_WF_FOLDER.setter
+    def dc_WF_FOLDER(self, value: str) -> None:
+        """Set the dc_WF_FOLDER property."""
+        self._dc_WF_FOLDER.set(value)
+    @property
+    def dc_WB_TYPE(self) -> str:
+        """Get the dc_WB_TYPE property."""
+        return self._dc_WB_TYPE.get()
+    @dc_WB_TYPE.setter
+    def dc_WB_TYPE(self, value: str) -> None:
+        """Set the dc_WB_TYPE property."""
+        self._dc_WB_TYPE.set(value)
     #endregion BudManGUIFrame properties
     #--------------------------------------------------------------------------+
     #endregion BudManGUIFrame class intrinsics
@@ -190,33 +259,61 @@ class BudManGUIFrame(ttk.Frame,
         '''Create the BudManGUIFrame widgets with minimal configuration,
         applying any style overrides.'''
 
-        # Construct the widgets
-        # Basic design: root window -> BudManGUIFrame -> BudManGUIFrame widgets
-        # button frame holds the buttons arranged horizontally
-        self.filepath_label = ttk.Label(self, text="BDM Store URL:")
-        self.filepath_label.configure(style='BMG.TLabel') # set style for label
-        # entry_font = tkFont.Font(family="Segoe UI", size=12)
-        self.filepath_entry = ttk.Entry(self, textvariable=self._filepath_value) #,font=entry_font) 
-        self.filepath_entry.configure(style='BMG.TEntry')  # set style for entry
-        self.button_frame = ttk.Frame(self)
-        self.button_frame.configure(style='BMG.TFrame')  # set style for button frame
-        self.save_button = ttk.Button(self.button_frame,text="Save")
+        # Configure the grid layout for the BudManGUIFrame: 4 rows by 5 columns,
+        # equal weight for all rows and columns.
+        self.columnconfigure(0, minsize=100)
+        self.columnconfigure((1,2,3), weight=1)
+        self.columnconfigure(4, minsize=50)
+        self.rowconfigure((0,1,2,3), weight=1, uniform="b")
+        # self.rowconfigure(3, weight=2,uniform="b")
+
+        # Construct and configure the widgets
+        # bdm_store_url label and entry
+        self.bdm_store_url_label = ttk.Label(self, text="BDM Store URL:")
+        self.bdm_store_url_label.configure(style='BMG.TLabel') # set style for label
+        self.bdm_store_url_entry = ttk.Entry(self, textvariable=self._filepath_value) #,font=entry_font) 
+        self.bdm_store_url_entry.configure(style='BMG.TEntry')  # set style for entry
+
+        # Command button frame with Save, Load, Quit buttons
+        self.budman_cmd_button_frame = ttk.Frame(self)
+        self.budman_cmd_button_frame.configure(style='BMG.TFrame')  # set style for button frame
+        self.save_button = ttk.Button(self.budman_cmd_button_frame,text="Save")
         self.save_button.configure(style='BMG.TButton')  # set style for button
-        self.load_button = ttk.Button(self.button_frame,text="Load")
+        self.load_button = ttk.Button(self.budman_cmd_button_frame,text="Load")
         self.load_button.configure(style='BMG.TButton')  # set style for button 
-        self.quit_button = ttk.Button(self.button_frame,text="Quit")
+        self.quit_button = ttk.Button(self.budman_cmd_button_frame,text="Quit")
         self.quit_button.configure(style='BMG.TButton')  # set style for button
+
+        # dc_info_frame with labels and values
+        self.dc_info_frame = ttk.Frame(self)
+        self.dc_info_frame.rowconfigure((0,1,2), weight=1, uniform="b")
+        self.dc_info_frame.columnconfigure((0,1,2,3), weight=1)
+        self.dc_info_frame.configure(style='BMG.TFrame')  # set style for dc_info_frame
+        self.dc_FI_KEY_label = ttk.Label(self.dc_info_frame, text="FI_KEY:")
+        self.dc_FI_KEY_value = ttk.Label(self.dc_info_frame, text="")
+        self.dc_workflow_label = ttk.Label(self.dc_info_frame, text="Workflow:")
+        self.dc_workflow_value = ttk.Label(self.dc_info_frame, text="")
+        self.dc_workflow_purpose_label = ttk.Label(self.dc_info_frame, text="Purpose:")
+        self.dc_workflow_purpose_value = ttk.Label(self.dc_info_frame, text="")
+        self.dc_workbook_label = ttk.Label(self.dc_info_frame, text="Workbook:")
+        self.dc_workbook_value = ttk.Label(self.dc_info_frame, text="")
+        self.dc_WF_FOLDER_label = ttk.Label(self.dc_info_frame, text="WF Folder:")
+        self.dc_WF_FOLDER_value = ttk.Label(self.dc_info_frame, text="")
+        self.dc_WB_TYPE_label = ttk.Label(self.dc_info_frame, text="WB Type:")
+        self.dc_WB_TYPE_value = ttk.Label(self.dc_info_frame, text="")
 
         # Paned window with TreeView and Frame:ScrolledText widget
         self.paned_window = ttk.Panedwindow(self, orient=tk.VERTICAL)
         self.paned_window.configure(style='BMG.TPanedwindow')  # set style for panedwindow
         self.file_treeview = self.create_file_treeview()
-        self.paned_window.add(self.file_treeview, weight=2)
+        self.paned_window.add(self.file_treeview, weight=2) # Pos 1
         # Text frame and area
         self.text_frame = tk.Frame(self.paned_window)
+        self.text_frame.rowconfigure(0, weight=1)
+        self.text_frame.columnconfigure(0, weight=1)
         self.text_frame.configure(bg=BMG_FAINT_GRAY)
         self.msg_area = self.create_msg_area_widget()
-        self.paned_window.add(self.text_frame, weight=3)
+        self.paned_window.add(self.text_frame, weight=3) # Pos 2
 
     def create_msg_area_widget(self) -> scrolledtext.ScrolledText:
         """Create a scrolled text area widget."""
@@ -260,29 +357,34 @@ class BudManGUIFrame(ttk.Frame,
         self.configure(style='BMG.TFrame') # set style for the frame
         # self.pack(side='top',  fill="both", expand=True,ipady=20) # pack layout for the frame
 
-        # Configure the grid layout for the frame: 4 rows by 5 columns,
-        # equal weight for all rows and columns.
-        self.columnconfigure(0, minsize=100)
-        self.columnconfigure((1,2,3), weight=1)
-        self.columnconfigure(4, minsize=50)
-        self.rowconfigure(2, weight=1, uniform="b")
-        # self.rowconfigure(3, weight=2,uniform="b")
-
         # Layout the widgets in the grid
         # row 0: filepath label, entry
-        self.filepath_label.grid(row=0, column=0, sticky="w", padx=5, pady=5)
-        self.filepath_entry.grid(row=0, column=1, columnspan=3, sticky="ew")
+        self.bdm_store_url_label.grid(row=0, column=0, sticky="w", padx=5, pady=5)
+        self.bdm_store_url_entry.grid(row=0, column=1, columnspan=3, sticky="ew")
 
         # row 1: button frame with save, load, quit buttons
-        self.button_frame.grid(row=1, column=0, columnspan=5, sticky="nse")
+        self.budman_cmd_button_frame.grid(row=1, column=0, columnspan=5, sticky="nse")
         self.quit_button.pack(side="right", padx=5, pady=5)
         self.load_button.pack(side="right", padx=5, pady=5)
         self.save_button.pack(side="right", padx=5, pady=5)
 
-        # row 2: paned window with workbook treeview and text area
-        self.paned_window.grid(row=2, column=0, columnspan=5, sticky="nsew")
-        self.text_frame.columnconfigure(0, weight=1)
-        self.text_frame.rowconfigure(0, weight=1)
+        # row 2: dc_info_frame with labels and values
+        self.dc_info_frame.grid(row=2, column=0, columnspan=5, sticky="nsew", padx=5, pady=5)
+        self.dc_FI_KEY_label.grid(row=0, column=0, sticky="e", padx=5, pady=2)
+        self.dc_FI_KEY_value.grid(row=0, column=1, sticky="w", padx=5, pady=2)
+        self.dc_workflow_label.grid(row=1, column=0, sticky="e", padx=5, pady=2)
+        self.dc_workflow_value.grid(row=1, column=1, sticky="w", padx=5, pady=2)
+        self.dc_workflow_purpose_label.grid(row=2, column=0, sticky="e", padx=5, pady=2)
+        self.dc_workflow_purpose_value.grid(row=2, column=1, sticky="w", padx=5, pady=2)
+        self.dc_workbook_label.grid(row=0, column=2, sticky="e", padx=5, pady=2)
+        self.dc_workbook_value.grid(row=0, column=3, sticky="w", padx=5, pady=2)
+        self.dc_WF_FOLDER_label.grid(row=1, column=2, sticky="e", padx=5, pady=2)
+        self.dc_WF_FOLDER_value.grid(row=1, column=3, sticky="w", padx=5, pady=2)
+        self.dc_WB_TYPE_label.grid(row=2, column=2, sticky="e", padx=5, pady=2)
+        self.dc_WB_TYPE_value.grid(row=2, column=3, sticky="w", padx=5, pady=2)
+
+        # row 3: paned window with workbook treeview and text area
+        self.paned_window.grid(row=3, column=0, columnspan=5, sticky="nsew")
         self.msg_area.grid(row=0, column=0, sticky="nsew")
 
     def bind_BudManGUIFrame_widgets(self):
@@ -293,9 +395,9 @@ class BudManGUIFrame(ttk.Frame,
         self.save_button.configure(command=self.on_save_button_clicked)
         self.load_button.configure(command=self.on_load_button_clicked)
         # do key bindings
-        self.filepath_entry.bind("<Return>", self.on_filepath_changed)
-        self.filepath_entry.bind("<Tab>", self.on_filepath_changed)
-        self.filepath_entry.bind("<FocusOut>", self.on_filepath_changed)
+        self.bdm_store_url_entry.bind("<Return>", self.on_filepath_changed)
+        self.bdm_store_url_entry.bind("<Tab>", self.on_filepath_changed)
+        self.bdm_store_url_entry.bind("<FocusOut>", self.on_filepath_changed)
 
         # Treeview selection event binding
         self.file_treeview.tag_bind(BMG_FTVOBJECT, "<<TreeviewSelect>>", self.on_file_treeview_select)
@@ -359,7 +461,7 @@ class BudManGUIFrame(ttk.Frame,
             # it and replace with a new one with updated content.
             if len(self.file_treeview.children) > 0:
                 new_treeview = self.create_file_treeview()
-                self.paned_window.forget(1)
+                self.paned_window.forget(1) # Treeview is at pos 1
                 self.paned_window.add(1, new_treeview, weight=2)
                 self.file_treeview = new_treeview
             # Traverse the file_tree and add items to file_treeview
