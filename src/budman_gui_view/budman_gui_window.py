@@ -92,16 +92,27 @@ class BudManGUIWindow(ttk.Window,
             logger.exception(p3u.exc_err_msg(e))
             logger.debug("BudManGUIWindow configured with no CommandProcessor.")
 
+        # Widget value variables
+        self._status_value: tk.StringVar = tk.StringVar(value=BMG_APP_READY_STATUS)
+        self._user_value: tk.StringVar = tk.StringVar(value="un-set")
+        self._window_size: tk.StringVar = tk.StringVar(value=f"{BMG_MIN_WINDOW_WIDTH}x{BMG_MIN_WINDOW_HEIGHT}")
+        self._progress_value: tk.IntVar = tk.IntVar(value=0)
+
         # Setup the View window
         self.style_registry = StyleRegistry(themename=themename)
+        self.themename: str = themename # Styles for the window and all widgets
         self.title( BMG_WINDOW_TITLE)
         self.geometry(f"{BMG_MIN_WINDOW_WIDTH}x{BMG_MIN_WINDOW_HEIGHT}")
-        self.themename: str = themename
         self.budman_gui_frame: BudManGUIFrame = None
         self.status_bar: ttk.Frame = None
         self.status_label: ttk.Label = None
-        self.progress: ttk.Progressbar = None
+        self.status_value: ttk.Label = None
+        self.progress_label: ttk.Label = None
+        self.progress_bar: ttk.Progressbar = None
+        self.window_size_label: ttk.Label = None
+        self.window_size_value: ttk.Label = None
         self.user_label: ttk.Label = None
+        self.user_value: ttk.Label = None
         
         # Configure main window grid
         self._destroyed: bool = False
@@ -175,6 +186,36 @@ class BudManGUIWindow(ttk.Window,
         if not isinstance(value, str):
             raise TypeError("store_url must be a string.")
         self._store_url = value
+    @property
+    def app_status(self) -> str:
+        """Get the app_status property."""
+        return self._status_value.get()
+    @app_status.setter
+    def app_status(self, value: str) -> None:
+        """Set the app_status property."""
+        if not isinstance(value, str):
+            raise TypeError("app_status must be a string.")
+        self._status_value.set(value)
+    @property
+    def window_size(self) -> str:  
+        """Get the window_size property."""
+        return self._window_size.get()
+    @window_size.setter
+    def window_size(self, value: str) -> None:
+        """Set the window_size property."""
+        if not isinstance(value, str):
+            raise TypeError("window_size must be a string.")
+        self._window_size.set(value)
+    @property
+    def app_user(self) -> str:  
+        """Get the app_user property."""
+        return self._user_value.get()
+    @app_user.setter
+    def app_user(self, value: str) -> None:
+        """Set the app_user property."""
+        if not isinstance(value, str):
+            raise TypeError("app_user must be a string.")
+        self._user_value.set(value)
 
     #endregion   BudManGUIWindow class properties
     # ------------------------------------------------------------------------ +
@@ -200,49 +241,91 @@ class BudManGUIWindow(ttk.Window,
     def _create_status_bar(self):
         """Creates a persistent status bar at the bottom of the window."""
         # Create status bar frame
-        self.status_bar = ttk.Frame(self, height=BMG_STATUS_BAR_HEIGHT)
+        self.status_bar = ttk.Frame(self, 
+                                    height=BMG_STATUS_BAR_HEIGHT)
         self.status_bar.configure(style="BMG.TFrame")
-        self.status_bar.grid(row=1, column=0, sticky="ew", padx=2, pady=(0, 2))
-        self.status_bar.grid_propagate(False)  # Maintain fixed height
+        self.status_bar.grid(row=1, column=0, sticky="ew", padx=2, pady=(2,10))
+        # self.status_bar.grid_propagate(False)  # Maintain fixed height
         
         # Configure status bar internal grid
-        self.status_bar.grid_columnconfigure(1, weight=1)  # Middle section expands
+        # self.status_bar.grid_columnconfigure(0, weight=0)  # Middle section expands
         
-        # Left section - Status message
+        # First from left - Status message
         self.status_label = ttk.Label(
             self.status_bar, 
-            text="Ready", 
+            text=BMG_APP_STATUS_LABEL, 
             anchor="w"
         )
         self.status_label.configure(style="BMG.TLabel")
-        self.status_label.grid(row=0, column=0, sticky="w", padx=(5, 10))
-
-        # Middle section - Progress bar
-        self.progress = ttk.Progressbar(
+        self.status_label.pack(side="left", padx=5, pady=5)
+        # self.status_label.grid(row=0, column=0, sticky="w", padx=5, pady=5)
+        self.status_value = ttk.Label(
             self.status_bar, 
-            length=150, 
-            mode="determinate"
+            text=BMG_APP_READY_STATUS, 
+            anchor="w",
+            textvariable=self._status_value
         )
-        self.progress.grid(row=0, column=1, sticky="w", padx=10)
-        self.progress["value"] = 0
+        self.status_value.configure(style="BMG.Value.TLabel")
+        self.status_value.pack(side="left", padx=5, pady=5)
+        # self.status_value.grid(row=0, column=0, sticky="w", padx=5, pady=5)
 
-        # Middle section - Window size label
-        self.window_size = ttk.Label(
+        # Second from left - Progress bar
+        self.progress_label = ttk.Label(
             self.status_bar, 
-            text=f"Size: {BMG_MIN_WINDOW_WIDTH}x{BMG_MIN_WINDOW_HEIGHT}", 
+            text=BMG_APP_PROGRESS_LABEL, 
             anchor="w"
         )
-        self.window_size.configure(style="BMG.TLabel")
-        self.window_size.grid(row=0, column=1, sticky="w", padx=10)
-
-        # Right section - User info
-        self.user_label = ttk.Label(
+        self.progress_label.configure(style="BMG.TLabel")
+        self.progress_label.pack(side="left", padx=5, pady=5)
+        # self.progress_label.grid(row=0, column=0, sticky="w", padx=5, pady=5)
+        self.progress_bar = ttk.Progressbar(
             self.status_bar, 
-            text=f"User: {getpass.getuser()}", 
+            length=150, 
+            variable=self._progress_value,
+            mode="determinate"
+        )
+        self.progress_bar.configure(style="BMG.Horizontal.TProgressbar")
+        self.progress_bar.pack(side="left", padx=5, pady=5)
+        # self.progress_bar.grid(row=0, column=0, sticky="w", padx=20, pady=5)
+        self.progress_bar["value"] = 0
+
+        # Third from left - Window size label
+        self.window_size_label = ttk.Label(
+            self.status_bar, 
+            text=BMG_APP_WINDOW_SIZE_LABEL, 
+            anchor="w"
+        )
+        self.window_size_label.configure(style="BMG.TLabel")
+        self.window_size_label.pack(side="left", padx=5, pady=5)
+        # self.window_size_label.grid(row=0, column=0, sticky="w",  padx=5, pady=5)
+        self.window_size_value = ttk.Label(
+            self.status_bar, 
+            text=f"Size: {BMG_MIN_WINDOW_WIDTH}x{BMG_MIN_WINDOW_HEIGHT}", 
+            anchor="w",
+            textvariable=self._window_size
+        )
+        self.window_size_value.configure(style="BMG.Value.TLabel")
+        self.window_size_value.pack(side="left", padx=5, pady=5)
+        # self.window_size_value.grid(row=0, column=0, sticky="w",  padx=5, pady=5)
+
+        # Far right - User info
+        self.user_value = ttk.Label(
+            self.status_bar, 
+            text=getpass.getuser(), 
             anchor="e"
         )
+        self.user_value.configure(style="BMG.Value.TLabel")
+        self.user_value.pack(side="right", padx=5, pady=5)
+        self.user_label = ttk.Label(
+            self.status_bar, 
+            text=BMG_APP_USER_LABEL, 
+            anchor="e",
+            textvariable=self._user_value
+        )
         self.user_label.configure(style="BMG.TLabel")
-        self.user_label.grid(row=0, column=2, sticky="e", padx=(10, 5))
+        self.user_label.pack(side="right", padx=5, pady=5)
+        # self.user_label.grid(row=0, column=2, sticky="e", padx=5, pady=5)
+        # self.user_value.grid(row=0, column=2, sticky="e", padx=5, pady=5)
 
     def load_sample_data(self):
         '''Load sample data into the BudManGUIFrame widgets for testing purposes.'''
@@ -316,13 +399,13 @@ class BudManGUIWindow(ttk.Window,
     
     def update_progress(self, value: int):
         """Update the progress bar (0-100)"""
-        if not self._destroyed and self.progress.winfo_exists():
-            self.progress["value"] = max(0, min(100, value))
+        if not self._destroyed and self.progress_bar.winfo_exists():
+            self.progress_bar["value"] = max(0, min(100, value))
     
     def update_window_size(self, width: int, height: int):
         """Update the window size label"""
-        if not self._destroyed and self.window_size.winfo_exists():
-            self.window_size.config(text=f"Size: {width}x{height}")
+        if not self._destroyed :
+            self.window_size = f"{width}x{height}"
 
     def update_user(self, user: str):
         """Update the user label"""

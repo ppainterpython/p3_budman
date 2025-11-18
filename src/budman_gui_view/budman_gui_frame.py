@@ -261,10 +261,12 @@ class BudManGUIFrame(ttk.Frame,
 
         # Configure the grid layout for the BudManGUIFrame: 4 rows by 5 columns,
         # equal weight for all rows and columns.
+        self.configure(style='BMG.TFrame') # set style for the frame
         self.columnconfigure(0, minsize=100)
         self.columnconfigure((1,2,3), weight=1)
         self.columnconfigure(4, minsize=50)
-        self.rowconfigure((0,1,2,3), weight=1, uniform="b")
+        self.rowconfigure((0,1,2), weight=0)
+        self.rowconfigure(3, weight=1)
         # self.rowconfigure(3, weight=2,uniform="b")
 
         # Construct and configure the widgets
@@ -287,20 +289,33 @@ class BudManGUIFrame(ttk.Frame,
         # dc_info_frame with labels and values
         self.dc_info_frame = ttk.Frame(self)
         self.dc_info_frame.rowconfigure((0,1,2), weight=1, uniform="b")
-        self.dc_info_frame.columnconfigure((0,1,2,3), weight=1)
+        self.dc_info_frame.columnconfigure((0,2), weight=0)
+        self.dc_info_frame.columnconfigure((1,3), weight=0)
         self.dc_info_frame.configure(style='BMG.TFrame')  # set style for dc_info_frame
         self.dc_FI_KEY_label = ttk.Label(self.dc_info_frame, text="FI_KEY:")
+        self.dc_FI_KEY_label.configure(style='BMG.TLabel')  # set style for label
         self.dc_FI_KEY_value = ttk.Label(self.dc_info_frame, text="")
+        self.dc_FI_KEY_value.configure(style='BMG.Value.TLabel')  # set style for value label
         self.dc_workflow_label = ttk.Label(self.dc_info_frame, text="Workflow:")
+        self.dc_workflow_label.configure(style='BMG.TLabel')  # set style for label
         self.dc_workflow_value = ttk.Label(self.dc_info_frame, text="")
+        self.dc_purpose_label = ttk.Label(self.dc_info_frame, text="Purpose:")
         self.dc_workflow_purpose_label = ttk.Label(self.dc_info_frame, text="Purpose:")
+        self.dc_workflow_purpose_label.configure(style='BMG.TLabel')  # set style for label
         self.dc_workflow_purpose_value = ttk.Label(self.dc_info_frame, text="")
+        self.dc_workflow_purpose_value.configure(style='BMG.Value.TLabel')  # set style for value label
         self.dc_workbook_label = ttk.Label(self.dc_info_frame, text="Workbook:")
+        self.dc_workbook_label.configure(style='BMG.TLabel')  # set style for label
         self.dc_workbook_value = ttk.Label(self.dc_info_frame, text="")
+        self.dc_workbook_value.configure(style='BMG.Value.TLabel')  # set style for value label
         self.dc_WF_FOLDER_label = ttk.Label(self.dc_info_frame, text="WF Folder:")
+        self.dc_WF_FOLDER_label.configure(style='BMG.TLabel')  # set style for label
         self.dc_WF_FOLDER_value = ttk.Label(self.dc_info_frame, text="")
+        self.dc_WF_FOLDER_value.configure(style='BMG.Value.TLabel')  # set style for value label
         self.dc_WB_TYPE_label = ttk.Label(self.dc_info_frame, text="WB Type:")
+        self.dc_WB_TYPE_label.configure(style='BMG.TLabel')  # set style for label
         self.dc_WB_TYPE_value = ttk.Label(self.dc_info_frame, text="")
+        self.dc_WB_TYPE_value.configure(style='BMG.Value.TLabel')  # set style for value label
 
         # Paned window with TreeView and Frame:ScrolledText widget
         self.paned_window = ttk.Panedwindow(self, orient=tk.VERTICAL)
@@ -352,10 +367,8 @@ class BudManGUIFrame(ttk.Frame,
 
     def layout_BudManGUIFrame_widgets(self):
         '''Configure the BudManGUIFrame child widgets layout grid configuration'''
-        # Use Pack layout for the BudManGUIFrame in the root window
         # The BudManGUIFrame should expand to fill the root window
-        self.configure(style='BMG.TFrame') # set style for the frame
-        # self.pack(side='top',  fill="both", expand=True,ipady=20) # pack layout for the frame
+        # self.configure(style='BMG.TFrame') # set style for the frame
 
         # Layout the widgets in the grid
         # row 0: filepath label, entry
@@ -363,13 +376,14 @@ class BudManGUIFrame(ttk.Frame,
         self.bdm_store_url_entry.grid(row=0, column=1, columnspan=3, sticky="ew")
 
         # row 1: button frame with save, load, quit buttons
-        self.budman_cmd_button_frame.grid(row=1, column=0, columnspan=5, sticky="nse")
+        self.budman_cmd_button_frame.grid(row=1, column=0, columnspan=5, 
+                                          sticky="nse", padx=5, pady=5)
         self.quit_button.pack(side="right", padx=5, pady=5)
         self.load_button.pack(side="right", padx=5, pady=5)
         self.save_button.pack(side="right", padx=5, pady=5)
 
-        # row 2: dc_info_frame with labels and values
-        self.dc_info_frame.grid(row=2, column=0, columnspan=5, sticky="nsew", padx=5, pady=5)
+        # row 2: dc_info_frame with labels and values, grow ew only
+        self.dc_info_frame.grid(row=2, column=0, columnspan=5, sticky="ew", padx=5, pady=5)
         self.dc_FI_KEY_label.grid(row=0, column=0, sticky="e", padx=5, pady=2)
         self.dc_FI_KEY_value.grid(row=0, column=1, sticky="w", padx=5, pady=2)
         self.dc_workflow_label.grid(row=1, column=0, sticky="e", padx=5, pady=2)
@@ -384,8 +398,8 @@ class BudManGUIFrame(ttk.Frame,
         self.dc_WB_TYPE_value.grid(row=2, column=3, sticky="w", padx=5, pady=2)
 
         # row 3: paned window with workbook treeview and text area
-        self.paned_window.grid(row=3, column=0, columnspan=5, sticky="nsew")
-        self.msg_area.grid(row=0, column=0, sticky="nsew")
+        self.paned_window.grid(row=3, column=0, columnspan=5, sticky="nsew",padx=5, pady=5)
+        self.msg_area.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
 
     def bind_BudManGUIFrame_widgets(self):
         ''' Bind the widgets in the frame to their respective event handlers.

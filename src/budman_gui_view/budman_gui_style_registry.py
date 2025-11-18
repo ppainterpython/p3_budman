@@ -23,16 +23,36 @@ class StyleRegistry:
         font_style = BMG_BASIC_FIXED_FONT
         font_style_bold = BMG_BASIC_FIXED_FONT_BOLD
         self.style.configure('BMG.TFrame', 
-                             background=BMG_FAINT_GRAY)
+                             background=BMG_FAINT_GRAY,
+                             padding=(BMG_TFRAME_PADDING,
+                                      BMG_TFRAME_PADDING,
+                                      BMG_TFRAME_PADDING,
+                                      BMG_TFRAME_PADDING),
+                             relief="solid",
+                             bordercolor='red',
+                             borderwidth=3)
         self.style.configure('BMG.TLabel', 
                              background=BMG_FAINT_GRAY, 
+                             padding=(2,2,2,2),
+                             relief="flat",
+                             borderwidth=3,
                              font=font_style_bold)
+        self.style.configure('BMG.Value.TLabel', 
+                             background=BMG_FAINT_GRAY, 
+                             foreground=BMG_TEXT_VALUE_COLOR,
+                             padding=(2,2,2,2),
+                             relief="flat",
+                             borderwidth=3,
+                             font=font_style)
         self.style.configure('BMG.TEntry', 
                              background=BMG_ENTRY_BACKGROUND_ACTIVE, 
+                             foreground=BMG_TEXT_VALUE_COLOR,
+                             padding=(2,2,2,2),
+                             relief="sunken",
                              font=font_style)
         self.style.configure('BMG.TButton', 
                              font=font_style_bold,
-                             relief="raised",
+                             padding=(2,2,2,2),
                              width=10)
         self.style.map("BMG.TButton",
                        foreground=[('disabled', BMG_BUTTON_FOREGROUND_DISABLED)],
@@ -45,6 +65,8 @@ class StyleRegistry:
         self.style.configure('BMG.Treeview', background=BMG_FAINT_GRAY,
                              font=font_style, rowheight=30)
         self.style.configure("BMG.Treeview.Heading", font=BMG_BASIC_FIXED_FONT_BOLD)
+        self.style.configure("BMG.Horizontal.TProgressbar", length=150, borderwidth=2,
+                             troughcolor=BMG_LIGHT_GRAY)
 
     def configure_tags_text(self, widget):
         """Configure the tags for a scrolled text widget."""
