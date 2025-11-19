@@ -68,8 +68,9 @@ class BudManGUIWindow(ttk.Window,
                  command_processor : Optional[p3m.CommandProcessor_Binding] = None,
                  data_context : Optional[BudManAppDataContext_Binding] = None,
                  ) -> None:
-        # init root window
+        # init root GUI application Window.
         super().__init__(themename=themename)
+        # Application attributes.
         self._settings : bdms.BudManSettings = budman_settings if budman_settings else bdms.BudManSettings()
         self._dc_binding:bool = False
         self._cp_binding:bool = False
@@ -92,17 +93,16 @@ class BudManGUIWindow(ttk.Window,
             logger.exception(p3u.exc_err_msg(e))
             logger.debug("BudManGUIWindow configured with no CommandProcessor.")
 
-        # Widget value variables
+        # Widget value variable attributes.
         self._status_value: tk.StringVar = tk.StringVar(value=BMG_APP_READY_STATUS)
         self._user_value: tk.StringVar = tk.StringVar(value="un-set")
         self._window_size: tk.StringVar = tk.StringVar(value=f"{BMG_MIN_WINDOW_WIDTH}x{BMG_MIN_WINDOW_HEIGHT}")
+        self._destroyed: bool = False
         self._progress_value: tk.IntVar = tk.IntVar(value=0)
 
-        # Setup the View window
+        # Attributes for other widgets in the GUI.
         self.style_registry = StyleRegistry(themename=themename)
         self.themename: str = themename # Styles for the window and all widgets
-        self.title( BMG_WINDOW_TITLE)
-        self.geometry(f"{BMG_MIN_WINDOW_WIDTH}x{BMG_MIN_WINDOW_HEIGHT}")
         self.budman_gui_frame: BudManGUIFrame = None
         self.status_bar: ttk.Frame = None
         self.status_label: ttk.Label = None
@@ -113,33 +113,16 @@ class BudManGUIWindow(ttk.Window,
         self.window_size_value: ttk.Label = None
         self.user_label: ttk.Label = None
         self.user_value: ttk.Label = None
-        
-        # Configure main window grid
-        self._destroyed: bool = False
-        self.minsize(BMG_MIN_WINDOW_WIDTH, BMG_MIN_WINDOW_HEIGHT)
-        self.maxsize(BMG_MAX_WINDOW_WIDTH, BMG_MAX_WINDOW_HEIGHT)
-        
-        # Configure main window grid weights
-        self.grid_rowconfigure(0, weight=1)    # Main content area expands
-        self.grid_rowconfigure(1, weight=0)    # Status bar fixed height
-        self.grid_columnconfigure(0, weight=1) # Full width
 
+        # Configure the root window properties
+        self.configure_root_window()
         # Create the BudManGUIFrame for the main view (row 0)
-        self.budman_gui_frame = BudManGUIFrame(self, 
-                                               self.style_registry, 
-                                               command_processor=command_processor,
-                                               data_context=data_context) 
-        self.budman_gui_frame.grid(row=0, column=0, sticky="nsew", padx=2, pady=2)
-
+        self.create_budman_gui_frame(command_processor, data_context)
         # Create the status bar for the bottom of the window (row 1)
         self._create_status_bar()
-
-        # Set up proper window closing
-        self.protocol("WM_DELETE_WINDOW", self.on_closing)
         # Bind event handlers
-        self.bind("<Button-1>", self.on_quit_button_clicked)  # Focus on click anywhere
-        self.bind("<Configure>", self.on_resize)
-
+        self.bind_event_handlers()
+        
         # All done
         logger.debug("BudManView initialized")
     #endregion __init__() 
@@ -238,6 +221,26 @@ class BudManGUIWindow(ttk.Window,
             logger.exception(p3u.exc_err_msg(e))
             raise
 
+    def configure_root_window(self):
+        """Configure the root window properties."""
+        self.title(BMG_WINDOW_TITLE)
+        self.geometry(f"{BMG_MIN_WINDOW_WIDTH}x{BMG_MIN_WINDOW_HEIGHT}")
+        self.minsize(BMG_MIN_WINDOW_WIDTH, BMG_MIN_WINDOW_HEIGHT)
+        self.maxsize(BMG_MAX_WINDOW_WIDTH, BMG_MAX_WINDOW_HEIGHT)
+
+        # Configure main window grid 2x1
+        self.grid_rowconfigure(0, weight=1)    # Main content area expands
+        self.grid_rowconfigure(1, weight=0)    # Status bar fixed height
+        self.grid_columnconfigure(0, weight=1) # Full width
+
+    def create_budman_gui_frame(self, command_processor, data_context):
+        """Create the BudManGUIFrame widget."""
+        self.budman_gui_frame = BudManGUIFrame(self, 
+                                               self.style_registry, 
+                                               command_processor=command_processor,
+                                               data_context=data_context) 
+        self.budman_gui_frame.grid(row=0, column=0, sticky="nsew", padx=2, pady=2)
+
     def _create_status_bar(self):
         """Creates a persistent status bar at the bottom of the window."""
         # Create status bar frame
@@ -257,8 +260,7 @@ class BudManGUIWindow(ttk.Window,
             anchor="w"
         )
         self.status_label.configure(style="BMG.TLabel")
-        self.status_label.pack(side="left", padx=5, pady=5)
-        # self.status_label.grid(row=0, column=0, sticky="w", padx=5, pady=5)
+        self.status_label.pack(side="left", padx=(2,0), pady=5)
         self.status_value = ttk.Label(
             self.status_bar, 
             text=BMG_APP_READY_STATUS, 
@@ -266,8 +268,11 @@ class BudManGUIWindow(ttk.Window,
             textvariable=self._status_value
         )
         self.status_value.configure(style="BMG.Value.TLabel")
-        self.status_value.pack(side="left", padx=5, pady=5)
-        # self.status_value.grid(row=0, column=0, sticky="w", padx=5, pady=5)
+        self.status_value.pack(side="left", padx=0, pady=5)
+
+        # Vertical separator
+        sep1 = ttk.Separator(self.status_bar, orient='vertical')
+        sep1.pack(side="left", padx=(2,2), pady=5)
 
         # Second from left - Progress bar
         self.progress_label = ttk.Label(
@@ -276,8 +281,7 @@ class BudManGUIWindow(ttk.Window,
             anchor="w"
         )
         self.progress_label.configure(style="BMG.TLabel")
-        self.progress_label.pack(side="left", padx=5, pady=5)
-        # self.progress_label.grid(row=0, column=0, sticky="w", padx=5, pady=5)
+        self.progress_label.pack(side="left", padx=0, pady=5)
         self.progress_bar = ttk.Progressbar(
             self.status_bar, 
             length=150, 
@@ -285,9 +289,12 @@ class BudManGUIWindow(ttk.Window,
             mode="determinate"
         )
         self.progress_bar.configure(style="BMG.Horizontal.TProgressbar")
-        self.progress_bar.pack(side="left", padx=5, pady=5)
-        # self.progress_bar.grid(row=0, column=0, sticky="w", padx=20, pady=5)
+        self.progress_bar.pack(side="left", padx=(0,2), pady=5)
         self.progress_bar["value"] = 0
+
+        # Vertical separator
+        sep2 = ttk.Separator(self.status_bar, orient='vertical')
+        sep2.pack(side="left", padx=(5,2), pady=5)
 
         # Third from left - Window size label
         self.window_size_label = ttk.Label(
@@ -296,55 +303,50 @@ class BudManGUIWindow(ttk.Window,
             anchor="w"
         )
         self.window_size_label.configure(style="BMG.TLabel")
-        self.window_size_label.pack(side="left", padx=5, pady=5)
-        # self.window_size_label.grid(row=0, column=0, sticky="w",  padx=5, pady=5)
+        self.window_size_label.pack(side="left", padx=0, pady=5)
+        initialize_size: str = f"{BMG_MIN_WINDOW_WIDTH}x{BMG_MIN_WINDOW_HEIGHT}"
+        initialize_width: int = int(BMG_MIN_WINDOW_WIDTH)
+        initialize_height: int = int(BMG_MIN_WINDOW_HEIGHT)
         self.window_size_value = ttk.Label(
             self.status_bar, 
-            text=f"Size: {BMG_MIN_WINDOW_WIDTH}x{BMG_MIN_WINDOW_HEIGHT}", 
+            text=f"Size: {initialize_size}", 
             anchor="w",
             textvariable=self._window_size
         )
         self.window_size_value.configure(style="BMG.Value.TLabel")
-        self.window_size_value.pack(side="left", padx=5, pady=5)
+        self.window_size_value.pack(side="left", padx=0, pady=5)
+        self.update_window_size(initialize_width, initialize_height)
         # self.window_size_value.grid(row=0, column=0, sticky="w",  padx=5, pady=5)
 
+        # Vertical separator
+        sep3 = ttk.Separator(self.status_bar, orient='vertical')
+        sep3.pack(side="left", padx=(2,2), pady=5)
+
         # Far right - User info
+        self.app_user = getpass.getuser()
         self.user_value = ttk.Label(
             self.status_bar, 
-            text=getpass.getuser(), 
-            anchor="e"
-        )
-        self.user_value.configure(style="BMG.Value.TLabel")
-        self.user_value.pack(side="right", padx=5, pady=5)
-        self.user_label = ttk.Label(
-            self.status_bar, 
-            text=BMG_APP_USER_LABEL, 
+            text=self.app_user, 
             anchor="e",
             textvariable=self._user_value
         )
+        self.user_value.configure(style="BMG.Value.TLabel")
+        self.user_value.pack(side="right", padx=0, pady=5)
+        self.user_label = ttk.Label(
+            self.status_bar, 
+            text=BMG_APP_USER_LABEL, 
+            anchor="e"
+        )
         self.user_label.configure(style="BMG.TLabel")
-        self.user_label.pack(side="right", padx=5, pady=5)
-        # self.user_label.grid(row=0, column=2, sticky="e", padx=5, pady=5)
-        # self.user_value.grid(row=0, column=2, sticky="e", padx=5, pady=5)
+        self.user_label.pack(side="right", padx=0, pady=5)
 
-    def load_sample_data(self):
-        '''Load sample data into the BudManGUIFrame widgets for testing purposes.'''
-        gui_frame: BudManGUIFrame = self.budman_gui_frame
-        root_folder = gui_frame.file_treeview.insert('', 'end', text="  0 budget", values=("Folder", "root", "n/a"))
-        file0_entry = gui_frame.file_treeview.insert(root_folder, 'end', text="  0 .bdm_file_tree.json", values=("File", "n/a", "n/a"))
-        file1_entry = gui_frame.file_treeview.insert(root_folder, 'end', text="  1 2025Budget.xlsx", values=("File", "n/a", "n/a"))
-        folder1_entry = gui_frame.file_treeview.insert(root_folder, 'end', text="  1 boa", values=('Folder', 'Financial Institution', 'FI_FOLDER'))
-        folder2_entry = gui_frame.file_treeview.insert(folder1_entry, 'end', text="  2 budget", values=('Folder', 'Budget', 'Working'))
-        gui_frame.file_treeview.insert(folder2_entry, 'end', text="  7 Manual-BOAChecking2023.slxs", values=('File', 'n/a', 'User-defined'))
-
-        gui_frame.msg_area.insert(tk.END, "Line 1:\n")
-        gui_frame.msg_area.insert(tk.END, "Line 2:\n")
-        gui_frame.msg_area.insert(tk.END, "Line 3:\n")
-        gui_frame.msg_area.yview(tk.END)
-        bdm_store_url = self.settings[bdms.BDM_STORE_URL]
-        gui_frame.filepath = bdm_store_url  
-        print("pause")
-
+    def bind_event_handlers(self):
+        """Bind event handlers for the BudManGUIWindow."""
+        # Set up proper window closing
+        self.protocol("WM_DELETE_WINDOW", self.on_closing)
+        # Bind event handlers
+        self.bind("<Button-1>", self.on_quit_button_clicked)  # Focus on click anywhere
+        self.bind("<Configure>", self.on_resize)
     #endregion BudManGUIView class methods
     #--------------------------------------------------------------------------+
 
@@ -410,7 +412,25 @@ class BudManGUIWindow(ttk.Window,
     def update_user(self, user: str):
         """Update the user label"""
         if not self._destroyed and self.user_label.winfo_exists():
-            self.user_label.config(text=f"User: {user}")
+            self.app_user=user
+
+    def load_sample_data(self):
+        '''Load sample data into the BudManGUIFrame widgets for testing purposes.'''
+        gui_frame: BudManGUIFrame = self.budman_gui_frame
+        root_folder = gui_frame.file_treeview.insert('', 'end', text="  0 budget", values=("Folder", "root", "n/a"))
+        file0_entry = gui_frame.file_treeview.insert(root_folder, 'end', text="  0 .bdm_file_tree.json", values=("File", "n/a", "n/a"))
+        file1_entry = gui_frame.file_treeview.insert(root_folder, 'end', text="  1 2025Budget.xlsx", values=("File", "n/a", "n/a"))
+        folder1_entry = gui_frame.file_treeview.insert(root_folder, 'end', text="  1 boa", values=('Folder', 'Financial Institution', 'FI_FOLDER'))
+        folder2_entry = gui_frame.file_treeview.insert(folder1_entry, 'end', text="  2 budget", values=('Folder', 'Budget', 'Working'))
+        gui_frame.file_treeview.insert(folder2_entry, 'end', text="  7 Manual-BOAChecking2023.slxs", values=('File', 'n/a', 'User-defined'))
+
+        gui_frame.msg_area.insert(tk.END, "Line 1:\n")
+        gui_frame.msg_area.insert(tk.END, "Line 2:\n")
+        gui_frame.msg_area.insert(tk.END, "Line 3:\n")
+        gui_frame.msg_area.yview(tk.END)
+        bdm_store_url = self.settings[bdms.BDM_STORE_URL]
+        gui_frame.filepath = bdm_store_url  
+        print("pause")
 
     #endregion Status bar utility methods
     #--------------------------------------------------------------------------+

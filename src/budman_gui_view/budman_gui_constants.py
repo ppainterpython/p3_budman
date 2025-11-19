@@ -36,4 +36,5 @@ BMG_APP_STATUS_LABEL = "Status:"
 BMG_APP_PROGRESS_LABEL = "Progress:"
 BMG_APP_WINDOW_SIZE_LABEL = "Size:"
 BMG_APP_USER_LABEL = "User:"
+BMG_UNBOUND_WORKBOOK = "<unbound workbook>"
 

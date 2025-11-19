@@ -69,6 +69,7 @@ class BudManGUIFrame(ttk.Frame,
                  ) -> None:
         # init super class (tk.Frame)
         super().__init__(parent,style="BMG.TFrame")
+        # Application attributes
         self._dc_binding:bool = False
         self._cp_binding:bool = False
         self._file_tree: Optional[Tree] = None
@@ -234,7 +235,19 @@ class BudManGUIFrame(ttk.Frame,
     def initialize(self) -> None:
         """Initialize the BudManGUIView class."""
         try:
-            # Setup the file tree here 
+            # Initialize the dc_info_frame values from the data context
+            self.dc_FI_KEY = self.DC.dc_FI_KEY
+            self.dc_workflow = self.DC.dc_WF_KEY
+            self.dc_purpose = self.DC.dc_WF_PURPOSE
+            if self.DC.dc_WORKBOOK is not None:
+                self.dc_WF_FOLDER = self.DC.dc_WORKBOOK.wf_folder
+                self.dc_WB_TYPE = self.DC.dc_WB_TYPE
+                self.dc_workbook = self.DC.dc_WB_NAME
+            else:
+                self.dc_WF_FOLDER = BMG_UNBOUND_WORKBOOK
+                self.dc_WB_TYPE = BMG_UNBOUND_WORKBOOK
+                self.dc_workbook = BMG_UNBOUND_WORKBOOK
+            # Initialize values for the file tree here
             self.initialize_file_tree()
             logger.debug(f"BudManGUIFrame: Initializing BudManGUIFrame widgets.")
             return self
@@ -256,8 +269,8 @@ class BudManGUIFrame(ttk.Frame,
             raise
 
     def create_BudManGUIFrame_widgets(self):
-        '''Create the BudManGUIFrame widgets with minimal configuration,
-        applying any style overrides.'''
+        '''Create and configure the BudManGUIFrame widgets with minimal 
+        configuration, including style and grid configuration.'''
 
         # Configure the grid layout for the BudManGUIFrame: 4 rows by 5 columns,
         # equal weight for all rows and columns.
@@ -292,29 +305,37 @@ class BudManGUIFrame(ttk.Frame,
         self.dc_info_frame.columnconfigure((0,2), weight=0)
         self.dc_info_frame.columnconfigure((1,3), weight=0)
         self.dc_info_frame.configure(style='BMG.TFrame')  # set style for dc_info_frame
+        # dc_info_frame widgets
         self.dc_FI_KEY_label = ttk.Label(self.dc_info_frame, text="FI_KEY:")
         self.dc_FI_KEY_label.configure(style='BMG.TLabel')  # set style for label
-        self.dc_FI_KEY_value = ttk.Label(self.dc_info_frame, text="")
+        self.dc_FI_KEY_value = ttk.Label(self.dc_info_frame, text="",
+                                         textvariable=self._dc_FI_KEY)
         self.dc_FI_KEY_value.configure(style='BMG.Value.TLabel')  # set style for value label
         self.dc_workflow_label = ttk.Label(self.dc_info_frame, text="Workflow:")
         self.dc_workflow_label.configure(style='BMG.TLabel')  # set style for label
-        self.dc_workflow_value = ttk.Label(self.dc_info_frame, text="")
+        self.dc_workflow_value = ttk.Label(self.dc_info_frame, text="",
+                                            textvariable=self._dc_workflow)
+        self.dc_workflow_value.configure(style='BMG.Value.TLabel')  # set style for value label
         self.dc_purpose_label = ttk.Label(self.dc_info_frame, text="Purpose:")
         self.dc_workflow_purpose_label = ttk.Label(self.dc_info_frame, text="Purpose:")
         self.dc_workflow_purpose_label.configure(style='BMG.TLabel')  # set style for label
-        self.dc_workflow_purpose_value = ttk.Label(self.dc_info_frame, text="")
+        self.dc_workflow_purpose_value = ttk.Label(self.dc_info_frame, text="",
+                                                    textvariable=self._dc_purpose)
         self.dc_workflow_purpose_value.configure(style='BMG.Value.TLabel')  # set style for value label
         self.dc_workbook_label = ttk.Label(self.dc_info_frame, text="Workbook:")
         self.dc_workbook_label.configure(style='BMG.TLabel')  # set style for label
-        self.dc_workbook_value = ttk.Label(self.dc_info_frame, text="")
+        self.dc_workbook_value = ttk.Label(self.dc_info_frame, text="",
+                                            textvariable=self._dc_workbook)
         self.dc_workbook_value.configure(style='BMG.Value.TLabel')  # set style for value label
         self.dc_WF_FOLDER_label = ttk.Label(self.dc_info_frame, text="WF Folder:")
         self.dc_WF_FOLDER_label.configure(style='BMG.TLabel')  # set style for label
-        self.dc_WF_FOLDER_value = ttk.Label(self.dc_info_frame, text="")
+        self.dc_WF_FOLDER_value = ttk.Label(self.dc_info_frame, text="",
+                                             textvariable=self._dc_WF_FOLDER)
         self.dc_WF_FOLDER_value.configure(style='BMG.Value.TLabel')  # set style for value label
         self.dc_WB_TYPE_label = ttk.Label(self.dc_info_frame, text="WB Type:")
         self.dc_WB_TYPE_label.configure(style='BMG.TLabel')  # set style for label
-        self.dc_WB_TYPE_value = ttk.Label(self.dc_info_frame, text="")
+        self.dc_WB_TYPE_value = ttk.Label(self.dc_info_frame, text="",
+                                           textvariable=self._dc_WB_TYPE)
         self.dc_WB_TYPE_value.configure(style='BMG.Value.TLabel')  # set style for value label
 
         # Paned window with TreeView and Frame:ScrolledText widget
