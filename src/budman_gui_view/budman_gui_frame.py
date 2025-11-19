@@ -18,7 +18,7 @@ from treelib import Tree, Node
 import p3_utils as p3u, p3logging as p3l, p3_mvvm as p3m
 # local modules and packages
 from budman_namespace import (FILE_TREE_NODE_TYPE_KEY, FILE_TREE_NODE_WF_KEY,
-                              FILE_TREE_NODE_WF_PURPOSE)
+                              FILE_TREE_NODE_WF_PURPOSE, P2, P4, P6)
 from budman_data_context import BudManAppDataContext_Binding
 import budman_command_processor as cp
 from .budman_gui_style_registry import StyleRegistry
@@ -436,6 +436,9 @@ class BudManGUIFrame(ttk.Frame,
 
         # Treeview selection event binding
         self.file_treeview.tag_bind(BMG_FTVOBJECT, "<<TreeviewSelect>>", self.on_file_treeview_select)
+        # Right mouse click support
+        self.file_treeview.bind("<Button-3>", self.on_right_click)
+
     #endregion BudManGUIFrame class methods
     #--------------------------------------------------------------------------+
 
@@ -477,10 +480,30 @@ class BudManGUIFrame(ttk.Frame,
 
     def on_file_treeview_select(self, event):
         """ Event handler for when the user selects an item in the file treeview. """
+        count = len(self.file_treeview.selection())
+        if count == 0:
+            return
+        budman_msg.output(f"File treeview selection changed. {count} item(s) selected.", BMG_DEBUG)
         selected_items = self.file_treeview.selection()
         for item in selected_items:
             item_text = self.file_treeview.item(item, "text")
-            print(f"BudManGUIFrame: Selected file treeview item: {item_text} (ID: {item})")
+            budman_msg.output(f"{P2}Selected item: {item_text} (ID: {item})", BMG_DEBUG)
+    
+    def on_right_click(self, event):
+        """ Event handler for right mouse click on the file treeview. """
+        # Identify the item clicked on
+        item_id = self.file_treeview.identify_row(event.y)
+        if not item_id:
+            # Was not on the treeview
+            return
+        count = len(self.file_treeview.selection())
+        if count == 0:
+            return
+        budman_msg.output(f"Right-click. {count} item(s) are selected.", BMG_DEBUG)
+        selected_items = self.file_treeview.selection()
+        for item in selected_items:
+            item_text = self.file_treeview.item(item, "text")
+            budman_msg.output(f"{P2}Selected item: {item_text} (ID: {item})", BMG_DEBUG)
     #endregion BudManViewFrame event handlers
     #--------------------------------------------------------------------------+
     
