@@ -75,6 +75,7 @@ class BudManGUIWindow(ttk.Window,
         self._dc_binding:bool = False
         self._cp_binding:bool = False
         self._store_url: str = ""
+        self._tk_windowing_system: str = self.tk.call('tk', 'windowingsystem')
 
         try:
             # Setup DataContext_Binding
@@ -228,10 +229,14 @@ class BudManGUIWindow(ttk.Window,
         self.minsize(BMG_MIN_WINDOW_WIDTH, BMG_MIN_WINDOW_HEIGHT)
         self.maxsize(BMG_MAX_WINDOW_WIDTH, BMG_MAX_WINDOW_HEIGHT)
 
-        # Configure main window grid 2x1
+        # Configure main window grid 2x1 (rows x columns)
         self.grid_rowconfigure(0, weight=1)    # Main content area expands
         self.grid_rowconfigure(1, weight=0)    # Status bar fixed height
         self.grid_columnconfigure(0, weight=1) # Full width
+
+        # Setup for Menu use later
+        self.option_add('*tearOff', FALSE)
+
 
     def create_budman_gui_frame(self, command_processor, data_context):
         """Create the BudManGUIFrame widget."""
@@ -331,7 +336,7 @@ class BudManGUIWindow(ttk.Window,
             textvariable=self._user_value
         )
         self.user_value.configure(style="BMG.Value.TLabel")
-        self.user_value.pack(side="right", padx=0, pady=5)
+        self.user_value.pack(side="right", padx=(0,2), pady=5)
         self.user_label = ttk.Label(
             self.status_bar, 
             text=BMG_APP_USER_LABEL, 

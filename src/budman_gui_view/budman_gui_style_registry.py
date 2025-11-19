@@ -31,6 +31,15 @@ class StyleRegistry:
                              relief="solid",
                              bordercolor='red',
                              borderwidth=3)
+        self.style.configure('BMG.TNotebook', 
+                             background=BMG_FAINT_GRAY,
+                             padding=(BMG_TNOTEBOOK_PADDING,
+                                      BMG_TNOTEBOOK_PADDING,
+                                      BMG_TNOTEBOOK_PADDING,
+                                      BMG_TNOTEBOOK_PADDING),
+                             relief="solid",
+                             bordercolor='blue',
+                             borderwidth=3)
         self.style.configure('BMG.TLabel', 
                              background=BMG_FAINT_GRAY, 
                              padding=(2,2,2,2),
