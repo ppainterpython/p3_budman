@@ -7,8 +7,7 @@
 #region Imports
 # python standard library modules and packages
 import logging
-from typing import Optional, Union
-from typing import Optional
+from typing import Optional, Union, List
 import tkinter as tk
 import tkinter.font as tkFont
 from tkinter import EventType, scrolledtext, StringVar, BooleanVar
@@ -134,6 +133,7 @@ class BudManGUIFrame(ttk.Frame,
         self.file_treeview: ttk.Treeview = None
         self.text_frame : tk.Frame = None
         self.msg_area: scrolledtext.ScrolledText = None
+        self.treeview_context_menu: tk.Menu = None
 
         # init widgets in BudManGUIFrame
         self.configure(style="BMG.TFrame")
@@ -334,8 +334,14 @@ class BudManGUIFrame(ttk.Frame,
 
         # Create file treeview frame and widget
         self.file_treeview_frame = self.create_file_treeview_frame(self.tree_notebook)
-        self.workbook_treeview_frame = self.create_workbook_treeview_frame(self.tree_notebook)
         # Create workbook treeview frame and widget
+        self.workbook_treeview_frame = self.create_workbook_treeview_frame(self.tree_notebook)
+        # Create treeview_context_menu
+        self.treeview_context_menu = tk.Menu(self, tearoff=0)
+        self.treeview_context_menu.add_command(label="workflow categorize", 
+                                      command=self.on_workflow_categorize)
+        self.treeview_context_menu.add_command(label="workflow transfer file", 
+                                      command=self.on_workflow_transfer_file)
 
     def create_dc_info_frame(self, parent:Union[tk.Widget, ttk.Widget]) -> ttk.Frame:
         """Create the dc_info_frame widget."""
@@ -610,19 +616,28 @@ class BudManGUIFrame(ttk.Frame,
     
     def on_right_click(self, event):
         """ Event handler for right mouse click on the file treeview. """
+        selected_items: List[str] = []
         # Identify the item clicked on
-        item_id = self.file_treeview.identify_row(event.y)
-        if not item_id:
-            # Was not on the treeview
+        clicked_item_id = self.file_treeview.identify_row(event.y)
+        if not clicked_item_id:
+            # Nothin right clicked on the treeview
             return
-        count = len(self.file_treeview.selection())
-        if count == 0:
-            return
-        budman_msg.output(f"Right-click. {count} item(s) are selected.", BMG_DEBUG)
+        self.file_treeview.selection_add(clicked_item_id)
+        selected_count = len(self.file_treeview.selection())
+        budman_msg.output(f"Right-click. {selected_count} item(s) are selected.", BMG_DEBUG)
         selected_items = self.file_treeview.selection()
         for item in selected_items:
             item_text = self.file_treeview.item(item, "text")
             budman_msg.output(f"{P2}Selected item: {item_text} (ID: {item})", BMG_DEBUG)
+        self.treeview_context_menu.post(event.x_root, event.y_root)
+
+    def on_workflow_categorize(self):
+        """ Event handler for workflow categorize context menu item. """
+        budman_msg.output("Workflow categorize context menu item selected.", BMG_DEBUG)
+
+    def on_workflow_transfer_file(self):
+        """ Event handler for workflow transfer file context menu item. """
+        budman_msg.output("Workflow transfer file context menu item selected.", BMG_DEBUG)
     #endregion BudManViewFrame event handlers
     #--------------------------------------------------------------------------+
     
