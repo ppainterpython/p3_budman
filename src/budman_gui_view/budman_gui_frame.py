@@ -69,29 +69,11 @@ class BudManGUIFrame(ttk.Frame,
                  ) -> None:
         # init super class (tk.Frame)
         super().__init__(parent,style="BMG.TFrame")
-        # Application attributes
+        # BudMan Application Attributes for properties
         self._dc_binding:bool = False
         self._cp_binding:bool = False
         self._file_tree: Optional[Tree] = None
-        try:
-            # Setup DataContext_Binding
-            if data_context is not None:
-                self.DC = data_context
-                self.dc_binding = True
-        except Exception as e:
-            logger.exception(p3u.exc_err_msg(e))
-            logger.debug("BudManGUIFrame configured with no DataContext.")
-
-        try:
-            # Setup CommandProcessor_Binding
-            if command_processor is not None:
-                self.CP = command_processor
-                self.cp_binding = True
-        except Exception as e:
-            logger.exception(p3u.exc_err_msg(e))
-            logger.debug("BudManGUIFrame configured with no CommandProcessor.")
-
-        # BudMan Application Attributes
+        self._workbook_tree: Optional[Tree] = None
         self._filepath_value = tk.StringVar(self,value="default")  # file path for the budget manager data file
         self._dc_FI_KEY = tk.StringVar(self,value="")  # DataContext FI_KEY
         self._dc_workflow = tk.StringVar(self,value="")  # DataContext workflow
@@ -99,11 +81,9 @@ class BudManGUIFrame(ttk.Frame,
         self._dc_workbook = tk.StringVar(self,value="")  # DataContext workbook
         self._dc_WF_FOLDER = tk.StringVar(self,value="")  # DataContext WF_FOLDER
         self._dc_WB_TYPE = tk.StringVar(self,value="")  # DataContext WB_TYPE
-
-        # tkinter configuration
-        self.parent = parent   # reference to the root window
-        self.style_registry = style_registry  # reference to the style registry
-        # widgets
+        # tkinter widget attributes
+        self.parent: tk.Window = parent  # reference to the root window
+        self.style_registry: StyleRegistry = style_registry  # reference to the style registry
         self.bdm_store_url_label: ttk.Label = None
         self.bdm_store_url_entry: tk.Entry = None
         self.budman_cmd_button_frame: ttk.Frame = None
@@ -135,11 +115,30 @@ class BudManGUIFrame(ttk.Frame,
         self.msg_area: scrolledtext.ScrolledText = None
         self.treeview_context_menu: tk.Menu = None
 
-        # init widgets in BudManGUIFrame
-        self.configure(style="BMG.TFrame")
-        self.create_BudManGUIFrame_widgets() # setup BudManGUIFrame widgets
-        self.layout_BudManGUIFrame_widgets() # layout BudManGUIFrame widgets
-        self.bind_BudManGUIFrame_widgets()   # bind BudManGUIFrame widgets to events
+        # Constructor-time Initialization  steps
+        try:
+            # Setup DataContext_Binding
+            if data_context is not None:
+                self.DC = data_context
+                self.dc_binding = True
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            logger.debug("BudManGUIFrame configured with no DataContext.")
+
+        try:
+            # Setup CommandProcessor_Binding
+            if command_processor is not None:
+                self.CP = command_processor
+                self.cp_binding = True
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            logger.debug("BudManGUIFrame configured with no CommandProcessor.")
+
+        # Init BudManGUIFrame widgets.
+        self.configure(style="BMG.TFrame")   # BudManGUIFrame style
+        self.create_BudManGUIFrame_widgets() # Create/configure widgets
+        self.layout_BudManGUIFrame_widgets() # layout widgets
+        self.bind_BudManGUIFrame_widgets()   # bind widgets to events
     #endregion __init__()
     #--------------------------------------------------------------------------+
     #region BudManGUIFrame properties
@@ -184,6 +183,17 @@ class BudManGUIFrame(ttk.Frame,
         if not isinstance(file_tree, (Tree, type(None))):
             raise TypeError("file_tree must be a Tree or None.")
         self._file_tree = file_tree
+
+    @property 
+    def workbook_tree(self) -> Optional[Tree]:
+        """Get the workbook_tree property."""
+        return self._workbook_tree
+    @workbook_tree.setter
+    def workbook_tree(self, workbook_tree: Optional[Tree]) -> None:
+        """Set the workbook_tree property."""
+        if not isinstance(workbook_tree, (Tree, type(None))):
+            raise TypeError("workbook_tree must be a Tree or None.")
+        self._workbook_tree = workbook_tree
 
     @property
     def dc_FI_KEY(self) -> str:
@@ -278,13 +288,25 @@ class BudManGUIFrame(ttk.Frame,
             raise
     
     def initialize_file_tree(self) -> None:
-        """Initialize the file treeview widget from the data context."""
+        """Initialize the file_treeview widget from the data context."""
         try:
-            logger.debug(f"BudManGUIFrame: Initializing file treeview widget.")
+            logger.debug(f"BudManGUIFrame: Initializing file_treeview widget.")
             if self.dc_binding:
-                # User the dc_FILE_TREE from the data context
+                # Use the dc_FILE_TREE from the data context
                 self.file_tree = self.dc_FILE_TREE
                 self.refresh_file_treeview()
+            return self
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise
+
+    def initialize_workbook_tree(self) -> None:
+        """Initialize the workbook_treeview widget from the data context."""
+        try:
+            logger.debug(f"BudManGUIFrame: Initializing workbook_treeview widget.")
+            if self.dc_binding:
+                # Use the the data context
+                self.refresh_workbook_treeview()
             return self
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
@@ -643,8 +665,71 @@ class BudManGUIFrame(ttk.Frame,
     
     #------------------------------------------------------------------------------+
     #region BudManGUIFrame support methods
+    def refresh_workbook_treeview(self) -> None:
+        """Refresh the workbook_treeview widget from the workbook_tree property."""
+        try:
+            if self.workbook_tree is None:
+                logger.debug("BudManGUIFrame: No workbook_tree to refresh.")
+                return
+            # Update the workbook_treeview. If one exists with content, then remove
+            # it and replace with a new one with updated content.
+            if len(self.workbook_treeview.children) > 0:
+                new_treeview = self.create_file_treeview()
+                self.paned_window.forget(1) # Treeview is at pos 1
+                self.paned_window.add(1, new_treeview, weight=2)
+                self.file_treeview = new_treeview
+            # Traverse the file_tree and add items to file_treeview
+            root_file_tree_node_id: str = self.file_tree.root
+            root_file_tree_node: Node = self.file_tree[root_file_tree_node_id]
+            # Setup the root file_treeview item
+            root_file_treeview_id = self.file_treeview.insert(
+                '', 
+                tk.END, 
+                text=root_file_tree_node.tag,
+                iid=root_file_tree_node_id,
+                tags=(BMG_FTVOBJECT,),
+                values=("BDM_FOLDER", "root", "All"))
+
+            # # Populate the file_treeview with items from the file_tree
+            def add_tree_nodes(file_tree: Tree, 
+                               parent_file_tree_node_id: str,
+                               parent_file_treeview_node_id: str) -> None:
+                # for node_id in self.file_tree.expand_tree():
+                #     node = self.file_tree.get_node(node_id)
+                # node.identifier = full path of folder or file
+                # node.tag = "nnn name" where nnn is the file or folder index
+                #            and name is the file or folder name.
+                for file_tree_node in file_tree.children(parent_file_tree_node_id):
+                    item_type = "unknown"
+                    workflow_value = "unknown"
+                    purpose_value = "unknown"
+                    if self.dc_binding:
+                        item_info = self.dc_FILE_TREE_node_info(file_tree_node)
+                        if item_info is not None:
+                            item_type = item_info.get(FILE_TREE_NODE_TYPE_KEY, item_type)
+                            workflow_value = item_info.get(FILE_TREE_NODE_WF_KEY, workflow_value)
+                            purpose_value = item_info.get(FILE_TREE_NODE_WF_PURPOSE, purpose_value)
+                    item_id = self.file_treeview.insert(
+                        parent_file_treeview_node_id,
+                        tk.END,
+                        iid=file_tree_node.identifier,
+                        text=file_tree_node.tag,
+                        tags=(BMG_FTVOBJECT,),
+                        values=(item_type, workflow_value, purpose_value)
+                    )
+                    add_tree_nodes(self.file_tree, file_tree_node.identifier, item_id)
+
+
+            add_tree_nodes(self.file_tree, 
+                           root_file_tree_node_id, 
+                           root_file_treeview_id)
+            logger.debug("BudManGUIFrame: File treeview refreshed.")
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise
+
     def refresh_file_treeview(self) -> None:
-        """Refresh the file treeview widget from the file_tree property."""
+        """Refresh the file_treeview widget from the file_tree property."""
         try:
             if self.file_tree is None:
                 logger.debug("BudManGUIFrame: No file_tree to refresh.")
@@ -705,12 +790,15 @@ class BudManGUIFrame(ttk.Frame,
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise
+
     def disable_button(self, button:ttk.Button) -> None:
         """Disable a button widget."""
         button.state(["disabled"])
+
     def enable_button(self, button:ttk.Button) -> None:
         """Enable a button widget."""
         button.state(["!disabled"])
+
     def button_is_enabled(self, button:ttk.Button) -> bool:
         """Check if a button widget is enabled."""
         return button.instate(["!disabled"])    

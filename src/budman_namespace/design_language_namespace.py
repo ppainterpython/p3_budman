@@ -98,8 +98,9 @@ BDM_LAST_MODIFIED_DATE = "_last_modified_date" # Type: str - ISO date string
 BDM_LAST_MODIFIED_BY = "_last_modified_by"     # Type: str - user name
 BDM_DATA_CONTEXT = "_data_context"             # Type: DATA_CONTEXT
 BSM_FILE_TREE = "_bsm_file_tree"               # Type: BSMFileTree, not persisted
-BDM_VALID_PREFIXES = "_valid_prefixes"          # Type: List[str]
-BDM_VALID_WB_TYPES = "_valid_wb_types"          # Type: List[str
+BDM_WORKBOOK_TREE = "_bdm_workbook_tree"       # Type: BDMWorkbookTree, not persisted
+BDM_VALID_PREFIXES = "_valid_prefixes"         # Type: List[str]
+BDM_VALID_WB_TYPES = "_valid_wb_types"         # Type: List[str
 # BDMConfig class Property name Constants (same as BudgetDomainModel)
 # but with BDM_CONFIG_OBJECT instead of BDM_STORE_OBJECT.
 BDM_CONFIG_OBJECT = "_bdm_config_object"       # Type: BDM_CONFIG
@@ -109,7 +110,7 @@ VALID_BDM_PROPERTIES = (
     BDM_FILENAME, BDM_FILETYPE, BDM_FOLDER, 
     BDM_URL, BDM_FI_COLLECTION, BDM_WF_COLLECTION, BDM_OPTIONS,
     BDM_CREATED_DATE, BDM_LAST_MODIFIED_DATE, 
-    BDM_LAST_MODIFIED_BY, BDM_DATA_CONTEXT, BSM_FILE_TREE)
+    BDM_LAST_MODIFIED_BY, BDM_DATA_CONTEXT, BSM_FILE_TREE, BDM_WORKBOOK_TREE)
 BSM_PERSISTED_PROPERTIES = (
     BDM_ID, BDM_FILENAME, BDM_FILETYPE, BDM_FOLDER, 
     BDM_URL, BDM_FI_COLLECTION, BDM_WF_COLLECTION,  

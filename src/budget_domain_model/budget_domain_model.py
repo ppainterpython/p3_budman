@@ -105,6 +105,7 @@ from openpyxl import Workbook, load_workbook
 # local modules and packages
 from budman_namespace import *
 from .budget_domain_model_config import BDMConfig
+from .bdm_workbook_tree import BDMWorkbookTree
 from budget_storage_model import (
     BSMFileTree,
     bsm_verify_folder, 
@@ -166,6 +167,7 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
         setattr(self, BDM_DATA_CONTEXT, {})  
         # Unpersisted attributes
         setattr(self, BSM_FILE_TREE, None)
+        setattr(self, BDM_WORKBOOK_TREE, None)
         setattr(self, BDM_VALID_PREFIXES, None)
         setattr(self, BDM_VALID_WB_TYPES, None)
         logger.debug("Complete:")
@@ -398,6 +400,17 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
         self._bsm_file_tree = value
 
     @property
+    def bdm_workbook_tree(self) -> BDMWorkbookTree:
+        """The BDMWorkbookTree object representing the workbook tree of the budget folder."""
+        return self._bdm_workbook_tree
+    @bdm_workbook_tree.setter
+    def bdm_workbook_tree(self, value: BDMWorkbookTree) -> None:
+        """Set the BDMWorkbookTree object."""
+        if not (value is None or isinstance(value, BDMWorkbookTree)):
+            raise ValueError(f"bdm_workbook_tree must be a BDMWorkbookTree or None: {value}")
+        self._bdm_workbook_tree = value
+
+    @property
     def bdm_valid_prefixes(self) -> List[str]:
         """The valid workbook prefixes for the budget model."""
         return self._valid_prefixes
@@ -596,6 +609,8 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
             self.bdm_valid_wb_types = VALID_WB_TYPE_VALUES
             # Load the BSM_FILE_TREE, scanning the BDM_FOLDER_URL
             self.bdm_FILE_TREE_refresh()
+            # Load the BDM_WORKBOOK_TREE, scanning the BDM_FOLDER_URL
+            self.bdm_WORKBOOK_TREE_refresh()
             # Initialization complete.
             self.bdm_initialized = True
             logger.debug(f"Complete: {p3u.stop_timer(st)}")   
@@ -606,7 +621,7 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
             raise
     #endregion bdm_initialize(self, bsm_init, ...) 
     # ------------------------------------------------------------------------ +
-    #region    bdm_FILE_LIST_refresh()
+    #region    bdm_FILE_TREE_refresh()
     def bdm_FILE_TREE_refresh(self) -> None:
         """Refresh the BSM file tree."""
         try:
@@ -667,7 +682,21 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
-    #endregion bdm_FILE_LIST_refresh()
+    #endregion bdm_FILE_TREE_refresh()
+    # ------------------------------------------------------------------------ +
+    #region    bdm_WORKBOOK_TREE_refresh()
+    def bdm_WORKBOOK_TREE_refresh(self) -> None:
+        """Refresh the BDM workbook tree."""
+        try:
+            if self.bdm_workbook_tree is not None:
+                del self.bdm_workbook_tree
+            self.bdm_workbook_tree = BDMWorkbookTree(self)
+            return
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise
+    #endregion bdm_WORKBOOK_TREE_refresh()
     # ------------------------------------------------------------------------ +
     #region    bdm_configured_prefixes() method
     def bdm_configured_prefixes(self) -> List[str]:
