@@ -235,10 +235,11 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
                     raise ValueError(m)
                 # Set the dc_FILE_TREE binding.
                 self._dc_FILE_TREE = self.model.bsm_file_tree.file_tree
+                # Set the dc_WORKBOOK_TREE binding.
+                self._dc_WORKBOOK_TREE = self.model.bdm_workbook_tree.workbook_tree
                 # The fi_key/fi_object binding to the model is the critical link
                 # between the BDMDataContext and the Model.
                 fi_object = self.model.bdm_FI_OBJECT(self._dc_FI_KEY)
-                wdc = self.model.bdm_FI_WORKBOOK_DATA_COLLECTION(self._dc_FI_KEY)
                 self._dc_FI_OBJECT = fi_object
                 # This is not DC business, but setup the WF_CATEGORY_MANAGER here.
                 if self.WF_CATEGORY_MANAGER is not None:
@@ -453,6 +454,33 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
             m = f"Error retrieving node info: {p3u.exc_err_msg(e)}"
             logger.error(m)
             return {}
+
+    def dc_WORKBOOK_TREE_node_info(self, node: Node) -> Dict[str,str]:
+        """Model-Aware: Return info about the specified workbook_tree node."""
+        try:
+            if not self.dc_VALID:
+                logger.error("Data context is not valid.")
+                return {}
+            if self.dc_WORKBOOK_TREE is None:
+                logger.error("Data context WORKBOOK_TREE is not set.")
+                return {}
+            if node is None:
+                logger.error("Node is None.")
+                return {}
+            if isinstance(node.data, dict):
+                return node.data
+            if isinstance(node.data, BDMWorkbook):
+                bdm_wb: BDMWorkbook = node.data
+                info = {
+                    WORKBOOK_TREE_NODE_TYPE_KEY: BDM_WORKBOOK
+                }
+                return info
+            return {}
+        except Exception as e:
+            m = f"Error retrieving node info: {p3u.exc_err_msg(e)}"
+            logger.error(m)
+            return {}
+
     #endregion BudManDataContext Method Overrides.
     # ------------------------------------------------------------------------ +
     #endregion BudManDataContext (Interface) Property/Method Overrides.

@@ -57,6 +57,9 @@ __all__ = [
     "FILE_TREE_NODE_WF_KEY",
     "FILE_TREE_NODE_WF_PURPOSE",
     # Common dictionary attribute key name constants
+    "BDM_WORKBOOK",
+    "FI_OBJECT",
+    "WF_OBJECT",
     "FI_KEY",
     "WF_KEY",
     "WF_PURPOSE", 
@@ -92,6 +95,11 @@ __all__ = [
     "BDM_VALID_WB_TYPES",
     "VALID_BDM_PROPERTIES",
     "BSM_PERSISTED_PROPERTIES",
+    # WORKBOOK_TREE info constants
+    "WORKBOOK_TREE_NODE_TYPE_KEY",
+    "WORKBOOK_TREE_NODE_FI_KEY",
+    "WORKBOOK_TREE_NODE_WF_KEY",
+    "WORKBOOK_TREE_NODE_WF_FOLDER",
     # BDM_OPTIONS Budget Model Options (BMO)Constants
     "BDMO_LOG_CONFIG",
     "BDMO_LOG_LEVEL",

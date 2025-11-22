@@ -113,7 +113,7 @@ class BudManAppDataContext(BudManAppDataContext_Base):
         self._dc_WORKBOOK_DATA_COLLECTION : WORKBOOK_DATA_COLLECTION_TYPE = dict()
         self._dc_LOADED_WORKBOOKS : LOADED_WORKBOOK_COLLECTION_TYPE = dict()
         self._dc_DataContext : DATA_CONTEXT_TYPE = dict()
-        self._dc_FILE_TREE : Optional[Tree] = None
+        self._dc_WORKBOOK_TREE : Optional[Tree] = None
     #endregion BudManAppDataContext__init__()
     # ------------------------------------------------------------------------ +
     #region BudManAppDataContext_Base Properties (concrete) 
@@ -374,6 +374,12 @@ class BudManAppDataContext(BudManAppDataContext_Base):
         """DC-Only: Requires a binding to a model or storage system.
         This backing variable can be set by a subclass override."""
         return self._dc_FILE_TREE
+
+    @property
+    def dc_WORKBOOK_TREE(self) -> Optional[Tree]:
+        """DC-Only: Requires a binding to a model or storage system.
+        This backing variable can be set by a subclass override."""
+        return self._dc_WORKBOOK_TREE
     #endregion BudManAppDataContext_Base Properties (concrete)
     # ------------------------------------------------------------------------ +
     #region BudManAppDataContext_Base Methods (concrete)

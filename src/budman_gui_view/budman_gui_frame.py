@@ -18,7 +18,12 @@ from treelib import Tree, Node
 import p3_utils as p3u, p3logging as p3l, p3_mvvm as p3m
 # local modules and packages
 from budman_namespace import (FILE_TREE_NODE_TYPE_KEY, FILE_TREE_NODE_WF_KEY,
-                              FILE_TREE_NODE_WF_PURPOSE, P2, P4, P6)
+                                FILE_TREE_NODE_WF_PURPOSE, 
+                                WORKBOOK_TREE_NODE_TYPE_KEY,
+                                WORKBOOK_TREE_NODE_FI_KEY,
+                                WORKBOOK_TREE_NODE_WF_KEY,
+                                WORKBOOK_TREE_NODE_WF_FOLDER,                              
+                                P2, P4, P6)
 from budman_data_context import BudManAppDataContext_Binding
 import budman_command_processor as cp
 from .budman_gui_style_registry import StyleRegistry
@@ -281,6 +286,7 @@ class BudManGUIFrame(ttk.Frame,
                 self.dc_workbook = BMG_UNBOUND_WORKBOOK
             # Initialize values for the file tree here
             self.initialize_file_tree()
+            self.initialize_workbook_tree()
             logger.debug(f"BudManGUIFrame: Initializing BudManGUIFrame widgets.")
             return self
         except Exception as e:
@@ -306,6 +312,7 @@ class BudManGUIFrame(ttk.Frame,
             logger.debug(f"BudManGUIFrame: Initializing workbook_treeview widget.")
             if self.dc_binding:
                 # Use the the data context
+                self.workbook_tree = self.dc_WORKBOOK_TREE
                 self.refresh_workbook_treeview()
             return self
         except Exception as e:
@@ -448,20 +455,18 @@ class BudManGUIFrame(ttk.Frame,
         """Create a workbook treeview widget."""
         try:
             workbook_treeview = ttk.Treeview(parent, 
-                                    columns=(FILE_TREE_NODE_TYPE_KEY,
-                                             FILE_TREE_NODE_WF_KEY, 
-                                             FILE_TREE_NODE_WF_PURPOSE), 
+                                    columns=(WORKBOOK_TREE_NODE_TYPE_KEY), 
                                     show='tree headings')
             workbook_treeview.configure(style='BMG.Treeview')
             # workbook_treeview config: headings and columns
             workbook_treeview.heading('#0', text='Index:Name', anchor='w')
             workbook_treeview.column('#0', anchor='w', width=200)
-            workbook_treeview.heading(FILE_TREE_NODE_TYPE_KEY, text='Type', anchor='w')
-            workbook_treeview.column(FILE_TREE_NODE_TYPE_KEY, anchor='w', width=40)
-            workbook_treeview.heading(FILE_TREE_NODE_WF_KEY, text='Workflow', anchor='w')
-            workbook_treeview.column(FILE_TREE_NODE_WF_KEY, anchor='w', width=80)
-            workbook_treeview.heading(FILE_TREE_NODE_WF_PURPOSE, text='Purpose', anchor='w')
-            workbook_treeview.column(FILE_TREE_NODE_WF_PURPOSE, anchor='w', width=80)
+            workbook_treeview.heading(WORKBOOK_TREE_NODE_TYPE_KEY, text='Type', anchor='w')
+            workbook_treeview.column(WORKBOOK_TREE_NODE_TYPE_KEY, anchor='w', width=40)
+            # workbook_treeview.heading(WORKBOOK_TREE_NODE_WF_KEY, text='Workflow', anchor='w')
+            # workbook_treeview.column(WORKBOOK_TREE_NODE_WF_KEY, anchor='w', width=80)
+            # workbook_treeview.heading(WORKBOOK_TREE_NODE_WF_FOLDER, text='Folder', anchor='w')
+            # workbook_treeview.column(WORKBOOK_TREE_NODE_WF_FOLDER, anchor='w', width=80)
             return workbook_treeview
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
@@ -674,58 +679,59 @@ class BudManGUIFrame(ttk.Frame,
             # Update the workbook_treeview. If one exists with content, then remove
             # it and replace with a new one with updated content.
             if len(self.workbook_treeview.children) > 0:
-                new_treeview = self.create_file_treeview()
-                self.paned_window.forget(1) # Treeview is at pos 1
-                self.paned_window.add(1, new_treeview, weight=2)
-                self.file_treeview = new_treeview
-            # Traverse the file_tree and add items to file_treeview
-            root_file_tree_node_id: str = self.file_tree.root
-            root_file_tree_node: Node = self.file_tree[root_file_tree_node_id]
-            # Setup the root file_treeview item
-            root_file_treeview_id = self.file_treeview.insert(
+                self.workbook_treeview.destroy()
+                self.workbook_treeview = self.create_workbook_treeview()
+            # Traverse the workbook_tree and add items to workbook_treeview
+            root_workbook_tree_node_id: str = self.workbook_tree.root
+            root_workbook_tree_node: Node = self.workbook_tree[root_workbook_tree_node_id]
+            # Setup the root workbook_treeview item
+            root_workbook_treeview_id = self.workbook_treeview.insert(
                 '', 
                 tk.END, 
-                text=root_file_tree_node.tag,
-                iid=root_file_tree_node_id,
-                tags=(BMG_FTVOBJECT,),
-                values=("BDM_FOLDER", "root", "All"))
+                text=root_workbook_tree_node.tag,
+                iid=root_workbook_tree_node_id,
+                tags=(BMG_WBTVOBJECT,),
+                values=("BDM_FOLDER")) #, "root", "All"))
 
             # # Populate the file_treeview with items from the file_tree
-            def add_tree_nodes(file_tree: Tree, 
-                               parent_file_tree_node_id: str,
-                               parent_file_treeview_node_id: str) -> None:
+            def add_workbook_tree_nodes(workbook_tree: Tree, 
+                               parent_workbook_tree_node_id: str,
+                               parent_workbook_treeview_node_id: str) -> None:
                 # for node_id in self.file_tree.expand_tree():
                 #     node = self.file_tree.get_node(node_id)
                 # node.identifier = full path of folder or file
                 # node.tag = "nnn name" where nnn is the file or folder index
                 #            and name is the file or folder name.
-                for file_tree_node in file_tree.children(parent_file_tree_node_id):
+                for workbook_tree_node in workbook_tree.children(parent_workbook_tree_node_id):
                     item_type = "unknown"
                     workflow_value = "unknown"
-                    purpose_value = "unknown"
+                    folder_value = "unknown"
                     if self.dc_binding:
-                        item_info = self.dc_FILE_TREE_node_info(file_tree_node)
+                        item_info = self.dc_WORKBOOK_TREE_node_info(workbook_tree_node)
                         if item_info is not None:
-                            item_type = item_info.get(FILE_TREE_NODE_TYPE_KEY, item_type)
-                            workflow_value = item_info.get(FILE_TREE_NODE_WF_KEY, workflow_value)
-                            purpose_value = item_info.get(FILE_TREE_NODE_WF_PURPOSE, purpose_value)
-                    item_id = self.file_treeview.insert(
-                        parent_file_treeview_node_id,
+                            item_type = item_info.get(WORKBOOK_TREE_NODE_TYPE_KEY, item_type)
+                            # workflow_value = item_info.get(WORKBOOK_TREE_NODE_WF_KEY, workflow_value)
+                            # folder_value = item_info.get(WORKBOOK_TREE_NODE_WF_FOLDER, folder_value)
+                    item_id = self.workbook_treeview.insert(
+                        parent_workbook_treeview_node_id,
                         tk.END,
-                        iid=file_tree_node.identifier,
-                        text=file_tree_node.tag,
-                        tags=(BMG_FTVOBJECT,),
-                        values=(item_type, workflow_value, purpose_value)
+                        iid=workbook_tree_node.identifier,
+                        text=workbook_tree_node.tag,
+                        tags=(BMG_WBTVOBJECT,),
+                        values=(item_type) #, workflow_value, folder_value)
                     )
-                    add_tree_nodes(self.file_tree, file_tree_node.identifier, item_id)
+                    add_workbook_tree_nodes(self.workbook_tree, 
+                                   workbook_tree_node.identifier, 
+                                   item_id)
+    
 
-
-            add_tree_nodes(self.file_tree, 
-                           root_file_tree_node_id, 
-                           root_file_treeview_id)
+            add_workbook_tree_nodes(self.workbook_tree, 
+                           root_workbook_tree_node_id, 
+                           root_workbook_treeview_id)
             logger.debug("BudManGUIFrame: File treeview refreshed.")
         except Exception as e:
-            logger.exception(p3u.exc_err_msg(e))
+            m: str = p3u.exc_err_msg(e)
+            logger.exception(m)
             raise
 
     def refresh_file_treeview(self) -> None:
@@ -737,10 +743,8 @@ class BudManGUIFrame(ttk.Frame,
             # Update the file_treeview. If one exists with content, then remove
             # it and replace with a new one with updated content.
             if len(self.file_treeview.children) > 0:
-                new_treeview = self.create_file_treeview()
-                self.paned_window.forget(1) # Treeview is at pos 1
-                self.paned_window.add(1, new_treeview, weight=2)
-                self.file_treeview = new_treeview
+                self.file_treeview.destroy()
+                self.file_treeview = self.create_file_treeview()
             # Traverse the file_tree and add items to file_treeview
             root_file_tree_node_id: str = self.file_tree.root
             root_file_tree_node: Node = self.file_tree[root_file_tree_node_id]
@@ -754,7 +758,7 @@ class BudManGUIFrame(ttk.Frame,
                 values=("BDM_FOLDER", "root", "All"))
 
             # # Populate the file_treeview with items from the file_tree
-            def add_tree_nodes(file_tree: Tree, 
+            def add_file_tree_nodes(file_tree: Tree, 
                                parent_file_tree_node_id: str,
                                parent_file_treeview_node_id: str) -> None:
                 # for node_id in self.file_tree.expand_tree():
@@ -780,10 +784,10 @@ class BudManGUIFrame(ttk.Frame,
                         tags=(BMG_FTVOBJECT,),
                         values=(item_type, workflow_value, purpose_value)
                     )
-                    add_tree_nodes(self.file_tree, file_tree_node.identifier, item_id)
+                    add_file_tree_nodes(self.file_tree, file_tree_node.identifier, item_id)
 
 
-            add_tree_nodes(self.file_tree, 
+            add_file_tree_nodes(self.file_tree, 
                            root_file_tree_node_id, 
                            root_file_treeview_id)
             logger.debug("BudManGUIFrame: File treeview refreshed.")

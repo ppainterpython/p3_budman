@@ -251,6 +251,12 @@ class BudManAppDataContext_Base(DataContext_Base):
     def dc_FILE_TREE(self) -> Optional[Tree]:
         """Abstract: Return the BDM_STORE file tree."""
         pass
+
+    @property
+    @abstractmethod
+    def dc_WORKBOOK_TREE(self) -> Optional[Tree]:
+        """Abstract: Return the BDM_STORE workbook_tree."""
+        pass
     #endregion BudManAppDataContext_Base Properties (abstract)
     # ------------------------------------------------------------------------ +
     #region BudManAppDataContext_Base Methods (abstract)
@@ -420,5 +426,11 @@ class BudManAppDataContext_Base(DataContext_Base):
     def dc_FILE_TREE_node_info(self, node: Node) -> Optional[Dict[str, str]]:
         """Abstract: Return information about a file tree node."""
         pass
+
+    @abstractmethod
+    def dc_WORKBOOK_TREE_node_info(self, node: Node) -> Optional[Dict[str, str]]:
+        """Abstract: Return information about a workbook_tree node."""
+        pass
+
     #endregion BudManAppDataContext_Base Methods (abstract)
     # ------------------------------------------------------------------------ +

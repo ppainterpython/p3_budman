@@ -134,33 +134,67 @@ class BDMWorkbookTree:
             # Iterate all FIs and the wf_folder configs for each, collect workbooks
             for fi_key, fi_obj in self.model.bdm_fi_collection.items():
                 # Each fi_obj needs a node.
+                node_data: Dict[str, str] = {}
                 fi_node: Node = wb_tree.get_node(fi_key)
                 if fi_node is None:
-                    # Create the node
+                    # Create the fi_node
+                    node_data[bdm.WORKBOOK_TREE_NODE_TYPE_KEY] = bdm.FI_OBJECT
+                    node_data[bdm.WORKBOOK_TREE_NODE_FI_KEY] = fi_key
                     fi_node = wb_tree.create_node(tag=f"FI({fi_key})", 
                                                   identifier=fi_key, 
-                                                  parent=root_node_id, data=fi_obj)
+                                                  parent=root_node_id, 
+                                                  data=node_data)
                 if fi_obj[bdm.FI_WF_FOLDER_CONFIG_COLLECTION] is None:
                     continue
                 for wf_key, wfc_list in fi_obj[bdm.FI_WF_FOLDER_CONFIG_COLLECTION].items():
-                    if len(wfc_list) == 0:
-                        continue
                     # Each wf_key needs a node.
                     wf_key_id = f"{fi_key}::{wf_key}"
                     wf_key_node: Node = wb_tree.get_node(wf_key_id)
                     if wf_key_node is None:
-                        wf_key_node = wb_tree.create_node(tag=f"WF({wf_key})", 
+                        node_data = node_data.copy()
+                        node_data[bdm.WORKBOOK_TREE_NODE_TYPE_KEY] = bdm.WF_OBJECT
+                        node_data[bdm.WORKBOOK_TREE_NODE_FI_KEY] = fi_key
+                        node_data[bdm.WORKBOOK_TREE_NODE_WF_KEY] = wf_key
+                        wf_key_node = wb_tree.create_node(tag=f"Workflow({wf_key})", 
                                                         identifier=wf_key_id, 
-                                                        parent=fi_key, data=None)
+                                                        parent=fi_key, 
+                                                        data=node_data)
+                    if len(wfc_list) == 0:
+                        continue
                     for wfc in wfc_list:
                         # Each wf_purpose:wf_folder needs a node.
-                        wf_folder_key = f"{wf_key}::{wfc[bdm.WF_PURPOSE]}::{wfc[bdm.WF_FOLDER]}"
+                        wf_purpose = wfc.get(bdm.WF_PURPOSE, "")
+                        wf_folder = wfc.get(bdm.WF_FOLDER, "")
+                        wf_folder_key = f"{wf_key}::{wf_purpose}::{wf_folder}"
+                        wf_folder_tag = f"WF_FOLDER({wf_purpose}::{wf_folder})"
                         wf_folder_node = wb_tree.get_node(wf_folder_key)
                         if wf_folder_node is None:
-                            wf_folder_node = wb_tree.create_node(tag=f"WF_FOLDER({wfc[bdm.WF_FOLDER]})",
+                            node_data = node_data.copy()
+                            node_data[bdm.WORKBOOK_TREE_NODE_TYPE_KEY] = bdm.WF_OBJECT
+                            node_data[bdm.WORKBOOK_TREE_NODE_FI_KEY] = fi_key
+                            node_data[bdm.WORKBOOK_TREE_NODE_WF_KEY] = wf_key
+                            node_data[bdm.WORKBOOK_TREE_NODE_WF_FOLDER] = wf_folder_key
+                            wf_folder_node = wb_tree.create_node(tag=wf_folder_tag,
                                                                 identifier=wf_folder_key,
                                                                 parent=wf_key_id,
-                                                                data=wfc)
+                                                                data=node_data)
+                            if (fi_obj[bdm.FI_WORKBOOK_DATA_COLLECTION] is None or 
+                                len(fi_obj[bdm.FI_WORKBOOK_DATA_COLLECTION]) == 0):
+                                   continue
+                        wb: BDMWorkbook = None
+                        for wb_id, wb in fi_obj[bdm.FI_WORKBOOK_DATA_COLLECTION].items():
+                            if (wb.wf_purpose == wf_purpose and
+                                wb.wf_key == wf_key and
+                                wb.wf_folder == wf_folder and
+                                wb.fi_key == fi_key ):
+                                # This workbook belongs in this wf_folder_node
+                                wb_node_id = wb.wb_id
+                                wb_node = wb_tree.get_node(wb_node_id)
+                                if wb_node is None:
+                                    wb_node = wb_tree.create_node(tag=wb.wb_name,
+                                                                  identifier=wb_node_id,
+                                                                  parent=wf_folder_key,
+                                                                  data=wb)
                         # lookup workbooks for fi_key, wf_key, wf_purpose and wf_folder
                         # Add workbook nodes to wf_folder_node
             return wb_tree

@@ -251,6 +251,11 @@ class BudManAppDataContext_Binding(BudManAppDataContext_Base, p3m.DataContext_Bi
         return self.DC.dc_FILE_TREE
 
     @property
+    def dc_WORKBOOK_TREE(self) -> Optional[Tree]:
+        """DC_Binding: Return the BDM_STORE workbook_tree."""
+        return self.DC.dc_WORKBOOK_TREE
+
+    @property
     def WF_CATEGORY_MANAGER(self) -> Optional[object]:
         """Return the current category manager in the DC.
 
@@ -424,6 +429,10 @@ class BudManAppDataContext_Binding(BudManAppDataContext_Base, p3m.DataContext_Bi
     def dc_FILE_TREE_node_info(self, node: Node) -> Dict[str,str]:
         """DC_Binding: Return a dictionary of info about the given file tree node."""
         return self.DC.dc_FILE_TREE_node_info(node)
+    
+    def dc_WORKBOOK_TREE_node_info(self, node: Node) -> Dict[str,str]:
+        """DC_Binding: Return a dictionary of info about the given workbook_tree node."""
+        return self.DC.dc_WORKBOOK_TREE_node_info(node)
     
     #endregion BudManAppDataContext_Base Methods (concrete)
     # ------------------------------------------------------------------------ +

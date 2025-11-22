@@ -59,6 +59,9 @@ type WF_FOLDER_CONFIG_LIST_TYPE = List[WF_FOLDER_CONFIG_TYPE]
 type FI_WF_FOLDER_CONFIG_COLLECTION_TYPE = Dict[str, WF_FOLDER_CONFIG_LIST_TYPE]
 # ---------------------------------------------------------------------------- +
 # Common dictionary attribute key name constants
+BDM_WORKBOOK = "bdm_workbook"
+FI_OBJECT = "fi_object"
+WF_OBJECT = "wf_object"
 FI_KEY = "fi_key"
 WF_KEY = "wf_key"
 WF_FOLDER = "wf_folder"
@@ -116,6 +119,11 @@ BSM_PERSISTED_PROPERTIES = (
     BDM_URL, BDM_FI_COLLECTION, BDM_WF_COLLECTION,  
     BDM_OPTIONS, BDM_CREATED_DATE, BDM_LAST_MODIFIED_DATE, BDM_LAST_MODIFIED_BY,
     BDM_DATA_CONTEXT)
+# WORKBOOK_TREE info constants
+WORKBOOK_TREE_NODE_TYPE_KEY = "node_type"
+WORKBOOK_TREE_NODE_FI_KEY = FI_KEY
+WORKBOOK_TREE_NODE_WF_KEY = WF_KEY
+WORKBOOK_TREE_NODE_WF_FOLDER = WF_FOLDER
 # ---------------------------------------------------------------------------- +
 #
 # BDMO_OBJECT Budget Domain Model Options pseudo-Object (Dictionary key names)
@@ -135,7 +143,7 @@ PATH = "_path"
 ABS_PATH = "_abs" + PATH
 WORKBOOKS = "_workbooks"
 # FILE_TREE info constants
-FILE_TREE_NODE_TYPE_KEY = "node_type"
+FILE_TREE_NODE_TYPE_KEY = WORKBOOK_TREE_NODE_TYPE_KEY
 FILE_TREE_NODE_WF_KEY = WF_KEY
 FILE_TREE_NODE_WF_PURPOSE = WF_PURPOSE
 # ---------------------------------------------------------------------------- +
