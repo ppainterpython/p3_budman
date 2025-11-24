@@ -542,6 +542,7 @@ class BudManAppDataContext(BudManAppDataContext_Base):
             if wb_id is None or not isinstance(wb_id, str) or len(wb_id) == 0:
                 logger.error(f" TypeError(wb_id must be a string, got {type(wb_id)})")
                 return -1
+            # The wb_index is determined as the index from list(wdc.keys())
             wdc_key_list = list(wdc.keys())
             if wb_id in wdc_key_list:
                 # If the wb_id is in the keys, return its index.

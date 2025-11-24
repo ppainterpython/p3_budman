@@ -445,25 +445,26 @@ class BudManGUIFrame(ttk.Frame,
         workbook_treeview_frame.columnconfigure(0, weight=1)
         workbook_treeview_frame.configure(style='BMG.TFrame')  # set style for frame
         self.workbook_treeview = self.create_workbook_treeview(workbook_treeview_frame)
-        self.tree_notebook.add(workbook_treeview_frame, text=WBT_TAB_LABEL) # Pos 1
+        self.tree_notebook.add(workbook_treeview_frame, text=WBTV_TAB_LABEL) # Pos 1
         return workbook_treeview_frame
     
     def create_workbook_treeview(self, parent:Union[tk.Widget, ttk.Widget]) -> ttk.Treeview:
         """Create a workbook treeview widget."""
         try:
             workbook_treeview = ttk.Treeview(parent, 
-                                    columns=WBT_TYPE_COLUMN_LABEL, 
+                                    columns=(WBTV_TYPE_COLUMN_LABEL,
+                                    WBTV_WB_INDEX_COLUMN_LABEL), 
                                     show='tree headings')
             workbook_treeview.configure(style='BMG.Treeview')
             # workbook_treeview config: headings and columns
-            workbook_treeview.heading('#0', text='Index:Name', anchor='w')
+            workbook_treeview.heading('#0', text=WBTV_NAME_COLUMN_LABEL, anchor='w')
             workbook_treeview.column('#0', anchor='w', width=200)
-            workbook_treeview.heading(WBT_TYPE_COLUMN_LABEL, text='Type', anchor='w')
-            workbook_treeview.column(WBT_TYPE_COLUMN_LABEL, anchor='w', width=40)
-            # workbook_treeview.heading(WORKBOOK_TREE_NODE_WF_KEY, text='Workflow', anchor='w')
-            # workbook_treeview.column(WORKBOOK_TREE_NODE_WF_KEY, anchor='w', width=80)
-            # workbook_treeview.heading(WORKBOOK_TREE_NODE_WF_FOLDER, text='Folder', anchor='w')
-            # workbook_treeview.column(WORKBOOK_TREE_NODE_WF_FOLDER, anchor='w', width=80)
+            workbook_treeview.heading(WBTV_TYPE_COLUMN_LABEL, 
+                                      text=WBTV_TYPE_COLUMN_LABEL, anchor='w')
+            workbook_treeview.column(WBTV_TYPE_COLUMN_LABEL, anchor='w', width=40)
+            workbook_treeview.heading(WBTV_WB_INDEX_COLUMN_LABEL, 
+                                      text=WBTV_WB_INDEX_COLUMN_LABEL, anchor='w')
+            workbook_treeview.column(WBTV_WB_INDEX_COLUMN_LABEL, anchor='w', width=80)
             return workbook_treeview
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
@@ -490,7 +491,7 @@ class BudManGUIFrame(ttk.Frame,
                                     show='tree headings')
             file_treeview.configure(style='BMG.Treeview')
             # file_treeview config: headings and columns
-            file_treeview.heading('#0', text='Index:Name', anchor='w')
+            file_treeview.heading('#0', text=FTV_NAME_COLUMN_LABEL, anchor='w')
             file_treeview.column('#0', anchor='w', width=200)
             file_treeview.heading(FILE_TREE_NODE_TYPE_KEY, text='Type', anchor='w')
             file_treeview.column(FILE_TREE_NODE_TYPE_KEY, anchor='w', width=40)
@@ -682,14 +683,13 @@ class BudManGUIFrame(ttk.Frame,
             root_wbt_node_id: str = self.workbook_tree.root
             root_wbt_node: BDMWorkbookTreeNode = self.workbook_tree[root_wbt_node_id]
             # Setup the root workbook_treeview item
-            node_type: str = root_wbt_node.node_type
             root_workbook_treeview_id = self.workbook_treeview.insert(
                 '', 
                 tk.END, 
                 text=root_wbt_node.tag,
                 iid=root_wbt_node_id,
                 tags=(BMG_WBTVOBJECT,),
-                values=(node_type)) #, "root", "All"))
+                values=(root_wbt_node.node_type, root_wbt_node.wb_index))
 
             # # Populate the file_treeview with items from the file_tree
             def add_workbook_tree_nodes(workbook_tree: Tree, 
@@ -702,16 +702,15 @@ class BudManGUIFrame(ttk.Frame,
                 #            and name is the file or folder name.
                 wbt_node: BDMWorkbookTreeNode = None
                 for wbt_node in workbook_tree.children(parent_workbook_tree_node_id):
-                    # item_type = "unknown"
-                    # workflow_value = "unknown"
-                    # folder_value = "unknown"
+                    node_type:str = wbt_node.node_type
+                    wb_index:str = str(wbt_node.wb_index) if wbt_node.wb_index > -1 else "N/A"
                     item_id = self.workbook_treeview.insert(
                         parent_workbook_treeview_node_id,
                         tk.END,
                         iid=wbt_node.identifier,
                         text=wbt_node.tag,
                         tags=(BMG_WBTVOBJECT,),
-                        values=(wbt_node.node_type) #, workflow_value, folder_value)
+                        values=(node_type, wb_index) 
                     )
                     add_workbook_tree_nodes(self.workbook_tree, 
                                    wbt_node.identifier, 

@@ -978,6 +978,25 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise ValueError(m)
+        
+    def bdm_FI_WORKBOOK_index(self, fi_key: str, wb_id:str)->int:
+        """Return the index of the workbook with wb_id in the FI_WORKBOOK_DATA_COLLECTION."""
+        try:
+            if p3u.str_empty(wb_id):
+                return -1
+            wdc: WORKBOOK_DATA_COLLECTION_TYPE = self.bdm_FI_OBJECT(fi_key)[FI_WORKBOOK_DATA_COLLECTION]
+            if wdc is None or len(wdc) == 0:
+                return -1
+            # The wb_index is determined as the index from list(wdc.keys())
+            wdc_key_list : List[str]= list(wdc.keys())
+            if wb_id in wdc_key_list:
+                # If the wb_id is in the keys, return its index.
+                return wdc_key_list.index(wb_id)
+            return -1
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise
 
     def bdm_FI_KEY_validate(self, fi_key:str) -> bool:
         """Validate the financial institution key as a member of the
@@ -1138,10 +1157,9 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
         try:
             root_node_id:str = self.bdm_id
             root_node_tag: str = f"BDM_FOLDER('{self.bdm_folder}')"
-            root_node: Node = None
             wb_tree: Tree = self.bdm_workbook_tree if self.bdm_workbook_tree is not None else BDMWorkbookTree()
             # Root node
-            root_node = wb_tree.add_tree_node(node_type=BDM,
+            _ = wb_tree.add_tree_node(node_type=BDM,
                                     tag=root_node_tag,
                                     identifier=root_node_id,
                                     data=self)
@@ -1210,7 +1228,8 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
                                         identifier=wb_node_id,
                                         data=wb,
                                         parent_id=wf_folder_key)
-                                    # TODO: Look up wb_index
+                                    # Look up wb_index, save in wb_node
+                                    wb_node.wb_index = self.bdm_FI_WORKBOOK_index(fi_key, wb.wb_id) 
                         # lookup workbooks for fi_key, wf_key, wf_purpose and wf_folder
                         # Add workbook nodes to wf_folder_node
             return wb_tree

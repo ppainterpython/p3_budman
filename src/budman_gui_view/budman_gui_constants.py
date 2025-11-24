@@ -42,8 +42,12 @@ BMG_UNBOUND_WORKBOOK = "<unbound workbook>"
 BMG_UNINITIALIZED = "<uninitialized>"
 # File_treeview (FTV) labels
 FTV_TAB_LABEL = "Files View"
-# Workbook_treeview (WBT)labels
-WBT_TAB_LABEL = "Workbook View"
-WBT_TYPE_COLUMN_LABEL = "Type"
+FTV_NAME_COLUMN_LABEL = "Name"
+# Workbook_treeview (WBTV)labels
+WBTV_TAB_LABEL = "Workbook View"
+WBTV_NAME_COLUMN_LABEL = "Name"
+WBTV_TYPE_COLUMN_LABEL = "Type"
+WBTV_WB_INDEX_COLUMN_LABEL = "WB_Index"
+
 
 

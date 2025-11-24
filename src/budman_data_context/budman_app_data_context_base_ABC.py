@@ -427,10 +427,5 @@ class BudManAppDataContext_Base(DataContext_Base):
         """Abstract: Return information about a file tree node."""
         pass
 
-    @abstractmethod
-    def dc_WORKBOOK_TREE_node_info(self, node: Node) -> Optional[Dict[str, str]]:
-        """Abstract: Return information about a workbook_tree node."""
-        pass
-
     #endregion BudManAppDataContext_Base Methods (abstract)
     # ------------------------------------------------------------------------ +

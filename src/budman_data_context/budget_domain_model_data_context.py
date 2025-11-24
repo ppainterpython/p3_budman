@@ -62,8 +62,10 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
     def __init__(self,  model : Model_Base = None, *args, dc_id : str = None) -> None:
         dc_id = args[0] if len(args) > 0 else None
         super().__init__(*args, dc_id=dc_id)
-        self._model : MODEL_OBJECT = model
         self._dc_id = self.__class__.__name__ if not self._dc_id else None
+        # Additional attributes in a model-aware Model_Binding data context
+        self._model : MODEL_OBJECT = model
+        # Additional attributes for BDMDataContext
         self._WF_CATEGORY_MANAGER : Optional[object] = None
     #endregion __init__() method init during BDMDataContext constructor.
     # ------------------------------------------------------------------------ +
@@ -450,32 +452,6 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
                 FILE_TREE_NODE_WF_PURPOSE: wf_purpose
             }
             return info
-        except Exception as e:
-            m = f"Error retrieving node info: {p3u.exc_err_msg(e)}"
-            logger.error(m)
-            return {}
-
-    def dc_WORKBOOK_TREE_node_info(self, node: Node) -> Dict[str,str]:
-        """Model-Aware: Return info about the specified workbook_tree node."""
-        try:
-            if not self.dc_VALID:
-                logger.error("Data context is not valid.")
-                return {}
-            if self.dc_WORKBOOK_TREE is None:
-                logger.error("Data context WORKBOOK_TREE is not set.")
-                return {}
-            if node is None:
-                logger.error("Node is None.")
-                return {}
-            if isinstance(node.data, dict):
-                return node.data
-            if isinstance(node.data, BDMWorkbook):
-                bdm_wb: BDMWorkbook = node.data
-                info = {
-                    # WBT_NODE_TYPE_KEY: BDM_WORKBOOK
-                }
-                return info
-            return {}
         except Exception as e:
             m = f"Error retrieving node info: {p3u.exc_err_msg(e)}"
             logger.error(m)

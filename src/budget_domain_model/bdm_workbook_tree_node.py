@@ -49,7 +49,7 @@ class BDMWorkbookTreeNode(Node):
         # Additional initialization can be added here if needed
         self._node_type: str = node_type
         self._name:str = tag
-        self._index: int = -1
+        self._wb_index: int = -1
     #endregion    __init__() method
     # ------------------------------------------------------------------------ +
     #region    Class Properties
@@ -72,13 +72,13 @@ class BDMWorkbookTreeNode(Node):
         self._name = value
 
     @property
-    def index(self) -> int:
+    def wb_index(self) -> int:
         """Get the index of the node."""
-        return self._index
-    @index.setter
-    def index(self, value: int) -> None:
+        return self._wb_index
+    @wb_index.setter
+    def wb_index(self, value: int) -> None:
         """Set the index of the node."""
-        self._index = value
+        self._wb_index = value
     #endregion Class Properties
     # ------------------------------------------------------------------------ +
     #endregion BDMWorkbookTreeNode class intrinsics
