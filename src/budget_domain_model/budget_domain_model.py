@@ -101,10 +101,12 @@ from pathlib import Path
 from typing import List, Optional, Type, Generator, Dict, Tuple, Any, TYPE_CHECKING
 # third-party modules and packages
 import p3_utils as p3u, pyjson5, p3logging as p3l, p3_mvvm as p3m
-from openpyxl import Workbook, load_workbook
+# from openpyxl import Workbook, load_workbook
+from treelib import Tree, Node
 # local modules and packages
 from budman_namespace import *
 from .budget_domain_model_config import BDMConfig
+from .bdm_workbook_tree_node import BDMWorkbookTreeNode
 from .bdm_workbook_tree import BDMWorkbookTree
 from budget_storage_model import (
     BSMFileTree,
@@ -684,20 +686,6 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
             raise
     #endregion bdm_FILE_TREE_refresh()
     # ------------------------------------------------------------------------ +
-    #region    bdm_WORKBOOK_TREE_refresh()
-    def bdm_WORKBOOK_TREE_refresh(self) -> None:
-        """Refresh the BDM workbook tree."""
-        try:
-            if self.bdm_workbook_tree is not None:
-                del self.bdm_workbook_tree
-            self.bdm_workbook_tree = BDMWorkbookTree(self)
-            return
-        except Exception as e:
-            m = p3u.exc_err_msg(e)
-            logger.error(m)
-            raise
-    #endregion bdm_WORKBOOK_TREE_refresh()
-    # ------------------------------------------------------------------------ +
     #region    bdm_configured_prefixes() method
     def bdm_configured_prefixes(self) -> List[str]:
         """Get the valid workbook prefixes for all configured FI's in the budget model."""
@@ -752,7 +740,7 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
                     # Convert the WORKBOOK_ITEM to a WORKBOOK_OBJECT.
                     wb_object = BDMWorkbook(**wb_data_2)
                     # Get the wf_folder_url expected for this workbook.
-                    wb_folder_url = self.bdm_FI_WF_FOLDER_CONFIG_ATTRIBUTE(
+                    wb_folder_url = self.bdm_WF_FOLDER_CONFIG_ATTRIBUTE(
                         fi_key=wb_object.fi_key, wf_key=wb_object.wf_key,
                         wf_purpose=wb_object.wf_purpose, attribute=WF_FOLDER_URL,
                         raise_errors=True)
@@ -866,7 +854,7 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
             raise ValueError(m)
     #endregion bdm_BDM_STORE_json() method
     # ------------------------------------------------------------------------ +
-    #region bdm_WORKBOOK_DATA_COLLECTION_find() method
+    #region    bdm_WORKBOOK_DATA_COLLECTION_find() method
     def bdm_WORKBOOK_DATA_COLLECTION_find(self, search_key: str, 
                                              search_value:DATA_COLLECTION_TYPE) -> BDMWorkbook:
         """Search all FI WDC for matching search_key with search_value.
@@ -886,7 +874,12 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
             raise ValueError(m)
     #endregion bdm_WORKBOOK_DATA_COLLECTION_find() method
     # ------------------------------------------------------------------------ +
-    #region    bdm_FI_OBJECT_TYPE methods
+    #endregion BDM - Budget Domain Model methods
+    # ======================================================================== +
+
+    # ======================================================================== +
+    #region    BDM - FI_OBJECT methods
+    # ------------------------------------------------------------------------ +    
     def bdm_FI_OBJECT(self, fi_key:str) -> FI_OBJECT_TYPE:
         """Return the FI_OBJECT for fi_key."""
         self.bdm_FI_KEY_validate(fi_key)
@@ -1038,12 +1031,15 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise ValueError(m)
-    #endregion bdm_FI_OBJECT_TYPE methods
-    # ------------------------------------------------------------------------ +
-    #region    bdm_FI_WF_FOLDER_CONFIG & _ATTRIBUTE methods:
-    def bdm_FI_WF_FOLDER_CONFIG(self, fi_key:str, 
+    # ------------------------------------------------------------------------ +    
+    #endregion BDM - FI_OBJECT methods
+    # ======================================================================== +
+
+    # ======================================================================== +
+    #region    BDM - WF_FOLDER_CONFIG methods
+    def bdm_WF_FOLDER_CONFIG(self, fi_key:str, 
                              wf_key:str, wf_purpose:str) -> Optional[WF_FOLDER_CONFIG_TYPE]:
-        """Return the FI_WF_FOLDER_CONFIG for a given fi_key, wf_key and wf_purpose."""
+        """Return the WF_FOLDER_CONFIG for a given fi_key, wf_key and wf_purpose."""
         try:
             fi_wf_fldr_cfg_coll: FI_WF_FOLDER_CONFIG_COLLECTION_TYPE = None
             fi_wf_fldr_cfg_coll = self.bdm_FI_WF_FOLDER_CONFIG_COLLECTION(fi_key)
@@ -1077,7 +1073,7 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
             logger.error(m)
             raise ValueError(m)
         
-    def bdm_FI_WF_FOLDER_CONFIG_ATTRIBUTE(self, 
+    def bdm_WF_FOLDER_CONFIG_ATTRIBUTE(self, 
                                           fi_key:str, 
                                           wf_key:str, 
                                           wf_purpose:str,
@@ -1086,7 +1082,7 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
         """Return an attribute value from the workflow folder config."""
         try:
             wf_folder_config: Optional[WF_FOLDER_CONFIG_TYPE] = None
-            wf_folder_config = self.bdm_FI_WF_FOLDER_CONFIG(fi_key, wf_key, wf_purpose)
+            wf_folder_config = self.bdm_WF_FOLDER_CONFIG(fi_key, wf_key, wf_purpose)
             if wf_folder_config is None:
                 m = f"Workflow folder config for FI_KEY('{fi_key}'), "
                 m += f"WF_KEY('{wf_key}'), WF_PURPOSE('{wf_purpose}') is None."
@@ -1114,9 +1110,129 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise ValueError(m)
-    #endregion bdm_FI_WF_FOLDER_CONFIG methods
+    #endregion BDM - WF_FOLDER_CONFIG methods
+    # ======================================================================== +
+
+    # ======================================================================== +
+    #region    BDM - WORKBOOK_TREE methods
     # ------------------------------------------------------------------------ +
-    #region    bdm_WF_OBJECT_TYPE Dict attribute getter methods
+    #region    bdm_WORKBOOK_TREE_refresh()
+    def bdm_WORKBOOK_TREE_refresh(self) -> None:
+        """Refresh the BDM workbook tree."""
+        try:
+            if self.bdm_workbook_tree is not None:
+                del self.bdm_workbook_tree
+            self.bdm_workbook_tree = self.bdm_WORKBOOK_TREE_construct()
+            return
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise
+    #endregion bdm_WORKBOOK_TREE_refresh()
+    # ------------------------------------------------------------------------ +
+    # ------------------------------------------------------------------------ +
+    #region bdm_WORKBOOK_TREE_construct()
+    def bdm_WORKBOOK_TREE_construct(self) -> BDMWorkbookTree:
+        """Update a workbook_tree structure from the model's current content."""
+        # Does the tree have nodes yet?
+        try:
+            root_node_id:str = self.bdm_id
+            root_node_tag: str = f"BDM_FOLDER('{self.bdm_folder}')"
+            root_node: Node = None
+            wb_tree: Tree = self.bdm_workbook_tree if self.bdm_workbook_tree is not None else BDMWorkbookTree()
+            # Root node
+            root_node = wb_tree.add_tree_node(node_type=BDM,
+                                    tag=root_node_tag,
+                                    identifier=root_node_id,
+                                    data=self)
+            # Iterate all FIs and the wf_folder configs for each, collect workbooks
+            fi_obj: Optional[FI_OBJECT_TYPE] = None
+            for fi_key, fi_obj in self.bdm_fi_collection.items():
+                # Each fi_obj needs a node.
+                fi_node: Node = wb_tree.get_node(fi_key)
+                if fi_node is None:
+                    # Create the fi_node
+                    fi_folder = self.bdm_FI_FOLDER(fi_key)
+                    fi_node_tag:str = f"FI_FOLDER('{fi_folder}')"
+                    fi_node = wb_tree.add_tree_node(node_type=FI_OBJECT,
+                                                  tag=fi_node_tag,
+                                                  identifier=fi_key,
+                                                  data=fi_obj,
+                                                  parent_id=root_node_id)
+                if fi_obj[FI_WF_FOLDER_CONFIG_COLLECTION] is None:
+                    continue
+                for wf_key, wfc_list in fi_obj[FI_WF_FOLDER_CONFIG_COLLECTION].items():
+                    # Each wf_key needs a node.
+                    wf_obj: WF_OBJECT_TYPE = self.bdm_WF_OBJECT(wf_key)
+                    if wf_obj is None:
+                        raise ValueError(f"Encountered invalid wf_key: '{wf_key}' with no configured workflow.")
+                    wf_key_id: str = f"{fi_key}::{wf_key}"
+                    wf_key_node: Node = wb_tree.get_node(wf_key_id)
+                    if wf_key_node is None:
+                        wf_node_tag: str = f"Workflow('{wf_key}')"
+                        wf_key_node = wb_tree.add_tree_node(node_type=WF_OBJECT,
+                                                        tag=wf_node_tag,
+                                                        identifier=wf_key_id,
+                                                        data=wf_obj,
+                                                        parent_id=fi_key)
+                    if len(wfc_list) == 0:
+                        continue
+                    for wfc in wfc_list:
+                        # Each wf_purpose:wf_folder needs a node.
+                        wf_purpose = wfc.get(WF_PURPOSE, "")
+                        wf_folder = wfc.get(WF_FOLDER, "")
+                        wf_folder_key = f"{wf_key}::{wf_purpose}::{wf_folder}"
+                        wf_folder_tag = f"WF_FOLDER[{wf_purpose}]('{wf_folder}')"
+                        wf_folder_node: Node = wb_tree.get_node(wf_folder_key)
+                        if wf_folder_node is None:
+                            wf_folder_node: Node = wb_tree.add_tree_node(
+                                node_type=WF_FOLDER_CONFIG,
+                                tag=wf_folder_tag,
+                                identifier=wf_folder_key,
+                                data=wfc,
+                                parent_id=wf_key_id)
+                            if (fi_obj[FI_WORKBOOK_DATA_COLLECTION] is None or 
+                                len(fi_obj[FI_WORKBOOK_DATA_COLLECTION]) == 0):
+                                   continue
+                        wb: BDMWorkbook = None
+                        for wb_id, wb in fi_obj[FI_WORKBOOK_DATA_COLLECTION].items():
+                            if (wb.wf_purpose == wf_purpose and
+                                wb.wf_key == wf_key and
+                                wb.wf_folder == wf_folder and
+                                wb.fi_key == fi_key ):
+                                # This workbook belongs in this wf_folder_node
+                                wb_node_id = wb.wb_id
+                                wb_node: Node = wb_tree.get_node(wb_node_id)
+                                if wb_node is None:
+                                    wb_node = wb_tree.add_tree_node(
+                                        node_type=BDM_WORKBOOK,
+                                        tag=wb.wb_name,
+                                        identifier=wb_node_id,
+                                        data=wb,
+                                        parent_id=wf_folder_key)
+                                    # TODO: Look up wb_index
+                        # lookup workbooks for fi_key, wf_key, wf_purpose and wf_folder
+                        # Add workbook nodes to wf_folder_node
+            return wb_tree
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+
+    def bdm_WORKBOOK_TREE_node_info(self, node_type:str, node_name: str, node_data: Any) -> Dict[str, Any]:
+        """Return a dict of workbook tree node info."""
+        # node_info: Dict[str, Any] = {}
+        # node_info[WBT_NODE_TYPE_KEY] = node_type
+        # node_info[WBT_NODE_NAME] = node_name
+        # node_info[WBT_NODE_DATA] = node_data
+        pass
+    #endregion bdm_WORKBOOK_TREE_construct()
+    # ------------------------------------------------------------------------ +
+    #endregion BDM - WORKBOOK_TREE methods
+    # ======================================================================== +
+
+    # ======================================================================== +
+    #region    BDM - WF_OBJECT methods
+    # ------------------------------------------------------------------------ +    
     def bdm_WF_OBJECT(self, wf_key:str) -> WF_OBJECT_TYPE:
         """Return the WF_OBJECT specified wf_key."""
         self.bdm_WF_KEY_validate(wf_key)
@@ -1197,9 +1313,8 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
                                     len(config[WF_PREFIX]) > 0])
         return wf_prefixes
 
-    #endregion bdm_WF_OBJECT_TYPE pseudo-Object properties
-    # ------------------------------------------------------------------------ +
-    #endregion BDM - Budget Domain Model methods
+    # ------------------------------------------------------------------------ +    
+    #endregion BDM - WF_OBJECT methods
     # ======================================================================== +
 
     # ======================================================================== +
@@ -1702,7 +1817,7 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
                 for wf_folder_config in wf_folder_config_list:
                     # Lookup wf_folder_config in the fi_wf_folder_config_list.
                     fi_wf_folder_config: WF_FOLDER_CONFIG_TYPE = None
-                    fi_wf_folder_config = self.bdm_FI_WF_FOLDER_CONFIG(
+                    fi_wf_folder_config = self.bdm_WF_FOLDER_CONFIG(
                         fi_key, wf_key, wf_folder_config[WF_PURPOSE])
                     if fi_wf_folder_config is None:
                         # Not found, so add it to the fi_wf_folder_config_list.

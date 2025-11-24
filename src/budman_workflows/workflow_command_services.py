@@ -699,13 +699,13 @@ def WORKFLOW_TASK_construct_bdm_workbook(src_filename: str,
             return False, m
         # Construct the workbook file URL.
         wb_extension: str = bdm.WB_FILETYPE_MAP[wb_type]
-        wb_prefix: str = model.bdm_FI_WF_FOLDER_CONFIG_ATTRIBUTE(
+        wb_prefix: str = model.bdm_WF_FOLDER_CONFIG_ATTRIBUTE(
             fi_key=fi_key, wf_key=wf_key, wf_purpose=wf_purpose,
             attribute=bdm.WF_PREFIX, raise_errors=True)
-        wf_folder_url: str = model.bdm_FI_WF_FOLDER_CONFIG_ATTRIBUTE(
+        wf_folder_url: str = model.bdm_WF_FOLDER_CONFIG_ATTRIBUTE(
             fi_key=fi_key, wf_key=wf_key, wf_purpose=wf_purpose,
             attribute=bdm.WF_FOLDER_URL, raise_errors=True)
-        wf_folder: str = model.bdm_FI_WF_FOLDER_CONFIG_ATTRIBUTE(
+        wf_folder: str = model.bdm_WF_FOLDER_CONFIG_ATTRIBUTE(
             fi_key=fi_key, wf_key=wf_key, wf_purpose=wf_purpose,
             attribute=bdm.WF_FOLDER, raise_errors=True)
         filename = f"{wb_prefix}{src_filename}{wb_type}"

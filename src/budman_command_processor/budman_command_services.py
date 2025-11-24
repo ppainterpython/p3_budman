@@ -293,7 +293,7 @@ def BUDMAN_CMD_list_files(cmd: p3m.CMD_OBJECT_TYPE,
         if src_wf_folder and not all_files:
             fi_key: str = bdm_DC.dc_FI_KEY
             # From the Model, get the wf_folder_url for an fi_key, wf_key, wf_purpose
-            fi_wf_folder_url: str = model.bdm_FI_WF_FOLDER_CONFIG_ATTRIBUTE(
+            fi_wf_folder_url: str = model.bdm_WF_FOLDER_CONFIG_ATTRIBUTE(
                 fi_key=fi_key, wf_key=wf_key, wf_purpose=wf_purpose, 
                 attribute=bdm.WF_FOLDER_URL, raise_errors=False)
             # Retrieve the sub tree for that folder_url

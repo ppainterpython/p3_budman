@@ -15,14 +15,16 @@ __description__ = "Budget Manager (BudMan) Model implementation."
 __license__ = "MIT"
 
 from .budget_domain_model import BudgetDomainModel
-from .bdm_workbook_tree import BDMWorkbookTree
 from .budget_domain_model_config import BDMConfig
+from .bdm_workbook_tree import BDMWorkbookTree
+from .bdm_workbook_tree_node import BDMWorkbookTreeNode
 
 # symbols for "from budman_model import *"
 __all__ = [
     "BudgetDomainModel",
     "Model_Base",
     "Model_Binding",
-    "BDMWorkbookTree",
     "BDMConfig",
+    "BDMWorkbookTreeNode",
+    "BDMWorkbookTree"
 ]

@@ -31,7 +31,7 @@ BMG_DEBUG = "DEBUG"
 BMG_WARNING = "WARNING"
 BMG_ERROR = "ERROR"
 BMG_CRITICAL = "CRITICAL"
-# BMG - String Constants
+# BMG - User-viewable String Constants
 BMG_WINDOW_TITLE = "P3 Budget Manager"
 BMG_APP_READY_STATUS = "Ready"
 BMG_APP_STATUS_LABEL = "Status:"
@@ -40,6 +40,10 @@ BMG_APP_WINDOW_SIZE_LABEL = "Size:"
 BMG_APP_USER_LABEL = "User:"
 BMG_UNBOUND_WORKBOOK = "<unbound workbook>"
 BMG_UNINITIALIZED = "<uninitialized>"
-BMG_TREEVIEW_WORKBOOKS_TAB_LABEL = "Workbook View"
-BMG_TREEVIEW_FILES_TAB_LABEL = "Files View"
+# File_treeview (FTV) labels
+FTV_TAB_LABEL = "Files View"
+# Workbook_treeview (WBT)labels
+WBT_TAB_LABEL = "Workbook View"
+WBT_TYPE_COLUMN_LABEL = "Type"
+
 

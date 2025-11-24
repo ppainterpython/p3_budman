@@ -236,7 +236,7 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
                 # Set the dc_FILE_TREE binding.
                 self._dc_FILE_TREE = self.model.bsm_file_tree.file_tree
                 # Set the dc_WORKBOOK_TREE binding.
-                self._dc_WORKBOOK_TREE = self.model.bdm_workbook_tree.workbook_tree
+                self._dc_WORKBOOK_TREE = self.model.bdm_workbook_tree
                 # The fi_key/fi_object binding to the model is the critical link
                 # between the BDMDataContext and the Model.
                 fi_object = self.model.bdm_FI_OBJECT(self._dc_FI_KEY)
@@ -472,7 +472,7 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
             if isinstance(node.data, BDMWorkbook):
                 bdm_wb: BDMWorkbook = node.data
                 info = {
-                    WORKBOOK_TREE_NODE_TYPE_KEY: BDM_WORKBOOK
+                    # WBT_NODE_TYPE_KEY: BDM_WORKBOOK
                 }
                 return info
             return {}

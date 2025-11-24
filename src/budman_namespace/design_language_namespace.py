@@ -19,6 +19,10 @@ from openpyxl.worksheet.worksheet import Worksheet #as Worksheet
 
 #endregion Imports
 # ---------------------------------------------------------------------------- +
+# Budget Domain Model Constants
+#
+BDM = "BudgetDomainModel"
+# ---------------------------------------------------------------------------- +
 # Type Alias Constants
 # Base Types - not model-aware
 DATA_OBJECT_TYPE = Dict[str, Any] 
@@ -59,7 +63,7 @@ type WF_FOLDER_CONFIG_LIST_TYPE = List[WF_FOLDER_CONFIG_TYPE]
 type FI_WF_FOLDER_CONFIG_COLLECTION_TYPE = Dict[str, WF_FOLDER_CONFIG_LIST_TYPE]
 # ---------------------------------------------------------------------------- +
 # Common dictionary attribute key name constants
-BDM_WORKBOOK = "bdm_workbook"
+BDM_WORKBOOK = "BDMWorkbook Object"
 FI_OBJECT = "fi_object"
 WF_OBJECT = "wf_object"
 FI_KEY = "fi_key"
@@ -82,8 +86,6 @@ WB_CATEGORY_COLLECTION = "wb_category_collection"
 WB_CATEGORY_COUNT = "wb_category_count"
 WB_CATEGORY_MAP_URL = "wb_category_map_url"  # URL to the category map workbook
 # ---------------------------------------------------------------------------- +
-#
-# Budget Domain Model Constants
 #
 # BudgetDomainModel (BDM) class Property name Constants
 BDM_ID = "_bdm_id"                             # Type: str
@@ -119,11 +121,6 @@ BSM_PERSISTED_PROPERTIES = (
     BDM_URL, BDM_FI_COLLECTION, BDM_WF_COLLECTION,  
     BDM_OPTIONS, BDM_CREATED_DATE, BDM_LAST_MODIFIED_DATE, BDM_LAST_MODIFIED_BY,
     BDM_DATA_CONTEXT)
-# WORKBOOK_TREE info constants
-WORKBOOK_TREE_NODE_TYPE_KEY = "node_type"
-WORKBOOK_TREE_NODE_FI_KEY = FI_KEY
-WORKBOOK_TREE_NODE_WF_KEY = WF_KEY
-WORKBOOK_TREE_NODE_WF_FOLDER = WF_FOLDER
 # ---------------------------------------------------------------------------- +
 #
 # BDMO_OBJECT Budget Domain Model Options pseudo-Object (Dictionary key names)
@@ -143,7 +140,7 @@ PATH = "_path"
 ABS_PATH = "_abs" + PATH
 WORKBOOKS = "_workbooks"
 # FILE_TREE info constants
-FILE_TREE_NODE_TYPE_KEY = WORKBOOK_TREE_NODE_TYPE_KEY
+FILE_TREE_NODE_TYPE_KEY = "node_type"
 FILE_TREE_NODE_WF_KEY = WF_KEY
 FILE_TREE_NODE_WF_PURPOSE = WF_PURPOSE
 # ---------------------------------------------------------------------------- +
@@ -179,6 +176,7 @@ VALID_BDM_WORKFLOWS = (EXAMPLE_BDM_WF_INTAKE, EXAMPLE_BDM_WF_CATEGORIZATION, EXA
 #
 WF_KEY = WF_KEY #common
 WF_NAME = "wf_name"  
+WF_FOLDER_CONFIG = "wf_folder_config"
 WF_FOLDER_CONFIG_LIST = "wf_folder_config_list" 
 VALID_WF_OBJECT_ATTR_KEYS = (WF_KEY, WF_NAME, WF_FOLDER_CONFIG_LIST)
 # WF_FOLDER_CONFIG_TYPE workflow folder definition object (Dictionary key names)
@@ -261,6 +259,9 @@ VALID_WB_FILETYPES = (
     WB_FILETYPE_JSON, WB_FILETYPE_JSONC, WB_FILETYPE_TEXT,
     WB_FILETYPE_TOML, WB_FILETYPE_PY
 )
+# WORKBOOK_TREE (WBT) info constants
+WBT_NODE_TYPE_KEY = "node_type"
+VALID_WBT_NODE_TYPES = (BDM, BDM_WORKBOOK, FI_OBJECT, WF_OBJECT, WF_FOLDER_CONFIG)
 # ---------------------------------------------------------------------------- +
 # DATA_CONTEXT "good guy" interface (Dictionary key names)
 DC_INITIALIZED = "dc_initialized"
