@@ -422,10 +422,5 @@ class BudManAppDataContext_Base(DataContext_Base):
         """Abstract: Save the BDM_STORE to the specified file path."""
         pass
 
-    @abstractmethod
-    def dc_FILE_TREE_node_info(self, node: Node) -> Optional[Dict[str, str]]:
-        """Abstract: Return information about a file tree node."""
-        pass
-
     #endregion BudManAppDataContext_Base Methods (abstract)
     # ------------------------------------------------------------------------ +

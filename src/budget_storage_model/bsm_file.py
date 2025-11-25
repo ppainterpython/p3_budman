@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 
 #region    BSMFile Class
-class BSMFile:
+class BSMFile():
     BSM_FILE = "file"
     BSM_FOLDER = "folder"
     def __init__(self, 

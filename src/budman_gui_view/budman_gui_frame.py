@@ -23,6 +23,7 @@ from budman_namespace import (FILE_TREE_NODE_TYPE_KEY, FILE_TREE_NODE_WF_KEY,
 from budman_data_context import BudManAppDataContext_Binding
 import budman_command_processor as cp
 from budget_domain_model import BDMWorkbookTreeNode
+from budget_storage_model import BSMFile
 from .budman_gui_style_registry import StyleRegistry
 from .budman_gui_msg import BudManGUIMsg
 from .budman_gui_constants import *
@@ -485,20 +486,33 @@ class BudManGUIFrame(ttk.Frame,
         """Create a file treeview widget."""
         try:
             file_treeview = ttk.Treeview(parent, 
-                                    columns=(FILE_TREE_NODE_TYPE_KEY,
-                                             FILE_TREE_NODE_WF_KEY, 
-                                             FILE_TREE_NODE_WF_PURPOSE), 
-                                    show='tree headings')
+                                         columns=(
+                                             FTV_TYPE_COLUMN_LABEL,
+                                             FTV_FILE_INDEX_COLUMN_LABEL,
+                                             FTV_WORKFLOW_COLUMN_LABEL, 
+                                             FTV_PURPOSE_COLUMN_LABEL), 
+                                         show='tree headings')
             file_treeview.configure(style='BMG.Treeview')
             # file_treeview config: headings and columns
             file_treeview.heading('#0', text=FTV_NAME_COLUMN_LABEL, anchor='w')
-            file_treeview.column('#0', anchor='w', width=200)
-            file_treeview.heading(FILE_TREE_NODE_TYPE_KEY, text='Type', anchor='w')
-            file_treeview.column(FILE_TREE_NODE_TYPE_KEY, anchor='w', width=40)
-            file_treeview.heading(FILE_TREE_NODE_WF_KEY, text='Workflow', anchor='w')
-            file_treeview.column(FILE_TREE_NODE_WF_KEY, anchor='w', width=80)
-            file_treeview.heading(FILE_TREE_NODE_WF_PURPOSE, text='Purpose', anchor='w')
-            file_treeview.column(FILE_TREE_NODE_WF_PURPOSE, anchor='w', width=80)
+            file_treeview.column('#0', anchor='w', 
+                                 stretch=True, width=FTV_NAME_COLUMN_WIDTH)
+            file_treeview.heading(FTV_TYPE_COLUMN_LABEL, 
+                                  text=FTV_TYPE_COLUMN_LABEL, anchor='w')
+            file_treeview.column(FTV_TYPE_COLUMN_LABEL, anchor='w', 
+                                 stretch=False,width=FTV_TYPE_COLUMN_WIDTH)
+            file_treeview.heading(FTV_FILE_INDEX_COLUMN_LABEL, 
+                                  text=FTV_FILE_INDEX_COLUMN_LABEL, anchor='center')
+            file_treeview.column(FTV_FILE_INDEX_COLUMN_LABEL, anchor='center', 
+                                 stretch=False,width=FTV_FILE_INDEX_COLUMN_WIDTH)
+            file_treeview.heading(FTV_WORKFLOW_COLUMN_LABEL, 
+                                  text=FTV_WORKFLOW_COLUMN_LABEL, anchor='center')
+            file_treeview.column(FTV_WORKFLOW_COLUMN_LABEL, anchor='w', 
+                                 stretch=False,width=FTV_WORKFLOW_COLUMN_WIDTH)
+            file_treeview.heading(FTV_PURPOSE_COLUMN_LABEL, 
+                                  text=FTV_PURPOSE_COLUMN_LABEL, anchor='center')
+            file_treeview.column(FTV_PURPOSE_COLUMN_LABEL, anchor='w', 
+                                 stretch=False,width=FTV_PURPOSE_COLUMN_WIDTH)
             return file_treeview
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
@@ -585,9 +599,13 @@ class BudManGUIFrame(ttk.Frame,
         self.bdm_store_url_entry.bind("<FocusOut>", self.on_filepath_changed)
 
         # Treeview selection event binding
+        self.file_treeview.bind("<Button-1>", self.on_left_click)
         self.file_treeview.tag_bind(BMG_FTVOBJECT, "<<TreeviewSelect>>", self.on_file_treeview_select)
         # Right mouse click support
         self.file_treeview.bind("<Button-3>", self.on_right_click)
+        # Bind Ctrl + Left Mouse Click
+        self.bind("<Button-1>", self.on_left_click)
+
 
     #endregion BudManGUIFrame class methods
     #--------------------------------------------------------------------------+
@@ -663,6 +681,19 @@ class BudManGUIFrame(ttk.Frame,
     def on_workflow_transfer_file(self):
         """ Event handler for workflow transfer file context menu item. """
         budman_msg.output("Workflow transfer file context menu item selected.", BMG_DEBUG)
+
+    def on_left_click(self,event):
+    # event.state is a bitmask of modifier keys + mouse buttons
+        ctrl_pressed = (event.state & 0x0004) != 0   # Control mask
+        shift_pressed = (event.state & 0x0001) != 0  # Shift mask
+        if ctrl_pressed:
+            cols = self.file_treeview["columns"]
+            cols = ('#0',) + cols
+            # Print widths of all columns
+            for col in cols:
+                col_width = self.file_treeview.column(col, option="width")
+                print(f"  {col}: {col_width}px")
+
     #endregion BudManViewFrame event handlers
     #--------------------------------------------------------------------------+
     
@@ -759,22 +790,18 @@ class BudManGUIFrame(ttk.Frame,
                 # node.tag = "nnn name" where nnn is the file or folder index
                 #            and name is the file or folder name.
                 for file_tree_node in file_tree.children(parent_file_tree_node_id):
-                    item_type = "unknown"
-                    workflow_value = "unknown"
-                    purpose_value = "unknown"
-                    if self.dc_binding:
-                        item_info = self.dc_FILE_TREE_node_info(file_tree_node)
-                        if item_info is not None:
-                            item_type = item_info.get(FILE_TREE_NODE_TYPE_KEY, item_type)
-                            workflow_value = item_info.get(FILE_TREE_NODE_WF_KEY, workflow_value)
-                            purpose_value = item_info.get(FILE_TREE_NODE_WF_PURPOSE, purpose_value)
+                    bsm_file: BSMFile = file_tree_node.data
+                    item_type = bsm_file.type
+                    file_index = f"{bsm_file.file_index:02}" if bsm_file.file_index > -1 else " - "
+                    workflow_value = bsm_file.wf_key
+                    purpose_value = bsm_file.wf_purpose
                     item_id = self.file_treeview.insert(
                         parent_file_treeview_node_id,
                         tk.END,
                         iid=file_tree_node.identifier,
                         text=file_tree_node.tag,
                         tags=(BMG_FTVOBJECT,),
-                        values=(item_type, workflow_value, purpose_value)
+                        values=(item_type, file_index, workflow_value, purpose_value)
                     )
                     add_file_tree_nodes(self.file_tree, file_tree_node.identifier, item_id)
 

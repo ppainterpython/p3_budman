@@ -430,33 +430,6 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
             logger.error(m)
             return False, m
 
-    def dc_FILE_TREE_node_info(self, node: Node) -> Dict[str,str]:
-        """Model-Aware: Return info about the specified file tree node."""
-        try:
-            if not self.dc_VALID:
-                logger.error("Data context is not valid.")
-                return {}
-            if self.dc_FILE_TREE is None:
-                logger.error("Data context FILE_TREE is not set.")
-                return {}
-            if node is None:
-                logger.error("Node is None.")
-                return {}
-            bsm_file: bsm.BSMFile = node.data
-            node_type = bsm_file.type
-            wf_key = bsm_file.wf_key
-            wf_purpose = bsm_file.wf_purpose
-            info = {
-                FILE_TREE_NODE_TYPE_KEY: node_type,
-                FILE_TREE_NODE_WF_KEY: wf_key,
-                FILE_TREE_NODE_WF_PURPOSE: wf_purpose
-            }
-            return info
-        except Exception as e:
-            m = f"Error retrieving node info: {p3u.exc_err_msg(e)}"
-            logger.error(m)
-            return {}
-
     #endregion BudManDataContext Method Overrides.
     # ------------------------------------------------------------------------ +
     #endregion BudManDataContext (Interface) Property/Method Overrides.

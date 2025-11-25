@@ -760,11 +760,6 @@ class BudManAppDataContext(BudManAppDataContext_Base):
         logger.error("BDM_STORE_save method is not implemented in this interface.")
         return None
     
-    def dc_FILE_TREE_node_info(self, node: Node) -> Dict[str,str]:
-        """DC-Only: Not implemented: Return info about the specified file tree node."""
-        raise NotImplementedError("dc_FILE_TREE_node_info is not implemented "
-                                  "as it requires a Model binding.")
-
     #endregion BudManAppDataContext_Base Methods (concrete)
     # ------------------------------------------------------------------------ +
     #region    Helper methods

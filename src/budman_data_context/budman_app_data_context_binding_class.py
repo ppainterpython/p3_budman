@@ -426,9 +426,5 @@ class BudManAppDataContext_Binding(BudManAppDataContext_Base, p3m.DataContext_Bi
         """DC_Binding: Save the BDM_STORE to the specified file path."""
         return self.DC.dc_BDM_STORE_save(file_path)
     
-    def dc_FILE_TREE_node_info(self, node: Node) -> Dict[str,str]:
-        """DC_Binding: Return a dictionary of info about the given file tree node."""
-        return self.DC.dc_FILE_TREE_node_info(node)
-    
     #endregion BudManAppDataContext_Base Methods (concrete)
     # ------------------------------------------------------------------------ +
