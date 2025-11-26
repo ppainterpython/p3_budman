@@ -453,19 +453,24 @@ class BudManGUIFrame(ttk.Frame,
         """Create a workbook treeview widget."""
         try:
             workbook_treeview = ttk.Treeview(parent, 
-                                    columns=(WBTV_TYPE_COLUMN_LABEL,
-                                    WBTV_WB_INDEX_COLUMN_LABEL), 
+                                    columns=(
+                                        WBTV_TYPE_COLUMN_LABEL,
+                                        WBTV_WB_INDEX_COLUMN_LABEL), 
                                     show='tree headings')
             workbook_treeview.configure(style='BMG.Treeview')
             # workbook_treeview config: headings and columns
             workbook_treeview.heading('#0', text=WBTV_NAME_COLUMN_LABEL, anchor='w')
-            workbook_treeview.column('#0', anchor='w', width=200)
+            workbook_treeview.column('#0', anchor='w', 
+                                     stretch=True, width=WBTV_NAME_COLUMN_WIDTH)
             workbook_treeview.heading(WBTV_TYPE_COLUMN_LABEL, 
                                       text=WBTV_TYPE_COLUMN_LABEL, anchor='w')
-            workbook_treeview.column(WBTV_TYPE_COLUMN_LABEL, anchor='w', width=40)
+            workbook_treeview.column(WBTV_TYPE_COLUMN_LABEL, anchor='w', 
+                                     stretch=False,width=WBTV_TYPE_COLUMN_WIDTH)
             workbook_treeview.heading(WBTV_WB_INDEX_COLUMN_LABEL, 
-                                      text=WBTV_WB_INDEX_COLUMN_LABEL, anchor='w')
-            workbook_treeview.column(WBTV_WB_INDEX_COLUMN_LABEL, anchor='w', width=80)
+                                      text=WBTV_WB_INDEX_COLUMN_LABEL, 
+                                      anchor='center')
+            workbook_treeview.column(WBTV_WB_INDEX_COLUMN_LABEL, anchor='center', 
+                                     stretch=False,width=WBTV_WB_INDEX_COLUMN_WIDTH)
             return workbook_treeview
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
@@ -599,12 +604,14 @@ class BudManGUIFrame(ttk.Frame,
         self.bdm_store_url_entry.bind("<FocusOut>", self.on_filepath_changed)
 
         # Treeview selection event binding
-        self.file_treeview.bind("<Button-1>", self.on_left_click)
+        # file_treeview
+        self.file_treeview.bind("<Button-1>", self.on_file_treeview_left_click)
         self.file_treeview.tag_bind(BMG_FTVOBJECT, "<<TreeviewSelect>>", self.on_file_treeview_select)
-        # Right mouse click support
-        self.file_treeview.bind("<Button-3>", self.on_right_click)
-        # Bind Ctrl + Left Mouse Click
-        self.bind("<Button-1>", self.on_left_click)
+        self.file_treeview.bind("<Button-3>", self.on_file_treeview_right_click)
+        # workbook_treeview
+        self.workbook_treeview.bind("<Button-1>", self.on_workbook_treeview_left_click)
+        self.workbook_treeview.tag_bind(BMG_WBTVOBJECT, "<<TreeviewSelect>>", self.on_workbook_treeview_select)
+        self.workbook_treeview.bind("<Button-3>", self.on_workbook_treeview_right_click)
 
 
     #endregion BudManGUIFrame class methods
@@ -647,7 +654,7 @@ class BudManGUIFrame(ttk.Frame,
         print(f"BudManGUIWindow.BudManGUIFrame.load_button clicked with filepath: {v}")
 
     def on_file_treeview_select(self, event):
-        """ Event handler for when the user selects an item in the file treeview. """
+        """ Event handler for when the user selects an item in the file_treeview. """
         count = len(self.file_treeview.selection())
         if count == 0:
             return
@@ -657,7 +664,18 @@ class BudManGUIFrame(ttk.Frame,
             item_text = self.file_treeview.item(item, "text")
             budman_msg.output(f"{P2}Selected item: {item_text} (ID: {item})", BMG_DEBUG)
     
-    def on_right_click(self, event):
+    def on_workbook_treeview_select(self, event):
+        """ Event handler for when the user selects an item in the workbook_treeview. """
+        count = len(self.workbook_treeview.selection())
+        if count == 0:
+            return
+        budman_msg.output(f"Workbook treeview selection changed. {count} item(s) selected.", BMG_DEBUG)
+        selected_items = self.workbook_treeview.selection()
+        for item in selected_items:
+            item_text = self.workbook_treeview.item(item, "text")
+            budman_msg.output(f"{P2}Selected item: {item_text} (ID: {item})", BMG_DEBUG)
+    
+    def on_file_treeview_right_click(self, event):
         """ Event handler for right mouse click on the file treeview. """
         selected_items: List[str] = []
         # Identify the item clicked on
@@ -674,6 +692,23 @@ class BudManGUIFrame(ttk.Frame,
             budman_msg.output(f"{P2}Selected item: {item_text} (ID: {item})", BMG_DEBUG)
         self.treeview_context_menu.post(event.x_root, event.y_root)
 
+    def on_workbook_treeview_right_click(self, event):
+        """ Event handler for right mouse click on the workbook_treeview. """
+        selected_items: List[str] = []
+        # Identify the item clicked on
+        clicked_item_id = self.workbook_treeview.identify_row(event.y)
+        if not clicked_item_id:
+            # Nothin right clicked on the treeview
+            return
+        self.workbook_treeview.selection_add(clicked_item_id)
+        selected_count = len(self.workbook_treeview.selection())
+        budman_msg.output(f"Right-click. {selected_count} item(s) are selected.", BMG_DEBUG)
+        selected_items = self.workbook_treeview.selection()
+        for item in selected_items:
+            item_text = self.workbook_treeview.item(item, "text")
+            budman_msg.output(f"{P2}Selected item: {item_text} (ID: {item})", BMG_DEBUG)
+        self.treeview_context_menu.post(event.x_root, event.y_root)
+
     def on_workflow_categorize(self):
         """ Event handler for workflow categorize context menu item. """
         budman_msg.output("Workflow categorize context menu item selected.", BMG_DEBUG)
@@ -682,18 +717,35 @@ class BudManGUIFrame(ttk.Frame,
         """ Event handler for workflow transfer file context menu item. """
         budman_msg.output("Workflow transfer file context menu item selected.", BMG_DEBUG)
 
-    def on_left_click(self,event):
-    # event.state is a bitmask of modifier keys + mouse buttons
+    def on_file_treeview_left_click(self,event):
+        # event.state is a bitmask of modifier keys + mouse buttons
         ctrl_pressed = (event.state & 0x0004) != 0   # Control mask
         shift_pressed = (event.state & 0x0001) != 0  # Shift mask
+        widget = event.widget
         if ctrl_pressed:
             cols = self.file_treeview["columns"]
             cols = ('#0',) + cols
             # Print widths of all columns
+            msg: str = "file_treeview column widths: "
             for col in cols:
                 col_width = self.file_treeview.column(col, option="width")
-                print(f"  {col}: {col_width}px")
+                msg += f"{col}: {col_width}px; "
+            budman_msg.output(msg, BMG_DEBUG)
 
+    def on_workbook_treeview_left_click(self,event):
+        # event.state is a bitmask of modifier keys + mouse buttons
+        ctrl_pressed = (event.state & 0x0004) != 0   # Control mask
+        shift_pressed = (event.state & 0x0001) != 0  # Shift mask
+        widget = event.widget
+        if ctrl_pressed:
+            cols = self.workbook_treeview["columns"]
+            cols = ('#0',) + cols
+            # Print widths of all columns
+            msg: str = "workbook_treeview column widths: "
+            for col in cols:
+                col_width = self.workbook_treeview.column(col, option="width")
+                msg += f"{col}: {col_width}px; "
+            budman_msg.output(msg, BMG_DEBUG)
     #endregion BudManViewFrame event handlers
     #--------------------------------------------------------------------------+
     
@@ -714,18 +766,19 @@ class BudManGUIFrame(ttk.Frame,
             root_wbt_node_id: str = self.workbook_tree.root
             root_wbt_node: BDMWorkbookTreeNode = self.workbook_tree[root_wbt_node_id]
             # Setup the root workbook_treeview item
+            wb_index:str = str(root_wbt_node.wb_index) if root_wbt_node.wb_index > -1 else " - "
             root_workbook_treeview_id = self.workbook_treeview.insert(
                 '', 
                 tk.END, 
                 text=root_wbt_node.tag,
                 iid=root_wbt_node_id,
                 tags=(BMG_WBTVOBJECT,),
-                values=(root_wbt_node.node_type, root_wbt_node.wb_index))
+                values=(root_wbt_node.node_type, wb_index))
 
             # # Populate the file_treeview with items from the file_tree
             def add_workbook_tree_nodes(workbook_tree: Tree, 
                                parent_workbook_tree_node_id: str,
-                               parent_workbook_treeview_node_id: str) -> None:
+                               parent_workbook_treeview_node_id: str):
                 # for node_id in self.file_tree.expand_tree():
                 #     node = self.file_tree.get_node(node_id)
                 # node.identifier = full path of folder or file
@@ -734,7 +787,7 @@ class BudManGUIFrame(ttk.Frame,
                 wbt_node: BDMWorkbookTreeNode = None
                 for wbt_node in workbook_tree.children(parent_workbook_tree_node_id):
                     node_type:str = wbt_node.node_type
-                    wb_index:str = str(wbt_node.wb_index) if wbt_node.wb_index > -1 else "N/A"
+                    wb_index:str = f"{wbt_node.wb_index:02}" if wbt_node.wb_index > -1 else " - "
                     item_id = self.workbook_treeview.insert(
                         parent_workbook_treeview_node_id,
                         tk.END,
@@ -778,7 +831,7 @@ class BudManGUIFrame(ttk.Frame,
                 text=root_file_tree_node.tag,
                 iid=root_file_tree_node_id,
                 tags=(BMG_FTVOBJECT,),
-                values=("BDM_FOLDER", "root", "All"))
+                values=("BDM_FOLDER", "root", "All", "All"))
 
             # # Populate the file_treeview with items from the file_tree
             def add_file_tree_nodes(file_tree: Tree, 
