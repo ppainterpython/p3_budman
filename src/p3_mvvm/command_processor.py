@@ -82,7 +82,7 @@
 # ---------------------------------------------------------------------------- +
 #region Imports
 # python standard library modules and packages
-import logging
+import logging, threading, queue
 from typing import List, Type, Generator, Dict, Tuple, Any, Callable, Optional
 # third-party modules and packages
 from h11 import Data
@@ -111,6 +111,8 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
     # ------------------------------------------------------------------------ +
     #region __init__() constructor method
     def __init__(self) -> None:
+        self._worker_thread : Optional[threading.Thread] = None
+        self._cmd_queue: queue.Queue = None
         self._initialized : bool = False
         self._cmd_map : Dict[str, Callable] = None
         self._parse_only : bool = False
@@ -190,6 +192,56 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
             raise
     #endregion cp_initialize() method
     # ------------------------------------------------------------------------ +
+    #region cp_initialize_worker_thread() method
+    def cp_initialize_worker_thread(self):
+        """Initialize the command processor worker thread."""
+        try:
+            if self._cmd_queue is None:
+                self._cmd_queue = queue.Queue()
+            if self._worker_thread is None or not self._worker_thread.is_alive():
+                self._worker_thread = threading.Thread(
+                    target=self._worker_thread_func,
+                    name="CommandProcessorWorkerThread",
+                    daemon=True)
+                self._worker_thread.start()
+                logger.debug("CommandProcessor worker thread started.")
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion cp_initialize_worker_thread() method
+    # ------------------------------------------------------------------------ +
+    #region cp_worker() method
+    def _worker_thread_func(self):
+        """Worker thread function for processing commands."""
+        logger.debug("Worker thread start.")
+        while True:
+            # Blocks until a message is available
+            cmd = self._cmd_queue.get()
+            if cmd is None:  # sentinel to stop the thread
+                break
+            # execuite the cmd in the worker thread
+            self.cp_execute_cmd(cmd)
+            self._cmd_queue.task_done()
+        logger.debug("Worker thread stop.")
+
+    #endregion cp_worker() method
+    # ------------------------------------------------------------------------ +
+    #region cp_cancel_worker_thread() method
+    def cp_cancel_worker_thread(self):
+        """Worker thread function for processing commands."""
+        logger.debug("Cancel CommandProcessor Worker thread.")
+        while True:
+            # Blocks until a message is available
+            cmd = self._cmd_queue.get()
+            if cmd is None:  # sentinel to stop the thread
+                break
+            # execuite the cmd in the worker thread
+            self.cp_execute_cmd(cmd)
+            self._cmd_queue.task_done()
+        logger.debug("Worker thread stop.")
+
+    #endregion cp_cancel_worker_thread() method
+    # ------------------------------------------------------------------------ +
     #region    cp_initialize_cmd_map() method
     def cp_initialize_cmd_map(self) -> None:
         """Application-specific: Initialize the cp_cmd_map."""
@@ -203,6 +255,35 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
             logger.error(p3u.exc_err_msg(e))
             raise
     #endregion cp_initialize_cmd_map() method
+    # ------------------------------------------------------------------------ +
+    #region    cp_execute_cmd_async() method
+    def cp_execute_cmd_async(self, cmd : CMD_OBJECT_TYPE = None,
+                       raise_error : bool = False) -> CMD_RESULT_TYPE:
+        """Execute a command within the command processor worker thread.
+
+        Pass the command request through to the command processor for
+        execution. 
+
+        Arguments:
+            cmd (Dict): The command to execute along with any arguments.
+        
+        Returns:
+            CMD_RESULT_TYPE: The outcome of the command 
+            execution.
+        """
+        try:
+            self._cmd_queue.put(cmd)
+            logger.debug("Async cmd queued.")
+            return create_CMD_RESULT_OBJECT(cmd_result_status=True,
+                                                result_content_type=CMD_STRING_OUTPUT,
+                                                result_content="Command submitted.",
+                                                cmd_object=cmd)
+        except Exception as e:
+            cmd_result = create_CMD_RESULT_EXCEPTION(cmd, e)
+            if raise_error:
+                raise RuntimeError(cmd_result[CMD_RESULT_CONTENT]) from e
+            return cmd_result
+    #endregion cp_execute_cmd() method
     # ------------------------------------------------------------------------ +
     #region    cp_execute_cmd() method
     def cp_execute_cmd(self, cmd : CMD_OBJECT_TYPE = None,

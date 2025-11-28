@@ -37,6 +37,7 @@ class BudManGUIMsg(metaclass=BDMSingletonMeta):
         self._root: Optional[tk.Tk] = root
         self._msg_widget : Optional[scrolledtext.ScrolledText] = None
         self._budman_msg_queue = queue.Queue()
+        self._after_id : Optional[str] = None
     #endregion  __init__()
     #--------------------------------------------------------------------------+
     #region    BudManGUIMsg class properties
@@ -72,7 +73,14 @@ class BudManGUIMsg(metaclass=BDMSingletonMeta):
                 self.update_msg_widget(msg_item["msg"], msg_item["tag"])
         except queue.Empty:
             pass  # No message, continue waiting
+        # poll for msgs every 100 ms
         self.root.after(100, self.msg_handler)
+    
+    def msg_handler_cancel(self):
+        """Cancel the message handler."""
+        if self._after_id is not None and self.root is not None:    
+            self.root.after_cancel(self._after_id)
+            self._after_id = None
 
     def update_msg_widget(self, msg : str, tag: str = BMG_INFO) -> None:
         """Append a message to the message widget."""

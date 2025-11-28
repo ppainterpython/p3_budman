@@ -676,7 +676,11 @@ class BudManGUIFrame(ttk.Frame,
             budman_msg.output(f"{P2}Selected item: {item_text} (ID: {item})", BMG_DEBUG)
     
     def on_file_treeview_right_click(self, event):
-        """ Event handler for right mouse click on the file treeview. """
+        """ Event handler for right mouse click on the file treeview. 
+        
+        Right-clicking an item selects it if not already selected, and
+        opens the context menu at the mouse location.
+        """
         selected_items: List[str] = []
         # Identify the item clicked on
         clicked_item_id = self.file_treeview.identify_row(event.y)
@@ -693,7 +697,11 @@ class BudManGUIFrame(ttk.Frame,
         self.treeview_context_menu.post(event.x_root, event.y_root)
 
     def on_workbook_treeview_right_click(self, event):
-        """ Event handler for right mouse click on the workbook_treeview. """
+        """ Event handler for right mouse click on the workbook_treeview. 
+                
+        Right-clicking an item selects it if not already selected, and
+        opens the context menu at the mouse location.
+"""
         selected_items: List[str] = []
         # Identify the item clicked on
         clicked_item_id = self.workbook_treeview.identify_row(event.y)
@@ -708,14 +716,6 @@ class BudManGUIFrame(ttk.Frame,
             item_text = self.workbook_treeview.item(item, "text")
             budman_msg.output(f"{P2}Selected item: {item_text} (ID: {item})", BMG_DEBUG)
         self.treeview_context_menu.post(event.x_root, event.y_root)
-
-    def on_workflow_categorize(self):
-        """ Event handler for workflow categorize context menu item. """
-        budman_msg.output("Workflow categorize context menu item selected.", BMG_DEBUG)
-
-    def on_workflow_transfer_file(self):
-        """ Event handler for workflow transfer file context menu item. """
-        budman_msg.output("Workflow transfer file context menu item selected.", BMG_DEBUG)
 
     def on_file_treeview_left_click(self,event):
         # event.state is a bitmask of modifier keys + mouse buttons
@@ -747,9 +747,20 @@ class BudManGUIFrame(ttk.Frame,
                 msg += f"{col}: {col_width}px; "
             budman_msg.output(msg, BMG_DEBUG)
     #endregion BudManViewFrame event handlers
-    #--------------------------------------------------------------------------+
+    #------------------------------------------------------------------------- +
     
-    #------------------------------------------------------------------------------+
+    #------------------------------------------------------------------------- +
+    #region BudManGUIFrame Command Methods
+    #------------------------------------------------------------------------- +
+    def on_workflow_categorize(self):
+        """ Event handler for workflow categorize context menu item. """
+        budman_msg.output("Workflow categorize context menu item selected.", BMG_DEBUG)
+
+    def on_workflow_transfer_file(self):
+        """ Event handler for workflow transfer file context menu item. """
+        budman_msg.output("Workflow transfer file context menu item selected.", BMG_DEBUG)
+
+    #------------------------------------------------------------------------- +
     #region BudManGUIFrame support methods
     def refresh_workbook_treeview(self) -> None:
         """Refresh the workbook_treeview widget from the workbook_tree property."""
@@ -879,4 +890,6 @@ class BudManGUIFrame(ttk.Frame,
         """Check if a button widget is enabled."""
         return button.instate(["!disabled"])    
     #endregion BudManGUIFrame support methods
-#------------------------------------------------------------------------------+
+    #------------------------------------------------------------------------- +
+
+#----------------------------------------------------------------------------- +
