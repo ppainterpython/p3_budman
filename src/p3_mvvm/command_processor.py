@@ -175,6 +175,16 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
     def cp_what_if(self, value: bool) -> None:
         """Set the what_if state of the command processor."""
         self._what_if = value
+
+    @property
+    def cp_worker_thread(self) -> Optional[threading.Thread]:
+        """Return the command processor worker thread."""
+        return self._worker_thread
+    
+    @property
+    def cp_cmd_queue(self) -> Optional[queue.Queue]:
+        """Return the command processor command queue."""
+        return self._cmd_queue
     #endregion CommandProcessor_Base Properties
     # ------------------------------------------------------------------------ +
     #region    CommandProcessor_Base Methods
@@ -183,6 +193,9 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
     def cp_initialize(self) -> "CommandProcessor":
         """Initialize the CommandProcessor."""
         try:
+            if self.cp_initialized:
+                logger.debug("CommandProcessor already initialized.")
+                return self
             self.cp_initialize_cmd_map()
             self.cp_initialized = True
             logger.debug(f"CommandProcessor initialized.")
@@ -218,6 +231,7 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
             # Blocks until a message is available
             cmd = self._cmd_queue.get()
             if cmd is None:  # sentinel to stop the thread
+                logger.debug("Break worker thread event loop.")
                 break
             # execuite the cmd in the worker thread
             self.cp_execute_cmd(cmd)
@@ -400,7 +414,7 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
                 if raise_error:
                     raise RuntimeError(m)
                 return False
-            if p3u.is_not_obj_of_type("cmd",cmd,dict,pfx):
+            if p3u.is_not_obj_of_type("cmd",cmd,dict,raise_error=raise_error):
                 cmd_type = type(cmd).__name__
                 m = f"Invalid CMD_OBJECT type: '{cmd_type}', no action taken."
                 logger.error(m)

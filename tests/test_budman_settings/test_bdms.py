@@ -1,6 +1,7 @@
 # ---------------------------------------------------------------------------- +
-# test_bdms.py
+#region test_bdms.py
 """Tests the BudManSettings class and its methods."""
+#endregion test_bdms.py
 # ---------------------------------------------------------------------------- +
 #region imports
 # python standard libraries
