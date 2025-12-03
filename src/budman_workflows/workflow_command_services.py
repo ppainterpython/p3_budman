@@ -62,7 +62,7 @@ def WORKFLOW_CMD_process(cmd: p3m.CMD_OBJECT_TYPE,
                                raise_error= True)
         # Should be called only for workflow cmd.
         cmd_result : p3m.CMD_RESULT_TYPE = cp.verify_cmd_key(cmd, cp.CV_WORKFLOW_CMD_KEY)
-        if not cmd_result[p3m.CMD_RESULT_STATUS]: return cmd_result
+        if not cmd_result[p3m.CK_CMD_RESULT_STATUS]: return cmd_result
         # Assuming the cmd parameters have been validated before reaching this point.
         # Process the CMD_OBJECT based on its CK_SUBCMD_KEY.
 
@@ -273,7 +273,7 @@ def WORKFLOW_TASK_transfer_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
         return p3m.create_CMD_RESULT_OBJECT(
             cmd_object=cmd,
             cmd_result_status=True,
-            result_content_type=p3m.CMD_DICT_OUTPUT,
+            result_content_type=p3m.CV_CMD_DICT_OUTPUT,
             result_content="all done"
         )
     except p3m.CMDValidationException as e:
@@ -446,7 +446,7 @@ def WORKFLOW_TASK_transfer_files(cmd: p3m.CMD_OBJECT_TYPE,
         return p3m.create_CMD_RESULT_OBJECT(
             cmd_object=cmd,
             cmd_result_status=True,
-            result_content_type=p3m.CMD_DICT_OUTPUT,
+            result_content_type=p3m.CV_CMD_DICT_OUTPUT,
             result_content="all done"
         )
     except p3m.CMDValidationException as e:

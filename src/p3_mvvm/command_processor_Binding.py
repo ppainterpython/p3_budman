@@ -164,7 +164,7 @@ class CommandProcessor_Binding(CommandProcessor_Base):
             return self.CP.cp_execute_cmd(cmd)
         except Exception as e:
             cmd_result = create_CMD_RESULT_EXCEPTION(cmd, e)
-            m = cmd_result[CMD_RESULT_CONTENT]
+            m = cmd_result[CK_CMD_RESULT_CONTENT]
             if raise_error:
                 raise RuntimeError(m)
             return False, m

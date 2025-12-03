@@ -49,7 +49,7 @@ type CMD_ARGS_TYPE = Dict[str, Any]    # type hint for command arguments dict.
 # user input.
 # 
 # Required CMD_OBJECT attributes:
-CMD_KEY_SUFFIX = "_cmd"
+CK_CMD_KEY_SUFFIX = "_cmd"
 CK_CMD_NAME = "cmd_name"
 """Key for storing the command name value. All commands have a unique name."""
 CK_CMD_KEY = "cmd_key"
@@ -72,37 +72,51 @@ CK_SUBCMD_KEY = "subcmd_key"
 """A key storing a subcmd key value, based on the cmd_key and subcmd_name. 
 A subcmd_key is formed by appending the cmd_key with underscore and the 
 subcmd_name."""
+# Commands run in the worker_thread will have a CK_ASYNC_CMD_ID parameter 
+# which is used to register a Callable subscriber function to handle the result.
+CK_CMD_ASYNC_ID = "cmd_async_id"
+CK_CMD_ASYNC_RESULT_SUBSCRIBER = "cmd_async_result_subscriber"
+
 BASE_COMMAND_OBJECT_KEYS = [
-    CK_CMD_NAME, CK_CMD_KEY, CK_SUBCMD_NAME, CK_SUBCMD_KEY, CK_CMD_EXEC_FUNC
+    CK_CMD_NAME, CK_CMD_KEY, CK_SUBCMD_NAME, CK_SUBCMD_KEY, CK_CMD_EXEC_FUNC,
+    CK_CMD_ASYNC_ID, CK_CMD_ASYNC_RESULT_SUBSCRIBER
 ]
-# Builtin CK_CMD_KEY and CK_CMD_NAME values.
-CV_P3_UNKNOWN_CMD_NAME = "p3_unknown"
-CV_P3_UNKNOWN_CMD_KEY = CV_P3_UNKNOWN_CMD_NAME + CMD_KEY_SUFFIX
+# ---------------------------------------------------------------------------- +
+# CMD_RESULT_OBJECT dictionary key constants
+# CMDs return results with a CMD_RESULT_OBJECT, also dictionary.
+CK_CMD_RESULT_STATUS = "cmd_result_status"
+CK_CMD_RESULT_CONTENT_TYPE = "cmd_result_content_type"
+CK_CMD_RESULT_CONTENT = "cmd_result_content"
+CK_CMD_OBJECT_VALUE = "cmd_object_value"
+CK_REQUIRED_CMD_RESULT_KEYS = [
+    CK_CMD_RESULT_STATUS, CK_CMD_RESULT_CONTENT_TYPE, CK_CMD_RESULT_CONTENT,
+    CK_CMD_OBJECT_VALUE
+]
+# CK_CMD_RESULT_CONTENT_TYPE values
+# CV_CMD_TREE_OBJECT is a treeblib.Tree object.
+CV_CMD_STRING_OUTPUT = "string_output"
+CV_CMD_ASYNC_ID = CK_CMD_ASYNC_ID
+CV_CMD_DICT_OUTPUT = "dict_output"
+CV_CMD_JSON_OUTPUT = "json_output"
+CV_CMD_TREE_OBJECT = "tree_object"
+CV_CMD_BDM_MODEL_OBJECT = "bdm_model_object"
+CV_CMD_WORKBOOK_INFO_TABLE = "workbook_info_table_output"
+CV_CMD_WORKBOOK_TREE_OBJECT = "workbook_tree_object"
+CV_CMD_FILE_TREE_OBJECT = "file_tree_object"
+CV_CMD_ERROR_STRING_OUTPUT = "error_string_output"
+
+# ---------------------------------------------------------------------------- +
 # Builtin command parameter support:
 # CommandProcessor supports these cmd options inherently.
 CK_PARSE_ONLY = "parse_only"
 CK_VALIDATE_ONLY = "validate_only"
 CK_WHAT_IF = "what_if"
+# Builtin CK_CMD_KEY and CK_CMD_NAME values.
+CV_P3_UNKNOWN_CMD_NAME = "p3_unknown"
+CV_P3_UNKNOWN_CMD_KEY = CV_P3_UNKNOWN_CMD_NAME + CK_CMD_KEY_SUFFIX
+CV_P3_SAMPLE_CMD_NAME = "sample"
+CV_P3_SAMPLE_CMD_KEY = CV_P3_SAMPLE_CMD_NAME + CK_CMD_KEY_SUFFIX
+CV_ATTRIBUTES_SUBCMD_NAME = "attributes"
+CV_ATTRIBUTES_SUBCMD_KEY = CV_P3_SAMPLE_CMD_KEY + "_" + CV_ATTRIBUTES_SUBCMD_NAME
 
-# ---------------------------------------------------------------------------- +
-# CMD_RESULT_OBJECT dictionary key constants
-CMD_RESULT_STATUS = "cmd_result_status"
-CMD_RESULT_CONTENT_TYPE = "cmd_result_content_type"
-CMD_RESULT_CONTENT = "cmd_result_content"
-CMD_OBJECT_VALUE = "cmd_object_value"
-REQUIRED_CMD_RESULT_KEYS = [
-    CMD_RESULT_STATUS, CMD_RESULT_CONTENT_TYPE, CMD_RESULT_CONTENT,
-    CMD_OBJECT_VALUE
-]
-# CMD_RESULT_CONTENT_TYPE values
-# CMD_TREE_OBJECT is a treeblib.Tree object.
-CMD_STRING_OUTPUT = "string_output"
-CMD_DICT_OUTPUT = "dict_output"
-CMD_JSON_OUTPUT = "json_output"
-CMD_TREE_OBJECT = "tree_object"
-CMD_BDM_MODEL_OBJECT = "bdm_model_object"
-CMD_WORKBOOK_INFO_TABLE = "workbook_info_table_output"
-CMD_WORKBOOK_TREE_OBJECT = "workbook_tree_object"
-CMD_FILE_TREE_OBJECT = "file_tree_object"
-CMD_ERROR_STRING_OUTPUT = "error_string_output"
 #endregion Types and Constants

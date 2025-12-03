@@ -197,7 +197,7 @@ class BudManGUIView(BudManAppDataContext_Binding,
         self.root.mainloop()
         cmd_result: p3m.CMD_RESULT_TYPE = p3m.create_CMD_RESULT_OBJECT(
             cmd_result_status=True,
-            result_content_type=p3m.CMD_STRING_OUTPUT,
+            result_content_type=p3m.CV_CMD_STRING_OUTPUT,
             result_content=f"BudManGuiApp run completed.",
             cmd_object=None
         )

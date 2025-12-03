@@ -85,7 +85,7 @@ def INTAKE_TASK_copy_file_to_wf_folder(
         # Assume the cmd parameters have been validated before reaching this point.
         cmd_result : p3m.CMD_RESULT_TYPE = p3m.create_CMD_RESULT_OBJECT(
             cmd_result_status = True,
-            result_content_type = p3m.CMD_STRING_OUTPUT,
+            result_content_type = p3m.CV_CMD_STRING_OUTPUT,
             result_content = "",
             cmd_object = cmd
         )
@@ -112,7 +112,7 @@ def INTAKE_TASK_copy_file_to_wf_folder(
         dst_wf_purpose = bdm_DC.dc_WF_PURPOSE
         msg:str = f"copy file_index {src_file_index} from {src_wf_key} "
         msg += f"to {dst_wf_key} for {dst_wf_purpose}"
-        cmd_result[p3m.CMD_RESULT_CONTENT] = msg
+        cmd_result[p3m.CK_CMD_RESULT_CONTENT] = msg
         return cmd_result
     except Exception as e:
         return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)

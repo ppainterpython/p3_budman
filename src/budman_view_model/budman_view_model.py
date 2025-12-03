@@ -567,7 +567,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             # Setup a CMD_RESULT object to return.
             cmd_result : p3m.CMD_RESULT_TYPE = p3m.create_CMD_RESULT_OBJECT(
                 cmd_result_status=False, 
-                result_content_type=p3m.CMD_STRING_OUTPUT,
+                result_content_type=p3m.CV_CMD_STRING_OUTPUT,
                 result_content="Command validation failed.",
                 cmd_object=cmd
             )
@@ -655,8 +655,8 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                 # continue validating all cmd args.
                 if not validate_all and not success:
                     # Without validate_all, if error, return, else continue
-                    cmd_result[p3m.CMD_RESULT_STATUS] = success
-                    cmd_result[p3m.CMD_RESULT_CONTENT] = result
+                    cmd_result[p3m.CK_CMD_RESULT_STATUS] = success
+                    cmd_result[p3m.CK_CMD_RESULT_CONTENT] = result
                     return cmd_result
                 else:
                     # If validate_all, accumulate results.
@@ -666,15 +666,15 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                 m = (f"Command validated - cmd_key: '{cmd[cp.p3m.CK_CMD_KEY]}' "
                             f"subcmd_key: {str(cmd[cp.p3m.CK_SUBCMD_KEY])}")
                 logger.info(m)
-                cmd_result[p3m.CMD_RESULT_STATUS] = success
-                cmd_result[p3m.CMD_RESULT_CONTENT] = m
+                cmd_result[p3m.CK_CMD_RESULT_STATUS] = success
+                cmd_result[p3m.CK_CMD_RESULT_CONTENT] = m
                 return cmd_result # The happy path return 
             if validate_all:
-                cmd_result[p3m.CMD_RESULT_STATUS] = success
-                cmd_result[p3m.CMD_RESULT_CONTENT] = all_results
+                cmd_result[p3m.CK_CMD_RESULT_STATUS] = success
+                cmd_result[p3m.CK_CMD_RESULT_CONTENT] = all_results
                 return cmd_result # The happy path return 
-            cmd_result[p3m.CMD_RESULT_STATUS] = success
-            cmd_result[p3m.CMD_RESULT_CONTENT] = result
+            cmd_result[p3m.CK_CMD_RESULT_STATUS] = success
+            cmd_result[p3m.CK_CMD_RESULT_CONTENT] = result
             return cmd_result
         except Exception as e:
             m = f"Error validating command: {str(cmd)}: {p3u.exc_err_msg(e)}"
@@ -727,7 +727,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             logger.debug(f"Start: ...{P2}")
             # Should be called only for list cmd.
             cmd_result : p3m.CMD_RESULT_TYPE = cp.verify_cmd_key(cmd, cp.CV_LIST_CMD_KEY)
-            if not cmd_result[p3m.CMD_RESULT_STATUS]: return cmd_result
+            if not cmd_result[p3m.CK_CMD_RESULT_STATUS]: return cmd_result
             # Process BudMan command tasks.
             cmd_result = cp.BUDMAN_CMD_process(cmd, self.DC)
             logger.debug(f"Complete: {p3u.stop_timer(st)}")
@@ -759,7 +759,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             self.dc_BDM_STORE_changed = False
             logger.info(f"Saved BDM_STORE url: {bdm_url}")
             logger.info(f"Complete: {p3u.stop_timer(st)}")
-            return p3m.create_CMD_RESULT_OBJECT(True, p3m.CMD_DICT_OUTPUT, bdm_dict, cmd)  
+            return p3m.create_CMD_RESULT_OBJECT(True, p3m.CV_CMD_DICT_OUTPUT, bdm_dict, cmd)  
         except Exception as e:
             return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
     #endregion BDM_STORE_save_cmd() execution method
@@ -794,7 +794,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             self._BDM_STORE_loaded = True
             self.dc_BDM_STORE_changed = False
             logger.info(f"Complete: {p3u.stop_timer(st)}")
-            return p3m.create_CMD_RESULT_OBJECT(True, p3m.CMD_DICT_OUTPUT, 
+            return p3m.create_CMD_RESULT_OBJECT(True, p3m.CV_CMD_DICT_OUTPUT, 
                                                 self.model.bdm_store_object, 
                                                 cmd)
         except Exception as e:
@@ -830,7 +830,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             logger.debug(f"Start: ...")
             # Should be called only for show cmd.
             cmd_result : p3m.CMD_RESULT_TYPE = cp.verify_cmd_key(cmd, cp.CV_SHOW_CMD_KEY)
-            if not cmd_result[p3m.CMD_RESULT_STATUS]: return cmd_result
+            if not cmd_result[p3m.CK_CMD_RESULT_STATUS]: return cmd_result
             # Process BudMan command tasks.
             cmd_result = cp.BUDMAN_CMD_process(cmd, self.DC)
             logger.info(f"Complete: {p3u.stop_timer(st)}")
@@ -881,7 +881,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                 r += f"\n{P2}Loaded {r_str}"
                 continue
             logger.debug(f"Complete Command: 'Load' {p3u.stop_timer(st)}")   
-            return p3m.create_CMD_RESULT_OBJECT(True, p3m.CMD_STRING_OUTPUT, r, cmd)
+            return p3m.create_CMD_RESULT_OBJECT(True, p3m.CV_CMD_STRING_OUTPUT, r, cmd)
         except Exception as e:
             return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
     #endregion WORKBOOKS_load_cmd() execution method
@@ -923,7 +923,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                 r_str = bdm_wb.wb_index_display_str(wb_index)
                 r += f"\n{P2}Saved {result!r}"
             logger.info(f"Complete Command: 'Save' {p3u.stop_timer(st)}")   
-            return p3m.create_CMD_RESULT_OBJECT(True, p3m.CMD_STRING_OUTPUT, r, cmd)
+            return p3m.create_CMD_RESULT_OBJECT(True, p3m.CV_CMD_STRING_OUTPUT, r, cmd)
         except Exception as e:
             return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
     #endregion WORKBOOKS_save_cmd() execution method
@@ -995,7 +995,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                                 f"'{str(self.dc_WB_INDEX):>4}' wb_id: '{bdm_wb.wb_id}'")
                         self.dc_BDM_STORE_changed = True
                     self.dc_WORKBOOK = bdm_wb
-                return p3m.create_CMD_RESULT_OBJECT(True, p3m.CMD_STRING_OUTPUT, result, cmd)
+                return p3m.create_CMD_RESULT_OBJECT(True, p3m.CV_CMD_STRING_OUTPUT, result, cmd)
         except Exception as e:
             return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
     #endregion CHANGE_cmd() execution method
@@ -1035,7 +1035,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             logger.debug(r_msg)
             # Should be called only for App cmd.
             cmd_result : p3m.CMD_RESULT_TYPE = cp.verify_cmd_key(cmd, cp.CV_APP_CMD_KEY)
-            if not cmd_result[p3m.CMD_RESULT_STATUS]: return cmd_result
+            if not cmd_result[p3m.CK_CMD_RESULT_STATUS]: return cmd_result
             subcmd_name = cmd[cp.p3m.CK_SUBCMD_NAME]
 
             # Transitioning to using the BudMan Command Processor
@@ -1063,7 +1063,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             logger.debug(r_msg)
             if subcmd_name == cp.CV_LOG_SUBCMD_NAME:
                 # Show the current log level.
-                return p3m.create_CMD_RESULT_OBJECT(True, p3m.CMD_STRING_OUTPUT, 
+                return p3m.create_CMD_RESULT_OBJECT(True, p3m.CV_CMD_STRING_OUTPUT, 
                                                     "App Log cmd.", cmd)
             elif subcmd_name == cp.CV_RELOAD_SUBCMD_NAME:
                 try:
@@ -1071,7 +1071,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                     if reload_target is None:
                         m = f"reload_target is None, no action taken."
                         logger.error(m)
-                        return p3m.create_CMD_RESULT_OBJECT(False, p3m.CMD_STRING_OUTPUT, m, cmd)
+                        return p3m.create_CMD_RESULT_OBJECT(False, p3m.CV_CMD_STRING_OUTPUT, m, cmd)
                     if reload_target == cp.CV_CATEGORY_MAP:
                         catman: BDMTXNCategoryManager = BDMTXNCategoryManager() #self.WF_CATEGORY_MANAGER
                         category_catalog: TXNCategoryCatalog = None
@@ -1087,47 +1087,47 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                                      f"rules, {cat_count:>3} categories.")
                                 logger.debug(m)
                                 return p3m.create_CMD_RESULT_OBJECT(
-                                    True, p3m.CMD_STRING_OUTPUT, m, cmd)
+                                    True, p3m.CV_CMD_STRING_OUTPUT, m, cmd)
                             else:
                                 return p3m.create_CMD_RESULT_OBJECT(
-                                    False, p3m.CMD_STRING_OUTPUT, 
+                                    False, p3m.CV_CMD_STRING_OUTPUT, 
                                     "Failed to reload category_map_module", cmd)
                     if reload_target == cp.CV_FI_WORKBOOK_DATA_COLLECTION:
                         m = "deprecated"
                         # wdc: WORKBOOK_DATA_COLLECTION_TYPE = None
                         # wdc, m = self.model.bsm_FI_WORKBOOK_DATA_COLLECTION_resolve(self.dc_FI_KEY)
                         return p3m.create_CMD_RESULT_OBJECT(
-                            True, p3m.CMD_STRING_OUTPUT, m, cmd)
+                            True, p3m.CV_CMD_STRING_OUTPUT, m, cmd)
                     if reload_target == cp.CV_WORKFLOWS_MODULE:
                         importlib.reload(budman_workflows.workflow_utils)
                         return p3m.create_CMD_RESULT_OBJECT(
-                            True, p3m.CMD_STRING_OUTPUT, 
+                            True, p3m.CV_CMD_STRING_OUTPUT, 
                             "Reloaded workflows module.", cmd)
                     return p3m.create_CMD_RESULT_OBJECT(
-                        True, p3m.CMD_STRING_OUTPUT, r_msg, cmd)
+                        True, p3m.CV_CMD_STRING_OUTPUT, r_msg, cmd)
                 except Exception as e:
                     m = f"Error reloading target: {reload_target}: {p3u.exc_err_msg(e)}"
                     logger.error(m)
                     return p3m.create_CMD_RESULT_OBJECT(
-                        False, p3m.CMD_STRING_OUTPUT, m, cmd)
+                        False, p3m.CV_CMD_STRING_OUTPUT, m, cmd)
             elif subcmd_name == cp.CV_DELETE_SUBCMD_NAME:
                 try:
                     delete_target = self.cp_cmd_attr_get(cmd, cp.CK_DELETE_TARGET, -1)
                     if self.dc_WB_INDEX_validate(delete_target):
                         bdm_wb: BDMWorkbook = self.dc_WORKBOOK_remove(delete_target)
                         return p3m.create_CMD_RESULT_OBJECT(
-                            True, p3m.CMD_STRING_OUTPUT, 
+                            True, p3m.CV_CMD_STRING_OUTPUT, 
                             f"Deleted workbook: {bdm_wb.wb_id}", cmd)
                     return p3m.create_CMD_RESULT_OBJECT(
-                        False, p3m.CMD_STRING_OUTPUT, 
+                        False, p3m.CV_CMD_STRING_OUTPUT, 
                         f"Invalid wb_index: '{delete_target}'", cmd)
                 except Exception as e:
                     m = f"Error deleting workbook: {delete_target}: {p3u.exc_err_msg(e)}"
                     logger.error(m)
                     return p3m.create_CMD_RESULT_OBJECT(
-                        False, p3m.CMD_STRING_OUTPUT, m, cmd)
+                        False, p3m.CV_CMD_STRING_OUTPUT, m, cmd)
             else:
-                return p3m.create_CMD_RESULT_OBJECT(False, p3m.CMD_STRING_OUTPUT, f"Unknown app subcmd: {subcmd_name}", cmd)
+                return p3m.create_CMD_RESULT_OBJECT(False, p3m.CV_CMD_STRING_OUTPUT, f"Unknown app subcmd: {subcmd_name}", cmd)
         except Exception as e:
             return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
     #endregion APP_cmd() execution method
@@ -1226,7 +1226,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                         continue
                     fr += f"\n{P8}Result: {r}"
             logger.info(m)
-            return p3m.create_CMD_RESULT_OBJECT(True, p3m.CMD_STRING_OUTPUT, fr, cmd)
+            return p3m.create_CMD_RESULT_OBJECT(True, p3m.CV_CMD_STRING_OUTPUT, fr, cmd)
         except Exception as e:
             return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
     #endregion WORKFLOW_categorization_cmd() execution method
@@ -1249,7 +1249,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             logger.debug(f"Start: ...")
             # Should be called only for workflow cmd.
             cmd_result : p3m.CMD_RESULT_TYPE = cp.verify_cmd_key(cmd, cp.CV_WORKFLOW_CMD_KEY)
-            if not cmd_result[p3m.CMD_RESULT_STATUS]: return cmd_result
+            if not cmd_result[p3m.CK_CMD_RESULT_STATUS]: return cmd_result
             # Process workflow command tasks.
             cmd_result = WORKFLOW_CMD_process(cmd, self.DC)
             logger.info(f"Complete: {p3u.stop_timer(st)}")
@@ -1289,9 +1289,9 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             subcmd_name = cmd[cp.p3m.CK_SUBCMD_NAME]
             if subcmd_name == cp.CV_APPLY_SUBCMD_NAME:
                 # Update the txn_categories by apply the category_map.
-                return p3m.create_CMD_RESULT_OBJECT(True, p3m.CMD_STRING_OUTPUT,
+                return p3m.create_CMD_RESULT_OBJECT(True, p3m.CV_CMD_STRING_OUTPUT,
                                  "Applied category_map to txn_categories.", cmd)   
-            return p3m.create_CMD_RESULT_OBJECT(False, p3m.CMD_STRING_OUTPUT, "", cmd)
+            return p3m.create_CMD_RESULT_OBJECT(False, p3m.CV_CMD_STRING_OUTPUT, "", cmd)
         except Exception as e:
             return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
     #endregion WORKFLOW_apply_cmd() execution method
@@ -1359,7 +1359,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                         bdm_wb.wb_content.save(bdm_wb_abs_path)
                 result += f"\n{P2}{r}"
                 continue
-            return p3m.create_CMD_RESULT_OBJECT(success, p3m.CMD_STRING_OUTPUT, 
+            return p3m.create_CMD_RESULT_OBJECT(success, p3m.CV_CMD_STRING_OUTPUT, 
                                                 result, cmd)
         except Exception as e:
             return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)

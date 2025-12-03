@@ -46,18 +46,18 @@ def CMD_RESULT_output(cmd_result: p3m.CMD_RESULT_TYPE) -> None:
             not p3m.is_CMD_RESULT(cmd_result)):
             err_output(f"Invalid command result: {str(cmd_result)}")
             return
-        if not cmd_result.get(p3m.CMD_RESULT_STATUS, False):
+        if not cmd_result.get(p3m.CK_CMD_RESULT_STATUS, False):
             # If the command result status is False, output the error message.
             err_output(cmd_result)
             return
-        result_type = cmd_result.get(p3m.CMD_RESULT_CONTENT_TYPE, None)
-        result_content: Any = cmd_result.get(p3m.CMD_RESULT_CONTENT, "")
+        result_type = cmd_result.get(p3m.CK_CMD_RESULT_CONTENT_TYPE, None)
+        result_content: Any = cmd_result.get(p3m.CK_CMD_RESULT_CONTENT, "")
         # CMD_STRING_OUTPUT
-        if result_type == p3m.CMD_STRING_OUTPUT:
+        if result_type == p3m.CV_CMD_STRING_OUTPUT:
             # OUTPUT_STRING input is a simple string.
             console.print(result_content)
         # CMD_DICT_OUTPUT
-        elif result_type == p3m.CMD_DICT_OUTPUT:
+        elif result_type == p3m.CV_CMD_DICT_OUTPUT:
             # Python dictionary (dict) input object.
             output_str: str = p3u.first_n(str(result_content), 100)
             console.print(output_str)
@@ -122,7 +122,7 @@ def err_output(cmd_result: Union[p3m.CMD_RESULT_TYPE,str]) -> None:
     if isinstance(cmd_result, str):
         err_msg = cmd_result
     elif p3m.is_CMD_RESULT(cmd_result):
-        err_msg = str(cmd_result.get(p3m.CMD_RESULT_CONTENT, "No error message provided."))
+        err_msg = str(cmd_result.get(p3m.CK_CMD_RESULT_CONTENT, "No error message provided."))
     else:
         err_msg = f"Invalid err_output input type: {type(cmd_result).__name__}"
     logger.error(err_msg)

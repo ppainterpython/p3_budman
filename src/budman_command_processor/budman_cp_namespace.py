@@ -15,26 +15,37 @@ import budman_namespace as bdm
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
 # BudMan application-specific Command Processor attribute Constants.
+# A CMD_OBJECT is a dictionary with keys and values per basic Python. 
+# Naming Convention for Constants: 
+#    "CK_" - CommandKey - prefix attribute key names in a command object dict. 
+#    "CV_" - CommandValue - prefixes attribute values used as predefined 
+#            values in a command object dict. 
+# A CV_ CommandValue name is a predefined value. Of course, not all 
+# CommandValues are predefined. There may be CV_ values that are values entered 
+# by client code, such as in a user interface entered dynamically from 
+# user input.
+# 
+
 
 # Known p3m.CK_CMD_KEY and p3m.CK_CMD_NAME values for BudMan app Command Objects.
 CV_APP_CMD_NAME = "app"
-CV_APP_CMD_KEY = CV_APP_CMD_NAME + p3m.CMD_KEY_SUFFIX
+CV_APP_CMD_KEY = CV_APP_CMD_NAME + p3m.CK_CMD_KEY_SUFFIX
 CV_CHANGE_CMD_NAME = "change"
-CV_CHANGE_CMD_KEY = CV_CHANGE_CMD_NAME + p3m.CMD_KEY_SUFFIX
+CV_CHANGE_CMD_KEY = CV_CHANGE_CMD_NAME + p3m.CK_CMD_KEY_SUFFIX
 CV_INIT_CMD_NAME = "init"
-CV_INIT_CMD_KEY = CV_INIT_CMD_NAME + p3m.CMD_KEY_SUFFIX
+CV_INIT_CMD_KEY = CV_INIT_CMD_NAME + p3m.CK_CMD_KEY_SUFFIX
 CV_LOAD_CMD_NAME = "load"
-CV_LOAD_CMD_KEY = CV_LOAD_CMD_NAME + p3m.CMD_KEY_SUFFIX
+CV_LOAD_CMD_KEY = CV_LOAD_CMD_NAME + p3m.CK_CMD_KEY_SUFFIX
 CV_LIST_CMD_NAME = "list"
-CV_LIST_CMD_KEY = CV_LIST_CMD_NAME + p3m.CMD_KEY_SUFFIX
+CV_LIST_CMD_KEY = CV_LIST_CMD_NAME + p3m.CK_CMD_KEY_SUFFIX
 CV_SAVE_CMD_NAME = "save"
-CV_SAVE_CMD_KEY = CV_SAVE_CMD_NAME + p3m.CMD_KEY_SUFFIX
+CV_SAVE_CMD_KEY = CV_SAVE_CMD_NAME + p3m.CK_CMD_KEY_SUFFIX
 CV_SHOW_CMD_NAME = "show"
-CV_SHOW_CMD_KEY = CV_SHOW_CMD_NAME + p3m.CMD_KEY_SUFFIX
+CV_SHOW_CMD_KEY = CV_SHOW_CMD_NAME + p3m.CK_CMD_KEY_SUFFIX
 CV_VAL_CMD_NAME = "val"
-CV_VAL_CMD_KEY = CV_VAL_CMD_NAME + p3m.CMD_KEY_SUFFIX
+CV_VAL_CMD_KEY = CV_VAL_CMD_NAME + p3m.CK_CMD_KEY_SUFFIX
 CV_WORKFLOW_CMD_NAME = "workflow"
-CV_WORKFLOW_CMD_KEY = CV_WORKFLOW_CMD_NAME + p3m.CMD_KEY_SUFFIX
+CV_WORKFLOW_CMD_KEY = CV_WORKFLOW_CMD_NAME + p3m.CK_CMD_KEY_SUFFIX
 
 # Supported p3m.CK_CMD_KEY, p3m.CK_SUBCMD_KEY and p3m.CK_SUBCMD_NAME values 
 # for the BudMan App Command Objects.
