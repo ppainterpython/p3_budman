@@ -856,8 +856,6 @@ def bsm_BDM_STORE_to_json(bdm_store_dict: bdm.BDM_STORE_TYPE) -> str:
         raise
 #endregion bsm_BDM_STORE_to_json()
 # ---------------------------------------------------------------------------- +
-#endregion bsm_BDM_STORE_to_json()
-# ---------------------------------------------------------------------------- +
 #endregion Common functions
 #                                                                              +
 # ---------------------------------------------------------------------------- +

@@ -184,6 +184,11 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
         return self._worker_thread
     
     @property
+    def cp_is_worker_thread_running(self) -> bool:
+        """Return True if the worker thread is running."""
+        return self._worker_thread.is_alive() if self._worker_thread else False
+
+    @property
     def cp_async_cmd_queue(self) -> Optional[queue.Queue]:
         """Return the command processor async command queue."""
         return self._async_cmd_queue
@@ -252,13 +257,20 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
             raise
     #endregion cp_initialize_worker_thread() method
     # ------------------------------------------------------------------------ +
-    #region cp_worker() method
+    #region c_worker_thread_funcp_worker() method
     def _worker_thread_func(self):
-        """Worker thread function for processing commands."""
+        """Worker thread function for processing async commands."""
         try:
             logger.debug("Worker thread start.")
+            # Validate in the worker thread
+            caller_tid: int = threading.get_ident()
+            worker_tid: int = self.cp_worker_thread.ident
+            if caller_tid != worker_tid:
+                logger.error("_worker_thread() must be called from the worker thread.")
+                return
             while True:
                 # Blocks until a message is available
+                logger.debug("Worker thread waiting for async cmd...")
                 cmd = self._async_cmd_queue.get()
                 if cmd is None:  # sentinel to stop the thread
                     logger.debug("Break worker thread event loop.")
@@ -269,36 +281,37 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
                     logger.error(f"Invalid async cmd object: {str(cmd)}")
                     self._async_cmd_queue.task_done()
                     return
-                # Execuite the cmd in the worker thread
+                # Execuite the cmd in the worker thread, collect the result.
+                logger.debug(f"Worker thread executing async cmd '{cmd[CK_CMD_ASYNC_ID]}'...")
                 async_cmd_result: CMD_RESULT_TYPE = self.cp_execute_cmd(cmd)
                 self.cp_async_cmd_result_registry[cmd[CK_CMD_ASYNC_ID]] = async_cmd_result
+                # Place the async_cmd_result in the async_cmd_result_queue for
+                # subsequent retrieval and invocation of the subscriber function.
+                self.cp_async_cmd_result_queue.put(async_cmd_result)
                 self._async_cmd_queue.task_done()
+                logger.debug(f"Worker thread queued async cmd result'{cmd[CK_CMD_ASYNC_ID]}'...")
             logger.debug("Worker thread stop.")
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             return
-    #endregion cp_worker() method
+    #endregion cp__worker_thread_funcworker() method
     # ------------------------------------------------------------------------ +
     #region cp_cancel_worker_thread() method
     def cp_cancel_worker_thread(self):
         """Worker thread function for processing commands."""
-        logger.debug("Cancel CommandProcessor Worker thread.")
-        while True:
-            # Blocks until a message is available
-            cmd = self._async_cmd_queue.get()
-            if cmd is None:  # sentinel to stop the thread
-                break
-            # execuite the cmd in the worker thread
-            self.cp_execute_cmd(cmd)
-            self._async_cmd_queue.task_done()
-        logger.debug("Worker thread stop.")
-
+        try:
+            logger.debug("Cancel CommandProcessor Worker thread.")
+            self.cp_async_cmd_queue.put(None)  # sentinel to stop the thread
+            logger.debug("Requested worker thread stop.")
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
     #endregion cp_cancel_worker_thread() method
     # ------------------------------------------------------------------------ +
     #region    cp_execute_cmd_async() method
     def cp_execute_cmd_async(self, 
                              cmd : CMD_OBJECT_TYPE = None,
-                             async_subscriber: Callable = None,
+                             async_result_subscriber: Callable = None,
                              raise_error : bool = False) -> CMD_RESULT_TYPE:
         """Client requests to execute a command within the command processor 
         worker thread.
@@ -317,27 +330,70 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
             async_id string for tracking the async command result.
         """
         try:
-            if (async_subscriber is None or
-                not callable(async_subscriber)):
+            if (async_result_subscriber is None or
+                not callable(async_result_subscriber)):
                 raise ValueError("async_subscriber must be a valid callable object.")
             async_id: str = p3u.gen_unique_hex_id()
             # Register new async cmd result expected
             self.cp_async_cmd_result_registry[async_id] = None
             # Flag this cmd as async
             cmd[CK_CMD_ASYNC_ID] = async_id
-            cmd[CK_CMD_ASYNC_RESULT_SUBSCRIBER] = async_subscriber
+            cmd[CK_CMD_ASYNC_RESULT_SUBSCRIBER] = async_result_subscriber
+            # Put the async cmd in the worker thread queue
             self._async_cmd_queue.put(cmd)
-            logger.debug(f"Async cmd '{async_id}' queued for subscriber: '{async_subscriber.__name__}'.")
+            logger.debug(f"Async cmd '{async_id}' queued for subscriber: '{async_result_subscriber.__name__}'.")
             return create_CMD_RESULT_OBJECT(cmd_result_status=True,
-                                                result_content_type=CV_CMD_ASYNC_ID,
-                                                result_content=async_id,
-                                                cmd_object=cmd)
+                                            result_content_type=CV_CMD_ASYNC_ID,
+                                            result_content=async_id,
+                                            cmd_object=cmd)
         except Exception as e:
             cmd_result = create_CMD_RESULT_EXCEPTION(cmd, e)
             if raise_error:
                 raise RuntimeError(cmd_result[CK_CMD_RESULT_CONTENT]) from e
             return cmd_result
     #endregion cp_execute_cmd() method
+    # ------------------------------------------------------------------------ +
+    #region process_async_cmd_results() method
+    def process_async_cmd_results(self) -> int:
+        """Process results from the async_cmd_result_queue."""
+        if (self.cp_async_cmd_result_queue is None or 
+            self.cp_async_cmd_result_queue.empty()):
+            logger.warning("async_cmd_result_queue is empty.")
+            return
+        # Validate not in the worker thread
+        caller_tid: int = threading.get_ident()
+        worker_tid: int = self.cp_worker_thread.ident
+        if caller_tid == worker_tid:
+            logger.error("process_async_cmd_results() cannot be called "
+                            "from the worker thread.")
+            return
+        cnt: int = 0
+        try:
+            while True:
+                cmd_result: CMD_RESULT_TYPE = self.cp_async_cmd_result_queue.get_nowait()
+                if cmd_result is None:
+                    break  # Exit signal, requires explicit .put(None) to stop
+                cmd: CMD_OBJECT_TYPE = cmd_result.get(CK_CMD_OBJECT_VALUE, None)
+                if cmd is None:
+                    logger.error(f"Invalid cmd_result without cmd_object: {str(cmd_result)}")
+                    self.cp_async_cmd_result_queue.task_done()
+                    continue
+                async_id: str = cmd.get(CK_CMD_ASYNC_ID, None)
+                async_subscriber: Callable = cmd.get(CK_CMD_ASYNC_RESULT_SUBSCRIBER, None)
+                if async_id is None or async_subscriber is None:
+                    logger.error(f"Invalid async cmd result: {str(cmd_result)}")
+                    self.cp_async_cmd_result_queue.task_done()
+                    continue
+                async_subscriber(cmd_result)
+                self.cp_async_cmd_result_queue.task_done()
+                logger.debug(f"Processed async cmd result for async_id: '{async_id}'.")
+                cnt += 1
+        except queue.Empty:
+            pass  # No message, continue waiting
+        return cnt
+        # poll for msgs every 100 ms
+        # self.root.after(100, self.msg_handler)
+    #endregion process_async_cmd_results() method
     # ------------------------------------------------------------------------ +
     #region    cp_execute_cmd() method
     def cp_execute_cmd(self, cmd : CMD_OBJECT_TYPE = None,
@@ -420,6 +476,7 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
         except Exception as e:
             return create_CMD_RESULT_EXCEPTION(cmd, e)
     #endregion cp_validate_cmd() method
+    # ------------------------------------------------------------------------ +
     #region    cp_validate_cmd_object() Command Processor method
     def cp_validate_cmd_object(self, 
                                cmd : CMD_OBJECT_TYPE = None,
@@ -501,6 +558,7 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
             logger.error(p3u.exc_err_msg(e))
             raise
     #endregion cp_validate_cmd_object() Command Processor method
+    # ------------------------------------------------------------------------ +
     #region    cp_exec_func_binding() Command Processor method
     def cp_exec_func_binding(self, cmd_key : str, default:Callable) -> Callable:
         """Get the command function for a given command key.
@@ -527,6 +585,7 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
             exec_func = default if default else None
         return exec_func
     #endregion cp_exec_func_binding() Command Processor method
+    # ------------------------------------------------------------------------ +
     #region    cp_cmd_attr_get() Command Processor method
     def cp_cmd_attr_get(self, cmd: Dict,
                        key_name: str, default_value: Any = None) -> Any:
@@ -542,6 +601,7 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
             return default_value
         return value
     #endregion cp_cmd_attr_get() Command Processor method
+    # ------------------------------------------------------------------------ +
     #region    cp_cmd_attr_set() Command Processor method
     def cp_cmd_attr_set(self, cmd: Dict,
                        arg_name: str, value: Any) -> None:
@@ -582,7 +642,7 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
             result = f"{func_name}(): Received unknown CMD_OBJECT: {str(cmd)})"
             logger.warning(result)
             return create_CMD_RESULT_OBJECT(False, 
-                                           result_content_type=CMD_ERROR_STRING_OUTPUT,
+                                           result_content_type=CV_CMD_ERROR_STRING_OUTPUT,
                                            result_content=result,
                                            cmd_object=cmd)
         except Exception as e:
@@ -745,6 +805,8 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
 
 #endregion CommandProcessor class
 # ---------------------------------------------------------------------------- +
+
+# ---------------------------------------------------------------------------- +
 #region CMDValidationException class
 class CMDValidationException(Exception):
     """Exception raised for errors in the command validation process."""
@@ -877,7 +939,7 @@ def create_CMD_RESULT_ERROR(cmd: Optional[CMD_OBJECT_TYPE] = None, msg: Optional
         return create_CMD_RESULT_OBJECT(
             cmd_result_status = False,
             result_content = m,
-            result_content_type=CMD_ERROR_STRING_OUTPUT,
+            result_content_type=CV_CMD_ERROR_STRING_OUTPUT,
             cmd_object=cmd
         )
 #endregion create_CMD_RESULT_ERROR() function
@@ -921,7 +983,7 @@ def unknown_CMD_RESULT_ERROR(cmd: CMD_OBJECT_TYPE) -> CMD_RESULT_TYPE:
         return create_CMD_RESULT_OBJECT(
             cmd_result_status = False,
             result_content = m,
-            result_content_type=CMD_ERROR_STRING_OUTPUT,
+            result_content_type=CV_CV_CMD_ERROR_STRING_OUTPUT,
             cmd_object=cmd
         )
 #endregion create_CMD_RESULT_ERROR() function

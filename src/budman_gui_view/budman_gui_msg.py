@@ -69,7 +69,7 @@ class BudManGUIMsg(metaclass=BDMSingletonMeta):
             while True:
                 msg_item = self._budman_msg_queue.get_nowait()
                 if msg_item is None:
-                    break  # Exit signal
+                    break  # Exit signal, requires explicit .put(None) to stop
                 self.update_msg_widget(msg_item["msg"], msg_item["tag"])
         except queue.Empty:
             pass  # No message, continue waiting

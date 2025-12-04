@@ -92,6 +92,10 @@ def WORKFLOW_CMD_process(cmd: p3m.CMD_OBJECT_TYPE,
             # Process the wf sync task.
             recon: bool = cmd.get(cp.CK_RECONCILE, False)
             return WORKFLOW_TASK_sync_wdc(recon, bdm_DC)
+        
+        # Subcmd: "workflow delete"
+        elif cmd[p3m.CK_SUBCMD_KEY] == cp.CV_WORKFLOW_DELETE_SUBCMD_KEY:
+            return WORKFLOW_TASK_delete_workbooks(cmd, bdm_DC)
 
         # Subcmd: "workflow unknown"
         else:
@@ -100,6 +104,78 @@ def WORKFLOW_CMD_process(cmd: p3m.CMD_OBJECT_TYPE,
         logger.error(p3u.exc_err_msg(e))
         raise
 #endregion WORKFLOW_CMD_process() function
+# ---------------------------------------------------------------------------- +
+#region WORKFLOW_TASK_delete_workbooks() function
+def WORKFLOW_TASK_delete_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
+                    bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
+    """WORKFLOW_DELETE_subcmd: Delete data workbooks from workflows."""
+    try:
+        # Validate the cmd argsuments.
+        cmd_args: p3m.CMD_ARGS_TYPE = cp.validate_cmd_arguments(
+            cmd=cmd, 
+            bdm_DC=bdm_DC,
+            cmd_key=cp.CV_WORKFLOW_CMD_KEY, 
+            subcmd_key=cp.CV_WORKFLOW_DELETE_SUBCMD_KEY,
+            model_aware=True,
+            required_args=[
+                cp.CK_WB_LIST, 
+                cp.CK_NO_SAVE
+            ]
+        )
+        logger.info(f"Start: ...")
+        # Extract and validate required parameters from the command.
+        model: BudgetDomainModel = bdm_DC.model
+        fi_key: str = bdm_DC.dc_FI_KEY
+        fr: str = ""
+        m: str = ""
+        success: bool = False
+        result: Any = None
+        no_save: bool = cmd_args.get(cp.CK_NO_SAVE)
+        selected_bdm_wb_list : List[BDMWorkbook] = None
+        selected_bdm_wb_list = process_selected_workbook_input(cmd, bdm_DC)
+        # Process the intended workbooks.
+        src_wb: BDMWorkbook = None
+        for src_wb in selected_bdm_wb_list:
+            # Select the current workbook in the Data Context.
+            bdm_DC.dc_WORKBOOK = src_wb
+            wb_index: int = bdm_DC.dc_WB_INDEX
+            # Remove the workbook from the DC and model first.
+            del_wb: BDMWorkbook = bdm_DC.dc_WORKBOOK_remove(wb_index)
+            # Save the BDM_STORE unless no_save is True.
+            no_save or model.bdm_save_model() 
+
+            # Delete the file from the storage model.
+            bdm_wb_abs_path: Path = src_wb.abs_path()
+            if bdm_wb_abs_path is None:
+                m = f"Workbook path is not valid: {src_wb.wb_url}"
+                logger.error(m)
+                fr += f"\n{P4}Error: {m}"
+                continue
+            try:
+                bdm_wb_abs_path.unlink()
+            except FileNotFoundError:
+                m = f"Workbook file not found for deletion: {bdm_wb_abs_path}"
+                logger.error(m)
+                fr += f"\n{P4}Error: {m}"
+                continue
+            except PermissionError:
+                m = f"Permission denied when deleting workbook file: {bdm_wb_abs_path}"
+                logger.error(m)
+                fr += f"\n{P4}Error: {m}"
+                continue
+            # Delete the workbook object
+            del src_wb
+            # TODO: Refresh the trees
+        return p3m.create_CMD_RESULT_OBJECT(
+            cmd_object=cmd,
+            cmd_result_status=True,
+            result_content_type=p3m.CV_CMD_STRING_OUTPUT,
+            result_content=fr
+        )
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion WORKFLOW_TASK_delete_workbooks() function
 # ---------------------------------------------------------------------------- +
 #region WORKFLOW_TASK_transfer_workbooks() function
 def WORKFLOW_TASK_transfer_workbooks(cmd: p3m.CMD_OBJECT_TYPE, 

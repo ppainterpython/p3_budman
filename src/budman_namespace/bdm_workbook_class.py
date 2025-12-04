@@ -274,21 +274,6 @@ class BDMWorkbook:
             return False
     #endregion check_wb_url
     # ------------------------------------------------------------------------ +
-    #region check_wb_url()
-    def check_wb_url(self) -> bool:
-        """ Check if the workbook URL is valid. """
-        try:
-            if not self.wb_url:
-                return False
-            wb_path = Path().from_uri(self.wb_url)
-            if not wb_path.exists():
-                return False
-            return True
-        except Exception as e:
-            logger.error(f"Error checking URL '{self.wb_url}': {p3u.exc_err_msg(e)}")
-            return False
-    #endregion check_wb_url
-    # ------------------------------------------------------------------------ +
     #region determine_wb_type
     def determine_wb_type(self, wb_index:int=-1) -> str:
         """ Determine the wb_type based on the filename or set unknown. """

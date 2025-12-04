@@ -751,15 +751,12 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             st = p3u.start_timer()
             logger.info(f"Start: ...")
             # Save the BDM_STORE file with the BSM.
-            # Get a Dict of the BudgetModel to store.
-            bdm_dict = self.budget_domain_model.bdm_dehydrate()
-            # Save the BDM_STORE file.
-            bdm_url = self.dc_BDM_STORE[BDM_URL]
-            bsm_BDM_STORE_url_put(bdm_dict, bdm_url)
+            self.model.bdm_save_model()
             self.dc_BDM_STORE_changed = False
-            logger.info(f"Saved BDM_STORE url: {bdm_url}")
+            logger.info(f"Saved BDM_STORE url: {self.model.bdm_url}")
             logger.info(f"Complete: {p3u.stop_timer(st)}")
-            return p3m.create_CMD_RESULT_OBJECT(True, p3m.CV_CMD_DICT_OUTPUT, bdm_dict, cmd)  
+            return p3m.create_CMD_RESULT_OBJECT(True, p3m.CV_CMD_DICT_OUTPUT, 
+                                                self.model.bdm_dehydrate(), cmd)  
         except Exception as e:
             return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
     #endregion BDM_STORE_save_cmd() execution method
@@ -1031,21 +1028,13 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
         """
         try:
             st = p3u.start_timer()
-            r_msg: str = "Start: ...{P2}"
-            logger.debug(r_msg)
             # Should be called only for App cmd.
             cmd_result : p3m.CMD_RESULT_TYPE = cp.verify_cmd_key(cmd, cp.CV_APP_CMD_KEY)
             if not cmd_result[p3m.CK_CMD_RESULT_STATUS]: return cmd_result
-            subcmd_name = cmd[cp.p3m.CK_SUBCMD_NAME]
 
-            # Transitioning to using the BudMan Command Processor
-            # Sync subcmd
-            if subcmd_name == cp.CV_SYNC_SUBCMD_NAME: 
-                cmd_result = cp.BUDMAN_CMD_process(cmd, self.DC)
-                logger.debug(f"Complete: {p3u.stop_timer(st)}")
-                return cmd_result
-            # GUI subcmd
-            if subcmd_name == cp.CV_GUI_SUBCMD_NAME:
+            # App GUI subcmd (Keep this in the View Model for now, it is essentially
+            # another View)
+            if cmd[cp.p3m.CK_SUBCMD_NAME] == cp.CV_GUI_SUBCMD_NAME:
                 # Create the gui_view and run it
                 gui_view: BudManGUIView = BudManGUIView(command_processor=self,
                                                         data_context=self.DC,
@@ -1055,79 +1044,10 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                 del gui_view
                 return cmd_result
 
-            # Process the old way
-            # TODO: Move these to budman_command_services.py
-            success: bool = False
-            result: Any = None
-            m:Optional[str] = None
-            logger.debug(r_msg)
-            if subcmd_name == cp.CV_LOG_SUBCMD_NAME:
-                # Show the current log level.
-                return p3m.create_CMD_RESULT_OBJECT(True, p3m.CV_CMD_STRING_OUTPUT, 
-                                                    "App Log cmd.", cmd)
-            elif subcmd_name == cp.CV_RELOAD_SUBCMD_NAME:
-                try:
-                    reload_target = self.cp_cmd_attr_get(cmd, cp.CK_RELOAD_TARGET, None)
-                    if reload_target is None:
-                        m = f"reload_target is None, no action taken."
-                        logger.error(m)
-                        return p3m.create_CMD_RESULT_OBJECT(False, p3m.CV_CMD_STRING_OUTPUT, m, cmd)
-                    if reload_target == cp.CV_CATEGORY_MAP:
-                        catman: BDMTXNCategoryManager = BDMTXNCategoryManager() #self.WF_CATEGORY_MANAGER
-                        category_catalog: TXNCategoryCatalog = None
-                        if catman :
-                            category_catalog = catman.catalogs[self.dc_FI_KEY]
-                            category_catalog.CATEGORY_MAP_WORKBOOK_import()
-                            mod = category_catalog.category_map_module
-                            if mod:
-                                cat_count = len(category_catalog.category_collection)
-                                rule_count = len(category_catalog.category_map)
-                                task = "CATEGORY_MAP_WORKBOOK_import()"
-                                m = (f"{P2}Task: {task:30} {rule_count:>3} "
-                                     f"rules, {cat_count:>3} categories.")
-                                logger.debug(m)
-                                return p3m.create_CMD_RESULT_OBJECT(
-                                    True, p3m.CV_CMD_STRING_OUTPUT, m, cmd)
-                            else:
-                                return p3m.create_CMD_RESULT_OBJECT(
-                                    False, p3m.CV_CMD_STRING_OUTPUT, 
-                                    "Failed to reload category_map_module", cmd)
-                    if reload_target == cp.CV_FI_WORKBOOK_DATA_COLLECTION:
-                        m = "deprecated"
-                        # wdc: WORKBOOK_DATA_COLLECTION_TYPE = None
-                        # wdc, m = self.model.bsm_FI_WORKBOOK_DATA_COLLECTION_resolve(self.dc_FI_KEY)
-                        return p3m.create_CMD_RESULT_OBJECT(
-                            True, p3m.CV_CMD_STRING_OUTPUT, m, cmd)
-                    if reload_target == cp.CV_WORKFLOWS_MODULE:
-                        importlib.reload(budman_workflows.workflow_utils)
-                        return p3m.create_CMD_RESULT_OBJECT(
-                            True, p3m.CV_CMD_STRING_OUTPUT, 
-                            "Reloaded workflows module.", cmd)
-                    return p3m.create_CMD_RESULT_OBJECT(
-                        True, p3m.CV_CMD_STRING_OUTPUT, r_msg, cmd)
-                except Exception as e:
-                    m = f"Error reloading target: {reload_target}: {p3u.exc_err_msg(e)}"
-                    logger.error(m)
-                    return p3m.create_CMD_RESULT_OBJECT(
-                        False, p3m.CV_CMD_STRING_OUTPUT, m, cmd)
-            elif subcmd_name == cp.CV_DELETE_SUBCMD_NAME:
-                try:
-                    delete_target = self.cp_cmd_attr_get(cmd, cp.CK_DELETE_TARGET, -1)
-                    if self.dc_WB_INDEX_validate(delete_target):
-                        bdm_wb: BDMWorkbook = self.dc_WORKBOOK_remove(delete_target)
-                        return p3m.create_CMD_RESULT_OBJECT(
-                            True, p3m.CV_CMD_STRING_OUTPUT, 
-                            f"Deleted workbook: {bdm_wb.wb_id}", cmd)
-                    return p3m.create_CMD_RESULT_OBJECT(
-                        False, p3m.CV_CMD_STRING_OUTPUT, 
-                        f"Invalid wb_index: '{delete_target}'", cmd)
-                except Exception as e:
-                    m = f"Error deleting workbook: {delete_target}: {p3u.exc_err_msg(e)}"
-                    logger.error(m)
-                    return p3m.create_CMD_RESULT_OBJECT(
-                        False, p3m.CV_CMD_STRING_OUTPUT, m, cmd)
-            else:
-                return p3m.create_CMD_RESULT_OBJECT(False, p3m.CV_CMD_STRING_OUTPUT, f"Unknown app subcmd: {subcmd_name}", cmd)
+            # Use the BudMan Command Services module.
+            cmd_result = cp.BUDMAN_CMD_process(cmd, self.DC)
+            logger.debug(f"Complete: {p3u.stop_timer(st)}")
+            return cmd_result
         except Exception as e:
             return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
     #endregion APP_cmd() execution method

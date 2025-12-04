@@ -81,6 +81,7 @@ from budman_namespace.design_language_namespace import (
     BDM_DATA_CONTEXT, DC_FI_KEY, DC_WF_KEY, DC_WF_PURPOSE, DC_WB_TYPE,
     FILE_TREE_NODE_TYPE_KEY, FILE_TREE_NODE_WF_KEY, FILE_TREE_NODE_WF_PURPOSE
     )
+from budman_namespace.bdm_workbook_class import BDMWorkbook
 import budget_storage_model as bsm
 from budman_data_context.budman_app_data_context_base_ABC import BudManAppDataContext_Base
 #endregion imports
@@ -719,10 +720,14 @@ class BudManAppDataContext(BudManAppDataContext_Base):
     def dc_WORKBOOK_remove(self, wb_index: str) -> WORKBOOK_OBJECT_TYPE:
         """DC-Only: Remove the specified workbook by index."""
         try:
-            bdm_wb = self.dc_WORKBOOK_by_index(wb_index)
+            bdm_wb: BDMWorkbook = self.dc_WORKBOOK_by_index(wb_index)
             if bdm_wb is None:
                 logger.error(f"Workbook with index '{wb_index}' not found.")
                 return None
+            if bdm_wb.wb_content :
+                del bdm_wb.wb_content
+                bdm_wb.wb_content = None
+                bdm_wb.wb_loaded = False
             del self.dc_WORKBOOK_DATA_COLLECTION[bdm_wb.wb_id]
             return bdm_wb
         except Exception as e:

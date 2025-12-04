@@ -142,6 +142,10 @@ class BudManCLIParser():
                 type=int, 
                 default= -1,
                 help="wb_index to delete.")
+            delete_parser.add_argument(
+                f"--{cp.CK_NO_SAVE}",
+                action="store_true",
+                help="Do NOT save BDM_STORE.")
             self.add_common_optional_args(delete_parser)
 
             # app reload subcommand
@@ -526,6 +530,25 @@ class BudManCLIParser():
             self.add_common_optional_args(check_parser)
             #endregion Workflow 'check' subcommand
 
+            #region Workflow 'delete' subcommand to remove workbooks from
+            # the DC and BDM_STORE
+            delete_parser = subparsers.add_parser(
+                cp.CV_DELETE_SUBCMD_NAME,
+                aliases=["del"], 
+                help="Delete workbooks by wb_index from the DC and BDM_STORE.")
+            delete_parser_defaults = {
+                p3m.CK_SUBCMD_NAME: cp.CV_DELETE_SUBCMD_NAME,
+                p3m.CK_SUBCMD_KEY: cp.CV_WORKFLOW_DELETE_SUBCMD_KEY,
+                cp.CK_NO_SAVE: False}
+            delete_parser.set_defaults(**delete_parser_defaults)
+            self.add_wb_list_or_all_mutually_exclusive_group(delete_parser)
+            delete_parser.add_argument(
+                f"--{cp.CK_NO_SAVE}",
+                action="store_true",
+                help="Do NOT save BDM_STORE on exit.")
+            self.add_common_optional_args(delete_parser)
+            #endregion Workflow 'delete' subcommand
+
             #region Workflow task sub-command: task
             task_parser = subparsers.add_parser(
                 cp.CV_TASK_SUBCMD_NAME,
@@ -545,13 +568,6 @@ class BudManCLIParser():
                 action="store_true", 
                 help="Reconcile with the WORKBOOK_DATA_COLLECTION on sync."
             )
-            # task_parser.add_argument(
-            #     "task_args",
-            #     nargs="*",
-            #     default=None,
-            #     help="List of arguments to pass to the workflow task."
-            # )
-            # self.add_wb_index_argument(task_parser)
             #endregion Workflow task sub-command: task
 
             #region workflow 'apply' subcommand
