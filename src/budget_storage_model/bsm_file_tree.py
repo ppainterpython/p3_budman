@@ -160,6 +160,35 @@ class BSMFileTree:
             logger.error(p3u.exc_err_msg(e))
             raise
 
+    def delete(self, bsm_file: BSMFile) -> None:
+        """Delete the file_tree .json file if it exists."""
+        try:
+            if not bsm_file:
+                raise ValueError("bsm_file is None.")
+            if not isinstance(bsm_file, BSMFile):
+                raise ValueError("bsm_file is not a BSMFile object.")
+            if not bsm_file.abs_path or not bsm_file.abs_path.exists():
+                logger.warning(f"File does not exist: '{bsm_file.abs_path}'")
+                return
+            try:
+                bsm_file.abs_path.unlink()
+            except FileNotFoundError:
+                m = f"Workbook file not found for deletion: {bsm_file.abs_path}"
+                logger.error(m)
+                raise
+            except PermissionError:
+                m = f"Permission denied when deleting workbook file: {bsm_file.abs_path}"
+                logger.error(m)
+                raise
+            except Exception as e:
+                m = f"Error deleting workbook file: {bsm_file.abs_path} - {p3u.exc_err_msg(e)}"
+                logger.error(m)
+                raise
+            logger.info(f"Deleted file: '{bsm_file.abs_path}'")
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+
     def get_BSMFile(self, file_index: int) -> Optional[BSMFile]:
         """Get the BSMFile object given file_index."""
         try:

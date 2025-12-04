@@ -183,6 +183,30 @@ class BSMFile():
                 self._wb_type = wb_type
                 self._filename = self._filename[:-len(wb_type)]
                 break
+    def delete(self) -> None:
+        """Delete the file from storage."""
+        try:
+            if not self.abs_path or not self.abs_path.exists():
+                logger.warning(f"File does not exist: '{self.abs_path}'")
+                return
+            try:
+                self.abs_path.unlink()
+            except FileNotFoundError:
+                m = f"Workbook file not found for deletion: {self.abs_path}"
+                logger.error(m)
+                raise
+            except PermissionError:
+                m = f"Permission denied when deleting workbook file: {self.abs_path}"
+                logger.error(m)
+                raise
+            except Exception as e:
+                m = f"Error deleting workbook file: {self.abs_path} - {p3u.exc_err_msg(e)}"
+                logger.error(m)
+                raise
+            logger.info(f"Deleted file: '{self.abs_path}'")
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
 
 #endregion BSMFile Class
 # ---------------------------------------------------------------------------- +

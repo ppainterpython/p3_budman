@@ -73,6 +73,7 @@ class BudManCLIParser():
     def app_cmd_parser_setup(self,app_name : str = "not-set") -> None:
         """Application settings and feature controls."""
         try:
+            #region app_cmd_parser_setup
             parser = self.app_cmd
             parser.prog = app_name
             title = self.app_cmd_parser_setup.__doc__
@@ -82,8 +83,8 @@ class BudManCLIParser():
                 p3m.CK_CMD_NAME: cp.CV_APP_CMD_NAME
             }
             parser.set_defaults(**app_cmd_defaults)
-
-            # app gui subcommand
+            #endregion app_cmd_parser_setup
+            #region app gui subcommand
             gui_parser = subparsers.add_parser(
                 cp.CV_GUI_SUBCMD_NAME,
                 help="Launch the GUI application.")
@@ -91,10 +92,10 @@ class BudManCLIParser():
                 p3m.CK_SUBCMD_NAME: cp.CV_GUI_SUBCMD_NAME,
                 p3m.CK_SUBCMD_KEY: cp.CV_GUI_SUBCMD_KEY
             }
-            parser.set_defaults(**gui_parser_defaults)
+            gui_parser.set_defaults(**gui_parser_defaults)
             self.add_common_optional_args(gui_parser)
-
-            # app sync BDM_STORE
+            #endregion app gui subcommand
+            #region app sync BDM_STORE
             sync_parser = subparsers.add_parser(
                 cp.CV_SYNC_SUBCMD_NAME,
                 help="Sync the BDM_STORE with the file system.")
@@ -112,8 +113,8 @@ class BudManCLIParser():
                 f"--{cp.CK_FIX_SWITCH}", "-f",
                 action="store_true",
                 help="Fix any discovered discrepancies.")
-
-            # app exit subcommand
+            #endregion app sync BDM_STORE
+            #region app exit subcommand
             exit_parser = subparsers.add_parser(
                 cp.CV_EXIT_SUBCMD_NAME,
                 aliases=["quit"],
@@ -127,28 +128,22 @@ class BudManCLIParser():
                 action="store_true",
                 help="Do NOT save BDM_STORE on exit.")
             self.add_common_optional_args(exit_parser)
-
-            # app delete subcommand
+            #endregion app exit subcommand
+            #region app delete subcommand
             delete_parser = subparsers.add_parser(
                 p3m.CK_SUBCMD_NAME,
                 aliases=["del"],
                 help="Delete a module.")
             delete_parser_defaults = {
-                p3m.CK_SUBCMD_NAME: cp.CV_DELETE_SUBCMD_NAME,
-                p3m.CK_SUBCMD_KEY: cp.CV_DELETE_SUBCMD_KEY}
+                p3m.CK_SUBCMD_NAME: cp.CV_FILE_DELETE_SUBCMD_NAME,
+                p3m.CK_SUBCMD_KEY: cp.CV_FILE_DELETE_SUBCMD_KEY,
+                cp.CK_FILE_LIST: [],
+                cp.CK_ALL_FILES: False}
             delete_parser.set_defaults(**delete_parser_defaults)
-            delete_parser.add_argument(
-                "delete_target", nargs="?",
-                type=int, 
-                default= -1,
-                help="wb_index to delete.")
-            delete_parser.add_argument(
-                f"--{cp.CK_NO_SAVE}",
-                action="store_true",
-                help="Do NOT save BDM_STORE.")
+            self.add_file_list_or_all_mutex_group(delete_parser)
             self.add_common_optional_args(delete_parser)
-
-            # app reload subcommand
+            #endregion app delete subcommand
+            #region app reload subcommand
             reload_parser = subparsers.add_parser(
                 cp.CV_RELOAD_SUBCMD_NAME,
                 aliases=["r"], 
@@ -166,8 +161,8 @@ class BudManCLIParser():
                 default=cp.CV_CATEGORY_MAP,
                 help="Name of object to reload, pick from choices.")
             self.add_common_optional_args(reload_parser)
-
-            # app log [handler-name] [--list] [--level [level-value]] [--rollover]
+            #endregion app reload subcommand
+            #region app log subcommand
             log_subcmd_parser = subparsers.add_parser(
                 cp.CV_LOG_SUBCMD_NAME, 
                 # aliases=["log"], 
@@ -194,6 +189,7 @@ class BudManCLIParser():
                 action = 'store_true',
                 help="Cause file loggers to rollover now.")
             self.add_common_optional_args(log_subcmd_parser)
+            #endregion app log subcommand
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise
@@ -315,7 +311,7 @@ class BudManCLIParser():
             parser.set_defaults(cmd_key=cp.CV_LOAD_CMD_KEY,   # new way
                                 cmd_name=cp.CV_LOAD_CMD_NAME)
 
-            # bdm_store_subcmd_parser
+            #region bdm_store_subcmd_parser
             # load BDM_STORE 
             bdm_store_subcmd_parser = subparsers.add_parser(
                 cp.CV_BDM_STORE_SUBCMD_NAME,
@@ -325,18 +321,24 @@ class BudManCLIParser():
                 subcmd_name=cp.CV_BDM_STORE_SUBCMD_NAME,
                 subcmd_key=cp.CV_LOAD_BDM_STORE_SUBCMD_KEY)
             self.add_common_optional_args(bdm_store_subcmd_parser)
+            #endregion bdm_store_subcmd_parser
 
-            # wb_subcmd_parser
+            #region wb_subcmd_parser
             # load workbooks [wb_index | -all | --all_wbs]
             wb_subcmd_parser  = subparsers.add_parser(
                 cp.CV_WORKBOOKS_SUBCMD_NAME,
                 aliases=["wb", "WB"], 
                 help="Select workbooks for loading.")
-            wb_subcmd_parser.set_defaults(
-                subcmd_name=cp.CV_WORKBOOKS_SUBCMD_NAME,
-                subcmd_key=cp.CV_LOAD_WORKBOOKS_SUBCMD_KEY)
+            load_cmd_defaults = {
+                p3m.CK_SUBCMD_NAME: cp.CV_WORKBOOKS_SUBCMD_NAME,
+                p3m.CK_SUBCMD_KEY: cp.CV_LOAD_WORKBOOKS_SUBCMD_KEY,
+                cp.CK_WB_LIST: [],
+                cp.CK_ALL_WBS: False
+            }
+            wb_subcmd_parser.set_defaults(**load_cmd_defaults)
             self.add_wb_list_or_all_mutually_exclusive_group(wb_subcmd_parser)
             self.add_common_optional_args(wb_subcmd_parser)
+            #endregion wb_subcmd_parser
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise
@@ -533,11 +535,11 @@ class BudManCLIParser():
             #region Workflow 'delete' subcommand to remove workbooks from
             # the DC and BDM_STORE
             delete_parser = subparsers.add_parser(
-                cp.CV_DELETE_SUBCMD_NAME,
+                cp.CV_FILE_DELETE_SUBCMD_NAME,
                 aliases=["del"], 
                 help="Delete workbooks by wb_index from the DC and BDM_STORE.")
             delete_parser_defaults = {
-                p3m.CK_SUBCMD_NAME: cp.CV_DELETE_SUBCMD_NAME,
+                p3m.CK_SUBCMD_NAME: cp.CV_FILE_DELETE_SUBCMD_NAME,
                 p3m.CK_SUBCMD_KEY: cp.CV_WORKFLOW_DELETE_SUBCMD_KEY,
                 cp.CK_NO_SAVE: False}
             delete_parser.set_defaults(**delete_parser_defaults)
@@ -877,6 +879,25 @@ class BudManCLIParser():
                 f"--{cp.CK_ALL_WBS}", "-all", dest="all_wbs", 
                 action="store_true",
                 help="All workbooks switch.") 
+            return
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise
+
+    def add_file_list_or_all_mutex_group(self, parser) -> None:
+        """Add a file_list or all_files arguments."""
+        try:
+            group = parser.add_mutually_exclusive_group(required=False)
+            group.add_argument(
+                cp.CK_FILE_LIST, nargs="*",
+                action='extend',
+                type=int, 
+                default = [],
+                help=f"File index: one or more numbers (spaces, no commas) indexing from the file list, 0-based.")
+            group.add_argument(
+                f"--{cp.CK_ALL_FILES}", "-all", dest="all_files", 
+                action="store_true",
+                help="All files switch.") 
             return
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))

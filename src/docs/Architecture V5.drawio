@@ -7198,10 +7198,7 @@
             <mxPoint x="1376" y="875" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="52eXtTrC2LM1tEqbPeIO-20" value="&lt;font face=&quot;Lucida Console&quot; style=&quot;font-size: 20px;&quot;&gt;delete | del delete_target&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;spacingLeft=4;" parent="52eXtTrC2LM1tEqbPeIO-1" vertex="1">
-          <mxGeometry x="1309" y="980" width="364" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="52eXtTrC2LM1tEqbPeIO-21" style="edgeStyle=entityRelationEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" parent="52eXtTrC2LM1tEqbPeIO-1" source="52eXtTrC2LM1tEqbPeIO-124" target="52eXtTrC2LM1tEqbPeIO-20" edge="1">
+        <mxCell id="52eXtTrC2LM1tEqbPeIO-21" style="edgeStyle=entityRelationEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="52eXtTrC2LM1tEqbPeIO-1" source="52eXtTrC2LM1tEqbPeIO-124" target="8_GFSdPsB0Lj7iTBchyP-3" edge="1">
           <mxGeometry relative="1" as="geometry">
             <mxPoint x="1171" y="1015" as="sourcePoint" />
             <mxPoint x="1376" y="1005" as="targetPoint" />
@@ -7643,7 +7640,7 @@
           <mxGeometry x="1011" y="2250" width="120" height="30" as="geometry" />
         </mxCell>
         <mxCell id="52eXtTrC2LM1tEqbPeIO-128" value="&lt;font face=&quot;Lucida Console&quot; style=&quot;font-size: 20px;&quot;&gt;sync --save&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;spacingLeft=4;" parent="52eXtTrC2LM1tEqbPeIO-1" vertex="1">
-          <mxGeometry x="1309" y="940" width="169" height="30" as="geometry" />
+          <mxGeometry x="1309" y="980" width="169" height="30" as="geometry" />
         </mxCell>
         <mxCell id="52eXtTrC2LM1tEqbPeIO-129" style="edgeStyle=entityRelationEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="52eXtTrC2LM1tEqbPeIO-1" source="52eXtTrC2LM1tEqbPeIO-124" target="52eXtTrC2LM1tEqbPeIO-128" edge="1">
           <mxGeometry relative="1" as="geometry">
@@ -7892,6 +7889,24 @@
           <mxGeometry relative="1" as="geometry">
             <mxPoint x="1160" y="1775" as="sourcePoint" />
             <mxPoint x="1319" y="1395" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="8_GFSdPsB0Lj7iTBchyP-3" value="&lt;font face=&quot;Lucida Console&quot;&gt;&lt;span style=&quot;font-size: 18px;&quot;&gt;delete | del&lt;/span&gt;&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="52eXtTrC2LM1tEqbPeIO-1">
+          <mxGeometry x="1309" y="940" width="151" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="8_GFSdPsB0Lj7iTBchyP-4" value="&lt;font style=&quot;font-size: 18px;&quot; face=&quot;Lucida Console&quot;&gt;file_list | ( --all_wbs | -all )&lt;/font&gt;" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;" vertex="1" parent="52eXtTrC2LM1tEqbPeIO-1">
+          <mxGeometry x="1559" y="935" width="360" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="8_GFSdPsB0Lj7iTBchyP-5" style="edgeStyle=entityRelationEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="52eXtTrC2LM1tEqbPeIO-1" source="8_GFSdPsB0Lj7iTBchyP-3" target="8_GFSdPsB0Lj7iTBchyP-4">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1160" y="1005" as="sourcePoint" />
+            <mxPoint x="1319" y="925" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="8_GFSdPsB0Lj7iTBchyP-6" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#666666;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=11;fontColor=default;labelBackgroundColor=default;edgeStyle=entityRelationEdgeStyle;" edge="1" parent="52eXtTrC2LM1tEqbPeIO-1" source="8_GFSdPsB0Lj7iTBchyP-4" target="52eXtTrC2LM1tEqbPeIO-174">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="1593" y="845" as="sourcePoint" />
+            <mxPoint x="2631" y="775" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         <mxCell id="gGM5oRLBQI6abg-GEobn-1" value="&lt;span style=&quot;font-size: 36px;&quot;&gt;UX Layout&lt;/span&gt;" style="swimlane;whiteSpace=wrap;html=1;strokeColor=#FFFFFF;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=12;fontColor=default;fontStyle=1;fillColor=light-dark(#000000,#2D64C7);startSize=60;swimlaneFillColor=none;strokeWidth=5;fillStyle=solid;" parent="1" vertex="1">

@@ -108,7 +108,7 @@ def WORKFLOW_CMD_process(cmd: p3m.CMD_OBJECT_TYPE,
 #region WORKFLOW_TASK_delete_workbooks() function
 def WORKFLOW_TASK_delete_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
                     bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
-    """WORKFLOW_DELETE_subcmd: Delete data workbooks from workflows."""
+    """WORKFLOW_DELETE_subcmd: Delete data workbooks based on wb_index."""
     try:
         # Validate the cmd argsuments.
         cmd_args: p3m.CMD_ARGS_TYPE = cp.validate_cmd_arguments(
@@ -132,7 +132,7 @@ def WORKFLOW_TASK_delete_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
         result: Any = None
         no_save: bool = cmd_args.get(cp.CK_NO_SAVE)
         selected_bdm_wb_list : List[BDMWorkbook] = None
-        selected_bdm_wb_list = process_selected_workbook_input(cmd, bdm_DC)
+        selected_bdm_wb_list = cp.process_selected_workbook_input(cmd, bdm_DC)
         # Process the intended workbooks.
         src_wb: BDMWorkbook = None
         for src_wb in selected_bdm_wb_list:
@@ -165,7 +165,9 @@ def WORKFLOW_TASK_delete_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
                 continue
             # Delete the workbook object
             del src_wb
-            # TODO: Refresh the trees
+        # Refresh the trees
+        model.bdm_FILE_TREE_refresh()
+        model.bdm_WORKBOOK_TREE_refresh()
         return p3m.create_CMD_RESULT_OBJECT(
             cmd_object=cmd,
             cmd_result_status=True,
@@ -251,7 +253,7 @@ def WORKFLOW_TASK_transfer_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
         success: bool = False
         result: Any = None
         selected_bdm_wb_list : List[BDMWorkbook] = None
-        selected_bdm_wb_list = process_selected_workbook_input(cmd, bdm_DC)
+        selected_bdm_wb_list = cp.process_selected_workbook_input(cmd, bdm_DC)
         log_all : bool = cmd.get(cp.CK_LOG_ALL, False)
         # Process the intended workbooks.
         src_wb: BDMWorkbook = None
@@ -818,61 +820,61 @@ def WORKFLOW_TASK_construct_bdm_workbook(src_filename: str,
 #region WORKFLOW_TASK helper functions
 # ---------------------------------------------------------------------------- +
 #region process_selected_workbook_input() function
-def process_selected_workbook_input(cmd: p3m.CMD_OBJECT_TYPE, 
-                    bdm_DC: BudManAppDataContext_Base) -> List[BDMWorkbook]:
-    """Process the workbook input from the command, return a list of 
-    BDMWorkbooks, which may be empty.
+# def process_selected_workbook_input(cmd: p3m.CMD_OBJECT_TYPE, 
+#                     bdm_DC: BudManAppDataContext_Base) -> List[BDMWorkbook]:
+#     """Process the workbook input from the command, return a list of 
+#     BDMWorkbooks, which may be empty.
 
-    Arguments:
-        cmd (Dict): A p3m.CMD_OBJECT.
+#     Arguments:
+#         cmd (Dict): A p3m.CMD_OBJECT.
 
-    Returns:
-        List[BDMWorkbook]: A list of BDMWorkbook objects.
-    """
-    try:
-        # TODO: this is duplicated code from a view_model method, needed until
-        # the workflow command processing is refactored.
-        # Extract common command attributes to select workbooks for task action.
-        wb_list : List[int] = cmd.get(cp.CK_WB_LIST, [])
-        all_wbs : bool = cmd.get(cp.CK_ALL_WBS, bdm_DC.dc_ALL_WBS)
-        selected_bdm_wb_list : List[BDMWorkbook] = []
-        load_workbook:bool = cmd.get(cp.CK_LOAD_WORKBOOK, False)
-        if all_wbs:
-            # If all_wbs is True, process all workbooks in the data context.
-            selected_bdm_wb_list = list(bdm_DC.dc_WORKBOOK_DATA_COLLECTION.values())
-        elif len(wb_list) > 0:
-            for wb_index in wb_list:
-                bdm_wb = bdm_DC.dc_WORKBOOK_by_index(wb_index)
-                selected_bdm_wb_list.append(bdm_wb)
-        else:
-            # No workbooks selected by the command parameters.
-            return selected_bdm_wb_list
-        for bdm_wb in selected_bdm_wb_list:
-            bdm_wb_abs_path = bdm_wb.abs_path()
-            if bdm_wb_abs_path is None:
-                selected_bdm_wb_list.remove(bdm_wb)
-                m = f"Excluded workbook: '{bdm_wb.wb_id}', "
-                m += f"workbook url is not valid: {bdm_wb.wb_url}"   
-                logger.error(m)
-                continue
-            if load_workbook and not bdm_wb.wb_loaded:
-                # Load the workbook content if it is not loaded.
-                success, result = bdm_DC.dc_WORKBOOK_content_get(bdm_wb)
-                if not success:
-                    selected_bdm_wb_list.remove(bdm_wb)
-                    m = f"Excluded workbook: '{bdm_wb.wb_id}', "
-                    m += f"failed to load: {result}"
-                    logger.error(m)
-                    continue
-                if not bdm_wb.wb_loaded:
-                    logger.warning(f"Workbook '{bdm_wb.wb_id}' wb_loaded was False!")
-                    bdm_wb.wb_loaded = True
-                # self.dc_LOADED_WORKBOOKS[bdm_wb.wb_id] = wb_content
-        return selected_bdm_wb_list
-    except Exception as e:
-        m = f"Error processing workbook input: {p3u.exc_err_msg(e)}"
-        logger.error(m)
-        raise RuntimeError(m)
+#     Returns:
+#         List[BDMWorkbook]: A list of BDMWorkbook objects.
+#     """
+#     try:
+#         # TODO: this is duplicated code from a view_model method, needed until
+#         # the workflow command processing is refactored.
+#         # Extract common command attributes to select workbooks for task action.
+#         wb_list : List[int] = cmd.get(cp.CK_WB_LIST, [])
+#         all_wbs : bool = cmd.get(cp.CK_ALL_WBS, bdm_DC.dc_ALL_WBS)
+#         selected_bdm_wb_list : List[BDMWorkbook] = []
+#         load_workbook:bool = cmd.get(cp.CK_LOAD_WORKBOOK, False)
+#         if all_wbs:
+#             # If all_wbs is True, process all workbooks in the data context.
+#             selected_bdm_wb_list = list(bdm_DC.dc_WORKBOOK_DATA_COLLECTION.values())
+#         elif len(wb_list) > 0:
+#             for wb_index in wb_list:
+#                 bdm_wb = bdm_DC.dc_WORKBOOK_by_index(wb_index)
+#                 selected_bdm_wb_list.append(bdm_wb)
+#         else:
+#             # No workbooks selected by the command parameters.
+#             return selected_bdm_wb_list
+#         for bdm_wb in selected_bdm_wb_list:
+#             bdm_wb_abs_path = bdm_wb.abs_path()
+#             if bdm_wb_abs_path is None:
+#                 selected_bdm_wb_list.remove(bdm_wb)
+#                 m = f"Excluded workbook: '{bdm_wb.wb_id}', "
+#                 m += f"workbook url is not valid: {bdm_wb.wb_url}"   
+#                 logger.error(m)
+#                 continue
+#             if load_workbook and not bdm_wb.wb_loaded:
+#                 # Load the workbook content if it is not loaded.
+#                 success, result = bdm_DC.dc_WORKBOOK_content_get(bdm_wb)
+#                 if not success:
+#                     selected_bdm_wb_list.remove(bdm_wb)
+#                     m = f"Excluded workbook: '{bdm_wb.wb_id}', "
+#                     m += f"failed to load: {result}"
+#                     logger.error(m)
+#                     continue
+#                 if not bdm_wb.wb_loaded:
+#                     logger.warning(f"Workbook '{bdm_wb.wb_id}' wb_loaded was False!")
+#                     bdm_wb.wb_loaded = True
+#                 # self.dc_LOADED_WORKBOOKS[bdm_wb.wb_id] = wb_content
+#         return selected_bdm_wb_list
+#     except Exception as e:
+#         m = f"Error processing workbook input: {p3u.exc_err_msg(e)}"
+#         logger.error(m)
+#         raise RuntimeError(m)
 #endregion process_selected_workbook_input() function
 # ---------------------------------------------------------------------------- +
 #endregion WORKFLOW_TASK helper functions

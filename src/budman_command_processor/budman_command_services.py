@@ -115,7 +115,7 @@ def BUDMAN_CMD_process(cmd: p3m.CMD_OBJECT_TYPE,
             elif cmd[p3m.CK_SUBCMD_KEY] == cp.CV_RELOAD_SUBCMD_KEY:
                 # Reload the application configuration and settings.
                 return BUDMAN_CMD_app_reload(cmd, bdm_DC)
-            elif cmd[p3m.CK_SUBCMD_KEY] == cp.CV_DELETE_SUBCMD_KEY:
+            elif cmd[p3m.CK_SUBCMD_KEY] == cp.CV_FILE_DELETE_SUBCMD_KEY:
                 # Delete workbooks from the BDM store and BSM.
                 return BUDMAN_CMD_app_delete(cmd, bdm_DC)
             else:
@@ -455,24 +455,55 @@ def BUDMAN_CMD_app_reload(cmd: p3m.CMD_OBJECT_TYPE,
 #region BUDMAN_CMD_app_delete()
 def BUDMAN_CMD_app_delete(cmd: p3m.CMD_OBJECT_TYPE,
                         bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
-    """Delete workbooks from the BDM store and BSM."""
+    """Delete files from the BSM, based on file_index."""
     # Delete a workbook from the DC or a file from BSM.
     try:
-        delete_target = cmd.get(cp.CK_DELETE_TARGET, -1)
-        no_save: bool = cmd.get(cp.CK_NO_SAVE, False)
-        if bdm_DC.dc_WB_INDEX_validate(delete_target):
-            bdm_wb: BDMWorkbook = bdm_DC.dc_WORKBOOK_remove(delete_target)
-            return p3m.create_CMD_RESULT_OBJECT(
-                True, p3m.CV_CMD_STRING_OUTPUT, 
-                f"Deleted workbook: {bdm_wb.wb_id}", cmd)
-        return p3m.create_CMD_RESULT_OBJECT(
-            False, p3m.CV_CMD_STRING_OUTPUT, 
-            f"Invalid wb_index: '{delete_target}'", cmd)
+        # Validate the cmd argsuments.
+        cmd_args: p3m.CMD_ARGS_TYPE = cp.validate_cmd_arguments(
+            cmd=cmd, 
+            bdm_DC=bdm_DC,
+            cmd_key=cp.CV_APP_CMD_KEY, 
+            subcmd_key=cp.CV_FILE_DELETE_SUBCMD_KEY,
+            model_aware=True,
+            required_args=[
+                cp.CK_FILE_LIST, 
+                cp.CK_ALL_FILES
+            ]
+        )
+        fr: str = "Delete files sart: ..."
+        m: str = ""
+        logger.info(fr)
+        model: BudgetDomainModel = bdm_DC.model
+        bsm_file_tree : BSMFileTree = model.bsm_file_tree
+        all_files: bool = cmd.get(cp.CK_ALL_FILES)
+        selected_file_list: List[str] = cmd_args.get(cp.CK_FILE_LIST)
+        bsm_files: List[BSMFile] = None
+        bsm_files = bsm_file_tree.validate_file_list(selected_file_list)
+        bsm_file: BSMFile = None
+        for bsm_file in bsm_files:
+            logger.debug(f"{P2}Deleting BSM file_url: '{bsm_file.file_url}'")
+            if bsm_file.in_bdm:
+                m = f"{P2}BSM file_url: '{bsm_file.file_url}' is flagged in BDM."
+                logger.warning(m)
+                fr += f"\n{m}"
+            tree_node: Node = bsm_file_tree.file_tree.get_node(bsm_file.file_url)
+            # Remove the bsm_file node from the file_tree
+            if tree_node:
+                bsm_file_tree.file_tree.remove_node(tree_node.identifier)
+            # Remove the physical file from storage
+            bsm_file.delete()
+            m = f"BizEVENT: Deleted file: '{bsm_file.file_url}'"
+            logger.info(m)
+            fr += f"\n{m}"
+            # Delete the BSMFile object.
+            del bsm_file
+
+        # Refresh the trees
+        model.bdm_FILE_TREE_refresh()
+        model.bdm_WORKBOOK_TREE_refresh()
+        return p3m.create_CMD_RESULT_OBJECT(True, p3m.CV_CMD_STRING_OUTPUT, fr, cmd)
     except Exception as e:
-        m = f"Error deleting workbook: {delete_target}: {p3u.exc_err_msg(e)}"
-        logger.error(m)
-        return p3m.create_CMD_RESULT_OBJECT(
-            False, p3m.CV_CMD_STRING_OUTPUT, m, cmd)
+        return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
 # ---------------------------------------------------------------------------- +    
 #endregion BudMan Application CMD_ functions
 # ---------------------------------------------------------------------------- +    

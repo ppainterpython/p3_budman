@@ -967,7 +967,7 @@ def create_CMD_RESULT_EXCEPTION(cmd: CMD_OBJECT_TYPE, e: Exception) -> CMD_RESUL
 #endregion create_CMD_RESULT_EXCEPTION() function
 # ---------------------------------------------------------------------------- +
 #region create_CMD_RESULT_ERROR() function
-def unknown_CMD_RESULT_ERROR(cmd: CMD_OBJECT_TYPE) -> CMD_RESULT_TYPE:
+def unknown_CMD_RESULT_ERROR(cmd: CMD_OBJECT_TYPE, msg: Optional[str] = None) -> CMD_RESULT_TYPE:
         """Return a CMD_RESULT based on unknown CK_CMD_KEY and CK_SUBCMD_KEY.
 
         Arguments:
@@ -977,13 +977,14 @@ def unknown_CMD_RESULT_ERROR(cmd: CMD_OBJECT_TYPE) -> CMD_RESULT_TYPE:
             CMD_RESULT_TYPE with error information and status of False.
             
         """
-        m = (f"Error unknown {CK_CMD_KEY}: '{cmd.get(CK_CMD_KEY,None)}' "
+        if msg is None:
+            msg = (f"Error unknown {CK_CMD_KEY}: '{cmd.get(CK_CMD_KEY,None)}' "
              f"{CK_SUBCMD_KEY}: '{cmd.get(CK_SUBCMD_KEY, None)}' ")
-        logger.error(m)
+        logger.error(msg)
         return create_CMD_RESULT_OBJECT(
             cmd_result_status = False,
-            result_content = m,
-            result_content_type=CV_CV_CMD_ERROR_STRING_OUTPUT,
+            result_content = msg,
+            result_content_type=CV_CMD_ERROR_STRING_OUTPUT,
             cmd_object=cmd
         )
 #endregion create_CMD_RESULT_ERROR() function

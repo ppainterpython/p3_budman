@@ -1237,13 +1237,6 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
             logger.error(p3u.exc_err_msg(e))
             raise
 
-    def bdm_WORKBOOK_TREE_node_info(self, node_type:str, node_name: str, node_data: Any) -> Dict[str, Any]:
-        """Return a dict of workbook tree node info."""
-        # node_info: Dict[str, Any] = {}
-        # node_info[WBT_NODE_TYPE_KEY] = node_type
-        # node_info[WBT_NODE_NAME] = node_name
-        # node_info[WBT_NODE_DATA] = node_data
-        pass
     #endregion bdm_WORKBOOK_TREE_construct()
     # ------------------------------------------------------------------------ +
     #endregion BDM - WORKBOOK_TREE methods
