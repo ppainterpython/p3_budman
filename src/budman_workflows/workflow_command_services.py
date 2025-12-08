@@ -128,11 +128,12 @@ def WORKFLOW_TASK_delete_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
         fi_key: str = bdm_DC.dc_FI_KEY
         fr: str = ""
         m: str = ""
-        success: bool = False
-        result: Any = None
-        no_save: bool = cmd_args.get(cp.CK_NO_SAVE)
+        # no_save: bool = cmd_args.get(cp.CK_NO_SAVE)
         selected_bdm_wb_list : List[BDMWorkbook] = None
-        selected_bdm_wb_list = cp.process_selected_workbook_input(cmd, bdm_DC)
+        selected_bdm_wb_list = cp.process_selected_workbook_input(
+            cmd, 
+            bdm_DC,
+            validate_url=False)
         # Process the intended workbooks.
         src_wb: BDMWorkbook = None
         for src_wb in selected_bdm_wb_list:
@@ -140,31 +141,16 @@ def WORKFLOW_TASK_delete_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
             bdm_DC.dc_WORKBOOK = src_wb
             wb_index: int = bdm_DC.dc_WB_INDEX
             # Remove the workbook from the DC and model first.
-            del_wb: BDMWorkbook = bdm_DC.dc_WORKBOOK_remove(wb_index)
-            # Save the BDM_STORE unless no_save is True.
-            no_save or model.bdm_save_model() 
-
-            # Delete the file from the storage model.
-            bdm_wb_abs_path: Path = src_wb.abs_path()
-            if bdm_wb_abs_path is None:
-                m = f"Workbook path is not valid: {src_wb.wb_url}"
+            del_wb: BDMWorkbook = model.bdm_WORKBOOK_delete(src_wb)
+            if del_wb is None:
+                m = f"Failed to remove workbook: '{src_wb.wb_id}'."
                 logger.error(m)
                 fr += f"\n{P4}Error: {m}"
                 continue
-            try:
-                bdm_wb_abs_path.unlink()
-            except FileNotFoundError:
-                m = f"Workbook file not found for deletion: {bdm_wb_abs_path}"
-                logger.error(m)
-                fr += f"\n{P4}Error: {m}"
-                continue
-            except PermissionError:
-                m = f"Permission denied when deleting workbook file: {bdm_wb_abs_path}"
-                logger.error(m)
-                fr += f"\n{P4}Error: {m}"
-                continue
-            # Delete the workbook object
-            del src_wb
+            # Successfully removed from DC, BDM and BSM.
+            fr += f"\n{P2}Deleted workbook: {str(wb_index):>4} "
+            fr += f"'{del_wb.wb_id:<40}' '{del_wb.wb_url}'"
+            src_wb = del_wb= None
         # Refresh the trees
         model.bdm_FILE_TREE_refresh()
         model.bdm_WORKBOOK_TREE_refresh()
@@ -348,6 +334,8 @@ def WORKFLOW_TASK_transfer_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
                 logger.error(m)
                 fr += f"\n{P4}Error: {m}"
                 continue
+        model.bdm_save_model()
+        model.bdm_refresh_trees()
         return p3m.create_CMD_RESULT_OBJECT(
             cmd_object=cmd,
             cmd_result_status=True,
@@ -452,10 +440,16 @@ def WORKFLOW_TASK_transfer_files(cmd: p3m.CMD_OBJECT_TYPE,
         bsm_file_tree : BSMFileTree = model.bsm_file_tree
         # Extract and validate required parameters from the command.
         dst_wf_key = cmd_args.get(cp.CK_WF_KEY)
+        if (p3u.str_empty(dst_wf_key) or not model.bdm_WF_KEY_validate(dst_wf_key)):
+            return cp.create_CMD_RESULT_ERROR(cmd, f"Invalid wf_key: '{dst_wf_key}'")
         wf_purpose = cmd_args.get(cp.CK_WF_PURPOSE)
+        if (p3u.str_empty(wf_purpose) or not model.bdm_WF_PURPOSE_validate(wf_purpose)):
+            return cp.create_CMD_RESULT_ERROR(cmd, f"Invalid wf_purpose: '{wf_purpose}'")
+        dst_wb_type = cmd_args.get(cp.CK_WB_TYPE)
+        if (p3u.str_empty(dst_wb_type) or dst_wb_type not in bdm.VALID_WB_TYPE_VALUES):
+            return cp.create_CMD_RESULT_ERROR(cmd, f"Invalid wb_type: '{dst_wb_type}'")
         # Can be 1 or a list of file_indexes provided.
         src_file_index_list = cmd_args.get(cp.CK_FILE_LIST)
-        dst_wb_type = cmd_args.get(cp.CK_WB_TYPE)
         fi_key: str = bdm_DC.dc_FI_KEY
         src_bsm_files: List[cp.BSMFile] = []
         src_bsm_files = bsm_file_tree.validate_file_list(src_file_index_list)
@@ -492,7 +486,7 @@ def WORKFLOW_TASK_transfer_files(cmd: p3m.CMD_OBJECT_TYPE,
                         continue
                     csv_wb = result
                     success, result = WORKFLOW_TASK_transfer_csv_file_to_workbook(
-                        src_file_url=src_bsm_file.file_url,
+                        src_file_url=src_bsm_file._file_url,
                         dst_wb=csv_wb,
                         wb_type=dst_wb_type
                     )
@@ -521,6 +515,8 @@ def WORKFLOW_TASK_transfer_files(cmd: p3m.CMD_OBJECT_TYPE,
                 logger.error(msg)
                 result_content += msg + "\n"
                 continue
+        model.bdm_save_model()
+        model.bdm_refresh_trees()
         return p3m.create_CMD_RESULT_OBJECT(
             cmd_object=cmd,
             cmd_result_status=True,
@@ -759,19 +755,19 @@ def WORKFLOW_TASK_construct_bdm_workbook(src_filename: str,
             m = "Empty filename provided."
             logger.error(m)
             return False, m
-        if not model.bdm_FI_KEY_validate(fi_key):
+        if (p3u.str_empty(fi_key) or not model.bdm_FI_KEY_validate(fi_key)):
             m = f"Invalid fi_key: '{fi_key}'"
             logger.error(m)
             return False, m
-        if not model.bdm_WF_KEY_validate(wf_key):
+        if (p3u.str_empty(wf_key) or not model.bdm_WF_KEY_validate(wf_key)):
             m = f"Invalid wf_key: '{wf_key}'"
             logger.error(m)
             return False, m
-        if not model.bdm_WF_PURPOSE_validate(wf_purpose):
+        if (p3u.str_empty(wf_purpose) or not model.bdm_WF_PURPOSE_validate(wf_purpose)):
             m = f"Invalid wf_purpose: '{wf_purpose}'"
             logger.error(m)
             return False, m
-        if wb_type not in bdm.VALID_WB_TYPE_VALUES:
+        if (p3u.str_empty(wb_type) or wb_type not in bdm.VALID_WB_TYPE_VALUES):
             m = f"Invalid wb_type: '{wb_type}'"
             logger.error(m)
             return False, m
@@ -814,68 +810,4 @@ def WORKFLOW_TASK_construct_bdm_workbook(src_filename: str,
         logger.error(err_msg)
         return False, err_msg
 #endregion WORKFLOW_TASK_contstruct_wb_file_url() function
-# ---------------------------------------------------------------------------- +
-
-# ---------------------------------------------------------------------------- +
-#region WORKFLOW_TASK helper functions
-# ---------------------------------------------------------------------------- +
-#region process_selected_workbook_input() function
-# def process_selected_workbook_input(cmd: p3m.CMD_OBJECT_TYPE, 
-#                     bdm_DC: BudManAppDataContext_Base) -> List[BDMWorkbook]:
-#     """Process the workbook input from the command, return a list of 
-#     BDMWorkbooks, which may be empty.
-
-#     Arguments:
-#         cmd (Dict): A p3m.CMD_OBJECT.
-
-#     Returns:
-#         List[BDMWorkbook]: A list of BDMWorkbook objects.
-#     """
-#     try:
-#         # TODO: this is duplicated code from a view_model method, needed until
-#         # the workflow command processing is refactored.
-#         # Extract common command attributes to select workbooks for task action.
-#         wb_list : List[int] = cmd.get(cp.CK_WB_LIST, [])
-#         all_wbs : bool = cmd.get(cp.CK_ALL_WBS, bdm_DC.dc_ALL_WBS)
-#         selected_bdm_wb_list : List[BDMWorkbook] = []
-#         load_workbook:bool = cmd.get(cp.CK_LOAD_WORKBOOK, False)
-#         if all_wbs:
-#             # If all_wbs is True, process all workbooks in the data context.
-#             selected_bdm_wb_list = list(bdm_DC.dc_WORKBOOK_DATA_COLLECTION.values())
-#         elif len(wb_list) > 0:
-#             for wb_index in wb_list:
-#                 bdm_wb = bdm_DC.dc_WORKBOOK_by_index(wb_index)
-#                 selected_bdm_wb_list.append(bdm_wb)
-#         else:
-#             # No workbooks selected by the command parameters.
-#             return selected_bdm_wb_list
-#         for bdm_wb in selected_bdm_wb_list:
-#             bdm_wb_abs_path = bdm_wb.abs_path()
-#             if bdm_wb_abs_path is None:
-#                 selected_bdm_wb_list.remove(bdm_wb)
-#                 m = f"Excluded workbook: '{bdm_wb.wb_id}', "
-#                 m += f"workbook url is not valid: {bdm_wb.wb_url}"   
-#                 logger.error(m)
-#                 continue
-#             if load_workbook and not bdm_wb.wb_loaded:
-#                 # Load the workbook content if it is not loaded.
-#                 success, result = bdm_DC.dc_WORKBOOK_content_get(bdm_wb)
-#                 if not success:
-#                     selected_bdm_wb_list.remove(bdm_wb)
-#                     m = f"Excluded workbook: '{bdm_wb.wb_id}', "
-#                     m += f"failed to load: {result}"
-#                     logger.error(m)
-#                     continue
-#                 if not bdm_wb.wb_loaded:
-#                     logger.warning(f"Workbook '{bdm_wb.wb_id}' wb_loaded was False!")
-#                     bdm_wb.wb_loaded = True
-#                 # self.dc_LOADED_WORKBOOKS[bdm_wb.wb_id] = wb_content
-#         return selected_bdm_wb_list
-#     except Exception as e:
-#         m = f"Error processing workbook input: {p3u.exc_err_msg(e)}"
-#         logger.error(m)
-#         raise RuntimeError(m)
-#endregion process_selected_workbook_input() function
-# ---------------------------------------------------------------------------- +
-#endregion WORKFLOW_TASK helper functions
 # ---------------------------------------------------------------------------- +

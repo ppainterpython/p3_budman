@@ -191,7 +191,7 @@ class TransactionData:
     currency: str = None
     account_code: str = None
     amount: float = 0.0
-    category: str = None
+    category: str = field(default="Other")
     level1: str = None
     level2: str = None
     level3: str = None
@@ -201,7 +201,26 @@ class TransactionData:
     payee: str = field(default="")
     rule: int = field(default=-1)
     manual: bool = field(default=False)
-    
+    row_data: Dict[str, any] = field(default_factory=dict)
+
+    def __post_init__(self):
+        """Post-initialization processing."""
+        # tid is a hash generated from of the transaction data as text
+        self.tid = p3u.gen_hash_key(p3u.iso_date_only_string(self.date) + 
+                                    self.description + self.currency + 
+                                    str(self.amount) + self.account_code)
+        self.year_month = year_month_str(self.date) 
+        if self.description is None:
+            self.description = ""
+        if self.category is None:
+            self.category = "Other"
+        if self.account_code is None:
+            self.account_code = "unknown"
+        if self.payee is None:
+            self.payee = "unknown"
+        if self.debit_credit is None:
+            self.debit_credit = '-'
+
     def data_str(self) -> str:
         """Return a string representation of the transaction data."""
         ret =  f"{self.tid:12}|{self.date.strftime("%m/%d/%Y")}|"
@@ -215,7 +234,6 @@ class TransactionData:
 # ---------------------------------------------------------------------------- +
 #region WORKFLOW_TASK_check_sheet_columns() function
 def WORKFLOW_TASK_check_sheet_columns(sheet: Worksheet, 
-                        trans_desc: str,
                         add_columns: bool = True) -> bool:
     """Check that the sheet is ready to process transactions.
     
@@ -251,11 +269,6 @@ def WORKFLOW_TASK_check_sheet_columns(sheet: Worksheet,
         missing_columns = [col for col in BUDMAN_REQUIRED_COLUMNS if col not in col_names]
         
         if missing_columns is not None and len(missing_columns) > 0:
-            # If the trans_desc column is missing, cannot continue.
-            if trans_desc in missing_columns:
-                m = f"Source transaction description column '{trans_desc}' not found in header row."
-                logger.error(m)
-                return False
             logger.error(f"Some required columns are present in sheet:('{sheet.title}')")
             logger.error(f"  Missing Columns: '{missing_columns}'")
         
@@ -408,34 +421,30 @@ def WORKSHEET_row_data(row:tuple,hdr:list=BUDMAN_WB_COLUMNS) -> TransactionData:
         # Second, verify the hdr contains the required columns.
         row_dict = dict(zip(hdr, row_values))  # Create a dict from the header and row values.
 
-        # Extract some of the values as strings to generate a hash from
-        t_date_str = p3u.iso_date_only_string(row_dict[DATE_COL_NAME])
-        t_desc = row_dict[TRANSACTION_DESCRIPTION_COL_NAME]
-        t_currency = row_dict[CURRENCY_COL_NAME]
-        t_amt_str = str(row_dict[AMOUNT_COL_NAME])
-        t_acct_str = row_dict[ACCOUNT_NAME_COL_NAME]
-        t_all_str = t_date_str + t_desc + t_currency + t_amt_str + t_acct_str
-        t_id = p3u.gen_hash_key(t_all_str) 
+        t_year_month = year_month_str(row_dict[DATE_COL_NAME])
         t_manual: bool = False
         t_rule: int = row_dict[RULE_COL_NAME] if RULE_COL_NAME in row_dict else -1
         if isinstance(t_rule, int) and t_rule > 20200000:
             t_manual = True
+        t_acct_code: str = row_dict[ACCOUNT_NAME_COL_NAME].split('-')[-1].strip()
+        t_debit_credit: str = 'C' if row_dict[AMOUNT_COL_NAME] > 0 else 'D'
 
         transaction = TransactionData(
-            tid=t_id,
+            tid=None,
             date=row_dict[DATE_COL_NAME],
             description=row_dict[TRANSACTION_DESCRIPTION_COL_NAME],
             currency=row_dict[CURRENCY_COL_NAME],
             amount=row_dict[AMOUNT_COL_NAME],
-            account_code=row_dict[ACCOUNT_CODE_COL_NAME],
+            account_code=t_acct_code,
             category=row_dict[BUDGET_CATEGORY_COL_NAME],
             level1=row_dict[LEVEL_1_COL_NAME],
             level2=row_dict[LEVEL_2_COL_NAME],
             level3=row_dict[LEVEL_3_COL_NAME],
-            debit_credit=row_dict[DEBIT_CREDIT_COL_NAME],
-            year_month=row_dict[YEAR_MONTH_COL_NAME],
-            rule=row_dict[RULE_COL_NAME],
-            manual=t_manual
+            debit_credit=t_debit_credit,
+            year_month=t_year_month,
+            rule=t_rule,
+            manual=t_manual,
+            row_data=row_dict
         )
         return transaction
     except Exception as e:
@@ -700,10 +709,11 @@ def WORKFLOW_TASK_process_budget_category(bdm_wb:BDMWorkbook,
                  f"no action taken.")
             logger.error(m)
             return False, m
-        # For the FI_KEY, get the name of the workbook column used as the 
-        # transaction description (trans_desc) which is mapped to a budget 
-        # category (bud_cat). Map 'trans_desc' column to 'bud_cat' column in 
-        # the workbook being category mapped.
+        # For the FI_KEY, get configured workbook column names used as the 
+        # transaction description (trans_desc) column which is mapped to a 
+        # budget category (bud_cat). Map 'trans_desc' column to 'bud_cat' 
+        # column. The FI-specific column names are configured in the
+        # BDM_STORE.
         trans_desc = fi_obj[FI_TRANSACTION_DESCRIPTION_COLUMN]
         if not p3u.is_non_empty_str("src", trans_desc):
             m = f"Source transaction description column name '{str(trans_desc)}' is not valid."
@@ -714,8 +724,8 @@ def WORKFLOW_TASK_process_budget_category(bdm_wb:BDMWorkbook,
             m = f"Destination budget category column name '{str(bud_cat)}' is not valid."
             logger.error(m)
             return False, m
-        # Now get the name of the worksheet in the workbook containung the
-        # transactions for catgegory mapping.
+        # Now get the BDM_STORE-configured name of the worksheet in the workbook 
+        # containing the transactions for catgegory mapping.
         ws_name = fi_obj[FI_TRANSACTION_WORKSHEET_NAME]
         if not p3u.is_non_empty_str("ws_name", ws_name):
             m = f"For FI_KEY: '{fi_key}', Transaction worksheet name '{str(ws_name)}' is not valid."
@@ -729,11 +739,16 @@ def WORKFLOW_TASK_process_budget_category(bdm_wb:BDMWorkbook,
             logger.error(m)
             return False, m
         #
+
+        # Get the configured Path for the FI's other category workbook.
+        other_cat_full_filename: str = fi_obj[FI_OTHER_CATEGORY_WORKBOOK_FULL_FILENAME]
+        fi_folder: Path = bdm_DC.model.bsm_FI_FOLDER_abs_path(fi_key)
+        other_cat_path: Path = fi_folder / other_cat_full_filename
         #endregion FI-specific data needed for the workbook
 
         # The workbooks's transaction worksheet is now available as ws.
         # Check that the required columns are present.
-        if not WORKFLOW_TASK_check_sheet_columns(ws, trans_desc, add_columns=False):
+        if not WORKFLOW_TASK_check_sheet_columns(ws, add_columns=False):
             m = (f"Sheet '{ws.title}' cannot be mapped due to "
                     f"missing required columns.")
             logger.error(m)
@@ -746,11 +761,17 @@ def WORKFLOW_TASK_process_budget_category(bdm_wb:BDMWorkbook,
         # row tuple matching the column name in hdr.
         hdr = [cell.value for cell in ws[1]] # Extract hdr col names. 
 
+        # Open Other category workbook to save unmapped rows.
+        other_wb: Workbook = None
+        other_ws: Worksheet = None
+        other_wb, other_ws = open_other_category_workbook(other_cat_path,
+                                                          hdr, 
+                                                          clear_content=clear_other)
         # TODO: need to refactor this to do replacements by col_name or something.
         # This is specific to the Budget Category mapping, which now is to be
         # split into 3 levels: Level1, Level2, Level3.
 
-        # Setup index values for each hdr column of interest for row access.
+        # Setup row index values for each hdr column.
         trans_desc_i = col_i(trans_desc,hdr)
         bud_cat_i = col_i(bud_cat,hdr)
         date_i = col_i(DATE_COL_NAME,hdr)
@@ -762,7 +783,6 @@ def WORKFLOW_TASK_process_budget_category(bdm_wb:BDMWorkbook,
         year_month_i = col_i(YEAR_MONTH_COL_NAME,hdr)
         acct_name_i = col_i(ACCOUNT_NAME_COL_NAME,hdr)
         acct_code_i = col_i(ACCOUNT_CODE_COL_NAME,hdr)
-        acct_cell : Cell = ws.cell(row=1, column=acct_name_i + 1)
         payee_i = col_i(PAYEE_COL_NAME,hdr)
         essential_i = col_i(ESSENTIAL_COL_NAME,hdr)
         rule_i = col_i(RULE_COL_NAME,hdr)
@@ -773,11 +793,6 @@ def WORKFLOW_TASK_process_budget_category(bdm_wb:BDMWorkbook,
         other_count = 0
         ch = clear_category_histogram()  # Clear the category histogram.
         rules_count = category_map_count()
-        # Open Other category workbook to save unmapped rows.
-        other_wb: Workbook = None
-        other_ws: Worksheet = None
-        other_wb, other_ws = open_other_category_workbook(hdr, 
-                                                          clear_content=clear_other)
 
         transactions: List[TransactionData] = []  # To hold all transactions.
         task_name = "WORKFLOW_TASK_process_budget_category()"
@@ -798,35 +813,30 @@ def WORKFLOW_TASK_process_budget_category(bdm_wb:BDMWorkbook,
                 logger.debug(f"{P2}Skipping manual: {trans_str}")
                 continue # skip due to manual category settings in workbook
             logger.debug(f"{P2}{trans_str}") if log_all else None
-            bud_cat_value, payee, rule_index = WORKFLOW_TASK_categorize_transaction(
-                transaction.description, 
+            transaction = WORKFLOW_TASK_categorize_transaction(
+                transaction, 
                 fi_txn_catalog, 
                 log_all)
-            row[bud_cat_i].value = bud_cat_value # Capture bud_cat mapping 
+            row[bud_cat_i].value = transaction.category # Capture bud_cat mapping 
             # Modify the actual row with additional values for BudMan.
-            date_val = row[date_i].value
-            year_month: str = year_month_str(date_val) if date_val else None
-            row[year_month_i].value = year_month
-            l1, l2, l3 = p3u.split_parts(bud_cat_value)
-            row[l1_i].value = l1 if l1_i != -1 else None
-            row[l2_i].value = l2 if l2_i != -1 else None
-            row[l3_i].value = l3 if l3_i != -1 else None
-            row[dORc_i].value = 'C' if row[amt_i].value > 0 else 'D'
-            acct_value = row[acct_name_i].value
-            t_acct_code = acct_value.split('-')[-1].strip()
-            row[acct_code_i].value = t_acct_code if acct_code_i != -1 else None
-            if payee is not None:
-                row[payee_i].value = payee if payee_i != -1 else None
+            row[year_month_i].value = transaction.year_month
+            row[l1_i].value = transaction.level1 if l1_i != -1 else None
+            row[l2_i].value = transaction.level2 if l2_i != -1 else None
+            row[l3_i].value = transaction.level3 if l3_i != -1 else None
+            row[dORc_i].value = transaction.debit_credit if dORc_i != -1 else None
+            row[acct_code_i].value = transaction.account_code if acct_code_i != -1 else None
+            if transaction.payee is not None:
+                row[payee_i].value = transaction.payee if payee_i != -1 else "unknown"
             essential_value = False
-            if (bud_cat_value != 'Other' and 
-                bud_cat_value in fi_txn_catalog.category_collection):
-                essential_value = fi_txn_catalog.category_collection[bud_cat_value].essential
+            if (transaction.category != 'Other' and 
+                transaction.category in fi_txn_catalog.category_collection):
+                essential_value = fi_txn_catalog.category_collection[transaction.category].essential
             else:
-                logger.warning(f"'{bud_cat_value}' not found in category collection.")
+                logger.warning(f"'{transaction.category}' not found in category collection.")
             row[essential_i].value = essential_value if essential_i != -1 else None
-            row[rule_i].value = rule_index if rule_i != -1 else None
+            row[rule_i].value = transaction.rule if rule_i != -1 else None
             # Capture 'Other' category transactions.
-            if bud_cat_value == 'Other':
+            if transaction.category == 'Other':
                 copy_row_to_worksheet(row, other_ws)
                 other_count += 1
                 logger.debug(f"'Other': {trans_str}" )
@@ -878,12 +888,13 @@ def copy_row_to_worksheet(source_row, dest_worksheet):
 # ---------------------------------------------------------------------------- +
 #region WORKFLOW_TASK_categorize_transaction() function
 def WORKFLOW_TASK_categorize_transaction(
-        description : str, 
+        transaction: TransactionData, 
         txn_catalog:TXNCategoryCatalog,
-        log_all : bool) -> Tuple[str,str]:
+        log_all : bool) -> TransactionData:
     """Use txn_catalog patterns to map description text to a category."""
     try:
-        p3u.is_non_empty_str("description", description, raise_error=True)
+        p3u.is_not_obj_of_type("transaction", transaction, TransactionData, 
+                               raise_error=True)
         p3u.is_not_obj_of_type("txn_catalog", txn_catalog, TXNCategoryCatalog,
                                raise_error=True)
         txn_catalog.valid
@@ -895,9 +906,14 @@ def WORKFLOW_TASK_categorize_transaction(
         payee = ""
         rule_index = 0
         for rule_index, (pattern, category) in enumerate(ccm.items()):
-            payee = ""
-            m = pattern.search(description)
+            transaction.payee = "unknown"
+            transaction.rule = -1
+            transaction.category = "Other"
+            m = pattern.search(transaction.description)
             if m:
+                transaction.category = ch.count(category)
+                transaction.rule = rule_index
+                transaction.level1, transaction.level2, transaction.level3 = p3u.split_parts(category)
                 if category not in tcc_keys:
                     logger.warning(f"FI key '{fi_key}' rule_index: '{rule_index}', "
                                    f"Category '{category}', not found in "
@@ -909,17 +925,17 @@ def WORKFLOW_TASK_categorize_transaction(
                                      f"pattern: '{pattern.pattern}' "
                                      f"category: '{category}', "
                                      f"groups: '{gc}', no payee found.")
-                    return ch.count(category), payee, rule_index
-                payee = m[1]
+                    return transaction
+                transaction.payee = m[1]
                 # print(f"Matched pattern: '{pattern.pattern}' with payee: '{payee}'")
                 if log_all:
                     logger.debug(f"{P2}Matched rule_index: '{rule_index}', "
                                  f"pattern: '{pattern.pattern}' "
                                  f"category: '{category}', "
                                  f"payee: '{payee}', groups: '{gc}'.")
-                return ch.count(category), payee, rule_index
-        logger.debug(f"{P2}No Match Description: [{description}]")
-        return ch.count('Other'), 'Other', -1  # Default category if no match is found
+                return transaction
+        logger.debug(f"{P2}No Match Description: [{transaction.description}]")
+        return transaction  # Default category if no match is found
     except re.PatternError as e:
         logger.error(p3u.exc_err_msg(e))
         logger.error(f'Pattern error: compiled_category_map dict: ' 
@@ -931,7 +947,7 @@ def WORKFLOW_TASK_categorize_transaction(
 #endregion WORKFLOW_TASK_categorize_transaction() function
 # ---------------------------------------------------------------------------- +
 #region open_other_category_workbook() function
-def open_other_category_workbook(hdr: List[str],clear_content:bool=True) -> Tuple[Workbook, Worksheet]:
+def open_other_category_workbook(other_wb_path: Path,hdr: List[str],clear_content:bool=True) -> Tuple[Workbook, Worksheet]:
     """Open the 'Other' category workbook.
 
     Args:
@@ -941,8 +957,7 @@ def open_other_category_workbook(hdr: List[str],clear_content:bool=True) -> Tupl
         Optional[BDMWorkbook]: The 'Other' category workbook, or None if not found.
     """
     try:
-        other_wb_abs_path_str = "C:/Users/ppain/OneDrive/budget/boa/Other.excel_txns.xlsx"
-        other_wb_path: Path = Path(other_wb_abs_path_str)
+        p3u.is_not_obj_of_type("other_wb_path", other_wb_path, Path,raise_error=True)
         other_wb: Workbook = load_workbook(other_wb_path)
         other_ws: Worksheet = other_wb.active
         # Clear the other worksheet before processing.

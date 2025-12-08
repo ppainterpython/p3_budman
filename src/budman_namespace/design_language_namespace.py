@@ -154,6 +154,7 @@ FI_TRANSACTION_BUDGET_CATEGORY_COLUMN = "fi_transaction_budget_category_column"
 FI_TRANSACTION_WORKSHEET_NAME = "fi_transaction_worksheet_name"
 FI_WF_FOLDER_CONFIG_COLLECTION = "fi_wf_folder_config_collection" 
 FI_WORKBOOK_DATA_COLLECTION = "fi_workbook_data_collection" 
+FI_OTHER_CATEGORY_WORKBOOK_FULL_FILENAME = "fi_other_category_workbook_full_filename"
 VALID_FI_OBJECT_ATTR_KEYS = (FI_KEY, FI_NAME, FI_TYPE, FI_FOLDER, 
                              FI_WF_FOLDER_CONFIG_COLLECTION, 
                              FI_TRANSACTION_WORKSHEET_NAME,

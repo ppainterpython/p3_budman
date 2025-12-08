@@ -231,6 +231,7 @@ class BudManCLIParser():
     def list_cmd_parser_setup(self,app_name : str = "not-set") -> None:
         """Setup the command line argument parsers for the list command."""
         try:
+            #region parser setup
             parser = self.list_cmd
             parser.prog = app_name
             list_cmd_defaults = {
@@ -240,7 +241,8 @@ class BudManCLIParser():
             parser.set_defaults(**list_cmd_defaults)
             # List command subparsers
             list_subparsers = parser.add_subparsers()
-
+            #endregion parser setup
+            
             #region bdm_store_subcmd_parser
             # list BDM_STORE 
             bdm_store_subcmd_parser = list_subparsers.add_parser(

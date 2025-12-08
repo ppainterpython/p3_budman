@@ -53,7 +53,8 @@ class BSMFile():
         self.type: str = type
         self.folder_index: int = folder_index
         self.file_index: int = file_index
-        self.file_url: Optional[str] = file_url
+        self._file_url: Optional[str] = file_url
+        self._file_url = self._file_url.lower() if self._file_url else None
         self._valid_prefixes: List[str] = valid_prefixes if valid_prefixes else []
         self._valid_wb_types: List[str] = valid_wb_types if valid_wb_types else []
         self._path: Path = None
@@ -70,6 +71,14 @@ class BSMFile():
     def __str__(self) -> str:
         return self.full_filename
 
+    @property
+    def file_url(self) -> Optional[str]:
+        """Return the file URL."""
+        return self._file_url.lower() if self._file_url else None
+    @file_url.setter
+    def file_url(self, value: str) -> None:
+        """Set the file URL."""
+        self._file_url = value.lower() if value else None
     @property
     def full_filename(self) -> Optional[str]:
         """Return the full filename (with extension) of the file."""
@@ -156,16 +165,16 @@ class BSMFile():
     def verify_url(self) -> Optional[Path]:
         """Verify the file URL."""
         try:
-            return bsm_URL_verify_file_scheme(self.file_url)
+            return bsm_URL_verify_file_scheme(self._file_url)
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             return False
 
     def update(self) -> None:
         """Update the prefix and wb_type properties based on the filename."""
-        if not self.file_url:
+        if not self._file_url:
             return
-        self._path = Path.from_uri(self.file_url)
+        self._path = Path.from_uri(self._file_url)
         self._full_filename = self._path.name
         self._filename = self._path.stem
         self._extension = self._path.suffix
@@ -183,7 +192,7 @@ class BSMFile():
                 self._wb_type = wb_type
                 self._filename = self._filename[:-len(wb_type)]
                 break
-    def delete(self) -> None:
+    def delete_file(self) -> None:
         """Delete the file from storage."""
         try:
             if not self.abs_path or not self.abs_path.exists():

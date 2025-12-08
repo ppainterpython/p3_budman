@@ -120,7 +120,7 @@ class BSMFileTree:
                 folder_index += 1
                 # iterdir() returns "arbitrary order, may need to sort."
                 for item in current_path.iterdir(): # Windows file system sprecific.
-                    node_id = item.as_uri() # str(item.resolve())
+                    node_id = item.as_uri().lower() 
                     if item.is_dir():
                         # Folder
                         # Apply folder exclude list
@@ -128,25 +128,32 @@ class BSMFileTree:
                                         "copies","__pycache__", "personal"]:
                             continue
                         tag = f"{folder_index:03}:{item.name}"
-                        folder_bsm_file: BSMFile = BSMFile(BSMFile.BSM_FOLDER, 
-                                                           folder_index, 
-                                                           -1, 
-                                                           node_id,
-                                             valid_prefixes=self.valid_prefixes,
-                                             valid_wb_types=self.valid_wb_types)
-                        file_tree.create_node(tag=tag, identifier=node_id,
+                        folder_bsm_file: BSMFile = BSMFile(
+                            BSMFile.BSM_FOLDER, 
+                            folder_index, 
+                            -1, 
+                            node_id,
+                            valid_prefixes=self.valid_prefixes,
+                            valid_wb_types=self.valid_wb_types)
+                        file_tree.create_node(
+                            tag=tag, 
+                            identifier=node_id,
                             parent=parent_id,
                             data=folder_bsm_file)
                         add_nodes(item, node_id)
                     else:
                         # File
                         tag = f"{file_index:03}:{item.name}"
-                        file_bsm_file: BSMFile = BSMFile(BSMFile.BSM_FILE, folder_index, file_index, item.as_uri(),
-                                                        valid_prefixes=self.valid_prefixes,
-                                                        valid_wb_types=self.valid_wb_types)
-                        file_tree.create_node(tag=tag, identifier=node_id,
-                                        parent=parent_id,
-                                        data=file_bsm_file)
+                        file_bsm_file: BSMFile = BSMFile(
+                            BSMFile.BSM_FILE, folder_index, 
+                            file_index, item.as_uri(),
+                            valid_prefixes=self.valid_prefixes,
+                            valid_wb_types=self.valid_wb_types)
+                        file_tree.create_node(
+                            tag=tag, 
+                            identifier=node_id,
+                            parent=parent_id,
+                            data=file_bsm_file)
                         file_index += 1
                 return
             except Exception as e:
@@ -160,7 +167,7 @@ class BSMFileTree:
             logger.error(p3u.exc_err_msg(e))
             raise
 
-    def delete(self, bsm_file: BSMFile) -> None:
+    def delete_file(self, bsm_file: BSMFile) -> None:
         """Delete the file_tree .json file if it exists."""
         try:
             if not bsm_file:
@@ -214,7 +221,7 @@ class BSMFileTree:
                 if not file_node.is_leaf(): # only look at file nodes, which are leafs
                     if (file_node.data and isinstance(file_node.data, BSMFile)):
                         bsm_file: BSMFile = file_node.data
-                        if file_url == bsm_file.file_url:
+                        if file_url == bsm_file._file_url:
                             # Return a deep copy of the sub tree at file_url
                             sub_tree:Tree = self.file_tree.subtree(node_id)
                             return Tree(sub_tree,deep=True)
@@ -236,6 +243,10 @@ class BSMFileTree:
                     raise ValueError(f"No sub tree found for file_url: {file_url}")
             bsm_files: List[BSMFile] = []
             for fi in file_list:
+                if fi > self.max_file_index or fi < 0:
+                    err_msg = f"Ignoring file_index '{fi}', out of range (0 to {self.max_file_index})."
+                    logger.error(err_msg)
+                    continue
                 for node_id in sub_tree.expand_tree(mode=Tree.WIDTH):
                     file_node: Node = sub_tree.get_node(node_id)
                     if file_node.is_leaf(): # only look at file nodes, which are leafs
@@ -244,7 +255,7 @@ class BSMFileTree:
                             # Matched fi to validate
                             bsm_file: BSMFile = file_node.data
                             if not bsm_file.verify_url():
-                                err_msg = f"File_index '{fi}' has an invalid URL: {bsm_file.file_url}"
+                                err_msg = f"File_index '{fi}' has an invalid URL: {bsm_file._file_url}"
                                 logger.error(err_msg)
                                 raise RuntimeError(err_msg)
                             bsm_files.append(bsm_file)
@@ -271,7 +282,7 @@ class BSMFileTree:
                         file_info_list += f"{bsm_file.full_filename or 'N/A':<50} "
                         file_info_list += f"'{bsm_file.prefix or 'N/A':<15}' "
                         file_info_list += f"'{bsm_file.wb_type or 'N/A':<15}' "
-                        file_info_list += f"{bsm_file.file_url}\n"
+                        file_info_list += f"{bsm_file._file_url}\n"
             return file_info_list
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))

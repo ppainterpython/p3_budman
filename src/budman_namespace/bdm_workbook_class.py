@@ -63,6 +63,16 @@ class BDMWorkbook:
     wb_schema_version: str = BDMWORKBOOK_SCHEMA_VERSION # added 08/04/2025
     #endregion dataclass object attributes
     # ------------------------------------------------------------------------ +
+    #region __post_init__() method
+    def __post_init__(self) -> None:
+        """BDMWorkbook.__post_init__() method."""
+        try:
+            self.wb_url = self.wb_url.lower() if self.wb_url else None
+        except Exception as e:
+            logger.error(f"BDMWorkbook __post_init__ error: {p3u.exc_err_msg(e)}")
+            raise
+    #endregion __post_init__() method
+    # ------------------------------------------------------------------------ +
     #region __getitem__() and __setitem__() methods
     def __getitem__(self, key: str):
         # Try to get a property or attribute by name

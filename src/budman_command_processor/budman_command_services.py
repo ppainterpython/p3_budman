@@ -99,7 +99,7 @@ def BUDMAN_CMD_process(cmd: p3m.CMD_OBJECT_TYPE,
         # Show command
         elif cmd[p3m.CK_CMD_KEY] == cp.CV_SHOW_CMD_KEY:
             if cmd[p3m.CK_SUBCMD_KEY] == cp.CV_SHOW_DATA_CONTEXT_SUBCMD_KEY:
-                return BUDMAN_CMD_TASK_show_DATA_CONTEXT(cmd, bdm_DC)
+                return BUDMAN_CMD_show_DATA_CONTEXT(cmd, bdm_DC)
             elif cmd[p3m.CK_SUBCMD_KEY] == cp.CV_SHOW_BUDGET_CATEGORIES_SUBCMD_KEY:
                 return BUDMAN_CMD_TASK_show_BUDGET_CATEGORIES(cmd, bdm_DC)
             else:
@@ -322,14 +322,51 @@ def BUDMAN_CMD_list_files(cmd: p3m.CMD_OBJECT_TYPE,
         cmd_result[p3m.CK_CMD_RESULT_STATUS] = True
         cmd_result[p3m.CK_CMD_RESULT_CONTENT_TYPE] = p3m.CV_CMD_FILE_TREE_OBJECT
         cmd_result[p3m.CK_CMD_RESULT_CONTENT] = file_tree
-        # msg = f"Workflow Folder Tree for WORKFLOW('{wf_key}') "
-        # msg += f"PURPOSE('{wf_purpose}')"
-
         return cmd_result
     except Exception as e:
         return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
 #endregion BUDMAN_CMD_list_files()
 # ---------------------------------------------------------------------------- +    
+#region BUDMAN_CMD_show_DATA_CONTEXT()
+def BUDMAN_CMD_show_DATA_CONTEXT(cmd: p3m.CMD_OBJECT_TYPE,
+                                bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
+    """Show the data context for the command."""
+    try:
+        # Gather the current content of the DATA_CONTEXT.
+        bs = bdm_DC.dc_BDM_STORE
+        bs_str = p3u.first_n(str(bs))
+        # Prepare the Command output result
+        result = f"Budget Manager Data Context:"
+        result += f"{P2}{bdm.DC_INITIALIZED}: {bdm_DC.dc_INITIALIZED}\n"
+        result += f"{P2}{bdm.DC_BDM_STORE}: {bs_str}\n"
+        result += "Current Workflow Location:"
+        result += ( f"{P2}{bdm.FI_KEY}: {bdm_DC.dc_FI_KEY}"
+                    f"{P2}{bdm.WF_KEY}: {bdm_DC.dc_WF_KEY}"
+                    f"{P2}{bdm.WF_PURPOSE}: {bdm_DC.dc_WF_PURPOSE}\n")
+        result += "Current Workbook:"
+        wb:BDMWorkbook = bdm_DC.dc_WORKBOOK
+        if wb:
+            result += (f"{P2}{bdm.WB_ID}: {bdm_DC.dc_WB_ID}"
+                        f"{P2}{bdm.WB_INDEX}: {bdm_DC.dc_WB_INDEX}"
+                        f"{P2}{bdm.WB_NAME}: {bdm_DC.dc_WB_NAME}"
+                        f"{P2}{bdm.WB_TYPE}: {bdm_DC.dc_WB_TYPE}\n")
+        else:
+            result += (f"{P2}{bdm.WB_ID}: ..."
+                        f"{P2}{bdm.WB_INDEX}: ..."
+                        f"{P2}{bdm.WB_NAME}: ..."
+                        f"{P2}{bdm.WB_TYPE}: ...\n")
+        _, wdc_result = get_workbook_data_collection_info_str(bdm_DC)
+        result += wdc_result
+        return p3m.create_CMD_RESULT_OBJECT(
+            cmd_result_status=True,
+            result_content=result,
+            result_content_type=p3m.CV_CMD_STRING_OUTPUT,
+            cmd_object=cmd
+        )
+    except Exception as e:
+        return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
+#endregion BUDMAN_CMD_show_DATA_CONTEXT()
+# ---------------------------------------------------------------------------- +
 #region BUDMAN_CMD_app_sync()
 def BUDMAN_CMD_app_sync(cmd: p3m.CMD_OBJECT_TYPE,
                          bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
@@ -367,9 +404,9 @@ def BUDMAN_CMD_app_sync(cmd: p3m.CMD_OBJECT_TYPE,
         # Sync the BDM_STORE to the BSM.
         wb: BDMWorkbook = None
         for bsm_file in bsm_file_tree.all_workbooks():
-            logger.debug(f"BSM file_url: '{bsm_file.file_url}'")
+            logger.debug(f"BSM file_url: '{bsm_file._file_url}'")
             wb = model.bdm_WORKBOOK_DATA_COLLECTION_find(bdm.WB_URL,
-                                                          bsm_file.file_url)
+                                                          bsm_file._file_url)
             if wb:
                 logger.debug(f"Found matching BDMWorkbook: '{wb.wb_id}'")
         # Success
@@ -470,7 +507,8 @@ def BUDMAN_CMD_app_delete(cmd: p3m.CMD_OBJECT_TYPE,
                 cp.CK_ALL_FILES
             ]
         )
-        fr: str = "Delete files sart: ..."
+        fr: str = "Delete files start: ..."
+        logger.debug(fr)
         m: str = ""
         logger.info(fr)
         model: BudgetDomainModel = bdm_DC.model
@@ -481,26 +519,25 @@ def BUDMAN_CMD_app_delete(cmd: p3m.CMD_OBJECT_TYPE,
         bsm_files = bsm_file_tree.validate_file_list(selected_file_list)
         bsm_file: BSMFile = None
         for bsm_file in bsm_files:
-            logger.debug(f"{P2}Deleting BSM file_url: '{bsm_file.file_url}'")
+            logger.debug(f"{P2}Deleting BSM file_url: '{bsm_file._file_url}'")
             if bsm_file.in_bdm:
-                m = f"{P2}BSM file_url: '{bsm_file.file_url}' is flagged in BDM."
+                m = f"{P2}BSM file_url: '{bsm_file._file_url}' is flagged in BDM."
                 logger.warning(m)
                 fr += f"\n{m}"
-            tree_node: Node = bsm_file_tree.file_tree.get_node(bsm_file.file_url)
+            tree_node: Node = bsm_file_tree.file_tree.get_node(bsm_file._file_url)
             # Remove the bsm_file node from the file_tree
             if tree_node:
                 bsm_file_tree.file_tree.remove_node(tree_node.identifier)
             # Remove the physical file from storage
-            bsm_file.delete()
-            m = f"BizEVENT: Deleted file: '{bsm_file.file_url}'"
+            bsm_file.delete_file()
+            m = f"BizEVENT: Deleted file: '{bsm_file._file_url}'"
             logger.info(m)
             fr += f"\n{m}"
             # Delete the BSMFile object.
             del bsm_file
 
         # Refresh the trees
-        model.bdm_FILE_TREE_refresh()
-        model.bdm_WORKBOOK_TREE_refresh()
+        model.bdm_refresh_trees()
         return p3m.create_CMD_RESULT_OBJECT(True, p3m.CV_CMD_STRING_OUTPUT, fr, cmd)
     except Exception as e:
         return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
@@ -624,46 +661,6 @@ def BUDMAN_CMD_TASK_get_workbook_tree(bdm_DC: BudManAppDataContext_Base) -> Rich
         return None
 #endregion BUDMAN_CMD_TASK_get_workbook_tree
 # ---------------------------------------------------------------------------- +    
-#region BUDMAN_CMD_TASK_show_DATA_CONTEXT()
-def BUDMAN_CMD_TASK_show_DATA_CONTEXT(cmd: p3m.CMD_OBJECT_TYPE,
-                                bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
-    """Show the data context for the command."""
-    try:
-        # Gather the current content of the DATA_CONTEXT.
-        bs = bdm_DC.dc_BDM_STORE
-        bs_str = p3u.first_n(str(bs))
-        # Prepare the Command output result
-        result = f"Budget Manager Data Context:"
-        result += f"{P2}{bdm.DC_INITIALIZED}: {bdm_DC.dc_INITIALIZED}\n"
-        result += f"{P2}{bdm.DC_BDM_STORE}: {bs_str}\n"
-        result += "Current Workflow Location:"
-        result += ( f"{P2}{bdm.FI_KEY}: {bdm_DC.dc_FI_KEY}"
-                    f"{P2}{bdm.WF_KEY}: {bdm_DC.dc_WF_KEY}"
-                    f"{P2}{bdm.WF_PURPOSE}: {bdm_DC.dc_WF_PURPOSE}\n")
-        result += "Current Workbook:"
-        wb:BDMWorkbook = bdm_DC.dc_WORKBOOK
-        if wb:
-            result += (f"{P2}{bdm.WB_ID}: {bdm_DC.dc_WB_ID}"
-                        f"{P2}{bdm.WB_INDEX}: {bdm_DC.dc_WB_INDEX}"
-                        f"{P2}{bdm.WB_NAME}: {bdm_DC.dc_WB_NAME}"
-                        f"{P2}{bdm.WB_TYPE}: {bdm_DC.dc_WB_TYPE}\n")
-        else:
-            result += (f"{P2}{bdm.WB_ID}: ..."
-                        f"{P2}{bdm.WB_INDEX}: ..."
-                        f"{P2}{bdm.WB_NAME}: ..."
-                        f"{P2}{bdm.WB_TYPE}: ...\n")
-        _, wdc_result = get_workbook_data_collection_info_str(bdm_DC)
-        result += wdc_result
-        return p3m.create_CMD_RESULT_OBJECT(
-            cmd_result_status=True,
-            result_content=result,
-            result_content_type=p3m.CV_CMD_STRING_OUTPUT,
-            cmd_object=cmd
-        )
-    except Exception as e:
-        return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
-#endregion BUDMAN_CMD_TASK_show_DATA_CONTEXT()
-# ---------------------------------------------------------------------------- +
 #region BUDMAN_CMD_TASK_show_BUDGET_CATEGORIES()
 def BUDMAN_CMD_TASK_show_BUDGET_CATEGORIES(cmd: p3m.CMD_OBJECT_TYPE,
                                       bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
@@ -850,7 +847,8 @@ def workbook_names(wdc: bdm.WORKBOOK_DATA_COLLECTION_TYPE, wf_key: str, wf_purpo
 # ---------------------------------------------------------------------------- +
 #region process_selected_workbook_input()
 def process_selected_workbook_input(cmd: p3m.CMD_OBJECT_TYPE,
-                                    bdm_DC: BudManAppDataContext_Base) -> List[BDMWorkbook]:
+                                    bdm_DC: BudManAppDataContext_Base,
+                                    validate_url:bool = True) -> List[BDMWorkbook]:
     """Process the workbook input from the command, return a list of 
     BDMWorkbooks, which may be empty.
 
@@ -876,27 +874,28 @@ def process_selected_workbook_input(cmd: p3m.CMD_OBJECT_TYPE,
         else:
             # No workbooks selected by the command parameters.
             return selected_bdm_wb_list
-        for bdm_wb in selected_bdm_wb_list:
-            bdm_wb_abs_path = bdm_wb.abs_path()
-            if bdm_wb_abs_path is None:
-                selected_bdm_wb_list.remove(bdm_wb)
-                m = f"Excluded workbook: '{bdm_wb.wb_id}', "
-                m += f"workbook url is not valid: {bdm_wb.wb_url}"   
-                logger.error(m)
-                continue
-            if load_workbook and not bdm_wb.wb_loaded:
-                # Load the workbook content if it is not loaded.
-                success, result = bdm_DC.dc_WORKBOOK_content_get(bdm_wb)
-                if not success:
+        if validate_url:
+            for bdm_wb in selected_bdm_wb_list:
+                bdm_wb_abs_path = bdm_wb.abs_path()
+                if bdm_wb_abs_path is None:
                     selected_bdm_wb_list.remove(bdm_wb)
                     m = f"Excluded workbook: '{bdm_wb.wb_id}', "
-                    m += f"failed to load: {result}"
+                    m += f"workbook url is not valid: {bdm_wb.wb_url}"   
                     logger.error(m)
                     continue
-                if not bdm_wb.wb_loaded:
-                    logger.warning(f"Workbook '{bdm_wb.wb_id}' wb_loaded was False!")
-                    bdm_wb.wb_loaded = True
-                # self.dc_LOADED_WORKBOOKS[bdm_wb.wb_id] = wb_content
+                if load_workbook and not bdm_wb.wb_loaded:
+                    # Load the workbook content if it is not loaded.
+                    success, result = bdm_DC.dc_WORKBOOK_content_get(bdm_wb)
+                    if not success:
+                        selected_bdm_wb_list.remove(bdm_wb)
+                        m = f"Excluded workbook: '{bdm_wb.wb_id}', "
+                        m += f"failed to load: {result}"
+                        logger.error(m)
+                        continue
+                    if not bdm_wb.wb_loaded:
+                        logger.warning(f"Workbook '{bdm_wb.wb_id}' wb_loaded was False!")
+                        bdm_wb.wb_loaded = True
+                    # self.dc_LOADED_WORKBOOKS[bdm_wb.wb_id] = wb_content
         return selected_bdm_wb_list
     except Exception as e:
         m = f"Error processing workbook input: {p3u.exc_err_msg(e)}"

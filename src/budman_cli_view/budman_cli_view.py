@@ -148,7 +148,7 @@ class BudManCLIView(cmd2.Cmd,
     """
     #endregion doc string
     # ------------------------------------------------------------------------ +
-    #region Class variables
+    #region    Class variables
     prompt = "budman> "
     intro = "\nWelcome to the Budget Manager CLI. Type help or ? to list commands.\n"
     #endregion Class variables
@@ -189,7 +189,7 @@ class BudManCLIView(cmd2.Cmd,
         self.set_prompt()
     #endregion __init__() method
     # ------------------------------------------------------------------------ +
-    #region   BudManCLIView class properties
+    #region    BudManCLIView class properties
     @property
     def save_on_exit(self) -> bool:
         """Get the save_on_exit property."""
@@ -276,7 +276,7 @@ class BudManCLIView(cmd2.Cmd,
             raise
     #endregion BudManCLIView Methods
     # ------------------------------------------------------------------------ +
-    #region   postparsing_hook() Methods
+    #region    postparsing_hook() Methods
     def postparsing_hook(self, data: cmd2.plugin.PostparsingData) -> cmd2.plugin.PostparsingData:
         """Tweak the cmd args after parsing complete()."""
         try:
@@ -290,7 +290,7 @@ class BudManCLIView(cmd2.Cmd,
             raise
     #endregion postparsing_hook Methods
     # ------------------------------------------------------------------------ +
-    #region   precmd_hook() Methods
+    #region    precmd_hook() Methods
     def precmd_hook(self, data: cmd2.plugin.PrecommandData) -> cmd2.plugin.PrecommandData:
         """Tweak the cmd args before cp_execute_cmd()."""
         try:
@@ -304,7 +304,7 @@ class BudManCLIView(cmd2.Cmd,
             raise
     #endregion precmd_hook Methods
     # ------------------------------------------------------------------------ +
-    #region   postcmd_hook() Methods
+    #region    postcmd_hook() Methods
     def postcmd_hook(self, data: cmd2.plugin.PostcommandData) -> cmd2.plugin.PostcommandData:
         """Clean after cmd execution."""
         try:

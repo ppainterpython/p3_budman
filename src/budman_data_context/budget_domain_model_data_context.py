@@ -430,6 +430,23 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
             logger.error(m)
             return False, m
 
+    def dc_WORKBOOK_remove(self, wb_index: str) -> WORKBOOK_OBJECT_TYPE:
+        """Model-Only: Remove the specified workbook by index from the DC 
+        and the Budget Domain Model (BDM).
+        """
+        try:
+            # This model-aware override lets the model do the work of removing.
+            bdm_wb: BDMWorkbook = super().dc_WORKBOOK_remove(wb_index)
+            if bdm_wb is None:
+                logger.error(f"Workbook with index '{wb_index}' not found.")
+                return None
+            self.model.bdm_WORKBOOK_delete(bdm_wb)
+            return bdm_wb
+        except Exception as e:
+            logger.error(f"Failed to remove workbook '{wb_index}': {e}")
+            raise
+        return None
+
     #endregion BudManDataContext Method Overrides.
     # ------------------------------------------------------------------------ +
     #endregion BudManDataContext (Interface) Property/Method Overrides.

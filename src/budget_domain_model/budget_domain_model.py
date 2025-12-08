@@ -110,6 +110,7 @@ from .bdm_workbook_tree_node import BDMWorkbookTreeNode
 from .bdm_workbook_tree import BDMWorkbookTree
 from budget_storage_model import (
     BSMFileTree,
+    bsm_BDMWorkbook_delete,
     bsm_verify_folder, 
     bsm_BDM_STORE_url_put,
     bsm_get_workbook_names,
@@ -609,10 +610,8 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
             # Set some values gathered from BDM configuration.
             self.bdm_valid_prefixes = self.bdm_configured_prefixes()
             self.bdm_valid_wb_types = VALID_WB_TYPE_VALUES
-            # Load the BSM_FILE_TREE, scanning the BDM_FOLDER_URL
-            self.bdm_FILE_TREE_refresh()
-            # Load the BDM_WORKBOOK_TREE, scanning the BDM_FOLDER_URL
-            self.bdm_WORKBOOK_TREE_refresh()
+            # Load the BSM_FILE_TREE and BDM_WORKBOOK_TREE
+            self.bdm_refresh_trees()
             # Initialization complete.
             self.bdm_initialized = True
             logger.debug(f"Complete: {p3u.stop_timer(st)}")   
@@ -623,12 +622,25 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
             raise
     #endregion bdm_initialize(self, bsm_init, ...) 
     # ------------------------------------------------------------------------ +
+    #region    bdm_refresh_trees() method
+    def bdm_refresh_trees(self) -> None:
+        """Refresh both the BSM file tree and the BDM workbook tree."""
+        try:
+            self.bdm_FILE_TREE_refresh()
+            self.bdm_WORKBOOK_TREE_refresh()
+            return
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise
+    #endregion bdm_refresh_trees() method 
+    # ------------------------------------------------------------------------ +
     #region    bdm_FILE_TREE_refresh()
     def bdm_FILE_TREE_refresh(self) -> None:
         """Refresh the BSM file tree."""
         try:
             if self.bsm_file_tree is not None:
-                del self.bsm_file_tree
+                self.bsm_file_tree = None
             # Build a list of all FI_FOLDER urls
             fi_folder_urls: List[str] = []
             for fi_key in self.bdm_fi_collection.keys():
@@ -662,6 +674,9 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
             for bsm_file in self.bsm_file_tree.all_files():
                 wb = self.bdm_WORKBOOK_DATA_COLLECTION_find(WB_URL, bsm_file.file_url)
                 if wb is not None:
+                    ft_node: Node = self.bsm_file_tree.file_tree.get_node(wb.wb_url)
+                    if ft_node is not None:
+                        ft_node.tag += " (BDMWorkbook)"
                     bsm_file.in_bdm = wb is not None
                     bsm_file.wb_type = wb.wb_type
                     bsm_file.type = BDMWorkbook.__name__
@@ -670,11 +685,11 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
 
             for bsm_folder in self.bsm_file_tree.all_folders():
                 # Update the workflow metadata for the folders in the BSM_FILE_TREE.
-                if bsm_folder.file_url in fi_folder_urls:
+                if bsm_folder._file_url in fi_folder_urls:
                     bsm_folder.type = FI_FOLDER
-                elif bsm_folder.file_url == bdm_folder_url:
+                elif bsm_folder._file_url == bdm_folder_url:
                     bsm_folder.type = "BDM_FOLDER"
-                elif bsm_folder.file_url in wf_folder_config_metadata:
+                elif bsm_folder._file_url in wf_folder_config_metadata:
                     md = wf_folder_config_metadata[bsm_folder.file_url]
                     bsm_folder.type = "WF_FOLDER"
                     bsm_folder.wf_key = md[WF_KEY]
@@ -874,6 +889,29 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
             raise ValueError(m)
     #endregion bdm_WORKBOOK_DATA_COLLECTION_find() method
     # ------------------------------------------------------------------------ +
+    #region    bdm_WORKBOOK_delete() method
+    def bdm_WORKBOOK_delete(self, bdm_wb: BDMWorkbook) -> None:
+        """Delete the BDMWorkbook from the BDM."""
+        try:
+            p3u.is_not_obj_of_type("wb", bdm_wb, BDMWorkbook, raise_error=True)
+            fi_key = bdm_wb.fi_key
+            wb_id = bdm_wb.wb_id
+            fi_wdc: WORKBOOK_DATA_COLLECTION_TYPE = self.bdm_FI_WORKBOOK_DATA_COLLECTION(fi_key)
+            if wb_id in fi_wdc:
+                del fi_wdc[wb_id]
+                logger.info(f"Deleted BDMWorkbook(wb_id='{wb_id}') from FI_KEY('{fi_key}')")
+            else:
+                logger.warning(f"BDMWorkbook(wb_id='{wb_id}') not found in FI_KEY('{fi_key}')")
+                            # Save the BDM_STORE unless no_save is True.
+            self.bdm_save_model() 
+            bsm_BDMWorkbook_delete(bdm_wb)
+            return
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            raise ValueError(m)
+    #endregion bdm_WORKBOOK_delete() method
+    # ------------------------------------------------------------------------ +
     #endregion BDM - Budget Domain Model methods
     # ======================================================================== +
 
@@ -957,7 +995,8 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
             raise ValueError(m)
 
     def bdm_FI_WORKBOOK_DATA_COLLECTION_find(self, fi_key:str, search_key: str, 
-                                             search_value:DATA_COLLECTION_TYPE) -> BDMWorkbook:
+                                             search_value:DATA_COLLECTION_TYPE,
+                                             ignore_case:bool = True) -> BDMWorkbook:
         """Search WDC for fi_key matching search_key with search_value.
         
         Return the first matching BDMWorkbook or None if not found.
@@ -971,8 +1010,17 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
                 logger.debug(m)
                 return None
             for wb_id, wb in wdc.items():
-                if getattr(wb,search_key) == search_value:
-                    return wb
+                search_attr = getattr(wb,search_key)
+                if ignore_case:
+                    if search_attr is not None and isinstance(search_attr, str):
+                        search_attr = search_attr.lower()
+                    if search_value is not None and isinstance(search_value, str):
+                        search_value = search_value.lower()
+                    if search_attr == search_value.lower():
+                        return wb
+                else:
+                    if search_attr == search_value:
+                        return wb
             return None
         except Exception as e:
             m = p3u.exc_err_msg(e)
@@ -1140,7 +1188,7 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
         """Refresh the BDM workbook tree."""
         try:
             if self.bdm_workbook_tree is not None:
-                del self.bdm_workbook_tree
+                self.bdm_workbook_tree = None
             self.bdm_workbook_tree = self.bdm_WORKBOOK_TREE_construct()
             return
         except Exception as e:
@@ -1148,7 +1196,6 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
             logger.error(m)
             raise
     #endregion bdm_WORKBOOK_TREE_refresh()
-    # ------------------------------------------------------------------------ +
     # ------------------------------------------------------------------------ +
     #region bdm_WORKBOOK_TREE_construct()
     def bdm_WORKBOOK_TREE_construct(self) -> BDMWorkbookTree:

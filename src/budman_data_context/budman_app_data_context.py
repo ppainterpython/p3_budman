@@ -718,7 +718,9 @@ class BudManAppDataContext(BudManAppDataContext_Base):
     #endregion WORKBOOK_CONTENT_TYPE storage-related methods
 
     def dc_WORKBOOK_remove(self, wb_index: str) -> WORKBOOK_OBJECT_TYPE:
-        """DC-Only: Remove the specified workbook by index."""
+        """DC-Only: Remove the specified workbook by index from the DC.
+        This implementation works only with the in-memory DC structure.
+        It is not model-aware."""
         try:
             bdm_wb: BDMWorkbook = self.dc_WORKBOOK_by_index(wb_index)
             if bdm_wb is None:
