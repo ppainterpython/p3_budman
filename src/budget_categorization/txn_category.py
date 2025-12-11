@@ -29,6 +29,7 @@ from treelib import Tree
 from budman_namespace import BDMSingletonMeta
 import budman_namespace.design_language_namespace as bdm
 import budman_settings as bdms
+from .budget_category_mapping import get_category_map
 from budget_storage_model import (
     bsm_WORKBOOK_CONTENT_url_get,
     bsm_WORKBOOK_CONTENT_url_put
@@ -331,7 +332,8 @@ class BDMTXNCategoryManager(metaclass=BDMSingletonMeta):
         Extract the current unique list of categories from the 
         CATEGORY_MAP_WORKBOOK, and update the TXN_CATEGORIES_WORKBOOK
         category_collection. A user edits the CATEGORY_MAP_WORKBOOK to add or
-        remove map patterns for categories, remove or change categories etc.
+        remove regex patterns for mapping transaction descriptions to 
+        categories, remove or change categories etc.
         Only merge new categories into the TXN_CATEGORIES_WORKBOOK and then
         remove categories that are no longer in the CATEGORY_MAP_WORKBOOK.
 
@@ -689,5 +691,151 @@ class BDMTXNCategoryManager(metaclass=BDMSingletonMeta):
     #endregion BDMTXNCategoryManager methods
     # ------------------------------------------------------------------------ +
 #endregion BDMTXNCategoryManager class 
+# ---------------------------------------------------------------------------- +
+#region extract_category_tree()
+def dot(n1:str=None, n2:str=None, n3:str=None) -> str:
+    """Format provided nodes with a dot in between."""
+    if not n1: return None
+    c = f"{n1}.{n2}" if n2 else n1
+    if not n2: return c
+    return f"{n1}.{n2}.{n3}" if n3 else c  
+
+def extract_category_tree(level:int=2) -> Tree:
+    """Extract the category tree from the category_map."""
+    try:
+        global check_register_map
+        now = dt.now()
+        now_str = now.strftime("%Y-%m-%d %I:%M:%S %p")
+        tree = Tree()
+        bct = tree.create_node("Budget", "root")  # Root node
+        filter_list = ["Darkside"]
+        cat_map = get_category_map()
+        combined_category_map = {**cat_map, **check_register_map}
+        for _, category in combined_category_map.items():
+            l1, l2, l3 = p3u.split_parts(category)
+            if l1 in filter_list:
+                continue
+            if tree.contains(l1): 
+                # If Level 1 already exists, find it
+                l1_node = tree.get_node(l1)
+            else:
+                l1_node = tree.create_node(l1, l1, parent="root")
+            if not l2 or level < 2:
+                continue
+            c = dot(l1, l2)
+            if tree.contains(c):
+                # If Level 2 already exists, find it
+                l2_node = tree.get_node(c)
+            else:
+                l2_node = tree.create_node(l2, c, parent=l1_node)
+            if not l3 or level < 3:
+                continue
+            c = dot(l1, l2, l3)
+            if tree.contains(c):
+                # If Level 3 already exists, find it
+                l3_node = tree.get_node(c)
+            else:
+                l3_node = tree.create_node(l3, c, parent=l2_node)
+        return tree
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion extract_category_tree()
+# ---------------------------------------------------------------------------- +
+#region output_category_tree()
+def output_category_tree(level:int=2,cat_list:list[str]=[]) -> str:
+    """Extract and output the category tree from the category_map."""
+    try:
+        now = dt.now()
+        now_str = now.strftime("%Y-%m-%d %I:%M:%S %p")
+        tree : Tree = extract_category_tree(level)
+        original_stdout = sys.stdout  # Save the original stdout
+        buffer = io.StringIO()
+        sys.stdout = buffer  # Redirect stdout to capture tree output
+        if len(cat_list) == 0:
+            print(f"Budget Category List(level {level}) {now_str}\n")
+            tree.show()
+        else: 
+            # Show only the categories in the cat_list
+            for cat in cat_list:
+                if tree.contains(cat):
+                    print(f"Budget Category Item('{cat}') {now_str}\n")
+                    tree.show(cat)
+        sys.stdout = original_stdout  # Reset stdout
+        output = buffer.getvalue()
+        return output
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion output_category_tree()
+# ---------------------------------------------------------------------------- +
+#region category_tree_to_csv()
+def category_tree_to_csv(level:int=2):
+    """Extract the category, convert to dict, write to csv file."""
+    try:
+        tree : Tree = extract_category_tree(level)
+        tree_dict = {}
+        for cat in tree.nodes.keys():
+            l1, l2, l3 = p3u.split_parts(cat)
+            # print(f"cat_key = '{cat}', L1 = '{l1}', L2 = '{l2}', L3 = '{l3}'")
+            tree_dict[cat] = {
+                'Budget Category': cat, 
+                'Level1': l1,
+                'Level2': l2,
+                'Level3': l3
+            }
+        v = tree_dict.pop('root', None)  # Remove the root node
+        filename = f"level_{level}_categories.csv"
+        with open(filename, 'w', newline='', encoding='utf-8') as f:
+            fields = ['Budget Category', 'Level1', 'Level2', 'Level3']
+            writer = csv.DictWriter(f, fieldnames=fields)
+            writer.writeheader()
+            for row in tree_dict.values():
+                writer.writerow(row)
+
+        return None
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion output_category_tree()
+# ---------------------------------------------------------------------------- +
+#region txn_category_url_save() function
+def txn_category_url_save(cat_url: str, category_map: Dict[str,str]) -> None:
+    """Save transaction categories to a URL.
+
+    Args:
+        cat_data (dict): The transaction category data to save.
+        cat_url (str): The URL to save the data to.
+    """
+    try:
+        p3u.is_non_empty_str("cat_url", cat_url, raise_error=True)
+        cat_url = "file:///C:/Users/ppain/OneDrive/budget/boa/data/new/All_TXN_Categories.txn_categories.json"
+        # Verify the URL file path.
+        tc_path = p3u.verify_url_file_path(cat_url, test=False)
+        # Save the category data to the URL.
+        cat_data = {
+            "name": "all_categories",
+            "categories": {}
+        }
+        for cat in category_map.values():
+            l1, l2, l3 = p3u.split_parts(cat)
+            cat_id = p3u.gen_hash_key(cat, length=8)
+            bdm_tc = BDMTXNCategory(
+                cat_id=cat_id,
+                full_cat=cat,
+                level1=l1,
+                level2=l2,
+                level3=l3,
+                description=f"Level 1 Category: {l1}",
+                payee=None
+            )
+            cat_data["categories"][cat_id] = bdm_tc
+            # print(f"category: '{cat_id}': '{repr(bdm_tc )}'")
+        bsm_WORKBOOK_CONTENT_url_put(cat_data, cat_url,bdm.WB_TYPE_TXN_CATEGORIES)
+        logger.info(f"Saved transaction categories to: {cat_url}")
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion txn_category_url_save() function
 # ---------------------------------------------------------------------------- +
 

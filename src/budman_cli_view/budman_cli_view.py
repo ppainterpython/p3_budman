@@ -175,8 +175,8 @@ class BudManCLIView(cmd2.Cmd,
         cmd2.Cmd.__init__(self, 
                           shortcuts=shortcuts,
                           allow_cli_args=False, 
-                         include_ipy=True,
-                         persistent_history_file=hfn)
+                          include_ipy=True,
+                          persistent_history_file=hfn)
         self.allow_style = ansi.AllowStyle.TERMINAL
         self.register_precmd_hook(self.precmd_hook)
         self.register_postcmd_hook(self.postcmd_hook)

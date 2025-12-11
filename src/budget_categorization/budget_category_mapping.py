@@ -111,12 +111,6 @@ check_register_map = {
 #      L2: Home Improvements
 #
 #endregion Budget Structure Notes
-def compile_category_map(cat_map:Dict[str,str]) -> Dict[re.Pattern, str]:
-    """Return the category map."""
-    ret = {re.compile(pattern, re.IGNORECASE): category 
-        for pattern, category in cat_map.items()}
-    return ret
-
 category_map = {
 #region Essential Spending Categories
 #region L1: Income - Essential
@@ -720,10 +714,20 @@ category_map = {
 #region Checks categorized manually by number - run last
     r'(?i)\bCheck\s*x*\d*\b': 'Financial.Checks to Categorize'
 #endregion Checks categorized manually by number - run last
-#endregion Non-Essential Spending Categories
 }
+#endregion Non-Essential Spending Categories
+#endregion category_map
+
+def compile_category_map(cat_map:Dict[str,str]) -> Dict[re.Pattern, str]:
+    """Return the category map."""
+    ret = {re.compile(pattern, re.IGNORECASE): category 
+        for pattern, category in cat_map.items()}
+    return ret
 
 compiled_category_map = compile_category_map(category_map)
+
+def category_map_count():
+    return len(get_category_map())
 
 def clear_category_map() -> Dict[str, str]:
     """Clear the category map."""
@@ -778,7 +782,6 @@ def set_check_register_map(cr_map:Dict[str,str]) -> None:
     clear_check_register_map()
     check_register_map = cr_map
 
-#endregion category_map
 # ---------------------------------------------------------------------------- +
 #region category_histogram
 class CategoryCounter(dict):

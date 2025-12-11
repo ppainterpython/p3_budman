@@ -12,8 +12,7 @@ import p3_utils as p3u, p3logging as p3l
 from treelib import Tree
 
 # local modules and packages
-from budman_workflows import (extract_category_tree, output_category_tree, 
-    category_tree_to_csv)
+from budget_categorization import (output_category_tree)
 #endregion Imports
 sys.path.append("./src")
 # ---------------------------------------------------------------------------- +

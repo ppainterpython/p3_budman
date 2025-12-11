@@ -23,7 +23,7 @@ from budman_namespace import *
 from budman_data_context import BudManAppDataContext
 from p3_mvvm import Model_Base, Model_Binding
 import budget_storage_model as bsm
-from budman_workflows.txn_category import BDMTXNCategoryManager
+from budget_categorization.txn_category import BDMTXNCategoryManager
 from budget_domain_model import BudgetDomainModel
 #endregion imports
 # ---------------------------------------------------------------------------- +

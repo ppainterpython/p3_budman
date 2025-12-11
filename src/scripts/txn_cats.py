@@ -49,10 +49,9 @@ import p3_utils as p3u, p3logging as p3l
 import budman_namespace as bdm
 from budman_namespace import (P2, P4, P6)
 import budman_settings as bdms
-from budman_workflows.txn_category import (
+from budget_categorization.txn_category import (
     BDMTXNCategory, TXNCategoryCatalog, BDMTXNCategoryManager
 )
-# from budman_workflows.budget_category_mapping import get_category_map
 from budget_storage_model import (
     BSMFileTree,
     csv_DATA_LIST_file_load
@@ -538,93 +537,3 @@ if __name__ == "__main__":
     finally:
         exit(0)
 #endregion __main__() method
-
-
-#region attic
-# ---------------------------------------------------------------------------- +
-        # filename : str = settings.config["category_catalog"]["boa"]
-        # fi_folder : Path = settings.FI_FOLDER_abs_path("boa") 
-        # cat_path = fi_folder / filename
-        # cat_uri = cat_path.as_uri()
-
-        # cat_data = {
-        #     "name": "all_categories",
-        #     "categories": {}
-        # }
-        # cat_data2 = {
-        #     "name": "all_categories",
-        #     "categories": {}
-        # }
-        # in_cat_data : Dict = bsm_WORKBOOK_content_url_get(all_cats_url)
-        # if in_cat_data is None:
-        #     raise ValueError(f"Failed to load categories from: {all_cats_url}")
-        # for cat_id, bdm_tc_data in in_cat_data["categories"].items():
-        #     logger.info(f"category: '{cat_id}': '{repr(bdm_tc_data)}'")
-        #     bdm_tc = BDMTXNCategory(**bdm_tc_data)
-        #     logger.info(f"BDMTXNCategory: {bdm_tc}")
-        #     cat_data2["categories"][cat_id] = bdm_tc
-        #     cp = re.compile(bdm_tc.pattern)
-        #     c_map[cp] = bdm_tc.full_cat
-        # logger.info(f"Read all categories to: {all_cats_url}")
-        # len1 = len(cat_data["categories"])
-        # len2 = len(cat_data2)
-        # if len(cat_data2["categories"]) == len(cat_data["categories"]):
-        #     logger.info(f"All categories read successfully: {len(cat_data2)}")
-# ---------------------------------------------------------------------------- +
-    # bdms_url = "file:///C:/Users/ppain/OneDrive/budget/p3_budget_manager_ca063e8b.jsonc"
-    # try:
-    #     bdms_json = bsm_BDM_STORE_url_load(bdms_url)
-    #     parsed_url = urlparse(bdms_url)
-    # except Exception as e:
-    #     logger.error(p3u.exc_err_msg(e))
-    #     raise ValueError(f"store_url is not a valid URL: {bdms_url}")
-    # if not parsed_url.scheme:
-    #     raise ValueError(f"store_url has no scheme: {bdms_url}")
-    # if parsed_url.scheme not in ["file", "http", "https"]:
-    #     raise ValueError(f"store_url scheme is not supported: {parsed_url.scheme}")
-    # # If the scheme is file, load the BDM_STORE from a file.
-    # if parsed_url.scheme == "file":
-    #     # Decode the URL and convert it to a Path object.
-    #     bdms_path = Path.from_uri(bdms_url)
-    #     print(f"Loading BDM_STORE from path:'{bdms_path}' url:'{bdms_url}'")
-    #     j = bsm_BDM_STORE_file_load(bdms_path)
-    # # bdm = bdms.bsm_BDM_STORE_url_load(bdms_url)
-    # print(f"complete")
-# ---------------------------------------------------------------------------- +
-# def bsm_BDM_STORE_url_load_foo(store_url : str = None) -> Dict:
-#     """BSM: Load a BDM_STORE object from a URL.
-    
-#     Entry point for a BDM_STORE file load operation. Parse the URL and decide
-#     how to load the BDM_STORE object based on the URL scheme.
-
-#     Args:
-#         store_url (str): The URL to the BDM_STORE object to load.
-#     """
-#     try:
-#         # store_url must be a non-empty string.
-#         p3u.is_non_empty_str(store_url, "store_url",raise_error=True)
-#         # store_url must be a valid URL.
-#         try:
-#             parsed_url = urlparse(store_url)
-#         except Exception as e:
-#             logger.error(p3u.exc_err_msg(e))
-#             raise ValueError(f"store_url is not a valid URL: {store_url}")
-#         if not parsed_url.scheme:
-#             raise ValueError(f"store_url has no scheme: {store_url}")
-#         if parsed_url.scheme not in ["file", "http", "https"]:
-#             raise ValueError(f"store_url scheme is not supported: {parsed_url.scheme}")
-#         # If the scheme is file, load the BDM_STORE from a file.
-#         if parsed_url.scheme == "file":
-#             # Decode the URL and convert it to a Path object.
-#             file_path = unquote(parsed_url.path)
-#             store_path = Path(file_path).expanduser().resolve()
-#             logger.info(f"Loading BDM_STORE from file: {store_path}")
-#             return {} #bsm_BDM_STORE_load(store_path)
-#         raise ValueError(f"Unsupported store_url scheme: {parsed_url.scheme}")
-#     # except json5.Json5DecoderException as e:
-#     #     logger.error(p3u.exc_err_msg(e))
-#     #     raise
-#     except Exception as e:
-#         logger.error(p3u.exc_err_msg(e))
-#         raise
-#endregion attic

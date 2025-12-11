@@ -111,6 +111,7 @@ CV_CMD_ERROR_STRING_OUTPUT = "error_string_output"
 CK_PARSE_ONLY = "parse_only"
 CK_VALIDATE_ONLY = "validate_only"
 CK_WHAT_IF = "what_if"
+CK_VERBOSE = "verbose"
 # Builtin CK_CMD_KEY and CK_CMD_NAME values.
 CV_P3_UNKNOWN_CMD_NAME = "p3_unknown"
 CV_P3_UNKNOWN_CMD_KEY = CV_P3_UNKNOWN_CMD_NAME + CK_CMD_KEY_SUFFIX

@@ -70,6 +70,7 @@ from .mvvm_namespace import (
     CK_PARSE_ONLY,
     CK_VALIDATE_ONLY,
     CK_WHAT_IF,
+    CK_VERBOSE,
     # CMD_RESULT Constants
     CK_CMD_RESULT_STATUS,
     CK_CMD_RESULT_CONTENT_TYPE,
@@ -117,6 +118,7 @@ __all__ = [
     "CK_PARSE_ONLY",
     "CK_VALIDATE_ONLY",
     "CK_WHAT_IF",
+    "CK_VERBOSE",
     #     CMD_RESULT Constants
     "CK_CMD_RESULT_STATUS",
     "CK_CMD_RESULT_CONTENT_TYPE",

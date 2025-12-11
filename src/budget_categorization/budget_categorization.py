@@ -33,15 +33,15 @@ from pyparsing import Optional
 from budman_namespace.design_language_namespace import *
 from budman_namespace.bdm_workbook_class import BDMWorkbook
 from .budget_category_mapping import (
-    get_category_map, check_register_map, get_category_histogram,
+    check_register_map, get_category_histogram,
+    category_map_count, 
+    get_category_histogram,
     clear_category_histogram
 )
-from .workflow_utils import (
-    category_map_count, 
-    check_register_map,
-    get_category_histogram,
-)
-from .txn_category import (BDMTXNCategoryManager, TXNCategoryCatalog)
+from .txn_category import (
+    BDMTXNCategoryManager, 
+    TXNCategoryCatalog,
+    )
 from budman_data_context import BudManAppDataContext_Base
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -177,11 +177,12 @@ BUDMAN_REQUIRED_COLUMNS = [
 
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
-#region dataclasses
+#region TransactionData dataclasse
 TRANS_PARAMETERS = ["tid", "date", "description", "currency",
                     "account_code", "amount", "category",
                     "level1", "level2", "level3", 
-                    "debit_credit", "year_month", "payee", "essential"]
+                    "debit_credit", "year_month", "essential", "payee", 
+                    "rule", "manual", "row_data"]
 @dataclass
 class TransactionData:
     """Data class to hold transaction data."""
@@ -230,7 +231,7 @@ class TransactionData:
         ret += f"|({len(self.category):03})|{self.category:40}|"
         return ret
     
-#endregion dataclasses
+#endregion TransactionData dataclass
 # ---------------------------------------------------------------------------- +
 #region WORKFLOW_TASK_check_sheet_columns() function
 def WORKFLOW_TASK_check_sheet_columns(sheet: Worksheet, 
@@ -906,9 +907,12 @@ def WORKFLOW_TASK_categorize_transaction(
         payee = ""
         rule_index = 0
         for rule_index, (pattern, category) in enumerate(ccm.items()):
+            # Set default values if no pattern match applies
             transaction.payee = "unknown"
             transaction.rule = -1
             transaction.category = "Other"
+            transaction.level1 = "Other"
+            # Apply the pattern to the transaction description
             m = pattern.search(transaction.description)
             if m:
                 transaction.category = ch.count(category)

@@ -20,6 +20,7 @@ from budman_settings import *
 from budman_settings.budman_settings_constants import BUDMAN_CMD_HISTORY_FILENAME
 import budman_command_processor.budman_cp_namespace as cp
 import budman_namespace.design_language_namespace as bdm
+from budman_data_context.budman_app_data_context_binding_class import BudManAppDataContext_Binding
                              
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -129,6 +130,17 @@ class BudManCLIParser():
                 help="Do NOT save BDM_STORE on exit.")
             self.add_common_optional_args(exit_parser)
             #endregion app exit subcommand
+            #region app refresh subcommand
+            refresh_parser = subparsers.add_parser(
+                cp.CV_APP_REFRESH_SUBCMD_NAME,
+                aliases=["r"],
+                help="Refresh aspects of the application.")
+            refresh_parser_defaults = {
+                p3m.CK_SUBCMD_NAME: cp.CV_APP_REFRESH_SUBCMD_NAME,
+                p3m.CK_SUBCMD_KEY: cp.CV_APP_REFRESH_SUBCMD_KEY}
+            refresh_parser.set_defaults(**refresh_parser_defaults)
+            self.add_common_optional_args(refresh_parser)
+            #endregion app refresh subcommand
             #region app delete subcommand
             delete_parser = subparsers.add_parser(
                 p3m.CK_SUBCMD_NAME,
@@ -146,7 +158,7 @@ class BudManCLIParser():
             #region app reload subcommand
             reload_parser = subparsers.add_parser(
                 cp.CV_RELOAD_SUBCMD_NAME,
-                aliases=["r"], 
+                aliases=["rel"], 
                 help="Reload objects like modules and data.")
             reload_parser_defaults = {
                 p3m.CK_SUBCMD_NAME: cp.CV_RELOAD_SUBCMD_NAME,
@@ -479,6 +491,7 @@ class BudManCLIParser():
         different workflows configured in Budget Manager. Tasks are functional 
         behaviors working with the available workbooks."""
         try:
+            #region parser setup
             parser = self.workflow_cmd
             # Add subparsers for workflow command parser
             d = "The workflow command is used to execute workflow tasks on "
@@ -490,8 +503,11 @@ class BudManCLIParser():
                 p3m.CK_CMD_NAME: cp.CV_WORKFLOW_CMD_NAME,
             }
             parser.set_defaults(**workflow_cmd_defaults)
-            
+            update_parser = self.add_update_subparser(subparsers)
             transfer_parser = self.add_transfer_subparser(subparsers)
+            set_parser = self.add_set_subparser(subparsers)
+            intake_parser = self.add_intake_subparser(subparsers)
+            #endregion parser setup
 
             #region workflow categorization subcommand
             categorization_parser = subparsers.add_parser(
@@ -597,8 +613,6 @@ class BudManCLIParser():
             self.add_common_optional_args(apply_parser)
             #endregion workflow 'apply' subcommand
 
-            set_parser = self.add_set_subparser(subparsers)
-            intake_parser = self.add_intake_subparser(subparsers)
 
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
@@ -713,6 +727,78 @@ class BudManCLIParser():
             logger.exception(p3u.exc_err_msg(e))
             raise
     #endregion add_transfer_subparser()
+    # ------------------------------------------------------------------------ +
+    #region add_update_subparser()
+    def add_update_subparser(self, subparsers) -> None:
+        """Add an update subparser in the provided subparsers."""
+        try:
+            # workflow update subcommand
+            update_subcmd_parser = subparsers.add_parser(
+                cp.CV_UPDATE_SUBCMD_NAME,
+                aliases=["up"], 
+                help="Update files in a workflow with a specific purpose.")
+            update_subcmd_parser.set_defaults(
+                subcmd_name=cp.CV_UPDATE_SUBCMD_NAME,
+                subcmd_key=cp.CV_WORKFLOW_UPDATE_SUBCMD_KEY)
+            # update subcmd subparsers
+            update_subparsers = update_subcmd_parser.add_subparsers()
+
+            # workflow update category_map_workbook subcommand subparser
+            category_map_wb_parser = update_subparsers.add_parser(
+                cp.CV_CATEGORY_MAP_WORKBOOK_SUBCMD_NAME,
+                aliases=["category_map"],
+                help="Specifies update of category map workbook.")
+            category_map_wb_defaults = {
+                cp.CK_UPDATE_CATEGORY_MAP_WORKBOOK: True, 
+                cp.CK_FI_KEY: None,
+            }
+            category_map_wb_parser.set_defaults(**category_map_wb_defaults)
+
+            category_map_wb_parser.add_argument(
+                # selected FI_KEY for financial institution
+                cp.CK_FI_KEY, nargs='?',
+                default='boa', 
+                help=("One fi_key value."))
+            self.add_common_optional_args(category_map_wb_parser)
+
+            # workflow transfer workbooks subcommand subparser
+            workbooks_parser = update_subparsers.add_parser(
+                cp.CV_WORKBOOKS_SUBCMD_NAME,
+                aliases=["WORKBOOKS"],
+                help="Specifies transfer of workbooks.")
+            workbooks_parser_defaults = {
+                cp.CK_TRANSFER_FILES: False,
+                cp.CK_TRANSFER_WORKBOOKS: True,
+                cp.CK_WB_LIST: [],
+                cp.CK_WF_KEY: None,
+                cp.CK_WF_PURPOSE: None,
+                cp.CK_WB_TYPE: None
+            }
+            workbooks_parser.set_defaults(**workbooks_parser_defaults)
+            workbooks_parser.add_argument(
+                # selected workbooks: wb_list
+                cp.CK_WB_LIST, nargs='*',
+                type=int, default=[], 
+                help=("One or more workbook index values from wb_list."))
+            workbooks_parser.add_argument(
+                f"--{cp.CK_WF_KEY}", "-w",
+                choices=bdm.VALID_BDM_WORKFLOWS,
+                help="Specify the destination workflow key.")
+            workbooks_parser.add_argument(
+                f"--{cp.CK_WF_PURPOSE}", "-p",
+                choices=bdm.VALID_WF_PURPOSE_CHOICES,
+                help="Specify the workflow purpose.")
+            workbooks_parser.add_argument(
+                f"--{cp.CK_WB_TYPE}", "-t",
+                choices=bdm.VALID_WB_TYPE_VALUES,
+                help="Specify the destination workbook type.")
+            self.add_common_optional_args(workbooks_parser)
+
+            return update_subcmd_parser
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise
+    #endregion add_update_subparser()
     # ------------------------------------------------------------------------ +
     #region intake subcommand subparser
     def add_intake_subparser(self, subparsers) -> None:
@@ -962,6 +1048,10 @@ class BudManCLIParser():
                 f"--{cp.CK_WHAT_IF}", 
                 action="store_true", 
                 help="Return details about what the command would do, but don't to any action.")
+            common_args.add_argument(
+                f"--{cp.CK_VERBOSE}", "-vb", 
+                action="store_true", 
+                help="Enable verbose logging output.")
             return common_args
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))

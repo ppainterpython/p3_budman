@@ -22,14 +22,15 @@ import p3_utils as p3u, pyjson5, p3logging as p3l, p3_mvvm as p3m
 from openpyxl import Workbook, load_workbook
 
 # local modules and packages
+import budman_settings as bdms
 import budman_command_processor as cp
 import budman_namespace as bdm
 from budman_namespace import P2, P4
 from budman_namespace import BDMWorkbook
 from budget_domain_model import BudgetDomainModel
 from budman_data_context import BudManAppDataContext_Base
-from budget_storage_model import (BSMFile, BSMFileTree,
-                                  csv_DATA_LIST_url_get) 
+from budget_categorization import (BDMTXNCategoryManager, TXNCategoryCatalog)
+from budget_storage_model import (BSMFile, BSMFileTree) 
 from .budget_intake import *
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -76,6 +77,12 @@ def WORKFLOW_CMD_process(cmd: p3m.CMD_OBJECT_TYPE,
             if transfer_workbooks:
                 return WORKFLOW_TASK_transfer_workbooks(cmd, bdm_DC)
             return p3m.unknown_CMD_RESULT_ERROR(cmd)
+
+        # Subcmd: "workflow update"
+        elif cmd[p3m.CK_SUBCMD_KEY] == cp.CV_WORKFLOW_UPDATE_SUBCMD_KEY:
+            catalog_map_update: bool = cmd.get(cp.CK_UPDATE_CATEGORY_MAP_WORKBOOK, False)
+            if catalog_map_update:
+                return WORKFLOW_TASK_update_catalog_map(cmd, bdm_DC)
 
         # Subcmd: "workflow intake"
         elif cmd[p3m.CK_SUBCMD_KEY] == cp.CV_WORKFLOW_INTAKE_SUBCMD_KEY:
@@ -164,6 +171,68 @@ def WORKFLOW_TASK_delete_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
         logger.error(p3u.exc_err_msg(e))
         raise
 #endregion WORKFLOW_TASK_delete_workbooks() function
+# ---------------------------------------------------------------------------- +
+#region WORKFLOW_TASK_update_catalog_map() function
+def WORKFLOW_TASK_update_catalog_map(cmd: p3m.CMD_OBJECT_TYPE, 
+                    bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
+    """WORKFLOW_TASK_update_catalog_map: Update the catalog map workbook for
+       a specified fi_key.
+
+    Tasks required to update the catalog map workbook for an fi_key in the
+    catalog manager.
+
+    Arguments:
+        cmd (CMD_OBJECT_TYPE): The command object to process.
+        bdm_DC (BudManAppDataContext_Base): The data context for the BudMan application.
+        Required cmd arguments:
+            cp.CK_FI_KEY - fi_key of a valid financial institution.
+
+    Returns:
+        p3m.CMD_RESULT_TYPE: The result of the command processing.
+
+    Raises:
+        p3m.CMDValidationException: For unrecoverable errors.
+    """
+    try:
+        # Validate the cmd argsuments.
+        cmd_args: p3m.CMD_ARGS_TYPE = cp.validate_cmd_arguments(
+            cmd=cmd, 
+            bdm_DC=bdm_DC,
+            cmd_key=cp.CV_WORKFLOW_CMD_KEY, 
+            subcmd_key=cp.CV_WORKFLOW_UPDATE_SUBCMD_KEY,
+            model_aware=True,
+            required_args=[
+                cp.CK_UPDATE_CATEGORY_MAP_WORKBOOK,
+                cp.CK_FI_KEY
+            ]
+        )
+        logger.info(f"Start: ...")
+        # Extract and validate required parameters from the command.
+        settings: bdms.BudManSettings = bdms.BudManSettings()
+        model: BudgetDomainModel = bdm_DC.model
+        catman: BDMTXNCategoryManager = BDMTXNCategoryManager(settings)
+        fi_key: str = cmd_args.get(cp.CK_FI_KEY)
+        result_msg: str = catman.FI_TXN_CATEGORIES_WORKBOOK_update(fi_key)
+        fr: str = ""  # final report string
+        m: str = ""
+        return p3m.create_CMD_RESULT_OBJECT(
+            cmd_object=cmd,
+            cmd_result_status=True,
+            result_content_type=p3m.CV_CMD_STRING_OUTPUT,
+            result_content=result_msg
+        )
+    except p3m.CMDValidationException as e:
+        logger.error(e.msg)
+        raise
+    except Exception as e:
+        m = p3u.exc_err_msg(e)
+        err_msg = (f"Exception during WORKFLOW_TASK_transfer: {m}")
+        logger.error(err_msg)
+        cmd_result_error = p3m.create_CMD_RESULT_ERROR(cmd, err_msg)
+        raise p3m.CMDValidationException(cmd=cmd, 
+                                         msg=err_msg,
+                                         cmd_result_error=cmd_result_error)
+#endregion WORKFLOW_TASK_update_catalog_map() function
 # ---------------------------------------------------------------------------- +
 #region WORKFLOW_TASK_transfer_workbooks() function
 def WORKFLOW_TASK_transfer_workbooks(cmd: p3m.CMD_OBJECT_TYPE, 
