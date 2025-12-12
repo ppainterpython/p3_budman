@@ -29,7 +29,7 @@ from budman_namespace import P2, P4
 from budman_namespace import BDMWorkbook
 from budget_domain_model import BudgetDomainModel
 from budman_data_context import BudManAppDataContext_Base
-from budget_categorization import (BDMTXNCategoryManager, TXNCategoryCatalog)
+from budget_categorization import (BDMTXNCategoryManager, TXNCategoryMap)
 from budget_storage_model import (BSMFile, BSMFileTree) 
 from .budget_intake import *
 #endregion Imports

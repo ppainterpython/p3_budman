@@ -32,16 +32,7 @@ from pyparsing import Optional
 # local modules and packages
 from budman_namespace.design_language_namespace import *
 from budman_namespace.bdm_workbook_class import BDMWorkbook
-from .budget_category_mapping import (
-    check_register_map, get_category_histogram,
-    category_map_count, 
-    get_category_histogram,
-    clear_category_histogram
-)
-from .txn_category import (
-    BDMTXNCategoryManager, 
-    TXNCategoryCatalog,
-    )
+from .txn_category import (BDMTXNCategoryManager, TXNCategoryMap)
 from budman_data_context import BudManAppDataContext_Base
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -605,7 +596,7 @@ def validate_budget_categories(bdm_wb:BDMWorkbook,
                 continue
         result += f"\n{pad}{P2}Workbook validation phase completed. unique categories: {len(unique_categories)} errors: {errors}"
         catman : BDMTXNCategoryManager = bdm_DC.WF_CATEGORY_MANAGER
-        fi_txn_catalog : TXNCategoryCatalog = catman.catalogs[bdm_wb.fi_key]
+        fi_txn_catalog : TXNCategoryMap = catman.catalogs[bdm_wb.fi_key]
         cat_collection_list = list(fi_txn_catalog.category_collection.keys())
         for key in unique_categories:
             if key not in cat_collection_list:
@@ -688,7 +679,8 @@ def WORKFLOW_TASK_process_budget_category(bdm_wb:BDMWorkbook,
                  f"from current DC FI_OBJECT: '{fi_obj[FI_KEY]}'.")
             logger.error(m)
             return False, m
-        # Process the Category Managers with the fi_key
+        # Use the Category Manager with the fi_key to obtain
+        # the FI-specific TXNCategoryMap.
         catman : BDMTXNCategoryManager = bdm_DC.WF_CATEGORY_MANAGER
         if fi_key not in catman.catalogs:
             # No WB_TYPE_TXN_CATEGORIES dictionary for this FI, no action taken.
@@ -696,14 +688,14 @@ def WORKFLOW_TASK_process_budget_category(bdm_wb:BDMWorkbook,
                  f"no action taken.")
             logger.error(m)
             return False, m
-        fi_txn_catalog : TXNCategoryCatalog = catman.catalogs[fi_key]
-        if not fi_txn_catalog:
+        fi_catmap : TXNCategoryMap = catman.catalogs[fi_key]
+        if not fi_catmap:
             # No TXNCategoryCatalogItem for this FI, no action taken.
             m = (f"TXNCategoryCatalogItem not found for FI '{fi_key}', "
                  f"no action taken.")
             logger.error(m)
             return False, m
-        ccm : Dict[str, re.Pattern] = fi_txn_catalog.compiled_category_map
+        ccm : Dict[str, re.Pattern] = fi_catmap.compiled_category_map
         if not ccm:
             # No compiled category map for this FI, no action taken.
             m = (f"Compiled category map not found for FI '{fi_key}', "
@@ -792,8 +784,8 @@ def WORKFLOW_TASK_process_budget_category(bdm_wb:BDMWorkbook,
                     f"'{bud_cat}'({bud_cat_i})")
         num_rows = ws.max_row # or set a smaller limit
         other_count = 0
-        ch = clear_category_histogram()  # Clear the category histogram.
-        rules_count = category_map_count()
+        ch = fi_catmap.clear_category_histogram()  # Clear the category histogram.
+        rules_count = fi_catmap.category_map_count()
 
         transactions: List[TransactionData] = []  # To hold all transactions.
         task_name = "WORKFLOW_TASK_process_budget_category()"
@@ -816,7 +808,7 @@ def WORKFLOW_TASK_process_budget_category(bdm_wb:BDMWorkbook,
             logger.debug(f"{P2}{trans_str}") if log_all else None
             transaction = WORKFLOW_TASK_categorize_transaction(
                 transaction, 
-                fi_txn_catalog, 
+                fi_catmap, 
                 log_all)
             row[bud_cat_i].value = transaction.category # Capture bud_cat mapping 
             # Modify the actual row with additional values for BudMan.
@@ -830,8 +822,8 @@ def WORKFLOW_TASK_process_budget_category(bdm_wb:BDMWorkbook,
                 row[payee_i].value = transaction.payee if payee_i != -1 else "unknown"
             essential_value = False
             if (transaction.category != 'Other' and 
-                transaction.category in fi_txn_catalog.category_collection):
-                essential_value = fi_txn_catalog.category_collection[transaction.category].essential
+                transaction.category in fi_catmap.category_collection):
+                essential_value = fi_catmap.category_collection[transaction.category].essential
             else:
                 logger.warning(f"'{transaction.category}' not found in category collection.")
             row[essential_i].value = essential_value if essential_i != -1 else None
@@ -845,7 +837,7 @@ def WORKFLOW_TASK_process_budget_category(bdm_wb:BDMWorkbook,
         close_other_category_workbook(other_wb)
         elapsed : float = time.time() - st
         per_row = elapsed / (num_rows - 1) if num_rows > 1 else 0.0
-        ch = get_category_histogram() 
+        ch = fi_catmap.category_histogram 
         m = (f"Task Complete: {time_taken} Mapped '{num_rows}' rows, to "
              f"'{len(ch)}' Categories, {per_row:6f} seconds per row, "
              f"'Other' category count: ({ch['Other']})({other_count})")
@@ -890,20 +882,20 @@ def copy_row_to_worksheet(source_row, dest_worksheet):
 #region WORKFLOW_TASK_categorize_transaction() function
 def WORKFLOW_TASK_categorize_transaction(
         transaction: TransactionData, 
-        txn_catalog:TXNCategoryCatalog,
+        fi_catmap:TXNCategoryMap,
         log_all : bool) -> TransactionData:
     """Use txn_catalog patterns to map description text to a category."""
     try:
         p3u.is_not_obj_of_type("transaction", transaction, TransactionData, 
                                raise_error=True)
-        p3u.is_not_obj_of_type("txn_catalog", txn_catalog, TXNCategoryCatalog,
+        p3u.is_not_obj_of_type("txn_catalog", fi_catmap, TXNCategoryMap,
                                raise_error=True)
-        txn_catalog.valid
-        fi_key: str = txn_catalog.fi_key
-        txn_category_collection = txn_catalog.txn_categories_workbook[WB_CATEGORY_COLLECTION]
+        fi_catmap.valid
+        fi_key: str = fi_catmap.fi_key
+        txn_category_collection = fi_catmap.txn_categories_workbook[WB_CATEGORY_COLLECTION]
         tcc_keys = list(txn_category_collection.keys())
-        ccm: COMPLIED_CATEGORY_MAP_TYPE = txn_catalog.compiled_category_map
-        ch = get_category_histogram()
+        ccm: COMPLIED_CATEGORY_MAP_TYPE = fi_catmap.compiled_category_map
+        ch = fi_catmap.category_histogram
         payee = ""
         rule_index = 0
         for rule_index, (pattern, category) in enumerate(ccm.items()):

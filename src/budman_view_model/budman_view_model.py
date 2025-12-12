@@ -245,7 +245,6 @@ from typing import List, Type, Optional, Dict, Tuple, Any, Callable
 import importlib
 
 # third-party modules and packages
-from budget_categorization import budget_category_mapping
 import p3_utils as p3u, p3logging as p3l, p3_mvvm as p3m
 from openpyxl import Workbook, load_workbook
 

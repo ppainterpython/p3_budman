@@ -52,8 +52,7 @@ from budman_data_context import BudManAppDataContext_Base
 from budget_storage_model import (
     BSMFile, BSMFileTree,
     bsm_verify_folder, bsm_URL_verify_file_scheme,)
-from budget_categorization import (BDMTXNCategoryManager, TXNCategoryCatalog,
-                              output_category_tree)
+from budget_categorization import (BDMTXNCategoryManager, TXNCategoryMap)
 import budman_workflows
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -485,7 +484,7 @@ def BUDMAN_CMD_app_reload(cmd: p3m.CMD_OBJECT_TYPE,
             return p3m.create_CMD_RESULT_OBJECT(False, p3m.CV_CMD_STRING_OUTPUT, m, cmd)
         if reload_target == CV_CATEGORY_MAP:
             catman: BDMTXNCategoryManager = BDMTXNCategoryManager() #self.WF_CATEGORY_MANAGER
-            category_catalog: TXNCategoryCatalog = None
+            category_catalog: TXNCategoryMap = None
             if catman :
                 category_catalog = catman.catalogs[bdm_DC.dc_FI_KEY]
                 category_catalog.CATEGORY_MAP_WORKBOOK_import()
@@ -703,7 +702,10 @@ def BUDMAN_CMD_TASK_show_BUDGET_CATEGORIES(cmd: p3m.CMD_OBJECT_TYPE,
         # Show the budget categories.
         cat_list = cmd.get(CK_CAT_LIST, [])
         tree_level = cmd.get(CK_LEVEL, 2)
-        result: str = output_category_tree(level=tree_level, cat_list=cat_list)
+        fi_key: str = bdm_DC.dc_FI_KEY
+        catman : BDMTXNCategoryManager = bdm_DC.WF_CATEGORY_MANAGER
+        fi_catmap : TXNCategoryMap = catman.catalogs[fi_key]
+        result: str = fi_catmap.output_category_tree(level=tree_level, cat_list=cat_list)
         return p3m.create_CMD_RESULT_OBJECT(
             cmd_result_status=True,
             result_content=result,

@@ -33,31 +33,7 @@ from .budget_categorization import (
 from .txn_category import (
     BDMTXNCategory,
     BDMTXNCategoryManager,
-    TXNCategoryCatalog,
-    extract_category_tree, 
-    output_category_tree,
-    category_tree_to_csv,
-    txn_category_url_save
-)
-from .budget_category_mapping import (
-    check_register_map, 
-    category_map, 
-    compile_category_map,
-    compiled_category_map,
-    category_map_count,
-    clear_category_map,
-    get_category_map,
-    set_category_map,
-    clear_compiled_category_map,
-    get_compiled_category_map,
-    set_compiled_category_map,
-    clear_check_register_map,
-    get_check_register_map,
-    set_check_register_map,
-    CategoryCounter,
-    category_histogram,
-    get_category_histogram,
-    clear_category_histogram
+    TXNCategoryMap
 )
 
 # symbols for "from budman_model import *"
@@ -65,12 +41,8 @@ __all__ = [
     # module names
     # txn_category.py module
     "BDMTXNCategory",
-    "TXNCategoryCatalog",
+    "TXNCategoryMap",
     "BDMTXNCategoryManager",
-    "extract_category_tree",
-    "output_category_tree",
-    "category_tree_to_csv",
-    "txn_category_url_save",
     # budget_categorization.py module
     "WORKFLOW_TASK_check_sheet_columns",
     "check_sheet_schema",
@@ -79,23 +51,4 @@ __all__ = [
     "WORKFLOW_TASK_process_budget_category",
     "WORKFLOW_TASK_categorize_transaction",
     "apply_check_register",
-    # budget_category_mapping.py module
-    "category_map_count",
-    "check_register_map",
-    "compile_category_map",
-    "category_map",
-    "compiled_category_map",
-    "category_map_count",
-    "clear_category_map",
-    "get_category_map",
-    "set_category_map",
-    "clear_compiled_category_map",
-    "get_compiled_category_map",
-    "set_compiled_category_map",
-    "clear_check_register_map",
-    "get_check_register_map",
-    "set_check_register_map",
-    "category_histogram",
-    "clear_category_histogram",
-    "get_category_histogram",
-]
+    ]

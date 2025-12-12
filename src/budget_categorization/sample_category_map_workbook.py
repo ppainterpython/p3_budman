@@ -1,29 +1,31 @@
 # ---------------------------------------------------------------------------- +
-#region category_mapping.py module
+#region sample_category_map_workbook.py module
 """ Regular Expression techniques to map financial transactions to categories.
 
-    When a workbook is downloaded from a financial institution, the transactions
-    typically have a column with a description of the transaction. Herein, a 
-    set of regular expressions can be defined to apply to the description and 
-    map it to a hierarchical category structure.
+    When a transaction workbook is downloaded from a financial institution, 
+    the transactions typically have a column with a description of the 
+    transaction. Herein, a set of regular expressions can be defined to apply 
+    to the description and map it to a hierarchical category structure.
+
+    This python module is a category_map_workbook. There will be one for each
+    configured financial institution. Since the transaction workbooks have
+    differen formats, the regex patterns for each are managed in this way.
+
+    Each modul is exptected to provide an interface defined in terms of 
+    variables and functions as follows:
+
+    Interface
+    ---------
+
+    Variable: category_map: Dict[str, str] - where the key value is a regex 
+    pattern string and the value is a budget category string. When the regex 
+    pattern matches something in the configured description column, the value 
+    string is provided as the mapped budget category.
+
+    Variable: check_register_map: Dict[str, str] - not currently used.
 
 """
-#endregion p3_execl_budget.p3_banking_transactions budget_transactions.py module
-# ---------------------------------------------------------------------------- +
-#region Imports
-# python standard library modules and packages
-from typing import Dict, Any, Optional, Union, List
-import re
-# third-party modules and packages
-import p3logging as p3l, p3_utils as p3u
-
-# local modules and packages.
-
-#endregion Imports
-# ---------------------------------------------------------------------------- +
-#region Globals and Constants
-#logger = logging.getLogger(__name__)
-#endregion Globals and Constants
+#endregion sample_category_map_workbook.py module
 # ---------------------------------------------------------------------------- +
 #region check_register_map
 # Map a CheckRegister .csv 'Pay-To' field to a Budget Category
@@ -41,8 +43,8 @@ check_register_map = {
     'APQT': 'Medical.Physical Therapy.APQT',
     'Detergent Maria Oyestas': 'Food.Groceries.Detergent Maria Oyestas',
     'Colonel George Moffett Chapter DAR': 'Lifestyle.Professional:Historical Orgs.DAR', #.Colonel George Moffett Chapter',
-    'Hannah Painter': 'Financial.Reimbursement.Hannah Painter',
-    'Laura Painter': 'Financial.Reimbursement.Laura Painter',
+    'Hannah Peterson': 'Financial.Reimbursement.Hannah Peterson',
+    'Laura Parker': 'Financial.Reimbursement.Laura Parker',
     'Lawn Sprinkler': 'Housing.Maintenance.Irrigation System',
     'HVAC Grape Cove Unknown': 'Housing.Maintenance.HVAC',
 }
@@ -120,7 +122,6 @@ category_map = {
     r'(?i)\bHP\sINC\.\s*\bDES:PAYROLL\b': 'Income.HP Inc',
     r'(?i)\bTWC-BENEFITS\b': 'Income.TWC',
     r'(?i)\bBank\s*of\s*America.*CASHREWARD': 'Income.Bank Reward',
-    r'(?i)\bZelle\s*payment\s*from\s*JOHN\s*PAINTER': 'Income.Inheritance.John Painter',
     # Taxes
     r'(?i)\bIRS\s': 'Financial.Taxes.Federal',
     r'(?i)\bINTUIT\s': 'Financial.Taxes.Federal',
@@ -168,8 +169,8 @@ category_map = {
     r'(?i)\bTHE\sGRASS\sOUTLET': 'Housing.Maintenance.Lawn Care', #.Grass Outlet',
     #endregion Maintenance
     # Housing General
-    r'(?i)\bTRANSFER\s*PAUL\s*B\s*PAINTER\s*LAURA:john\s*hogge\b': 'Housing.Mortgage.Hogge',
-    r'(?i)\bTRANSFER\s*PAUL\s*B\s*PAINTER:john\s*hogge\b': 'Housing.Mortgage.Hogge',
+    r'(?i)\bTRANSFER\s*PAUL\s*B\s*Parker\s*LAURA:john\s*Hopper\b': 'Housing.Mortgage.Hopper',
+    r'(?i)\bTRANSFER\s*PAUL\s*B\s*Parker:john\s*Hopper\b': 'Housing.Mortgage.Hopper',
     r'(?i)\bavery\W*.*?\branch\W*.*?\bHOA\W*.*?\bdues\b': 'Housing.HomeOwnersAssociation.Avery Ranch',
 #endregion L1: Housing - Essential - A roof overhead, a place to live.
 #region L1: Transportation - Essential
@@ -633,9 +634,9 @@ category_map = {
     r'(?i)\bAdjustment\/Correction.*': 'Financial.Adjustment',
     r'(?i)\bOnline\s*(Banking)*\s*payment.*from\s*SAV.*': 'Financial.Payment.From Savings 0196',
     r'(?i)\bOnline\s*Banking\s*transfer.*from\s*SAV.*': 'Financial.Transfer.From Savings 0196',
-    r'(?i)\bPMNT\s*SENT.*CASH\s*APP.*ROBIN\s*PAINTER.*': 'Financial.Transfer.Robin Painter',
-    r'(?i)\bOnline\s*Banking\s*Transfer.*Painter,\s*ROBIN.*': 'Financial.Transfer.Robin Painter',
-    r'(?i)\bOnline\s*Banking\s*Transfer.*Painter,\s*JUSTIN.*': 'Financial.Transfer.Justin Painter',
+    r'(?i)\bPMNT\s*SENT.*CASH\s*APP.*ROBIN\s*Parker.*': 'Financial.Transfer.Robin Parker',
+    r'(?i)\bOnline\s*Banking\s*Transfer.*Parker,\s*ROBIN.*': 'Financial.Transfer.Robin Parker',
+    r'(?i)\bOnline\s*Banking\s*Transfer.*Parker,\s*JUSTIN.*': 'Financial.Transfer.Justin Parker',
     r'(?i)\bPreferred\s*Rewards.*\b': 'Financial.Preferred Rewards',
     r'(?i)\bLATE\sFEE\sFOR\sPAYMENT\sDUE\b': 'Financial.Late Fee',
     r'(?i)\bINTEREST\sCHARGED\sON\sPURCHASES\b': 'Financial.Interest',
@@ -717,96 +718,3 @@ category_map = {
 }
 #endregion Non-Essential Spending Categories
 #endregion category_map
-
-def compile_category_map(cat_map:Dict[str,str]) -> Dict[re.Pattern, str]:
-    """Return the category map."""
-    ret = {re.compile(pattern, re.IGNORECASE): category 
-        for pattern, category in cat_map.items()}
-    return ret
-
-compiled_category_map = compile_category_map(category_map)
-
-def category_map_count():
-    return len(get_category_map())
-
-def clear_category_map() -> Dict[str, str]:
-    """Clear the category map."""
-    global category_map
-    if category_map is not None:
-        del category_map
-    category_map = {}
-
-def get_category_map() -> Dict[str, str]:
-    """Return the category map."""
-    global category_map
-    return category_map
-
-def set_category_map(cat_map:Dict[str, str]) -> None:
-    """Set the category map."""
-    global category_map
-    clear_category_map()
-    category_map = cat_map
-
-def clear_compiled_category_map() -> Dict[str, str]:
-    """Clear the compiled category map."""
-    global category_map
-    del category_map
-    category_map = {}
-
-def get_compiled_category_map() -> Dict[str, str]:
-    """Return the compiled category map."""
-    global compiled_category_map
-    return compiled_category_map
-
-def set_compiled_category_map(compiled_cat_map:Dict[re.Pattern, str]) -> None:
-    """Set the compiled category map."""
-    global compiled_category_map
-    clear_compiled_category_map()
-    compiled_category_map = compiled_cat_map
-
-def clear_check_register_map() -> Dict[str, str]:
-    """Clear the check_register map."""
-    global check_register_map
-    if check_register_map is not None:
-        del check_register_map
-    check_register_map = {}
-
-def get_check_register_map() -> Dict[str, str]:
-    """Return the check register map."""
-    global check_register_map
-    return check_register_map
-
-def set_check_register_map(cr_map:Dict[str,str]) -> None:
-    """Set the check register map."""
-    global check_register_map
-    clear_check_register_map()
-    check_register_map = cr_map
-
-# ---------------------------------------------------------------------------- +
-#region category_histogram
-class CategoryCounter(dict):
-    """A custom dictionary to count occurrences of budget categories."""
-    def __missing__(self, key):
-        return 0
-    def count(self, key: str) -> str:
-        """Increment the count for key, return key."""
-        self[key] += 1
-        return key
-category_histogram : Optional[CategoryCounter] = None
-
-def get_category_histogram() -> CategoryCounter:
-    """Get the category histogram, initializing it if necessary."""
-    global category_histogram
-    if category_histogram is None:
-        category_histogram = CategoryCounter()
-    return category_histogram
-
-def clear_category_histogram():
-    """Clear the category histogram."""
-    global category_histogram
-    if category_histogram is not None:
-        del category_histogram
-    category_histogram = CategoryCounter()
-    return category_histogram
-#endregion category_histogram
-# ---------------------------------------------------------------------------- +

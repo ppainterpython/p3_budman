@@ -50,7 +50,7 @@ import budman_namespace as bdm
 from budman_namespace import (P2, P4, P6)
 import budman_settings as bdms
 from budget_categorization.txn_category import (
-    BDMTXNCategory, TXNCategoryCatalog, BDMTXNCategoryManager
+    BDMTXNCategory, TXNCategoryMap, BDMTXNCategoryManager
 )
 from budget_storage_model import (
     BSMFileTree,
@@ -111,7 +111,7 @@ class CmdLineApp(cmd2.Cmd):
         self.settings = settings if settings else bdms.BudManSettings()
         self._catman: BDMTXNCategoryManager = BDMTXNCategoryManager(self.settings)
         self._fi_key: str = self.settings[bdms.BUDMAN_DEFAULT_FI]
-        self._fi_catalog: TXNCategoryCatalog = None
+        self._fi_catalog: TXNCategoryMap = None
         super().__init__(allow_cli_args=False, 
                          include_ipy=True,
                          persistent_history_file="txn_cats_history.txt")
@@ -144,13 +144,13 @@ class CmdLineApp(cmd2.Cmd):
         self._fi_key = value
 
     @property
-    def fi_catalog(self) -> TXNCategoryCatalog:
+    def fi_catalog(self) -> TXNCategoryMap:
         """Get the transaction category catalog for the financial institution."""
         return self._fi_catalog
     @fi_catalog.setter
-    def fi_catalog(self, value: TXNCategoryCatalog) -> None:
+    def fi_catalog(self, value: TXNCategoryMap) -> None:
         """Set the transaction category catalog for the financial institution."""
-        if value is not None and isinstance(value, TXNCategoryCatalog):
+        if value is not None and isinstance(value, TXNCategoryMap):
             self.fi_key = value.fi_key
         self._fi_catalog = value
     #endregion CmdLineApp Class intrinsics
@@ -202,7 +202,7 @@ class CmdLineApp(cmd2.Cmd):
                     console.print("No transaction catalogs found.")
                 self.display_catman()
             if check_flag:
-                tcc: TXNCategoryCatalog = self.catman.catalogs.get(self.fi_key)
+                tcc: TXNCategoryMap = self.catman.catalogs.get(self.fi_key)
                 if not tcc:
                     console.print(f"No transaction category catalog found for fi_key: {self.fi_key}")
                 else:
@@ -306,7 +306,7 @@ class CmdLineApp(cmd2.Cmd):
         """Display a summary of the Category Manager content."""
         self.check_catalog()
         fi_key: str = ""
-        tcc: TXNCategoryCatalog = None
+        tcc: TXNCategoryMap = None
         console.print(f"[b][gold3]BDMTXNCategoryManager[/b][/gold3]")
         for fi_key, tcc in self.catman.catalogs.items():
             map_count = len(tcc.category_map)
