@@ -83,19 +83,26 @@
 #region Imports
 # python standard library modules and packages
 import logging, threading, queue
-from typing import List, Type, Generator, Dict, Tuple, Any, Callable, Optional
+from typing import List, Type, Union, Dict, Tuple, Any, Callable, Optional
 # third-party modules and packages
 from h11 import Data
 import cmd2, argparse
+from treelib import Tree
+from rich.console import Console
+from rich.table import Table
 import p3_utils as p3u, pyjson5, p3logging as p3l
 # local modules and packages
+import budman_namespace.design_language_namespace as bdm
 from .mvvm_namespace import *
 from .command_processor_Base_ABC import CommandProcessor_Base
+from .cp_message_service import cp_msg_svc
 from .data_context_binding import DataContext_Binding
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals
 logger = logging.getLogger(__name__)
+console = Console(force_terminal=True, width=bdm.BUDMAN_WIDTH, highlight=True,
+                  soft_wrap=False)
 BMCLI_SYSTEM_EXIT_WARNING = "Not exiting due to SystemExit"
 # ---------------------------------------------------------------------------- +
 #endregion Globals
@@ -237,7 +244,7 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
             raise
     #endregion cp_initialize_cmd_map() method
     # ------------------------------------------------------------------------ +
-    #region cp_initialize_worker_thread() method
+    #region    cp_initialize_worker_thread() method
     def cp_initialize_worker_thread(self):
         """Initialize the command processor worker thread."""
         try:
@@ -257,7 +264,7 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
             raise
     #endregion cp_initialize_worker_thread() method
     # ------------------------------------------------------------------------ +
-    #region c_worker_thread_funcp_worker() method
+    #region    _worker_thread_func() method
     def _worker_thread_func(self):
         """Worker thread function for processing async commands."""
         try:
@@ -296,7 +303,7 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
             return
     #endregion cp__worker_thread_funcworker() method
     # ------------------------------------------------------------------------ +
-    #region cp_cancel_worker_thread() method
+    #region    cp_cancel_worker_thread() method
     def cp_cancel_worker_thread(self):
         """Worker thread function for processing commands."""
         try:
@@ -353,8 +360,8 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
             return cmd_result
     #endregion cp_execute_cmd() method
     # ------------------------------------------------------------------------ +
-    #region process_async_cmd_results() method
-    def process_async_cmd_results(self) -> int:
+    #region    cp_process_async_cmd_results() method
+    def cp_process_async_cmd_results(self) -> int:
         """Process results from the async_cmd_result_queue."""
         if (self.cp_async_cmd_result_queue is None or 
             self.cp_async_cmd_result_queue.empty()):
@@ -393,60 +400,7 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
         return cnt
         # poll for msgs every 100 ms
         # self.root.after(100, self.msg_handler)
-    #endregion process_async_cmd_results() method
-    # ------------------------------------------------------------------------ +
-    #region    cp_execute_cmd() method
-    def cp_execute_cmd(self, cmd : CMD_OBJECT_TYPE = None,
-                       raise_error : bool = False) -> CMD_RESULT_TYPE:
-        """Execute a command within the command processor.
-
-        Pass the command request through to the command processor for
-        execution. 
-
-        Arguments:
-            cmd (Dict): The command to execute along with any arguments.
-        
-        Returns:
-            CMD_RESULT_TYPE: The outcome of the command 
-            execution.
-        """
-        try:
-            st = p3u.start_timer()
-            logger.info(f"Start Command: {cmd}")
-            parse_only: bool = self.cp_cmd_attr_get(cmd, CK_PARSE_ONLY, self.cp_parse_only)
-            if parse_only:
-                cmd_string: str = f"{CK_PARSE_ONLY}: {str(cmd)}"
-                logger.info(cmd_string)
-                return create_CMD_RESULT_OBJECT(cmd_result_status=True,
-                                                 result_content_type=CV_CMD_STRING_OUTPUT,
-                                                 result_content=cmd_string,
-                                                 cmd_object=cmd)
-            cmd_result: CMD_RESULT_TYPE = self.cp_validate_cmd(cmd)
-            if not cmd_result[CK_CMD_RESULT_STATUS]: return cmd_result
-            # if cp_validate_cmd() is good, continue.
-            exec_func: Callable = cmd[CK_CMD_EXEC_FUNC]
-            function_name = exec_func.__name__
-            validate_only: bool = self.cp_cmd_attr_get(cmd, CK_VALIDATE_ONLY, self.cp_validate_only)
-            if validate_only:
-                cmd_string: str = f"{CK_VALIDATE_ONLY}: {function_name}({str(cmd)})"
-                logger.info(cmd_string)
-                return create_CMD_RESULT_OBJECT(cmd_result_status=True,
-                                                 result_content_type=CV_CMD_STRING_OUTPUT,
-                                                 result_content=cmd_string,
-                                                 cmd_object=cmd)
-            logger.info(f"Executing command: {function_name}({str(cmd)})")
-            # Execute a cmd with its associated exec_func from the cmd_map.
-            cmd_result: CMD_RESULT_TYPE = exec_func(cmd)
-            # status, result = self.cp_cmd_map.get(full_cmd_key)(cmd)
-            logger.info(f"Complete Command: [{p3u.stop_timer(st)}] "
-                        f"{(cmd_result[CK_CMD_RESULT_STATUS])}")
-            return cmd_result
-        except Exception as e:
-            cmd_result = create_CMD_RESULT_EXCEPTION(cmd, e)
-            if raise_error:
-                raise RuntimeError(cmd_result[CK_CMD_RESULT_CONTENT]) from e
-            return cmd_result
-    #endregion cp_execute_cmd() method
+    #endregion cp_process_async_cmd_results() method
     # ------------------------------------------------------------------------ +
     #region    cp_validate_cmd() method
     def cp_validate_cmd(self, 
@@ -585,6 +539,70 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
             exec_func = default if default else None
         return exec_func
     #endregion cp_exec_func_binding() Command Processor method
+    # ------------------------------------------------------------------------ +
+    #region    cp_execute_cmd() method
+    def cp_execute_cmd(self, cmd : CMD_OBJECT_TYPE = None,
+                       raise_error : bool = False) -> CMD_RESULT_TYPE:
+        """Execute a command within the command processor.
+
+        Pass the command request through to the command processor for
+        execution. 
+
+        Arguments:
+            cmd (Dict): The command to execute along with any arguments.
+        
+        Returns:
+            CMD_RESULT_TYPE: The outcome of the command 
+            execution.
+        """
+        try:
+            st = p3u.start_timer()
+            cp_msg_svc.user_info_message(f"Starting Command Execution: {str(cmd)}")
+            parse_only: bool = self.cp_cmd_attr_get(cmd, CK_PARSE_ONLY, self.cp_parse_only)
+            if parse_only:
+                cmd_string: str = f"{CK_PARSE_ONLY}: {str(cmd)}"
+                cp_msg_svc.user_info_message(cmd_string)
+                return create_CMD_RESULT_OBJECT(cmd_result_status=True,
+                                                 result_content_type=CV_CMD_STRING_OUTPUT,
+                                                 result_content=cmd_string,
+                                                 cmd_object=cmd)
+            cmd_result: CMD_RESULT_TYPE = self.cp_validate_cmd(cmd)
+            if not cmd_result[CK_CMD_RESULT_STATUS]: return cmd_result
+            # if cp_validate_cmd() is good, continue.
+            exec_func: Callable = cmd[CK_CMD_EXEC_FUNC]
+            function_name = exec_func.__name__
+            validate_only: bool = self.cp_cmd_attr_get(cmd, CK_VALIDATE_ONLY, self.cp_validate_only)
+            if validate_only:
+                cmd_string: str = f"{CK_VALIDATE_ONLY}: {function_name}({str(cmd)})"
+                logger.info(cmd_string)
+                return create_CMD_RESULT_OBJECT(cmd_result_status=True,
+                                                 result_content_type=CV_CMD_STRING_OUTPUT,
+                                                 result_content=cmd_string,
+                                                 cmd_object=cmd)
+            cp_msg_svc.user_info_message(f"Executing command: {function_name}({str(cmd)})")
+            # Execute a cmd with its associated exec_func from the cmd_map.
+            cmd_result: CMD_RESULT_TYPE = exec_func(cmd)
+            cp_msg_svc.user_info_message(f"Complete Command: [{p3u.stop_timer(st)}] "
+                        f"{(cmd_result[CK_CMD_RESULT_STATUS])}")
+            return cmd_result
+        except Exception as e:
+            cmd_result = create_CMD_RESULT_EXCEPTION(cmd, e)
+            if raise_error:
+                raise RuntimeError(cmd_result[CK_CMD_RESULT_CONTENT]) from e
+            return cmd_result
+    #endregion cp_execute_cmd() method
+    # ------------------------------------------------------------------------ +
+    #region    cp_output_cmd_result() method
+    def cp_output_cmd_result(self, cmd: CMD_OBJECT_TYPE,
+                             cmd_result: CMD_RESULT_TYPE) -> None:
+        """Output in the View any output based on the command result."""
+        if is_CMD_RESULT(cmd_result):
+            # A CMD_RESULT_OBJECT was returned.
+            CMD_RESULT_output(cmd_result)
+        else:
+            # Fall back, try to show something.
+            console.print(str(cmd_result))
+    #endregion    cp_output_cmd_result() method
     # ------------------------------------------------------------------------ +
     #region    cp_cmd_attr_get() Command Processor method
     def cp_cmd_attr_get(self, cmd: Dict,
@@ -802,8 +820,8 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
     # ------------------------------------------------------------------------ +
     #endregion CommandProcessor argparse support methods
     # ------------------------------------------------------------------------ +
-
-#endregion CommandProcessor class
+    #endregion CommandProcessor_Base Methos
+#endregion    CommandProcessor class
 # ---------------------------------------------------------------------------- +
 
 # ---------------------------------------------------------------------------- +
@@ -988,6 +1006,76 @@ def unknown_CMD_RESULT_ERROR(cmd: CMD_OBJECT_TYPE, msg: Optional[str] = None) ->
             cmd_object=cmd
         )
 #endregion create_CMD_RESULT_ERROR() function
+# ---------------------------------------------------------------------------- +
+#region    CMD_RESULT_output() function
+def CMD_RESULT_output(cmd_result: CMD_RESULT_TYPE) -> None:
+    """Route the cmd_result to the appropriate output handler."""
+    try:
+        if (cmd_result is None or 
+            not is_CMD_RESULT(cmd_result)):
+            CMD_RESULT_output_error(f"Invalid command result: {str(cmd_result)}")
+            return
+        if not cmd_result.get(CK_CMD_RESULT_STATUS, False):
+            # If the command result status is False, output the error message.
+            CMD_RESULT_output_error(cmd_result)
+            return
+        result_type = cmd_result.get(CK_CMD_RESULT_CONTENT_TYPE, None)
+        result_content: Any = cmd_result.get(CK_CMD_RESULT_CONTENT, "")
+        # CMD_STRING_OUTPUT
+        if result_type == CV_CMD_STRING_OUTPUT:
+            # OUTPUT_STRING input is a simple string.
+            console.print(result_content)
+        # CMD_DICT_OUTPUT
+        elif result_type == CV_CMD_DICT_OUTPUT:
+            # Python dictionary (dict) input object.
+            output_str: str = p3u.first_n(str(result_content), 100)
+            console.print(output_str)
+        # CV_CMD_JSON_OUTPUT
+        elif result_type == CV_CMD_JSON_OUTPUT:
+            # JSON_STRING input is a JSON string.
+            console.print_json(result_content)
+        # CV_CMD_TREE_OBJECT
+        elif result_type == CV_CMD_TREE_OBJECT:
+            # CMD_RESULT content is a treelib.Tree.
+            formatted_tree = p3u.format_tree_view(result_content)
+            console.print(formatted_tree)
+        # CV_CMD_FILE_TREE_OBJECT
+        elif result_type == CV_CMD_FILE_TREE_OBJECT:
+            # CMD_RESULT content is a treelib.Tree with file information.
+            formatted_tree = p3u.format_tree_view(result_content)
+            console.print(formatted_tree)
+        # CV_CMD_WORKBOOK_TREE_OBJECT
+        elif result_type == CV_CMD_WORKBOOK_TREE_OBJECT:
+            # CV_CMD_WORKBOOK_TREE_OBJECT input is a treelib.Tree with workbook information.
+            formatted_tree = p3u.format_tree_view(result_content)
+            console.print(formatted_tree)
+        # CV_CMD_WORKBOOK_INFO_TABLE
+        elif result_type == CV_CMD_WORKBOOK_INFO_TABLE:
+            # INFO_TABLE input is an array dictionaries.
+            hdr = list(result_content[0].keys()) if result_content else []
+            table = Table(*hdr, show_header=True, header_style="bold green")
+            for row in result_content:
+                table.add_row(*[str(cell) for cell in row.values()])
+            console.print(table)
+        else:
+            logger.warning(f"Unknown command result type: {result_type}")
+            console.print(result_content)
+    except Exception as e:
+        CMD_RESULT_output_error(f"Error processing command result: {e}") 
+#endregion CMD_RESULT_output() function
+# ---------------------------------------------------------------------------- +
+#region    CMD_RESULT_output_error() function
+def CMD_RESULT_output_error(cmd_result: Union[CMD_RESULT_TYPE,str]) -> None:
+    """Display error msg output."""
+    if isinstance(cmd_result, str):
+        err_msg = cmd_result
+    elif is_CMD_RESULT(cmd_result):
+        err_msg = str(cmd_result.get(CK_CMD_RESULT_CONTENT, "No error message provided."))
+    else:
+        err_msg = f"Invalid err_output input type: {type(cmd_result).__name__}"
+    logger.error(err_msg)
+    console.print(f"Error: {err_msg}", style="bold red")
+#endregion CMD_RESULT_output_error() function
 # ---------------------------------------------------------------------------- +
 #endregion CMD_RESULT_OBJECT functions
 # ---------------------------------------------------------------------------- +

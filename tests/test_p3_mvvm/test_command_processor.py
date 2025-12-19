@@ -10,6 +10,7 @@ import pytest, logging, time
 
 # local libraries
 from p3_mvvm.command_processor import CommandProcessor, is_CMD_OBJECT
+from p3_mvvm.cp_message_service import CPMessageService
 from p3_mvvm.mvvm_namespace import *
 #endregion Imports
 # ---------------------------------------------------------------------------- +

@@ -1196,6 +1196,10 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             subcmd_name = cmd[cp.p3m.CK_SUBCMD_NAME]
             if subcmd_name == cp.CV_APPLY_SUBCMD_NAME:
                 # Update the txn_categories by apply the category_map.
+                p3m.cp_msg_svc.user_info_message("workflow apply cmd starting..")
+                p3m.cp_msg_svc.user_warning_message("workflow apply cmd Warning..")
+                p3m.cp_msg_svc.user_error_message("workflow apply cmd Error..")
+                p3m.cp_msg_svc.user_debug_message("workflow apply cmd Debug..")
                 return p3m.create_CMD_RESULT_OBJECT(True, p3m.CV_CMD_STRING_OUTPUT,
                                  "Applied category_map to txn_categories.", cmd)   
             return p3m.create_CMD_RESULT_OBJECT(False, p3m.CV_CMD_STRING_OUTPUT, "", cmd)

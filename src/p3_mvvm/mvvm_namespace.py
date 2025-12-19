@@ -19,7 +19,7 @@ from typing import List, Type, Generator, Dict, Tuple, Any, Callable, Optional
 # throughout an application applying the p3_mvvm capabilities.
 
 # ---------------------------------------------------------------------------- +
-#region Global Constants for p3_mvvm Command Processor pattern.
+#region    Global Constants for p3_mvvm Command Processor pattern.
 # The Command Processor capability uses dictionaries to implement 
 # a CMD_OBJECT constructed by client modules or an application to represent
 # commands to be executed somewhere in the application modules. This design
@@ -120,4 +120,24 @@ CV_P3_SAMPLE_CMD_KEY = CV_P3_SAMPLE_CMD_NAME + CK_CMD_KEY_SUFFIX
 CV_ATTRIBUTES_SUBCMD_NAME = "attributes"
 CV_ATTRIBUTES_SUBCMD_KEY = CV_P3_SAMPLE_CMD_KEY + "_" + CV_ATTRIBUTES_SUBCMD_NAME
 
-#endregion Types and Constants
+#endregion Global Constants for p3_mvvm Command Processor pattern.
+# ---------------------------------------------------------------------------- +
+
+# ---------------------------------------------------------------------------- +
+#region    Constants for CPMessageService class.
+
+# Message topics
+CP_USER_MSG_TOPIC = "cp.user_message"
+CP_CMD_RESULT_TOPIC = "cp.cmd_result_message"
+CP_EVENT_MSG_TOPIC = "cp.event_message"
+# Message tags
+CP_INFO =    "INFO"
+CP_WARNING = "WARNING"
+CP_ERROR =   "ERROR"
+CP_DEBUG =   "DEBUG"
+CP_VERBOSE = "VERBOSE"
+#endregion Constants for CPMessageService class.
+# ---------------------------------------------------------------------------- +
+
+#endregion Globals and Constants
+# ---------------------------------------------------------------------------- +

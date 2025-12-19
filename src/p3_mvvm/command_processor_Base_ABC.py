@@ -100,21 +100,6 @@ class CommandProcessor_Base(ABC):
         pass
 
     @abstractmethod
-    def cp_execute_cmd(self, cmd : CMD_OBJECT_TYPE = None, raise_error:bool=False) -> CMD_RESULT_TYPE:
-        """Execute a command.
-
-        The command processor is a callable object.
-
-        Arguments:
-            cmd (Dict): The command to execute along with any arguments.
-        
-        Returns:
-            Tuple[success : bool, result : Any]: The outcome of the command 
-            execution.
-        """
-        pass
-
-    @abstractmethod
     def cp_validate_cmd(self, cmd : CMD_OBJECT_TYPE = None,
                         validate_all : bool = False) -> CMD_RESULT_TYPE:
         """Validate a command."""
@@ -159,6 +144,27 @@ class CommandProcessor_Base(ABC):
             Callable: The function associated with the command key, or an 
             UNKNOWN_cmd function if the key is not found.
         """
+        pass
+
+    @abstractmethod
+    def cp_execute_cmd(self, cmd : CMD_OBJECT_TYPE = None, raise_error:bool=False) -> CMD_RESULT_TYPE:
+        """Execute a command.
+
+        The command processor is a callable object.
+
+        Arguments:
+            cmd (Dict): The command to execute along with any arguments.
+        
+        Returns:
+            Tuple[success : bool, result : Any]: The outcome of the command 
+            execution.
+        """
+        pass
+
+    @abstractmethod
+    def cp_output_cmd_result(self, cmd : CMD_OBJECT_TYPE = None, 
+                             cmd_result: CMD_RESULT_TYPE = None) -> None:
+        """Output the result of a command."""
         pass
 
     @abstractmethod

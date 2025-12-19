@@ -22,6 +22,7 @@ import budman_command_processor as cp
 from .budman_gui_style_registry import StyleRegistry
 from .budman_gui_frame import BudManGUIFrame
 from .budman_gui_msg import BudManGUIMsg
+from .budman_gui_command_processor import BudManGUICommandProcessor
 from .budman_gui_constants import *
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -31,8 +32,7 @@ budman_msg = BudManGUIMsg()  # Singleton instance of BudManGuiMsg
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
 class BudManGUIWindow(ttk.Window, 
-                      BudManAppDataContext_Binding,
-                      p3m.CommandProcessor_Binding):
+                      BudManAppDataContext_Binding):
     #--------------------------------------------------------------------------+
     #region BudManGUIWindow class Intrinsics
     #--------------------------------------------------------------------------+
@@ -65,7 +65,7 @@ class BudManGUIWindow(ttk.Window,
     def __init__(self, 
                  themename: str,
                  budman_settings : Optional[bdms.BudManSettings] = None,
-                 command_processor : Optional[p3m.CommandProcessor_Binding] = None,
+                 budman_gui_cp : Optional[BudManGUICommandProcessor] = None,
                  data_context : Optional[BudManAppDataContext_Binding] = None,
                  ) -> None:
         # init root GUI application Window.
@@ -73,7 +73,7 @@ class BudManGUIWindow(ttk.Window,
         # Application attributes.
         self._settings : bdms.BudManSettings = budman_settings if budman_settings else bdms.BudManSettings()
         self._dc_binding:bool = False
-        self._cp_binding:bool = False
+        self._budman_gui_cp_binding:BudManGUICommandProcessor = None
         self._store_url: str = ""
         self._tk_windowing_system: str = self.tk.call('tk', 'windowingsystem')
 
@@ -87,9 +87,8 @@ class BudManGUIWindow(ttk.Window,
             logger.debug("BudManGUIWindow configured with no DataContext.")
         try:
             # Setup CommandProcessor_Binding
-            if command_processor is not None:
-                self.CP = command_processor
-                self.cp_binding = True
+            if budman_gui_cp is not None:
+                self.CP = budman_gui_cp
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             logger.debug("BudManGUIWindow configured with no CommandProcessor.")
@@ -118,7 +117,7 @@ class BudManGUIWindow(ttk.Window,
         # Configure the root window properties
         self.configure_root_window()
         # Create the BudManGUIFrame for the main view (row 0)
-        self.create_budman_gui_frame(command_processor, data_context)
+        self.create_budman_gui_frame(budman_gui_cp, data_context)
         # Create the status bar for the bottom of the window (row 1)
         self._create_status_bar()
         # Bind event handlers
@@ -140,15 +139,15 @@ class BudManGUIWindow(ttk.Window,
             raise TypeError("dc_binding must be a boolean.")
         self._dc_binding = value
     @property
-    def cp_binding(self) -> bool:
-        """Get the cp_binding property."""
-        return self._cp_binding
-    @cp_binding.setter
-    def cp_binding(self, value: bool) -> None:
-        """Set the cp_binding property."""
-        if not isinstance(value, bool):
-            raise TypeError("cp_binding must be a boolean.")
-        self._cp_binding = value
+    def CP(self) -> BudManGUICommandProcessor:
+        """Get the CP property."""
+        return self._budman_gui_cp_binding
+    @CP.setter
+    def CP(self, value: BudManGUICommandProcessor) -> None:
+        """Set the CP property."""
+        if not isinstance(value, BudManGUICommandProcessor):
+            raise TypeError("CP must be a BudManGUICommandProcessor instance.")
+        self._budman_gui_cp_binding = value
     @property
     def settings(self) -> bdms.BudManSettings:
         """Get the settings property."""
@@ -238,11 +237,13 @@ class BudManGUIWindow(ttk.Window,
         self.option_add('*tearOff', FALSE)
 
 
-    def create_budman_gui_frame(self, command_processor, data_context):
+    def create_budman_gui_frame(self, 
+                                budman_gui_cp: BudManGUICommandProcessor, 
+                                data_context: BudManAppDataContext_Binding) -> None:
         """Create the BudManGUIFrame widget."""
         self.budman_gui_frame = BudManGUIFrame(self, 
                                                self.style_registry, 
-                                               command_processor=command_processor,
+                                               budman_gui_cp=budman_gui_cp,
                                                data_context=data_context) 
         self.budman_gui_frame.grid(row=0, column=0, sticky="nsew", padx=2, pady=2)
 

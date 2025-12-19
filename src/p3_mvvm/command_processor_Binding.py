@@ -62,8 +62,7 @@ class CommandProcessor_Binding(CommandProcessor_Base):
     def CP_binding(self) -> bool:
         """Is CP binding set?"""
         return (self._cp is not None and
-                isinstance(self._cp, CommandProcessor_Base) and
-                self.CP.cp_initialized)
+                isinstance(self._cp, CommandProcessor_Base))
     #endregion CommandProcessor_BindingProperties
     # ------------------------------------------------------------------------ +
     #region CommandProcessor_Base Properties
@@ -71,7 +70,6 @@ class CommandProcessor_Binding(CommandProcessor_Base):
     def cp_initialized(self) -> bool:
         """Return True if the command processor is initialized."""
         return self.CP.cp_initialized
-
     @cp_initialized.setter
     def cp_initialized(self, value: bool) -> None:
         """Set the initialized state of the command processor."""
@@ -92,7 +90,6 @@ class CommandProcessor_Binding(CommandProcessor_Base):
     def cp_parse_only(self) -> bool:
         """Return the parse_only state of the command processor."""
         return self.CP.cp_parse_only
-
     @cp_parse_only.setter
     def cp_parse_only(self, value: bool) -> None:
         """Set the parse_only state of the command processor."""
@@ -102,7 +99,6 @@ class CommandProcessor_Binding(CommandProcessor_Base):
     def cp_validate_only(self) -> bool:
         """Return the validate_only state of the command processor."""
         return self.CP.cp_validate_only
-
     @cp_validate_only.setter
     def cp_validate_only(self, value: bool) -> None:
         """Set the validate_only state of the command processor."""
@@ -112,7 +108,6 @@ class CommandProcessor_Binding(CommandProcessor_Base):
     def cp_what_if(self) -> bool:
         """Return the what_if state of the command processor."""
         return self.CP.cp_what_if
-
     @cp_what_if.setter
     def cp_what_if(self, value: bool) -> None:
         """Set the what_if state of the command processor."""
@@ -143,32 +138,6 @@ class CommandProcessor_Binding(CommandProcessor_Base):
             logger.error(p3u.exc_err_msg(e))
             raise
     #endregion cp_initialize_cmd_map() method
-    # ------------------------------------------------------------------------ +
-    #region execute_cmd() method
-    def cp_execute_cmd(self, cmd : Dict = None,
-                       raise_error : bool = False) -> CMD_RESULT_TYPE:
-        """Execute a command with the bound command processor.
-
-        Pass the command request through to the command processor for
-        execution. The command processor is a callable object within the 
-        ViewModel.
-
-        Arguments:
-            cmd (Dict): The command to execute along with any arguments.
-        
-        Returns:
-            Tuple[success : bool, result : Any]: The outcome of the command 
-            execution.
-        """
-        try:
-            return self.CP.cp_execute_cmd(cmd)
-        except Exception as e:
-            cmd_result = create_CMD_RESULT_EXCEPTION(cmd, e)
-            m = cmd_result[CK_CMD_RESULT_CONTENT]
-            if raise_error:
-                raise RuntimeError(m)
-            return False, m
-    #endregion execute_cmd() command method
     # ------------------------------------------------------------------------ +
     #region cp_validate_cmd() method
     def cp_validate_cmd(self, 
@@ -205,6 +174,43 @@ class CommandProcessor_Binding(CommandProcessor_Base):
             logger.error(p3u.exc_err_msg(e))
             raise
     #endregion cp_exec_func_binding() command method
+    # ------------------------------------------------------------------------ +
+    #region execute_cmd() method
+    def cp_execute_cmd(self, cmd : Dict = None,
+                       raise_error : bool = False) -> CMD_RESULT_TYPE:
+        """Execute a command with the bound command processor.
+
+        Pass the command request through to the command processor for
+        execution. The command processor is a callable object within the 
+        ViewModel.
+
+        Arguments:
+            cmd (Dict): The command to execute along with any arguments.
+        
+        Returns:
+            Tuple[success : bool, result : Any]: The outcome of the command 
+            execution.
+        """
+        try:
+            return self.CP.cp_execute_cmd(cmd)
+        except Exception as e:
+            cmd_result = create_CMD_RESULT_EXCEPTION(cmd, e)
+            m = cmd_result[CK_CMD_RESULT_CONTENT]
+            if raise_error:
+                raise RuntimeError(m)
+            return cmd_result
+    #endregion execute_cmd() command method
+    # ------------------------------------------------------------------------ +
+    #region    cp_output_cmd_result() method
+    def cp_output_cmd_result(self, cmd: CMD_OBJECT_TYPE,
+                             cmd_result: CMD_RESULT_TYPE) -> None:
+        """Output in the View any output based on the command result."""
+        try:
+            return self.CP.cp_output_cmd_result(cmd, cmd_result)
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+    #endregion cp_output_cmd_result() method
     # ------------------------------------------------------------------------ +
     #region cp_cmd_attr_get() method
     def cp_cmd_attr_get(self, cmd: Dict,

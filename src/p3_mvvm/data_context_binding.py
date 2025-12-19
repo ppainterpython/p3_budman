@@ -85,6 +85,12 @@ class DataContext_Binding(DataContext_Base):
         is raised. The DC property is a reference to the data context object.
         """        
         self.data_context = DataContext_Binding._valid_DC_Binding(value)
+
+    @property
+    def DC_binding(self) -> bool:
+        """DC_Binding: Return True if the data context binding is valid."""
+        return (isinstance(self._data_context, DataContext_Base) and
+                self._data_context is not None)
     #endregion DataContext_Binding Properties
     # ------------------------------------------------------------------------ +
     #region DataContext_Base Properties (concrete)

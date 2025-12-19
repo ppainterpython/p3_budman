@@ -576,6 +576,8 @@ def BUDMAN_CMD_app_delete(cmd: p3m.CMD_OBJECT_TYPE,
 # ---------------------------------------------------------------------------- +    
 #endregion BudMan Application CMD_ functions
 # ---------------------------------------------------------------------------- +    
+#endregion BudMan Application CMD_ functions
+# --------------------------------------------------------------------------- +
 
 # --------------------------------------------------------------------------- +
 #region BudMan Application CMD_TASK_ functions

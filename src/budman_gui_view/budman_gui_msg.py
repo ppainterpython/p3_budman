@@ -7,7 +7,7 @@
 #region Imports
 # python standard library modules and packages
 import logging, queue
-from typing import Optional
+from typing import Optional, List, Dict, Any
 import tkinter as tk
 from tkinter import scrolledtext
 # third-party modules and packages
@@ -96,3 +96,7 @@ class BudManGUIMsg(metaclass=BDMSingletonMeta):
             msg += "\n"
             msg_item = {"msg": msg, "tag": tag}
             self._budman_msg_queue.put(msg_item)
+
+budman_msg = BudManGUIMsg()  # Singleton instance of BudManGuiMsg
+
+

@@ -52,6 +52,14 @@ from .command_processor import (
     create_CMD_RESULT_ERROR,
     unknown_CMD_RESULT_ERROR
 )
+from .cp_message_service import (
+    CPUserOutputMessage,
+    CPMessageService,
+    cp_user_message_callback,
+    cp_cmd_result_message_callback,
+    cp_print_user_message,
+    cp_msg_svc
+)
 from .mvvm_namespace import (
     # Types
     CMD_OBJECT_TYPE,
@@ -85,7 +93,16 @@ from .mvvm_namespace import (
     CV_CMD_WORKBOOK_INFO_TABLE,
     CV_CMD_WORKBOOK_TREE_OBJECT,
     CV_CMD_FILE_TREE_OBJECT,
-    CV_CMD_ERROR_STRING_OUTPUT
+    CV_CMD_ERROR_STRING_OUTPUT,
+    # CPMessageService Constants
+    CP_USER_MSG_TOPIC,
+    CP_CMD_RESULT_TOPIC,
+    CP_EVENT_MSG_TOPIC,
+    CP_INFO,
+    CP_WARNING,
+    CP_ERROR,
+    CP_DEBUG, 
+    CP_VERBOSE
 )
 # target for 'from budman_app import *'
 __all__ = [
@@ -143,5 +160,20 @@ __all__ = [
     "create_CMD_RESULT_EXCEPTION",
     "create_CMD_RESULT_ERROR",
     "unknown_CMD_RESULT_ERROR"
+    # CPMessageService Constants
+    "CP_USER_MSG_TOPIC",
+    "CP_CMD_RESULT_TOPIC",
+    "CP_EVENT_MSG_TOPIC",
+    "CP_INFO",
+    "CP_WARNING",
+    "CP_ERROR",
+    "CP_DEBUG",
+    "CP_VERBOSE",
+    "CPMessageService",
+    "CPUserOutputMessage",
+    "cp_user_message_callback",
+    "cp_cmd_result_message_callback",
+    "cp_print_user_message",
+    "cp_msg_svc"
 ]
 

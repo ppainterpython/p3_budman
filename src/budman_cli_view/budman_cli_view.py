@@ -42,7 +42,6 @@ import cmd2, argparse
 from cmd2 import (Cmd2ArgumentParser, with_argparser, with_argument_list)
 from cmd2 import (Bg,Fg, style, ansi)
 # local modules and packages
-from budman_cli_view.budman_cli_output import cli_view_cmd_output
 import budman_settings as bdms
 from budman_settings.budman_settings_constants import BUDMAN_CMD_HISTORY_FILENAME
 from budman_data_context import BudManAppDataContext_Binding
@@ -95,6 +94,27 @@ def workflow_cmd_parser() -> cmd2.Cmd2ArgumentParser:
     return cli_parser.workflow_cmd if cli_parser else None
 
 #endregion Configure the CLI parser 
+# ---------------------------------------------------------------------------- +
+#region    cli_view_cp_user_output()
+@p3m.cp_user_message_callback
+def cli_view_cp_user_output(m: p3m.CPUserOutputMessage) -> None:
+    """Output user messages from the Command Processor to the CLI View."""
+    try:
+        tag = m.tag.upper()
+        msg = m.message
+        if tag == p3m.CP_INFO:
+            console.print(f"[bold green]INFO:[/bold green] {msg}")
+        elif tag == p3m.CP_WARNING:
+            console.print(f"[bold yellow]WARNING:[/bold yellow] {msg}")
+        elif tag == p3m.CP_ERROR:
+            console.print(f"[bold red]ERROR:[/bold red] {msg}")
+        elif tag == p3m.CP_DEBUG:
+            console.print(f"[bold blue]DEBUG:[/bold blue] {msg}")
+        else:
+            console.print(f"[bold blue]{tag}:[/bold blue] {msg}")
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))        
+#endregion cli_view_cp_user_output()
 # ---------------------------------------------------------------------------- +
 class BudManCLIView(cmd2.Cmd, 
                     BudManAppDataContext_Binding,
@@ -168,6 +188,9 @@ class BudManCLIView(cmd2.Cmd,
         p3m.CommandProcessor_Binding.__init__(self, command_processor)
         self.cp_initialized : bool = False
 
+        # Setup CP Msg Svc bindings
+        p3m.cp_msg_svc.subscribe_user_message(cli_view_cp_user_output)
+
         # Setup and initialize cmd2.cmd cli parser
         shortcuts = dict(cmd2.DEFAULT_SHORTCUTS)
         shortcuts.update({'wf': 'workflow'})
@@ -187,6 +210,7 @@ class BudManCLIView(cmd2.Cmd,
                           self, onchange_cb=self._onchange_parse_only)
         )
         self.set_prompt()
+        p3m.cp_msg_svc.user_info_message("BudManCLIView initialized.")
     #endregion __init__() method
     # ------------------------------------------------------------------------ +
     #region    BudManCLIView class properties
@@ -352,7 +376,7 @@ class BudManCLIView(cmd2.Cmd,
             # Submit the command to the command processor.
             cmd_result: p3m.CMD_RESULT_TYPE = self.cp_execute_cmd(cmd)
             # Render the result.
-            cli_view_cmd_output(cmd, cmd_result)
+            self.cp_output_cmd_result(cmd, cmd_result)
         except Exception as e:
             self.pexcept(e)
     #endregion do_app command
@@ -367,7 +391,7 @@ class BudManCLIView(cmd2.Cmd,
             # Submit the command to the command processor.
             cmd_result: p3m.CMD_RESULT_TYPE = self.cp_execute_cmd(cmd)
             # Render the result.
-            cli_view_cmd_output(cmd, cmd_result)
+            self.cp_output_cmd_result(cmd, cmd_result)
         except Exception as e:
             self.pexcept(e)
     #endregion do_change command - change attributes of workbooks and other objects.
@@ -388,7 +412,7 @@ class BudManCLIView(cmd2.Cmd,
             # Submit the command to the command processor.
             cmd_result: p3m.CMD_RESULT_TYPE = self.cp_execute_cmd(cmd)
             # Render the result.
-            cli_view_cmd_output(cmd, cmd_result)
+            self.cp_output_cmd_result(cmd, cmd_result)
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
@@ -411,7 +435,7 @@ class BudManCLIView(cmd2.Cmd,
             # Submit the command to the command processor.
             cmd_result: p3m.CMD_RESULT_TYPE = self.cp_execute_cmd(cmd)
             # Render the result.
-            cli_view_cmd_output(cmd, cmd_result)
+            self.cp_output_cmd_result(cmd, cmd_result)
         except Exception as e:
             self.pexcept(e)
     #endregion do_load command - load workbooks
@@ -445,7 +469,7 @@ class BudManCLIView(cmd2.Cmd,
             cmd: p3m.CMD_OBJECT_TYPE = self.construct_cmd_from_argparse(opts)
             cmd_result: p3m.CMD_RESULT_TYPE  = self.cp_execute_cmd(cmd)
             # Render the result.
-            cli_view_cmd_output(cmd, cmd_result)
+            self.cp_output_cmd_result(cmd, cmd_result)
         except Exception as e:
             self.pexcept(e)
     #endregion do_show command
@@ -466,7 +490,7 @@ class BudManCLIView(cmd2.Cmd,
            # Submit the command to the command processor.
             cmd_result: p3m.CMD_RESULT_TYPE = self.cp_execute_cmd(cmd)
             # Render the result.
-            cli_view_cmd_output(cmd, cmd_result)
+            self.cp_output_cmd_result(cmd, cmd_result)
         except Exception as e:
             self.pexcept(e)
     #endregion do_save command - save workbooks
@@ -493,7 +517,7 @@ class BudManCLIView(cmd2.Cmd,
             # Submit the command to the command processor.
             cmd_result: p3m.CMD_RESULT_TYPE  = self.cp_execute_cmd(cmd)
             # Output the result.
-            cli_view_cmd_output(cmd, cmd_result)
+            self.cp_output_cmd_result(cmd, cmd_result)
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)

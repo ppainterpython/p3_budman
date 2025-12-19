@@ -91,11 +91,11 @@ class CategoryCounter(dict):
 # ---------------------------------------------------------------------------- +
 
 # ---------------------------------------------------------------------------- +
-#region TXNCategoryCatalog class
+#region TXNCategoryMap class
 class TXNCategoryMap:
     # ------------------------------------------------------------------------ +
-    #region TXNCategoryCatalog class intrinsics
-    """Represents a single transaction category catalog for one FI."""
+    #region TXNCategoryMap class intrinsics
+    """Represents a single transaction category map for one FI."""
     # ------------------------------------------------------------------------ +
     #region __init__()
     def __init__(self, fi_key: str, settings: bdms.BudManSettings,
@@ -108,6 +108,7 @@ class TXNCategoryMap:
         self._category_map : bdm.CATEGORY_MAP_WORKBOOK_TYPE = None
         self._category_map_module : types.ModuleType =  None
         self._compiled_category_map: Dict[re.Pattern, str] = None
+        self._check_register_map: Dict[str, str] = None
         self._category_histogram: CategoryCounter = CategoryCounter()
     #endregion __init__()
     # ------------------------------------------------------------------------ +
@@ -194,6 +195,15 @@ class TXNCategoryMap:
         self._compiled_category_map = value
 
     @property
+    def check_register_map(self) -> Dict[str, str]:
+        """Get the check register map."""
+        return self._check_register_map
+    @check_register_map.setter
+    def check_register_map(self, value: Dict[str, str]):
+        """Set the check register map."""
+        self._check_register_map = value
+
+    @property
     def category_histogram(self) -> CategoryCounter:
         """Get the category histogram."""
         if self._category_histogram is None:
@@ -258,7 +268,7 @@ class TXNCategoryMap:
             raise
     #endregion clear_category_map()
     # ------------------------------------------------------------------------ +
-    #region clear_category_histogram()
+    #region    clear_category_histogram()
     def clear_category_histogram(self) -> None:
         """Clear the category histogram."""
         try:
@@ -268,7 +278,7 @@ class TXNCategoryMap:
             raise
     #endregion clear_category_histogram()
     # ------------------------------------------------------------------------ +
-    #region extract_category_tree()
+    #region    extract_category_tree()
     def extract_category_tree(self, level:int=2) -> Tree:
         """Extract the category tree from the category_map."""
         try:
@@ -311,7 +321,7 @@ class TXNCategoryMap:
             raise
     #endregion extract_category_tree()
     # ---------------------------------------------------------------------------- +
-    #region output_category_tree()
+    #region    output_category_tree()
     def output_category_tree(self,level:int=2,cat_list:list[str]=[]) -> str:
         """Extract and output the category tree from the category_map."""
         try:
@@ -338,7 +348,7 @@ class TXNCategoryMap:
             raise
     #endregion output_category_tree()
     # ---------------------------------------------------------------------------- +
-    #region category_tree_to_csv()
+    #region    category_tree_to_csv()
     def category_tree_to_csv(self, level:int=2):
         """Extract the category, convert to dict, write to csv file."""
         try:
@@ -368,7 +378,7 @@ class TXNCategoryMap:
             raise
     #endregion output_category_tree()
     # ---------------------------------------------------------------------------- +
-    #region txn_category_url_save() function
+    #region    txn_category_url_save() function
     def txn_category_url_save(self,cat_url: str, category_map: Dict[str,str]) -> None:
         """Save transaction categories to a URL.
 
@@ -411,9 +421,9 @@ class TXNCategoryMap:
     # ------------------------------------------------------------------------ +
 
     # ------------------------------------------------------------------------ +
-    #region CATEGORY_MAP_WORKBOOK methods
+    #region    CATEGORY_MAP_WORKBOOK methods
     # ------------------------------------------------------------------------ +
-    #region CATEGORY_COLLECTION_create() method
+    #region    CATEGORY_COLLECTION_create() method
     def CATEGORY_COLLECTION_create(self, 
         category_map: bdm.CATEGORY_MAP_WORKBOOK_TYPE) -> bdm.CATEGORY_COLLECTION_TYPE :
         """Construct and return a CATEGORY_COLLECTION from a CATEGORY_MAP_WORKBOOK.
@@ -449,7 +459,7 @@ class TXNCategoryMap:
             raise
     #endregion CATEGORY_COLLECTION_create() method
     # ------------------------------------------------------------------------ +
-    #region CATEGORY_MAP_WORKBOOK_import()
+    #region    CATEGORY_MAP_WORKBOOK_import()
     def CATEGORY_MAP_WORKBOOK_import(self) -> None:
         """Load the CATEGORY_MAP_WORKBOOK from the URL.
         
@@ -464,6 +474,7 @@ class TXNCategoryMap:
             mod = p3u.import_module_from_path(mod_name, mod_path)
             self.category_map_module = mod
             self.category_map = mod.category_map
+            self.check_register_map = mod.check_register_map
             self.compile_category_map()
             # self.compiled_category_map = mod.compile_category_map(mod.category_map)
             if not isinstance(self._category_map, dict):
@@ -473,7 +484,7 @@ class TXNCategoryMap:
             raise
     #endregion CATEGORY_MAP_WORKBOOK_import()
     # ------------------------------------------------------------------------ +
-    #region CATEGORY_MAP_WORKBOOK_abs_path()
+    #region    CATEGORY_MAP_WORKBOOK_abs_path()
     def CATEGORY_MAP_WORKBOOK_abs_path(self, fi_key: str) -> Path:
         """Get the absolute path for the CATEGORY_MAP_WORKBOOK for a given FI.
 
@@ -503,7 +514,7 @@ class TXNCategoryMap:
     # ------------------------------------------------------------------------ +
     #endregion CATEGORY_MAP_WORKBOOK methods
     # ------------------------------------------------------------------------ +
-#endregion TXNCategoryCatalog class
+#endregion TXNCategoryMap class
 # ---------------------------------------------------------------------------- +
 
 # ---------------------------------------------------------------------------- +

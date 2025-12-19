@@ -103,10 +103,10 @@ def WORKFLOW_CMD_process(cmd: p3m.CMD_OBJECT_TYPE,
         # Subcmd: "workflow delete"
         elif cmd[p3m.CK_SUBCMD_KEY] == cp.CV_WORKFLOW_DELETE_SUBCMD_KEY:
             return WORKFLOW_TASK_delete_workbooks(cmd, bdm_DC)
-
-        # Subcmd: "workflow unknown"
         else:
-            return p3m.unknown_CMD_RESULT_ERROR(cmd)
+            pass
+        # Subcmd: "workflow unknown"
+        return p3m.unknown_CMD_RESULT_ERROR(cmd)
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise

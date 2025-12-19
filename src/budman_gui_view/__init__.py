@@ -6,7 +6,10 @@ __name__ = "budman_gui_view"
 __description__ = "Budget Manager GUI View."
 __license__ = "MIT"
 
-from .budman_gui_view_class import BudManGUIView
+from .budman_gui_view_class import (
+    BudManGUIView, 
+    gui_view_cp_user_output
+)
 from .budman_gui_window import BudManGUIWindow
 from .budman_gui_frame import BudManGUIFrame
 from .budman_gui_command_processor import BudManGUICommandProcessor
@@ -15,6 +18,7 @@ from .budman_gui_constants import *
 from .budman_gui_msg import BudManGUIMsg
 __all__ = [
     "BudManGUIView",
+    "gui_view_cp_user_output",
     "BudManGUIWindow",
     "BudManGUIFrame",
     "BudManGUICommandProcessor",

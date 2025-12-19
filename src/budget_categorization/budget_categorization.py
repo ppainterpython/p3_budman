@@ -991,68 +991,70 @@ def close_other_category_workbook(other_wb:Workbook) -> None:
 #endregion open_other_category_workbook() function
 # ---------------------------------------------------------------------------- +
 #region apply_check_register() function
-def apply_check_register(cr_wb_content:BDM_CHECK_REGISTER_TYPE, 
-                         trans_wb_ref:EXCEL_TXNS_WORKBOOK_TYPE) -> None:
-    """Apply the check transactions to the worksheet.
+# For future: change to BDMWorkbooks, use fi_key to get the
+# check_register_map
+# def apply_check_register(cr_wb_content:BDM_CHECK_REGISTER_TYPE, 
+#                          trans_wb_ref:EXCEL_TXNS_WORKBOOK_TYPE) -> None:
+#     """Apply the check transactions to the worksheet.
     
-    The sheet has banking transaction data in rows and columns. 
-    The check_reg has a collection of checks. Scan and match the checks
-    with the content in the worksheet. If found, modify the transactions.
+#     The sheet has banking transaction data in rows and columns. 
+#     The check_reg has a collection of checks. Scan and match the checks
+#     with the content in the worksheet. If found, modify the transactions.
 
-    Args:
-        sheet (openpyxl.worksheet): The worksheet to process.
-        check_reg (dict): A dictionary of check transactions to apply.
-    """
-    try:
-        # Validate the input parameters.
-        p3u.is_not_obj_of_type("cr_wb_content", cr_wb_content, dict, raise_error=True)
-        p3u.is_not_obj_of_type("trans_wb_ref",trans_wb_ref, Workbook, raise_error=True)
-        # Validate the input parameters.
-        cr = cr_wb_content
-        sh = trans_wb_ref.active  # Get the active worksheet.
-        if not WORKFLOW_TASK_check_sheet_columns(sh, add_columns=False):
-            logger.error(f"Sheet '{sh.title}' cannot be mapped due to "
-                         f"missing required columns.")
-            return
-        logger.info(f"Applying checks from check register to sheet: '{sh.title}' ")
-        # transactions = WORKSHEET_data(sheet)
-        # A row is a tuple of the Cell objects in the row. Tuples are 0-based
-        # hdr is a list, also 0-based. So, using the index(name) will 
-        # give the cell from a row tuple matching the column name in hdr.
-        hdr = [cell.value for cell in sh[1]] 
-        budget_cat = hdr.index(BUDGET_CATEGORY_COL_NAME)
-        orig_desc = hdr.index(TRANSACTION_DESCRIPTION_COL_NAME)
+#     Args:
+#         sheet (openpyxl.worksheet): The worksheet to process.
+#         check_reg (dict): A dictionary of check transactions to apply.
+#     """
+#     try:
+#         # Validate the input parameters.
+#         p3u.is_not_obj_of_type("cr_wb_content", cr_wb_content, dict, raise_error=True)
+#         p3u.is_not_obj_of_type("trans_wb_ref",trans_wb_ref, Workbook, raise_error=True)
+#         # Validate the input parameters.
+#         cr = cr_wb_content
+#         sh = trans_wb_ref.active  # Get the active worksheet.
+#         if not WORKFLOW_TASK_check_sheet_columns(sh, add_columns=False):
+#             logger.error(f"Sheet '{sh.title}' cannot be mapped due to "
+#                          f"missing required columns.")
+#             return
+#         logger.info(f"Applying checks from check register to sheet: '{sh.title}' ")
+#         # transactions = WORKSHEET_data(sheet)
+#         # A row is a tuple of the Cell objects in the row. Tuples are 0-based
+#         # hdr is a list, also 0-based. So, using the index(name) will 
+#         # give the cell from a row tuple matching the column name in hdr.
+#         hdr = [cell.value for cell in sh[1]] 
+#         budget_cat = hdr.index(BUDGET_CATEGORY_COL_NAME)
+#         orig_desc = hdr.index(TRANSACTION_DESCRIPTION_COL_NAME)
 
-        # For each check, with the check number and the Budget Category
-        # 'Banking.Checks to Categorize', find the row in the worksheet to modify.
-        target_cat = 'Banking.Checks to Categorize'
-        check_pat = re.compile(r'^.*Check\s*x*(\d{1,6})\b.*$')  
+#         # For each check, with the check number and the Budget Category
+#         # 'Banking.Checks to Categorize', find the row in the worksheet to modify.
+#         target_cat = 'Banking.Checks to Categorize'
+#         check_pat = re.compile(r'^.*Check\s*x*(\d{1,6})\b.*$')  
 
-        trans_match = []
-        for row in sh.iter_rows(min_row=2):
-            # row is a 'tuple' of Cell objects, 0-based index
-            budget_cat_cell = row[budget_cat]
-            if budget_cat_cell.value and target_cat in budget_cat_cell.value:
-                orig_desc_cell = row[orig_desc]
-                desc = row[orig_desc].value if orig_desc != -1 else ""
-                m = check_pat.match(desc)
-                if m:
-                    check_key = m.group(1)
-                    if check_key in cr:
-                        # Modify the transaction with the check number.
-                        pay_to = cr[check_key]['Pay-To']
-                        new_cat = check_register_map[pay_to] if pay_to in check_register_map else 'Unknown'
-                        new_desc = f"{pay_to} Check: {check_key}"
-                        row[budget_cat].value = new_cat
-                        row[orig_desc].value = new_desc
-                        logger.info(f"Modified transaction for check: '{check_key}' "
-                                    f"new_desc: '{new_desc}' new_cat: '{new_cat}'")
-                logger.info(f"'{sh.title}' Match '{target_cat}' desc={desc}")
-        logger.info(f"Found {len(trans_match)} transactions in sheet "
-                    f"'{sh.title}' with category '{target_cat}' to modify.")
-        return None
-    except Exception as e:
-        logger.error(p3u.exc_err_msg(e))
-        raise    
+#         trans_match = []
+#         for row in sh.iter_rows(min_row=2):
+#             # row is a 'tuple' of Cell objects, 0-based index
+#             budget_cat_cell = row[budget_cat]
+#             if budget_cat_cell.value and target_cat in budget_cat_cell.value:
+#                 orig_desc_cell = row[orig_desc]
+#                 desc = row[orig_desc].value if orig_desc != -1 else ""
+#                 m = check_pat.match(desc)
+#                 if m:
+#                     check_key = m.group(1)
+#                     if check_key in cr:
+#                         # Modify the transaction with the check number.
+#                         pay_to = cr[check_key]['Pay-To']
+#                         new_cat = check_register_map[pay_to] if pay_to in check_register_map else 'Unknown'
+#                         new_desc = f"{pay_to} Check: {check_key}"
+#                         row[budget_cat].value = new_cat
+#                         row[orig_desc].value = new_desc
+#                         logger.info(f"Modified transaction for check: '{check_key}' "
+#                                     f"new_desc: '{new_desc}' new_cat: '{new_cat}'")
+#                 logger.info(f"'{sh.title}' Match '{target_cat}' desc={desc}")
+#         logger.info(f"Found {len(trans_match)} transactions in sheet "
+#                     f"'{sh.title}' with category '{target_cat}' to modify.")
+#         return None
+#     except Exception as e:
+#         logger.error(p3u.exc_err_msg(e))
+#         raise    
 #endregion apply_check_register() function
 # ---------------------------------------------------------------------------- +

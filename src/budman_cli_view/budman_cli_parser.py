@@ -596,8 +596,6 @@ class BudManCLIParser():
                 aliases=["a"], 
                 help="Task: Apply some operation with workbooks.")
             apply_parser.set_defaults(
-                cmd_key=cp.CV_APPLY_SUBCMD_KEY,   # new way
-                cmd_name=cp.CV_APPLY_SUBCMD_NAME, 
                 subcmd_name=cp.CV_APPLY_SUBCMD_NAME,
                 subcmd_key=cp.CV_APPLY_SUBCMD_KEY)
             apply_parser.add_argument(
@@ -760,40 +758,6 @@ class BudManCLIParser():
                 default='boa', 
                 help=("One fi_key value."))
             self.add_common_optional_args(category_map_wb_parser)
-
-            # workflow transfer workbooks subcommand subparser
-            workbooks_parser = update_subparsers.add_parser(
-                cp.CV_WORKBOOKS_SUBCMD_NAME,
-                aliases=["WORKBOOKS"],
-                help="Specifies transfer of workbooks.")
-            workbooks_parser_defaults = {
-                cp.CK_TRANSFER_FILES: False,
-                cp.CK_TRANSFER_WORKBOOKS: True,
-                cp.CK_WB_LIST: [],
-                cp.CK_WF_KEY: None,
-                cp.CK_WF_PURPOSE: None,
-                cp.CK_WB_TYPE: None
-            }
-            workbooks_parser.set_defaults(**workbooks_parser_defaults)
-            workbooks_parser.add_argument(
-                # selected workbooks: wb_list
-                cp.CK_WB_LIST, nargs='*',
-                type=int, default=[], 
-                help=("One or more workbook index values from wb_list."))
-            workbooks_parser.add_argument(
-                f"--{cp.CK_WF_KEY}", "-w",
-                choices=bdm.VALID_BDM_WORKFLOWS,
-                help="Specify the destination workflow key.")
-            workbooks_parser.add_argument(
-                f"--{cp.CK_WF_PURPOSE}", "-p",
-                choices=bdm.VALID_WF_PURPOSE_CHOICES,
-                help="Specify the workflow purpose.")
-            workbooks_parser.add_argument(
-                f"--{cp.CK_WB_TYPE}", "-t",
-                choices=bdm.VALID_WB_TYPE_VALUES,
-                help="Specify the destination workbook type.")
-            self.add_common_optional_args(workbooks_parser)
-
             return update_subcmd_parser
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))

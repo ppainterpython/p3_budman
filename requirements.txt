@@ -1,3 +1,4 @@
+annotated-types==0.7.0
 anyio==4.9.0
 argon2-cffi==23.1.0
 argon2-cffi-bindings==21.2.0
@@ -9,10 +10,14 @@ babel==2.17.0
 beautifulsoup4==4.13.3
 bleach==6.2.0
 blinker==1.9.0
+boto3==1.40.54
+botocore==1.40.54
 certifi==2025.1.31
 cffi==1.17.1
 charset-normalizer==3.4.1
 click==8.2.1
+click-completion==0.5.2
+cloudflare==4.3.1
 cmd2==2.5.11
 colorama==0.4.6
 comm==0.2.2
@@ -20,12 +25,14 @@ concurrent-log-handler==0.9.25
 config==0.5.1
 contourpy==1.3.1
 coverage==7.8.0
+crayons==0.4.0
 cycler==0.12.1
 dash==3.0.4
 dash_cytoscape==1.0.2
 debugpy==1.8.14
 decorator==5.2.1
 defusedxml==0.7.1
+distro==1.9.0
 docutils==0.21.2
 dynaconf==3.2.11
 et_xmlfile==2.0.0
@@ -53,6 +60,7 @@ jaraco.context==6.0.1
 jaraco.functools==4.1.0
 jedi==0.19.2
 Jinja2==3.1.6
+jmespath==1.0.1
 json5==0.12.0
 jsonpointer==3.0.0
 jsonschema==4.23.0
@@ -87,9 +95,9 @@ notebook_shim==0.2.4
 numpy==2.2.4
 openpyxl==3.1.5
 overrides==7.7.0
--e git+https://github.com/ppainterpython/p3_budman.git@aa11cee9f56681c5b4c491e23403dbb68b011ef1#egg=p3_budget_model
+-e git+https://github.com/ppainterpython/p3_budman.git@68e7f63c4ee4a958e8326e87cbc99ba60e9234bd#egg=p3_budget_model
 p3_exel_budget==0.0.0
--e git+https://github.com/ppainterpython/p3_utils.git@31586947bbc6e655717477d21605b5bfb7f847f3#egg=p3_utils
+-e git+https://github.com/ppainterpython/p3_utils.git@b989529a62a9b697dc3e02703d0d62c08211e5ff#egg=p3_utils
 -e git+https://github.com/ppainterpython/p3logging.git@6f7fe9ad9b48fdf42bb24ea2029cb1a72a793190#egg=p3logging
 packaging==24.2
 pandas==2.2.3
@@ -105,6 +113,9 @@ prompt_toolkit==3.0.50
 psutil==7.0.0
 pure_eval==0.2.3
 pycparser==2.22
+pycycle==0.0.8
+pydantic==2.12.2
+pydantic_core==2.41.4
 pydeps==3.0.1
 pydot==3.0.4
 Pygments==2.19.1
@@ -132,12 +143,15 @@ rfc3986==2.0.0
 rfc3986-validator==0.1.1
 rich==13.9.4
 rpds-py==0.24.0
+s3transfer==0.14.0
 Send2Trash==1.8.3
 setuptools==78.1.0
+shellingham==1.5.4
 six==1.17.0
 smmap==5.0.2
 sniffio==1.3.1
 soupsieve==2.6
+splurge-pub-sub==2025.3.2
 stack-data==0.6.3
 stdlib-list==0.11.1
 tach==0.29.0
@@ -149,9 +163,11 @@ tomli_w==1.2.0
 tornado==6.4.2
 traitlets==5.14.3
 treelib==1.7.1
+ttkbootstrap==1.16.0
 twine==6.1.0
 types-python-dateutil==2.9.0.20241206
-typing_extensions==4.13.2
+typing-inspection==0.4.2
+typing_extensions==4.15.0
 tzdata==2025.2
 uri-template==1.3.0
 urllib3==2.4.0

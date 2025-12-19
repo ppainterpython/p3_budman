@@ -27,8 +27,7 @@ from .budget_categorization import (
     TRANSACTION_DESCRIPTION_COL_NAME, 
     validate_budget_categories,
     WORKFLOW_TASK_process_budget_category,
-    WORKFLOW_TASK_categorize_transaction,
-    apply_check_register
+    WORKFLOW_TASK_categorize_transaction
 )
 from .txn_category import (
     BDMTXNCategory,
