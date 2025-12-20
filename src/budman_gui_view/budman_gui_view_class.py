@@ -42,16 +42,7 @@ def gui_view_cp_user_output(m: p3m.CPUserOutputMessage) -> None:
     try:
         tag = m.tag.upper()
         msg = m.message
-        if tag == p3m.CP_WARNING:
-            budman_msg.output(f"[bold yellow]{tag:>7}:[/bold yellow] {msg}", BMG_WARNING)
-        elif tag == p3m.CP_ERROR:
-            budman_msg.output(f"[bold red]{tag:>7}:[/bold red] {msg}", BMG_ERROR)
-        elif tag == p3m.CP_DEBUG:
-            budman_msg.output(f"[bold blue]{tag:>7} :[/bold blue] {msg}", BMG_DEBUG)
-        elif tag == p3m.CP_VERBOSE:
-            budman_msg.output(f"[bold blue]{tag:>7} :[/bold blue] {msg}", BMG_DEBUG)
-        else:
-            budman_msg.output(f"[bold blue]{tag:>7}:[/bold blue] {msg}", BMG_INFO)
+        budman_msg.output(msg, tag)
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))        
 

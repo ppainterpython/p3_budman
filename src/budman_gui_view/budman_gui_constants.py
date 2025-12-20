@@ -26,6 +26,7 @@ BMG_TNOTEBOOK_PADDING = 0
 # BMG - UI Widget Tags
 BMG_FTVOBJECT = "ftvobject"
 BMG_WBTVOBJECT = "wbtvobject"
+BMG_NORMAL = "normal"
 BMG_INFO = "INFO"
 BMG_DEBUG = "DEBUG"
 BMG_VERBOSE = "VERBOSE"

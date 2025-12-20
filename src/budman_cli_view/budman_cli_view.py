@@ -103,13 +103,17 @@ def cli_view_cp_user_output(m: p3m.CPUserOutputMessage) -> None:
         tag = m.tag.upper()
         msg = m.message
         if tag == p3m.CP_INFO:
-            console.print(f"[bold green]INFO:[/bold green] {msg}")
+            console.print(f"[bold green]{p3m.CP_INFO:>7}:[/bold green] {msg}")
         elif tag == p3m.CP_WARNING:
-            console.print(f"[bold yellow]WARNING:[/bold yellow] {msg}")
+            console.print(f"[bold orange]{p3m.CP_WARNING:>7}:[/bold orange] {msg}")
         elif tag == p3m.CP_ERROR:
-            console.print(f"[bold red]ERROR:[/bold red] {msg}")
+            console.print(f"[bold red]{p3m.CP_ERROR:>7}:[/bold red] {msg}")
         elif tag == p3m.CP_DEBUG:
-            console.print(f"[bold blue]DEBUG:[/bold blue] {msg}")
+            console.print(f"[bold blue]{p3m.CP_DEBUG:>7}:[/bold blue] {msg}")
+        elif tag == p3m.CP_VERBOSE:
+            console.print(f"[bold light blue]{p3m.CP_VERBOSE:>7}:[/bold light blue] {msg}")
+        elif tag == p3m.CP_CRITICAL:
+            console.print(f"[bold dark red]{p3m.CP_CRITICAL:>7}:[/bold dark red] {msg}")
         else:
             console.print(f"[bold blue]{tag}:[/bold blue] {msg}")
     except Exception as e:

@@ -53,60 +53,83 @@ def cli_view2_cp_user_output(message: p3m.CPUserOutputMessage) -> None:
     print(f"CLI View2 User Message [{message.tag}]: {message.message}")
 
 test_text = """
-[bold blue]  DEBUG :[/bold blue] Catalog Map Update button clicked.
+[bold blue]  DEBUG:[/bold blue] Here is a DEBUG message.
 [bold blue]   INFO:[/bold blue] Starting Command Execution: {'cmd_name': 'workflow', 'cmd_key': 'workflow_cmd', 'cmd_exec_func': None, 'subcmd_name': 'update', 'subcmd_key': 'workflow_cmd_update', 'cmd_async_id': None, 'cmd_async_result_subscriber': None, 'fi_key': 'boa', 'update_category_map_workbook': True}
-[bold blue]   INFO:[/bold blue] Executing command: WORKFLOW_cmd({'cmd_name': 'workflow', 'cmd_key': 'workflow_cmd', 'cmd_exec_func': <bound method BudManViewModel.WORKFLOW_cmd of <budman_view_model.budman_view_model.BudManViewModel object at 0x000002BEDA5BC590>>, 'subcmd_name': 'update', 'subcmd_key': 'workflow_cmd_update', 'cmd_async_id': None, 'cmd_async_result_subscriber': None, 'fi_key': 'boa', 'update_category_map_workbook': True, 'wf_key': 'categorize_transactions'})
-[bold blue]       :[/bold blue] string_output
+[bold red]  ERROR:[/bold red] Executing command: WORKFLOW_cmd({'cmd_name': 'workflow', 'cmd_key': 'workflow_cmd', 'cmd_exec_func': <bound method BudManViewModel.WORKFLOW_cmd of <budman_view_model.budman_view_model.BudManViewModel object at 0x000002BEDA5BC590>>, 'subcmd_name': 'update', 'subcmd_key': 'workflow_cmd_update', 'cmd_async_id': None, 'cmd_async_result_subscriber': None, 'fi_key': 'boa', 'update_category_map_workbook': True, 'wf_key': 'categorize_transactions'})
+[bold yellow]WARNING:[/bold yellow] Warning message example.
 [bold blue]   INFO:[/bold blue] Complete Command: [0.248009 seconds] True
+[bold green]   INFO:[/bold green] Green Complete Command: [0.248009 seconds] True
 """
-def reformat(msg: str) -> str:
+def reformat_console_markup(msg: str) -> Dict[str, Any]:
     new_output: List[str] = []
     """Reformat a message string for GUI output."""
     token : Dict[str, Any] = {
-        "open": "[bold blue]",
-        "close": "[/bold blue]",
-        "count": 0
+        "open": "",
+        "close": "",
+        "line_no": 0,
+        "offset": 0,
+        "text": ""
     }
     tokens: List[dict[str, Any]] = [
         {
             "open": "[bold blue]",
-            "close": "[/bold blue]",
-            "offset": 0,
-            "count": 0
+            "close": "[/bold blue]"
         },
         {
             "open": "[bold yellow]",
-            "close": "[/bold yellow]",
-            "offset": 0,
-            "count": 0
+            "close": "[/bold yellow]"
+        },
+        {
+            "open": "[bold green]",
+            "close": "[/bold green]"
+        },
+        {
+            "open": "[bold black]",
+            "close": "[/bold black]"
         },
         {
             "open": "[bold red]",
-            "close": "[/bold red]",
-            "offset": 0,
-            "count": 0
+            "close": "[/bold red]"
         },
 
     ]
-    for line in test_text.splitlines():
-        line = line.strip()
+    found_tokens: List[dict[str, Any]] = []
+
+    for n, line in enumerate(msg.splitlines(), start=1):
+        if len(line) == 0:
+            new_output.append("\n")
+            continue
+        msg = ""
         for t in tokens:
-            pos = line.find(t["open"])
-        if line.startswith("[bold blue]") and ":[/bold blue]" in line:
-            parts = line.split(":")
-            if len(parts) >= 2:
-                tag_part = parts[0].strip()
-                msg_part = ":".join(parts[1:]).strip()
-                tag = tag_part.replace("[bold blue]", "").replace("[/bold blue]", "").strip()
-                new_output.append(f"{token['open']}{tag:>7}:{token['close']} {msg_part}")
-            else:
-                new_output.append(line)
-        else:
-            new_output.append(line)
-    return ""
+            pos_o = line.find(t["open"])
+            pos_c = line.find(t["close"])
+            if pos_o != -1 and pos_c != -1 and pos_c > pos_o:
+                new = {
+                    "open": t["open"],
+                    "close": t["close"],
+                    "line_no": n,
+                    "offset": len(msg),
+                    "text": line[len(msg)+len(t["open"]):pos_c]
+                }
+                msg += new["text"] # text between open and close tokens
+                line = line[pos_c + len(t["close"]):]  # rest of line after close token
+                found_tokens.append(new)
+        if len(line) > 0:
+            new = {
+                "open": "[normal]",
+                "close": "[/normal]",
+                "line_no": n,
+                "offset": len(msg),
+                "text": line
+            }
+            found_tokens.append(new)
+            msg += line  # append any remaining text
+        new_output.append(f"{msg}\n")
+    return new_output
     
 if __name__ == "__main__":
     try:
+        newmsg = reformat_console_markup(test_text)
         configure_logging(__name__, logtest=False)
         p3m.cp_msg_svc.subscribe_user_message(cli_view_cp_user_output)
         p3m.cp_msg_svc.subscribe_user_message(cli_view2_cp_user_output)

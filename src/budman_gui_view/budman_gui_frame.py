@@ -704,7 +704,7 @@ class BudManGUIFrame(ttk.Frame,
         widget = event.widget
         if isinstance(widget, ttk.Frame):
             w_name = self.widget_name(widget.winfo_id())
-            budman_msg.output(f"Mouse entered : {w_name}", BMG_DEBUG)
+            budman_msg.output(f"Mouse entered : {w_name}", BMG_VERBOSE)
 
     def on_quit_button_clicked(self, event):
         """ Event handler for when the user clicks the quit button. """
@@ -736,7 +736,12 @@ class BudManGUIFrame(ttk.Frame,
             self.disable_button(self.save_button)
         else:   
             self.enable_button(self.save_button)
+        budman_msg.output(f"Load button clicked with filepath: {v}", BMG_INFO)
         budman_msg.output(f"Load button clicked with filepath: {v}", BMG_DEBUG)
+        budman_msg.output(f"Load button clicked with filepath: {v}", BMG_VERBOSE)
+        budman_msg.output(f"Load button clicked with filepath: {v}", BMG_WARNING)
+        budman_msg.output(f"Load button clicked with filepath: {v}", BMG_ERROR)
+        budman_msg.output(f"Load button clicked with filepath: {v}", BMG_CRITICAL)
         print(f"BudManGUIWindow.BudManGUIFrame.load_button clicked with filepath: {v}")
 
     def on_file_treeview_select(self, event):
