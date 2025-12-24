@@ -742,6 +742,12 @@ class BudManGUIFrame(ttk.Frame,
         budman_msg.output(f"Load button clicked with filepath: {v}", BMG_WARNING)
         budman_msg.output(f"Load button clicked with filepath: {v}", BMG_ERROR)
         budman_msg.output(f"Load button clicked with filepath: {v}", BMG_CRITICAL)
+        budman_msg.output(f"Load button clicked with filepath: [red]{v}[/red]", BMG_INFO, prefix=False)
+        budman_msg.output(f"Load button clicked with filepath: {v}", BMG_DEBUG, prefix=False)
+        budman_msg.output(f"Load button clicked with filepath: {v}", BMG_VERBOSE, prefix=False)
+        budman_msg.output(f"Load button clicked with filepath: {v}", BMG_WARNING, prefix=False)
+        budman_msg.output(f"Load button clicked with filepath: {v}", BMG_ERROR, prefix=False)
+        budman_msg.output(f"Load button clicked with filepath: {v}", BMG_CRITICAL, prefix=False)
         print(f"BudManGUIWindow.BudManGUIFrame.load_button clicked with filepath: {v}")
 
     def on_file_treeview_select(self, event):

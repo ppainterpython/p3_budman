@@ -78,14 +78,22 @@ class StyleRegistry:
                              troughcolor=BMG_LIGHT_GRAY)
 
     def configure_tags_text(self, widget):
-        """Configure the tags for a scrolled text widget."""
+        """Configure the tags for a scrolled text widget.
+        These colors are used in a way that requires each tag to have a unique
+        color name."""
         widget.tag_configure(BMG_NORMAL, foreground=BMG_DARK_TEXT)
-        widget.tag_configure(BMG_INFO, foreground="green")
-        widget.tag_configure(BMG_DEBUG, foreground="blue")
+        widget.tag_configure(BMG_INFO, foreground="dark green")
+        widget.tag_configure(BMG_INFO_PREFIX, foreground="green")
+        widget.tag_configure(BMG_DEBUG, foreground="cadet blue")
+        widget.tag_configure(BMG_DEBUG_PREFIX, foreground="blue")
         widget.tag_configure(BMG_VERBOSE, foreground="light blue")
+        widget.tag_configure(BMG_VERBOSE_PREFIX, foreground="dodger blue")
         widget.tag_configure(BMG_WARNING, foreground="orange")
+        widget.tag_configure(BMG_WARNING_PREFIX, foreground="dark orange")
         widget.tag_configure(BMG_ERROR, foreground="red")
-        widget.tag_configure(BMG_CRITICAL, foreground="dark red", underline=1)
+        widget.tag_configure(BMG_ERROR_PREFIX, foreground="red3")
+        widget.tag_configure(BMG_CRITICAL, foreground="red2", underline=1)
+        widget.tag_configure(BMG_CRITICAL_PREFIX, foreground="dark red", underline=1)
 
     def get_style(self) -> Style:
         """Get the ttk.Style object for the BudMan GUI application."""
