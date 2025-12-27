@@ -269,9 +269,9 @@ logger = logging.getLogger(__name__)
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
 class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor, 
-                      p3m.Model_Binding): 
+                      p3m.ViewModel_Base, p3m.Model_Binding): 
     # ======================================================================== +
-    #region BudManViewModel_Base class intrinsics                              +
+    #region    BudManViewModel_Base class intrinsics                              +
     # ======================================================================== +
     #                                                                          +
     # ------------------------------------------------------------------------ +
@@ -678,7 +678,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
     # ======================================================================== +
     #                                                                          +
     # ------------------------------------------------------------------------ +
-    #region    Model_Binding Properties                                        +
+    #region    Model_Binding Property Overrides                                +
     @property
     def model(self) -> BudgetDomainModel:
         """Override: Return the model object reference from Dependency Injection."""

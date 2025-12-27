@@ -17,6 +17,7 @@ from pathlib import Path
 from rich.console import Console
 import p3logging as p3l
 from p3_utils import exc_err_msg, dscr, start_timer, stop_timer
+import argparse
 # local modules and packages
 import budman_namespace as bdm
 from budman_settings.budman_settings_constants import *
@@ -31,6 +32,16 @@ console = Console(force_terminal=True, width=bdm.BUDMAN_WIDTH, highlight=True,
                   soft_wrap=False)
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
+# ---------------------------------------------------------------------------- +
+#region command line argparse setup
+parser: argparse.ArgumentParser = argparse.ArgumentParser(
+    description="Budget Manager (BudMan) Application",
+    epilog="BudMan: P3 Budget Manager Application"
+)
+parser.add_argument("--show_log_config", action="store_true",
+                    help="Show the logging configuration.")
+args = parser.parse_args()
+#endregion command line argparse setup
 # ---------------------------------------------------------------------------- +
 #region configure_logging() method
 def configure_logging(logger_name : str, log_config_url: str, logtest : bool = True) -> None:
@@ -74,7 +85,7 @@ def configure_logging(logger_name : str, log_config_url: str, logtest : bool = T
 """
 #endregion backlog - main todo list
 # ---------------------------------------------------------------------------- +
-def main(bdms_url : str = None, start_time:float = start_timer()) -> None:
+def main(bdms_url : str = None, start_time:float = app_start_time) -> None:
     """Main entry point for the Budget Manager application.
     Args:
         bdms_url (str): Optional, the URL to BDM_STORE to load at startup.
@@ -97,9 +108,9 @@ def main(bdms_url : str = None, start_time:float = start_timer()) -> None:
             fs ="(from settings) "
         logger.info(f"BizEVENT: Started {app_name} User BDM_STORE {fs}bdms_url = '{bdms_url}'...")
         app = BudManApp(BudManMain_settings,start_time)
-        logger.debug(f"{dscr(app)} created. ...")
+        logger.debug(f"{dscr(app)} created. ...{stop_timer(start_time)}")
         app.run(bdms_url)  # Start the application
-        logger.debug(f"Complete:")
+        logger.debug(f"Complete: {stop_timer(start_time)}")
         logger.info(f"BizEVENT: {Path(__file__).name} completed successfully "
                     f"in {stop_timer(app_start_time)} seconds.")
         return

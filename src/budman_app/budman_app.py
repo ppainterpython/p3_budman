@@ -13,7 +13,7 @@ from typing import Optional
 
 # third-party  packages and module libraries
 from rich.console import Console
-import p3logging as p3l
+import p3logging as p3l, p3_mvvm as p3m
 from p3_utils import exc_err_msg, dscr, start_timer, stop_timer
 
 # local packages and module libraries
@@ -38,13 +38,28 @@ console.print(f"Starting {__name__}...")
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
-class BudManApp(metaclass=BDMSingletonMeta): 
-    """BudManApp: The main application class for the Budget Manager."""
+class BudManApp(p3m.Model_Binding, metaclass=BDMSingletonMeta): 
     # ------------------------------------------------------------------------ +
-    # region Class Properties    
-    def __init__(self, app_settings : Optional[BudManSettings] = None, start_time:float=time.time()) -> None:
-        """BudManApp__init__()."""
-        self._model : Optional[object] = None  # type: ignore
+    #region    BudManApp class intrinsics
+    # ------------------------------------------------------------------------ +
+    #region    doc string
+    """BudManApp: The main application class for the Budget Manager."""
+    #endregion doc string
+    # ------------------------------------------------------------------------ +
+    #region    __init__() method
+    def __init__(self, 
+                 app_settings : Optional[BudManSettings] = None, 
+                 start_time:float=time.time()) -> None:
+        """BudManApp__init__() - construct BudManApp class.
+        
+        Initialize the class attributes, but do not instantiate the object 
+        components and services. Applying Dependency Injection pattern, do that
+        in the budman_app_setup() method.
+        Args:
+            app_settings (BudManSettings): The application settings instance.
+            start_time (float): The application start time.
+        """
+        # self._model : Optional[object] = None  # type: ignore
         self._view : Optional[object] = None  # type: ignore
         self._view_model : Optional[object] = None  # type: ignore
         self._data_context : Optional[object] = None  # type: ignore
@@ -54,19 +69,9 @@ class BudManApp(metaclass=BDMSingletonMeta):
         self._settings : Optional[BudManSettings] = app_settings
         self._exit_code: int = 0
         d = dscr(self)
-        logger.debug(f"{d}.__init__() completed ...")
+    #endregion __init__() method
     # ------------------------------------------------------------------------ +
-    @property
-    def model(self) -> Optional[object]:
-        """Return the model."""
-        return self._model
-    @model.setter
-    def model(self, model: Optional[object]) -> None:
-        """Set the model."""
-        if not isinstance(model, object):
-            raise TypeError("model must be an object")
-        self._model = model
-
+    # region   Class Properties    
     @property
     def view(self) -> Optional[object]:
         """Return the view."""
@@ -148,13 +153,20 @@ class BudManApp(metaclass=BDMSingletonMeta):
     
     #endregion Class Properties
     # ------------------------------------------------------------------------ +
-    #region budman_app_cli_cmdloop() function
+    #endregion BudManApp class intrinsics
+    # ------------------------------------------------------------------------ +
+
+    # ------------------------------------------------------------------------ +
+    #region    class methods
+    # ------------------------------------------------------------------------ +
+    #region    budman_app_cli_cmdloop() function
     def budman_app_cli_cmdloop(self, startup : bool = True) -> None:
         """CLI cmdloop function."""
         try:
             # startup the view or not
             if self.view is None:
                 raise ValueError("View not initialized.")
+            # Main cmdloop() for the cli view invoked here.
             self._exit_code = self.view.cmdloop() if startup else None # Application CLI loop
             if self.view.save_on_exit:
                 self.view_model.save_model()
@@ -167,7 +179,7 @@ class BudManApp(metaclass=BDMSingletonMeta):
             raise
     #endregion budman_app_cli_cmdloop() function
     # ------------------------------------------------------------------------ +
-    #region budman_app_exit_handler() function
+    #region    budman_app_exit_handler() function
     def budman_app_exit_handler(self):
         """start the cli repl loop."""
         try:
@@ -180,8 +192,10 @@ class BudManApp(metaclass=BDMSingletonMeta):
             raise
     #endregion budman_app_exit_handler() function
     # ------------------------------------------------------------------------ +
-    #region budman_app_service_dependency_injection() function
-    def budman_app_service_dependency_injection(self, bdms_url : str = None, testmode : bool = False):
+    #region    budman_app_service_dependency_injection() function
+    def budman_app_service_dependency_injection(self, 
+                                                bdms_url : str = None, 
+                                                testmode : bool = False):
         """Assemble the application for startup. Do Dependency Injection.
                 
         Args:
@@ -225,9 +239,10 @@ class BudManApp(metaclass=BDMSingletonMeta):
             raise
     #endregion budman_app_service_dependency_injection() function
     # ------------------------------------------------------------------------ +
-    #region budman_app_setup() function
+    #region    budman_app_setup() function
     def budman_app_setup(self, bdms_url : str = None, testmode : bool = False):
-        """Assemble the application for startup. Do Dependency Injection.
+        """Assemble the application for startup. Do Dependency Injection by 
+        instantiating the appropriate classes for components and services.
                 
         Args:
             bdms_url (str): Optional, the URL to BDM_STORE to load at startup.
@@ -259,7 +274,7 @@ class BudManApp(metaclass=BDMSingletonMeta):
             raise
     #endregion budman_app_setup() function
     # ------------------------------------------------------------------------ +
-    #region budman_app_start() function
+    #region    budman_app_start() function
     def budman_app_start(self,testmode:bool=False):
         """start the cli repl loop."""
         try:
@@ -275,7 +290,7 @@ class BudManApp(metaclass=BDMSingletonMeta):
             raise
     #endregion budman_app_start() function
     # ------------------------------------------------------------------------ +
-    #region run() function
+    #region    run() function
     def run(self, 
             bdms_url : str = None, 
             testmode: bool = False, 
@@ -301,4 +316,6 @@ class BudManApp(metaclass=BDMSingletonMeta):
         d = dscr(self)
         logger.info(f"{d} exiting ...")
     #endregion run() function
+    # ------------------------------------------------------------------------ +
+    #endregion class methods
     # ------------------------------------------------------------------------ +

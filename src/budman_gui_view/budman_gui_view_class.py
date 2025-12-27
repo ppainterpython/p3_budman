@@ -47,7 +47,7 @@ def gui_view_cp_user_output(m: p3m.CPUserOutputMessage) -> None:
         logger.error(p3u.exc_err_msg(e))        
 
 @p3m.cp_cmd_result_message_callback
-def gui_cmd_result_message(cmd_result: p3m.CMD_RESULT_TYPE) -> None:
+def gui_cmd_result_output(cmd_result: p3m.CMD_RESULT_TYPE) -> None:
     """Output command results to the GUI View."""
     try:
         pass
@@ -109,7 +109,7 @@ class BudManGUIView(BudManAppDataContext_Binding,
         
         # CP Message Service Bindings, leveraged for BudManGUIMsg user output
         p3m.cp_msg_svc.subscribe_user_message(gui_view_cp_user_output)
-        p3m.cp_msg_svc.subscribe_cmd_result_message(gui_cmd_result_message)
+        p3m.cp_msg_svc.subscribe_cmd_result_message(gui_cmd_result_output)
         p3m.cp_msg_svc.user_info_message(f"Initializing BudMan GUI View")
         p3m.cp_msg_svc.user_debug_message(f"BudManGUIView created")
         p3m.cp_msg_svc.user_info_message(f"BudManGUIView created for application '{self._app_name}'.")

@@ -86,6 +86,17 @@ class CommandProcessor_Base(ABC):
         """Set the what_if state of the command processor."""
         pass
 
+    @property
+    @abstractmethod
+    def cp_verbose_log(self) -> bool:
+        """Return the verbose_log state of the command processor."""
+        pass
+    @cp_verbose_log.setter
+    @abstractmethod
+    def cp_verbose_log(self, value: bool) -> None:
+        """Set the verbose_log state of the command processor."""
+        pass
+
     #endregion CommandProcessor_Base Properties
     # ------------------------------------------------------------------------ +
     #region CommandProcessor methods
@@ -162,8 +173,7 @@ class CommandProcessor_Base(ABC):
         pass
 
     @abstractmethod
-    def cp_output_cmd_result(self, cmd : CMD_OBJECT_TYPE = None, 
-                             cmd_result: CMD_RESULT_TYPE = None) -> None:
+    def cp_output_cmd_result(self, cmd_result: CMD_RESULT_TYPE = None) -> None:
         """Output the result of a command."""
         pass
 

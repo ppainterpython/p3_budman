@@ -127,6 +127,7 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
         self._parse_only : bool = False
         self._validate_only : bool = False
         self._what_if : bool = False
+        self._verbose_log: bool = False
     #endregion __init__() constructor method
     # ------------------------------------------------------------------------ +
     #endregion CommandProcessor class instrisics - override for app-specific
@@ -138,7 +139,6 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
     def cp_initialized(self) -> bool:
         """Return True if the command processor is initialized."""
         return self._initialized
-
     @cp_initialized.setter
     def cp_initialized(self, value: bool) -> None:
         """Set the initialized state of the command processor."""
@@ -159,7 +159,6 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
     def cp_parse_only(self) -> bool:
         """Return the parse_only state of the command processor."""
         return self._parse_only
-
     @cp_parse_only.setter
     def cp_parse_only(self, value: bool) -> None:
         """Set the parse_only state of the command processor."""
@@ -169,7 +168,6 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
     def cp_validate_only(self) -> bool:
         """Return the validate_only state of the command processor."""
         return self._validate_only
-
     @cp_validate_only.setter
     def cp_validate_only(self, value: bool) -> None:
         """Set the validate_only state of the command processor."""
@@ -179,11 +177,19 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
     def cp_what_if(self) -> bool:
         """Return the what_if state of the command processor."""
         return self._what_if
-
     @cp_what_if.setter
     def cp_what_if(self, value: bool) -> None:
         """Set the what_if state of the command processor."""
         self._what_if = value
+
+    @property
+    def cp_verbose_log(self) -> bool:
+        """Return the verbose_log state of the command processor."""
+        return self._verbose_log
+    @cp_verbose_log.setter
+    def cp_verbose_log(self, value: bool) -> None:
+        """Set the verbose_log state of the command processor."""
+        self._verbose_log = value
 
     @property
     def cp_worker_thread(self) -> Optional[threading.Thread]:
@@ -582,6 +588,7 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
             cp_msg_svc.user_info_message(f"Executing command: {function_name}({str(cmd)})")
             # Execute a cmd with its associated exec_func from the cmd_map.
             cmd_result: CMD_RESULT_TYPE = exec_func(cmd)
+            cp_msg_svc.publish_cmd_result(cmd_result)
             cp_msg_svc.user_info_message(f"Complete Command: [{p3u.stop_timer(st)}] "
                         f"{(cmd_result[CK_CMD_RESULT_STATUS])}")
             return cmd_result
@@ -593,8 +600,7 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
     #endregion cp_execute_cmd() method
     # ------------------------------------------------------------------------ +
     #region    cp_output_cmd_result() method
-    def cp_output_cmd_result(self, cmd: CMD_OBJECT_TYPE,
-                             cmd_result: CMD_RESULT_TYPE) -> None:
+    def cp_output_cmd_result(self, cmd_result: CMD_RESULT_TYPE) -> None:
         """Output in the View any output based on the command result."""
         if is_CMD_RESULT(cmd_result):
             # A CMD_RESULT_OBJECT was returned.

@@ -120,7 +120,24 @@ def cli_view_cp_user_output(m: p3m.CPUserOutputMessage) -> None:
         logger.error(p3u.exc_err_msg(e))        
 #endregion cli_view_cp_user_output()
 # ---------------------------------------------------------------------------- +
+#region    cli_cmd_result_output() method
+@p3m.cp_cmd_result_message_callback
+def cli_cmd_result_output(cmd_result: p3m.CMD_RESULT_TYPE) -> None:
+    """Output command results to the CLI View."""
+    try:
+        if budman_cli_view:
+            if budman_cli_view.cp_verbose_log:
+                p3m.cp_user_debug_message(f"cli_cmd_result_output: cmd_result={cmd_result}")
+            budman_cli_view.output_cmd_result( cmd_result)
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+#endregion cli_cmd_result_output() method
+# ---------------------------------------------------------------------------- +
+
+# ============================================================================ +
+#region BudManCLIView class
 class BudManCLIView(cmd2.Cmd, 
+                    p3m.View_Base,
                     BudManAppDataContext_Binding,
                     p3m.CommandProcessor_Binding): 
     # ======================================================================== +
@@ -183,6 +200,8 @@ class BudManCLIView(cmd2.Cmd,
                  app_name : str = "budman_cli",
                  settings : Optional[bdms.BudManSettings] = None) -> None:
         # Internal attributes for this View
+        global budman_cli_view
+        budman_cli_view = self
         self._app_name = app_name
         self._settings : bdms.BudManSettings = settings if settings else bdms.BudManSettings()
         self._current_cmd :Optional[str] = None
@@ -194,6 +213,7 @@ class BudManCLIView(cmd2.Cmd,
 
         # Setup CP Msg Svc bindings
         p3m.cp_msg_svc.subscribe_user_message(cli_view_cp_user_output)
+        p3m.cp_msg_svc.subscribe_cmd_result_message(cli_cmd_result_output)
 
         # Setup and initialize cmd2.cmd cli parser
         shortcuts = dict(cmd2.DEFAULT_SHORTCUTS)
@@ -209,9 +229,15 @@ class BudManCLIView(cmd2.Cmd,
         self.register_postcmd_hook(self.postcmd_hook)
         self.register_postparsing_hook(self.postparsing_hook)
         # Configure set cmd parameters
+        self.parse_only = False
         self.add_settable(
             cmd2.Settable(cp.CK_PARSE_ONLY, str, 'parse_only mode: on|off|toggle',
                           self, onchange_cb=self._onchange_parse_only)
+        )
+        self.verbose = False
+        self.add_settable(
+            cmd2.Settable(cp.CK_VERBOSE, str, 'verbose mode: on|off|toggle',
+                          self, onchange_cb=self._onchange_verbose)
         )
         self.set_prompt()
         p3m.cp_msg_svc.user_info_message("BudManCLIView initialized.")
@@ -380,7 +406,7 @@ class BudManCLIView(cmd2.Cmd,
             # Submit the command to the command processor.
             cmd_result: p3m.CMD_RESULT_TYPE = self.cp_execute_cmd(cmd)
             # Render the result.
-            self.cp_output_cmd_result(cmd, cmd_result)
+            self.cp_output_cmd_result( cmd_result)
         except Exception as e:
             self.pexcept(e)
     #endregion do_app command
@@ -395,7 +421,7 @@ class BudManCLIView(cmd2.Cmd,
             # Submit the command to the command processor.
             cmd_result: p3m.CMD_RESULT_TYPE = self.cp_execute_cmd(cmd)
             # Render the result.
-            self.cp_output_cmd_result(cmd, cmd_result)
+            self.cp_output_cmd_result( cmd_result)
         except Exception as e:
             self.pexcept(e)
     #endregion do_change command - change attributes of workbooks and other objects.
@@ -414,9 +440,7 @@ class BudManCLIView(cmd2.Cmd,
             # Construct the command object from cmd2's argparse Namespace.
             cmd: p3m.CMD_OBJECT_TYPE = self.construct_cmd_from_argparse(opts)
             # Submit the command to the command processor.
-            cmd_result: p3m.CMD_RESULT_TYPE = self.cp_execute_cmd(cmd)
-            # Render the result.
-            self.cp_output_cmd_result(cmd, cmd_result)
+            _ = self.cp_execute_cmd(cmd)
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
@@ -437,9 +461,9 @@ class BudManCLIView(cmd2.Cmd,
             # Construct the command object from cmd2's argparse Namespace.
             cmd: p3m.CMD_OBJECT_TYPE = self.construct_cmd_from_argparse(opts)
             # Submit the command to the command processor.
-            cmd_result: p3m.CMD_RESULT_TYPE = self.cp_execute_cmd(cmd)
+            _ = self.cp_execute_cmd(cmd)
             # Render the result.
-            self.cp_output_cmd_result(cmd, cmd_result)
+            # self.cp_output_cmd_result(cmd_result)
         except Exception as e:
             self.pexcept(e)
     #endregion do_load command - load workbooks
@@ -471,9 +495,9 @@ class BudManCLIView(cmd2.Cmd,
         try:
             # Construct the command object from cmd2's argparse Namespace.
             cmd: p3m.CMD_OBJECT_TYPE = self.construct_cmd_from_argparse(opts)
-            cmd_result: p3m.CMD_RESULT_TYPE  = self.cp_execute_cmd(cmd)
+            _  = self.cp_execute_cmd(cmd)
             # Render the result.
-            self.cp_output_cmd_result(cmd, cmd_result)
+            # self.cp_output_cmd_result(cmd_result)
         except Exception as e:
             self.pexcept(e)
     #endregion do_show command
@@ -494,7 +518,7 @@ class BudManCLIView(cmd2.Cmd,
            # Submit the command to the command processor.
             cmd_result: p3m.CMD_RESULT_TYPE = self.cp_execute_cmd(cmd)
             # Render the result.
-            self.cp_output_cmd_result(cmd, cmd_result)
+            self.cp_output_cmd_result(cmd_result)
         except Exception as e:
             self.pexcept(e)
     #endregion do_save command - save workbooks
@@ -521,12 +545,76 @@ class BudManCLIView(cmd2.Cmd,
             # Submit the command to the command processor.
             cmd_result: p3m.CMD_RESULT_TYPE  = self.cp_execute_cmd(cmd)
             # Output the result.
-            self.cp_output_cmd_result(cmd, cmd_result)
+            self.cp_output_cmd_result(cmd_result)
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
             self.pexcept(e)
     #endregion do_workflow command
+    # ------------------------------------------------------------------------ +
+    #region cmd_result_output() method
+    def output_cmd_result(self, cmd_result: p3m.CMD_RESULT_TYPE):
+        """Output command results to the CLI View."""
+        try:
+            if (cmd_result is None or 
+                not p3m.is_CMD_RESULT(cmd_result)):
+                self.cp_cmd_result_output_error(f"Invalid command result: {str(cmd_result)}")
+                return
+            if not cmd_result.get(p3m.CK_CMD_RESULT_STATUS, False):
+                # If the command result status is False, output the error message.
+                self.cp_cmd_result_output_error(cmd_result)
+                return
+            result_type = cmd_result.get(p3m.CK_CMD_RESULT_CONTENT_TYPE, None)
+            result_content: Any = cmd_result.get(p3m.CK_CMD_RESULT_CONTENT, "")
+            # CMD_STRING_OUTPUT
+            if result_type == p3m.CV_CMD_STRING_OUTPUT:
+                # OUTPUT_STRING input is a simple string.
+                console.print(result_content)
+            # CMD_DICT_OUTPUT
+            elif result_type == p3m.CV_CMD_DICT_OUTPUT:
+                # Python dictionary (dict) input object.
+                output_str: str = p3u.first_n(str(result_content), 100)
+                console.print(output_str)
+            # CV_CMD_JSON_OUTPUT
+            elif result_type == p3m.CV_CMD_JSON_OUTPUT:
+                # JSON_STRING input is a JSON string.
+                console.print_json(result_content)
+            # CV_CMD_TREE_OBJECT
+            elif result_type == p3m.CV_CMD_TREE_OBJECT:
+                # CMD_RESULT content is a treelib.Tree.
+                formatted_tree = p3u.format_tree_view(result_content)
+                console.print(formatted_tree)
+            # CV_CMD_FILE_TREE_OBJECT
+            elif result_type == p3m.CV_CMD_FILE_TREE_OBJECT:
+                # CMD_RESULT content is a treelib.Tree with file information.
+                formatted_tree = p3u.format_tree_view(result_content)
+                console.print(formatted_tree)
+            # CV_CMD_WORKBOOK_TREE_OBJECT
+            elif result_type == p3m.CV_CMD_WORKBOOK_TREE_OBJECT:
+                # CV_CMD_WORKBOOK_TREE_OBJECT input is a treelib.Tree with workbook information.
+                formatted_tree = p3u.format_tree_view(result_content)
+                console.print(formatted_tree)
+            # CV_CMD_WORKBOOK_INFO_TABLE
+            elif result_type == p3m.CV_CMD_WORKBOOK_INFO_TABLE:
+                # INFO_TABLE input is an array dictionaries.
+                hdr = list(result_content[0].keys()) if result_content else []
+                table = Table(*hdr, show_header=True, header_style="bold green")
+                for row in result_content:
+                    table.add_row(*[str(cell) for cell in row.values()])
+                console.print(table)
+            else:
+                logger.warning(f"Unknown command result type: {result_type}")
+                console.print(result_content)
+        except Exception as e:
+            self.cp_cmd_result_output_error(f"Error processing command result: {e}") 
+    
+    def cp_cmd_result_output_error(self, error_msg: str) -> None:
+        """Output command result error messages to the CLI View."""
+        try:
+            console.print(f"[bold red]ERROR:[/bold red] {error_msg}")
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+    #endregion cmd_result_output() method
     # ------------------------------------------------------------------------ +
     #
     #endregion BudManCLIView do_ommand Execution Methods
@@ -540,17 +628,35 @@ class BudManCLIView(cmd2.Cmd,
     #region _onchange_parse_only
     def _onchange_parse_only(self, _param_name, _old, new: str) -> None:
         """parse_only settalbe attribute was changed."""
+        new = new.lower()
         if new == "toggle":
-            self.cp_parse_only = not self.cp_parse_only
-        elif new == "on":
-            self.cp_parse_only = True
-        elif new == "off":
-            self.cp_parse_only = False
+            self.parse_only = not self.cp_parse_only
+        elif new == "on" or new == 'true':
+            self.parse_only = True
+        elif new == "off" or new == 'false':
+            self.parse_only = False
+    #endregion _onchange_parse_only
+    # ------------------------------------------------------------------------ +    
+    #region _onchange_verbose
+    def _onchange_verbose(self, _param_name, _old, new: str) -> None:
+        """verbose settalbe attribute was changed."""
+        new = new.lower()
+        if new == "toggle":
+            self.verbose = not self.verbose
+        elif new == "on" or new == 'true':
+            self.verbose = True
+        elif new == "off" or new == 'false':
+            self.verbose = False 
+        self.cp_verbose_log = self.verbose
+    #endregion _onchange_verbose
     # ------------------------------------------------------------------------ +    
     #
     #endregion BudManCLIView Helper Methods
-    # ------------------------------------------------------------------------ +    
-    #endregion BudManCLIView class
     # ======================================================================== +
 
+    # ------------------------------------------------------------------------ +    
+#endregion BudManCLIView class
+# ============================================================================ +
+
 # ---------------------------------------------------------------------------- +
+budman_cli_view: BudManCLIView = None

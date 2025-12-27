@@ -123,7 +123,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
-class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
+class BudgetDomainModel(p3m.Model,metaclass=BDMSingletonMeta):
     # ======================================================================== +
     #region BudgetDomainModel class intrinsics
     # ======================================================================== +
@@ -435,7 +435,7 @@ class BudgetDomainModel(p3m.Model_Base,metaclass=BDMSingletonMeta):
             raise ValueError(f"bdm_valid_wb_types must be a list or None: {value}")
         self._valid_wb_types = value
 
-    #BDMBaseInterface properties
+    # Model_Base property override
     @property
     def model_id(self) -> str:
         """Return the model ID."""

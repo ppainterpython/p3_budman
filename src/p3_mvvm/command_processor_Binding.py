@@ -112,6 +112,16 @@ class CommandProcessor_Binding(CommandProcessor_Base):
     def cp_what_if(self, value: bool) -> None:
         """Set the what_if state of the command processor."""
         self.CP.cp_what_if = value
+
+    @property
+    def cp_verbose_log(self) -> bool:
+        """Return the verbose_log state of the command processor."""
+        return self.CP.cp_verbose_log
+    @cp_verbose_log.setter
+    def cp_verbose_log(self, value: bool) -> None:
+        """Set the verbose_log state of the command processor."""
+        self.CP.cp_verbose_log = value
+        
     #endregion CommandProcessor_BindingProperties
     # ------------------------------------------------------------------------ +
     #region CommandProcessor_Base Methods
@@ -202,11 +212,10 @@ class CommandProcessor_Binding(CommandProcessor_Base):
     #endregion execute_cmd() command method
     # ------------------------------------------------------------------------ +
     #region    cp_output_cmd_result() method
-    def cp_output_cmd_result(self, cmd: CMD_OBJECT_TYPE,
-                             cmd_result: CMD_RESULT_TYPE) -> None:
+    def cp_output_cmd_result(self, cmd_result: CMD_RESULT_TYPE) -> None:
         """Output in the View any output based on the command result."""
         try:
-            return self.CP.cp_output_cmd_result(cmd, cmd_result)
+            return self.CP.cp_output_cmd_result(cmd_result)
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise

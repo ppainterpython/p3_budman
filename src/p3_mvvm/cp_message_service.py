@@ -136,29 +136,25 @@ class CPMessageService(PubSub, metaclass=BDMSingletonMeta):
 
     def user_info_message(self, message: str, log: bool = True) -> None:
         """Publish a user INFO message."""
-        self.publish(topic=CP_USER_MSG_TOPIC, 
-                      data={'message': message, 'tag': CP_INFO})
+        self.user_message(message, CP_INFO)
         if log:
             logger.info(message)
 
     def user_warning_message(self, message: str, log: bool = True) -> None:
         """Publish a user WARNING message."""
-        self.publish(topic=CP_USER_MSG_TOPIC, 
-                      data={'message': message, 'tag': CP_WARNING})
+        self.user_message(message, CP_WARNING)
         if log:
             logger.warning(message)
             
     def user_error_message(self, message: str, log: bool = True) -> None:
         """Publish a user ERROR message."""
-        self.publish(topic=CP_USER_MSG_TOPIC, 
-                      data={'message': message, 'tag': CP_ERROR})
+        self.user_message(message, CP_ERROR)
         if log:
             logger.error(message)
 
     def user_debug_message(self, message: str, log: bool = True) -> None:
         """Publish a user DEBUG message."""
-        self.publish(topic=CP_USER_MSG_TOPIC, 
-                      data={'message': message, 'tag': CP_DEBUG})
+        self.user_message(message, CP_DEBUG)
         if log:
             logger.debug(message)
     #endregion CP_USER_MSG_TOPIC Methods
@@ -168,7 +164,7 @@ class CPMessageService(PubSub, metaclass=BDMSingletonMeta):
         """Subscribe to command result messages."""
         return self.subscribe(CP_CMD_RESULT_TOPIC, callback)    
 
-    def cmd_result_message(self, cmd_result: CMD_RESULT_TYPE) -> None:
+    def publish_cmd_result(self, cmd_result: CMD_RESULT_TYPE) -> None:
         """Publish a command result message."""
         self.publish(topic=CP_CMD_RESULT_TOPIC, 
                       data={'message': cmd_result})
@@ -181,13 +177,63 @@ class CPMessageService(PubSub, metaclass=BDMSingletonMeta):
 # ---------------------------------------------------------------------------- +
 
 # ---------------------------------------------------------------------------- +
-#region cp_print_user_message() function -sample callback
+#region cp_msg_svc variable - reference to Singleton CPMessageService
+cp_msg_svc: CPMessageService = CPMessageService()
+#endregion cp_msg_svc variable - reference to Singleton CPMessageService
+# ---------------------------------------------------------------------------- +
+#region cp_print_user_message() function - sample callback
 @cp_user_message_callback
 def cp_print_user_message(message: CPUserOutputMessage) -> None:
     """Sample user message callback."""
     print(f"[{message.tag:>7}]: {message.message}")
 
-cp_msg_svc: CPMessageService = CPMessageService()
-#endregion cp_print_user_message() function -sample callback
+#endregion cp_print_user_message() function - sample callback
+# ---------------------------------------------------------------------------- +
+#region user_message functions
+def cp_subscribe_user_message(callback: Callback) -> str:
+    """Subscribe to user messages."""
+    return cp_msg_svc.subscribe(CP_USER_MSG_TOPIC, callback)
+
+def cp_user_message(message: str, tag: str = CP_INFO) -> None:
+    """Publish a user message."""
+    cp_msg_svc.publish(topic=CP_USER_MSG_TOPIC, 
+                    data={'message': message, 'tag': tag})
+
+def cp_user_info_message(message: str, log: bool = True) -> None:
+    """Publish a user INFO message."""
+    cp_msg_svc.user_message(message, CP_INFO)
+    if log:
+        logger.info(message)
+
+def cp_user_warning_message(message: str, log: bool = True) -> None:
+    """Publish a user WARNING message."""
+    cp_msg_svc.user_message(message, CP_WARNING)
+    if log:
+        logger.warning(message)
+        
+def cp_user_error_message(message: str, log: bool = True) -> None:
+    """Publish a user ERROR message."""
+    cp_msg_svc.user_message(message, CP_ERROR)
+    if log:
+        logger.error(message)
+
+def cp_user_debug_message(message: str, log: bool = True) -> None:
+    """Publish a user DEBUG message."""
+    cp_msg_svc.user_message(message, CP_DEBUG)
+    if log:
+        logger.debug(message)
+#endregion user_message functions
+# ---------------------------------------------------------------------------- +
+#region cmd_result functions
+def cp_subscribe_cmd_result_message(callback: Callback) -> str:
+    """Subscribe to command result messages."""
+    return cp_msg_svc.subscribe(CP_CMD_RESULT_TOPIC, callback)    
+
+def cp_publish_cmd_result(cmd_result: CMD_RESULT_TYPE) -> None:
+    """Publish a command result message."""
+    cp_msg_svc.publish(topic=CP_CMD_RESULT_TOPIC, 
+                    data={'message': cmd_result})
+
+#endregion cmd_result functions
 # ---------------------------------------------------------------------------- +
 
