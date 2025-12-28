@@ -76,7 +76,7 @@ def WORKFLOW_CMD_process(cmd: p3m.CMD_OBJECT_TYPE,
             transfer_workbooks: bool = cmd.get(cp.CK_TRANSFER_WORKBOOKS, False)
             if transfer_workbooks:
                 return WORKFLOW_TASK_transfer_workbooks(cmd, bdm_DC)
-            return p3m.unknown_CMD_RESULT_ERROR(cmd)
+            return p3m.cp_CMD_RESULT_ERROR_unknown(cmd)
 
         # Subcmd: "workflow update"
         elif cmd[p3m.CK_SUBCMD_KEY] == cp.CV_WORKFLOW_UPDATE_SUBCMD_KEY:
@@ -106,7 +106,7 @@ def WORKFLOW_CMD_process(cmd: p3m.CMD_OBJECT_TYPE,
         else:
             pass
         # Subcmd: "workflow unknown"
-        return p3m.unknown_CMD_RESULT_ERROR(cmd)
+        return p3m.cp_CMD_RESULT_ERROR_unknown(cmd)
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
@@ -161,7 +161,7 @@ def WORKFLOW_TASK_delete_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
         # Refresh the trees
         model.bdm_FILE_TREE_refresh()
         model.bdm_WORKBOOK_TREE_refresh()
-        return p3m.create_CMD_RESULT_OBJECT(
+        return p3m.cp_CMD_RESULT_create(
             cmd_object=cmd,
             cmd_result_status=True,
             result_content_type=p3m.CV_CMD_STRING_OUTPUT,
@@ -215,7 +215,7 @@ def WORKFLOW_TASK_update_catalog_map(cmd: p3m.CMD_OBJECT_TYPE,
         result_msg: str = catman.FI_TXN_CATEGORIES_WORKBOOK_update(fi_key)
         fr: str = ""  # final report string
         m: str = ""
-        return p3m.create_CMD_RESULT_OBJECT(
+        return p3m.cp_CMD_RESULT_create(
             cmd_object=cmd,
             cmd_result_status=True,
             result_content_type=p3m.CV_CMD_STRING_OUTPUT,
@@ -228,7 +228,7 @@ def WORKFLOW_TASK_update_catalog_map(cmd: p3m.CMD_OBJECT_TYPE,
         m = p3u.exc_err_msg(e)
         err_msg = (f"Exception during WORKFLOW_TASK_transfer: {m}")
         logger.error(err_msg)
-        cmd_result_error = p3m.create_CMD_RESULT_ERROR(cmd, err_msg)
+        cmd_result_error = p3m.cp_CMD_RESULT_ERROR_create(cmd, err_msg)
         raise p3m.CMDValidationException(cmd=cmd, 
                                          msg=err_msg,
                                          cmd_result_error=cmd_result_error)
@@ -405,7 +405,7 @@ def WORKFLOW_TASK_transfer_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
                 continue
         model.bdm_save_model()
         model.bdm_refresh_trees()
-        return p3m.create_CMD_RESULT_OBJECT(
+        return p3m.cp_CMD_RESULT_create(
             cmd_object=cmd,
             cmd_result_status=True,
             result_content_type=p3m.CV_CMD_DICT_OUTPUT,
@@ -418,7 +418,7 @@ def WORKFLOW_TASK_transfer_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
         m = p3u.exc_err_msg(e)
         err_msg = (f"Exception during WORKFLOW_TASK_transfer: {m}")
         logger.error(err_msg)
-        cmd_result_error = p3m.create_CMD_RESULT_ERROR(cmd, err_msg)
+        cmd_result_error = p3m.cp_CMD_RESULT_ERROR_create(cmd, err_msg)
         raise p3m.CMDValidationException(cmd=cmd, 
                                          msg=err_msg,
                                          cmd_result_error=cmd_result_error)
@@ -586,7 +586,7 @@ def WORKFLOW_TASK_transfer_files(cmd: p3m.CMD_OBJECT_TYPE,
                 continue
         model.bdm_save_model()
         model.bdm_refresh_trees()
-        return p3m.create_CMD_RESULT_OBJECT(
+        return p3m.cp_CMD_RESULT_create(
             cmd_object=cmd,
             cmd_result_status=True,
             result_content_type=p3m.CV_CMD_DICT_OUTPUT,
@@ -599,7 +599,7 @@ def WORKFLOW_TASK_transfer_files(cmd: p3m.CMD_OBJECT_TYPE,
         m = p3u.exc_err_msg(e)
         err_msg = (f"Exception during WORKFLOW_TASK_transfer: {m}")
         logger.error(err_msg)
-        cmd_result_error = p3m.create_CMD_RESULT_ERROR(cmd, err_msg)
+        cmd_result_error = p3m.cp_CMD_RESULT_ERROR_create(cmd, err_msg)
         raise p3m.CMDValidationException(cmd=cmd, 
                                          msg=err_msg,
                                          cmd_result_error=cmd_result_error)

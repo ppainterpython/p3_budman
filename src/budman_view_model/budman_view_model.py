@@ -552,7 +552,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             # If cp_validate_cmd_object() returns, CMD_OBJECT has 
             # content to examine and validate.
             # Setup a CMD_RESULT object to return.
-            cmd_result : p3m.CMD_RESULT_TYPE = p3m.create_CMD_RESULT_OBJECT(
+            cmd_result : p3m.CMD_RESULT_TYPE = p3m.cp_CMD_RESULT_create(
                 cmd_result_status=False, 
                 result_content_type=p3m.CV_CMD_STRING_OUTPUT,
                 result_content="Command validation failed.",
@@ -720,7 +720,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             logger.debug(f"Complete: {p3u.stop_timer(st)}")
             return cmd_result
         except Exception as e:
-            return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
+            return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
     #endregion SHOW_cmd() execution method
     # ------------------------------------------------------------------------ +
     #region BDM_STORE_save_cmd() execution method
@@ -742,10 +742,10 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             self.dc_BDM_STORE_changed = False
             logger.info(f"Saved BDM_STORE url: {self.model.bdm_url}")
             logger.info(f"Complete: {p3u.stop_timer(st)}")
-            return p3m.create_CMD_RESULT_OBJECT(True, p3m.CV_CMD_DICT_OUTPUT, 
+            return p3m.cp_CMD_RESULT_create(True, p3m.CV_CMD_DICT_OUTPUT, 
                                                 self.model.bdm_dehydrate(), cmd)  
         except Exception as e:
-            return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
+            return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
     #endregion BDM_STORE_save_cmd() execution method
     # ------------------------------------------------------------------------ +
     #region BDM_STORE_load_cmd() execution method
@@ -778,11 +778,11 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             self._BDM_STORE_loaded = True
             self.dc_BDM_STORE_changed = False
             logger.info(f"Complete: {p3u.stop_timer(st)}")
-            return p3m.create_CMD_RESULT_OBJECT(True, p3m.CV_CMD_DICT_OUTPUT, 
+            return p3m.cp_CMD_RESULT_create(True, p3m.CV_CMD_DICT_OUTPUT, 
                                                 self.model.bdm_store_object, 
                                                 cmd)
         except Exception as e:
-            return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
+            return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
     #endregion BDM_STORE_load_cmd() execution method
     # ------------------------------------------------------------------------ +
     #region SHOW_cmd() execution method
@@ -820,7 +820,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             return cmd_result
         except Exception as e:
-            return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
+            return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
     #endregion SHOW_cmd() execution method
     # ------------------------------------------------------------------------ +
     #region WORKBOOKS_load_cmd() execution method
@@ -865,9 +865,9 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                 r += f"\n{P2}Loaded {r_str}"
                 continue
             logger.debug(f"Complete Command: 'Load' {p3u.stop_timer(st)}")   
-            return p3m.create_CMD_RESULT_OBJECT(True, p3m.CV_CMD_STRING_OUTPUT, r, cmd)
+            return p3m.cp_CMD_RESULT_create(True, p3m.CV_CMD_STRING_OUTPUT, r, cmd)
         except Exception as e:
-            return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
+            return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
     #endregion WORKBOOKS_load_cmd() execution method
     # ------------------------------------------------------------------------ +
     #region WORKBOOKS_save_cmd() execution method
@@ -907,9 +907,9 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                 r_str = bdm_wb.wb_index_display_str(wb_index)
                 r += f"\n{P2}Saved {result!r}"
             logger.info(f"Complete Command: 'Save' {p3u.stop_timer(st)}")   
-            return p3m.create_CMD_RESULT_OBJECT(True, p3m.CV_CMD_STRING_OUTPUT, r, cmd)
+            return p3m.cp_CMD_RESULT_create(True, p3m.CV_CMD_STRING_OUTPUT, r, cmd)
         except Exception as e:
-            return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
+            return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
     #endregion WORKBOOKS_save_cmd() execution method
     # ------------------------------------------------------------------------ +
     #region CHANGE_cmd() execution method
@@ -979,9 +979,9 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                                 f"'{str(self.dc_WB_INDEX):>4}' wb_id: '{bdm_wb.wb_id}'")
                         self.dc_BDM_STORE_changed = True
                     self.dc_WORKBOOK = bdm_wb
-                return p3m.create_CMD_RESULT_OBJECT(True, p3m.CV_CMD_STRING_OUTPUT, result, cmd)
+                return p3m.cp_CMD_RESULT_create(True, p3m.CV_CMD_STRING_OUTPUT, result, cmd)
         except Exception as e:
-            return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
+            return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
     #endregion CHANGE_cmd() execution method
     # ------------------------------------------------------------------------ +
     #region APP_cmd() execution method
@@ -1036,7 +1036,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             logger.debug(f"Complete: {p3u.stop_timer(st)}")
             return cmd_result
         except Exception as e:
-            return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
+            return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
     #endregion APP_cmd() execution method
     # ------------------------------------------------------------------------ +
     #region WORKFLOW_categorization_cmd() execution method
@@ -1133,9 +1133,9 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                         continue
                     fr += f"\n{P8}Result: {r}"
             logger.info(m)
-            return p3m.create_CMD_RESULT_OBJECT(True, p3m.CV_CMD_STRING_OUTPUT, fr, cmd)
+            return p3m.cp_CMD_RESULT_create(True, p3m.CV_CMD_STRING_OUTPUT, fr, cmd)
         except Exception as e:
-            return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
+            return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
     #endregion WORKFLOW_categorization_cmd() execution method
     # ------------------------------------------------------------------------ +
     #region WORKFLOW_cmd() execution method
@@ -1162,7 +1162,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             return cmd_result
         except Exception as e:
-            return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
+            return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
     #endregion WORKFLOW_cmd() execution method
     # ------------------------------------------------------------------------ +
     #region WORKFLOW_apply_cmd() execution method
@@ -1200,11 +1200,11 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                 p3m.cp_msg_svc.user_warning_message("workflow apply cmd Warning..")
                 p3m.cp_msg_svc.user_error_message("workflow apply cmd Error..")
                 p3m.cp_msg_svc.user_debug_message("workflow apply cmd Debug..")
-                return p3m.create_CMD_RESULT_OBJECT(True, p3m.CV_CMD_STRING_OUTPUT,
+                return p3m.cp_CMD_RESULT_create(True, p3m.CV_CMD_STRING_OUTPUT,
                                  "Applied category_map to txn_categories.", cmd)   
-            return p3m.create_CMD_RESULT_OBJECT(False, p3m.CV_CMD_STRING_OUTPUT, "", cmd)
+            return p3m.cp_CMD_RESULT_create(False, p3m.CV_CMD_STRING_OUTPUT, "", cmd)
         except Exception as e:
-            return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
+            return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
     #endregion WORKFLOW_apply_cmd() execution method
     # ------------------------------------------------------------------------ +
     #region WORKFLOW_check() execution method 
@@ -1270,10 +1270,10 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                         bdm_wb.wb_content.save(bdm_wb_abs_path)
                 result += f"\n{P2}{r}"
                 continue
-            return p3m.create_CMD_RESULT_OBJECT(success, p3m.CV_CMD_STRING_OUTPUT, 
+            return p3m.cp_CMD_RESULT_create(success, p3m.CV_CMD_STRING_OUTPUT, 
                                                 result, cmd)
         except Exception as e:
-            return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
+            return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
     #endregion WORKFLOW_check_cmd() execution method
     # ------------------------------------------------------------------------ +
     #                                                                          +

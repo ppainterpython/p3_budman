@@ -76,7 +76,7 @@ class BudManGUICommandProcessor(BudManAppDataContext_Binding,
 
     def WORKFLOW_UPDATE_CMD(self,fi_key: str) -> p3m.CMD_RESULT_TYPE:
         """Create a BudMan GUI View WORKFLOW_UPDATE CMD_OBJECT and process."""
-        cmd: p3m.CMD_OBJECT_TYPE = p3m.create_CMD_OBJECT(
+        cmd: p3m.CMD_OBJECT_TYPE = p3m.cp_CMD_OBJECT_create(
             cmd_name=cp.CV_WORKFLOW_CMD_NAME,
             cmd_key=cp.CV_WORKFLOW_CMD_KEY,
             subcmd_name=cp.CV_UPDATE_SUBCMD_NAME,

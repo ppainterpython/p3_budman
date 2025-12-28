@@ -60,9 +60,9 @@ def INTAKE_TASK_process(cmd: p3m.CMD_OBJECT_TYPE,
             return INTAKE_TASK_copy_file_to_wf_folder(cmd, bdm_DC)
         else:
             m = f"Unknown intake task: {cmd[cp.CK_INTAKE_TASK]}"
-            return p3m.create_CMD_RESULT_ERROR(cmd, m)
+            return p3m.cp_CMD_RESULT_ERROR_create(cmd, m)
     except Exception as e:
-        return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
+        return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
 #endregion INTAKE_TASK_process() function
 # ---------------------------------------------------------------------------- +
 #region INTAKE_TASK_copy_file_to_wf_folder() function
@@ -83,7 +83,7 @@ def INTAKE_TASK_copy_file_to_wf_folder(
     """
     try:
         # Assume the cmd parameters have been validated before reaching this point.
-        cmd_result : p3m.CMD_RESULT_TYPE = p3m.create_CMD_RESULT_OBJECT(
+        cmd_result : p3m.CMD_RESULT_TYPE = p3m.cp_CMD_RESULT_create(
             cmd_result_status = True,
             result_content_type = p3m.CV_CMD_STRING_OUTPUT,
             result_content = "",
@@ -106,7 +106,7 @@ def INTAKE_TASK_copy_file_to_wf_folder(
             msg = f"Source file_index '{src_file_index}' not found "
             msg += f"in folder tree: {file_tree.root}"
             logger.error(msg)
-            return p3m.create_CMD_RESULT_ERROR(cmd, msg)
+            return p3m.cp_CMD_RESULT_ERROR_create(cmd, msg)
         # Destination workflow folder
         dst_wf_key = bdm_DC.dc_WF_KEY
         dst_wf_purpose = bdm_DC.dc_WF_PURPOSE
@@ -115,7 +115,7 @@ def INTAKE_TASK_copy_file_to_wf_folder(
         cmd_result[p3m.CK_CMD_RESULT_CONTENT] = msg
         return cmd_result
     except Exception as e:
-        return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
+        return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
 #endregion INTAKE_TASK_copy_file_to_wf_folder() function
 # ---------------------------------------------------------------------------- +
 #region convert_csv_txns_to_excel_txns() function

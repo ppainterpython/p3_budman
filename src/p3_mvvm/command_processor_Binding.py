@@ -17,7 +17,8 @@ import p3_utils as p3u, pyjson5, p3logging as p3l
 # local modules and packages
 from .mvvm_namespace import *
 from .command_processor_Base_ABC import CommandProcessor_Base
-from .command_processor import create_CMD_RESULT_EXCEPTION
+from .command_processor import cp_CMD_RESULT_EXCEPTION_create
+from .cp_message_service import *
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -159,7 +160,7 @@ class CommandProcessor_Binding(CommandProcessor_Base):
         try:
             return self.CP.cp_validate_cmd(cmd, validate_all)
         except Exception as e:
-            cmd_result = create_CMD_RESULT_EXCEPTION(cmd, e)
+            cmd_result = cp_CMD_RESULT_EXCEPTION_create(cmd, e)
             return cmd_result
     #endregion cp_validate_cmd() command method
     # ------------------------------------------------------------------------ +
@@ -204,22 +205,12 @@ class CommandProcessor_Binding(CommandProcessor_Base):
         try:
             return self.CP.cp_execute_cmd(cmd)
         except Exception as e:
-            cmd_result = create_CMD_RESULT_EXCEPTION(cmd, e)
+            cmd_result = cp_CMD_RESULT_EXCEPTION_create(cmd, e)
             m = cmd_result[CK_CMD_RESULT_CONTENT]
             if raise_error:
                 raise RuntimeError(m)
             return cmd_result
     #endregion execute_cmd() command method
-    # ------------------------------------------------------------------------ +
-    #region    cp_output_cmd_result() method
-    def cp_output_cmd_result(self, cmd_result: CMD_RESULT_TYPE) -> None:
-        """Output in the View any output based on the command result."""
-        try:
-            return self.CP.cp_output_cmd_result(cmd_result)
-        except Exception as e:
-            logger.error(p3u.exc_err_msg(e))
-            raise
-    #endregion cp_output_cmd_result() method
     # ------------------------------------------------------------------------ +
     #region cp_cmd_attr_get() method
     def cp_cmd_attr_get(self, cmd: Dict,
@@ -228,6 +219,7 @@ class CommandProcessor_Binding(CommandProcessor_Base):
         try:
             return self.CP.cp_cmd_attr_get(cmd, key_name, default_value)
         except Exception as e:
+            cp_user_error_message(p3u.exc_err_msg(e))
             raise
     #endregion cp_cmd_attr_get() command method
     # ------------------------------------------------------------------------ +
@@ -246,27 +238,27 @@ class CommandProcessor_Binding(CommandProcessor_Base):
     # ------------------------------------------------------------------------ +
     #region CommandProcessor argparse support methods
     # ------------------------------------------------------------------------ +
-    #region construct_cmd_from_argparse
-    def construct_cmd_from_argparse(self, opts : argparse.Namespace) -> CMD_OBJECT_TYPE:
+    #region cp_construct_cmd_from_argparse
+    def cp_construct_cmd_from_argparse(self, opts : argparse.Namespace) -> CMD_OBJECT_TYPE:
         """Construct a valid cmd object from cmd2/argparse arguments or raise error."""
         try:
-            return self.CP.construct_cmd_from_argparse(opts)
+            return self.CP.cp_construct_cmd_from_argparse(opts)
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
-    #endregion construct_cmd_from_argparse
+    #endregion cp_construct_cmd_from_argparse
     # ------------------------------------------------------------------------ +
-    #region extract_CMD_OBJECT_from_argparse_Namespace
-    def extract_CMD_OBJECT_from_argparse_Namespace(self, opts : argparse.Namespace) -> CMD_OBJECT_TYPE:
+    #region cp_extract_CMD_OBJECT_from_argparse_Namespace
+    def cp_extract_CMD_OBJECT_from_argparse_Namespace(self, opts : argparse.Namespace) -> CMD_OBJECT_TYPE:
         """Construct a valid cmd object from cmd2/argparse arguments or raise error."""
         try:
-            return self.CP.extract_CMD_OBJECT_from_argparse_Namespace(opts)
+            return self.CP.cp_extract_CMD_OBJECT_from_argparse_Namespace(opts)
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
             raise
-    #endregion extract_CMD_OBJECT_from_argparse_Namespace
+    #endregion cp_extract_CMD_OBJECT_from_argparse_Namespace
     # ------------------------------------------------------------------------ +
     #endregion CommandProcessor argparse support methods
     # ------------------------------------------------------------------------ +

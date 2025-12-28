@@ -94,7 +94,7 @@ def BUDMAN_CMD_process(cmd: p3m.CMD_OBJECT_TYPE,
                 # List files in the BDM store
                 return BUDMAN_CMD_list_files(cmd, bdm_DC)
             else:
-                return p3m.unknown_CMD_RESULT_ERROR(cmd)
+                return p3m.cp_CMD_RESULT_ERROR_unknown(cmd)
         # Show command
         elif cmd[p3m.CK_CMD_KEY] == CV_SHOW_CMD_KEY:
             if cmd[p3m.CK_SUBCMD_KEY] == CV_SHOW_DATA_CONTEXT_SUBCMD_KEY:
@@ -102,7 +102,7 @@ def BUDMAN_CMD_process(cmd: p3m.CMD_OBJECT_TYPE,
             elif cmd[p3m.CK_SUBCMD_KEY] == CV_SHOW_BUDGET_CATEGORIES_SUBCMD_KEY:
                 return BUDMAN_CMD_TASK_show_BUDGET_CATEGORIES(cmd, bdm_DC)
             else:
-                return p3m.unknown_CMD_RESULT_ERROR(cmd)
+                return p3m.cp_CMD_RESULT_ERROR_unknown(cmd)
         # App command
         elif cmd[p3m.CK_CMD_KEY] == CV_APP_CMD_KEY:
             if cmd[p3m.CK_SUBCMD_KEY] == CV_SYNC_SUBCMD_KEY:
@@ -121,10 +121,10 @@ def BUDMAN_CMD_process(cmd: p3m.CMD_OBJECT_TYPE,
                 # Delete workbooks from the BDM store and BSM.
                 return BUDMAN_CMD_app_delete(cmd, bdm_DC)
             else:
-                return p3m.unknown_CMD_RESULT_ERROR(cmd)
+                return p3m.cp_CMD_RESULT_ERROR_unknown(cmd)
         # Unknown command
         else:
-            return p3m.unknown_CMD_RESULT_ERROR(cmd)
+            return p3m.cp_CMD_RESULT_ERROR_unknown(cmd)
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
@@ -146,7 +146,7 @@ def BUDMAN_CMD_list_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
     """
     try:
         # Construct CMD_RESULT for return.
-        cmd_result: p3m.CMD_RESULT_TYPE = p3m.create_CMD_RESULT_OBJECT(
+        cmd_result: p3m.CMD_RESULT_TYPE = p3m.cp_CMD_RESULT_create(
             cmd_object=cmd
         )
         # check bdm_tree flag
@@ -183,7 +183,7 @@ def BUDMAN_CMD_list_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
             cmd_result[p3m.CK_CMD_RESULT_STATUS] = True
             return cmd_result
     except Exception as e:
-        return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
+        return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
 #endregion BUDMAN_CMD_list_workbooks()
 # ---------------------------------------------------------------------------- +
 #region BUDMAN_CMD_list_bdm_store_json()
@@ -206,14 +206,14 @@ def BUDMAN_CMD_list_bdm_store_json(cmd: p3m.CMD_OBJECT_TYPE,
         if not model:
             m = "No BudgetDomainModel binding in the DC."
             logger.error(m)
-            return p3m.create_CMD_RESULT_OBJECT(
+            return p3m.cp_CMD_RESULT_create(
                 cmd_object=cmd,
                 cmd_result_status=False,
                 result_content_type=p3m.CV_CMD_STRING_OUTPUT,
                 result_content=m
             )
         # Construct CMD_RESULT for return.
-        cmd_result: p3m.CMD_RESULT_TYPE = p3m.create_CMD_RESULT_OBJECT(
+        cmd_result: p3m.CMD_RESULT_TYPE = p3m.cp_CMD_RESULT_create(
             cmd_object=cmd
         )
         cmd_result[p3m.CK_CMD_RESULT_CONTENT_TYPE] = p3m.CMD_JSON_OUTPUT
@@ -221,7 +221,7 @@ def BUDMAN_CMD_list_bdm_store_json(cmd: p3m.CMD_OBJECT_TYPE,
         cmd_result[p3m.CK_CMD_RESULT_STATUS] = True
         return cmd_result
     except Exception as e:
-        return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
+        return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
 #endregion BUDMAN_CMD_list_bdm_store_json()
 # ---------------------------------------------------------------------------- +    
 #region BUDMAN_CMD_list_files()
@@ -259,7 +259,7 @@ def BUDMAN_CMD_list_files(cmd: p3m.CMD_OBJECT_TYPE,
         cmd_err: bool = False
         err_msg:str = ""
         # Construct CMD_RESULT for return.
-        cmd_result = p3m.create_CMD_RESULT_OBJECT(
+        cmd_result = p3m.cp_CMD_RESULT_create(
             cmd_object=cmd
         )
         # List files all_files | wf_folder
@@ -326,7 +326,7 @@ def BUDMAN_CMD_list_files(cmd: p3m.CMD_OBJECT_TYPE,
         cmd_result[p3m.CK_CMD_RESULT_CONTENT] = file_tree
         return cmd_result
     except Exception as e:
-        return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
+        return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
 #endregion BUDMAN_CMD_list_files()
 # ---------------------------------------------------------------------------- +    
 #region BUDMAN_CMD_show_DATA_CONTEXT()
@@ -359,14 +359,14 @@ def BUDMAN_CMD_show_DATA_CONTEXT(cmd: p3m.CMD_OBJECT_TYPE,
                         f"{P2}{bdm.WB_TYPE}: ...\n")
         _, wdc_result = get_workbook_data_collection_info_str(bdm_DC)
         result += wdc_result
-        return p3m.create_CMD_RESULT_OBJECT(
+        return p3m.cp_CMD_RESULT_create(
             cmd_result_status=True,
             result_content=result,
             result_content_type=p3m.CV_CMD_STRING_OUTPUT,
             cmd_object=cmd
         )
     except Exception as e:
-        return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
+        return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
 #endregion BUDMAN_CMD_show_DATA_CONTEXT()
 # ---------------------------------------------------------------------------- +
 #region BUDMAN_CMD_app_sync()
@@ -412,14 +412,14 @@ def BUDMAN_CMD_app_sync(cmd: p3m.CMD_OBJECT_TYPE,
             if wb:
                 logger.debug(f"Found matching BDMWorkbook: '{wb.wb_id}'")
         # Success
-        return p3m.create_CMD_RESULT_OBJECT(
+        return p3m.cp_CMD_RESULT_create(
             cmd_object=None,
             cmd_result_status=True,
             result_content_type=p3m.CV_CMD_STRING_OUTPUT,
             result_content="foo"
         )
     except Exception as e:
-        return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
+        return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
 #endregion BUDMAN_CMD_app_sync()
 # ---------------------------------------------------------------------------- +    
 #region BUDMAN_CMD_app_log()
@@ -428,7 +428,7 @@ def BUDMAN_CMD_app_log(cmd: p3m.CMD_OBJECT_TYPE,
     """Show the current log level."""
     try:
         # Construct CMD_RESULT for return.
-        cmd_result: p3m.CMD_RESULT_TYPE = p3m.create_CMD_RESULT_OBJECT(
+        cmd_result: p3m.CMD_RESULT_TYPE = p3m.cp_CMD_RESULT_create(
             cmd_object=cmd
         )
         log_level_name: str = logging.getLevelName(logger.getEffectiveLevel())
@@ -437,7 +437,7 @@ def BUDMAN_CMD_app_log(cmd: p3m.CMD_OBJECT_TYPE,
         cmd_result[p3m.CK_CMD_RESULT_CONTENT] = f"Current log level: '{log_level_name}'"
         return cmd_result
     except Exception as e:
-        return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
+        return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
 #endregion BUDMAN_CMD_app_log()
 # ---------------------------------------------------------------------------- +    
 #region BUDMAN_CMD_app_refresh()
@@ -466,9 +466,9 @@ def BUDMAN_CMD_app_refresh(cmd: p3m.CMD_OBJECT_TYPE,
         fr += f"\n{r}"
         logger.debug(r)
         model.bdm_refresh_trees()
-        return p3m.create_CMD_RESULT_OBJECT(True, p3m.CV_CMD_STRING_OUTPUT, fr, cmd)
+        return p3m.cp_CMD_RESULT_create(True, p3m.CV_CMD_STRING_OUTPUT, fr, cmd)
     except Exception as e:
-        return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
+        return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
 #endregion BUDMAN_CMD_app_refresh()
 # ---------------------------------------------------------------------------- +    
 #region BUDMAN_CMD_app_reload()
@@ -481,7 +481,7 @@ def BUDMAN_CMD_app_reload(cmd: p3m.CMD_OBJECT_TYPE,
         if reload_target is None:
             m = f"reload_target is None, no action taken."
             logger.error(m)
-            return p3m.create_CMD_RESULT_OBJECT(False, p3m.CV_CMD_STRING_OUTPUT, m, cmd)
+            return p3m.cp_CMD_RESULT_create(False, p3m.CV_CMD_STRING_OUTPUT, m, cmd)
         if reload_target == CV_CATEGORY_MAP:
             catman: BDMTXNCategoryManager = BDMTXNCategoryManager() #self.WF_CATEGORY_MANAGER
             category_catalog: TXNCategoryMap = None
@@ -496,29 +496,29 @@ def BUDMAN_CMD_app_reload(cmd: p3m.CMD_OBJECT_TYPE,
                     m = (f"{P2}Task: {task:30} {rule_count:>3} "
                             f"rules, {cat_count:>3} categories.")
                     logger.debug(m)
-                    return p3m.create_CMD_RESULT_OBJECT(
+                    return p3m.cp_CMD_RESULT_create(
                         True, p3m.CV_CMD_STRING_OUTPUT, m, cmd)
                 else:
-                    return p3m.create_CMD_RESULT_OBJECT(
+                    return p3m.cp_CMD_RESULT_create(
                         False, p3m.CV_CMD_STRING_OUTPUT, 
                         "Failed to reload category_map_module", cmd)
         if reload_target == CV_FI_WORKBOOK_DATA_COLLECTION:
             m = "deprecated"
             # wdc: WORKBOOK_DATA_COLLECTION_TYPE = None
             # wdc, m = self.model.bsm_FI_WORKBOOK_DATA_COLLECTION_resolve(self.dc_FI_KEY)
-            return p3m.create_CMD_RESULT_OBJECT(
+            return p3m.cp_CMD_RESULT_create(
                 True, p3m.CV_CMD_STRING_OUTPUT, m, cmd)
         if reload_target == CV_WORKFLOWS_MODULE:
             importlib.reload(budman_workflows.workflow_utils)
-            return p3m.create_CMD_RESULT_OBJECT(
+            return p3m.cp_CMD_RESULT_create(
                 True, p3m.CV_CMD_STRING_OUTPUT, 
                 "Reloaded workflows module.", cmd)
-        return p3m.create_CMD_RESULT_OBJECT(
+        return p3m.cp_CMD_RESULT_create(
             True, p3m.CV_CMD_STRING_OUTPUT, r_msg, cmd)
     except Exception as e:
         m = f"Error reloading target: {reload_target}: {p3u.exc_err_msg(e)}"
         logger.error(m)
-        return p3m.create_CMD_RESULT_OBJECT(
+        return p3m.cp_CMD_RESULT_create(
             False, p3m.CV_CMD_STRING_OUTPUT, m, cmd)
 #endregion BUDMAN_CMD_app_reload()
 # ---------------------------------------------------------------------------- +    
@@ -570,9 +570,9 @@ def BUDMAN_CMD_app_delete(cmd: p3m.CMD_OBJECT_TYPE,
 
         # Refresh the trees
         model.bdm_refresh_trees()
-        return p3m.create_CMD_RESULT_OBJECT(True, p3m.CV_CMD_STRING_OUTPUT, fr, cmd)
+        return p3m.cp_CMD_RESULT_create(True, p3m.CV_CMD_STRING_OUTPUT, fr, cmd)
     except Exception as e:
-        return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
+        return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
 # ---------------------------------------------------------------------------- +    
 #endregion BudMan Application CMD_ functions
 # ---------------------------------------------------------------------------- +    
@@ -602,21 +602,21 @@ def BUDMAN_CMD_TASK_sync_BDM_STORE_to_BSM(bdm_DC: BudManAppDataContext_Base) -> 
         sync_result: Tuple[bool, str] = model.bdm_sync_BDM_STORE_to_BSM()
         if not sync_result[0]:
             # Sync failed
-            return p3m.create_CMD_RESULT_OBJECT(
+            return p3m.cp_CMD_RESULT_create(
                 cmd_object=None,
                 cmd_result_status=False,
                 result_content_type=p3m.CV_CMD_STRING_OUTPUT,
                 result_content=sync_result[1]
             )
         # Success
-        return p3m.create_CMD_RESULT_OBJECT(
+        return p3m.cp_CMD_RESULT_create(
             cmd_object=None,
             cmd_result_status=True,
             result_content_type=p3m.CV_CMD_STRING_OUTPUT,
             result_content=sync_result[1]
         )
     except Exception as e:
-        return p3m.create_CMD_RESULT_EXCEPTION(None, e)
+        return p3m.cp_CMD_RESULT_EXCEPTION_create(None, e)
 #endregion BUDMAN_CMD_TASK_sync_BDM_STORE_to_BSM()
 # ---------------------------------------------------------------------------- +    
 #region BUDMAN_CMD_TASK_get_workbook_tree() method
@@ -708,14 +708,14 @@ def BUDMAN_CMD_TASK_show_BUDGET_CATEGORIES(cmd: p3m.CMD_OBJECT_TYPE,
         catman : BDMTXNCategoryManager = bdm_DC.WF_CATEGORY_MANAGER
         fi_catmap : TXNCategoryMap = catman.catalogs[fi_key]
         result: str = fi_catmap.output_category_tree(level=tree_level, cat_list=cat_list)
-        return p3m.create_CMD_RESULT_OBJECT(
+        return p3m.cp_CMD_RESULT_create(
             cmd_result_status=True,
             result_content=result,
             result_content_type=p3m.CV_CMD_STRING_OUTPUT,
             cmd_object=cmd
         )
     except Exception as e:
-        return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
+        return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
 #endregion BUDMAN_CMD_TASK_show_BUDGET_CATEGORIES()
 # ---------------------------------------------------------------------------- +
 #region BUDMAN_CMD_TASK_construct_dst_file_url()
@@ -740,14 +740,14 @@ def BUDMAN_CMD_TASK_construct_dst_file_url(cmd: p3m.CMD_OBJECT_TYPE,
         dst_file_url = f"{bsm_file.wf_prefix}{bsm_file.wb_name}" \
                        f"{bsm_file.wb_type}.{bsm_file.extension}"
 
-        return p3m.create_CMD_RESULT_OBJECT(
+        return p3m.cp_CMD_RESULT_create(
             cmd_result_status=True,
             result_content=dst_file_url,
             result_content_type=p3m.CV_CMD_STRING_OUTPUT,
             cmd_object=cmd
         )
     except Exception as e:
-        return p3m.create_CMD_RESULT_EXCEPTION(cmd, e)
+        return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
 #endregion BUDMAN_CMD_TASK_construct_dst_file_url()
 # ---------------------------------------------------------------------------- +
 #region extract_bdm_tree() function
@@ -981,7 +981,7 @@ def verify_cmd_key( cmd: p3m.CMD_OBJECT_TYPE,
         CMD_RESULT_TYPE: True if the command key matches, False otherwise,
         with a returnable CMD_RESULT_TYPE.
     """
-    cmd_result: p3m.CMD_RESULT_TYPE = p3m.create_CMD_RESULT_OBJECT(
+    cmd_result: p3m.CMD_RESULT_TYPE = p3m.cp_CMD_RESULT_create(
         cmd_result_status=True,
         result_content_type=p3m.CV_CMD_STRING_OUTPUT,
         result_content=f"Expected cmd_key: {expected_cmd_key} is valid.",
@@ -1012,7 +1012,7 @@ def verify_subcmd_key( cmd: p3m.CMD_OBJECT_TYPE,
         CMD_RESULT_TYPE: True if the command key matches, False otherwise,
         with a returnable CMD_RESULT_TYPE.
     """
-    cmd_result: p3m.CMD_RESULT_TYPE = p3m.create_CMD_RESULT_OBJECT(
+    cmd_result: p3m.CMD_RESULT_TYPE = p3m.cp_CMD_RESULT_create(
         cmd_result_status=True,
         result_content_type=p3m.CV_CMD_STRING_OUTPUT,
         result_content=f"Expected subcmd_key: {expected_subcmd_key} is valid.",
@@ -1054,7 +1054,7 @@ def validate_cmd_arguments(cmd: p3m.CMD_OBJECT_TYPE,
                                 raise_error=True)
         except Exception as e:
             msg = f"Error validating command components: {str(e)}"
-            cmd_result: p3m.CMD_RESULT_TYPE = p3m.create_CMD_RESULT_ERROR(
+            cmd_result: p3m.CMD_RESULT_TYPE = p3m.cp_CMD_RESULT_ERROR_create(
                 cmd=cmd, msg=msg
             )
             logger.error(msg)
@@ -1100,7 +1100,7 @@ def validate_cmd_arguments(cmd: p3m.CMD_OBJECT_TYPE,
             m = (f"Missing {missing_arg_count} required arguments: "
                  f"{missing_arg_list}")
             logger.error(m)
-            cmd_result = p3m.create_CMD_RESULT_OBJECT(
+            cmd_result = p3m.cp_CMD_RESULT_create(
                 cmd_result_status=False,
                 result_content_type=p3m.CV_CMD_ERROR_STRING_OUTPUT,
                 result_content=missing_arg_error_msg,
@@ -1114,7 +1114,7 @@ def validate_cmd_arguments(cmd: p3m.CMD_OBJECT_TYPE,
         raise
     except Exception as e:
         logger.error(f"Error validating command components: {e}")
-        return p3m.create_CMD_RESULT_OBJECT(
+        return p3m.cp_CMD_RESULT_create(
             cmd_result_status=False,
             result_content_type=p3m.CV_CMD_ERROR_STRING_OUTPUT,
             result_content=str(e),
@@ -1143,7 +1143,7 @@ def validate_model_binding(bdm_DC: BudManAppDataContext_Base,
             logger.error(m)
             if raise_error:
                 raise ValueError(m)
-            return p3m.create_CMD_RESULT_OBJECT(
+            return p3m.cp_CMD_RESULT_create(
                 cmd_result_status=False,
                 result_content=m,
                 result_content_type=p3m.CV_CMD_ERROR_STRING_OUTPUT,
@@ -1154,14 +1154,14 @@ def validate_model_binding(bdm_DC: BudManAppDataContext_Base,
             logger.error(m)
             if raise_error:
                 raise ValueError(m)
-            return p3m.create_CMD_RESULT_OBJECT(
+            return p3m.cp_CMD_RESULT_create(
                 cmd_result_status=False,
                 result_content=m,
                 result_content_type=p3m.CV_CMD_ERROR_STRING_OUTPUT,
                 cmd_object=None
             )
         # Model is valid
-        return p3m.create_CMD_RESULT_OBJECT(
+        return p3m.cp_CMD_RESULT_create(
             cmd_result_status=True,
             result_content=model,
             result_content_type=p3m.CV_CMD_BDM_MODEL_OBJECT,
@@ -1172,7 +1172,7 @@ def validate_model_binding(bdm_DC: BudManAppDataContext_Base,
         logger.error(m)
         if raise_error:
             raise
-        return p3m.create_CMD_RESULT_OBJECT(
+        return p3m.cp_CMD_RESULT_create(
             cmd_result_status=False,
             result_content=m,
             result_content_type=p3m.CV_CMD_ERROR_STRING_OUTPUT,

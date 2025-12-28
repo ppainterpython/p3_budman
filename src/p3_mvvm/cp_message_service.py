@@ -104,6 +104,13 @@ class CPUserOutputMessage(Message):
 #region   CPMessageService class
 class CPMessageService(PubSub, metaclass=BDMSingletonMeta):
     # ------------------------------------------------------------------------ +
+    #region    class methods
+    @classmethod
+    def getCPMessageService(cls) -> 'CPMessageService':
+        """Get the singleton instance of CPMessageService."""
+        return cls()
+    #endregion class methods
+    # ------------------------------------------------------------------------ +
     #region    CPMessageService class Intrinsics
     # ------------------------------------------------------------------------ +
     #region    CPMessageService doc string
@@ -116,6 +123,7 @@ class CPMessageService(PubSub, metaclass=BDMSingletonMeta):
     #region    __init__() 
     def __init__(self) -> None:
         super().__init__()
+        self.verbose_log: bool = False
     #endregion  __init__()
     # ------------------------------------------------------------------------ +
     #endregion CPMessageService class Intrinsics
@@ -155,6 +163,13 @@ class CPMessageService(PubSub, metaclass=BDMSingletonMeta):
     def user_debug_message(self, message: str, log: bool = True) -> None:
         """Publish a user DEBUG message."""
         self.user_message(message, CP_DEBUG)
+        if log:
+            logger.debug(message)
+
+    def user_verbose_message(self, message: str, log: bool = True) -> None:
+        """Publish a user VERBOSE message."""
+        if self.verbose_log:    
+            self.user_message(message, CP_VERBOSE)
         if log:
             logger.debug(message)
     #endregion CP_USER_MSG_TOPIC Methods
@@ -220,6 +235,12 @@ def cp_user_error_message(message: str, log: bool = True) -> None:
 def cp_user_debug_message(message: str, log: bool = True) -> None:
     """Publish a user DEBUG message."""
     cp_msg_svc.user_message(message, CP_DEBUG)
+    if log:
+        logger.debug(message)
+
+def cp_user_verbose_message(message: str, log: bool = True) -> None:
+    """Publish a user VERBOSE message."""
+    cp_msg_svc.user_message(message, CP_VERBOSE)
     if log:
         logger.debug(message)
 #endregion user_message functions

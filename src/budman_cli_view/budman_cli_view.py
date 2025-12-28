@@ -127,7 +127,8 @@ def cli_cmd_result_output(cmd_result: p3m.CMD_RESULT_TYPE) -> None:
     try:
         if budman_cli_view:
             if budman_cli_view.cp_verbose_log:
-                p3m.cp_user_debug_message(f"cli_cmd_result_output: cmd_result={cmd_result}")
+                p3m.cp_user_debug_message(f"cli_cmd_result_output: "
+                                          f"cmd_result={p3m.cp_CMD_RESULT_summary(cmd_result)}")
             budman_cli_view.output_cmd_result( cmd_result)
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
@@ -396,7 +397,7 @@ class BudManCLIView(cmd2.Cmd,
         """
         try:
             # Construct the command object from cmd2's argparse Namespace.
-            cmd: p3m.CMD_OBJECT_TYPE = self.construct_cmd_from_argparse(opts)
+            cmd: p3m.CMD_OBJECT_TYPE = self.cp_construct_cmd_from_argparse(opts)
             # If app exit cmd, handle here.
             if cmd[p3m.CK_SUBCMD_KEY] == cp.CV_EXIT_SUBCMD_KEY:
                 # Handle the --no_save switch
@@ -404,9 +405,7 @@ class BudManCLIView(cmd2.Cmd,
                 console.print("Exiting Budget Manager CLI.")
                 return True
             # Submit the command to the command processor.
-            cmd_result: p3m.CMD_RESULT_TYPE = self.cp_execute_cmd(cmd)
-            # Render the result.
-            self.cp_output_cmd_result( cmd_result)
+            _ = self.cp_execute_cmd(cmd)
         except Exception as e:
             self.pexcept(e)
     #endregion do_app command
@@ -417,11 +416,9 @@ class BudManCLIView(cmd2.Cmd,
         """Change (ch) attributes of workbooks and other objects in the Data Context for the Budget Manager application."""
         try:
             # Construct the command object from cmd2's argparse Namespace.
-            cmd: p3m.CMD_OBJECT_TYPE = self.construct_cmd_from_argparse(opts)
+            cmd: p3m.CMD_OBJECT_TYPE = self.cp_construct_cmd_from_argparse(opts)
             # Submit the command to the command processor.
-            cmd_result: p3m.CMD_RESULT_TYPE = self.cp_execute_cmd(cmd)
-            # Render the result.
-            self.cp_output_cmd_result( cmd_result)
+            _ = self.cp_execute_cmd(cmd)
         except Exception as e:
             self.pexcept(e)
     #endregion do_change command - change attributes of workbooks and other objects.
@@ -438,7 +435,7 @@ class BudManCLIView(cmd2.Cmd,
         """
         try:
             # Construct the command object from cmd2's argparse Namespace.
-            cmd: p3m.CMD_OBJECT_TYPE = self.construct_cmd_from_argparse(opts)
+            cmd: p3m.CMD_OBJECT_TYPE = self.cp_construct_cmd_from_argparse(opts)
             # Submit the command to the command processor.
             _ = self.cp_execute_cmd(cmd)
         except Exception as e:
@@ -459,11 +456,9 @@ class BudManCLIView(cmd2.Cmd,
         """
         try:
             # Construct the command object from cmd2's argparse Namespace.
-            cmd: p3m.CMD_OBJECT_TYPE = self.construct_cmd_from_argparse(opts)
+            cmd: p3m.CMD_OBJECT_TYPE = self.cp_construct_cmd_from_argparse(opts)
             # Submit the command to the command processor.
             _ = self.cp_execute_cmd(cmd)
-            # Render the result.
-            # self.cp_output_cmd_result(cmd_result)
         except Exception as e:
             self.pexcept(e)
     #endregion do_load command - load workbooks
@@ -494,10 +489,8 @@ class BudManCLIView(cmd2.Cmd,
         """
         try:
             # Construct the command object from cmd2's argparse Namespace.
-            cmd: p3m.CMD_OBJECT_TYPE = self.construct_cmd_from_argparse(opts)
+            cmd: p3m.CMD_OBJECT_TYPE = self.cp_construct_cmd_from_argparse(opts)
             _  = self.cp_execute_cmd(cmd)
-            # Render the result.
-            # self.cp_output_cmd_result(cmd_result)
         except Exception as e:
             self.pexcept(e)
     #endregion do_show command
@@ -514,11 +507,9 @@ class BudManCLIView(cmd2.Cmd,
         """
         try:
             # Construct the command object from cmd2's argparse Namespace.
-            cmd: p3m.CMD_OBJECT_TYPE = self.construct_cmd_from_argparse(opts)
+            cmd: p3m.CMD_OBJECT_TYPE = self.cp_construct_cmd_from_argparse(opts)
            # Submit the command to the command processor.
-            cmd_result: p3m.CMD_RESULT_TYPE = self.cp_execute_cmd(cmd)
-            # Render the result.
-            self.cp_output_cmd_result(cmd_result)
+            _ = self.cp_execute_cmd(cmd)
         except Exception as e:
             self.pexcept(e)
     #endregion do_save command - save workbooks
@@ -541,11 +532,9 @@ class BudManCLIView(cmd2.Cmd,
         """
         try:
             # Construct the command object from cmd2's argparse Namespace.
-            cmd: p3m.CMD_OBJECT_TYPE = self.construct_cmd_from_argparse(opts)
+            cmd: p3m.CMD_OBJECT_TYPE = self.cp_construct_cmd_from_argparse(opts)
             # Submit the command to the command processor.
-            cmd_result: p3m.CMD_RESULT_TYPE  = self.cp_execute_cmd(cmd)
-            # Output the result.
-            self.cp_output_cmd_result(cmd_result)
+            _  = self.cp_execute_cmd(cmd)
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
@@ -557,7 +546,7 @@ class BudManCLIView(cmd2.Cmd,
         """Output command results to the CLI View."""
         try:
             if (cmd_result is None or 
-                not p3m.is_CMD_RESULT(cmd_result)):
+                not p3m.cp_is_CMD_RESULT(cmd_result)):
                 self.cp_cmd_result_output_error(f"Invalid command result: {str(cmd_result)}")
                 return
             if not cmd_result.get(p3m.CK_CMD_RESULT_STATUS, False):

@@ -173,11 +173,6 @@ class CommandProcessor_Base(ABC):
         pass
 
     @abstractmethod
-    def cp_output_cmd_result(self, cmd_result: CMD_RESULT_TYPE = None) -> None:
-        """Output the result of a command."""
-        pass
-
-    @abstractmethod
     def cp_cmd_attr_get(self, cmd: CMD_OBJECT_TYPE,
                     key_name: str, default_value: Any = None) -> Any:
         """Use cmd attr key_name to get value or return default."""

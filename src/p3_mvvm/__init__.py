@@ -52,14 +52,17 @@ from .command_processor import (
     CommandProcessor,
     CMDValidationException,
     # Functions
-    create_CMD_OBJECT, 
-    validate_cmd_key_with_name,
-    validate_subcmd_key_with_name,
-    create_CMD_RESULT_OBJECT,
-    is_CMD_RESULT,
-    create_CMD_RESULT_EXCEPTION,
-    create_CMD_RESULT_ERROR,
-    unknown_CMD_RESULT_ERROR
+    cp_CMD_OBJECT_create, 
+    cp_is_CMD_OBJECT,
+    cp_is_ASYNC_CMD,
+    cp_validate_cmd_key_with_name,
+    cp_validate_subcmd_key_with_name,
+    cp_CMD_RESULT_create,
+    cp_CMD_RESULT_summary,
+    cp_is_CMD_RESULT,
+    cp_CMD_RESULT_ERROR_create,
+    cp_CMD_RESULT_EXCEPTION_create,
+    cp_CMD_RESULT_ERROR_unknown
 )
 from .cp_message_service import (
     CPUserOutputMessage,
@@ -74,6 +77,7 @@ from .cp_message_service import (
     cp_user_warning_message,
     cp_user_error_message,
     cp_user_debug_message,
+    cp_user_verbose_message,
     cp_subscribe_cmd_result_message,
     cp_publish_cmd_result
 )
@@ -165,7 +169,7 @@ __all__ = [
     "CK_CMD_RESULT_STATUS",
     "CK_CMD_RESULT_CONTENT_TYPE",
     "CK_CMD_RESULT_CONTENT",
-    "create_CMD_OBJECT",
+    "cp_CMD_OBJECT_create",
     "CV_CMD_STRING_OUTPUT",
     "CV_CMD_ASYNC_ID",
     "CMD_JSON_OUTPUT",
@@ -177,14 +181,17 @@ __all__ = [
     "CMD_FILE_TREE_OBJECT",
     "CV_CMD_ERROR_STRING_OUTPUT",
     # Command Processor Functions
-    "create_CMD_OBJECT",
-    "validate_cmd_key_with_name",
-    "validate_subcmd_key_with_name",
-    "create_CMD_RESULT_OBJECT",
-    "is_CMD_RESULT",
-    "create_CMD_RESULT_EXCEPTION",
-    "create_CMD_RESULT_ERROR",
-    "unknown_CMD_RESULT_ERROR"
+    "cp_CMD_OBJECT_create",
+    "cp_is_CMD_OBJECT",
+    "cp_is_ASYNC_CMD",
+    "cp_validate_cmd_key_with_name",
+    "cp_validate_subcmd_key_with_name",
+    "cp_CMD_RESULT_create",
+    "cp_CMD_RESULT_summary",
+    "cp_is_CMD_RESULT",
+    "cp_CMD_RESULT_ERROR_create",
+    "cp_CMD_RESULT_EXCEPTION_create",
+    "cp_CMD_RESULT_ERROR_unknown",
     # CPMessageService Constants
     "CP_USER_MSG_TOPIC",
     "CP_CMD_RESULT_TOPIC",
@@ -207,6 +214,7 @@ __all__ = [
     "cp_user_warning_message",
     "cp_user_error_message",
     "cp_user_debug_message",
+    "cp_user_verbose_message",
     "cp_subscribe_cmd_result_message",
     "cp_publish_cmd_result",
     # Application_Base
