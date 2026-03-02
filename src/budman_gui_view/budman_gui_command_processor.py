@@ -74,6 +74,21 @@ class BudManGUICommandProcessor(BudManAppDataContext_Binding,
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))        
 
+    def WORKFLOW_CHECK_CMD(self,fi_key: str) -> p3m.CMD_RESULT_TYPE:
+        """Create a BudMan GUI View WORKFLOW_CHECK CMD_OBJECT and process."""
+        cmd: p3m.CMD_OBJECT_TYPE = p3m.cp_CMD_OBJECT_create(
+            cmd_name=cp.CV_WORKFLOW_CMD_NAME,
+            cmd_key=cp.CV_WORKFLOW_CMD_KEY,
+            subcmd_name=cp.CV_CHECK_SUBCMD_NAME,
+            subcmd_key=cp.CV_CHECK_SUBCMD_KEY,
+            cmd_exec_func=None,
+            other_attrs={cp.CK_FI_KEY: fi_key, 
+                         cp.CK_WB_LIST: [], # Need gui view attr for current selected workbooks
+                         cp.CK_LOAD_WORKBOOK_SWITCH: True, 
+                         cp.CK_FIX_SWITCH: True})
+        cmd_result: p3m.CMD_RESULT_TYPE = self.cp_execute_cmd(cmd)
+        return cmd_result
+
     def WORKFLOW_UPDATE_CMD(self,fi_key: str) -> p3m.CMD_RESULT_TYPE:
         """Create a BudMan GUI View WORKFLOW_UPDATE CMD_OBJECT and process."""
         cmd: p3m.CMD_OBJECT_TYPE = p3m.cp_CMD_OBJECT_create(

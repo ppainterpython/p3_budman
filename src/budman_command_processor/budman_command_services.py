@@ -900,7 +900,7 @@ def process_selected_workbook_input(cmd: p3m.CMD_OBJECT_TYPE,
         wb_list : List[int] = cmd.get(CK_WB_LIST, [])
         all_wbs : bool = cmd.get(CK_ALL_WBS, bdm_DC.dc_ALL_WBS)
         selected_bdm_wb_list : List[BDMWorkbook] = []
-        load_workbook:bool = cmd.get(CK_LOAD_WORKBOOK, False)
+        load_workbook:bool = cmd.get(CK_LOAD_WORKBOOK_SWITCH, False)
         if all_wbs:
             # If all_wbs is True, process all workbooks in the data context.
             selected_bdm_wb_list = list(bdm_DC.dc_WORKBOOK_DATA_COLLECTION.values())

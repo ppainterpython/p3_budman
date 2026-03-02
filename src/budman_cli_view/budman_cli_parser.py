@@ -538,7 +538,10 @@ class BudManCLIParser():
                 help="Check some aspect of the workflow data or processing.")
             check_parser_defaults = {
                 p3m.CK_SUBCMD_NAME: cp.CV_CHECK_SUBCMD_NAME,
-                p3m.CK_SUBCMD_KEY: cp.CV_CHECK_SUBCMD_KEY}
+                p3m.CK_SUBCMD_KEY: cp.CV_CHECK_SUBCMD_KEY,
+                cp.CK_LOAD_WORKBOOK_SWITCH: True,
+                cp.CK_FIX_SWITCH: False,
+                cp.CK_VALIDATE_CATEGORIES: False}
             check_parser.set_defaults(**check_parser_defaults)
             self.add_wb_list_or_all_mutually_exclusive_group(check_parser)
             self.add_load_workbook_argument(check_parser)
@@ -610,8 +613,6 @@ class BudManCLIParser():
                 help="a wb_ref to a check register(s). wb_index, wb_name or 'all'.")
             self.add_common_optional_args(apply_parser)
             #endregion workflow 'apply' subcommand
-
-
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise
@@ -973,7 +974,7 @@ class BudManCLIParser():
         """Add a --load_workbook argument.""" 
         try:
             parser.add_argument(
-                "--load_workbook","-l", "-load", 
+                f"--{cp.CK_LOAD_WORKBOOK_SWITCH}", "-l", "-load", 
                 action="store_true", 
                 help="Load the workbook if not yet loaded.")
             return

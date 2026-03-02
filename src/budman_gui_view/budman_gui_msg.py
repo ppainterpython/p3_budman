@@ -42,80 +42,108 @@ class BudManGUIMsg(metaclass=BDMSingletonMeta):
     #endregion  __init__()
     #--------------------------------------------------------------------------+
     #region init_msg_tag_tokens() method
+    budman_gui_msg_tag_tokens: Dict[str, Dict[str, str]] = {}
     def init_msg_tag_tokens(self) -> Dict[str, Dict[str, str]]:
         """Initialize the message tag tokens dictionary.
         
         In this gui message service, the output of messages is formatted with
-        markup tags for color and style, based on the Rich Console markup syntax.
-        But the text in the gui domain will be displaed in tkinter using tags
-        associated with style setting. This dictionary maps come of the console
-        markup tokens to tags used to format text in a ScrolledText widget.
+        markup tags for color and style, based on the Rich Console (rc_) markup 
+        syntax. But the text in the gui domain will be displayed in tkinter 
+        using tags associated with style setting. This dictionary maps some 
+        of the console markup tokens to tags used to format text in a 
+        tkinter.ScrolledText widget.
         """
         msg_tag_tokens: Dict[str, Dict[str, str]] = {
             BMG_NORMAL: {
-                "prefix_tag": BMG_NORMAL,
-                "open": "[bold black]",
-                "close": "[/bold black]"
+                BMG_TAG: BMG_NORMAL,
+                BMG_RC_OPEN: "[{RC_BOLD_BLACK}]",
+                BMG_RC_CLOSE: "[/{RC_BOLD_BLACK}]",
+                BMG_TK_OPEN: "[{TK_BOLD_BLACK}]",
+                BMG_TK_CLOSE: "[/{TK_BOLD_BLACK}]"
             },
             BMG_INFO: {
-                "prefix_tag": BMG_INFO_PREFIX,  
-                "open": "[dark green]",
-                "close": "[/dark green]"
+                BMG_TAG: BMG_INFO_PREFIX,  
+                BMG_RC_OPEN: "[{RC_DARK_GREEN}]",
+                BMG_RC_CLOSE: "[/{RC_DARK_GREEN}]",
+                BMG_TK_OPEN: "[{TK_DARK_GREEN}]",
+                BMG_TK_CLOSE: "[/{TK_DARK_GREEN}]"
             },
             BMG_INFO_PREFIX: {
-                "prefix_tag": None,
-                "open": "[bold green]",
-                "close": "[/bold green]"
+                BMG_TAG: None,
+                BMG_RC_OPEN: "[{RC_BOLD_GREEN}]",
+                BMG_RC_CLOSE: "[/{RC_BOLD_GREEN}]",
+                BMG_TK_OPEN: "[{TK_BOLD_GREEN}]",
+                BMG_TK_CLOSE: "[/{TK_BOLD_GREEN}]"
             },
             BMG_DEBUG: {
-                "prefix_tag": BMG_DEBUG_PREFIX,
-                "open": "[cadet blue]",
-                "close": "[/cadet blue]"
+                BMG_TAG: BMG_DEBUG_PREFIX,
+                BMG_RC_OPEN: "[{RC_CADET_BLUE}]",
+                BMG_RC_CLOSE: "[/{RC_CADET_BLUE}]",
+                BMG_TK_OPEN: "[{TK_CADET_BLUE}]",
+                BMG_TK_CLOSE: "[/{TK_CADET_BLUE}]"
             },
             BMG_DEBUG_PREFIX: {
-                "prefix_tag": None,
-                "open": "[bold blue]",
-                "close": "[/bold blue]"
+                BMG_TAG: None,
+                BMG_RC_OPEN: "[{RC_BOLD_BLUE}]",
+                BMG_RC_CLOSE: "[/{RC_BOLD_BLUE}]",
+                BMG_TK_OPEN: "[{TK_BOLD_BLUE}]",
+                BMG_TK_CLOSE: "[/{TK_BOLD_BLUE}]"
             },
             BMG_VERBOSE: {
-                "prefix_tag": BMG_VERBOSE_PREFIX,
-                "open": "[light blue]",
-                "close": "[/light blue]"
+                BMG_TAG: BMG_VERBOSE_PREFIX,
+                BMG_RC_OPEN: "[{RC_LIGHT_BLUE}]",
+                BMG_RC_CLOSE: "[/{RC_LIGHT_BLUE}]",
+                BMG_TK_OPEN: "[{TK_LIGHT_BLUE}]",
+                BMG_TK_CLOSE: "[/{TK_LIGHT_BLUE}]"
             },
             BMG_VERBOSE_PREFIX: {
-                "prefix_tag": None,
-                "open": "[bold dodger blue]",
-                "close": "[/bold dodger blue]"
+                BMG_TAG: None,
+                BMG_RC_OPEN: "[{RC_BOLD_DODGER_BLUE}]",
+                BMG_RC_CLOSE: "[/{RC_BOLD_DODGER_BLUE}]",
+                BMG_TK_OPEN: "[{TK_BOLD_DODGER_BLUE}]",
+                BMG_TK_CLOSE: "[/{TK_BOLD_DODGER_BLUE}]"
             },
             BMG_WARNING: {
-                "prefix_tag": BMG_WARNING_PREFIX,
-                "open": "[bold orange]",
-                "close": "[/bold orange]"
+                BMG_TAG: BMG_WARNING_PREFIX,
+                BMG_RC_OPEN: "[{RC_BOLD_DARK_ORANGE}]",
+                BMG_RC_CLOSE: "[/{RC_BOLD_DARK_ORANGE}]",
+                BMG_TK_OPEN: "[{TK_BOLD_DARK_ORANGE}]",
+                BMG_TK_CLOSE: "[/{TK_BOLD_DARK_ORANGE}]"
             },
             BMG_WARNING_PREFIX: {
-                "prefix_tag": None,
-                "open": "[bold dark orange]",
-                "close": "[/bold dark orange]"
+                BMG_TAG: None,
+                BMG_RC_OPEN: "[{RC_BOLD_DARK_ORANGE}]",
+                BMG_RC_CLOSE: "[/{RC_BOLD_DARK_ORANGE}]",
+                BMG_TK_OPEN: "[{TK_BOLD_DARK_ORANGE}]",
+                BMG_TK_CLOSE: "[/{TK_BOLD_DARK_ORANGE}]"
             },
             BMG_ERROR: {
-                "prefix_tag": BMG_ERROR_PREFIX,
-                "open": "[red]",
-                "close": "[/red]"
+                BMG_TAG: BMG_ERROR_PREFIX,
+                BMG_RC_OPEN: "[{RC_RED}]",
+                BMG_RC_CLOSE: "[/{RC_RED}]",
+                BMG_TK_OPEN: "[{TK_RED}]",
+                BMG_TK_CLOSE: "[/{TK_RED}]"
             },
             BMG_ERROR_PREFIX: {
-                "prefix_tag": None,
-                "open": "[bold red3]",
-                "close": "[/bold red3]"
+                BMG_TAG: None,
+                BMG_RC_OPEN: "[{RC_BOLD_RED3}]",
+                BMG_RC_CLOSE: "[/{RC_BOLD_RED3}]",
+                BMG_TK_OPEN: "[{TK_BOLD_RED3}]",
+                BMG_TK_CLOSE: "[/{TK_BOLD_RED3}]"
             },
             BMG_CRITICAL: {
-                "prefix_tag": BMG_CRITICAL_PREFIX,
-                "open": "[red2]",
-                "close": "[/red2]"
+                BMG_TAG: BMG_CRITICAL_PREFIX,
+                BMG_RC_OPEN: "[{RC_BOLD_RED2}]",
+                BMG_RC_CLOSE: "[/{RC_BOLD_RED2}]",
+                BMG_TK_OPEN: "[{TK_BOLD_RED2}]",
+                BMG_TK_CLOSE: "[/{TK_BOLD_RED2}]"
             },
             BMG_CRITICAL_PREFIX: {
-                "prefix_tag": None,
-                "open": "[bold dark red]",
-                "close": "[/bold dark red]"
+                BMG_TAG: None,
+                BMG_RC_OPEN: "[{RC_BOLD_DARK_RED}]",
+                BMG_RC_CLOSE: "[/{RC_BOLD_DARK_RED}]",
+                BMG_TK_OPEN: "[{TK_BOLD_DARK_RED}]",
+                BMG_TK_CLOSE: "[/{TK_BOLD_DARK_RED}]"
             }
         }
         return msg_tag_tokens
@@ -306,10 +334,10 @@ class BudManGUIMsg(metaclass=BDMSingletonMeta):
         token_str: str = line[open_start:open_end + 1]
         full_token: Optional[Dict[str, Any]] = None
         for k,v in self._msg_tag_tokens.items():
-            if token_str == v["open"] :
+            if token_str == v["rc_open"] :
                 full_token = {
-                    "open": v["open"],
-                    "close": v["close"],
+                    "open": v["tk_open"],  # Sub rich.console color for tkinter color
+                    "close": v["tk_close"],
                     "line_no": line_no,
                     "open_start": open_start,
                     "close_end": -1,
@@ -333,6 +361,7 @@ class BudManGUIMsg(metaclass=BDMSingletonMeta):
         text_start: int = open_start + len(full_token["open"])
         text_end: int = close_end - len(full_token["close"]) + 1
         full_token["text"] = line[text_start:text_end]
+        logger.debug(f"Found token: {full_token}")
         return full_token   
 
     def token_count(self, line:str) -> int:
@@ -362,8 +391,10 @@ class BudManGUIMsg(metaclass=BDMSingletonMeta):
                 mod_msg += (f"[bold green]{tag:>7}:[/bold green] "
                         f"[dark green]{line.rstrip(nl)}[/dark green]{nl}")
             elif tag == BMG_WARNING:
-                mod_msg += (f"[bold dark orange]{tag:>7}:[/bold dark orange] "
-                        f"[bold orange]{line.rstrip(nl)}[/bold orange]{nl}")
+                mod_msg += (f"{self._msg_tag_tokens[tag]['tk_open']}{tag:>7}:{self._msg_tag_tokens[tag]['tk_close']} "
+                        f"{line.rstrip(nl)}")
+                # mod_msg += (f"[bold dark orange]{tag:>7}:[/bold dark orange] "
+                #         f"[bold orange]{line.rstrip(nl)}[/bold orange]{nl}")
             elif tag == BMG_ERROR:
                 mod_msg += (f"[bold red3]{tag:>7}:[/bold red3] "
                         f"[red]{line.rstrip(nl)}[/red]{nl}")

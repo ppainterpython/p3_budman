@@ -11,7 +11,7 @@ app_start_time : float = time.time()  # Start time for the application
 # ---------------------------------------------------------------------------- +
 #region Imports
 # python standard library modules and packages
-import sys, logging
+import sys, logging, os
 from pathlib import Path
 # third-party modules and packages
 from rich.console import Console
@@ -28,7 +28,11 @@ from src.budman_app.budman_app import BudManApp
 #region Globals and Constants
 logger = logging.getLogger(__name__)
 sys.stdout.reconfigure(encoding='utf-8')  # Ensure stdout uses UTF-8 encoding
-console = Console(force_terminal=True, width=bdm.BUDMAN_WIDTH, highlight=True,
+terminal_size = os.get_terminal_size()
+console = Console(force_terminal=True, 
+                  color_system='truecolor',
+                  width=terminal_size.columns, 
+                  highlight=True,   
                   soft_wrap=False)
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants

@@ -102,20 +102,7 @@ def cli_view_cp_user_output(m: p3m.CPUserOutputMessage) -> None:
     try:
         tag = m.tag.upper()
         msg = m.message
-        if tag == p3m.CP_INFO:
-            console.print(f"[bold green]{p3m.CP_INFO:>7}:[/bold green] {msg}")
-        elif tag == p3m.CP_WARNING:
-            console.print(f"[bold orange]{p3m.CP_WARNING:>7}:[/bold orange] {msg}")
-        elif tag == p3m.CP_ERROR:
-            console.print(f"[bold red]{p3m.CP_ERROR:>7}:[/bold red] {msg}")
-        elif tag == p3m.CP_DEBUG:
-            console.print(f"[bold blue]{p3m.CP_DEBUG:>7}:[/bold blue] {msg}")
-        elif tag == p3m.CP_VERBOSE:
-            console.print(f"[bold light blue]{p3m.CP_VERBOSE:>7}:[/bold light blue] {msg}")
-        elif tag == p3m.CP_CRITICAL:
-            console.print(f"[bold dark red]{p3m.CP_CRITICAL:>7}:[/bold dark red] {msg}")
-        else:
-            console.print(f"[bold blue]{tag}:[/bold blue] {msg}")
+        budman_cli_view.cli_view_user_output(msg, tag)
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))        
 #endregion cli_view_cp_user_output()
@@ -322,7 +309,6 @@ class BudManCLIView(cmd2.Cmd,
             BudManCLIView.prompt = PO_ON_PROMPT if self.cp_parse_only else PO_OFF_PROMPT
             if self.cp_initialized:
                 cwl = self.current_working_location()
-                # cmd2.Cmd.set_window_title(f"Budget Manager CLI - {cwl}")
                 self.prompt = f"{cwl}\n{BudManCLIView.prompt}"
             else:
                 self.prompt = f"{BudManCLIView.prompt}"
@@ -336,7 +322,6 @@ class BudManCLIView(cmd2.Cmd,
         """Tweak the cmd args after parsing complete()."""
         try:
             logger.debug(f"Start:")
-            # self.cli_parser.view_cmd = self
             self.current_cmd = data.statement.raw
             logger.debug(f"Complete:")
             return data
@@ -350,7 +335,6 @@ class BudManCLIView(cmd2.Cmd,
         """Tweak the cmd args before cp_execute_cmd()."""
         try:
             logger.debug(f"Start:")
-            # self.cli_parser.view_cmd = self
             self.current_cmd = data.statement.raw
             logger.debug(f"Complete:")
             return data
@@ -367,8 +351,6 @@ class BudManCLIView(cmd2.Cmd,
             self.current_cmd = None
             # update the dynamic prompt and window title
             self.set_prompt()
-            cwl = self.current_working_location()
-            # BudManCLIView.update_terminal_title(f"Budget Manager CLI - {cwl}")
             logger.debug(f"Complete:")
             return data
         except Exception as e:
@@ -558,12 +540,12 @@ class BudManCLIView(cmd2.Cmd,
             # CMD_STRING_OUTPUT
             if result_type == p3m.CV_CMD_STRING_OUTPUT:
                 # OUTPUT_STRING input is a simple string.
-                console.print(result_content)
+                self.cli_view_user_output(result_content, p3m.CP_INFO)
             # CMD_DICT_OUTPUT
             elif result_type == p3m.CV_CMD_DICT_OUTPUT:
                 # Python dictionary (dict) input object.
                 output_str: str = p3u.first_n(str(result_content), 100)
-                console.print(output_str)
+                self.cli_view_user_output(output_str, p3m.CP_INFO)
             # CV_CMD_JSON_OUTPUT
             elif result_type == p3m.CV_CMD_JSON_OUTPUT:
                 # JSON_STRING input is a JSON string.
@@ -593,7 +575,7 @@ class BudManCLIView(cmd2.Cmd,
                 console.print(table)
             else:
                 logger.warning(f"Unknown command result type: {result_type}")
-                console.print(result_content)
+                self.cli_view_user_output(result_content, p3m.CP_WARNING)
         except Exception as e:
             self.cp_cmd_result_output_error(f"Error processing command result: {e}") 
     
@@ -638,6 +620,35 @@ class BudManCLIView(cmd2.Cmd,
             self.verbose = False 
         self.cp_verbose_log = self.verbose
     #endregion _onchange_verbose
+    # ------------------------------------------------------------------------ +    
+    #region cli_view_user_output()
+    def cli_view_user_output(self, msg: Optional[str], tag: Optional[str]) -> None:
+        """Output user messages from the Command Processor to the CLI View."""
+        try:
+            if p3u.str_empty(msg):
+                return
+            if p3u.str_empty(tag):
+                tag = p3m.CP_INFO
+            prefix: str = ""
+            for n, line in enumerate(msg.splitlines(), start=1):
+                if tag == p3m.CP_INFO:
+                    prefix = f"[bold green]{p3m.CP_INFO:>7}:[/bold green] "
+                elif tag == p3m.CP_WARNING:
+                    prefix = f"[bold orange]{p3m.CP_WARNING:>7}:[/bold orange] "
+                elif tag == p3m.CP_ERROR:
+                    prefix = f"[bold red]{p3m.CP_ERROR:>7}:[/bold red] "
+                elif tag == p3m.CP_DEBUG:
+                    prefix = f"[bold blue]{p3m.CP_DEBUG:>7}:[/bold blue] "
+                elif tag == p3m.CP_VERBOSE:
+                    prefix = f"[bold light blue]{p3m.CP_VERBOSE:>7}:[/bold light blue] "
+                elif tag == p3m.CP_CRITICAL:
+                    prefix = f"[bold dark red]{p3m.CP_CRITICAL:>7}:[/bold dark red] "
+                else:
+                    prefix = f"[bold blue]{tag:>7}:[/bold blue] "
+                console.print(f"{prefix}{line}")
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+    #endregion cli_view_user_output()
     # ------------------------------------------------------------------------ +    
     #
     #endregion BudManCLIView Helper Methods

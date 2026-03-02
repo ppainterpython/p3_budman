@@ -29,7 +29,11 @@ from budman_namespace import P2, P4
 from budman_namespace import BDMWorkbook
 from budget_domain_model import BudgetDomainModel
 from budman_data_context import BudManAppDataContext_Base
-from budget_categorization import (BDMTXNCategoryManager, TXNCategoryMap)
+from budget_categorization import (
+    BDMTXNCategoryManager, TXNCategoryMap,
+    check_sheet_schema, 
+    WORKFLOW_TASK_check_sheet_columns,
+    validate_budget_categories)
 from budget_storage_model import (BSMFile, BSMFileTree) 
 from .budget_intake import *
 #endregion Imports
@@ -84,6 +88,10 @@ def WORKFLOW_CMD_process(cmd: p3m.CMD_OBJECT_TYPE,
             if catalog_map_update:
                 return WORKFLOW_TASK_update_catalog_map(cmd, bdm_DC)
 
+        # Subcmd: "workflow check"
+        elif cmd[p3m.CK_SUBCMD_KEY] == cp.CV_CHECK_SUBCMD_KEY:
+            return WORKFLOW_TASK_check_workbooks(cmd, bdm_DC)
+
         # Subcmd: "workflow intake"
         elif cmd[p3m.CK_SUBCMD_KEY] == cp.CV_WORKFLOW_INTAKE_SUBCMD_KEY:
             return INTAKE_TASK_process(cmd, bdm_DC)
@@ -108,7 +116,7 @@ def WORKFLOW_CMD_process(cmd: p3m.CMD_OBJECT_TYPE,
         # Subcmd: "workflow unknown"
         return p3m.cp_CMD_RESULT_ERROR_unknown(cmd)
     except Exception as e:
-        logger.error(p3u.exc_err_msg(e))
+        p3m.cp_user_error_message(p3u.exc_err_msg(e))
         raise
 #endregion WORKFLOW_CMD_process() function
 # ---------------------------------------------------------------------------- +
@@ -171,6 +179,94 @@ def WORKFLOW_TASK_delete_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
         logger.error(p3u.exc_err_msg(e))
         raise
 #endregion WORKFLOW_TASK_delete_workbooks() function
+# ---------------------------------------------------------------------------- +
+#region WORKFLOW_TASK_check_workbooks() function
+def WORKFLOW_TASK_check_workbooks(
+        cmd: p3m.CMD_OBJECT_TYPE,
+        bdm_DC: BudManAppDataContext_Base,
+        level: int = 0) -> p3m.CMD_RESULT_TYPE:
+    """WORKFLOW_TASK_check_workbooks: Check data workbooks."""
+    try:
+        ls: str = P2 * (level + 1)
+        ts: str = "[bold dark_orange]Task: [/bold dark_orange]"
+        m: str = f"{ls}{ts} {WORKFLOW_TASK_check_workbooks.__name__}()"
+        p3m.cp_user_info_message(m)
+        # Validate the cmd argsuments.
+        cmd_args: p3m.CMD_ARGS_TYPE = cp.validate_cmd_arguments(
+            cmd=cmd, 
+            bdm_DC=bdm_DC,
+            cmd_key=cp.CV_WORKFLOW_CMD_KEY, 
+            subcmd_key=cp.CV_CHECK_SUBCMD_KEY,
+            model_aware=True,
+            required_args=[
+                cp.CK_WB_LIST, 
+                cp.CK_LOAD_WORKBOOK_SWITCH,
+                cp.CK_FIX_SWITCH,
+                cp.CK_VALIDATE_CATEGORIES
+            ]
+        )
+        logger.info(f"Start: ...")
+        # Extract and validate required parameters from the command.
+        success: bool = False
+        model: BudgetDomainModel = bdm_DC.model
+        fi_key: str = bdm_DC.dc_FI_KEY
+        selected_bdm_wb_list : List[BDMWorkbook] = None
+        selected_bdm_wb_list = cp.process_selected_workbook_input(
+            cmd, 
+            bdm_DC,
+            validate_url=True)
+        # Process the selected workbooks.
+        if len(selected_bdm_wb_list) == 0:
+            m = "{P2}No workbooks selected to check."
+            p3m.cp_user_warning_message(m)
+            return p3m.cp_CMD_RESULT_ERROR_create(cmd, m)
+        elif len(selected_bdm_wb_list) > 1:
+            m = f"{P2}'{len(selected_bdm_wb_list)}' workbooks selected to check."
+            p3m.cp_user_info_message(m)
+        else :
+            m = f"{P2}A single workbook selected to check."
+            p3m.cp_user_info_message(m)
+        src_wb: BDMWorkbook = None
+        for src_wb in selected_bdm_wb_list:
+            # Select the current workbook in the Data Context.
+            bdm_DC.dc_WORKBOOK = src_wb
+            bdm_wb_abs_path = src_wb.abs_path()
+            m = f"{P2}workbook: {str(bdm_DC.dc_WB_INDEX):>4} '{src_wb.wb_id:<40}'"
+            p3m.cp_user_info_message(m)
+            # Check cmd needs loaded workbooks to check
+            if not src_wb.wb_loaded:
+                m = f"{P2}wb_name '{src_wb.wb_name}' is not loaded, no action taken."
+                p3m.cp_user_error_message(m)
+                continue
+            # By default, check the sheet schema. But other cli switches
+            # can added to check something else.
+            if cmd[cp.CK_VALIDATE_CATEGORIES]:
+                # Validate the categories in the workbook.
+                task = "validate_budget_categories()"
+                m = (f"{P2}Task: {task:30} {str(bdm_DC.dc_WB_INDEX):>4} "
+                    f"'{src_wb.wb_id:<40}'")
+                p3m.cp_user_debug_message(m)
+                success, r = validate_budget_categories(src_wb, bdm_DC, P4)
+                continue
+            success = check_sheet_schema(src_wb.wb_content)
+            m = f"{P2}Task: check_sheet_schema workbook: Workbook: '{src_wb.wb_id}' "
+            if success:
+                p3m.cp_user_info_message(m)
+                continue
+            if cmd[cp.CK_FIX_SWITCH]:
+                m = f"{P2}Task: check_sheet_columns workbook: Workbook: '{src_wb.wb_id}' "
+                p3m.cp_user_info_message(m)
+                ws = src_wb.wb_content.active
+                success = WORKFLOW_TASK_check_sheet_columns(ws, add_columns=True)
+                if success: 
+                    src_wb.wb_content.save(bdm_wb_abs_path)
+            continue
+        return p3m.cp_CMD_RESULT_create(success, p3m.CV_CMD_STRING_OUTPUT, 
+                                            f"{P2}Complete", cmd)
+    except Exception as e:
+        p3m.cp_user_error_message(p3u.exc_err_msg(e))
+        raise
+#endregion WORKFLOW_TASK_check_workbooks() function
 # ---------------------------------------------------------------------------- +
 #region WORKFLOW_TASK_update_catalog_map() function
 def WORKFLOW_TASK_update_catalog_map(cmd: p3m.CMD_OBJECT_TYPE, 

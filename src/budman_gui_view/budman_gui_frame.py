@@ -736,14 +736,16 @@ class BudManGUIFrame(ttk.Frame,
             self.disable_button(self.save_button)
         else:   
             self.enable_button(self.save_button)
-        budman_msg.output(f"Load button clicked with filepath: {v}", BMG_INFO)
-        budman_msg.output(f"Load button clicked with filepath: {v}", BMG_DEBUG)
-        budman_msg.output(f"Load button clicked with filepath: {v}", BMG_VERBOSE)
+        # budman_msg.output(f"Load button clicked with filepath: {v}", BMG_INFO)
+        # budman_msg.output(f"Load button clicked with filepath: {v}", BMG_DEBUG)
+        # budman_msg.output(f"Load button clicked with filepath: {v}", BMG_VERBOSE)
         budman_msg.output(f"Load button clicked with filepath: {v}", BMG_WARNING)
-        budman_msg.output(f"Load button clicked with filepath: {v}", BMG_ERROR)
-        budman_msg.output(f"Load button clicked with filepath: {v}", BMG_CRITICAL)
-        budman_msg.output(f"Load button clicked with filepath: [red]{v}[/red]", BMG_INFO, prefix=False)
-        print(f"BudManGUIWindow.BudManGUIFrame.load_button clicked with filepath: {v}")
+        # This should display in gui and cli
+        p3m.cp_user_warning_message(f"Load button clicked with filepath: {v}")
+        # budman_msg.output(f"Load button clicked with filepath: {v}", BMG_ERROR)
+        # budman_msg.output(f"Load button clicked with filepath: {v}", BMG_CRITICAL)
+        # budman_msg.output(f"Load button clicked with filepath: [red]{v}[/red]", BMG_INFO, prefix=False)
+        # print(f"print: BudManGUIWindow.BudManGUIFrame.load_button clicked with filepath: {v}")
 
     def on_file_treeview_select(self, event):
         """ Event handler for when the user selects an item in the file_treeview. """

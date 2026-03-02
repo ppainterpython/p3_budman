@@ -516,7 +516,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                 cp.CV_CATEGORIZATION_SUBCMD_KEY: self.WORKFLOW_categorization_cmd,
                 cp.CV_WORKFLOW_CMD_KEY: self.WORKFLOW_cmd,
                 cp.CV_APPLY_SUBCMD_KEY: self.WORKFLOW_apply_cmd,
-                cp.CV_CHECK_SUBCMD_KEY: self.WORKFLOW_check_cmd,
+                # cp.CV_CHECK_SUBCMD_KEY: self.WORKFLOW_check_cmd,
                 # cp.CV_WORKFLOW_INTAKE_SUBCMD_KEY: self.WORKFLOW_intake_cmd,
                 cp.CV_SHOW_CMD_KEY: self.SHOW_cmd,
                 cp.CV_CHANGE_CMD_KEY: self.CHANGE_cmd,
@@ -1207,75 +1207,6 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
     #endregion WORKFLOW_apply_cmd() execution method
     # ------------------------------------------------------------------------ +
-    #region WORKFLOW_check() execution method 
-    def WORKFLOW_check_cmd(self, cmd : p3m.CMD_OBJECT_TYPE) -> p3m.CMD_RESULT_TYPE:
-        """Workflow check to one or more WORKBOOKS in the DC.
-
-        A WORKFLOW_check_cmd command will use the wb_ref value in the cmd. 
-        Value is a number or a wb_name.
-
-        Arguments:
-            cmd (Dict): A valid BudMan View Model Command object. For this
-            command, must contain workflow_cmd = 'categorization' resulting in
-            a full command key of 'workflow_cmd_categorization'.
-
-        Returns:
-            p3m.CMD_RESULT_TYPE: The outcome of the command 
-            execution. If success is True, result contains result of the 
-            command, if False, a description of the error.
-            
-        Raises:
-            RuntimeError: A description of the
-            root error is contained in the exception message.
-        """
-        try:
-            logger.info(f"Start: ...")
-            selected_bdm_wb_list : List[BDMWorkbook] = None
-            selected_bdm_wb_list = self.process_selected_workbook_input(cmd)
-            result: str = f"Checking {len(selected_bdm_wb_list)} workbooks:"
-            r: str = ""
-            success: bool = False
-            for bdm_wb in selected_bdm_wb_list:
-                # Select the current workbook in the Data Context.
-                self.dc_WORKBOOK = bdm_wb
-                bdm_wb_abs_path = bdm_wb.abs_path()
-                result += f"\n{P2}workbook: {str(self.dc_WB_INDEX):>4} '{bdm_wb.wb_id:<40}'"
-                # Check cmd needs loaded workbooks to check
-                if not bdm_wb.wb_loaded:
-                    m = f"wb_name '{bdm_wb.wb_name}' is not loaded, no action taken."
-                    logger.error(m)
-                    result += f"\n{P2}{m}"
-                    continue
-                # By default, check the sheet schema. But other cli switches
-                # can added to check something else.
-                if cmd[cp.CK_VALIDATE_CATEGORIES]:
-                    # Validate the categories in the workbook.
-                    task = "validate_budget_categories()"
-                    m = (f"{P2}Task: {task:30} {str(self.dc_WB_INDEX):>4} "
-                        f"'{bdm_wb.wb_id:<40}'")
-                    logger.debug(m)
-                    success, r = validate_budget_categories(bdm_wb, self.DC, P4)
-                    result += f"\n{r}"
-                    continue
-                success = check_sheet_schema(bdm_wb.wb_content)
-                r = f"Task: check_sheet_schema workbook: Workbook: '{bdm_wb.wb_id}' "
-                if success:
-                    result += f"\n{P2}{r}"
-                    continue
-                if cmd[cp.CK_FIX_SWITCH]:
-                    r = f"Task: check_sheet_columns workbook: Workbook: '{bdm_wb.wb_id}' "
-                    ws = bdm_wb.wb_content.active
-                    success = WORKFLOW_TASK_check_sheet_columns(ws, add_columns=True)
-                    if success: 
-                        bdm_wb.wb_content.save(bdm_wb_abs_path)
-                result += f"\n{P2}{r}"
-                continue
-            return p3m.cp_CMD_RESULT_create(success, p3m.CV_CMD_STRING_OUTPUT, 
-                                                result, cmd)
-        except Exception as e:
-            return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
-    #endregion WORKFLOW_check_cmd() execution method
-    # ------------------------------------------------------------------------ +
     #                                                                          +
     #endregion Command Execution Methods                                       +
     # ======================================================================== +
@@ -1299,7 +1230,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             wb_list : List[int] = cmd.get(cp.CK_WB_LIST, [])
             all_wbs : bool = self.cp_cmd_attr_get(cmd, cp.CK_ALL_WBS, self.dc_ALL_WBS)
             selected_bdm_wb_list : List[BDMWorkbook] = []
-            load_workbook:bool = self.cp_cmd_attr_get(cmd, cp.CK_LOAD_WORKBOOK, False)
+            load_workbook:bool = self.cp_cmd_attr_get(cmd, cp.CK_LOAD_WORKBOOK_SWITCH, False)
             if all_wbs:
                 # If all_wbs is True, process all workbooks in the data context.
                 selected_bdm_wb_list = list(self.dc_WORKBOOK_DATA_COLLECTION.values())
