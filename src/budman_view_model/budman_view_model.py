@@ -512,6 +512,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                 cp.CV_SAVE_BDM_STORE_SUBCMD_KEY: self.BDM_STORE_save_cmd,
                 cp.CV_LOAD_WORKBOOKS_SUBCMD_KEY: self.WORKBOOKS_load_cmd,
                 cp.CV_SAVE_WORKBOOKS_SUBCMD_KEY: self.WORKBOOKS_save_cmd,
+                cp.CV_CLOSE_WORKBOOKS_SUBCMD_KEY: self.WORKBOOKS_close_cmd,
                 cp.CV_CHANGE_WORKBOOKS_SUBCMD_KEY: self.CHANGE_cmd,
                 cp.CV_CATEGORIZATION_SUBCMD_KEY: self.WORKFLOW_categorization_cmd,
                 cp.CV_WORKFLOW_CMD_KEY: self.WORKFLOW_cmd,
@@ -911,6 +912,48 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
         except Exception as e:
             return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
     #endregion WORKBOOKS_save_cmd() execution method
+    # ------------------------------------------------------------------------ +
+    #region WORKBOOKS_close_cmd() execution method
+    def WORKBOOKS_close_cmd(self, cmd : p3m.CMD_OBJECT_TYPE) -> BUDMAN_RESULT_TYPE: 
+        """Model-Aware: Execute close command for one WB_INDEX or ALL_WBS.
+        In BudMan, loaded workbook content is maintained in the 
+        dc_LOADED_WORKBOOKS collection. This command will cause that content
+        to be saved to its storage location.        
+
+        Raises:
+            RuntimeError: For exceptions.
+        """
+        try:
+            r : str = ""
+            m : str = ""
+            st = p3u.start_timer()  
+            logger.debug(f"Start: {str(cmd)}")
+            selected_bdm_wb_list : List[BDMWorkbook] = None
+            selected_bdm_wb_list = self.process_selected_workbook_input(cmd)
+            bdm_wb : Optional[BDMWorkbook] = None
+            r = f"\nBudget Manager Workbooks({len(selected_bdm_wb_list)}):"
+            bdm_wb : Optional[BDMWorkbook] = None
+            for bdm_wb in selected_bdm_wb_list:
+                wb_index = self.dc_WORKBOOK_index(bdm_wb.wb_id)
+                if bdm_wb.wb_content is None:
+                    m = f"Workbook wb_id: '{bdm_wb.wb_id}' has no loaded content."
+                    logger.error(m)
+                    r += f"\n{P2}Error wb_index: {wb_index:>4} wb_id: '{bdm_wb.wb_id:<40}' Reason:{m}"
+                    continue
+                # Close the workbook content.
+                success, result = self.dc_WORKBOOK_close(bdm_wb)
+                if not success:
+                    m = f"Error closing wb_id: '{bdm_wb.wb_id}': {result}"
+                    logger.error(m)
+                    r += f"\n{P2}Error wb_index: {wb_index:>2} wb_id: '{bdm_wb.wb_id:<40}' Reason: {m}"
+                    continue
+                r_str = bdm_wb.wb_index_display_str(wb_index)
+                r += f"\n{P2}Closed {result!r}"
+            logger.info(f"Complete Command: 'Close' {p3u.stop_timer(st)}")   
+            return p3m.cp_CMD_RESULT_create(True, p3m.CV_CMD_STRING_OUTPUT, r, cmd)
+        except Exception as e:
+            return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
+    #endregion WORKBOOKS_close_cmd() execution method
     # ------------------------------------------------------------------------ +
     #region CHANGE_cmd() execution method
     def CHANGE_cmd(self, cmd : p3m.CMD_OBJECT_TYPE) -> p3m.CMD_RESULT_TYPE:

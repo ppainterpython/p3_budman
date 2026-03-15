@@ -62,6 +62,8 @@ def WORKFLOW_CMD_process(cmd: p3m.CMD_OBJECT_TYPE,
             The data context for the BudMan application.
     """
     try:
+        # Note: Each of the processing functions should do all necessary
+        # outout to the user, including error messages and exceptions.
         # If bdm_DC is bad, just raise an error.
         p3u.is_not_obj_of_type("bdm_DC", bdm_DC, BudManAppDataContext_Base,
                                raise_error= True)
@@ -116,7 +118,6 @@ def WORKFLOW_CMD_process(cmd: p3m.CMD_OBJECT_TYPE,
         # Subcmd: "workflow unknown"
         return p3m.cp_CMD_RESULT_ERROR_unknown(cmd)
     except Exception as e:
-        p3m.cp_user_error_message(p3u.exc_err_msg(e))
         raise
 #endregion WORKFLOW_CMD_process() function
 # ---------------------------------------------------------------------------- +

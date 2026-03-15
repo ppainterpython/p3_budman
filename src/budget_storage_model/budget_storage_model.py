@@ -139,6 +139,26 @@ def bsm_BDMWorkbook_save(bdm_wb:BDMWorkbook) -> None:
         raise
 #endregion bsm_BDMWorkbook_save()
 # ---------------------------------------------------------------------------- +
+#region    bsm_BDMWorkbook_close()
+def bsm_BDMWorkbook_close(bdm_wb:BDMWorkbook) -> None:
+    """
+    Close the BDMWorkbook content by clearing its content and setting it as not loaded.
+    
+    """
+    try:
+        st: float = p3u.start_timer()
+        p3u.is_not_obj_of_type("bdm_wb", bdm_wb, BDMWorkbook, raise_error=True)
+        logger.debug(f"Start:")
+        p3u.is_not_obj_of_type("bdm_wb", bdm_wb, BDMWorkbook, raise_error=True)
+        logger.debug(f"Closing BDMWorkbook content for WB_ID('{bdm_wb.wb_id}') ")
+        bsm_WORKBOOK_CONTENT_url_close(bdm_wb.wb_content,bdm_wb.wb_url, bdm_wb.wb_type)
+        bdm_wb.wb_loaded = False
+        logger.debug(f"Complete: {p3u.stop_timer(st)}")
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion bsm_BDMWorkbook_close()
+# ---------------------------------------------------------------------------- +
 #region    bsm_BDMWorkbook_delete()
 def bsm_BDMWorkbook_delete(bdm_wb:BDMWorkbook) -> None:
     """
@@ -252,6 +272,42 @@ def bsm_WORKBOOK_CONTENT_url_put(wb_content: bdm.WORKBOOK_CONTENT_TYPE,
         logger.error(p3u.exc_err_msg(e))
         raise
 #endregion bsm_WORKBOOK_CONTENT_url_put() function
+# ---------------------------------------------------------------------------- +
+#region    bsm_WORKBOOK_CONTENT_url_close() function
+def bsm_WORKBOOK_CONTENT_url_close(wb_content: bdm.WORKBOOK_CONTENT_TYPE, 
+                                   wb_content_url: str, 
+                                   wb_type: str) -> None:
+    """BSM: Close a WORKBOOK_OBJECT by clearing its content and setting it as not loaded.
+
+    Layer 2 point closing wb_content from a storage service. Parse the URL to 
+    decide how to route the request to an appropriate storage service.
+
+    Args:
+        wb_content (WORKBOOK_OBJECT): The workbook content object to CLOSE.
+        wb_content_url (str): The URL to the WORKBOOK_CONTENT object to CLOSE.
+        wb_type (str): The type of the workbook to close.
+
+    Returns:
+        None
+    """
+    try:
+        st: float = p3u.start_timer()
+        logger.debug(f"Start:")
+        # Validate the URL and wb_type. Raises error if not valid.
+        bsm_WB_URL_TYPE_validate(wb_content_url, wb_type)
+        # All is good, wb_type compatible with wb_content_url.
+        # Since right now we only support file:// URLs, proceed on that basis.
+        wb_content_abs_path: Path = bsm_URL_verify_file_scheme(wb_content_url,
+                                                                  test_exists=False)
+        logger.debug(f"Closing WORKBOOK_CONTENT at path: "
+                     f"'{wb_content_abs_path}' for URL: '{wb_content_url}'")
+        bsm_WORKBOOK_CONTENT_file_close(wb_content, wb_content_abs_path, wb_type,
+                                       pre_validated=True)
+        logger.debug(f"Complete: {p3u.stop_timer(st)}")
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion bsm_WORKBOOK_CONTENT_url_close() function
 # ---------------------------------------------------------------------------- +
 #region    bsm_WORKBOOK_CONTENT_url_delete() function
 def bsm_WORKBOOK_CONTENT_url_delete(wb_content: bdm.WORKBOOK_CONTENT_TYPE, 
@@ -443,6 +499,73 @@ def bsm_WORKBOOK_CONTENT_file_save(wb_content:bdm.WORKBOOK_CONTENT_TYPE,
             logger.error(m)
             raise ValueError(m)
         logger.info(f"BizEVENT: Saved {wbtl} to file: {wb_content_abs_path}")
+        logger.debug(f"Complete: {p3u.stop_timer(st)}")
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise    
+#endregion bsm_WORKBOOK_CONTENT_file_save(wb_abs_path : str = None) -> Any
+# ---------------------------------------------------------------------------- +
+#region    bsm_WORKBOOK_CONTENT_file_close(wb:Workbook,wb_abs_path : str = None) -> Any
+def bsm_WORKBOOK_CONTENT_file_close(wb_content:bdm.WORKBOOK_CONTENT_TYPE,
+                                   wb_content_abs_path:Path, 
+                                   wb_type: str,
+                                   pre_validated:bool=False) -> None:
+    """Close a wb_content file of a given wb_type.
+
+    BSM Layer 3: This is a local file system service function, closing a 
+    workbook's data content in the local file system.
+
+    Args:
+        wb_content (bdm.WORKBOOK_CONTENT_TYPE): The workbook content to close.
+        wb_content_abs_path (Path): The path of the workbook file to close.
+        wb_type (str): The type of the workbook to close.
+        pre_validated (bool): If True, the input parameters are already validated.
+
+    """
+    try:
+        st = p3u.start_timer()
+        logger.debug(f"Start:")
+
+        logger.debug(f"BSM Local Filesystem: Closing WORKBOOK_CONTENT file: "
+                     f"'{wb_content_abs_path}'")
+        wbtl: str = "WB_TYPE_UNKNOWN" # wb_type label
+        if not pre_validated:
+            # Validate the wb_content_abs_path is a Path object.
+            p3u.is_obj_of_type("wb_content_abs_path", wb_content_abs_path, Path, raise_error=True)
+            ...
+        # Depending on the wb_type, route the request to actual implementation
+        # for the wb_type, wb_filetype.
+        if wb_type in [bdm.WB_TYPE_BDM_STORE, bdm.WB_TYPE_BDM_CONFIG]:
+            # WB_TYPE_BDM_STORE, WB_TYPE_BDM_CONFIG: Save it as a json file.
+            bsm_BDM_STORE_file_abs_path(wb_content, wb_content_abs_path)
+            wbtl = "BDM_STORE" if wb_type == bdm.WB_TYPE_BDM_STORE else "BDM_CONFIG"
+        elif wb_type == bdm.WB_TYPE_TXN_REGISTER:
+            # WB_TYPE_TXN_REGISTER: Save it as a CSV file.
+            # csv_DATA_LIST_file_close(wb_content, wb_content_abs_path)
+            wbtl = "TXN_REGISTER_WORKBOOK"
+        elif wb_type == bdm.WB_TYPE_EXCEL_TXNS:
+            # WB_TYPE_EXCEL_TXNS: Close it as an Excel file.
+            wb_content.close()
+            wbtl = "TXN_EXCEL_WORKBOOK"
+        elif wb_type == bdm.WB_TYPE_CSV_TXNS:
+            # WB_TYPE_CSV_TXNS: Load it as a CSV file.
+            # csv_DATA_LIST_file_close(wb_content, wb_content_abs_path)
+            wbtl = "TXN_CSV_WORKBOOK"
+        elif wb_type == bdm.WB_TYPE_TXN_CATEGORIES:
+            # WB_TYPE_TXN_CATEGORIES: Load it as a JSON file.
+            # json_DATA_OBJECT_file_close(wb_content, wb_content_abs_path)
+            wbtl = "TXN_CATEGORIES_WORKBOOK"
+        elif wb_type == bdm.WB_TYPE_CATEGORY_MAP:
+            # WB_TYPE_CATEGORY_MAP, load it as a TOML file.
+            # with open(wb_content_abs_path, 'w', encoding='utf-8') as f:
+                # toml.close(wb_content, f)
+            wbtl = "CATEGORY_MAP_WORKBOOK"
+        else: 
+            # wb_type == bdm.WB_TYPE_BUDGET: # or anything else unknown
+            m = f"Unsupported wb_type: '{wb_type}' for file: '{wb_content_abs_path}'"
+            logger.error(m)
+            raise ValueError(m)
+        logger.info(f"BizEVENT: Closed {wbtl} file: {wb_content_abs_path}")
         logger.debug(f"Complete: {p3u.stop_timer(st)}")
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))

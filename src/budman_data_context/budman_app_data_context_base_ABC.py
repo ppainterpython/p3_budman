@@ -401,6 +401,12 @@ class BudManAppDataContext_Base(DataContext_Base):
     #endregion WORKBOOK_CONTENT_TYPE storage-related methods
 
     @abstractmethod
+    def dc_WORKBOOK_close(self,bdm_wb: WORKBOOK_OBJECT_TYPE) -> BUDMAN_RESULT_TYPE:
+        """Abstract: Close bdm_wb WORKBOOK_CONTENT_TYPE."""
+        pass
+    #endregion WORKBOOK_CONTENT_TYPE storage-related methods
+
+    @abstractmethod
     def dc_WORKBOOK_remove(self, wb_name: str) -> None:
         """Abstract: Remove the specified workbook by name."""
         pass

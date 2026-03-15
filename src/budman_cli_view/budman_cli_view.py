@@ -88,6 +88,8 @@ def load_cmd_parser() -> cmd2.Cmd2ArgumentParser:
     return cli_parser.load_cmd if cli_parser else None
 def save_cmd_parser() -> cmd2.Cmd2ArgumentParser:
     return cli_parser.save_cmd if cli_parser else None
+def close_cmd_parser() -> cmd2.Cmd2ArgumentParser:
+    return cli_parser.close_cmd if cli_parser else None
 def show_cmd_parser() -> cmd2.Cmd2ArgumentParser:
     return cli_parser.show_cmd if cli_parser else None
 def workflow_cmd_parser() -> cmd2.Cmd2ArgumentParser:
@@ -496,6 +498,25 @@ class BudManCLIView(cmd2.Cmd,
             self.pexcept(e)
     #endregion do_save command - save workbooks
     # ------------------------------------------------------------------------ +
+    #region do_close command - close workbooks
+    @cmd2.with_argparser(close_cmd_parser())
+    def do_close(self, opts):
+        """Close specified data objects in the Budget Manager application.
+        
+        Arguments:
+            opts (argparse.Namespace): The command line options after parsing
+            the arguments with argparse. The opts dict becomes the command
+            object for the command processor.
+        """
+        try:
+            # Construct the command object from cmd2's argparse Namespace.
+            cmd: p3m.CMD_OBJECT_TYPE = self.cp_construct_cmd_from_argparse(opts)
+           # Submit the command to the command processor.
+            _ = self.cp_execute_cmd(cmd)
+        except Exception as e:
+            self.pexcept(e)
+    #endregion do_close command - close workbooks
+    # ------------------------------------------------------------------------ +
     #region do_workflow command
     @with_argparser(workflow_cmd_parser())
     def do_workflow(self, opts):
@@ -645,7 +666,8 @@ class BudManCLIView(cmd2.Cmd,
                     prefix = f"[bold dark red]{p3m.CP_CRITICAL:>7}:[/bold dark red] "
                 else:
                     prefix = f"[bold blue]{tag:>7}:[/bold blue] "
-                console.print(f"{prefix}{line}")
+                with self.terminal_lock:
+                    console.print(f"{prefix}{line}")
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
     #endregion cli_view_user_output()

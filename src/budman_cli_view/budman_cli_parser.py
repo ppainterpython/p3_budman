@@ -56,6 +56,7 @@ class BudManCLIParser():
         self.list_cmd = cmd2.Cmd2ArgumentParser()
         self.load_cmd = cmd2.Cmd2ArgumentParser()
         self.save_cmd = cmd2.Cmd2ArgumentParser()
+        self.close_cmd = cmd2.Cmd2ArgumentParser()
         self.show_cmd = cmd2.Cmd2ArgumentParser()
         self.workflow_cmd = cmd2.Cmd2ArgumentParser(
             description="Workflow management commands.",
@@ -66,6 +67,7 @@ class BudManCLIParser():
         self.list_cmd_parser_setup(self.app_name)
         self.load_cmd_parser_setup(self.app_name)
         self.save_cmd_parser_setup(self.app_name)
+        self.close_cmd_parser_setup(self.app_name)
         self.show_cmd_parser_setup(self.app_name)
         self.workflow_cmd_parser_setup(self.app_name)
     #endregion class BudManCLIParser initialization
@@ -387,6 +389,31 @@ class BudManCLIParser():
             wb_subcmd_parser.set_defaults(
                 subcmd_name=cp.CV_WORKBOOKS_SUBCMD_NAME,
                 subcmd_key=cp.CV_SAVE_WORKBOOKS_SUBCMD_KEY)
+            self.add_wb_list_or_all_mutually_exclusive_group(wb_subcmd_parser)
+            self.add_common_optional_args(wb_subcmd_parser)
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise
+
+    def close_cmd_parser_setup(self,app_name : str = "not-set") -> None:
+        """Close Command: parser setup"""
+        try:
+            # Close subcommands: workbooks
+            parser = self.close_cmd
+            parser.prog = app_name
+            subparsers = parser.add_subparsers()
+            parser.set_defaults(cmd_key=cp.CV_CLOSE_CMD_KEY,   # new way
+                                cmd_name=cp.CV_CLOSE_CMD_NAME)
+
+            # wb_subcmd_parser
+            # close workbooks [wb_index | -all | --all_wbs]
+            wb_subcmd_parser  = subparsers.add_parser(
+                cp.CV_WORKBOOKS_SUBCMD_NAME,
+                aliases=["wb", "WB"], 
+                help="Select workbooks to close.")
+            wb_subcmd_parser.set_defaults(
+                subcmd_name=cp.CV_WORKBOOKS_SUBCMD_NAME,
+                subcmd_key=cp.CV_CLOSE_WORKBOOKS_SUBCMD_KEY)
             self.add_wb_list_or_all_mutually_exclusive_group(wb_subcmd_parser)
             self.add_common_optional_args(wb_subcmd_parser)
         except Exception as e:

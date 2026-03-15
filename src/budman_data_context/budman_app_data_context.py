@@ -715,6 +715,34 @@ class BudManAppDataContext(BudManAppDataContext_Base):
             logger.error(m)
             return False, m
         return None
+
+    def dc_WORKBOOK_close(self, bdm_wb: Workbook) -> BUDMAN_RESULT_TYPE:
+        """ DC-Only: Close bdm_wb by clearing the wb_content property.
+            Abstract: Close bdm_wb WORKBOOK_CONTENT_TYPE.
+        """
+        try:
+            # DC-Only World. Clear the wb_content if it is 
+            # flagged as loaded, return the bdm_wb.wb_content.
+            success : bool = False
+            result : Any = None
+            success, result = self.dc_is_valid()
+            if not success: return False, result
+            if not self.dc_WORKBOOK_validate(bdm_wb):
+                raise TypeError(f"Invalid BDM_WORKBOOK object, "
+                                f"type: '{type(bdm_wb).__name__}")
+            # Check if the workbook is already loaded by some app means
+            # outside this DC-Only implementation?
+            wb_id = str(getattr(bdm_wb, WB_ID, None))
+            wb_loaded = getattr(bdm_wb, WB_LOADED, False)
+            if not wb_loaded:
+                return False, f"BDM_WORKBOOK with id '{wb_id}' is not loaded."
+            setattr(bdm_wb, WB_CONTENT, None)
+            return True, f"BDM_WORKBOOK with id '{wb_id}' close request."
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            logger.error(m)
+            return False, m
+        return None
     #endregion WORKBOOK_CONTENT_TYPE storage-related methods
 
     def dc_WORKBOOK_remove(self, wb_index: str) -> WORKBOOK_OBJECT_TYPE:

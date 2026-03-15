@@ -10,14 +10,17 @@ from .budget_storage_model import (
     # Level 1 Methods
     bsm_BDMWorkbook_load,
     bsm_BDMWorkbook_save,
+    bsm_BDMWorkbook_close,
     bsm_BDMWorkbook_delete,
     # Level 2 Methods
     bsm_WORKBOOK_CONTENT_url_get,
     bsm_WORKBOOK_CONTENT_url_put,
+    bsm_WORKBOOK_CONTENT_url_close,
     bsm_WORKBOOK_CONTENT_url_delete,
     # Level 3 Methods
     bsm_WORKBOOK_CONTENT_file_load,
     bsm_WORKBOOK_CONTENT_file_save,
+    bsm_WORKBOOK_CONTENT_file_close,
     bsm_WORKBOOK_CONTENT_file_delete,
     bsm_BDM_STORE_url_get,
     bsm_BDM_STORE_url_put,
@@ -49,14 +52,17 @@ __all__ = [
     # Level 1 Methods
     "bsm_BDMWorkbook_load",
     "bsm_BDMWorkbook_save",
+    "bsm_BDMWorkbook_close",
     "bsm_BDMWorkbook_delete",
     # Level 2 Methods
     "bsm_WORKBOOK_CONTENT_url_get",
     "bsm_WORKBOOK_CONTENT_url_put",
+    "bsm_WORKBOOK_CONTENT_url_close",
     "bsm_WORKBOOK_CONTENT_url_delete",
     # Level 3 Methods
     "bsm_WORKBOOK_CONTENT_file_load",
     "bsm_WORKBOOK_CONTENT_file_save",
+    "bsm_WORKBOOK_CONTENT_file_close",
     "bsm_WORKBOOK_CONTENT_file_delete",
     "bsm_BDM_STORE_url_get",
     "bsm_BDM_STORE_url_put",

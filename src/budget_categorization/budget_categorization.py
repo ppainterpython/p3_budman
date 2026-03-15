@@ -416,6 +416,9 @@ def WORKSHEET_row_data(row:tuple,hdr:list=BUDMAN_WB_COLUMNS) -> TransactionData:
         t_year_month = year_month_str(row_dict[DATE_COL_NAME])
         t_manual: bool = False
         t_rule: int = row_dict[RULE_COL_NAME] if RULE_COL_NAME in row_dict else -1
+        # In the .excel_txns workbook, to set a rule as manually changed so it
+        # will be skipped, set rule column to an integer greater than 20200000
+        # to rerpresent a date of manual change, like 20260304.
         if isinstance(t_rule, int) and t_rule > 20200000:
             t_manual = True
         t_acct_code: str = row_dict[ACCOUNT_NAME_COL_NAME].split('-')[-1].strip()
@@ -824,8 +827,6 @@ def WORKFLOW_TASK_process_budget_category(bdm_wb:BDMWorkbook,
             if (transaction.category != 'Other' and 
                 transaction.category in fi_catmap.category_collection):
                 essential_value = fi_catmap.category_collection[transaction.category].essential
-            else:
-                logger.warning(f"'{transaction.category}' not found in category collection.")
             row[essential_i].value = essential_value if essential_i != -1 else None
             row[rule_i].value = transaction.rule if rule_i != -1 else None
             # Capture 'Other' category transactions.
@@ -910,7 +911,7 @@ def WORKFLOW_TASK_categorize_transaction(
                 transaction.category = ch.count(category)
                 transaction.rule = rule_index
                 transaction.level1, transaction.level2, transaction.level3 = p3u.split_parts(category)
-                if category not in tcc_keys:
+                if category not in tcc_keys and category != 'Other':
                     logger.warning(f"FI key '{fi_key}' rule_index: '{rule_index}', "
                                    f"Category '{category}', not found in "
                                    f"transaction category collection.")

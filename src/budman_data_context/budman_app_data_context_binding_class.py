@@ -402,6 +402,10 @@ class BudManAppDataContext_Binding(BudManAppDataContext_Base, p3m.DataContext_Bi
             Abstract: Save bdm_wb WORKBOOK_CONTENT_TYPE to storage.
         """
         return self.DC.dc_WORKBOOK_save(wb)
+
+    def dc_WORKBOOK_close(self, wb: Workbook) -> BUDMAN_RESULT_TYPE:
+        """DC_Binding: Close bdm_wb WORKBOOK_CONTENT_TYPE."""
+        return self.DC.dc_WORKBOOK_close(wb)
     #endregion WORKBOOK_CONTENT_TYPE storage-related methods
 
     def dc_WORKBOOK_remove(self, wb_name: str) -> None:

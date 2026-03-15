@@ -430,6 +430,35 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
             logger.error(m)
             return False, m
 
+    def dc_WORKBOOK_close(self, bdm_wb : BDMWorkbook) -> BUDMAN_RESULT_TYPE:
+        """Model-Aware: Close the workbook content.
+
+        Args:
+            wb_content (WORKBOOK_CONTENT): The content to close.
+            bdm_wb (BDMWorkbook): The workbook object to close content for.
+        Returns:
+            BUDMAN_RESULT: Tuple[success:bool, result: Optional[msg:str]]
+        """
+        self.not_dc_INITIALIZED()
+        try:
+            # Model-Aware World
+            success : bool = False
+            result : BDMWorkbook | str = None
+            if not self.dc_WORKBOOK_validate(bdm_wb):
+                m = f"Invalid workbook object: {bdm_wb!r}"
+                logger.error(m)
+                return False, m
+            # Close the workbook content using the BSM.
+            bsm.bsm_BDMWorkbook_close(bdm_wb)
+            # Update the dc_LOADED_WORKBOOKS with the closed content.
+            self.dc_LOADED_WORKBOOKS[bdm_wb.wb_id] = None
+            bdm_wb.wb_loaded = False
+            return True, f"Workbook '{bdm_wb.wb_id}' closed successfully."
+        except Exception as e:
+            m = f"Error closing workbook '{bdm_wb.wb_id}': {p3u.exc_err_msg(e)}"
+            logger.error(m)
+            return False, m
+
     def dc_WORKBOOK_remove(self, wb_index: str) -> WORKBOOK_OBJECT_TYPE:
         """Model-Only: Remove the specified workbook by index from the DC 
         and the Budget Domain Model (BDM).
