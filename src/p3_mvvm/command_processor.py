@@ -107,6 +107,8 @@ BMCLI_SYSTEM_EXIT_WARNING = "Not exiting due to SystemExit"
 # ---------------------------------------------------------------------------- +
 #endregion Globals
 # ---------------------------------------------------------------------------- +
+
+# ---------------------------------------------------------------------------- +
 #region    CommandProcessor class
 class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
     # ------------------------------------------------------------------------ +
@@ -133,8 +135,6 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
     #endregion __init__() constructor method
     # ------------------------------------------------------------------------ +
     #endregion CommandProcessor class instrisics - override for app-specific
-    # ------------------------------------------------------------------------ +
-
     # ------------------------------------------------------------------------ +
     #region    CommandProcessor_Base Properties
     @property
@@ -819,7 +819,8 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
     # ------------------------------------------------------------------------ +
     #endregion CommandProcessor argparse support methods
     # ------------------------------------------------------------------------ +
-    #endregion CommandProcessor_Base Methos
+    #endregion CommandProcessor_Base Methods
+    # ------------------------------------------------------------------------ +
 #endregion    CommandProcessor class
 # ---------------------------------------------------------------------------- +
 

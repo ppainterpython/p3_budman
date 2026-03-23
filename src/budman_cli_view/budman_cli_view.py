@@ -38,9 +38,8 @@ from rich.tree import Tree
 from rich.console import Console
 from rich.table import Table
 import p3_utils as p3u, pyjson5, p3logging as p3l, p3_mvvm as p3m
-import cmd2, argparse
-from cmd2 import (Cmd2ArgumentParser, with_argparser, with_argument_list)
-from cmd2 import (Bg,Fg, style, ansi)
+import cmd2
+from cmd2 import with_argparser
 # local modules and packages
 import budman_settings as bdms
 from budman_settings.budman_settings_constants import BUDMAN_CMD_HISTORY_FILENAME
@@ -59,13 +58,6 @@ BMCLI_SYSTEM_EXIT_WARNING = "Not exiting due to SystemExit"
 PO_OFF_PROMPT = "p3budman> "
 PO_ON_PROMPT = "po-p3budman> "
 TERM_TITLE = "Budget Manager CLI"
-red = str(Fg.RED)
-green = str(Fg.GREEN)
-yellow = str(Fg.YELLOW)
-blue = str(Fg.BLUE)
-magenta = str(Fg.MAGENTA)
-cyan = str(Fg.CYAN)
-fg_reset = str(Fg.RESET)
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
@@ -214,7 +206,7 @@ class BudManCLIView(cmd2.Cmd,
                           allow_cli_args=False, 
                           include_ipy=True,
                           persistent_history_file=hfn)
-        self.allow_style = ansi.AllowStyle.TERMINAL
+        # self.allow_style = ansi.AllowStyle.TERMINAL
         self.register_precmd_hook(self.precmd_hook)
         self.register_postcmd_hook(self.postcmd_hook)
         self.register_postparsing_hook(self.postparsing_hook)
@@ -302,16 +294,21 @@ class BudManCLIView(cmd2.Cmd,
         fi_key = self.dc_FI_KEY if self.DC else "unknown"
         wf_key = self.dc_WF_KEY if self.DC else "unknown"
         wf_purpose = self.dc_WF_PURPOSE if self.DC else "unknown"
-        cwl: str = f"{fg_reset}({green}{fi_key}:{cyan}{wf_key}:{yellow}{wf_purpose}{fg_reset})"
-        return cwl
+        cwl: str = f"[bold green]{fi_key}[/bold green]:"
+        cwl += f"[bold cyan]{wf_key}[/bold cyan]:"
+        cwl += f"[bold yellow]{wf_purpose}[/bold yellow]"
+        with console.capture() as capture:
+            console.print(cwl)
+        return capture.get()
     def set_prompt(self) -> None:
         """Set the prompt for the CLI."""
         try:
             # update the dynamic prompt and window title
             BudManCLIView.prompt = PO_ON_PROMPT if self.cp_parse_only else PO_OFF_PROMPT
             if self.cp_initialized:
-                cwl = self.current_working_location()
-                self.prompt = f"{cwl}\n{BudManCLIView.prompt}"
+                # cwl = self.current_working_location()
+                # self.prompt = f"{cwl}{BudManCLIView.prompt}"
+                self.prompt = f"{BudManCLIView.prompt}"
             else:
                 self.prompt = f"{BudManCLIView.prompt}"
         except Exception as e:
