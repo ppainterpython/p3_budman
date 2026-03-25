@@ -28,7 +28,7 @@ def cp_user_message_callback(func: Callback) -> Callback:
     """Decorator to mark a function as a PubSub callback for user messages.
     
         User messages are intended to be shown to the user in some fashion. The
-        decoratof converts the splurge_pub_sub.Message to a CPUserOutputMessage
+        decorator converts the splurge_pub_sub.Message to a CPUserOutputMessage
         before passing it to the decorated function.
     """
     def wrapper(*args, **kwargs) -> None:

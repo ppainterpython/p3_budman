@@ -543,7 +543,10 @@ class BudManCLIParser():
                 help="Apply Categorization workflow.")
             categorization_parser_defaults = {
                 p3m.CK_SUBCMD_NAME: cp.CV_CATEGORIZATION_SUBCMD_NAME,
-                p3m.CK_SUBCMD_KEY: cp.CV_CATEGORIZATION_SUBCMD_KEY}
+                p3m.CK_SUBCMD_KEY: cp.CV_CATEGORIZATION_SUBCMD_KEY,
+                cp.CK_LOG_ALL: False,
+                cp.CK_CLEAR_OTHER: True
+            }
             categorization_parser.set_defaults(**categorization_parser_defaults)
             self.add_wb_list_or_all_mutually_exclusive_group(categorization_parser)
             self.add_load_workbook_argument(categorization_parser)

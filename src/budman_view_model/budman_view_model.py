@@ -514,11 +514,8 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                 cp.CV_SAVE_WORKBOOKS_SUBCMD_KEY: self.WORKBOOKS_save_cmd,
                 cp.CV_CLOSE_WORKBOOKS_SUBCMD_KEY: self.WORKBOOKS_close_cmd,
                 cp.CV_CHANGE_WORKBOOKS_SUBCMD_KEY: self.CHANGE_cmd,
-                cp.CV_CATEGORIZATION_SUBCMD_KEY: self.WORKFLOW_categorization_cmd,
                 cp.CV_WORKFLOW_CMD_KEY: self.WORKFLOW_cmd,
                 cp.CV_APPLY_SUBCMD_KEY: self.WORKFLOW_apply_cmd,
-                # cp.CV_CHECK_SUBCMD_KEY: self.WORKFLOW_check_cmd,
-                # cp.CV_WORKFLOW_INTAKE_SUBCMD_KEY: self.WORKFLOW_intake_cmd,
                 cp.CV_SHOW_CMD_KEY: self.SHOW_cmd,
                 cp.CV_CHANGE_CMD_KEY: self.CHANGE_cmd,
                 cp.CV_APP_CMD_KEY: self.APP_cmd,
@@ -1082,105 +1079,6 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
     #endregion APP_cmd() execution method
     # ------------------------------------------------------------------------ +
-    #region WORKFLOW_categorization_cmd() execution method
-    def WORKFLOW_categorization_cmd(self, cmd : p3m.CMD_OBJECT_TYPE) -> BUDMAN_RESULT_TYPE:
-        """Apply categorization workflow to one or more WORKBOOKS in the DC.
-
-        As a workflow process, the WORKFLOW_categorization_cmd method has the
-        job to marshall the necessary input objects, implied by the command
-        arguments and perhaps Data Context, and then invoke the appropriate 
-        function or method to conduct the requested process, tasks, etc. It also
-        catches the return status and result to return.
-
-        Arguments:
-            cmd (Dict): A valid BudMan View Model Command object. 
-    
-        Required cmd object attributes:
-            cmd_key: 'workflow_cmd' 
-        Optional cmd object attributes:
-            cmd_name: CV_WORKFLOW_CMD
-            Valid subcommands:
-                subcmd_key: 'workflow_cmd_categorization'
-                subcmd_name: CV_DELETE_SUBCMD
-            subcmd_key: 'app_cmd_reload'
-            subcmd_name: CV_RELOAD_SUBCMD
-            subcmd_key: 'app_cmd_log'
-            subcmd_name: CV_LOG_SUBCMD
-
-        Returns:
-            Tuple[success : bool, result : Any]: The outcome of the command 
-            execution. If success is True, result contains result of the 
-            command, if False, a description of the error.
-            
-        Raises:
-            RuntimeError: A description of the
-            root error is contained in the exception message.
-        """
-        try:
-            logger.info(f"Start: ...")
-            selected_bdm_wb_list : List[BDMWorkbook] = None
-            selected_bdm_wb_list = self.process_selected_workbook_input(cmd)
-            fr: str = f"Categorizing {len(selected_bdm_wb_list)} workbooks:"
-            success : bool = False
-            r : str = ""
-            m : str = ""
-            log_all : bool = self.cp_cmd_attr_get(cmd, cp.CK_LOG_ALL, False)
-            clear_other: bool = self.cp_cmd_attr_get(cmd, cp.CK_CLEAR_OTHER, False)
-            cleared_other_now: bool = clear_other
-            # Process the intended workbooks.
-            for bdm_wb in selected_bdm_wb_list:
-                # Select the current workbook in the Data Context.
-                self.dc_WORKBOOK = bdm_wb
-                bdm_wb_abs_path = bdm_wb.abs_path()
-                fr += f"\n{P2}workbook: {str(self.dc_WB_INDEX):>4} '{self.dc_WB_ID:<40}'"
-                bdm_wb_abs_path = bdm_wb.abs_path()
-                if bdm_wb_abs_path is None:
-                    m = f"Workbook path is not valid: {bdm_wb.wb_url}"
-                    logger.error(m)
-                    fr += f"\n{P4}Error: {m}"
-                    continue
-                # Check cmd needs loaded workbooks to check
-                if not bdm_wb.wb_loaded:
-                    m = f"wb_name '{bdm_wb.wb_name}' is not loaded, no action taken."
-                    logger.error(m)
-                    fr += f"\n{P4}Error: {m}"
-                    continue
-                # Now we have a valid bdm_wb to process.
-                if bdm_wb.wb_type == WB_TYPE_EXCEL_TXNS:
-                    task = "process_budget_category()"
-                    m = (f"{P2}Task: {task:30} {str(self.dc_WB_INDEX):>4} "
-                         f"'{self.dc_WB_ID:<40}'")
-                    logger.debug(m)
-                    fr += f"\n{P2}{m}"
-                    success, r = WORKFLOW_TASK_process_budget_category(bdm_wb, self.DC, 
-                                                         log_all, cleared_other_now)
-                    cleared_other_now = False # Only clear_other for first workbook
-                    if not success:
-                        r = (f"{P4}Task Failed: process_budget_category() Workbook: "
-                             f"'{self.dc_WB_ID}'\n{P8}Result: {r}")
-                        logger.error(r)
-                        fr += r + "\n"
-                        continue
-                    fr += f"\n{P8}Result: {r}"
-                    task = "dc_WORKBOOK_save()"
-                    m = (f"{P2}Task: {task:30} {str(self.dc_WB_INDEX):>4} "
-                         f"'{self.dc_WB_ID:<40}'")
-                    logger.debug(m)
-                    fr += f"\n{P2}{m}"
-                    success, r = self.dc_WORKBOOK_save(bdm_wb)
-                    if not success:
-                        m = (f"{P4}Task Failed: dc_WORKBOOK_save() Workbook: "
-                             f"'{bdm_wb.wb_id}'\n{P8}Result: {m}")
-                        logger.error(m)
-                        fr += m + "\n"
-                        continue
-                    fr += f"\n{P8}Result: {r}"
-            logger.info(m)
-            return p3m.cp_CMD_RESULT_create(True, p3m.CV_CMD_STRING_OUTPUT, fr, cmd)
-        except Exception as e:
-            return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
-    #endregion WORKFLOW_categorization_cmd() execution method
-    # ------------------------------------------------------------------------ +
     #region WORKFLOW_cmd() execution method
     def WORKFLOW_cmd(self, cmd : p3m.CMD_OBJECT_TYPE) -> p3m.CMD_RESULT_TYPE:
         """Execute a workflow task.
@@ -1232,10 +1130,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
         try:
             logger.info(f"Start: ...")
             r_msg: str = "Start:"
-            m:Optional[str] = None
             logger.debug(r_msg)
-            success: bool = False
-            result: Any = None
             subcmd_name = cmd[cp.p3m.CK_SUBCMD_NAME]
             if subcmd_name == cp.CV_APPLY_SUBCMD_NAME:
                 # Update the txn_categories by apply the category_map.

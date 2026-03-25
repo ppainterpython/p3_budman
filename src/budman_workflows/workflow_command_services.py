@@ -18,6 +18,7 @@ from treelib import Tree
 from datetime import datetime as dt
 
 # third-party modules and packages
+from budman_namespace.design_language_namespace import P8
 import p3_utils as p3u, pyjson5, p3logging as p3l, p3_mvvm as p3m
 from openpyxl import Workbook, load_workbook
 
@@ -33,6 +34,7 @@ from budget_categorization import (
     BDMTXNCategoryManager, TXNCategoryMap,
     check_sheet_schema, 
     WORKFLOW_TASK_check_sheet_columns,
+    WORKFLOW_TASK_process_budget_category,
     validate_budget_categories)
 from budget_storage_model import (BSMFile, BSMFileTree) 
 from .budget_intake import *
@@ -84,6 +86,10 @@ def WORKFLOW_CMD_process(cmd: p3m.CMD_OBJECT_TYPE,
                 return WORKFLOW_TASK_transfer_workbooks(cmd, bdm_DC)
             return p3m.cp_CMD_RESULT_ERROR_unknown(cmd)
 
+        # Subcmd: "workflow categorize_transactions"
+        elif cmd[p3m.CK_SUBCMD_KEY] == cp.CV_CATEGORIZATION_SUBCMD_KEY:
+            return WORKFLOW_TASK_categorize_transactions(cmd, bdm_DC)
+
         # Subcmd: "workflow update"
         elif cmd[p3m.CK_SUBCMD_KEY] == cp.CV_WORKFLOW_UPDATE_SUBCMD_KEY:
             catalog_map_update: bool = cmd.get(cp.CK_UPDATE_CATEGORY_MAP_WORKBOOK, False)
@@ -121,6 +127,145 @@ def WORKFLOW_CMD_process(cmd: p3m.CMD_OBJECT_TYPE,
         raise
 #endregion WORKFLOW_CMD_process() function
 # ---------------------------------------------------------------------------- +
+#region WORKFLOW_categorization_cmd() execution method
+def WORKFLOW_TASK_categorize_transactions(
+        cmd: p3m.CMD_OBJECT_TYPE,
+        bdm_DC: BudManAppDataContext_Base,
+        level: int = 0) -> p3m.CMD_RESULT_TYPE:
+        # cmd : p3m.CMD_OBJECT_TYPE) -> BUDMAN_RESULT_TYPE:
+    """Apply categorization workflow to one or more WORKBOOKS in the DC.
+
+    As a workflow process, the WORKFLOW_categorization_cmd method has the
+    job to marshall the necessary input objects, implied by the command
+    arguments and perhaps Data Context, and then invoke the appropriate 
+    function or method to conduct the requested process, tasks, etc. It also
+    catches the return status and result to return.
+
+    Arguments:
+        cmd (Dict): A valid BudMan View Model Command object. 
+
+    Required cmd object attributes:
+        cmd_key: 'workflow_cmd' 
+    Optional cmd object attributes:
+        cmd_name: CV_WORKFLOW_CMD
+        Valid subcommands:
+            subcmd_key: 'workflow_cmd_categorization'
+            subcmd_name: CV_DELETE_SUBCMD
+        subcmd_key: 'app_cmd_reload'
+        subcmd_name: CV_RELOAD_SUBCMD
+        subcmd_key: 'app_cmd_log'
+        subcmd_name: CV_LOG_SUBCMD
+
+    Returns:
+        Tuple[success : bool, result : Any]: The outcome of the command 
+        execution. If success is True, result contains result of the 
+        command, if False, a description of the error.
+        
+    Raises:
+        RuntimeError: A description of the
+        root error is contained in the exception message.
+    """
+    try:
+        ls: str = P2 * (level + 1)
+        ts: str = "[bold dark_orange]Task: [/bold dark_orange]"
+        m: str = f"{ls}{ts} {WORKFLOW_TASK_categorize_transactions.__name__}()"
+        p3m.cp_user_info_message(m)
+        # Validate the cmd argsuments.
+        cmd_args: p3m.CMD_ARGS_TYPE = cp.validate_cmd_arguments(
+            cmd=cmd, 
+            bdm_DC=bdm_DC,
+            cmd_key=cp.CV_WORKFLOW_CMD_KEY, 
+            subcmd_key=cp.CV_CATEGORIZATION_SUBCMD_KEY,
+            model_aware=True,
+            required_args=[
+                cp.CK_WB_LIST, 
+                cp.CK_LOG_ALL,
+                cp.CK_CLEAR_OTHER
+            ]
+        )
+        logger.info(f"Start: ...")
+        # Extract and validate required parameters from the command.
+        success: bool = False
+        model: BudgetDomainModel = bdm_DC.model
+        fi_key: str = bdm_DC.dc_FI_KEY
+        selected_bdm_wb_list : List[BDMWorkbook] = None
+        selected_bdm_wb_list = cp.process_selected_workbook_input(
+            cmd, 
+            bdm_DC,
+            validate_url=True)
+        # Process the selected workbooks.
+        if len(selected_bdm_wb_list) == 0:
+            m = "{P2}No workbooks selected to check."
+            p3m.cp_user_warning_message(m)
+            return p3m.cp_CMD_RESULT_ERROR_create(cmd, m)
+        elif len(selected_bdm_wb_list) > 1:
+            m = f"{P2}'{len(selected_bdm_wb_list)}' workbooks selected to check."
+            p3m.cp_user_info_message(m)
+        else :
+            m = f"{P2}A single workbook selected to check."
+            p3m.cp_user_info_message(m)
+        src_wb: BDMWorkbook = None
+        fr: str = f"Categorizing {len(selected_bdm_wb_list)} workbooks:"
+        success : bool = False
+        r : str = ""
+        m : str = ""
+        log_all : bool = cmd[cp.CK_LOG_ALL]
+        clear_other: bool = cmd[cp.CK_CLEAR_OTHER]
+        cleared_other_now: bool = clear_other
+        # Process the intended workbooks.
+        for bdm_wb in selected_bdm_wb_list:
+            # Select the current workbook in the Data Context.
+            bdm_DC.dc_WORKBOOK = bdm_wb
+            bdm_wb_abs_path = bdm_wb.abs_path()
+            fr += f"\n{P2}workbook: {str(bdm_DC.dc_WB_INDEX):>4} '{bdm_DC.dc_WB_ID:<40}'"
+            bdm_wb_abs_path = bdm_wb.abs_path()
+            if bdm_wb_abs_path is None:
+                m = f"Workbook path is not valid: {bdm_wb.wb_url}"
+                logger.error(m)
+                fr += f"\n{P4}Error: {m}"
+                continue
+            # Check cmd needs loaded workbooks to check
+            if not bdm_wb.wb_loaded:
+                m = f"wb_name '{bdm_wb.wb_name}' is not loaded, no action taken."
+                logger.error(m)
+                fr += f"\n{P4}Error: {m}"
+                continue
+            # Now we have a valid bdm_wb to process.
+            if bdm_wb.wb_type == bdm.WB_TYPE_EXCEL_TXNS:
+                task = "process_budget_category()"
+                m = (f"{P2}Task: {task:30} {str(bdm_DC.dc_WB_INDEX):>4} "
+                        f"'{bdm_DC.dc_WB_ID:<40}'")
+                logger.debug(m)
+                fr += f"\n{P2}{m}"
+                success, r = WORKFLOW_TASK_process_budget_category(bdm_wb, bdm_DC, 
+                                                        log_all, cleared_other_now)
+                cleared_other_now = False # Only clear_other for first workbook
+                if not success:
+                    r = (f"{P4}Task Failed: process_budget_category() Workbook: "
+                            f"'{bdm_DC.dc_WB_ID}'\n{P8}Result: {r}")
+                    logger.error(r)
+                    fr += r + "\n"
+                    continue
+                fr += f"\n{P8}Result: {r}"
+                task = "dc_WORKBOOK_save()"
+                m = (f"{P2}Task: {task:30} {str(bdm_DC.dc_WB_INDEX):>4} "
+                        f"'{bdm_DC.dc_WB_ID:<40}'")
+                logger.debug(m)
+                fr += f"\n{P2}{m}"
+                success, r = bdm_DC.dc_WORKBOOK_save(bdm_wb)
+                if not success:
+                    m = (f"{P4}Task Failed: dc_WORKBOOK_save() Workbook: "
+                            f"'{bdm_DC.dc_WB_ID}'\n{P8}Result: {m}")
+                    logger.error(m)
+                    fr += m + "\n"
+                    continue
+                fr += f"\n{P8}Result: {r}"
+        logger.info(m)
+        return p3m.cp_CMD_RESULT_create(True, p3m.CV_CMD_STRING_OUTPUT, fr, cmd)
+    except Exception as e:
+        return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
+#endregion WORKFLOW_categorization_cmd() execution method
+# ------------------------------------------------------------------------ +
 #region WORKFLOW_TASK_delete_workbooks() function
 def WORKFLOW_TASK_delete_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
                     bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
