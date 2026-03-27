@@ -210,10 +210,9 @@ class BudManApp(p3m.Model_Binding, metaclass=BDMSingletonMeta):
             # independently, and then bind them together.
             # Start by creating the VIEW_MODEL.
             self.view_model = BudManViewModel(bdms_url, self.settings)
-            # Next, create a MODEL. In our case, we use the VIEW_MODEL for that.
-            self.model = self.view_model.initialize_model(bdms_url)
-            # Next, bind the MODEL to the VIEW_MODEL.
-            self.view_model.model = self.model
+            # Initialize the VIEW_MODEL, which also initializes the CommandProcessor.            
+            self.view_model.initialize()  
+            self.model = self.view_model.model
             # Next, instantiate the BDMDataContext to serve as the 
             # DATA_CONTEXT for the VIEW_MODEL
             self.DC : BDMDataContext = BDMDataContext()
@@ -229,7 +228,7 @@ class BudManApp(p3m.Model_Binding, metaclass=BDMSingletonMeta):
             # Next, bind the DATA_CONTEXT to the VIEW_MODEL.
             self.view_model.DC = self.DC
             # Next, initialize the VIEW_MODEL.
-            self.view_model.initialize()
+            # self.view_model.initialize()
             # This completes the app_service setup.
             logger.debug(f"Complete:")
             return self

@@ -82,7 +82,7 @@
 # ---------------------------------------------------------------------------- +
 #region Imports
 # python standard library modules and packages
-import logging, threading, queue
+import logging, threading, queue, uuid
 from typing import List, Type, Union, Dict, Tuple, Any, Callable, Optional
 # third-party modules and packages
 from h11 import Data
@@ -90,7 +90,8 @@ import cmd2, argparse
 from treelib import Tree
 from rich.console import Console
 from rich.table import Table
-import p3_utils as p3u, pyjson5, p3logging as p3l
+import p3_utils as p3u 
+import p3logging as p3l
 # local modules and packages
 import budman_namespace.design_language_namespace as bdm
 from .mvvm_namespace import *
@@ -349,7 +350,7 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
             if (async_result_subscriber is None or
                 not callable(async_result_subscriber)):
                 raise ValueError("async_subscriber must be a valid callable object.")
-            async_id: str = p3u.gen_unique_hex_id()
+            async_id: str = uuid.uuid4().hex[:8]
             # Register new async cmd result expected
             self.cp_async_cmd_result_registry[async_id] = None
             # Flag this cmd as async

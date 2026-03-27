@@ -334,6 +334,7 @@ def BUDMAN_CMD_show_DATA_CONTEXT(cmd: p3m.CMD_OBJECT_TYPE,
                                 bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
     """Show the data context for the command."""
     try:
+        time.sleep(1) # Pause to let View threads finish async setup
         # Gather the current content of the DATA_CONTEXT.
         bs = bdm_DC.dc_BDM_STORE
         bs_str = p3u.first_n(str(bs))

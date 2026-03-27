@@ -186,6 +186,34 @@ class CommandProcessor_Binding(CommandProcessor_Base):
             raise
     #endregion cp_exec_func_binding() command method
     # ------------------------------------------------------------------------ +
+    #region execute_cmd_async() method
+    def cp_execute_cmd_async(self, 
+                             cmd : Dict = None,
+                             async_result_subscriber: Callable = None,
+                             raise_error : bool = False) -> CMD_RESULT_TYPE:
+        """Execute a command asynchronously with the bound command processor.
+
+        Pass the command request through to the command processor for
+        execution. The command processor is a callable object within the 
+        ViewModel.
+
+        Arguments:
+            cmd (Dict): The command to execute along with any arguments.
+        
+        Returns:
+            Tuple[success : bool, result : Any]: The outcome of the command 
+            execution.
+        """
+        try:
+            return self.CP.cp_execute_cmd_async(cmd, async_result_subscriber, raise_error)
+        except Exception as e:
+            cmd_result = cp_CMD_RESULT_EXCEPTION_create(cmd, e)
+            m = cmd_result[CK_CMD_RESULT_CONTENT]
+            if raise_error:
+                raise RuntimeError(m)
+            return cmd_result
+    #endregion execute_cmd() command method
+    # ------------------------------------------------------------------------ +
     #region execute_cmd() method
     def cp_execute_cmd(self, cmd : Dict = None,
                        raise_error : bool = False) -> CMD_RESULT_TYPE:

@@ -191,7 +191,6 @@ class BudManCLIView(cmd2.Cmd,
 
         # Setup CommandProcessor_Binding 
         p3m.CommandProcessor_Binding.__init__(self, command_processor)
-        self.cp_initialized : bool = False
 
         # Setup CP Msg Svc bindings
         p3m.cp_msg_svc.subscribe_user_message(cli_view_cp_user_output)
@@ -283,7 +282,6 @@ class BudManCLIView(cmd2.Cmd,
         try:
             logger.info(f"BizEVENT: View setup for BudManCLIView({self._app_name}).")
             # Initialize CommandProcessor.
-            self.cp_initialize()    
             self.set_prompt()
             return self
         except Exception as e:
@@ -335,6 +333,7 @@ class BudManCLIView(cmd2.Cmd,
         try:
             logger.debug(f"Start:")
             self.current_cmd = data.statement.raw
+            # self.terminal_lock.acquire()
             logger.debug(f"Complete:")
             return data
         except Exception as e:
@@ -348,6 +347,7 @@ class BudManCLIView(cmd2.Cmd,
         try:
             logger.debug(f"Start:")
             self.current_cmd = None
+            # self.terminal_lock.release()
             # update the dynamic prompt and window title
             self.set_prompt()
             logger.debug(f"Complete:")
@@ -471,7 +471,12 @@ class BudManCLIView(cmd2.Cmd,
         try:
             # Construct the command object from cmd2's argparse Namespace.
             cmd: p3m.CMD_OBJECT_TYPE = self.cp_construct_cmd_from_argparse(opts)
-            _  = self.cp_execute_cmd(cmd)
+            # _  = self.cp_execute_cmd(cmd)
+            cr : p3m.CMD_RESULT_TYPE  = self.cp_execute_cmd_async(
+                cmd,
+                async_result_subscriber=cli_cmd_result_output
+                )
+            ...
         except Exception as e:
             self.pexcept(e)
     #endregion do_show command
@@ -648,22 +653,22 @@ class BudManCLIView(cmd2.Cmd,
             if p3u.str_empty(tag):
                 tag = p3m.CP_INFO
             prefix: str = ""
-            for n, line in enumerate(msg.splitlines(), start=1):
-                if tag == p3m.CP_INFO:
-                    prefix = f"[bold green]{p3m.CP_INFO:>7}:[/bold green] "
-                elif tag == p3m.CP_WARNING:
-                    prefix = f"[bold orange]{p3m.CP_WARNING:>7}:[/bold orange] "
-                elif tag == p3m.CP_ERROR:
-                    prefix = f"[bold red]{p3m.CP_ERROR:>7}:[/bold red] "
-                elif tag == p3m.CP_DEBUG:
-                    prefix = f"[bold blue]{p3m.CP_DEBUG:>7}:[/bold blue] "
-                elif tag == p3m.CP_VERBOSE:
-                    prefix = f"[bold light blue]{p3m.CP_VERBOSE:>7}:[/bold light blue] "
-                elif tag == p3m.CP_CRITICAL:
-                    prefix = f"[bold dark red]{p3m.CP_CRITICAL:>7}:[/bold dark red] "
-                else:
-                    prefix = f"[bold blue]{tag:>7}:[/bold blue] "
-                with self.terminal_lock:
+            with self.terminal_lock:
+                for n, line in enumerate(msg.splitlines(), start=1):
+                    if tag == p3m.CP_INFO:
+                        prefix = f"[bold green]{p3m.CP_INFO:>7}:[/bold green] "
+                    elif tag == p3m.CP_WARNING:
+                        prefix = f"[bold orange]{p3m.CP_WARNING:>7}:[/bold orange] "
+                    elif tag == p3m.CP_ERROR:
+                        prefix = f"[bold red]{p3m.CP_ERROR:>7}:[/bold red] "
+                    elif tag == p3m.CP_DEBUG:
+                        prefix = f"[bold blue]{p3m.CP_DEBUG:>7}:[/bold blue] "
+                    elif tag == p3m.CP_VERBOSE:
+                        prefix = f"[bold light blue]{p3m.CP_VERBOSE:>7}:[/bold light blue] "
+                    elif tag == p3m.CP_CRITICAL:
+                        prefix = f"[bold dark red]{p3m.CP_CRITICAL:>7}:[/bold dark red] "
+                    else:
+                        prefix = f"[bold blue]{tag:>7}:[/bold blue] "
                     console.print(f"{prefix}{line}")
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))

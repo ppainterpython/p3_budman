@@ -320,7 +320,10 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
         try:
             st = p3u.start_timer()
             logger.info(f"BizEVENT: View Model setup for '{self.app_name}'")
-            self._initialized = False
+            self.cp_initialize()
+            self.cp_initialize_worker_thread()
+            self._budget_domain_model = self.initialize_model(self.bdms_url)
+            self._initialized = True
             logger.debug(f"Complete: {p3u.stop_timer(st)}")
             return self
         except Exception as e:

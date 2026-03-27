@@ -18,7 +18,7 @@ charset-normalizer==3.4.1
 click==8.2.1
 click-completion==0.5.2
 cloudflare==4.3.1
-cmd2==2.5.11
+cmd2==3.4.0
 colorama==0.4.6
 comm==0.2.2
 concurrent-log-handler==0.9.25
@@ -96,7 +96,6 @@ numpy==2.2.4
 openpyxl==3.1.5
 overrides==7.7.0
 -e git+https://github.com/ppainterpython/p3_budman.git@68e7f63c4ee4a958e8326e87cbc99ba60e9234bd#egg=p3_budget_model
-p3_exel_budget==0.0.0
 -e git+https://github.com/ppainterpython/p3_utils.git@b989529a62a9b697dc3e02703d0d62c08211e5ff#egg=p3_utils
 -e git+https://github.com/ppainterpython/p3logging.git@6f7fe9ad9b48fdf42bb24ea2029cb1a72a793190#egg=p3logging
 packaging==24.2
@@ -141,11 +140,12 @@ retrying==1.3.4
 rfc3339-validator==0.1.4
 rfc3986==2.0.0
 rfc3986-validator==0.1.1
-rich==13.9.4
+rich==14.3.3
+rich-argparse==1.7.2
 rpds-py==0.24.0
 s3transfer==0.14.0
 Send2Trash==1.8.3
-setuptools==78.1.0
+setuptools==82.0.1
 shellingham==1.5.4
 six==1.17.0
 smmap==5.0.2
@@ -154,7 +154,7 @@ soupsieve==2.6
 splurge-pub-sub==2025.3.2
 stack-data==0.6.3
 stdlib-list==0.11.1
-tach==0.29.0
+tach==0.34.0
 terminado==0.18.1
 tinycss2==1.4.0
 toml==0.10.2
@@ -171,6 +171,7 @@ typing_extensions==4.15.0
 tzdata==2025.2
 uri-template==1.3.0
 urllib3==2.4.0
+-e git+https://github.com/ppainterpython/wa2md.git@eb61d2eda55df5dfcb123e9e4db0ce677dd4e59c#egg=wa2md
 wcwidth==0.2.13
 webcolors==24.11.1
 webencodings==0.5.1
