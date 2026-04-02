@@ -163,7 +163,7 @@ def BUDMAN_CMD_list_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
             # Success for workbook_tree
             cmd_result[p3m.CK_CMD_RESULT_STATUS] = True
             cmd_result[p3m.CK_CMD_RESULT_CONTENT] = result_tree
-            cmd_result[p3m.CK_CMD_RESULT_CONTENT_TYPE] = p3m.CV_CMD_WORKBOOK_TREE_OBJECT
+            cmd_result[p3m.CK_CMD_RESULT_CONTENT_TYPE] = CV_CMD_JSON_OUTPUT
             return cmd_result
         else:
             # CMD_TASK_list_workbook_info_table()
@@ -172,7 +172,7 @@ def BUDMAN_CMD_list_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
             selected_bdm_wb_list = process_selected_workbook_input(cmd, bdm_DC)
             # Collect the wb info for workbooks in the selected_bdm_wb_list.
             # Construct the output dictionary result
-            cmd_result[p3m.CK_CMD_RESULT_CONTENT_TYPE] = p3m.CV_CMD_WORKBOOK_INFO_TABLE
+            cmd_result[p3m.CK_CMD_RESULT_CONTENT_TYPE] = CV_CMD_JSON_OUTPUT
             cmd_result[p3m.CK_CMD_RESULT_CONTENT] = list()
             for wb in selected_bdm_wb_list:
                 wb_index = bdm_DC.dc_WORKBOOK_index(wb.wb_id)
@@ -322,7 +322,7 @@ def BUDMAN_CMD_list_files(cmd: p3m.CMD_OBJECT_TYPE,
             logger.error(cmd_result[p3m.CK_CMD_RESULT_CONTENT])
             return cmd_result
         cmd_result[p3m.CK_CMD_RESULT_STATUS] = True
-        cmd_result[p3m.CK_CMD_RESULT_CONTENT_TYPE] = p3m.CV_CMD_FILE_TREE_OBJECT
+        cmd_result[p3m.CK_CMD_RESULT_CONTENT_TYPE] = CV_CMD_TREE_OBJECT
         cmd_result[p3m.CK_CMD_RESULT_CONTENT] = file_tree
         return cmd_result
     except Exception as e:
@@ -1165,7 +1165,7 @@ def validate_model_binding(bdm_DC: BudManAppDataContext_Base,
         return p3m.cp_CMD_RESULT_create(
             cmd_result_status=True,
             result_content=model,
-            result_content_type=p3m.CV_CMD_BDM_MODEL_OBJECT,
+            result_content_type=CV_CMD_JSON_OUTPUT,
             cmd_object=None
         )
     except Exception as e:

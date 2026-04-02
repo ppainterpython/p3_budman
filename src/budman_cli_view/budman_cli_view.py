@@ -565,31 +565,31 @@ class BudManCLIView(cmd2.Cmd,
                 # OUTPUT_STRING input is a simple string.
                 self.cli_view_user_output(result_content, p3m.CP_INFO)
             # CMD_DICT_OUTPUT
-            elif result_type == p3m.CV_CMD_DICT_OUTPUT:
+            elif result_type == cp.CV_CMD_DICT_OUTPUT:
                 # Python dictionary (dict) input object.
                 output_str: str = p3u.first_n(str(result_content), 100)
                 self.cli_view_user_output(output_str, p3m.CP_INFO)
             # CV_CMD_JSON_OUTPUT
-            elif result_type == p3m.CV_CMD_JSON_OUTPUT:
+            elif result_type == cp.CV_CMD_JSON_OUTPUT:
                 # JSON_STRING input is a JSON string.
                 console.print_json(result_content)
             # CV_CMD_TREE_OBJECT
-            elif result_type == p3m.CV_CMD_TREE_OBJECT:
+            elif result_type == cp.CV_CMD_TREE_OBJECT:
                 # CMD_RESULT content is a treelib.Tree.
                 formatted_tree = p3u.format_tree_view(result_content)
                 console.print(formatted_tree)
             # CV_CMD_FILE_TREE_OBJECT
-            elif result_type == p3m.CV_CMD_FILE_TREE_OBJECT:
+            elif result_type == cp.CV_CMD_FILE_TREE_OBJECT:
                 # CMD_RESULT content is a treelib.Tree with file information.
                 formatted_tree = p3u.format_tree_view(result_content)
                 console.print(formatted_tree)
             # CV_CMD_WORKBOOK_TREE_OBJECT
-            elif result_type == p3m.CV_CMD_WORKBOOK_TREE_OBJECT:
+            elif result_type == cp.CV_CMD_WORKBOOK_TREE_OBJECT:
                 # CV_CMD_WORKBOOK_TREE_OBJECT input is a treelib.Tree with workbook information.
                 formatted_tree = p3u.format_tree_view(result_content)
                 console.print(formatted_tree)
             # CV_CMD_WORKBOOK_INFO_TABLE
-            elif result_type == p3m.CV_CMD_WORKBOOK_INFO_TABLE:
+            elif result_type == cp.CV_CMD_WORKBOOK_INFO_TABLE:
                 # INFO_TABLE input is an array dictionaries.
                 hdr = list(result_content[0].keys()) if result_content else []
                 table = Table(*hdr, show_header=True, header_style="bold green")

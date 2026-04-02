@@ -96,13 +96,6 @@ CK_REQUIRED_CMD_RESULT_KEYS = [
 # CV_CMD_TREE_OBJECT is a treeblib.Tree object.
 CV_CMD_STRING_OUTPUT = "string_output"
 CV_CMD_ASYNC_ID = CK_CMD_ASYNC_ID
-CV_CMD_DICT_OUTPUT = "dict_output"
-CV_CMD_JSON_OUTPUT = "json_output"
-CV_CMD_TREE_OBJECT = "tree_object"
-CV_CMD_BDM_MODEL_OBJECT = "bdm_model_object"
-CV_CMD_WORKBOOK_INFO_TABLE = "workbook_info_table_output"
-CV_CMD_WORKBOOK_TREE_OBJECT = "workbook_tree_object"
-CV_CMD_FILE_TREE_OBJECT = "file_tree_object"
 CV_CMD_ERROR_STRING_OUTPUT = "error_string_output"
 
 # ---------------------------------------------------------------------------- +

@@ -86,6 +86,10 @@ def WORKFLOW_CMD_process(cmd: p3m.CMD_OBJECT_TYPE,
                 return WORKFLOW_TASK_transfer_workbooks(cmd, bdm_DC)
             return p3m.cp_CMD_RESULT_ERROR_unknown(cmd)
 
+        # Subcmd: "workflow process"
+        elif cmd[p3m.CK_SUBCMD_KEY] == cp.CV_PROCESS_SUBCMD_KEY:
+            return WORKFLOW_TASK_process(cmd, bdm_DC)
+
         # Subcmd: "workflow categorize_transactions"
         elif cmd[p3m.CK_SUBCMD_KEY] == cp.CV_CATEGORIZATION_SUBCMD_KEY:
             return WORKFLOW_TASK_categorize_transactions(cmd, bdm_DC)
@@ -476,6 +480,126 @@ def WORKFLOW_TASK_update_catalog_map(cmd: p3m.CMD_OBJECT_TYPE,
                                          cmd_result_error=cmd_result_error)
 #endregion WORKFLOW_TASK_update_catalog_map() function
 # ---------------------------------------------------------------------------- +
+#region WORKFLOW_TASK_process() function
+def WORKFLOW_TASK_process(cmd: p3m.CMD_OBJECT_TYPE, 
+                    bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
+    """WORKFLOW_PROCESS_subcmd: Process new .csv file all the way through the
+    workflow process.
+
+    Tasks required to transfer raw_input .csv files into .csv_txns workbooks, 
+    then to .excel_txns workbooks, and then to categorize the transactions in 
+    the .excel_txns workbook.
+    
+    Arguments:
+        cmd (CMD_OBJECT_TYPE): The command object to process.
+        bdm_DC (BudManAppDataContext_Base): The data context for the BudMan application.
+        Required cmd arguments:
+            cp.CK_FILE_LIST - list of src file_index values.
+
+    Returns:
+        p3m.CMD_RESULT_TYPE: The result of the command processing.
+
+    Raises:
+        p3m.CMDValidationException: For unrecoverable errors.
+    """
+    try:
+        # Validate the cmd argsuments.
+        cmd_args: p3m.CMD_ARGS_TYPE = cp.validate_cmd_arguments(
+            cmd=cmd, 
+            bdm_DC=bdm_DC,
+            cmd_key=cp.CV_WORKFLOW_CMD_KEY, 
+            subcmd_key=cp.CV_PROCESS_SUBCMD_KEY,
+            model_aware=True,
+            required_args=[
+                cp.CK_FILE_LIST,
+                cp.CK_WF_KEY
+            ]
+        )
+        model: BudgetDomainModel = bdm_DC.model
+        bsm_file_tree : BSMFileTree = model.bsm_file_tree
+        # Extract and validate required parameters from the command.
+        dst_wf_key = cmd_args.get(cp.CK_WF_KEY, "intake")
+        wf_purpose = bdm.WF_INPUT
+        dst_wb_type = bdm.WB_TYPE_CSV_TXNS
+        # Can be 1 or a list of file_indexes provided.
+        src_file_index_list = cmd_args.get(cp.CK_FILE_LIST)
+        fi_key: str = bdm_DC.dc_FI_KEY
+        src_bsm_files: List[cp.BSMFile] = []
+        src_bsm_files = bsm_file_tree.validate_file_list(src_file_index_list)
+        result_content: str = ""
+        msg: str = ""
+        # Supported cases:
+        # 1. transfer .csv files from file_list to a .csv_txns workbooks
+        success: bool = False
+        result: str = ""
+        src_bsm_file: BSMFile = None
+        cvs_wb: BDMWorkbook = None
+        for src_bsm_file in src_bsm_files:
+            # Dest wb_type is csv_txns workbook.
+            # Input file must have .csv extension.
+            if src_bsm_file.extension != bdm.WB_FILETYPE_CSV:
+                # Unsupported file type for transfer.
+                msg = (f"Unsupported source file type file "
+                        f"'{src_bsm_file.file_index:2}:{src_bsm_file.full_filename}'"
+                        f" must be .csv file.")
+                logger.error(msg)
+                result_content += msg + "\n"
+                continue
+            # Transfer a .csv file to a .csv_txns workbook.
+            # Create a BDMWorkbook for the new file being transferred.
+            success, result = WORKFLOW_TASK_construct_bdm_workbook(
+                src_filename=src_bsm_file.filename,
+                wb_type=dst_wb_type,
+                fi_key=fi_key,
+                wf_key=dst_wf_key,
+                wf_purpose=wf_purpose,
+                bdm_DC=bdm_DC
+            )
+            if not success:
+                msg = (f"Failed to construct file URL for file: "
+                        f"'{src_bsm_file.file_index:2}:{src_bsm_file.full_filename}'"
+                        f" Error: {result}")
+                logger.error(msg)
+                result_content += msg + "\n"
+                continue
+            csv_wb = result
+            success, result = WORKFLOW_TASK_transfer_csv_file_to_workbook(
+                src_file_url=src_bsm_file._file_url,
+                dst_wb=csv_wb,
+                wb_type=dst_wb_type
+            )
+            if not success:
+                msg = (f"Failed to transfer file: "
+                        f"'{src_bsm_file.file_index:2}:{src_bsm_file.full_filename}' "
+                        f" to .csv_txns workbook. Error: {result}")
+                logger.error(msg)
+                result_content += msg + "\n"
+                continue
+            # Add the new workbook to the wdc.
+            wdc = bdm_DC.dc_WORKBOOK_DATA_COLLECTION
+            wb_id = csv_wb.wb_id
+            wdc[wb_id] = csv_wb
+        model.bdm_save_model()
+        model.bdm_refresh_trees()
+        return p3m.cp_CMD_RESULT_create(
+            cmd_object=cmd,
+            cmd_result_status=True,
+            result_content_type=cp.CV_CMD_DICT_OUTPUT,
+            result_content="all done"
+        )
+    except p3m.CMDValidationException as e:
+        logger.error(e.msg)
+        raise
+    except Exception as e:
+        m = p3u.exc_err_msg(e)
+        err_msg = (f"Exception during WORKFLOW_TASK_transfer: {m}")
+        logger.error(err_msg)
+        cmd_result_error = p3m.cp_CMD_RESULT_ERROR_create(cmd, err_msg)
+        raise p3m.CMDValidationException(cmd=cmd, 
+                                         msg=err_msg,
+                                         cmd_result_error=cmd_result_error)
+#endregion WORKFLOW_TASK_process() function
+# ---------------------------------------------------------------------------- +
 #region WORKFLOW_TASK_transfer_workbooks() function
 def WORKFLOW_TASK_transfer_workbooks(cmd: p3m.CMD_OBJECT_TYPE, 
                     bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
@@ -650,7 +774,7 @@ def WORKFLOW_TASK_transfer_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
         return p3m.cp_CMD_RESULT_create(
             cmd_object=cmd,
             cmd_result_status=True,
-            result_content_type=p3m.CV_CMD_DICT_OUTPUT,
+            result_content_type=cp.CV_CMD_DICT_OUTPUT,
             result_content="all done"
         )
     except p3m.CMDValidationException as e:
@@ -831,7 +955,7 @@ def WORKFLOW_TASK_transfer_files(cmd: p3m.CMD_OBJECT_TYPE,
         return p3m.cp_CMD_RESULT_create(
             cmd_object=cmd,
             cmd_result_status=True,
-            result_content_type=p3m.CV_CMD_DICT_OUTPUT,
+            result_content_type=cp.CV_CMD_DICT_OUTPUT,
             result_content="all done"
         )
     except p3m.CMDValidationException as e:

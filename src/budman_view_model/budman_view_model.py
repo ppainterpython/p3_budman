@@ -743,7 +743,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             self.dc_BDM_STORE_changed = False
             logger.info(f"Saved BDM_STORE url: {self.model.bdm_url}")
             logger.info(f"Complete: {p3u.stop_timer(st)}")
-            return p3m.cp_CMD_RESULT_create(True, p3m.CV_CMD_DICT_OUTPUT, 
+            return p3m.cp_CMD_RESULT_create(True, cp.CV_CMD_DICT_OUTPUT, 
                                                 self.model.bdm_dehydrate(), cmd)  
         except Exception as e:
             return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
@@ -779,7 +779,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             self._BDM_STORE_loaded = True
             self.dc_BDM_STORE_changed = False
             logger.info(f"Complete: {p3u.stop_timer(st)}")
-            return p3m.cp_CMD_RESULT_create(True, p3m.CV_CMD_DICT_OUTPUT, 
+            return p3m.cp_CMD_RESULT_create(True, cp.CV_CMD_DICT_OUTPUT, 
                                                 self.model.bdm_store_object, 
                                                 cmd)
         except Exception as e:

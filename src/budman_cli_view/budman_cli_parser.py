@@ -518,7 +518,7 @@ class BudManCLIParser():
         different workflows configured in Budget Manager. Tasks are functional 
         behaviors working with the available workbooks."""
         try:
-            #region parser setup
+            #region workflow cmd parser setup
             parser = self.workflow_cmd
             # Add subparsers for workflow command parser
             d = "The workflow command is used to execute workflow tasks on "
@@ -534,7 +534,31 @@ class BudManCLIParser():
             transfer_parser = self.add_transfer_subparser(subparsers)
             set_parser = self.add_set_subparser(subparsers)
             intake_parser = self.add_intake_subparser(subparsers)
-            #endregion parser setup
+            #endregion workflow cmd parser setup
+
+            #region workflow process subcommand
+            process_parser = subparsers.add_parser(
+                cp.CV_PROCESS_SUBCMD_NAME,
+                aliases=["proc", "p"], 
+                help="Apply the full workflow process to raw input file.")
+            process_parser_defaults = {
+                p3m.CK_SUBCMD_NAME: cp.CV_PROCESS_SUBCMD_NAME,
+                p3m.CK_SUBCMD_KEY: cp.CV_PROCESS_SUBCMD_KEY,
+                cp.CK_FILE_LIST: [], 
+                cp.CK_WF_KEY: None
+            }
+            process_parser.set_defaults(**process_parser_defaults)
+            process_parser.add_argument(
+                # selected files: file_list
+                cp.CK_FILE_LIST, nargs='*',
+                type=int, default=[], 
+                help=("One or more file index values from file_list."))
+            process_parser.add_argument(
+                f"--{cp.CK_WF_KEY}", "-w",
+                choices=bdm.VALID_BDM_WORKFLOWS,
+                help="Specify the destination workflow key.")
+            self.add_common_optional_args(process_parser)
+            #endregion workflow process subcommand
 
             #region workflow categorization subcommand
             categorization_parser = subparsers.add_parser(
