@@ -30,6 +30,7 @@ import budman_namespace as bdm
 # The budman app uses the following extended values for the CMD_OBJECT key 
 # CK_CMD_RESULT_CONTENT_TYPE:
 CV_CMD_STRING_OUTPUT = p3m.CV_CMD_STRING_OUTPUT
+CV_CMD_LIST_OUTPUT = "list_output"
 CV_CMD_DICT_OUTPUT = "dict_output"
 CV_CMD_JSON_OUTPUT = "json_output"
 CV_CMD_TREE_OBJECT = "tree_object"

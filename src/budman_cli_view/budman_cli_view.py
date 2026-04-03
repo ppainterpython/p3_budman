@@ -27,7 +27,7 @@ declarations are contained in that one class, separate from the View code.
 #region Imports
 # python standard library modules and packages
 import cmd
-import logging, os, sys, getpass, time, copy
+import logging, os, sys, getpass, time, copy, threading
 from pathlib import Path
 from typing import List, Type, Generator, Dict, Tuple, Any, Optional, Union, Callable
 # third-party modules and packages
@@ -92,19 +92,34 @@ def workflow_cmd_parser() -> cmd2.Cmd2ArgumentParser:
 #region    cli_view_cp_user_output()
 @p3m.cp_user_message_callback
 def cli_view_cp_user_output(m: p3m.CPUserOutputMessage) -> None:
-    """Output user messages from the Command Processor to the CLI View."""
+    """Output user messages from the Command Processor to the CLI View.
+       Runs in the PubSub-Worker thread."""
     try:
         tag = m.tag.upper()
         msg = m.message
         budman_cli_view.cli_view_user_output(msg, tag)
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))        
+
+def wait_for_main_thread_block_input():
+    """Wait for the main thread to be ready for input."""
+    not_stop: bool = True
+    while not_stop:
+        time.sleep(0.8)
+        main_thread = threading.main_thread()
+        frames = sys._current_frames()
+        mtf = frames.get(main_thread.ident)
+        if mtf.f_code.co_name in ("wait", "get"):
+            not_stop = False
+            print("\r-")
+
 #endregion cli_view_cp_user_output()
 # ---------------------------------------------------------------------------- +
 #region    cli_cmd_result_output() method
 @p3m.cp_cmd_result_message_callback
 def cli_cmd_result_output(cmd_result: p3m.CMD_RESULT_TYPE) -> None:
-    """Output command results to the CLI View."""
+    """Output command results to the CLI View.
+       Runs in the PubSub-Worker thread."""
     try:
         if budman_cli_view:
             if budman_cli_view.cp_verbose_log:
@@ -563,6 +578,10 @@ class BudManCLIView(cmd2.Cmd,
             # CMD_STRING_OUTPUT
             if result_type == p3m.CV_CMD_STRING_OUTPUT:
                 # OUTPUT_STRING input is a simple string.
+                self.cli_view_user_output(result_content, p3m.CP_INFO)
+            # CMD_LIST_OUTPUT
+            elif result_type == cp.CV_CMD_LIST_OUTPUT:
+                # Python list (list) input object.
                 self.cli_view_user_output(result_content, p3m.CP_INFO)
             # CMD_DICT_OUTPUT
             elif result_type == cp.CV_CMD_DICT_OUTPUT:
