@@ -31,7 +31,7 @@ BDMWORKBOOK_SCHEMA_VERSION = "1.3.0"
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
-@dataclass
+@dataclass(init=True, kw_only=True)
 class BDMWorkbook:
     #region    doc string
     """ BDMWorkbook is basic wrapper around file-based data objects. It 
@@ -271,14 +271,11 @@ class BDMWorkbook:
     # ------------------------------------------------------------------------ +
     #region check_wb_url()
     def check_wb_url(self) -> bool:
-        """ Check if the workbook URL is valid. """
+        """ Check if the workbook URL is valid and exists in storage. """
         try:
             if not self.wb_url:
                 return False
-            wb_path = Path().from_uri(self.wb_url)
-            if not wb_path.exists():
-                return False
-            return True
+            return True if Path().from_uri(self.wb_url).exists() else False
         except Exception as e:
             logger.error(f"Error checking URL '{self.wb_url}': {p3u.exc_err_msg(e)}")
             return False

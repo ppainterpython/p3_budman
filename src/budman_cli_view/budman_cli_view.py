@@ -55,8 +55,10 @@ console = Console(force_terminal=True,width=bdm.BUDMAN_WIDTH, highlight=True,
                   soft_wrap=False)
 
 BMCLI_SYSTEM_EXIT_WARNING = "Not exiting due to SystemExit"
-PO_OFF_PROMPT = "p3budman> "
-PO_ON_PROMPT = "po-p3budman> "
+# PO_OFF_PROMPT = "p3budman> "
+# PO_ON_PROMPT = "po-p3budman> "
+PO_OFF_PROMPT = "> "
+PO_ON_PROMPT = "> "
 TERM_TITLE = "Budget Manager CLI"
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
@@ -688,7 +690,8 @@ class BudManCLIView(cmd2.Cmd,
                         prefix = f"[bold dark red]{p3m.CP_CRITICAL:>7}:[/bold dark red] "
                     else:
                         prefix = f"[bold blue]{tag:>7}:[/bold blue] "
-                    console.print(f"{prefix}{line}")
+                    self.poutput(f"{prefix}{line}", markup=True)
+                    # console.print(f"{prefix}{line}")
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
     #endregion cli_view_user_output()
