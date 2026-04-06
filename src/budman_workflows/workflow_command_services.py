@@ -46,8 +46,8 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 
 # ---------------------------------------------------------------------------- +
-#region WORKFLOW_CMD_process() function
-def WORKFLOW_CMD_process(cmd: p3m.CMD_OBJECT_TYPE, 
+#region WORKFLOW_CMD_dispatch() function
+def WORKFLOW_CMD_dispatch(cmd: p3m.CMD_OBJECT_TYPE, 
                        bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
     """Process workflow tasks.
 
@@ -129,7 +129,7 @@ def WORKFLOW_CMD_process(cmd: p3m.CMD_OBJECT_TYPE,
         return p3m.cp_CMD_RESULT_ERROR_unknown(cmd)
     except Exception as e:
         raise
-#endregion WORKFLOW_CMD_process() function
+#endregion WORKFLOW_CMD_dispatch() function
 # ---------------------------------------------------------------------------- +
 #region WORKFLOW_categorization_cmd() execution method
 def WORKFLOW_TASK_categorize_transactions(
@@ -170,10 +170,12 @@ def WORKFLOW_TASK_categorize_transactions(
         root error is contained in the exception message.
     """
     try:
+        level += 1
         ls: str = P2 * (level + 1)
-        ts: str = "[bold dark_orange]Task: [/bold dark_orange]"
-        m: str = f"{ls}{ts} {WORKFLOW_TASK_categorize_transactions.__name__}()"
-        p3m.cp_user_info_message(m)
+        ts: str = "[bold dark_orange]CMD: [/bold dark_orange]"
+        m: str = f"{pad(level)}{ts} {WORKFLOW_TASK_categorize_transactions.__name__}()"
+        msg: str = ""
+        p3m.cp_user_info_message(m + "Start: ...")
         # Validate the cmd argsuments.
         cmd_args: p3m.CMD_ARGS_TYPE = cp.validate_cmd_arguments(
             cmd=cmd, 
@@ -187,7 +189,6 @@ def WORKFLOW_TASK_categorize_transactions(
                 cp.CK_CLEAR_OTHER
             ]
         )
-        logger.info(f"Start: ...")
         # Extract and validate required parameters from the command.
         success: bool = False
         model: BudgetDomainModel = bdm_DC.model
@@ -199,20 +200,20 @@ def WORKFLOW_TASK_categorize_transactions(
             validate_url=True)
         # Process the selected workbooks.
         if len(selected_bdm_wb_list) == 0:
-            m = "{P2}No workbooks selected to check."
-            p3m.cp_user_warning_message(m)
-            return p3m.cp_CMD_RESULT_ERROR_create(cmd, m)
+            msg = f"{pad(level)}No workbooks selected to check."
+            p3m.cp_user_warning_message(msg)
+            return p3m.cp_CMD_RESULT_ERROR_create(cmd, msg)
         elif len(selected_bdm_wb_list) > 1:
-            m = f"{P2}'{len(selected_bdm_wb_list)}' workbooks selected to check."
-            p3m.cp_user_info_message(m)
+            msg = f"{pad(level)}'{len(selected_bdm_wb_list)}' workbooks selected to check."
+            p3m.cp_user_info_message(msg)
         else :
-            m = f"{P2}A single workbook selected to check."
-            p3m.cp_user_info_message(m)
+            msg = f"{pad(level)}A single workbook selected to check."
+            p3m.cp_user_info_message(msg)
         src_wb: BDMWorkbook = None
-        fr: str = f"Categorizing {len(selected_bdm_wb_list)} workbooks:"
+        p3m.cp_user_info_message(f"{pad(level)}Categorizing {len(selected_bdm_wb_list)} workbooks:")
         success : bool = False
         r : str = ""
-        m : str = ""
+        msg : str = ""
         log_all : bool = cmd[cp.CK_LOG_ALL]
         clear_other: bool = cmd[cp.CK_CLEAR_OTHER]
         cleared_other_now: bool = clear_other
@@ -221,51 +222,45 @@ def WORKFLOW_TASK_categorize_transactions(
             # Select the current workbook in the Data Context.
             bdm_DC.dc_WORKBOOK = bdm_wb
             bdm_wb_abs_path = bdm_wb.abs_path()
-            fr += f"\n{P2}workbook: {str(bdm_DC.dc_WB_INDEX):>4} '{bdm_DC.dc_WB_ID:<40}'"
+            p3m.cp_user_info_message(f"\n{pad(level)}workbook: {str(bdm_DC.dc_WB_INDEX):>4} '{bdm_DC.dc_WB_ID:<40}'")
             bdm_wb_abs_path = bdm_wb.abs_path()
             if bdm_wb_abs_path is None:
-                m = f"Workbook path is not valid: {bdm_wb.wb_url}"
-                logger.error(m)
-                fr += f"\n{P4}Error: {m}"
+                msg = f"Workbook path is not valid: {bdm_wb.wb_url}"
+                p3m.cp_user_error_message(f"\n{pad(level + 1)}Error: {msg}")
                 continue
             # Check cmd needs loaded workbooks to check
             if not bdm_wb.wb_loaded:
-                m = f"wb_name '{bdm_wb.wb_name}' is not loaded, no action taken."
-                logger.error(m)
-                fr += f"\n{P4}Error: {m}"
+                msg = f"wb_name '{bdm_wb.wb_name}' is not loaded, no action taken."
+                p3m.cp_user_error_message(f"\n{pad(level + 1)}Error: {msg}")
                 continue
             # Now we have a valid bdm_wb to process.
             if bdm_wb.wb_type == bdm.WB_TYPE_EXCEL_TXNS:
                 task = "process_budget_category()"
-                m = (f"{P2}Task: {task:30} {str(bdm_DC.dc_WB_INDEX):>4} "
+                msg = (f"{pad(level)}Task: {task:30} {str(bdm_DC.dc_WB_INDEX):>4} "
                         f"'{bdm_DC.dc_WB_ID:<40}'")
-                logger.debug(m)
-                fr += f"\n{P2}{m}"
+                p3m.cp_user_info_message(f"\n{pad(level)}{msg}")
                 success, r = WORKFLOW_TASK_process_budget_category(bdm_wb, bdm_DC, 
                                                         log_all, cleared_other_now)
                 cleared_other_now = False # Only clear_other for first workbook
                 if not success:
-                    r = (f"{P4}Task Failed: process_budget_category() Workbook: "
-                            f"'{bdm_DC.dc_WB_ID}'\n{P8}Result: {r}")
-                    logger.error(r)
-                    fr += r + "\n"
+                    r = (f"{pad(level + 1)}Task Failed: process_budget_category() Workbook: "
+                            f"'{bdm_DC.dc_WB_ID}'\n{pad(level + 2)}Result: {r}")
+                    p3m.cp_user_info_message(f"\n{pad(level + 1)}{r}")
                     continue
-                fr += f"\n{P8}Result: {r}"
+                p3m.cp_user_info_message(f"\n{pad(level + 2)}Result: {r}")
                 task = "dc_WORKBOOK_save()"
-                m = (f"{P2}Task: {task:30} {str(bdm_DC.dc_WB_INDEX):>4} "
+                m = (f"{pad(level)}Task: {task:30} {str(bdm_DC.dc_WB_INDEX):>4} "
                         f"'{bdm_DC.dc_WB_ID:<40}'")
-                logger.debug(m)
-                fr += f"\n{P2}{m}"
+                p3m.cp_user_info_message(f"\n{pad(level)}{m}")
                 success, r = bdm_DC.dc_WORKBOOK_save(bdm_wb)
                 if not success:
-                    m = (f"{P4}Task Failed: dc_WORKBOOK_save() Workbook: "
-                            f"'{bdm_DC.dc_WB_ID}'\n{P8}Result: {m}")
-                    logger.error(m)
-                    fr += m + "\n"
+                    msg = (f"{pad(level + 1)}Task Failed: dc_WORKBOOK_save() Workbook: "
+                            f"'{bdm_DC.dc_WB_ID}'\n{pad(level + 2)}Result: {msg}")
+                    p3m.cp_user_error_message(f"\n{pad(level + 1)}{msg}")
                     continue
-                fr += f"\n{P8}Result: {r}"
-        logger.info(m)
-        return p3m.cp_CMD_RESULT_create(True, p3m.CV_CMD_STRING_OUTPUT, fr, cmd)
+                p3m.cp_user_info_message(f"\n{pad(level + 2)}Result: {r}")
+        p3m.cp_user_info_message(m + "Complete: ...")
+        return p3m.cp_CMD_RESULT_create(True, p3m.CV_CMD_STRING_OUTPUT, "Complete", cmd)
     except Exception as e:
         return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
 #endregion WORKFLOW_categorization_cmd() execution method
@@ -337,10 +332,11 @@ def WORKFLOW_CMD_check_workbooks(
         level: int = 0) -> p3m.CMD_RESULT_TYPE:
     """WORKFLOW_CMD_check_workbooks: Check data workbooks."""
     try:
-        ls: str = P2 * (level + 1)
-        ts: str = "[bold dark_orange]Task: [/bold dark_orange]"
-        m: str = f"{ls}{ts} {WORKFLOW_CMD_check_workbooks.__name__}()"
-        p3m.cp_user_info_message(m)
+        level += 1
+        ts: str = "[bold dark_orange]CMD: [/bold dark_orange]"
+        m: str = f"{pad(level)}{ts} {WORKFLOW_CMD_check_workbooks.__name__}()"
+        p3m.cp_user_info_message(m + "Start: ...")
+        level += 1
         # Validate the cmd argsuments.
         cmd_args: p3m.CMD_ARGS_TYPE = cp.validate_cmd_arguments(
             cmd=cmd, 
@@ -355,8 +351,9 @@ def WORKFLOW_CMD_check_workbooks(
                 cp.CK_VALIDATE_CATEGORIES
             ]
         )
-        logger.info(f"Start: ...")
-        # Extract and validate required parameters from the command.
+        # Initializations
+        msg: str = ""
+        src_wb: BDMWorkbook = None
         success: bool = False
         model: BudgetDomainModel = bdm_DC.model
         fi_key: str = bdm_DC.dc_FI_KEY
@@ -367,50 +364,50 @@ def WORKFLOW_CMD_check_workbooks(
             validate_url=True)
         # Process the selected workbooks.
         if len(selected_bdm_wb_list) == 0:
-            m = "{P2}No workbooks selected to check."
-            p3m.cp_user_warning_message(m)
-            return p3m.cp_CMD_RESULT_ERROR_create(cmd, m)
+            msg = f"{pad(level)}No workbooks selected to check."
+            p3m.cp_user_warning_message(msg)
+            return p3m.cp_CMD_RESULT_ERROR_create(cmd, msg)
         elif len(selected_bdm_wb_list) > 1:
-            m = f"{P2}'{len(selected_bdm_wb_list)}' workbooks selected to check."
-            p3m.cp_user_info_message(m)
+            msg = f"{pad(level)}'{len(selected_bdm_wb_list)}' workbooks selected to check."
+            p3m.cp_user_info_message(msg)
         else :
-            m = f"{P2}A single workbook selected to check."
-            p3m.cp_user_info_message(m)
-        src_wb: BDMWorkbook = None
+            msg = f"{pad(level)}A single workbook selected to check."
+            p3m.cp_user_info_message(msg)
         for src_wb in selected_bdm_wb_list:
             # Select the current workbook in the Data Context.
             bdm_DC.dc_WORKBOOK = src_wb
             bdm_wb_abs_path = src_wb.abs_path()
-            m = f"{P2}workbook: {str(bdm_DC.dc_WB_INDEX):>4} '{src_wb.wb_id:<40}'"
-            p3m.cp_user_info_message(m)
+            msg = f"{pad(level)}workbook: {str(bdm_DC.dc_WB_INDEX):>4} '{src_wb.wb_id:<40}'"
+            p3m.cp_user_info_message(msg)
             # Check cmd needs loaded workbooks to check
             if not src_wb.wb_loaded:
-                m = f"{P2}wb_name '{src_wb.wb_name}' is not loaded, no action taken."
-                p3m.cp_user_error_message(m)
+                msg = f"{pad(level)}wb_name '{src_wb.wb_name}' is not loaded, no action taken."
+                p3m.cp_user_error_message(msg)
                 continue
             # By default, check the sheet schema. But other cli switches
             # can added to check something else.
             if cmd[cp.CK_VALIDATE_CATEGORIES]:
                 # Validate the categories in the workbook.
                 task = "validate_budget_categories()"
-                m = (f"{P2}Task: {task:30} {str(bdm_DC.dc_WB_INDEX):>4} "
+                msg = (f"{pad(level)}Task: {task:30} {str(bdm_DC.dc_WB_INDEX):>4} "
                     f"'{src_wb.wb_id:<40}'")
-                p3m.cp_user_debug_message(m)
+                p3m.cp_user_debug_message(msg)
                 success, r = validate_budget_categories(src_wb, bdm_DC, P4)
                 continue
             success = check_sheet_schema(src_wb.wb_content)
-            m = f"{P2}Task: check_sheet_schema workbook: Workbook: '{src_wb.wb_id}' "
+            msg = f"{pad(level)}Task: check_sheet_schema workbook: Workbook: '{src_wb.wb_id}' "
             if success:
-                p3m.cp_user_info_message(m)
+                p3m.cp_user_info_message(msg)
                 continue
             if cmd[cp.CK_FIX_SWITCH]:
-                m = f"{P2}Task: check_sheet_columns workbook: Workbook: '{src_wb.wb_id}' "
-                p3m.cp_user_info_message(m)
+                msg = f"{pad(level)}Task: check_sheet_columns workbook: Workbook: '{src_wb.wb_id}' "
+                p3m.cp_user_info_message(msg)
                 ws = src_wb.wb_content.active
                 success = WORKFLOW_TASK_check_sheet_columns(ws, add_columns=True)
                 if success: 
                     src_wb.wb_content.save(bdm_wb_abs_path)
             continue
+        p3m.cp_user_info_message(m + "End: ...")
         return p3m.cp_CMD_RESULT_create(success, p3m.CV_CMD_STRING_OUTPUT, 
                                             f"{P2}Complete", cmd)
     except Exception as e:
@@ -511,6 +508,7 @@ def WORKFLOW_CMD_process(
         p3m.CMDValidationException: For unrecoverable errors.
     """
     try:
+        #region Initialization and validation
         level += 1
         ts: str = "[bold dark_orange]CMD: [/bold dark_orange]"
         m: str = f"{pad(level)}{ts} {WORKFLOW_CMD_process.__name__}() "
@@ -530,6 +528,7 @@ def WORKFLOW_CMD_process(
         )
         # Initializations
         wb_index_list: List[int] = []
+        #endregion Initialization and validation
 
         #region Command 1: WORKFLOW_CMD_transfer_files()
         #    Transfer WB_FILETYPE_CSV(.csv) files from file_list to a 
@@ -581,7 +580,7 @@ def WORKFLOW_CMD_process(
         #endregion Command 2: WORKFLOW_CMD_transfer_workbooks()
 
         #region Command 3: WORKFLOW_TASK_check_workbooks()
-        # Check the new WB_TYPE_EXCEL_TXNS workbooks with  to ensure they are 
+        # Check the new WB_TYPE_EXCEL_TXNS workbooks with to ensure they are 
         # ready for the next step in the workflow process.
         new_cmd = None
         new_cmd : p3m.CMD_OBJECT_TYPE = p3m.cp_CMD_OBJECT_create(
@@ -601,7 +600,25 @@ def WORKFLOW_CMD_process(
             return p3m.cp_CMD_RESULT_ERROR_create(cmd, m)
         #endregion Command 3: Check the new WB_TYPE_EXCEL_TXNS workbooks.
 
-
+        #region Command 4: WORKFLOW_TASK_categorize_transactions()
+        #    Categorize the transactions in the new WB_TYPE_EXCEL_TXNS workbooks.
+        new_cmd = None
+        new_cmd : p3m.CMD_OBJECT_TYPE = p3m.cp_CMD_OBJECT_create(
+            cmd_name=cp.CV_WORKFLOW_CMD_NAME,
+            cmd_key=cp.CV_WORKFLOW_CMD_KEY,
+            subcmd_name=cp.CV_CATEGORIZATION_SUBCMD_NAME,
+            subcmd_key=cp.CV_CATEGORIZATION_SUBCMD_KEY)
+        new_cmd[cp.CK_LOAD_WORKBOOK_SWITCH] = True
+        new_cmd[cp.CK_LOG_ALL] = True
+        new_cmd[cp.CK_CLEAR_OTHER] = True
+        new_cmd[cp.CK_WB_LIST] = wb_index_list
+        # Run CMD: WORKFLOW_TASK_categorize_transactions() and capture the result.
+        result : p3m.CMD_RESULT_TYPE = WORKFLOW_TASK_categorize_transactions(new_cmd, bdm_DC, level) 
+        if not result[p3m.CK_CMD_RESULT_STATUS]:
+            m = f"Failed to categorize transactions in {bdm.WB_TYPE_EXCEL_TXNS} workbooks."
+            logger.error(m)
+            return p3m.cp_CMD_RESULT_ERROR_create(cmd, m)
+        #endregion Command 4: WORKFLOW_TASK_categorize_transactions()
 
         p3m.cp_user_info_message(m + "End: ...")
         return p3m.cp_CMD_RESULT_create(
@@ -672,6 +689,10 @@ def WORKFLOW_CMD_transfer_workbooks(
         p3m.CMDValidationException: For unrecoverable errors.
     """
     try:
+        level += 1
+        ts: str = "[bold dark_orange]CMD: [/bold dark_orange]"
+        m: str = f"{pad(level)}{ts} {WORKFLOW_CMD_transfer_workbooks.__name__}() "
+        p3m.cp_user_info_message(m + "Start: ...")
         # Validate the cmd argsuments.
         cmd_args: p3m.CMD_ARGS_TYPE = cp.validate_cmd_arguments(
             cmd=cmd, 
@@ -687,11 +708,6 @@ def WORKFLOW_CMD_transfer_workbooks(
                 cp.CK_WB_TYPE
             ]
         )
-        level += 1
-        ts: str = "[bold dark_orange]CMD: [/bold dark_orange]"
-        m: str = f"{pad(level)}{ts} {WORKFLOW_CMD_transfer_workbooks.__name__}() "
-        p3m.cp_user_info_message(m + "Start: ...")
-        level += 1
         # Initializations
         fi_key: str = bdm_DC.dc_FI_KEY
         model: BudgetDomainModel = bdm_DC.model
@@ -921,7 +937,6 @@ def WORKFLOW_CMD_transfer_files(
         ts: str = "[bold dark_orange]CMD: [/bold dark_orange]"
         m: str = f"{pad(level)}{ts} {WORKFLOW_CMD_transfer_files.__name__}() "
         p3m.cp_user_info_message(m + "Start: ...")
-        level += 1
         # Validate the cmd argsuments.
         cmd_args: p3m.CMD_ARGS_TYPE = cp.validate_cmd_arguments(
             cmd=cmd, 

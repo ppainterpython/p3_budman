@@ -258,7 +258,7 @@ from budman_namespace.bdm_workbook_class import BDMWorkbook
 from budget_categorization import (
     check_sheet_schema, WORKFLOW_TASK_check_sheet_columns, 
     validate_budget_categories, WORKFLOW_TASK_process_budget_category)
-from budman_workflows import (WORKFLOW_CMD_process)
+from budman_workflows import (WORKFLOW_CMD_dispatch)
 from budget_domain_model import (BudgetDomainModel, BDMConfig)
 from budman_data_context.budman_app_data_context_binding_class import BudManAppDataContext_Binding
 from budman_gui_view import BudManGUIView
@@ -1102,7 +1102,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             cmd_result : p3m.CMD_RESULT_TYPE = cp.verify_cmd_key(cmd, cp.CV_WORKFLOW_CMD_KEY)
             if not cmd_result[p3m.CK_CMD_RESULT_STATUS]: return cmd_result
             # Process workflow command tasks.
-            cmd_result = WORKFLOW_CMD_process(cmd, self.DC)
+            cmd_result = WORKFLOW_CMD_dispatch(cmd, self.DC)
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             return cmd_result
         except Exception as e:
