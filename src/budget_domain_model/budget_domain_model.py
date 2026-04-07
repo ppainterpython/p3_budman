@@ -1256,9 +1256,10 @@ class BudgetDomainModel(p3m.Model,metaclass=BDMSingletonMeta):
                                 identifier=wf_folder_key,
                                 data=wfc,
                                 parent_id=wf_key_id)
-                            if (fi_obj[FI_WORKBOOK_DATA_COLLECTION] is None or 
-                                len(fi_obj[FI_WORKBOOK_DATA_COLLECTION]) == 0):
-                                   continue
+                        # Process workbooks if any are listed in the FI_WORKBOOK_DATA_COLLECTION for this fi_key.
+                        if (fi_obj[FI_WORKBOOK_DATA_COLLECTION] is None or 
+                            len(fi_obj[FI_WORKBOOK_DATA_COLLECTION]) == 0):
+                            continue
                         wb: BDMWorkbook = None
                         for wb_id, wb in fi_obj[FI_WORKBOOK_DATA_COLLECTION].items():
                             if (wb.wf_purpose == wf_purpose and

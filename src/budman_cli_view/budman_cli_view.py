@@ -64,31 +64,9 @@ TERM_TITLE = "Budget Manager CLI"
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
 #region Configure the CLI parser
-# Setup the command line argument parsers. This is required due to the
-# cmd2.with_argparser decorator, which requires a callable to return a 
-# Cmd2ArgumentParser object. If one fails during setup(), the goal is the
-# whole app won't fail, and will display the error message for the
-# particular command parser.
-# TODO: how to get the app_name from settings prior to BudManCLIView instantiation?
+# Setup the command line argument parsers. Parsers are now initialized
+# as a class variable in BudManCLIView for better encapsulation.
 settings = bdms.BudManSettings()
-cli_parser : BudManCLIParser = BudManCLIParser(settings)
-def app_cmd_parser() -> cmd2.Cmd2ArgumentParser:
-    return cli_parser.app_cmd if cli_parser else None
-def change_cmd_parser() -> cmd2.Cmd2ArgumentParser:
-    return cli_parser.change_cmd if cli_parser else None
-def list_cmd_parser() -> cmd2.Cmd2ArgumentParser:
-    return cli_parser.list_cmd if cli_parser else None
-def load_cmd_parser() -> cmd2.Cmd2ArgumentParser:
-    return cli_parser.load_cmd if cli_parser else None
-def save_cmd_parser() -> cmd2.Cmd2ArgumentParser:
-    return cli_parser.save_cmd if cli_parser else None
-def close_cmd_parser() -> cmd2.Cmd2ArgumentParser:
-    return cli_parser.close_cmd if cli_parser else None
-def show_cmd_parser() -> cmd2.Cmd2ArgumentParser:
-    return cli_parser.show_cmd if cli_parser else None
-def workflow_cmd_parser() -> cmd2.Cmd2ArgumentParser:
-    return cli_parser.workflow_cmd if cli_parser else None
-
 #endregion Configure the CLI parser 
 # ---------------------------------------------------------------------------- +
 #region    cli_view_cp_user_output()
@@ -189,6 +167,8 @@ class BudManCLIView(cmd2.Cmd,
     #endregion doc string
     # ------------------------------------------------------------------------ +
     #region    Class variables
+    # Initialize the CLI parser as a class variable
+    cli_parser: BudManCLIParser | None = None
     prompt = "budman> "
     intro = "\nWelcome to the Budget Manager CLI. Type help or ? to list commands.\n"
     #endregion Class variables
@@ -201,6 +181,7 @@ class BudManCLIView(cmd2.Cmd,
         # Internal attributes for this View
         global budman_cli_view
         budman_cli_view = self
+        BudManCLIView.cli_parser = BudManCLIParser(settings if settings else bdms.BudManSettings())
         self._app_name = app_name
         self._settings : bdms.BudManSettings = settings if settings else bdms.BudManSettings()
         self._current_cmd :Optional[str] = None
@@ -383,7 +364,16 @@ class BudManCLIView(cmd2.Cmd,
     #
     # ------------------------------------------------------------------------ +
     #region do_app command
-    @with_argparser(app_cmd_parser())
+    @classmethod
+    def create_app_cmd_parser(cls) -> cmd2.Cmd2ArgumentParser:
+        """Create the app command parser."""
+        try:
+            return cls.cli_parser.app_cmd if cls.cli_parser else None
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+
+    @with_argparser(lambda: BudManCLIView.create_app_cmd_parser())
     def do_app(self, opts):
         """View and adjust app settings and features.
         
@@ -409,7 +399,16 @@ class BudManCLIView(cmd2.Cmd,
     #endregion do_app command
     # ------------------------------------------------------------------------ +
     #region do_change command - change attributes of workbooks and other objects.
-    @cmd2.with_argparser(change_cmd_parser()) # This decorator links cmd2 with argparse.
+    @classmethod
+    def create_change_cmd_parser(cls) -> cmd2.Cmd2ArgumentParser:
+        """Create the change command parser."""
+        try:
+            return cls.cli_parser.change_cmd if cls.cli_parser else None
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+
+    @cmd2.with_argparser(lambda: BudManCLIView.create_change_cmd_parser()) # This decorator links cmd2 with argparse.
     def do_change(self, opts):
         """Change (ch) attributes of workbooks and other objects in the Data Context for the Budget Manager application."""
         try:
@@ -422,7 +421,16 @@ class BudManCLIView(cmd2.Cmd,
     #endregion do_change command - change attributes of workbooks and other objects.
     # ------------------------------------------------------------------------ +
     #region do_list command - workbooks, status, etc.
-    @cmd2.with_argparser(list_cmd_parser())
+    @classmethod
+    def create_list_cmd_parser(cls) -> cmd2.Cmd2ArgumentParser:
+        """Create the list command parser."""
+        try:
+            return cls.cli_parser.list_cmd if cls.cli_parser else None
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+
+    @cmd2.with_argparser(lambda: BudManCLIView.create_list_cmd_parser())
     def do_list(self, opts):
         """List information from the Budget Manager application.
 
@@ -432,6 +440,7 @@ class BudManCLIView(cmd2.Cmd,
             object for the command processor.
         """
         try:
+            list_parser = self._command_parsers.get(self.do_list)
             # Construct the command object from cmd2's argparse Namespace.
             cmd: p3m.CMD_OBJECT_TYPE = self.cp_construct_cmd_from_argparse(opts)
             # Submit the command to the command processor.
@@ -443,7 +452,16 @@ class BudManCLIView(cmd2.Cmd,
     #endregion do_show command
     # ------------------------------------------------------------------------ +
     #region do_load command - load workbooks
-    @cmd2.with_argparser(load_cmd_parser())
+    @classmethod
+    def create_load_cmd_parser(cls) -> cmd2.Cmd2ArgumentParser:
+        """Create the load command parser."""
+        try:
+            return cls.cli_parser.load_cmd if cls.cli_parser else None
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+
+    @cmd2.with_argparser(lambda: BudManCLIView.create_load_cmd_parser())
     def do_load(self, opts):
         """Load specified data objects in the Budget Manager application.
         
@@ -462,6 +480,15 @@ class BudManCLIView(cmd2.Cmd,
     #endregion do_load command - load workbooks
     # ------------------------------------------------------------------------ +
     #region restart command - restart the application.
+    @classmethod
+    def create_restart_cmd_parser(cls) -> cmd2.Cmd2ArgumentParser:
+        """Create the restart command parser."""
+        try:
+            return cls.cli_parser.restart_cmd if cls.cli_parser else None
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+
     def do_restart(self, args):
         """Restart the Budget Manager CLI application."""
         try:
@@ -476,7 +503,16 @@ class BudManCLIView(cmd2.Cmd,
     #endregion restart command - restart the application.
     # ------------------------------------------------------------------------ +
     #region do_show command - workbooks, status, etc.
-    @cmd2.with_argparser(show_cmd_parser())
+    @classmethod
+    def create_show_cmd_parser(cls) -> cmd2.Cmd2ArgumentParser:
+        """Create the show command parser."""
+        try:
+            return cls.cli_parser.show_cmd if cls.cli_parser else None
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+
+    @cmd2.with_argparser(lambda: BudManCLIView.create_show_cmd_parser())
     def do_show(self, opts):
         """Show information from the Budget Manager application.
         
@@ -499,7 +535,16 @@ class BudManCLIView(cmd2.Cmd,
     #endregion do_show command
     # ------------------------------------------------------------------------ +
     #region do_save command - save workbooks
-    @cmd2.with_argparser(save_cmd_parser())
+    @classmethod
+    def create_save_cmd_parser(cls) -> cmd2.Cmd2ArgumentParser:
+        """Create the save command parser."""
+        try:
+            return cls.cli_parser.save_cmd if cls.cli_parser else None
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+
+    @cmd2.with_argparser(lambda: BudManCLIView.create_save_cmd_parser())
     def do_save(self, opts):
         """Save specified data objects in the Budget Manager application.
         
@@ -518,7 +563,16 @@ class BudManCLIView(cmd2.Cmd,
     #endregion do_save command - save workbooks
     # ------------------------------------------------------------------------ +
     #region do_close command - close workbooks
-    @cmd2.with_argparser(close_cmd_parser())
+    @classmethod
+    def create_close_cmd_parser(cls) -> cmd2.Cmd2ArgumentParser:
+        """Create the close command parser."""
+        try:
+            return cls.cli_parser.close_cmd if cls.cli_parser else None
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+
+    @cmd2.with_argparser(lambda: BudManCLIView.create_close_cmd_parser())
     def do_close(self, opts):
         """Close specified data objects in the Budget Manager application.
         
@@ -537,7 +591,16 @@ class BudManCLIView(cmd2.Cmd,
     #endregion do_close command - close workbooks
     # ------------------------------------------------------------------------ +
     #region do_workflow command
-    @with_argparser(workflow_cmd_parser())
+    @classmethod
+    def create_workflow_cmd_parser(cls) -> cmd2.Cmd2ArgumentParser:
+        """Create the workflow command parser."""
+        try:
+            return cls.cli_parser.workflow_cmd if cls.cli_parser else None
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+
+    @cmd2.with_argparser(lambda: BudManCLIView.create_workflow_cmd_parser())
     def do_workflow(self, opts):
         """Apply a workflow to Budget Manager data.
         

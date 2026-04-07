@@ -315,10 +315,10 @@ def WORKFLOW_TASK_delete_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
         model.bdm_FILE_TREE_refresh()
         model.bdm_WORKBOOK_TREE_refresh()
         return p3m.cp_CMD_RESULT_create(
-            cmd_object=cmd,
-            cmd_result_status=True,
-            result_content_type=p3m.CV_CMD_STRING_OUTPUT,
-            result_content=fr
+            cmd=cmd,
+            status=True,
+            type=p3m.CV_CMD_STRING_OUTPUT,
+            content=fr
         )
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
@@ -459,10 +459,10 @@ def WORKFLOW_TASK_update_catalog_map(cmd: p3m.CMD_OBJECT_TYPE,
         fr: str = ""  # final report string
         m: str = ""
         return p3m.cp_CMD_RESULT_create(
-            cmd_object=cmd,
-            cmd_result_status=True,
-            result_content_type=p3m.CV_CMD_STRING_OUTPUT,
-            result_content=result_msg
+            cmd=cmd,
+            status=True,
+            type=p3m.CV_CMD_STRING_OUTPUT,
+            content=result_msg
         )
     except p3m.CMDValidationException as e:
         logger.error(e.msg)
@@ -513,6 +513,7 @@ def WORKFLOW_CMD_process(
         ts: str = "[bold dark_orange]CMD: [/bold dark_orange]"
         m: str = f"{pad(level)}{ts} {WORKFLOW_CMD_process.__name__}() "
         p3m.cp_user_info_message(m + "Start: ...")
+        level += 1
         # Start: ------------------------------------------------------------- +
         # # Validate the cmd argsuments.
         cmd_args: p3m.CMD_ARGS_TYPE = cp.validate_cmd_arguments(
@@ -620,12 +621,14 @@ def WORKFLOW_CMD_process(
             return p3m.cp_CMD_RESULT_ERROR_create(cmd, m)
         #endregion Command 4: WORKFLOW_TASK_categorize_transactions()
 
+        level -= 1
         p3m.cp_user_info_message(m + "End: ...")
+        # End: --------------------------------------------------------------- +
         return p3m.cp_CMD_RESULT_create(
-            cmd_result_status=True,
-            result_content_type=cp.CV_CMD_DICT_OUTPUT,
-            result_content=result,
-            cmd_object=cmd
+            status=True,
+            type=cp.CV_CMD_DICT_OUTPUT,
+            content=result,
+            cmd=cmd
         )
     except p3m.CMDValidationException as e:
         logger.error(e.msg)
@@ -844,10 +847,10 @@ def WORKFLOW_CMD_transfer_workbooks(
         model.bdm_refresh_trees()
         p3m.cp_user_info_message(m + "End: ...")
         return p3m.cp_CMD_RESULT_create(
-            cmd_object=cmd,
-            cmd_result_status=True,
-            result_content_type=cp.CV_CMD_LIST_OUTPUT,
-            result_content=result_new_wb_index_list
+            cmd=cmd,
+            status=True,
+            type=cp.CV_CMD_LIST_OUTPUT,
+            content=result_new_wb_index_list
         )
     except p3m.CMDValidationException as e:
         logger.error(e.msg)
@@ -1043,10 +1046,10 @@ def WORKFLOW_CMD_transfer_files(
         model.bdm_refresh_trees()
         p3m.cp_user_info_message(m + "End: ...")
         return p3m.cp_CMD_RESULT_create(
-            cmd_result_status=True,
-            result_content_type=cp.CV_CMD_LIST_OUTPUT,
-            result_content=result_new_wb_index_list,
-            cmd_object=cmd
+            status=True,
+            type=cp.CV_CMD_LIST_OUTPUT,
+            content=result_new_wb_index_list,
+            cmd=cmd
         )
     except p3m.CMDValidationException as e:
         logger.error(e.msg)
@@ -1347,9 +1350,7 @@ def pad(level: int) -> str:
         str: P2 times level.
 `    """
     return P2 * level
-#endrgion pad()
-# ---------------------------------------------------------------------------- +
-#endregion Workflow Command Services helper functions
+#endregion pad()
 # ---------------------------------------------------------------------------- +
 #endregion Workflow Command Services helper functions
 # ---------------------------------------------------------------------------- +

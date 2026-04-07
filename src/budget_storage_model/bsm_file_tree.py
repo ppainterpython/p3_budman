@@ -218,10 +218,10 @@ class BSMFileTree:
             p3u.is_not_non_empty_str("file_url", file_url, raise_error=True)
             for node_id in self.file_tree.expand_tree(mode=Tree.WIDTH):
                 file_node: Node = self.file_tree.get_node(node_id)
-                if not file_node.is_leaf(): # only look at file nodes, which are leafs
+                if not file_node.is_leaf(): # only look at folder nodes, which are not leafs
                     if (file_node.data and isinstance(file_node.data, BSMFile)):
                         bsm_file: BSMFile = file_node.data
-                        if file_url == bsm_file._file_url:
+                        if file_url.lower() == bsm_file._file_url.lower():
                             # Return a deep copy of the sub tree at file_url
                             sub_tree:Tree = self.file_tree.subtree(node_id)
                             return Tree(sub_tree,deep=True)

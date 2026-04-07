@@ -50,7 +50,9 @@ class BudManCLIParser():
     """
     def __init__(self,settings: BudManSettings) -> None:
         """Initialize the BudManCLIParser class."""
+        self.settings: BudManSettings = settings
         self.app_name = settings[APP_NAME]
+        self.valid_fi_keys = settings[BUDMAN_VALID_FI_KEYS]
         self.app_cmd = cmd2.Cmd2ArgumentParser()
         self.change_cmd = cmd2.Cmd2ArgumentParser()
         self.list_cmd = cmd2.Cmd2ArgumentParser()
@@ -250,19 +252,28 @@ class BudManCLIParser():
             parser.prog = app_name
             list_cmd_defaults = {
                 p3m.CK_CMD_KEY: cp.CV_LIST_CMD_KEY,
-                p3m.CK_CMD_NAME: cp.CV_LIST_CMD_NAME
+                p3m.CK_CMD_NAME: cp.CV_LIST_CMD_NAME,
+                cp.CK_CMDLINE_FI_KEY: self.settings[BUDMAN_DEFAULT_FI]
             }
             parser.set_defaults(**list_cmd_defaults)
             # List command subparsers
-            list_subparsers = parser.add_subparsers()
-            #endregion parser setup
-            
-            #region bdm_store_subcmd_parser
-            # list BDM_STORE 
+            list_subparsers = parser.add_subparsers(help='List subcommands')
             bdm_store_subcmd_parser = list_subparsers.add_parser(
                 cp.CV_BDM_STORE_SUBCMD_NAME,
                 aliases=["bdm_store", "bms"], 
                 help="List the Budget Manager Store file.")
+            wb_subcmd_parser  = list_subparsers.add_parser(
+                cp.CV_WORKBOOKS_SUBCMD_NAME,
+                aliases=["wb", "WB"], 
+                help="Select workbooks to list.")
+            files_subcmd_parser  = list_subparsers.add_parser(
+                cp.CV_FILES_SUBCMD_NAME,
+                aliases=["f"], 
+                help="Select files to list.")
+            #endregion parser setup
+            
+            #region bdm_store_subcmd_parser
+            # list BDM_STORE 
             bdm_store_subcmd_defaults = {
                 p3m.CK_SUBCMD_NAME: cp.CV_BDM_STORE_SUBCMD_NAME,
                 p3m.CK_SUBCMD_KEY: cp.CV_LIST_BDM_STORE_SUBCMD_KEY
@@ -273,10 +284,6 @@ class BudManCLIParser():
 
             # region wb_subcmd_parser
             # list workbooks  [-t] [wb_list | -all]
-            wb_subcmd_parser  = list_subparsers.add_parser(
-                cp.CV_WORKBOOKS_SUBCMD_NAME,
-                aliases=["wb", "WB"], 
-                help="Select workbooks to list.")
             wb_subcmd_defaults = {
                 p3m.CK_SUBCMD_NAME: cp.CV_WORKBOOKS_SUBCMD_NAME,
                 p3m.CK_SUBCMD_KEY: cp.CV_LIST_WORKBOOKS_SUBCMD_KEY
@@ -292,10 +299,6 @@ class BudManCLIParser():
 
             #region files_subcmd_parser
             # list files  [--cmdline_wf_key | -w <wf_key>] [--cmdline_wf_purpose | [-p <wf_purpose> | -wi | -ww | -wo]]
-            files_subcmd_parser  = list_subparsers.add_parser(
-                cp.CV_FILES_SUBCMD_NAME,
-                aliases=["f"], 
-                help="Select files to list.")
             files_subcmd_defaults = {
                 p3m.CK_SUBCMD_NAME: cp.CV_FILES_SUBCMD_NAME,
                 p3m.CK_SUBCMD_KEY: cp.CV_LIST_FILES_SUBCMD_KEY,
@@ -852,6 +855,21 @@ class BudManCLIParser():
             raise
     #endregion intake subcommand subparser
     # ------------------------------------------------------------------------ +
+    def add_CK_CMDLINE_FI_KEY_optional_argument(self, parser) -> None:
+        """Add a fi_key optional argument to the provided parser."""
+        try:
+            valid_fi_keys: List[str] = self.settings[BUDMAN_VALID_FI_KEYS]
+            parser.add_argument(
+                f"--{cp.CK_CMDLINE_FI_KEY}", "-fi", 
+                dest=cp.CK_CMDLINE_FI_KEY, 
+                choices=valid_fi_keys,
+                action="store",
+                help="List files for selected financial institution.")
+            return
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise
+
     def add_workflow_optional_argument(self, parser) -> None:
         """Add a workflow optional argument to the provided parser."""
         try:
@@ -913,6 +931,7 @@ class BudManCLIParser():
                 dest=cp.CK_RAW_FORMAT, 
                 action="store_true",
                 help="Output file info in raw format.")
+            self.add_CK_CMDLINE_FI_KEY_optional_argument(all_files_parser)
             self.add_common_optional_args(all_files_parser)
             return
         except Exception as e:
@@ -942,6 +961,7 @@ class BudManCLIParser():
                 dest=cp.CK_RAW_FORMAT, 
                 action="store_true",
                 help="Output file info in raw format.")
+            self.add_CK_CMDLINE_FI_KEY_optional_argument(src_wf_folder_parser)
             self.add_common_optional_args(src_wf_folder_parser)
             return
         except Exception as e:

@@ -554,10 +554,10 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             # content to examine and validate.
             # Setup a CMD_RESULT object to return.
             cmd_result : p3m.CMD_RESULT_TYPE = p3m.cp_CMD_RESULT_create(
-                cmd_result_status=False, 
-                result_content_type=p3m.CV_CMD_STRING_OUTPUT,
-                result_content="Command validation failed.",
-                cmd_object=cmd
+                status=False, 
+                type=p3m.CV_CMD_STRING_OUTPUT,
+                content="Command validation failed.",
+                cmd=cmd
             )
             # For a few args, apply the DC values if no value given in the cmd.
             if self.cp_cmd_attr_get(cmd, cp.CK_FI_KEY) is None:

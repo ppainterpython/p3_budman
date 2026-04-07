@@ -84,10 +84,10 @@ def INTAKE_TASK_copy_file_to_wf_folder(
     try:
         # Assume the cmd parameters have been validated before reaching this point.
         cmd_result : p3m.CMD_RESULT_TYPE = p3m.cp_CMD_RESULT_create(
-            cmd_result_status = True,
-            result_content_type = p3m.CV_CMD_STRING_OUTPUT,
-            result_content = "",
-            cmd_object = cmd
+            status = True,
+            type = p3m.CV_CMD_STRING_OUTPUT,
+            content = "",
+            cmd = cmd
         )
         # Current DC values of wf_key and wf_purpose are the destination 
         # folder for the file to be copied. CMDLINE file_index, wf_key and 

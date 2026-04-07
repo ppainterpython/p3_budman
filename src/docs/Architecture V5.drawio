@@ -8247,7 +8247,7 @@
     </mxGraphModel>
   </diagram>
   <diagram id="9hkjF49SgZOi7EjC9HtN" name="GUI and Commands">
-    <mxGraphModel dx="6153" dy="1753" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+    <mxGraphModel dx="5554" dy="1707" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -10228,7 +10228,7 @@
             <mxPoint x="2701" y="808" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="JLI3ra4WvbqxLuwXyBe9-1" value="" style="edgeStyle=none;orthogonalLoop=1;jettySize=auto;html=1;rounded=0;" edge="1" parent="1">
+        <mxCell id="JLI3ra4WvbqxLuwXyBe9-1" value="ate" style="edgeStyle=none;orthogonalLoop=1;jettySize=auto;html=1;rounded=0;" edge="1" parent="1">
           <mxGeometry width="80" relative="1" as="geometry">
             <mxPoint x="1590" y="1990" as="sourcePoint" />
             <mxPoint x="1670" y="1990" as="targetPoint" />

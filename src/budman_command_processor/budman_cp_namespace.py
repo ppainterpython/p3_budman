@@ -189,6 +189,7 @@ CK_BDM_TREE = "bdm_tree"
 CK_CMDLINE_WB_TYPE = "cmdline_wb_type"
 CK_CMDLINE_WF_KEY = "cmdline_wf_key"
 CK_CMDLINE_WF_PURPOSE = "cmdline_wf_purpose"
+CK_CMDLINE_FI_KEY = "cmdline_fi_key"
 # subcmd_name CV_DELETE_SUBCMD argument constants
 CK_DELETE_TARGET = "delete_target"
 # subcmd_name CV_PARSER_ONLY_SUBCMD argument constants
