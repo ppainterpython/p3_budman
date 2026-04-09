@@ -1,6 +1,7 @@
 # ---------------------------------------------------------------------------- +
 #region budman_cp_namespace.py module
-""" budman_cp_namespace.py defines symbol constants for budman app Command Objects."""
+""" budman_cp_namespace.py defines symbol constants for budman app 
+Command Processor Objects."""
 #endregion budman_cp_namespace.py module
 # ---------------------------------------------------------------------------- +
 #region Imports
@@ -14,8 +15,9 @@ import budman_namespace as bdm
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
-# BudMan application-specific Command Processor attribute Constants.
-# A CMD_OBJECT is a dictionary with keys and values per basic Python. 
+# BudMan application-specific p3_mvvm Command Processor attribute Constants.
+# A p3_mvvm Command Processor CMD_OBJECT is a dictionary with defined keys and 
+# values. 
 # Naming Convention for Constants: 
 #    "CK_" - CommandKey - prefix attribute key names in a command object dict. 
 #    "CV_" - CommandValue - prefixes attribute values used as predefined 
@@ -25,6 +27,17 @@ import budman_namespace as bdm
 # by client code, such as in a user interface entered dynamically from 
 # user input.
 # 
+# The budman app uses the following extended values for the CMD_OBJECT key 
+# CK_CMD_RESULT_CONTENT_TYPE:
+CV_CMD_STRING_OUTPUT = p3m.CV_CMD_STRING_OUTPUT
+CV_CMD_LIST_OUTPUT = "list_output"
+CV_CMD_DICT_OUTPUT = "dict_output"
+CV_CMD_JSON_OUTPUT = "json_output"
+CV_CMD_TREE_OBJECT = "tree_object"
+CV_CMD_BDM_MODEL_OBJECT = "bdm_model_object"
+CV_CMD_WORKBOOK_INFO_TABLE = "workbook_info_table_output"
+CV_CMD_WORKBOOK_TREE_OBJECT = "workbook_tree_object"
+CV_CMD_FILE_TREE_OBJECT = "file_tree_object"
 
 
 # Known p3m.CK_CMD_KEY and p3m.CK_CMD_NAME values for BudMan app Command Objects.
@@ -74,6 +87,8 @@ CV_FILES_SUBCMD_NAME = "files"
 CV_LIST_FILES_SUBCMD_KEY = CV_LIST_CMD_KEY + "_" + CV_FILES_SUBCMD_NAME
 CV_SHOW_DATA_CONTEXT_SUBCMD_KEY = CV_SHOW_CMD_KEY + "_" + CV_DATA_CONTEXT_SUBCMD_NAME
 CV_CATEGORY_MAP_WORKBOOK_SUBCMD_NAME = "CATEGORY_MAP_WORKBOOK"
+CV_PROCESS_SUBCMD_NAME = "process"
+CV_PROCESS_SUBCMD_KEY = CV_WORKFLOW_CMD_KEY + "_" + CV_PROCESS_SUBCMD_NAME
 CV_CATEGORIZATION_SUBCMD_NAME = "categorization"
 CV_CATEGORIZATION_SUBCMD_KEY = CV_WORKFLOW_CMD_KEY + "_" + CV_CATEGORIZATION_SUBCMD_NAME
 CV_SET_SUBCMD_NAME = "set"
@@ -174,6 +189,7 @@ CK_BDM_TREE = "bdm_tree"
 CK_CMDLINE_WB_TYPE = "cmdline_wb_type"
 CK_CMDLINE_WF_KEY = "cmdline_wf_key"
 CK_CMDLINE_WF_PURPOSE = "cmdline_wf_purpose"
+CK_CMDLINE_FI_KEY = "cmdline_fi_key"
 # subcmd_name CV_DELETE_SUBCMD argument constants
 CK_DELETE_TARGET = "delete_target"
 # subcmd_name CV_PARSER_ONLY_SUBCMD argument constants

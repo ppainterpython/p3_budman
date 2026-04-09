@@ -27,7 +27,7 @@ declarations are contained in that one class, separate from the View code.
 #region Imports
 # python standard library modules and packages
 import cmd
-import logging, os, sys, getpass, time, copy
+import logging, os, sys, getpass, time, copy, threading
 from pathlib import Path
 from typing import List, Type, Generator, Dict, Tuple, Any, Optional, Union, Callable
 # third-party modules and packages
@@ -55,56 +55,51 @@ console = Console(force_terminal=True,width=bdm.BUDMAN_WIDTH, highlight=True,
                   soft_wrap=False)
 
 BMCLI_SYSTEM_EXIT_WARNING = "Not exiting due to SystemExit"
-PO_OFF_PROMPT = "p3budman> "
-PO_ON_PROMPT = "po-p3budman> "
+# PO_OFF_PROMPT = "p3budman> "
+# PO_ON_PROMPT = "po-p3budman> "
+PO_OFF_PROMPT = "> "
+PO_ON_PROMPT = "> "
 TERM_TITLE = "Budget Manager CLI"
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
 #region Configure the CLI parser
-# Setup the command line argument parsers. This is required due to the
-# cmd2.with_argparser decorator, which requires a callable to return a 
-# Cmd2ArgumentParser object. If one fails during setup(), the goal is the
-# whole app won't fail, and will display the error message for the
-# particular command parser.
-# TODO: how to get the app_name from settings prior to BudManCLIView instantiation?
+# Setup the command line argument parsers. Parsers are now initialized
+# as a class variable in BudManCLIView for better encapsulation.
 settings = bdms.BudManSettings()
-cli_parser : BudManCLIParser = BudManCLIParser(settings)
-def app_cmd_parser() -> cmd2.Cmd2ArgumentParser:
-    return cli_parser.app_cmd if cli_parser else None
-def change_cmd_parser() -> cmd2.Cmd2ArgumentParser:
-    return cli_parser.change_cmd if cli_parser else None
-def list_cmd_parser() -> cmd2.Cmd2ArgumentParser:
-    return cli_parser.list_cmd if cli_parser else None
-def load_cmd_parser() -> cmd2.Cmd2ArgumentParser:
-    return cli_parser.load_cmd if cli_parser else None
-def save_cmd_parser() -> cmd2.Cmd2ArgumentParser:
-    return cli_parser.save_cmd if cli_parser else None
-def close_cmd_parser() -> cmd2.Cmd2ArgumentParser:
-    return cli_parser.close_cmd if cli_parser else None
-def show_cmd_parser() -> cmd2.Cmd2ArgumentParser:
-    return cli_parser.show_cmd if cli_parser else None
-def workflow_cmd_parser() -> cmd2.Cmd2ArgumentParser:
-    return cli_parser.workflow_cmd if cli_parser else None
-
 #endregion Configure the CLI parser 
 # ---------------------------------------------------------------------------- +
 #region    cli_view_cp_user_output()
 @p3m.cp_user_message_callback
 def cli_view_cp_user_output(m: p3m.CPUserOutputMessage) -> None:
-    """Output user messages from the Command Processor to the CLI View."""
+    """Output user messages from the Command Processor to the CLI View.
+       Runs in the PubSub-Worker thread."""
     try:
         tag = m.tag.upper()
         msg = m.message
         budman_cli_view.cli_view_user_output(msg, tag)
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))        
+
+def wait_for_main_thread_block_input():
+    """Wait for the main thread to be ready for input."""
+    not_stop: bool = True
+    while not_stop:
+        time.sleep(0.8)
+        main_thread = threading.main_thread()
+        frames = sys._current_frames()
+        mtf = frames.get(main_thread.ident)
+        if mtf.f_code.co_name in ("wait", "get"):
+            not_stop = False
+            print("\r-")
+
 #endregion cli_view_cp_user_output()
 # ---------------------------------------------------------------------------- +
 #region    cli_cmd_result_output() method
 @p3m.cp_cmd_result_message_callback
 def cli_cmd_result_output(cmd_result: p3m.CMD_RESULT_TYPE) -> None:
-    """Output command results to the CLI View."""
+    """Output command results to the CLI View.
+       Runs in the PubSub-Worker thread."""
     try:
         if budman_cli_view:
             if budman_cli_view.cp_verbose_log:
@@ -172,6 +167,8 @@ class BudManCLIView(cmd2.Cmd,
     #endregion doc string
     # ------------------------------------------------------------------------ +
     #region    Class variables
+    # Initialize the CLI parser as a class variable
+    cli_parser: BudManCLIParser | None = None
     prompt = "budman> "
     intro = "\nWelcome to the Budget Manager CLI. Type help or ? to list commands.\n"
     #endregion Class variables
@@ -184,6 +181,7 @@ class BudManCLIView(cmd2.Cmd,
         # Internal attributes for this View
         global budman_cli_view
         budman_cli_view = self
+        BudManCLIView.cli_parser = BudManCLIParser(settings if settings else bdms.BudManSettings())
         self._app_name = app_name
         self._settings : bdms.BudManSettings = settings if settings else bdms.BudManSettings()
         self._current_cmd :Optional[str] = None
@@ -191,7 +189,6 @@ class BudManCLIView(cmd2.Cmd,
 
         # Setup CommandProcessor_Binding 
         p3m.CommandProcessor_Binding.__init__(self, command_processor)
-        self.cp_initialized : bool = False
 
         # Setup CP Msg Svc bindings
         p3m.cp_msg_svc.subscribe_user_message(cli_view_cp_user_output)
@@ -283,7 +280,6 @@ class BudManCLIView(cmd2.Cmd,
         try:
             logger.info(f"BizEVENT: View setup for BudManCLIView({self._app_name}).")
             # Initialize CommandProcessor.
-            self.cp_initialize()    
             self.set_prompt()
             return self
         except Exception as e:
@@ -335,6 +331,7 @@ class BudManCLIView(cmd2.Cmd,
         try:
             logger.debug(f"Start:")
             self.current_cmd = data.statement.raw
+            # self.terminal_lock.acquire()
             logger.debug(f"Complete:")
             return data
         except Exception as e:
@@ -348,6 +345,7 @@ class BudManCLIView(cmd2.Cmd,
         try:
             logger.debug(f"Start:")
             self.current_cmd = None
+            # self.terminal_lock.release()
             # update the dynamic prompt and window title
             self.set_prompt()
             logger.debug(f"Complete:")
@@ -366,7 +364,16 @@ class BudManCLIView(cmd2.Cmd,
     #
     # ------------------------------------------------------------------------ +
     #region do_app command
-    @with_argparser(app_cmd_parser())
+    @classmethod
+    def create_app_cmd_parser(cls) -> cmd2.Cmd2ArgumentParser:
+        """Create the app command parser."""
+        try:
+            return cls.cli_parser.app_cmd if cls.cli_parser else None
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+
+    @with_argparser(lambda: BudManCLIView.create_app_cmd_parser())
     def do_app(self, opts):
         """View and adjust app settings and features.
         
@@ -392,7 +399,16 @@ class BudManCLIView(cmd2.Cmd,
     #endregion do_app command
     # ------------------------------------------------------------------------ +
     #region do_change command - change attributes of workbooks and other objects.
-    @cmd2.with_argparser(change_cmd_parser()) # This decorator links cmd2 with argparse.
+    @classmethod
+    def create_change_cmd_parser(cls) -> cmd2.Cmd2ArgumentParser:
+        """Create the change command parser."""
+        try:
+            return cls.cli_parser.change_cmd if cls.cli_parser else None
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+
+    @cmd2.with_argparser(lambda: BudManCLIView.create_change_cmd_parser()) # This decorator links cmd2 with argparse.
     def do_change(self, opts):
         """Change (ch) attributes of workbooks and other objects in the Data Context for the Budget Manager application."""
         try:
@@ -405,7 +421,16 @@ class BudManCLIView(cmd2.Cmd,
     #endregion do_change command - change attributes of workbooks and other objects.
     # ------------------------------------------------------------------------ +
     #region do_list command - workbooks, status, etc.
-    @cmd2.with_argparser(list_cmd_parser())
+    @classmethod
+    def create_list_cmd_parser(cls) -> cmd2.Cmd2ArgumentParser:
+        """Create the list command parser."""
+        try:
+            return cls.cli_parser.list_cmd if cls.cli_parser else None
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+
+    @cmd2.with_argparser(lambda: BudManCLIView.create_list_cmd_parser())
     def do_list(self, opts):
         """List information from the Budget Manager application.
 
@@ -415,6 +440,7 @@ class BudManCLIView(cmd2.Cmd,
             object for the command processor.
         """
         try:
+            list_parser = self._command_parsers.get(self.do_list)
             # Construct the command object from cmd2's argparse Namespace.
             cmd: p3m.CMD_OBJECT_TYPE = self.cp_construct_cmd_from_argparse(opts)
             # Submit the command to the command processor.
@@ -426,7 +452,16 @@ class BudManCLIView(cmd2.Cmd,
     #endregion do_show command
     # ------------------------------------------------------------------------ +
     #region do_load command - load workbooks
-    @cmd2.with_argparser(load_cmd_parser())
+    @classmethod
+    def create_load_cmd_parser(cls) -> cmd2.Cmd2ArgumentParser:
+        """Create the load command parser."""
+        try:
+            return cls.cli_parser.load_cmd if cls.cli_parser else None
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+
+    @cmd2.with_argparser(lambda: BudManCLIView.create_load_cmd_parser())
     def do_load(self, opts):
         """Load specified data objects in the Budget Manager application.
         
@@ -445,6 +480,15 @@ class BudManCLIView(cmd2.Cmd,
     #endregion do_load command - load workbooks
     # ------------------------------------------------------------------------ +
     #region restart command - restart the application.
+    @classmethod
+    def create_restart_cmd_parser(cls) -> cmd2.Cmd2ArgumentParser:
+        """Create the restart command parser."""
+        try:
+            return cls.cli_parser.restart_cmd if cls.cli_parser else None
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+
     def do_restart(self, args):
         """Restart the Budget Manager CLI application."""
         try:
@@ -459,7 +503,16 @@ class BudManCLIView(cmd2.Cmd,
     #endregion restart command - restart the application.
     # ------------------------------------------------------------------------ +
     #region do_show command - workbooks, status, etc.
-    @cmd2.with_argparser(show_cmd_parser())
+    @classmethod
+    def create_show_cmd_parser(cls) -> cmd2.Cmd2ArgumentParser:
+        """Create the show command parser."""
+        try:
+            return cls.cli_parser.show_cmd if cls.cli_parser else None
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+
+    @cmd2.with_argparser(lambda: BudManCLIView.create_show_cmd_parser())
     def do_show(self, opts):
         """Show information from the Budget Manager application.
         
@@ -471,13 +524,27 @@ class BudManCLIView(cmd2.Cmd,
         try:
             # Construct the command object from cmd2's argparse Namespace.
             cmd: p3m.CMD_OBJECT_TYPE = self.cp_construct_cmd_from_argparse(opts)
-            _  = self.cp_execute_cmd(cmd)
+            # _  = self.cp_execute_cmd(cmd)
+            cr : p3m.CMD_RESULT_TYPE  = self.cp_execute_cmd_async(
+                cmd,
+                async_result_subscriber=cli_cmd_result_output
+                )
+            ...
         except Exception as e:
             self.pexcept(e)
     #endregion do_show command
     # ------------------------------------------------------------------------ +
     #region do_save command - save workbooks
-    @cmd2.with_argparser(save_cmd_parser())
+    @classmethod
+    def create_save_cmd_parser(cls) -> cmd2.Cmd2ArgumentParser:
+        """Create the save command parser."""
+        try:
+            return cls.cli_parser.save_cmd if cls.cli_parser else None
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+
+    @cmd2.with_argparser(lambda: BudManCLIView.create_save_cmd_parser())
     def do_save(self, opts):
         """Save specified data objects in the Budget Manager application.
         
@@ -496,7 +563,16 @@ class BudManCLIView(cmd2.Cmd,
     #endregion do_save command - save workbooks
     # ------------------------------------------------------------------------ +
     #region do_close command - close workbooks
-    @cmd2.with_argparser(close_cmd_parser())
+    @classmethod
+    def create_close_cmd_parser(cls) -> cmd2.Cmd2ArgumentParser:
+        """Create the close command parser."""
+        try:
+            return cls.cli_parser.close_cmd if cls.cli_parser else None
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+
+    @cmd2.with_argparser(lambda: BudManCLIView.create_close_cmd_parser())
     def do_close(self, opts):
         """Close specified data objects in the Budget Manager application.
         
@@ -515,7 +591,16 @@ class BudManCLIView(cmd2.Cmd,
     #endregion do_close command - close workbooks
     # ------------------------------------------------------------------------ +
     #region do_workflow command
-    @with_argparser(workflow_cmd_parser())
+    @classmethod
+    def create_workflow_cmd_parser(cls) -> cmd2.Cmd2ArgumentParser:
+        """Create the workflow command parser."""
+        try:
+            return cls.cli_parser.workflow_cmd if cls.cli_parser else None
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+            raise
+
+    @cmd2.with_argparser(lambda: BudManCLIView.create_workflow_cmd_parser())
     def do_workflow(self, opts):
         """Apply a workflow to Budget Manager data.
         
@@ -559,32 +644,36 @@ class BudManCLIView(cmd2.Cmd,
             if result_type == p3m.CV_CMD_STRING_OUTPUT:
                 # OUTPUT_STRING input is a simple string.
                 self.cli_view_user_output(result_content, p3m.CP_INFO)
+            # CMD_LIST_OUTPUT
+            elif result_type == cp.CV_CMD_LIST_OUTPUT:
+                # Python list (list) input object.
+                self.cli_view_user_output(result_content, p3m.CP_INFO)
             # CMD_DICT_OUTPUT
-            elif result_type == p3m.CV_CMD_DICT_OUTPUT:
+            elif result_type == cp.CV_CMD_DICT_OUTPUT:
                 # Python dictionary (dict) input object.
                 output_str: str = p3u.first_n(str(result_content), 100)
                 self.cli_view_user_output(output_str, p3m.CP_INFO)
             # CV_CMD_JSON_OUTPUT
-            elif result_type == p3m.CV_CMD_JSON_OUTPUT:
+            elif result_type == cp.CV_CMD_JSON_OUTPUT:
                 # JSON_STRING input is a JSON string.
                 console.print_json(result_content)
             # CV_CMD_TREE_OBJECT
-            elif result_type == p3m.CV_CMD_TREE_OBJECT:
+            elif result_type == cp.CV_CMD_TREE_OBJECT:
                 # CMD_RESULT content is a treelib.Tree.
                 formatted_tree = p3u.format_tree_view(result_content)
                 console.print(formatted_tree)
             # CV_CMD_FILE_TREE_OBJECT
-            elif result_type == p3m.CV_CMD_FILE_TREE_OBJECT:
+            elif result_type == cp.CV_CMD_FILE_TREE_OBJECT:
                 # CMD_RESULT content is a treelib.Tree with file information.
                 formatted_tree = p3u.format_tree_view(result_content)
                 console.print(formatted_tree)
             # CV_CMD_WORKBOOK_TREE_OBJECT
-            elif result_type == p3m.CV_CMD_WORKBOOK_TREE_OBJECT:
+            elif result_type == cp.CV_CMD_WORKBOOK_TREE_OBJECT:
                 # CV_CMD_WORKBOOK_TREE_OBJECT input is a treelib.Tree with workbook information.
                 formatted_tree = p3u.format_tree_view(result_content)
                 console.print(formatted_tree)
             # CV_CMD_WORKBOOK_INFO_TABLE
-            elif result_type == p3m.CV_CMD_WORKBOOK_INFO_TABLE:
+            elif result_type == cp.CV_CMD_WORKBOOK_INFO_TABLE:
                 # INFO_TABLE input is an array dictionaries.
                 hdr = list(result_content[0].keys()) if result_content else []
                 table = Table(*hdr, show_header=True, header_style="bold green")
@@ -648,23 +737,24 @@ class BudManCLIView(cmd2.Cmd,
             if p3u.str_empty(tag):
                 tag = p3m.CP_INFO
             prefix: str = ""
-            for n, line in enumerate(msg.splitlines(), start=1):
-                if tag == p3m.CP_INFO:
-                    prefix = f"[bold green]{p3m.CP_INFO:>7}:[/bold green] "
-                elif tag == p3m.CP_WARNING:
-                    prefix = f"[bold orange]{p3m.CP_WARNING:>7}:[/bold orange] "
-                elif tag == p3m.CP_ERROR:
-                    prefix = f"[bold red]{p3m.CP_ERROR:>7}:[/bold red] "
-                elif tag == p3m.CP_DEBUG:
-                    prefix = f"[bold blue]{p3m.CP_DEBUG:>7}:[/bold blue] "
-                elif tag == p3m.CP_VERBOSE:
-                    prefix = f"[bold light blue]{p3m.CP_VERBOSE:>7}:[/bold light blue] "
-                elif tag == p3m.CP_CRITICAL:
-                    prefix = f"[bold dark red]{p3m.CP_CRITICAL:>7}:[/bold dark red] "
-                else:
-                    prefix = f"[bold blue]{tag:>7}:[/bold blue] "
-                with self.terminal_lock:
-                    console.print(f"{prefix}{line}")
+            with self.terminal_lock:
+                for n, line in enumerate(msg.splitlines(), start=1):
+                    if tag == p3m.CP_INFO:
+                        prefix = f"[bold green]{p3m.CP_INFO:>7}:[/bold green] "
+                    elif tag == p3m.CP_WARNING:
+                        prefix = f"[bold orange]{p3m.CP_WARNING:>7}:[/bold orange] "
+                    elif tag == p3m.CP_ERROR:
+                        prefix = f"[bold red]{p3m.CP_ERROR:>7}:[/bold red] "
+                    elif tag == p3m.CP_DEBUG:
+                        prefix = f"[bold blue]{p3m.CP_DEBUG:>7}:[/bold blue] "
+                    elif tag == p3m.CP_VERBOSE:
+                        prefix = f"[bold light blue]{p3m.CP_VERBOSE:>7}:[/bold light blue] "
+                    elif tag == p3m.CP_CRITICAL:
+                        prefix = f"[bold dark red]{p3m.CP_CRITICAL:>7}:[/bold dark red] "
+                    else:
+                        prefix = f"[bold blue]{tag:>7}:[/bold blue] "
+                    self.poutput(f"{prefix}{line}", markup=True)
+                    # console.print(f"{prefix}{line}")
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
     #endregion cli_view_user_output()

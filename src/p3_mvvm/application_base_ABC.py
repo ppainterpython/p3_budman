@@ -22,6 +22,8 @@ class Application_Base(CommandProcessor_Binding, DataContext_Binding, Model_Bind
 
     Each application has a Model, a View, a View Model, a Command Processor (CP)
     and a Data Context (DC).
+
+    4/4/2026 - Paul Painter - This is not fully implemented yet.
     """
     
     @property

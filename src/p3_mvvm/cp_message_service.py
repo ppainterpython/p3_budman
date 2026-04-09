@@ -6,7 +6,7 @@
 #------------------------------------------------------------------------------+
 #region Imports
 # python standard library modules and packages
-import logging, queue
+import logging, threading
 from typing import Optional
 # third-party modules and packages
 import p3_utils as p3u, p3logging as p3l
@@ -14,6 +14,7 @@ from splurge_pub_sub import PubSub, Message, Callback
 # local modules and packages
 from budman_namespace import BDMSingletonMeta
 from .mvvm_namespace import *
+from .view_base_ABC import View_Base
 
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -28,7 +29,7 @@ def cp_user_message_callback(func: Callback) -> Callback:
     """Decorator to mark a function as a PubSub callback for user messages.
     
         User messages are intended to be shown to the user in some fashion. The
-        decoratof converts the splurge_pub_sub.Message to a CPUserOutputMessage
+        decorator converts the splurge_pub_sub.Message to a CPUserOutputMessage
         before passing it to the decorated function.
     """
     def wrapper(*args, **kwargs) -> None:
@@ -121,10 +122,29 @@ class CPMessageService(PubSub, metaclass=BDMSingletonMeta):
     #endregion CPMessageService doc string
     # ------------------------------------------------------------------------ +
     #region    __init__() 
-    def __init__(self) -> None:
+    def __init__(self, view: View_Base|None = None) -> None:
+        # Creates PubSub-Worker thread and initializes PubSub.
         super().__init__()
+        _view : View_Base|None = view
+        _in_main_thread: bool = threading.current_thread() == threading.main_thread()
         self.verbose_log: bool = False
     #endregion  __init__()
+    # ------------------------------------------------------------------------ +
+    #region    CPMessageService class Properties
+    @property
+    def view(self) -> Optional[View_Base]:
+        """Get the view associated with the message service."""
+        return self._view
+    @view.setter
+    def view(self, value: View_Base) -> None:
+        """Set the view associated with the message service."""
+        self._view = value
+
+    @property
+    def in_main_thread(self) -> bool:
+        """Return True if the current thread is the main thread."""
+        return self._in_main_thread
+    #endregion CPMessageService class Properties
     # ------------------------------------------------------------------------ +
     #endregion CPMessageService class Intrinsics
     # ------------------------------------------------------------------------ +

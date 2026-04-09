@@ -101,9 +101,24 @@ The concept of __Workbook__ is expanding. Need to change __WB_TYPE__ to __WF_PUR
 
 A Command Processing (CP) pattern is quite common, after all, every computer ever built had a command interface. Years ago, I learned the .NET MVVM framework and followed the evolution of the Command interfaces. Parsing what action to take, whether from a GUI button click or a typed in command line is a repetitious problem area. So, this particular approach will be familiar.
 
-Notes:
+In our simple `mvvm` pattern, the `view` object is responsible to construct a `cmd` object based on input from a user. Whether the users experience is cli or gui based, the `cmd` object is the same structure. In general, a `command processor` executes commands based on the content of the `cmd` object. In `python` the `cmd` object is a `dictionary` keyword value list.
 
-1. cmd_name, cmd_key, full_cmd_key, sub-cmd concept, cmd args.
+At a minimum, a `cmd` object must contain the following attributes:
+
+| Key Name | Value |
+| --- | --- |
+| `'cmd_name'` | Name of a command as a string, e.g., `"change"`, `"load"`, `"save"` |
+| `'cmd_key'` | Short unique string literal identifier for the `cmd' object, e.g.,"change_cmd"`, `"load_cmd"`,`"save_cmd"` |
+| `'cmd_exec_func'` | String name of the function to invoke to execute the `cmd`. |
+| __Optional keys__ | Optional `cmd` object attributes |
+| `'subcmd_name'` | Name of a sub-command associated with a `'cmd_name'` |
+| `'subcmd_key'` | Short unique string literal identifier for `'subcmd_name'` |
+| `'cmd_async_id'` | |
+| `'cmd_async_result_subscriber'` | |
+
+Part of application initialization and dependency injection is to bind to a command_processor object implementing the `p3m.CommandProcessor_Base` interface. Methods are available to invoke a command for execution synchronously or asynchronously.
+
+Notes:
 
 View -> ViewDataContext(bindings for CP, DC) -> ViewModel(bindings for CP, DC) -> uber-DC -> Model
 
@@ -190,10 +205,10 @@ The BDM_STORE file contains information about "workbooks" which are files used i
 
 ## Change Journal
 
-| Date       | Description                                                      |
-|------------|------------------------------------------------------------------|
-| 06/17/2025 | Removed bdm_initialize_from_BDM_STORE(self) from budget_domain_model.py|
-| 06/17/2025 |Modified BDMWorkbook class and WORKBOOK_DATA_COLLECTION to be use the wb_id as the key, not a list index. The wb_index used in layers above BDM, not persisted in BDMWorkbook.|
-| 06/19/2025 |Making BudManViewModel a subclass of BudManAppDataContext_Binding finally.|
+| Date | Description |
+| --- | --- |
+| 06/17/2025 | Removed bdm_initialize_from_BDM_STORE(self) from budget_domain_model.py |
+| 06/17/2025 | Modified BDMWorkbook class and WORKBOOK_DATA_COLLECTION to be use the wb_id as the key, not a list index. The wb_index used in layers above BDM, not persisted in BDMWorkbook. |
+| 06/19/2025 | Making BudManViewModel a subclass of BudManAppDataContext_Binding finally. |
 | 06/23/2025 | Implement -all switch for wf cat cmd. Abandoned the wb_ref approach in favor of a simplified wb_index with the UI. Now, workbooks are referred to by their wb_index in commands, not names. |
-| 06/25/2025 |Extending the workflow process model for cleaner separation of concerns. Command execution methods in the ViewModel take the validated command and arguments and dispatch that, in the case of the workflow command, to appropriate functions that implement the process tasks, passing workbooks to them. Keep the knowledge of the process out of the command execution, just validate and invoke the process function/method, etc.|
+| 06/25/2025 | Extending the workflow process model for cleaner separation of concerns. Command execution methods in the ViewModel take the validated command and arguments and dispatch that, in the case of the workflow command, to appropriate functions that implement the process tasks, passing workbooks to them. Keep the knowledge of the process out of the command execution, just validate and invoke the process function/method, etc. |

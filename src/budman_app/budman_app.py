@@ -192,8 +192,8 @@ class BudManApp(p3m.Model_Binding, metaclass=BDMSingletonMeta):
             raise
     #endregion budman_app_exit_handler() function
     # ------------------------------------------------------------------------ +
-    #region    budman_app_service_dependency_injection() function
-    def budman_app_service_dependency_injection(self, 
+    #region    budman_app_services_dependency_injection() function
+    def budman_app_services_dependency_injection(self, 
                                                 bdms_url : str = None, 
                                                 testmode : bool = False):
         """Assemble the application for startup. Do Dependency Injection.
@@ -204,16 +204,15 @@ class BudManApp(p3m.Model_Binding, metaclass=BDMSingletonMeta):
         """
         try:
             logger.debug(f"Started: bdms_url = '{bdms_url}'...")
-            # In our MVVM pattern design, the app_service is the VIEW_MODEL, 
-            # MODEL, DATA_CONTEXT, and COMMAND_PROCESSOR.
-            # Create the VIEW_MODEL, MODEL, DATA_CONTEXT and COMMAND_PROCESSOR,
-            # independently, and then bind them together.
+            # In our MVVM pattern design, app_services include providing for the 
+            # VIEW, VIEW_MODEL, MODEL, DATA_CONTEXT, and COMMAND_PROCESSOR.
+            # Different classes can be used for these components and services, 
+            # so they configured here and bound to their respective roles.
             # Start by creating the VIEW_MODEL.
             self.view_model = BudManViewModel(bdms_url, self.settings)
-            # Next, create a MODEL. In our case, we use the VIEW_MODEL for that.
-            self.model = self.view_model.initialize_model(bdms_url)
-            # Next, bind the MODEL to the VIEW_MODEL.
-            self.view_model.model = self.model
+            # Initialize the VIEW_MODEL, which also initializes the CommandProcessor.            
+            self.view_model.initialize()  
+            self.model = self.view_model.model
             # Next, instantiate the BDMDataContext to serve as the 
             # DATA_CONTEXT for the VIEW_MODEL
             self.DC : BDMDataContext = BDMDataContext()
@@ -228,16 +227,23 @@ class BudManApp(p3m.Model_Binding, metaclass=BDMSingletonMeta):
             self.DC.dc_INITIALIZED = True
             # Next, bind the DATA_CONTEXT to the VIEW_MODEL.
             self.view_model.DC = self.DC
-            # Next, initialize the VIEW_MODEL.
-            self.view_model.initialize()
-            # This completes the app_service setup.
+            # Next, instantiate the BudManCLIView class to server as the VIEW 
+            # for the application. The VIEW_MODEL is bound as the CommandProcessor.
+            self.view = BudManCLIView(command_processor=self.view_model,
+                                      app_name=self.app_name,
+                                      settings=self.settings)
+            # Next, bind the DATA_CONTEXT to the VIEW.
+            self.view.DC = self.DC
+            # Next, initialize the view.
+            self.view.initialize() 
+            # This completes the app_services setup.
             logger.debug(f"Complete:")
             return self
         except Exception as e:
             m = exc_err_msg(e)
             logger.error(m)
             raise
-    #endregion budman_app_service_dependency_injection() function
+    #endregion budman_app_services_dependency_injection() function
     # ------------------------------------------------------------------------ +
     #region    budman_app_setup() function
     def budman_app_setup(self, bdms_url : str = None, testmode : bool = False):
@@ -250,20 +256,9 @@ class BudManApp(p3m.Model_Binding, metaclass=BDMSingletonMeta):
         """
         try:
             logger.debug(f"Started: bdms_url = '{bdms_url}'...")
-            # In our MVVM pattern design, the app_service is the VIEW_MODEL,
-            # MODEL, DATA_CONTEXT and COMMAND_PROCESSOR.
-            # So, first setup the app_service, which can work with different
-            # VIEW implementations.
-            _ = self.budman_app_service_dependency_injection(bdms_url, testmode)
-            # Next, instantiate the BudManCLIView class to server as the VIEW 
-            # for the application. The VIEW_MODEL is bound as the CommandProcessor.
-            self.view = BudManCLIView(command_processor=self.view_model,
-                                      app_name=self.app_name,
-                                      settings=self.settings)
-            # Next, bind the DATA_CONTEXT to the VIEW.
-            self.view.DC = self.DC
-            # Next, initialize the view.
-            self.view.initialize() 
+            # In our MVVM pattern design, there are app_services for the VIEW, 
+            # VIEW_MODEL, MODEL, DATA_CONTEXT and COMMAND_PROCESSOR.
+            _ = self.budman_app_services_dependency_injection(bdms_url, testmode)
             # Register exit handler
             atexit.register(self.budman_app_exit_handler)
             logger.debug(f"Complete:")

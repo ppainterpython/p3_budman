@@ -18,6 +18,7 @@ from treelib import Tree
 from datetime import datetime as dt
 
 # third-party modules and packages
+from budman_namespace.design_language_namespace import P8
 import p3_utils as p3u, pyjson5, p3logging as p3l, p3_mvvm as p3m
 from openpyxl import Workbook, load_workbook
 
@@ -33,6 +34,7 @@ from budget_categorization import (
     BDMTXNCategoryManager, TXNCategoryMap,
     check_sheet_schema, 
     WORKFLOW_TASK_check_sheet_columns,
+    WORKFLOW_TASK_process_budget_category,
     validate_budget_categories)
 from budget_storage_model import (BSMFile, BSMFileTree) 
 from .budget_intake import *
@@ -44,8 +46,8 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 
 # ---------------------------------------------------------------------------- +
-#region WORKFLOW_CMD_process() function
-def WORKFLOW_CMD_process(cmd: p3m.CMD_OBJECT_TYPE, 
+#region WORKFLOW_CMD_dispatch() function
+def WORKFLOW_CMD_dispatch(cmd: p3m.CMD_OBJECT_TYPE, 
                        bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
     """Process workflow tasks.
 
@@ -78,11 +80,19 @@ def WORKFLOW_CMD_process(cmd: p3m.CMD_OBJECT_TYPE,
             # Either transfer Files or Workbooks
             transfer_files: bool = cmd.get(cp.CK_TRANSFER_FILES, False)
             if transfer_files:
-                return WORKFLOW_TASK_transfer_files(cmd, bdm_DC)
+                return WORKFLOW_CMD_transfer_files(cmd, bdm_DC)
             transfer_workbooks: bool = cmd.get(cp.CK_TRANSFER_WORKBOOKS, False)
             if transfer_workbooks:
-                return WORKFLOW_TASK_transfer_workbooks(cmd, bdm_DC)
+                return WORKFLOW_CMD_transfer_workbooks(cmd, bdm_DC)
             return p3m.cp_CMD_RESULT_ERROR_unknown(cmd)
+
+        # Subcmd: "workflow process"
+        elif cmd[p3m.CK_SUBCMD_KEY] == cp.CV_PROCESS_SUBCMD_KEY:
+            return WORKFLOW_CMD_process(cmd, bdm_DC)
+
+        # Subcmd: "workflow categorize_transactions"
+        elif cmd[p3m.CK_SUBCMD_KEY] == cp.CV_CATEGORIZATION_SUBCMD_KEY:
+            return WORKFLOW_TASK_categorize_transactions(cmd, bdm_DC)
 
         # Subcmd: "workflow update"
         elif cmd[p3m.CK_SUBCMD_KEY] == cp.CV_WORKFLOW_UPDATE_SUBCMD_KEY:
@@ -92,7 +102,7 @@ def WORKFLOW_CMD_process(cmd: p3m.CMD_OBJECT_TYPE,
 
         # Subcmd: "workflow check"
         elif cmd[p3m.CK_SUBCMD_KEY] == cp.CV_CHECK_SUBCMD_KEY:
-            return WORKFLOW_TASK_check_workbooks(cmd, bdm_DC)
+            return WORKFLOW_CMD_check_workbooks(cmd, bdm_DC)
 
         # Subcmd: "workflow intake"
         elif cmd[p3m.CK_SUBCMD_KEY] == cp.CV_WORKFLOW_INTAKE_SUBCMD_KEY:
@@ -119,8 +129,142 @@ def WORKFLOW_CMD_process(cmd: p3m.CMD_OBJECT_TYPE,
         return p3m.cp_CMD_RESULT_ERROR_unknown(cmd)
     except Exception as e:
         raise
-#endregion WORKFLOW_CMD_process() function
+#endregion WORKFLOW_CMD_dispatch() function
 # ---------------------------------------------------------------------------- +
+#region WORKFLOW_categorization_cmd() execution method
+def WORKFLOW_TASK_categorize_transactions(
+        cmd: p3m.CMD_OBJECT_TYPE,
+        bdm_DC: BudManAppDataContext_Base,
+        level: int = 0) -> p3m.CMD_RESULT_TYPE:
+        # cmd : p3m.CMD_OBJECT_TYPE) -> BUDMAN_RESULT_TYPE:
+    """Apply categorization workflow to one or more WORKBOOKS in the DC.
+
+    As a workflow process, the WORKFLOW_categorization_cmd method has the
+    job to marshall the necessary input objects, implied by the command
+    arguments and perhaps Data Context, and then invoke the appropriate 
+    function or method to conduct the requested process, tasks, etc. It also
+    catches the return status and result to return.
+
+    Arguments:
+        cmd (Dict): A valid BudMan View Model Command object. 
+
+    Required cmd object attributes:
+        cmd_key: 'workflow_cmd' 
+    Optional cmd object attributes:
+        cmd_name: CV_WORKFLOW_CMD
+        Valid subcommands:
+            subcmd_key: 'workflow_cmd_categorization'
+            subcmd_name: CV_DELETE_SUBCMD
+        subcmd_key: 'app_cmd_reload'
+        subcmd_name: CV_RELOAD_SUBCMD
+        subcmd_key: 'app_cmd_log'
+        subcmd_name: CV_LOG_SUBCMD
+
+    Returns:
+        Tuple[success : bool, result : Any]: The outcome of the command 
+        execution. If success is True, result contains result of the 
+        command, if False, a description of the error.
+        
+    Raises:
+        RuntimeError: A description of the
+        root error is contained in the exception message.
+    """
+    try:
+        level += 1
+        ls: str = P2 * (level + 1)
+        ts: str = "[bold dark_orange]CMD: [/bold dark_orange]"
+        m: str = f"{pad(level)}{ts} {WORKFLOW_TASK_categorize_transactions.__name__}()"
+        msg: str = ""
+        p3m.cp_user_info_message(m + "Start: ...")
+        # Validate the cmd argsuments.
+        cmd_args: p3m.CMD_ARGS_TYPE = cp.validate_cmd_arguments(
+            cmd=cmd, 
+            bdm_DC=bdm_DC,
+            cmd_key=cp.CV_WORKFLOW_CMD_KEY, 
+            subcmd_key=cp.CV_CATEGORIZATION_SUBCMD_KEY,
+            model_aware=True,
+            required_args=[
+                cp.CK_WB_LIST, 
+                cp.CK_LOG_ALL,
+                cp.CK_CLEAR_OTHER
+            ]
+        )
+        # Extract and validate required parameters from the command.
+        success: bool = False
+        model: BudgetDomainModel = bdm_DC.model
+        fi_key: str = bdm_DC.dc_FI_KEY
+        selected_bdm_wb_list : List[BDMWorkbook] = None
+        selected_bdm_wb_list = cp.process_selected_workbook_input(
+            cmd, 
+            bdm_DC,
+            validate_url=True)
+        # Process the selected workbooks.
+        if len(selected_bdm_wb_list) == 0:
+            msg = f"{pad(level)}No workbooks selected to check."
+            p3m.cp_user_warning_message(msg)
+            return p3m.cp_CMD_RESULT_ERROR_create(cmd, msg)
+        elif len(selected_bdm_wb_list) > 1:
+            msg = f"{pad(level)}'{len(selected_bdm_wb_list)}' workbooks selected to check."
+            p3m.cp_user_info_message(msg)
+        else :
+            msg = f"{pad(level)}A single workbook selected to check."
+            p3m.cp_user_info_message(msg)
+        src_wb: BDMWorkbook = None
+        p3m.cp_user_info_message(f"{pad(level)}Categorizing {len(selected_bdm_wb_list)} workbooks:")
+        success : bool = False
+        r : str = ""
+        msg : str = ""
+        log_all : bool = cmd[cp.CK_LOG_ALL]
+        clear_other: bool = cmd[cp.CK_CLEAR_OTHER]
+        cleared_other_now: bool = clear_other
+        # Process the intended workbooks.
+        for bdm_wb in selected_bdm_wb_list:
+            # Select the current workbook in the Data Context.
+            bdm_DC.dc_WORKBOOK = bdm_wb
+            bdm_wb_abs_path = bdm_wb.abs_path()
+            p3m.cp_user_info_message(f"\n{pad(level)}workbook: {str(bdm_DC.dc_WB_INDEX):>4} '{bdm_DC.dc_WB_ID:<40}'")
+            bdm_wb_abs_path = bdm_wb.abs_path()
+            if bdm_wb_abs_path is None:
+                msg = f"Workbook path is not valid: {bdm_wb.wb_url}"
+                p3m.cp_user_error_message(f"\n{pad(level + 1)}Error: {msg}")
+                continue
+            # Check cmd needs loaded workbooks to check
+            if not bdm_wb.wb_loaded:
+                msg = f"wb_name '{bdm_wb.wb_name}' is not loaded, no action taken."
+                p3m.cp_user_error_message(f"\n{pad(level + 1)}Error: {msg}")
+                continue
+            # Now we have a valid bdm_wb to process.
+            if bdm_wb.wb_type == bdm.WB_TYPE_EXCEL_TXNS:
+                task = "process_budget_category()"
+                msg = (f"{pad(level)}Task: {task:30} {str(bdm_DC.dc_WB_INDEX):>4} "
+                        f"'{bdm_DC.dc_WB_ID:<40}'")
+                p3m.cp_user_info_message(f"\n{pad(level)}{msg}")
+                success, r = WORKFLOW_TASK_process_budget_category(bdm_wb, bdm_DC, 
+                                                        log_all, cleared_other_now)
+                cleared_other_now = False # Only clear_other for first workbook
+                if not success:
+                    r = (f"{pad(level + 1)}Task Failed: process_budget_category() Workbook: "
+                            f"'{bdm_DC.dc_WB_ID}'\n{pad(level + 2)}Result: {r}")
+                    p3m.cp_user_info_message(f"\n{pad(level + 1)}{r}")
+                    continue
+                p3m.cp_user_info_message(f"\n{pad(level + 2)}Result: {r}")
+                task = "dc_WORKBOOK_save()"
+                m = (f"{pad(level)}Task: {task:30} {str(bdm_DC.dc_WB_INDEX):>4} "
+                        f"'{bdm_DC.dc_WB_ID:<40}'")
+                p3m.cp_user_info_message(f"\n{pad(level)}{m}")
+                success, r = bdm_DC.dc_WORKBOOK_save(bdm_wb)
+                if not success:
+                    msg = (f"{pad(level + 1)}Task Failed: dc_WORKBOOK_save() Workbook: "
+                            f"'{bdm_DC.dc_WB_ID}'\n{pad(level + 2)}Result: {msg}")
+                    p3m.cp_user_error_message(f"\n{pad(level + 1)}{msg}")
+                    continue
+                p3m.cp_user_info_message(f"\n{pad(level + 2)}Result: {r}")
+        p3m.cp_user_info_message(m + "Complete: ...")
+        return p3m.cp_CMD_RESULT_create(True, p3m.CV_CMD_STRING_OUTPUT, "Complete", cmd)
+    except Exception as e:
+        return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
+#endregion WORKFLOW_categorization_cmd() execution method
+# ------------------------------------------------------------------------ +
 #region WORKFLOW_TASK_delete_workbooks() function
 def WORKFLOW_TASK_delete_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
                     bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
@@ -171,27 +315,28 @@ def WORKFLOW_TASK_delete_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
         model.bdm_FILE_TREE_refresh()
         model.bdm_WORKBOOK_TREE_refresh()
         return p3m.cp_CMD_RESULT_create(
-            cmd_object=cmd,
-            cmd_result_status=True,
-            result_content_type=p3m.CV_CMD_STRING_OUTPUT,
-            result_content=fr
+            cmd=cmd,
+            status=True,
+            type=p3m.CV_CMD_STRING_OUTPUT,
+            content=fr
         )
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
 #endregion WORKFLOW_TASK_delete_workbooks() function
 # ---------------------------------------------------------------------------- +
-#region WORKFLOW_TASK_check_workbooks() function
-def WORKFLOW_TASK_check_workbooks(
+#region WORKFLOW_CMD_check_workbooks() function
+def WORKFLOW_CMD_check_workbooks(
         cmd: p3m.CMD_OBJECT_TYPE,
         bdm_DC: BudManAppDataContext_Base,
         level: int = 0) -> p3m.CMD_RESULT_TYPE:
-    """WORKFLOW_TASK_check_workbooks: Check data workbooks."""
+    """WORKFLOW_CMD_check_workbooks: Check data workbooks."""
     try:
-        ls: str = P2 * (level + 1)
-        ts: str = "[bold dark_orange]Task: [/bold dark_orange]"
-        m: str = f"{ls}{ts} {WORKFLOW_TASK_check_workbooks.__name__}()"
-        p3m.cp_user_info_message(m)
+        level += 1
+        ts: str = "[bold dark_orange]CMD: [/bold dark_orange]"
+        m: str = f"{pad(level)}{ts} {WORKFLOW_CMD_check_workbooks.__name__}()"
+        p3m.cp_user_info_message(m + "Start: ...")
+        level += 1
         # Validate the cmd argsuments.
         cmd_args: p3m.CMD_ARGS_TYPE = cp.validate_cmd_arguments(
             cmd=cmd, 
@@ -206,8 +351,9 @@ def WORKFLOW_TASK_check_workbooks(
                 cp.CK_VALIDATE_CATEGORIES
             ]
         )
-        logger.info(f"Start: ...")
-        # Extract and validate required parameters from the command.
+        # Initializations
+        msg: str = ""
+        src_wb: BDMWorkbook = None
         success: bool = False
         model: BudgetDomainModel = bdm_DC.model
         fi_key: str = bdm_DC.dc_FI_KEY
@@ -218,56 +364,56 @@ def WORKFLOW_TASK_check_workbooks(
             validate_url=True)
         # Process the selected workbooks.
         if len(selected_bdm_wb_list) == 0:
-            m = "{P2}No workbooks selected to check."
-            p3m.cp_user_warning_message(m)
-            return p3m.cp_CMD_RESULT_ERROR_create(cmd, m)
+            msg = f"{pad(level)}No workbooks selected to check."
+            p3m.cp_user_warning_message(msg)
+            return p3m.cp_CMD_RESULT_ERROR_create(cmd, msg)
         elif len(selected_bdm_wb_list) > 1:
-            m = f"{P2}'{len(selected_bdm_wb_list)}' workbooks selected to check."
-            p3m.cp_user_info_message(m)
+            msg = f"{pad(level)}'{len(selected_bdm_wb_list)}' workbooks selected to check."
+            p3m.cp_user_info_message(msg)
         else :
-            m = f"{P2}A single workbook selected to check."
-            p3m.cp_user_info_message(m)
-        src_wb: BDMWorkbook = None
+            msg = f"{pad(level)}A single workbook selected to check."
+            p3m.cp_user_info_message(msg)
         for src_wb in selected_bdm_wb_list:
             # Select the current workbook in the Data Context.
             bdm_DC.dc_WORKBOOK = src_wb
             bdm_wb_abs_path = src_wb.abs_path()
-            m = f"{P2}workbook: {str(bdm_DC.dc_WB_INDEX):>4} '{src_wb.wb_id:<40}'"
-            p3m.cp_user_info_message(m)
+            msg = f"{pad(level)}workbook: {str(bdm_DC.dc_WB_INDEX):>4} '{src_wb.wb_id:<40}'"
+            p3m.cp_user_info_message(msg)
             # Check cmd needs loaded workbooks to check
             if not src_wb.wb_loaded:
-                m = f"{P2}wb_name '{src_wb.wb_name}' is not loaded, no action taken."
-                p3m.cp_user_error_message(m)
+                msg = f"{pad(level)}wb_name '{src_wb.wb_name}' is not loaded, no action taken."
+                p3m.cp_user_error_message(msg)
                 continue
             # By default, check the sheet schema. But other cli switches
             # can added to check something else.
             if cmd[cp.CK_VALIDATE_CATEGORIES]:
                 # Validate the categories in the workbook.
                 task = "validate_budget_categories()"
-                m = (f"{P2}Task: {task:30} {str(bdm_DC.dc_WB_INDEX):>4} "
+                msg = (f"{pad(level)}Task: {task:30} {str(bdm_DC.dc_WB_INDEX):>4} "
                     f"'{src_wb.wb_id:<40}'")
-                p3m.cp_user_debug_message(m)
+                p3m.cp_user_debug_message(msg)
                 success, r = validate_budget_categories(src_wb, bdm_DC, P4)
                 continue
             success = check_sheet_schema(src_wb.wb_content)
-            m = f"{P2}Task: check_sheet_schema workbook: Workbook: '{src_wb.wb_id}' "
+            msg = f"{pad(level)}Task: check_sheet_schema workbook: Workbook: '{src_wb.wb_id}' "
             if success:
-                p3m.cp_user_info_message(m)
+                p3m.cp_user_info_message(msg)
                 continue
             if cmd[cp.CK_FIX_SWITCH]:
-                m = f"{P2}Task: check_sheet_columns workbook: Workbook: '{src_wb.wb_id}' "
-                p3m.cp_user_info_message(m)
+                msg = f"{pad(level)}Task: check_sheet_columns workbook: Workbook: '{src_wb.wb_id}' "
+                p3m.cp_user_info_message(msg)
                 ws = src_wb.wb_content.active
                 success = WORKFLOW_TASK_check_sheet_columns(ws, add_columns=True)
                 if success: 
                     src_wb.wb_content.save(bdm_wb_abs_path)
             continue
+        p3m.cp_user_info_message(m + "End: ...")
         return p3m.cp_CMD_RESULT_create(success, p3m.CV_CMD_STRING_OUTPUT, 
                                             f"{P2}Complete", cmd)
     except Exception as e:
         p3m.cp_user_error_message(p3u.exc_err_msg(e))
         raise
-#endregion WORKFLOW_TASK_check_workbooks() function
+#endregion WORKFLOW_CMD_check_workbooks() function
 # ---------------------------------------------------------------------------- +
 #region WORKFLOW_TASK_update_catalog_map() function
 def WORKFLOW_TASK_update_catalog_map(cmd: p3m.CMD_OBJECT_TYPE, 
@@ -313,10 +459,10 @@ def WORKFLOW_TASK_update_catalog_map(cmd: p3m.CMD_OBJECT_TYPE,
         fr: str = ""  # final report string
         m: str = ""
         return p3m.cp_CMD_RESULT_create(
-            cmd_object=cmd,
-            cmd_result_status=True,
-            result_content_type=p3m.CV_CMD_STRING_OUTPUT,
-            result_content=result_msg
+            cmd=cmd,
+            status=True,
+            type=p3m.CV_CMD_STRING_OUTPUT,
+            content=result_msg
         )
     except p3m.CMDValidationException as e:
         logger.error(e.msg)
@@ -331,9 +477,178 @@ def WORKFLOW_TASK_update_catalog_map(cmd: p3m.CMD_OBJECT_TYPE,
                                          cmd_result_error=cmd_result_error)
 #endregion WORKFLOW_TASK_update_catalog_map() function
 # ---------------------------------------------------------------------------- +
-#region WORKFLOW_TASK_transfer_workbooks() function
-def WORKFLOW_TASK_transfer_workbooks(cmd: p3m.CMD_OBJECT_TYPE, 
-                    bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
+#region WORKFLOW_CMD_process() function
+def WORKFLOW_CMD_process(
+        cmd: p3m.CMD_OBJECT_TYPE, 
+        bdm_DC: BudManAppDataContext_Base,
+        level: int = 0) -> p3m.CMD_RESULT_TYPE:
+    """WORKFLOW_PROCESS_subcmd: Execute a workflow process for input files or workbooks.
+
+    NOTE: The process is hard coded for now as: 
+    "intake" -> "categorize_transactions" -> "budget"
+    The process can be made more dynamic in the future, but for now,
+    
+    Process new .csv file all the way through the
+    workflow process applying CMD and TASK functions as necessary.
+
+    The process must transfer input .csv files into .csv_txns workbooks, 
+    then to .excel_txns workbooks, and then to categorize the transactions in 
+    the .excel_txns workbook. The "budget" phase in not yet implemented.
+    
+    Arguments:
+        cmd (CMD_OBJECT_TYPE): The command object to process.
+        bdm_DC (BudManAppDataContext_Base): The data context for the BudMan application.
+        Required cmd arguments:
+            cp.CK_FILE_LIST - list of src file_index values.
+
+    Returns:
+        p3m.CMD_RESULT_TYPE: The result of the command processing.
+
+    Raises:
+        p3m.CMDValidationException: For unrecoverable errors.
+    """
+    try:
+        #region Initialization and validation
+        level += 1
+        ts: str = "[bold dark_orange]CMD: [/bold dark_orange]"
+        m: str = f"{pad(level)}{ts} {WORKFLOW_CMD_process.__name__}() "
+        p3m.cp_user_info_message(m + "Start: ...")
+        level += 1
+        # Start: ------------------------------------------------------------- +
+        # # Validate the cmd argsuments.
+        cmd_args: p3m.CMD_ARGS_TYPE = cp.validate_cmd_arguments(
+            cmd=cmd, 
+            bdm_DC=bdm_DC,
+            cmd_key=cp.CV_WORKFLOW_CMD_KEY, 
+            subcmd_key=cp.CV_PROCESS_SUBCMD_KEY,
+            model_aware=True,
+            required_args=[
+                cp.CK_FILE_LIST,
+                cp.CK_WF_KEY
+            ]
+        )
+        # Initializations
+        wb_index_list: List[int] = []
+        #endregion Initialization and validation
+
+        #region Command 1: WORKFLOW_CMD_transfer_files()
+        #    Transfer WB_FILETYPE_CSV(.csv) files from file_list to a 
+        #    WB_TYPE_CSV_TXNS(.csv) workbooks.
+        # Build a CMD object for WORKFLOW_CMD_transfer_files()
+        new_cmd : p3m.CMD_OBJECT_TYPE = p3m.cp_CMD_OBJECT_create(
+            cmd_name=cp.CV_WORKFLOW_CMD_NAME,
+            cmd_key=cp.CV_WORKFLOW_CMD_KEY,
+            subcmd_name=cp.CV_TRANSFER_SUBCMD_NAME,
+            subcmd_key=cp.CV_WORKFLOW_TRANSFER_SUBCMD_KEY)
+        new_cmd[cp.CK_TRANSFER_FILES] = True
+        new_cmd[cp.CK_TRANSFER_WORKBOOKS] = False
+        new_cmd[cp.CK_FILE_LIST] = cmd_args.get(cp.CK_FILE_LIST)
+        new_cmd[cp.CK_WF_KEY] = "intake"
+        new_cmd[cp.CK_WF_PURPOSE] =  bdm.WF_WORKING
+        new_cmd[cp.CK_WB_TYPE] = bdm.WB_TYPE_CSV_TXNS
+        # Run CMD: WORKFLOW_CMD_transfer_files() and capture the result.
+        result : p3m.CMD_RESULT_TYPE = WORKFLOW_CMD_transfer_files(new_cmd, bdm_DC, level) 
+        if not result[p3m.CK_CMD_RESULT_STATUS]:
+            m = f"Failed to transfer files to {bdm.WB_TYPE_CSV_TXNS} workbooks."
+            logger.error(m)
+            return p3m.cp_CMD_RESULT_ERROR_create(cmd, m)
+        wb_index_list = result[p3m.CK_CMD_RESULT_CONTENT]
+        #endregion Command 1: WORKFLOW_CMD_transfer_files()
+
+        #region Command 2: WORKFLOW_CMD_transfer_workbooks()
+        #    Transfer WB_TYPE_CSV_TXNS(.csv) workbook from wb_index_list to a 
+        #    WB_TYPE_EXCEL_TXNS(.xlsx) workbooks.
+        # Build a CMD object for WORKFLOW_CMD_transfer_workbooks()
+        new_cmd = None
+        new_cmd : p3m.CMD_OBJECT_TYPE = p3m.cp_CMD_OBJECT_create(
+            cmd_name=cp.CV_WORKFLOW_CMD_NAME,
+            cmd_key=cp.CV_WORKFLOW_CMD_KEY,
+            subcmd_name=cp.CV_TRANSFER_SUBCMD_NAME,
+            subcmd_key=cp.CV_WORKFLOW_TRANSFER_SUBCMD_KEY)
+        new_cmd[cp.CK_TRANSFER_FILES] = False
+        new_cmd[cp.CK_TRANSFER_WORKBOOKS] = True
+        new_cmd[cp.CK_WB_LIST] = wb_index_list
+        new_cmd[cp.CK_WF_KEY] = "categorize_transactions"
+        new_cmd[cp.CK_WF_PURPOSE] =  bdm.WF_WORKING
+        new_cmd[cp.CK_WB_TYPE] = bdm.WB_TYPE_EXCEL_TXNS
+        # Run CMD: WORKFLOW_CMD_transfer_workbooks() and capture the result.
+        result : p3m.CMD_RESULT_TYPE = WORKFLOW_CMD_transfer_workbooks(new_cmd, bdm_DC, level) 
+        if not result[p3m.CK_CMD_RESULT_STATUS]:
+            m = f"Failed to transfer {bdm.WB_TYPE_CSV_TXNS} workbooks to {bdm.WB_TYPE_EXCEL_TXNS} workbooks."
+            logger.error(m)
+            return p3m.cp_CMD_RESULT_ERROR_create(cmd, m)
+        wb_index_list = result[p3m.CK_CMD_RESULT_CONTENT]
+        #endregion Command 2: WORKFLOW_CMD_transfer_workbooks()
+
+        #region Command 3: WORKFLOW_TASK_check_workbooks()
+        # Check the new WB_TYPE_EXCEL_TXNS workbooks with to ensure they are 
+        # ready for the next step in the workflow process.
+        new_cmd = None
+        new_cmd : p3m.CMD_OBJECT_TYPE = p3m.cp_CMD_OBJECT_create(
+            cmd_name=cp.CV_WORKFLOW_CMD_NAME,
+            cmd_key=cp.CV_WORKFLOW_CMD_KEY,
+            subcmd_name=cp.CV_CHECK_SUBCMD_NAME,
+            subcmd_key=cp.CV_CHECK_SUBCMD_KEY)
+        new_cmd[cp.CK_LOAD_WORKBOOK_SWITCH] = True
+        new_cmd[cp.CK_FIX_SWITCH] = True
+        new_cmd[cp.CK_VALIDATE_CATEGORIES] = False
+        new_cmd[cp.CK_WB_LIST] = wb_index_list
+        # Run CMD: WORKFLOW_CMD_check_workbooks() and capture the result.
+        result : p3m.CMD_RESULT_TYPE = WORKFLOW_CMD_check_workbooks(new_cmd, bdm_DC, level) 
+        if not result[p3m.CK_CMD_RESULT_STATUS]:
+            m = f"Failed to check {bdm.WB_TYPE_EXCEL_TXNS} workbooks."
+            logger.error(m)
+            return p3m.cp_CMD_RESULT_ERROR_create(cmd, m)
+        #endregion Command 3: Check the new WB_TYPE_EXCEL_TXNS workbooks.
+
+        #region Command 4: WORKFLOW_TASK_categorize_transactions()
+        #    Categorize the transactions in the new WB_TYPE_EXCEL_TXNS workbooks.
+        new_cmd = None
+        new_cmd : p3m.CMD_OBJECT_TYPE = p3m.cp_CMD_OBJECT_create(
+            cmd_name=cp.CV_WORKFLOW_CMD_NAME,
+            cmd_key=cp.CV_WORKFLOW_CMD_KEY,
+            subcmd_name=cp.CV_CATEGORIZATION_SUBCMD_NAME,
+            subcmd_key=cp.CV_CATEGORIZATION_SUBCMD_KEY)
+        new_cmd[cp.CK_LOAD_WORKBOOK_SWITCH] = True
+        new_cmd[cp.CK_LOG_ALL] = True
+        new_cmd[cp.CK_CLEAR_OTHER] = True
+        new_cmd[cp.CK_WB_LIST] = wb_index_list
+        # Run CMD: WORKFLOW_TASK_categorize_transactions() and capture the result.
+        result : p3m.CMD_RESULT_TYPE = WORKFLOW_TASK_categorize_transactions(new_cmd, bdm_DC, level) 
+        if not result[p3m.CK_CMD_RESULT_STATUS]:
+            m = f"Failed to categorize transactions in {bdm.WB_TYPE_EXCEL_TXNS} workbooks."
+            logger.error(m)
+            return p3m.cp_CMD_RESULT_ERROR_create(cmd, m)
+        #endregion Command 4: WORKFLOW_TASK_categorize_transactions()
+
+        level -= 1
+        p3m.cp_user_info_message(m + "End: ...")
+        # End: --------------------------------------------------------------- +
+        return p3m.cp_CMD_RESULT_create(
+            status=True,
+            type=cp.CV_CMD_DICT_OUTPUT,
+            content=result,
+            cmd=cmd
+        )
+    except p3m.CMDValidationException as e:
+        logger.error(e.msg)
+        raise
+    except Exception as e:
+        m = p3u.exc_err_msg(e)
+        err_msg = (f"Exception during WORKFLOW_CMD_process: {m}")
+        logger.error(err_msg)
+        cmd_result_error = p3m.cp_CMD_RESULT_ERROR_create(cmd, err_msg)
+        raise p3m.CMDValidationException(cmd=cmd, 
+                                         msg=err_msg,
+                                         cmd_result_error=cmd_result_error)
+#endregion WORKFLOW_CMD_process() function
+# ---------------------------------------------------------------------------- +
+#region WORKFLOW_CMD_transfer_workbooks() function
+def WORKFLOW_CMD_transfer_workbooks(
+        cmd: p3m.CMD_OBJECT_TYPE, 
+        bdm_DC: BudManAppDataContext_Base,
+        level: int = 0
+        ) -> p3m.CMD_RESULT_TYPE:
     """WORKFLOW_TRANSFER_subcmd: Transfer data workbooks between workflows.
 
     Tasks required to transfer workbooks to a workflow for a specified purpose.
@@ -377,6 +692,10 @@ def WORKFLOW_TASK_transfer_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
         p3m.CMDValidationException: For unrecoverable errors.
     """
     try:
+        level += 1
+        ts: str = "[bold dark_orange]CMD: [/bold dark_orange]"
+        m: str = f"{pad(level)}{ts} {WORKFLOW_CMD_transfer_workbooks.__name__}() "
+        p3m.cp_user_info_message(m + "Start: ...")
         # Validate the cmd argsuments.
         cmd_args: p3m.CMD_ARGS_TYPE = cp.validate_cmd_arguments(
             cmd=cmd, 
@@ -392,36 +711,44 @@ def WORKFLOW_TASK_transfer_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
                 cp.CK_WB_TYPE
             ]
         )
-        logger.info(f"Start: ...")
-        # Extract and validate required parameters from the command.
+        # Initializations
+        fi_key: str = bdm_DC.dc_FI_KEY
         model: BudgetDomainModel = bdm_DC.model
         valid_prefixes: List[str] = model.bdm_valid_WF_PREFIX_values()
-        dst_wf_key = cmd_args.get(cp.CK_WF_KEY)
-        dst_wf_purpose = cmd_args.get(cp.CK_WF_PURPOSE)
-        dst_wb_type = cmd_args.get(cp.CK_WB_TYPE)
-        fi_key: str = bdm_DC.dc_FI_KEY
-        fr: str = ""  # final report string
-        m: str = ""
+        result_new_wb_index_list: List[int] = []
         success: bool = False
         result: Any = None
+        src_wb: BDMWorkbook = None
+        dst_wb: BDMWorkbook = None
+        msg: str = ""
+        src_wb_type: str = ''
+        wb_index: int = -1
+        # Extract and validate required parameters from the command.
+        dst_wf_key = cmd_args.get(cp.CK_WF_KEY)
+        if (p3u.str_empty(dst_wf_key) or not model.bdm_WF_KEY_validate(dst_wf_key)):
+            return cp.create_CMD_RESULT_ERROR(cmd, f"Invalid wf_key: '{dst_wf_key}'")
+        dst_wf_purpose = cmd_args.get(cp.CK_WF_PURPOSE)
+        if (p3u.str_empty(dst_wf_purpose) or not model.bdm_WF_PURPOSE_validate(dst_wf_purpose)):
+            return cp.create_CMD_RESULT_ERROR(cmd, f"Invalid wf_purpose: '{dst_wf_purpose}'")
+        dst_wb_type = cmd_args.get(cp.CK_WB_TYPE)
+        if (p3u.str_empty(dst_wb_type) or dst_wb_type not in bdm.VALID_WB_TYPE_VALUES):
+            return cp.create_CMD_RESULT_ERROR(cmd, f"Invalid wb_type: '{dst_wb_type}'")
         selected_bdm_wb_list : List[BDMWorkbook] = None
         selected_bdm_wb_list = cp.process_selected_workbook_input(cmd, bdm_DC)
         log_all : bool = cmd.get(cp.CK_LOG_ALL, False)
         # Process the intended workbooks.
-        src_wb: BDMWorkbook = None
-        dst_wb: BDMWorkbook = None
-        src_wb_type: str = ''
         for src_wb in selected_bdm_wb_list:
             # Select the current workbook in the Data Context.
             bdm_DC.dc_WORKBOOK = src_wb
             wb_index: int = bdm_DC.dc_WB_INDEX
             bdm_wb_abs_path = src_wb.abs_path()
-            fr += f"\n{P2}workbook: {str(bdm_DC.dc_WB_INDEX):>4} '{bdm_DC.dc_WB_ID:<40}'"
+            msg = f"\n{pad(level)}{P2}workbook: {str(bdm_DC.dc_WB_INDEX):>4} '{bdm_DC.dc_WB_ID:<40}'"
+            p3m.cp_user_info_message(msg)
             bdm_wb_abs_path = src_wb.abs_path()
             if bdm_wb_abs_path is None:
-                m = f"Workbook path is not valid: {src_wb.wb_url}"
+                m = f"{pad(level)}Workbook path is not valid: {src_wb.wb_url}"
                 logger.error(m)
-                fr += f"\n{P4}Error: {m}"
+                p3m.cp_user_error_message(m)
                 continue
             # Transfer cmd needs loaded workbooks
             if not src_wb.wb_loaded:
@@ -429,9 +756,10 @@ def WORKFLOW_TASK_transfer_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
                 success, result = bdm_DC.dc_WORKBOOK_content_get(src_wb)
                 if not success:
                     selected_bdm_wb_list.remove(src_wb)
-                    m = f"Excluded workbook: '{src_wb.wb_id}', "
-                    m += f"failed to load: {result}"
-                    logger.error(m)
+                    msg = f"{pad(level)}Excluded workbook: '{src_wb.wb_id}', "
+                    msg += f"failed to load: {result}"
+                    logger.error(msg)
+                    p3m.cp_user_error_message(msg)
                     continue
             src_wb_type = src_wb.wb_type
             # Supportted transfer cases.
@@ -452,11 +780,11 @@ def WORKFLOW_TASK_transfer_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
                     bdm_DC=bdm_DC
                 )
                 if not success:
-                    msg = (f"Failed to construct file URL for workbook: "
+                    msg = (f"{pad(level)}Failed to construct file URL for workbook: "
                             f"'{wb_index:2}:{src_wb.wb_name}' "
                             f" Error: {result}")
                     logger.error(msg)
-                    result_content += msg + "\n"
+                    p3m.cp_user_error_message(msg)
                     continue
                 dst_wb = result
                 WORKFLOW_TASK_convert_csv_txns_to_excel_txns(src_wb, dst_wb)
@@ -464,6 +792,10 @@ def WORKFLOW_TASK_transfer_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
                 wdc = bdm_DC.dc_WORKBOOK_DATA_COLLECTION
                 wb_id = dst_wb.wb_id
                 wdc[wb_id] = dst_wb
+                wb_index = bdm_DC.dc_WORKBOOK_index(wb_id)
+                result_new_wb_index_list.append(wb_index)
+                msg = (f"{pad(level)}Added new workbook: '{wb_index:03}:{dst_wb.wb_name}' ")
+                p3m.cp_user_info_message(msg)
             elif src_wb_type == bdm.WB_TYPE_EXCEL_TXNS and dst_wb_type == bdm.WB_TYPE_EXCEL_TXNS:
                 # Transfer a excel_txns workbook to another workflow wf_folder.
                 # Create a file_url for the new workbook file being transferred.
@@ -472,7 +804,7 @@ def WORKFLOW_TASK_transfer_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
                     valid_prefixes=valid_prefixes,
                     valid_wb_types=bdm.VALID_WB_TYPE_VALUES
                 )
-                # Create a BDMWorkbook for the dst workbook.
+                # Task: Create a BDMWorkbook for the dst workbook.
                 success, result = WORKFLOW_TASK_construct_bdm_workbook(
                     src_filename=src_wb_bsm_file.filename,
                     wb_type=dst_wb_type,
@@ -486,27 +818,39 @@ def WORKFLOW_TASK_transfer_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
                             f"'{wb_index:2}:{src_wb.wb_name}' "
                             f" Error: {result}")
                     logger.error(msg)
-                    result_content += msg + "\n"
+                    p3m.cp_user_error_message(msg)
                     continue
                 dst_wb = result
+                if dst_wb.check_wb_url():
+                    msg = (f"{pad(level)}Destination Workbook already exists for URL: "
+                            f"'{dst_wb.wb_url}'")
+                    p3m.cp_user_warning_message(msg)
+                    msg = (f"{pad(level)}The Workbook will be overwritten.")
+                    p3m.cp_user_warning_message(msg)
+                # Task: Copy the workbook content from the src workbook to the dst workbook.
                 WORKFLOW_TASK_copy_workbook(src_wb, dst_wb)
                 # Add the new workbook to the wdc.
                 wdc = bdm_DC.dc_WORKBOOK_DATA_COLLECTION
                 wb_id = dst_wb.wb_id
                 wdc[wb_id] = dst_wb
+                wb_index = bdm_DC.dc_WORKBOOK_index(wb_id)
+                result_new_wb_index_list.append(wb_index)
+                msg = (f"{pad(level)}Added new workbook: '{wb_index:03}:{dst_wb.wb_name}' ")
+                p3m.cp_user_info_message(msg)
             else:
-                m = (f"Unsupported transfer from src wb_type '{src_wb_type}' "
+                msg = (f"Unsupported transfer from src wb_type '{src_wb_type}' "
                      f"to dst wb_type '{dst_wb_type}'")
-                logger.error(m)
-                fr += f"\n{P4}Error: {m}"
+                logger.error(msg)
+                p3m.cp_user_error_message(msg)
                 continue
         model.bdm_save_model()
         model.bdm_refresh_trees()
+        p3m.cp_user_info_message(m + "End: ...")
         return p3m.cp_CMD_RESULT_create(
-            cmd_object=cmd,
-            cmd_result_status=True,
-            result_content_type=p3m.CV_CMD_DICT_OUTPUT,
-            result_content="all done"
+            cmd=cmd,
+            status=True,
+            type=cp.CV_CMD_LIST_OUTPUT,
+            content=result_new_wb_index_list
         )
     except p3m.CMDValidationException as e:
         logger.error(e.msg)
@@ -519,11 +863,14 @@ def WORKFLOW_TASK_transfer_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
         raise p3m.CMDValidationException(cmd=cmd, 
                                          msg=err_msg,
                                          cmd_result_error=cmd_result_error)
-#endregion WORKFLOW_TASK_transfer_workbooks() function
+#endregion WORKFLOW_CMD_transfer_workbooks() function
 # ---------------------------------------------------------------------------- +
-#region WORKFLOW_TASK_transfer_files() function
-def WORKFLOW_TASK_transfer_files(cmd: p3m.CMD_OBJECT_TYPE, 
-                    bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
+#region WORKFLOW_CMD_transfer_files() function
+def WORKFLOW_CMD_transfer_files(
+        cmd: p3m.CMD_OBJECT_TYPE, 
+        bdm_DC: BudManAppDataContext_Base,
+        level: int = 0
+        ) -> p3m.CMD_RESULT_TYPE:
     """WORKFLOW_TRANSFER_subcmd: Transfer data files into workflow workbooks.
 
     Tasks required to transfer files to a workflow for a specified purpose.
@@ -542,7 +889,9 @@ def WORKFLOW_TASK_transfer_files(cmd: p3m.CMD_OBJECT_TYPE,
             cp.CK_WB_TYPE - workbook type of destination.
 
     Returns:
-        p3m.CMD_RESULT_TYPE: The result of the command processing.
+        p3m.CMD_RESULT_TYPE: The result of the command processing. 
+        The result_content upon succss is a List[int] of the new wb_index values 
+        for the workbooks created from the transfer operation.
 
     Raises:
         p3m.CMDValidationException: For unrecoverable errors.
@@ -587,6 +936,10 @@ def WORKFLOW_TASK_transfer_files(cmd: p3m.CMD_OBJECT_TYPE,
      commands and tasks.
     """
     try:
+        level += 1
+        ts: str = "[bold dark_orange]CMD: [/bold dark_orange]"
+        m: str = f"{pad(level)}{ts} {WORKFLOW_CMD_transfer_files.__name__}() "
+        p3m.cp_user_info_message(m + "Start: ...")
         # Validate the cmd argsuments.
         cmd_args: p3m.CMD_ARGS_TYPE = cp.validate_cmd_arguments(
             cmd=cmd, 
@@ -602,92 +955,101 @@ def WORKFLOW_TASK_transfer_files(cmd: p3m.CMD_OBJECT_TYPE,
                 cp.CK_WB_TYPE
             ]
         )
+        # Initialization
+        fi_key: str = bdm_DC.dc_FI_KEY
         model: BudgetDomainModel = bdm_DC.model
         bsm_file_tree : BSMFileTree = model.bsm_file_tree
-        # Extract and validate required parameters from the command.
-        dst_wf_key = cmd_args.get(cp.CK_WF_KEY)
-        if (p3u.str_empty(dst_wf_key) or not model.bdm_WF_KEY_validate(dst_wf_key)):
-            return cp.create_CMD_RESULT_ERROR(cmd, f"Invalid wf_key: '{dst_wf_key}'")
-        wf_purpose = cmd_args.get(cp.CK_WF_PURPOSE)
-        if (p3u.str_empty(wf_purpose) or not model.bdm_WF_PURPOSE_validate(wf_purpose)):
-            return cp.create_CMD_RESULT_ERROR(cmd, f"Invalid wf_purpose: '{wf_purpose}'")
-        dst_wb_type = cmd_args.get(cp.CK_WB_TYPE)
-        if (p3u.str_empty(dst_wb_type) or dst_wb_type not in bdm.VALID_WB_TYPE_VALUES):
-            return cp.create_CMD_RESULT_ERROR(cmd, f"Invalid wb_type: '{dst_wb_type}'")
-        # Can be 1 or a list of file_indexes provided.
-        src_file_index_list = cmd_args.get(cp.CK_FILE_LIST)
-        fi_key: str = bdm_DC.dc_FI_KEY
-        src_bsm_files: List[cp.BSMFile] = []
-        src_bsm_files = bsm_file_tree.validate_file_list(src_file_index_list)
-        result_content: str = ""
+        result_msg: str = ""
+        result_new_wb_index_list: List[int] = []
         msg: str = ""
-        # Supported cases:
-        # 1. transfer .csv files from file_list to a .csv_txns workbooks
         success: bool = False
         result: str = ""
         src_bsm_file: BSMFile = None
-        cvs_wb: BDMWorkbook = None
+        csv_wb: BDMWorkbook = None
+        wb_index: int = -1
+        # Extract and validate required parameters from the command.
+        dst_wf_key : str = cmd_args.get(cp.CK_WF_KEY)
+        if (p3u.str_empty(dst_wf_key) or not model.bdm_WF_KEY_validate(dst_wf_key)):
+            return cp.create_CMD_RESULT_ERROR(cmd, f"Invalid wf_key: '{dst_wf_key}'")
+        wf_purpose: str = cmd_args.get(cp.CK_WF_PURPOSE)
+        if (p3u.str_empty(wf_purpose) or not model.bdm_WF_PURPOSE_validate(wf_purpose)):
+            return cp.create_CMD_RESULT_ERROR(cmd, f"Invalid wf_purpose: '{wf_purpose}'")
+        dst_wb_type: str = cmd_args.get(cp.CK_WB_TYPE)
+        if (p3u.str_empty(dst_wb_type) or dst_wb_type not in bdm.VALID_WB_TYPE_VALUES):
+            return cp.create_CMD_RESULT_ERROR(cmd, f"Invalid wb_type: '{dst_wb_type}'")
+        # Can be 1 or a list of file_indexes provided.
+        src_file_index_list : List[int] = cmd_args.get(cp.CK_FILE_LIST)
+        src_bsm_files: List[cp.BSMFile] = bsm_file_tree.validate_file_list(src_file_index_list)
+        # Supported cases:
+        # 1. transfer .csv files from file_list to a .csv_txns workbooks
         for src_bsm_file in src_bsm_files:
             # Process for supported transfer dst wb_types.
             if dst_wb_type == bdm.WB_TYPE_CSV_TXNS:
                 # Dest wb_type is csv_txns workbook.
                 # Input file must have .csv extension.
-                if src_bsm_file.extension == bdm.WB_FILETYPE_CSV:
-                    # Transfer a .csv file to a .csv_txns workbook.
-                    # Create a BDMWorkbook for the new file being transferred.
-                    success, result = WORKFLOW_TASK_construct_bdm_workbook(
-                        src_filename=src_bsm_file.filename,
-                        wb_type=dst_wb_type,
-                        fi_key=fi_key,
-                        wf_key=dst_wf_key,
-                        wf_purpose=wf_purpose,
-                        bdm_DC=bdm_DC
-                    )
-                    if not success:
-                        msg = (f"Failed to construct file URL for file: "
-                               f"'{src_bsm_file.file_index:2}:{src_bsm_file.full_filename}'"
-                               f" Error: {result}")
-                        logger.error(msg)
-                        result_content += msg + "\n"
-                        continue
-                    csv_wb = result
-                    success, result = WORKFLOW_TASK_transfer_csv_file_to_workbook(
-                        src_file_url=src_bsm_file._file_url,
-                        dst_wb=csv_wb,
-                        wb_type=dst_wb_type
-                    )
-                    if not success:
-                        msg = (f"Failed to transfer file: "
-                               f"'{src_bsm_file.file_index:2}:{src_bsm_file.full_filename}' "
-                               f" to .csv_txns workbook. Error: {result}")
-                        logger.error(msg)
-                        result_content += msg + "\n"
-                        continue
-                else:
+                if src_bsm_file.extension != bdm.WB_FILETYPE_CSV:
                     # Unsupported file type for transfer.
-                    msg = (f"Unsupported source file type file "
+                    msg = (f"{pad(level)}Unsupported source file type file "
                            f"'{src_bsm_file.file_index:2}:{src_bsm_file.full_filename}'"
                            f" must be .csv file.")
-                    logger.error(msg)
-                    result_content += msg + "\n"
+                    p3m.cp_user_error_message(msg)
+                    continue
+                # Task: Create a BDMWorkbook for the new file being transferred.
+                success, result = WORKFLOW_TASK_construct_bdm_workbook(
+                    src_filename=src_bsm_file.filename,
+                    wb_type=dst_wb_type,
+                    fi_key=fi_key,
+                    wf_key=dst_wf_key,
+                    wf_purpose=wf_purpose,
+                    bdm_DC=bdm_DC
+                )
+                if not success:
+                    msg = (f"{pad(level)}Failed to construct file URL for file: "
+                            f"'{src_bsm_file.file_index:2}:{src_bsm_file.full_filename}'"
+                            f" Error: {result}")
+                    p3m.cp_user_error_message(msg)
+                    continue
+                csv_wb = result
+                if csv_wb.check_wb_url():
+                    msg = (f"{pad(level)}Destination Workbook already exists for URL: "
+                            f"'{csv_wb.wb_url}'")
+                    p3m.cp_user_warning_message(msg)
+                    msg = (f"{pad(level)}The Workbook will be overwritten.")
+                    p3m.cp_user_warning_message(msg)
+                # Transfer a WB_FILETYPE_CSV(.csv) file content to a 
+                # WB_TYPE_CSV_TXNS(.csv) workbook.
+                success, result = WORKFLOW_TASK_transfer_csv_file_to_workbook(
+                    src_file_url=src_bsm_file._file_url,
+                    dst_wb=csv_wb,
+                    wb_type=dst_wb_type
+                )
+                if not success:
+                    msg = (f"{pad(level)}Failed to transfer file: "
+                            f"'{src_bsm_file.file_index:2}:{src_bsm_file.full_filename}' "
+                            f" to .csv_txns workbook. Error: {result}")
+                    p3m.cp_user_error_message(msg)
                     continue
                 # Add the new workbook to the wdc.
                 wdc = bdm_DC.dc_WORKBOOK_DATA_COLLECTION
                 wb_id = csv_wb.wb_id
                 wdc[wb_id] = csv_wb
+                wb_index = bdm_DC.dc_WORKBOOK_index(wb_id)
+                result_new_wb_index_list.append(wb_index)
+                msg = (f"{pad(level)}Added new workbook: '{wb_index:03}:{csv_wb.wb_name}' ")
+                p3m.cp_user_info_message(msg)
             else:
                 # Unsupported dst wb_type for transfer.
-                msg = (f"Unsupported destination workbook type for transfer: {dst_wb_type}")
-                logger.error(msg)
-                result_content += msg + "\n"
+                msg = (f"{pad(level)}Unsupported destination workbook type for transfer: {dst_wb_type}")
+                p3m.cp_user_error_message(msg)
                 continue
         model.bdm_save_model()
         model.bdm_refresh_trees()
+        p3m.cp_user_info_message(m + "End: ...")
         return p3m.cp_CMD_RESULT_create(
-            cmd_object=cmd,
-            cmd_result_status=True,
-            result_content_type=p3m.CV_CMD_DICT_OUTPUT,
-            result_content="all done"
+            status=True,
+            type=cp.CV_CMD_LIST_OUTPUT,
+            content=result_new_wb_index_list,
+            cmd=cmd
         )
     except p3m.CMDValidationException as e:
         logger.error(e.msg)
@@ -700,7 +1062,7 @@ def WORKFLOW_TASK_transfer_files(cmd: p3m.CMD_OBJECT_TYPE,
         raise p3m.CMDValidationException(cmd=cmd, 
                                          msg=err_msg,
                                          cmd_result_error=cmd_result_error)
-#endregion WORKFLOW_TASK_transfer_files() function
+#endregion WORKFLOW_CMD_transfer_files() function
 # ---------------------------------------------------------------------------- +
 #region process_txn_intake() function
 def WORKFLOW_TASK_convert_csv_txns_to_excel_txns(csv_wb: BDMWorkbook, 
@@ -952,23 +1314,19 @@ def WORKFLOW_TASK_construct_bdm_workbook(src_filename: str,
         full_filename: str = f"{filename}{wb_extension}"
         folder_path = Path.from_uri(wf_folder_url) 
         file_path = folder_path / full_filename
-        # Check if the dst file already exists.
-        if file_path.exists():
-            m = (f"Destination file already exists: "
-                 f"'{file_path.as_uri()}'")
-            logger.error(m)
         file_url: str = file_path.as_uri()
-        new_wb: BDMWorkbook = BDMWorkbook()
-        new_wb.wb_type = wb_type
-        new_wb.wb_name = full_filename
-        new_wb.wb_filename = filename
-        new_wb.wb_filetype = wb_extension
-        new_wb.wb_url = file_url
-        new_wb.fi_key = fi_key
-        new_wb.wf_key = wf_key
-        new_wb.wf_purpose = wf_purpose
-        new_wb.wf_folder_url = wf_folder_url
-        new_wb.wf_folder = wf_folder
+        new_wb: BDMWorkbook = BDMWorkbook(
+            wb_name=full_filename,
+            wb_filename=filename,
+            wb_filetype=wb_extension,
+            wb_type=wb_type,
+            wb_url=file_url,    
+            fi_key=fi_key,
+            wf_key=wf_key,
+            wf_purpose=wf_purpose,
+            wf_folder_url=wf_folder_url,
+            wf_folder=wf_folder
+        )
         return True, new_wb
     except Exception as e:
         m = p3u.exc_err_msg(e)
@@ -976,4 +1334,23 @@ def WORKFLOW_TASK_construct_bdm_workbook(src_filename: str,
         logger.error(err_msg)
         return False, err_msg
 #endregion WORKFLOW_TASK_contstruct_wb_file_url() function
+# ---------------------------------------------------------------------------- +
+
+# ---------------------------------------------------------------------------- +
+#region Workflow Command Services helper functions
+# ---------------------------------------------------------------------------- +
+#region pad()
+def pad(level: int) -> str:
+    """Pad level times P2 (2 spaces).
+
+    Args:
+        level (int): The level to pad.
+
+    Returns:
+        str: P2 times level.
+`    """
+    return P2 * level
+#endregion pad()
+# ---------------------------------------------------------------------------- +
+#endregion Workflow Command Services helper functions
 # ---------------------------------------------------------------------------- +

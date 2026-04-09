@@ -30,6 +30,7 @@ from openpyxl.cell.cell import Cell
 from pyparsing import Optional
 
 # local modules and packages
+import budman_command_processor as cp
 from budman_namespace.design_language_namespace import *
 from budman_namespace.bdm_workbook_class import BDMWorkbook
 from .txn_category import (BDMTXNCategoryManager, TXNCategoryMap)
@@ -198,9 +199,7 @@ class TransactionData:
     def __post_init__(self):
         """Post-initialization processing."""
         # tid is a hash generated from of the transaction data as text
-        self.tid = p3u.gen_hash_key(p3u.iso_date_only_string(self.date) + 
-                                    self.description + self.currency + 
-                                    str(self.amount) + self.account_code)
+        _ = self.create_tid()  # Generate the transaction ID (tid) from the transaction data.
         self.year_month = year_month_str(self.date) 
         if self.description is None:
             self.description = ""
@@ -221,6 +220,13 @@ class TransactionData:
         ret += f"({len(self.description):03}){self.description:102}|->" 
         ret += f"|({len(self.category):03})|{self.category:40}|"
         return ret
+
+    def create_tid(self) -> str:
+        """Create a transaction ID (tid) from the transaction data."""
+        dt : str = p3u.iso_date_only_string(self.date)
+        desc_hash : str = p3u.gen_hash_key(self.description)
+        self.tid = f"{desc_hash[:8]}|{dt}|{self.amount:>+12.2f}"
+        return self.tid
     
 #endregion TransactionData dataclass
 # ---------------------------------------------------------------------------- +
@@ -665,7 +671,7 @@ def WORKFLOW_TASK_process_budget_category(bdm_wb:BDMWorkbook,
         #
         #endregion Validate all required information is accessible.
 
-        #region FI-specific data needed for the workbook 
+        #region Workbook FI-specific data needed for the workbook 
         #
         # Validate category manager to get to the appropriate category_map.
         # Use the bdm_wb fi_key to access the category manager for the FI in 
@@ -813,6 +819,7 @@ def WORKFLOW_TASK_process_budget_category(bdm_wb:BDMWorkbook,
                 transaction, 
                 fi_catmap, 
                 log_all)
+
             row[bud_cat_i].value = transaction.category # Capture bud_cat mapping 
             # Modify the actual row with additional values for BudMan.
             row[year_month_i].value = transaction.year_month
