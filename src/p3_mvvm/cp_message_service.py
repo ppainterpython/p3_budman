@@ -125,8 +125,8 @@ class CPMessageService(PubSub, metaclass=BDMSingletonMeta):
     def __init__(self, view: View_Base|None = None) -> None:
         # Creates PubSub-Worker thread and initializes PubSub.
         super().__init__()
-        _view : View_Base|None = view
-        _in_main_thread: bool = threading.current_thread() == threading.main_thread()
+        self._view : View_Base|None = view
+        self._in_main_thread: bool = threading.current_thread() == threading.main_thread()
         self.verbose_log: bool = False
     #endregion  __init__()
     # ------------------------------------------------------------------------ +
@@ -158,7 +158,11 @@ class CPMessageService(PubSub, metaclass=BDMSingletonMeta):
         return self.subscribe(CP_USER_MSG_TOPIC, callback)
 
     def user_message(self, message: str, tag: str = CP_INFO) -> None:
-        """Publish a user message."""
+        """If not in main thread Publish a user message. If in main thread
+        and view object bound, invoke view method directly."""
+        if self.in_main_thread and self.view is not None:
+            self.view.view_user_message(message, tag)
+            return
         self.publish(topic=CP_USER_MSG_TOPIC, 
                       data={'message': message, 'tag': tag})
 
@@ -190,6 +194,12 @@ class CPMessageService(PubSub, metaclass=BDMSingletonMeta):
         """Publish a user VERBOSE message."""
         if self.verbose_log:    
             self.user_message(message, CP_VERBOSE)
+        if log:
+            logger.debug(message)
+
+    def user_none_message(self, message: str, log: bool = True) -> None:
+        """Publish a user NONE message."""
+        self.user_message(message, CP_NONE)
         if log:
             logger.debug(message)
     #endregion CP_USER_MSG_TOPIC Methods
@@ -261,6 +271,12 @@ def cp_user_debug_message(message: str, log: bool = True) -> None:
 def cp_user_verbose_message(message: str, log: bool = True) -> None:
     """Publish a user VERBOSE message."""
     cp_msg_svc.user_message(message, CP_VERBOSE)
+    if log:
+        logger.debug(message)
+
+def cp_user_none_message(message: str, log: bool = True) -> None:
+    """Publish a user NONE message."""
+    cp_msg_svc.user_message(message, CP_NONE)
     if log:
         logger.debug(message)
 #endregion user_message functions

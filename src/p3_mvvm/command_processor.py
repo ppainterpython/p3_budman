@@ -82,7 +82,7 @@
 # ---------------------------------------------------------------------------- +
 #region Imports
 # python standard library modules and packages
-import logging, threading, queue, uuid
+import logging, threading, queue, uuid, time
 from typing import List, Type, Union, Dict, Tuple, Any, Callable, Optional
 # third-party modules and packages
 from h11 import Data
@@ -120,14 +120,16 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
     #endregion CommandProcessor class doc string
     # ------------------------------------------------------------------------ +
     #region    __init__() constructor method
-    def __init__(self) -> None:
+    def __init__(self, view: View_Base|None = None) -> None:
         self._initialized : bool = False
         self._cmd_map : Dict[str, Callable] = None
         self._parse_only : bool = False
         self._validate_only : bool = False
         self._what_if : bool = False
         self._verbose_log: bool = False
-        self._cp_message_service: CPMessageService = CPMessageService.getCPMessageService()
+        # View may be provided at construction or later bound through the view property.
+        self._view : View_Base|None = view
+        self._cp_message_service: CPMessageService = CPMessageService(view=view)
         # Cmd Asyn attributes
         self._worker_thread : Optional[threading.Thread] = None
         self._async_cmd_queue: queue.Queue = None
@@ -219,6 +221,16 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
     def cp_async_cmd_result_registry(self) -> Dict[str, CMD_RESULT_TYPE]:
         """Return the command processor async command result dictionary."""
         return self._async_cmd_result_registry
+
+    @property
+    def view(self) -> Optional[View_Base]:
+        """Return the view bound to the command processor."""
+        return self._view
+    @view.setter
+    def view(self, value: View_Base) -> None:
+        """Set the view bound to the command processor."""
+        self._view = value
+        self._cp_message_service.view = value
     #endregion CommandProcessor_Base Properties
     # ------------------------------------------------------------------------ +
     #region    CommandProcessor_Base Methods
@@ -358,7 +370,8 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
             cmd[CK_CMD_ASYNC_RESULT_SUBSCRIBER] = async_result_subscriber
             # Put the async cmd in the worker thread queue
             self._async_cmd_queue.put(cmd)
-            cp_user_verbose_message(f"Async cmd '{async_id}' queued for subscriber: '{async_result_subscriber.__name__}'.")
+            cp_user_info_message(f"Async CMD '{async_id}' queued for subscriber: '{async_result_subscriber.__name__}'.")
+            time.sleep(0.2)  # Allow some time for the worker thread to pick up the cmd
             return cp_CMD_RESULT_create(status=True,
                                             type=CV_CMD_ASYNC_ID,
                                             content=async_id,
@@ -595,6 +608,8 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
             # Execute a cmd with its associated exec_func from the cmd_map.
             cmd_result: CMD_RESULT_TYPE = exec_func(cmd)
             cp_publish_cmd_result(cmd_result)
+            if cp_is_ASYNC_CMD(cmd):
+                cp_user_none_message(f"       Async CMD '{cmd_str}' executed, results to follow...")
             cp_user_info_message(
                 f"Complete: [{p3u.stop_timer(st)}] "
                 f"status: {(cmd_result[CK_CMD_RESULT_STATUS])}")

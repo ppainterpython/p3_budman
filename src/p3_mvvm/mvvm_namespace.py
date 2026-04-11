@@ -130,6 +130,7 @@ CP_ERROR =   "ERROR"
 CP_DEBUG =   "DEBUG"
 CP_VERBOSE = "VERBOSE"
 CP_CRITICAL = "CRITICAL"
+CP_NONE = "NONE"
 #endregion Constants for CPMessageService class.
 # ---------------------------------------------------------------------------- +
 

@@ -66,39 +66,27 @@ TERM_TITLE = "Budget Manager CLI"
 #region Configure the CLI parser
 # Setup the command line argument parsers. Parsers are now initialized
 # as a class variable in BudManCLIView for better encapsulation.
-settings = bdms.BudManSettings()
+# settings = bdms.BudManSettings()
 #endregion Configure the CLI parser 
 # ---------------------------------------------------------------------------- +
 #region    cli_view_cp_user_output()
 @p3m.cp_user_message_callback
 def cli_view_cp_user_output(m: p3m.CPUserOutputMessage) -> None:
-    """Output user messages from the Command Processor to the CLI View.
+    """Output callback for async user messages from the Command Processor to the CLI View.
        Runs in the PubSub-Worker thread."""
     try:
         tag = m.tag.upper()
         msg = m.message
-        budman_cli_view.cli_view_user_output(msg, tag)
+        budman_cli_view.view_user_message(msg, tag)
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))        
-
-def wait_for_main_thread_block_input():
-    """Wait for the main thread to be ready for input."""
-    not_stop: bool = True
-    while not_stop:
-        time.sleep(0.8)
-        main_thread = threading.main_thread()
-        frames = sys._current_frames()
-        mtf = frames.get(main_thread.ident)
-        if mtf.f_code.co_name in ("wait", "get"):
-            not_stop = False
-            print("\r-")
 
 #endregion cli_view_cp_user_output()
 # ---------------------------------------------------------------------------- +
 #region    cli_cmd_result_output() method
 @p3m.cp_cmd_result_message_callback
 def cli_cmd_result_output(cmd_result: p3m.CMD_RESULT_TYPE) -> None:
-    """Output command results to the CLI View.
+    """Output async command results to the CLI View.
        Runs in the PubSub-Worker thread."""
     try:
         if budman_cli_view:
@@ -219,7 +207,7 @@ class BudManCLIView(cmd2.Cmd,
                           self, onchange_cb=self._onchange_verbose)
         )
         self.set_prompt()
-        p3m.cp_msg_svc.user_info_message("BudManCLIView initialized.")
+        self.user_info_message("BudManCLIView initialized.")
     #endregion __init__() method
     # ------------------------------------------------------------------------ +
     #region    BudManCLIView class properties
@@ -280,6 +268,7 @@ class BudManCLIView(cmd2.Cmd,
         try:
             logger.info(f"BizEVENT: View setup for BudManCLIView({self._app_name}).")
             # Initialize CommandProcessor.
+            self.CP.view = self
             self.set_prompt()
             return self
         except Exception as e:
@@ -643,16 +632,16 @@ class BudManCLIView(cmd2.Cmd,
             # CMD_STRING_OUTPUT
             if result_type == p3m.CV_CMD_STRING_OUTPUT:
                 # OUTPUT_STRING input is a simple string.
-                self.cli_view_user_output(result_content, p3m.CP_INFO)
+                self.view_user_message(result_content, p3m.CP_INFO)
             # CMD_LIST_OUTPUT
             elif result_type == cp.CV_CMD_LIST_OUTPUT:
                 # Python list (list) input object.
-                self.cli_view_user_output(result_content, p3m.CP_INFO)
+                self.view_user_message(result_content, p3m.CP_INFO)
             # CMD_DICT_OUTPUT
             elif result_type == cp.CV_CMD_DICT_OUTPUT:
                 # Python dictionary (dict) input object.
                 output_str: str = p3u.first_n(str(result_content), 100)
-                self.cli_view_user_output(output_str, p3m.CP_INFO)
+                self.view_user_message(output_str, p3m.CP_INFO)
             # CV_CMD_JSON_OUTPUT
             elif result_type == cp.CV_CMD_JSON_OUTPUT:
                 # JSON_STRING input is a JSON string.
@@ -682,7 +671,7 @@ class BudManCLIView(cmd2.Cmd,
                 console.print(table)
             else:
                 logger.warning(f"Unknown command result type: {result_type}")
-                self.cli_view_user_output(result_content, p3m.CP_WARNING)
+                self.view_user_message(result_content, p3m.CP_WARNING)
         except Exception as e:
             self.cp_cmd_result_output_error(f"Error processing command result: {e}") 
     
@@ -696,6 +685,91 @@ class BudManCLIView(cmd2.Cmd,
     # ------------------------------------------------------------------------ +
     #
     #endregion BudManCLIView do_ommand Execution Methods
+    # ======================================================================== +
+
+    # ======================================================================== +
+    #region BudManCLIView direct user output methods
+    # ------------------------------------------------------------------------ +
+    #
+    # ------------------------------------------------------------------------ +
+    #region view_user_message()
+    def view_user_message(self, msg: Optional[str], tag: Optional[str]) -> None:
+        """Output user messages from the Command Processor to the CLI View."""
+        try:
+            if p3u.str_empty(msg):
+                return
+            if p3u.str_empty(tag):
+                tag = p3m.CP_INFO
+            prefix: str = ""
+            with self.terminal_lock:
+                for n, line in enumerate(msg.splitlines(), start=1):
+                    if tag == p3m.CP_INFO:
+                        prefix = f"[bold green]{p3m.CP_INFO:>7}:[/bold green] "
+                    elif tag == p3m.CP_WARNING:
+                        prefix = f"[bold orange]{p3m.CP_WARNING:>7}:[/bold orange] "
+                    elif tag == p3m.CP_ERROR:
+                        prefix = f"[bold red]{p3m.CP_ERROR:>7}:[/bold red] "
+                    elif tag == p3m.CP_DEBUG:
+                        prefix = f"[bold blue]{p3m.CP_DEBUG:>7}:[/bold blue] "
+                    elif tag == p3m.CP_VERBOSE:
+                        prefix = f"[bold light blue]{p3m.CP_VERBOSE:>7}:[/bold light blue] "
+                    elif tag == p3m.CP_CRITICAL:
+                        prefix = f"[bold dark red]{p3m.CP_CRITICAL:>7}:[/bold dark red] "
+                    elif tag == p3m.CP_NONE:
+                        prefix = ""
+                    else:
+                        prefix = ""
+                    self.poutput(f"{prefix}{line}", markup=True)
+                    # console.print(f"{prefix}{line}")
+        except Exception as e:
+            logger.error(p3u.exc_err_msg(e))
+    #endregion view_user_message()
+    # ------------------------------------------------------------------------ +    
+    #region BudManCLIView user message methods
+    def user_info_message(self, message: str, log: bool = True) -> None:
+        """Publish a user INFO message."""
+        self.view_user_message(message, p3m.CP_INFO)
+        if log:
+            logger.info(message)
+
+    def user_warning_message(self, message: str, log: bool = True) -> None:
+        """Publish a user WARNING message."""
+        self.view_user_message(message, p3m.CP_WARNING)
+        if log:
+            logger.warning(message)
+            
+    def user_error_message(self, message: str, log: bool = True) -> None:
+        """Publish a user ERROR message."""
+        self.view_user_message(message, p3m.CP_ERROR)
+        if log:
+            logger.error(message)
+
+    def user_debug_message(self, message: str, log: bool = True) -> None:
+        """Publish a user DEBUG message."""
+        self.view_user_message(message, p3m.CP_DEBUG)
+        if log:
+            logger.debug(message)
+
+    def user_verbose_message(self, message: str, log: bool = True) -> None:
+        """Publish a user VERBOSE message."""
+        if self.verbose_log:    
+            self.view_user_message(message, p3m.CP_VERBOSE)
+        if log:
+            logger.debug(message)
+    def user_none_message(self, message: str, log: bool = True) -> None:
+        """Publish a user message with no prefix."""
+        self.view_user_message(message, p3m.CP_NONE)
+        if log:
+            logger.debug(message)
+    def user_message(self, message: str, log: bool = True) -> None:
+        """Publish a user message with no prefix."""
+        self.user_none_message(message)
+    #region BudManCLIView user message methods
+    # ------------------------------------------------------------------------ +    
+    #
+    # ------------------------------------------------------------------------ +    
+    #
+    #endregion BudManCLIView direct user output methods
     # ======================================================================== +
 
     # ======================================================================== +
@@ -727,37 +801,6 @@ class BudManCLIView(cmd2.Cmd,
             self.verbose = False 
         self.cp_verbose_log = self.verbose
     #endregion _onchange_verbose
-    # ------------------------------------------------------------------------ +    
-    #region cli_view_user_output()
-    def cli_view_user_output(self, msg: Optional[str], tag: Optional[str]) -> None:
-        """Output user messages from the Command Processor to the CLI View."""
-        try:
-            if p3u.str_empty(msg):
-                return
-            if p3u.str_empty(tag):
-                tag = p3m.CP_INFO
-            prefix: str = ""
-            with self.terminal_lock:
-                for n, line in enumerate(msg.splitlines(), start=1):
-                    if tag == p3m.CP_INFO:
-                        prefix = f"[bold green]{p3m.CP_INFO:>7}:[/bold green] "
-                    elif tag == p3m.CP_WARNING:
-                        prefix = f"[bold orange]{p3m.CP_WARNING:>7}:[/bold orange] "
-                    elif tag == p3m.CP_ERROR:
-                        prefix = f"[bold red]{p3m.CP_ERROR:>7}:[/bold red] "
-                    elif tag == p3m.CP_DEBUG:
-                        prefix = f"[bold blue]{p3m.CP_DEBUG:>7}:[/bold blue] "
-                    elif tag == p3m.CP_VERBOSE:
-                        prefix = f"[bold light blue]{p3m.CP_VERBOSE:>7}:[/bold light blue] "
-                    elif tag == p3m.CP_CRITICAL:
-                        prefix = f"[bold dark red]{p3m.CP_CRITICAL:>7}:[/bold dark red] "
-                    else:
-                        prefix = f"[bold blue]{tag:>7}:[/bold blue] "
-                    self.poutput(f"{prefix}{line}", markup=True)
-                    # console.print(f"{prefix}{line}")
-        except Exception as e:
-            logger.error(p3u.exc_err_msg(e))
-    #endregion cli_view_user_output()
     # ------------------------------------------------------------------------ +    
     #
     #endregion BudManCLIView Helper Methods

@@ -120,7 +120,8 @@ from .mvvm_namespace import (
     CP_ERROR,
     CP_DEBUG, 
     CP_VERBOSE,
-    CP_CRITICAL
+    CP_CRITICAL,
+    CP_NONE
 )
 # target for 'from budman_app import *'
 __all__ = [

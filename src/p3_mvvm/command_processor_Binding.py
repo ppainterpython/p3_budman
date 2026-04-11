@@ -123,6 +123,14 @@ class CommandProcessor_Binding(CommandProcessor_Base):
         """Set the verbose_log state of the command processor."""
         self.CP.cp_verbose_log = value
         
+    @property
+    def view(self) -> Optional[View_Base]:
+        """Return the view bound to the command processor."""
+        return self.CP.view
+    @view.setter
+    def view(self, value: View_Base) -> None:
+        """Set the view bound to the command processor."""
+        self.CP.view = value
     #endregion CommandProcessor_BindingProperties
     # ------------------------------------------------------------------------ +
     #region CommandProcessor_Base Methods

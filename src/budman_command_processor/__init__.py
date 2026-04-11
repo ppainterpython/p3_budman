@@ -18,7 +18,7 @@ from .budman_command_services import (
     BUDMAN_CMD_FILE_SERVICE_get_BSMFile,
     BUDMAN_CMD_FILE_SERVICE_get_full_filename,
     process_selected_workbook_input,
-    # Helper functions
+    BUDMAN_CMD_TASK_validate_model_binding,    # Helper functions
     verify_cmd_key,
     verify_subcmd_key,
     validate_cmd_arguments
@@ -32,6 +32,7 @@ __all__ = [
     "BUDMAN_CMD_FILE_SERVICE_get_BSMFile",
     "BUDMAN_CMD_FILE_SERVICE_get_full_filename",
     "process_selected_workbook_input",
+    "BUDMAN_CMD_TASK_validate_model_binding",
     "verify_cmd_key",
     "verify_subcmd_key",
     "validate_cmd_arguments"

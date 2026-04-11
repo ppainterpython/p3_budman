@@ -259,11 +259,13 @@ def BUDMAN_CMD_list_files(
                 CK_CMDLINE_FI_KEY
             ]
         )
-        cmd_result: p3m.CMD_RESULT_TYPE = validate_model_binding(bdm_DC)
+        cmd_result: p3m.CMD_RESULT_TYPE = BUDMAN_CMD_TASK_validate_model_binding(bdm_DC)
         # Validate DC is Model-aware with a model binding.
         if not cmd_result[p3m.CK_CMD_RESULT_STATUS]:
             return cmd_result
         model: BudgetDomainModel = bdm_DC.model
+        # Refresh the BSM file tree in the model to ensure it is up to date.
+        model.bdm_FILE_TREE_refresh()
         bsm_file_tree : BSMFileTree = model.bsm_file_tree
         file_tree: Tree = None
         cmd_err: bool = False
@@ -414,7 +416,7 @@ def BUDMAN_CMD_app_sync(cmd: p3m.CMD_OBJECT_TYPE,
             subcmd_key=CV_SYNC_SUBCMD_KEY,
             required_args=[CK_SAVE, CK_FIX_SWITCH]
         )
-        cmd_result: p3m.CMD_RESULT_TYPE = validate_model_binding(bdm_DC)
+        cmd_result: p3m.CMD_RESULT_TYPE = BUDMAN_CMD_TASK_validate_model_binding(bdm_DC)
         # Validate DC is Model-aware with a model binding.
         if not cmd_result[p3m.CK_CMD_RESULT_STATUS]:
             return cmd_result
@@ -611,7 +613,7 @@ def BUDMAN_CMD_TASK_sync_BDM_STORE_to_BSM(bdm_DC: BudManAppDataContext_Base) -> 
     """
     try:
         # Validate DC is Model-aware with a model binding.
-        cmd_result: p3m.CMD_RESULT_TYPE = validate_model_binding(bdm_DC)
+        cmd_result: p3m.CMD_RESULT_TYPE = BUDMAN_CMD_TASK_validate_model_binding(bdm_DC)
         if not cmd_result[p3m.CK_CMD_RESULT_STATUS]:
             return cmd_result
         model: BudgetDomainModel = bdm_DC.model
@@ -1092,7 +1094,7 @@ def validate_cmd_arguments(cmd: p3m.CMD_OBJECT_TYPE,
                                              msg=cmd_result[p3m.CK_CMD_RESULT_CONTENT],
                                              cmd_result_error=cmd_result)
         if model_aware:
-            cmd_result = validate_model_binding(bdm_DC)
+            cmd_result = BUDMAN_CMD_TASK_validate_model_binding(bdm_DC)
             # Validate DC is Model-aware with a model binding.
             if not cmd_result[p3m.CK_CMD_RESULT_STATUS]:
                 return cmd_result
@@ -1139,8 +1141,8 @@ def validate_cmd_arguments(cmd: p3m.CMD_OBJECT_TYPE,
         )
 #endregion validate_cmd_arguments()
 # ---------------------------------------------------------------------------- +
-#region validate_model_binding()
-def validate_model_binding(bdm_DC: BudManAppDataContext_Base,
+#region BUDMAN_CMD_TASK_validate_model_binding()
+def BUDMAN_CMD_TASK_validate_model_binding(bdm_DC: BudManAppDataContext_Base,
                            raise_error: bool = False) -> p3m.CMD_RESULT_TYPE:
     """Validate that the BudManAppDataContext has a valid BudgetDomainModel binding.
 
@@ -1180,8 +1182,8 @@ def validate_model_binding(bdm_DC: BudManAppDataContext_Base,
         # Model is valid
         return p3m.cp_CMD_RESULT_create(
             status=True,
-            content=model,
-            type=CV_CMD_JSON_OUTPUT,
+            content="Valid BudgetDomainModel binding in the DC.",
+            type=p3m.CV_CMD_STRING_OUTPUT,
             cmd=None
         )
     except Exception as e:

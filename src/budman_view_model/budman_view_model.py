@@ -515,7 +515,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                 cp.CV_SAVE_BDM_STORE_SUBCMD_KEY: self.BDM_STORE_save_cmd,
                 cp.CV_LOAD_WORKBOOKS_SUBCMD_KEY: self.WORKBOOKS_load_cmd,
                 cp.CV_SAVE_WORKBOOKS_SUBCMD_KEY: self.WORKBOOKS_save_cmd,
-                cp.CV_CLOSE_WORKBOOKS_SUBCMD_KEY: self.WORKBOOKS_close_cmd,
+                cp.CV_CLOSE_WORKBOOKS_SUBCMD_KEY: self.BUDMAN_CMD_close_workbooks,
                 cp.CV_CHANGE_WORKBOOKS_SUBCMD_KEY: self.CHANGE_cmd,
                 cp.CV_WORKFLOW_CMD_KEY: self.WORKFLOW_cmd,
                 cp.CV_APPLY_SUBCMD_KEY: self.WORKFLOW_apply_cmd,
@@ -913,8 +913,11 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
     #endregion WORKBOOKS_save_cmd() execution method
     # ------------------------------------------------------------------------ +
-    #region WORKBOOKS_close_cmd() execution method
-    def WORKBOOKS_close_cmd(self, cmd : p3m.CMD_OBJECT_TYPE) -> BUDMAN_RESULT_TYPE: 
+    #region BUDMAN_CMD_close_workbooks() execution method
+    def BUDMAN_CMD_close_workbooks(self, 
+                            cmd : p3m.CMD_OBJECT_TYPE,
+                            level: int = 0
+                            ) -> BUDMAN_RESULT_TYPE: 
         """Model-Aware: Execute close command for one WB_INDEX or ALL_WBS.
         In BudMan, loaded workbook content is maintained in the 
         dc_LOADED_WORKBOOKS collection. This command will cause that content
@@ -924,36 +927,38 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             RuntimeError: For exceptions.
         """
         try:
+            level += 1
+            ts: str = "[bold dark_orange]CMD: [/bold dark_orange]"
+            m: str = f"{pad(level)}{ts} {self.BUDMAN_CMD_close_workbooks.__name__}() "
+            p3m.cp_user_info_message(m + "Start: ...")
             r : str = ""
-            m : str = ""
-            st = p3u.start_timer()  
             logger.debug(f"Start: {str(cmd)}")
             selected_bdm_wb_list : List[BDMWorkbook] = None
             selected_bdm_wb_list = self.process_selected_workbook_input(cmd)
             bdm_wb : Optional[BDMWorkbook] = None
-            r = f"\nBudget Manager Workbooks({len(selected_bdm_wb_list)}):"
+            r = f"{pad(level)}Budget Manager Workbooks({len(selected_bdm_wb_list)}):"
+            p3m.cp_user_info_message(r)
             bdm_wb : Optional[BDMWorkbook] = None
             for bdm_wb in selected_bdm_wb_list:
                 wb_index = self.dc_WORKBOOK_index(bdm_wb.wb_id)
                 if bdm_wb.wb_content is None:
-                    m = f"Workbook wb_id: '{bdm_wb.wb_id}' has no loaded content."
-                    logger.error(m)
-                    r += f"\n{P2}Error wb_index: {wb_index:>4} wb_id: '{bdm_wb.wb_id:<40}' Reason:{m}"
                     continue
                 # Close the workbook content.
                 success, result = self.dc_WORKBOOK_close(bdm_wb)
                 if not success:
-                    m = f"Error closing wb_id: '{bdm_wb.wb_id}': {result}"
-                    logger.error(m)
-                    r += f"\n{P2}Error wb_index: {wb_index:>2} wb_id: '{bdm_wb.wb_id:<40}' Reason: {m}"
+                    r = f"{pad(level)}Error closing wb_id: '{bdm_wb.wb_id}': {result}"
+                    p3m.cp_user_error_message(r)
+                    r = f"{pad(level)}Error wb_index: {wb_index:>2} wb_id: '{bdm_wb.wb_id:<40}' Reason: {m}"
+                    p3m.cp_user_error_message(r)
                     continue
                 r_str = bdm_wb.wb_index_display_str(wb_index)
-                r += f"\n{P2}Closed {result!r}"
-            logger.info(f"Complete Command: 'Close' {p3u.stop_timer(st)}")   
+                r = f"{pad(level)}Closed {result!r}"
+                p3m.cp_user_info_message(r)
+            p3m.cp_user_info_message(m + "End: ...")
             return p3m.cp_CMD_RESULT_create(True, p3m.CV_CMD_STRING_OUTPUT, r, cmd)
         except Exception as e:
             return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
-    #endregion WORKBOOKS_close_cmd() execution method
+    #endregion BUDMAN_CMD_close_workbooks() execution method
     # ------------------------------------------------------------------------ +
     #region CHANGE_cmd() execution method
     def CHANGE_cmd(self, cmd : p3m.CMD_OBJECT_TYPE) -> p3m.CMD_RESULT_TYPE:
@@ -1275,3 +1280,18 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
     #                                                                          +
     #endregion helper methods for command execution                            +
     # ======================================================================== +
+
+# ---------------------------------------------------------------------------- +
+#region pad()
+def pad(level: int) -> str:
+    """Pad level times P2 (2 spaces).
+
+    Args:
+        level (int): The level to pad.
+
+    Returns:
+        str: P2 times level.
+    """
+    return P2 * level
+#endregion pad()
+# ---------------------------------------------------------------------------- +
