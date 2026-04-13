@@ -29,7 +29,7 @@ from openpyxl.cell.cell import Cell
 from treelib import Tree
 
 # local modules and packages
-import budman_command_processor as cp
+import budman_command_services as cp
 import budman_namespace.design_language_namespace as bdm
 from budman_namespace.bdm_workbook_class import BDMWorkbook
 from budman_data_context import BudManAppDataContext_Base

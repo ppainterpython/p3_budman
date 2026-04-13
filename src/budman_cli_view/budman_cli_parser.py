@@ -18,7 +18,7 @@ from cmd2.argparse_custom import Cmd2HelpFormatter
 # local modules and packages
 from budman_settings import *
 from budman_settings.budman_settings_constants import BUDMAN_CMD_HISTORY_FILENAME
-import budman_command_processor.budman_cp_namespace as cp
+import budman_command_services.budman_cp_namespace as cp
 import budman_namespace.design_language_namespace as bdm
 from budman_data_context.budman_app_data_context_binding_class import BudManAppDataContext_Binding
                              

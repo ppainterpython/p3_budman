@@ -30,7 +30,7 @@ from openpyxl.cell.cell import Cell
 from pyparsing import Optional
 
 # local modules and packages
-import budman_command_processor as cp
+import budman_command_services as cp
 from budman_namespace.design_language_namespace import *
 from budman_namespace.bdm_workbook_class import BDMWorkbook
 from .txn_category import (BDMTXNCategoryManager, TXNCategoryMap)
@@ -44,7 +44,6 @@ logger = logging.getLogger(__name__)
 # list. In excel, worksheet columns are 1-based. So, we need to adjust the indices.
 # A list of cells from a worksheet row is 0-based, with cell(0) being the value
 # from column 1, or column 'A'.
-
 # Symbols for BOA .csv files.
 BOA_ORIGINAL_DESCRIPTION_COL_NAME = "Original Description"
 BOA_DATE_COL_NAME = "Date"
@@ -165,6 +164,42 @@ BUDMAN_REQUIRED_COLUMNS = [
     PAYEE_COL_NAME,
     ESSENTIAL_COL_NAME,
     RULE_COL_NAME
+]
+
+BUDMAN_WB_SCHEMA = [
+    DATE_COL_NAME, 
+    TRANSACTION_DESCRIPTION_COL_NAME,
+    AMOUNT_COL_NAME, 
+    ACCOUNT_NAME_COL_NAME,
+    ACCOUNT_CODE_COL_NAME,
+    LEVEL_1_COL_NAME,
+    LEVEL_2_COL_NAME,
+    LEVEL_3_COL_NAME,
+    YEAR_MONTH_COL_NAME,
+    PAYEE_COL_NAME,
+    ESSENTIAL_COL_NAME,
+    RULE_COL_NAME
+    ]
+
+BUDMAN_INTAKE_FORMATS = [
+    {
+        "fi_key": "boa",
+        "intake_format_name": "BOA account Info",
+        "intake_format_description": "Intake format for BOA account info excel files.",
+        "intake_format_id": "boa_account_info",
+        "intake_file_ext": ".csv",
+        "has_column_headers": True,
+        "intake_columns": BOA_WB_COLUMNS
+    },
+    {
+        "fi_key": "wellsfargo",
+        "intake_format_name": "Wells Fargo account Info",
+        "intake_format_description": "Intake format for Wells Fargo account info excel files.",
+        "intake_format_id": "wellsfargo_account_info",
+        "intake_file_ext": ".csv",
+        "has_column_headers": False,
+        "intake_columns": ["Date", "Amount", "ignore", "Original Description"]
+    }
 ]
 
 #endregion Globals and Constants

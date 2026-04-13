@@ -21,7 +21,7 @@ from budman_namespace import (FILE_TREE_NODE_TYPE_KEY, FILE_TREE_NODE_WF_KEY,
                                 FILE_TREE_NODE_WF_PURPOSE, 
                                 P2, P4, P6)
 from budman_data_context import BudManAppDataContext_Binding
-import budman_command_processor as cp
+import budman_command_services as cp
 from budget_domain_model import BDMWorkbookTreeNode
 from budget_storage_model import BSMFile
 from .budman_gui_style_registry import StyleRegistry

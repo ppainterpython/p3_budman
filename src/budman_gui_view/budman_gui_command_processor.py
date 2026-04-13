@@ -17,7 +17,7 @@ import ttkbootstrap as tb  # tb.Window used for root window only
 import p3_utils as p3u, p3logging as p3l, p3_mvvm as p3m
 # local modules and packages
 from budman_data_context import BudManAppDataContext_Binding
-import budman_command_processor as cp
+import budman_command_services as cp
 from .budman_gui_style_registry import StyleRegistry
 from .budman_gui_constants import *
 from .budman_gui_msg import BudManGUIMsg

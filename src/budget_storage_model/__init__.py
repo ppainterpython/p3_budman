@@ -45,6 +45,8 @@ from .csv_data_collection import (
     csv_DATA_LIST_url_put,
     csv_DATA_LIST_file_load,
     csv_DATA_LIST_file_save,
+    csv_DATA_LIST_add_header_row,
+    csv_DATA_LIST_remove_columns,
 )
 
 __all__ = [
@@ -83,9 +85,11 @@ __all__ = [
     "BSMFile",
     #bsm_file_tree module
     "BSMFileTree",
-    # cvs_data_collection Functions
+    # csv_data_collection Functions
     "csv_DATA_LIST_url_get",
     "csv_DATA_LIST_url_put",
     "csv_DATA_LIST_file_load",
     "csv_DATA_LIST_file_save",
+    "csv_DATA_LIST_add_header_row",
+    "csv_DATA_LIST_remove_columns"
 ]

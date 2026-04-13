@@ -45,7 +45,7 @@ import budman_settings as bdms
 from budman_settings.budman_settings_constants import BUDMAN_CMD_HISTORY_FILENAME
 from budman_data_context import BudManAppDataContext_Binding
 import budman_namespace as bdm
-import budman_command_processor as cp
+import budman_command_services as cp
 from budman_cli_view import BudManCLIParser
 #endregion Imports
 # ---------------------------------------------------------------------------- +

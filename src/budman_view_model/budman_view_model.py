@@ -251,14 +251,14 @@ from openpyxl import Workbook, load_workbook
 # local modules and packages
 # from budman_command_processor.cp_utils import CMD_RESULT_OBJECT
 import budman_workflows
-import budman_command_processor as cp
+import budman_command_services as cp
 import budman_settings as bdms
 from budman_namespace.design_language_namespace import *
 from budman_namespace.bdm_workbook_class import BDMWorkbook
 from budget_categorization import (
     check_sheet_schema, WORKFLOW_TASK_check_sheet_columns, 
     validate_budget_categories, WORKFLOW_TASK_process_budget_category)
-from budman_workflows import (WORKFLOW_CMD_dispatch)
+from budman_command_services import (WORKFLOW_CMD_dispatch)
 from budget_domain_model import (BudgetDomainModel, BDMConfig)
 from budman_data_context.budman_app_data_context_binding_class import BudManAppDataContext_Binding
 from budman_gui_view import BudManGUIView

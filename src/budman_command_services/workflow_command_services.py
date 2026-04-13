@@ -24,7 +24,7 @@ from openpyxl import Workbook, load_workbook
 
 # local modules and packages
 import budman_settings as bdms
-import budman_command_processor as cp
+import budman_command_services as cp
 import budman_namespace as bdm
 from budman_namespace import P2, P4
 from budman_namespace import BDMWorkbook

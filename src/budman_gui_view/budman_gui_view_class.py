@@ -19,7 +19,7 @@ import p3_utils as p3u, pyjson5, p3logging as p3l, p3_mvvm as p3m
 import budman_namespace as bdm
 import budman_settings as bdms
 from budman_data_context import BudManAppDataContext_Binding
-import budman_command_processor as cp
+import budman_command_services as cp
 from budget_storage_model import BSMFileTree
 # bugman_gui_view modules and packages
 from .budman_gui_style_registry  import StyleRegistry

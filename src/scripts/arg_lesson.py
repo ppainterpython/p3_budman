@@ -4,7 +4,7 @@
 
 import cmd2
 import p3_mvvm as p3m
-import budman_command_processor.budman_cp_namespace as cp
+import budman_command_services.budman_cp_namespace as cp
 import budman_namespace.design_language_namespace as bdm
 import argparse
 
