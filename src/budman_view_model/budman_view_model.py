@@ -249,7 +249,7 @@ import p3_utils as p3u, p3logging as p3l, p3_mvvm as p3m
 from openpyxl import Workbook, load_workbook
 
 # local modules and packages
-# from budman_command_processor.cp_utils import CMD_RESULT_OBJECT
+# from budman_command_services.cp_utils import CMD_RESULT_OBJECT
 import budman_workflows
 import budman_command_services as cp
 import budman_settings as bdms
@@ -258,7 +258,7 @@ from budman_namespace.bdm_workbook_class import BDMWorkbook
 from budget_categorization import (
     check_sheet_schema, WORKFLOW_TASK_check_sheet_columns, 
     validate_budget_categories, WORKFLOW_TASK_process_budget_category)
-from budman_command_services import (WORKFLOW_CMD_dispatch)
+from budman_command_services import (WORKFLOW_CMD_router)
 from budget_domain_model import (BudgetDomainModel, BDMConfig)
 from budman_data_context.budman_app_data_context_binding_class import BudManAppDataContext_Binding
 from budman_gui_view import BudManGUIView
@@ -717,7 +717,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             cmd_result : p3m.CMD_RESULT_TYPE = cp.verify_cmd_key(cmd, cp.CV_LIST_CMD_KEY)
             if not cmd_result[p3m.CK_CMD_RESULT_STATUS]: return cmd_result
             # Process BudMan command tasks.
-            cmd_result = cp.BUDMAN_CMD_process(cmd, self.DC)
+            cmd_result = cp.BUDMAN_CMD_router(cmd, self.DC)
             logger.debug(f"Complete: {p3u.stop_timer(st)}")
             return cmd_result
         except Exception as e:
@@ -817,7 +817,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             cmd_result : p3m.CMD_RESULT_TYPE = cp.verify_cmd_key(cmd, cp.CV_SHOW_CMD_KEY)
             if not cmd_result[p3m.CK_CMD_RESULT_STATUS]: return cmd_result
             # Process BudMan command tasks.
-            cmd_result = cp.BUDMAN_CMD_process(cmd, self.DC)
+            cmd_result = cp.BUDMAN_CMD_router(cmd, self.DC)
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             return cmd_result
         except Exception as e:
@@ -1080,7 +1080,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                 return cmd_result
 
             # Use the BudMan Command Services module.
-            cmd_result = cp.BUDMAN_CMD_process(cmd, self.DC)
+            cmd_result = cp.BUDMAN_CMD_router(cmd, self.DC)
             logger.debug(f"Complete: {p3u.stop_timer(st)}")
             return cmd_result
         except Exception as e:
@@ -1107,7 +1107,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             cmd_result : p3m.CMD_RESULT_TYPE = cp.verify_cmd_key(cmd, cp.CV_WORKFLOW_CMD_KEY)
             if not cmd_result[p3m.CK_CMD_RESULT_STATUS]: return cmd_result
             # Process workflow command tasks.
-            cmd_result = WORKFLOW_CMD_dispatch(cmd, self.DC)
+            cmd_result = WORKFLOW_CMD_router(cmd, self.DC)
             logger.info(f"Complete: {p3u.stop_timer(st)}")
             return cmd_result
         except Exception as e:

@@ -54,7 +54,7 @@ def configure_logging(logger_name : str, log_config_url: str, logtest : bool = T
         # Convert log_config_url to a file path.
         log_config_file = Path.from_uri(log_config_url).expanduser().resolve()
         # Configure logging
-        _ = p3l.setup_logging(
+        _ = p3l.setup_logging( 
             logger_name = logger_name,
             config_file = str(log_config_file)
             )

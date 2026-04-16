@@ -2,7 +2,7 @@
 #region budman_command_services.py module
 """ budman_command_services.py implements functions for BudMan app commands.
 
-    The budman_command_processor package provides modules with functions
+    The budman_command_services package provides modules with functions
     to execute validated commands within the BudMan application. In general,
     a CMD_OBJECT is dispatched to the appropriate command handler for execution.
     A handler will decompose a CMD_OBJECT into a series of CMD tasks to be
@@ -64,8 +64,8 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 #region BudMan Application CMD_ functions
 # ---------------------------------------------------------------------------- +
-#region BUDMAN_CMD_process() function
-def BUDMAN_CMD_process(cmd: p3m.CMD_OBJECT_TYPE,
+#region BUDMAN_CMD_router() function
+def BUDMAN_CMD_router(cmd: p3m.CMD_OBJECT_TYPE,
                      bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
     """Process a CMD_TASK command.
 
@@ -128,7 +128,7 @@ def BUDMAN_CMD_process(cmd: p3m.CMD_OBJECT_TYPE,
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
-#endregion BUDMAN_CMD_process() function
+#endregion BUDMAN_CMD_router() function
 # ---------------------------------------------------------------------------- +
 #region BUDMAN_CMD_list_workbooks()
 def BUDMAN_CMD_list_workbooks(cmd: p3m.CMD_OBJECT_TYPE,

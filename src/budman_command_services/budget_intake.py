@@ -33,19 +33,22 @@ import budman_command_services as cp
 import budman_namespace.design_language_namespace as bdm
 from budman_namespace.bdm_workbook_class import BDMWorkbook
 from budman_data_context import BudManAppDataContext_Base
+from budget_domain_model import BudgetDomainModel
+from budget_storage_model import BSMFile, BSMFileTree
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
 logger = logging.getLogger(__name__)
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
-#region INTAKE_TASK_process() function
-def INTAKE_TASK_process(cmd: p3m.CMD_OBJECT_TYPE, 
+#region INTAKE_SBCMD_router() function
+def INTAKE_SBCMD_router(cmd: p3m.CMD_OBJECT_TYPE, 
              bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
     """Process workflow intake subcmd tasks.
 
-    This function processes a workflow intake subcmd. Depending on the subcmd type,
-    it delegates the processing to the appropriate task functions. There could
+    This function processes a workflow intake subcmd. Depending on the 
+    CK_INTAKE_TASK value in the cmd, it routes to the appropriate task function.
+    It delegates the processing to the appropriate task functions. There could
     be a variety of tasks depending on the value of the CK_INTAKE_TASK key.
 
     Args:
@@ -54,24 +57,40 @@ def INTAKE_TASK_process(cmd: p3m.CMD_OBJECT_TYPE,
             BudMan application.
     """
     try:
+        # Note: Each of the processing functions should do all necessary
+        # outout to the user, including error messages and exceptions.
+        # If bdm_DC is bad, just raise an error.
+        p3u.is_not_obj_of_type("bdm_DC", bdm_DC, BudManAppDataContext_Base,
+                               raise_error= True)
+        # Should be called only for workflow intake subcmd.
+        cmd_result : p3m.CMD_RESULT_TYPE = cp.verify_cmd_key(cmd, cp.CV_WORKFLOW_CMD_KEY)
+        if not cmd_result[p3m.CK_CMD_RESULT_STATUS]: return cmd_result
+        cmd_result : p3m.CMD_RESULT_TYPE = cp.verify_subcmd_key(cmd, cp.CV_INTAKE_SUBCMD_NAME)
+        if not cmd_result[p3m.CK_CMD_RESULT_STATUS]: return cmd_result
         # Assuming the cmd parameters have been validated before reaching this point.
+        # Process the CMD_OBJECT based on its CK_INTAKE_TASK.
+        msg: str = ''
+        # Assuming the cmd parameters have been validated before this point.
         if cmd[cp.CK_INTAKE_TASK] == cp.CV_INTAKE_COPY_TASK:
             # Process the copy task. 
             return INTAKE_TASK_copy_file_to_wf_folder(cmd, bdm_DC)
         else:
-            m = f"Unknown intake task: {cmd[cp.CK_INTAKE_TASK]}"
-            return p3m.cp_CMD_RESULT_ERROR_create(cmd, m)
+            msg = f"Unknown intake task: {cmd[cp.CK_INTAKE_TASK]}"
+            p3m.cp_user_info_message(m + "End: ... " + msg)
+        return p3m.cp_CMD_RESULT_ERROR_create(cmd, msg)
     except Exception as e:
         return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
-#endregion INTAKE_TASK_process() function
+#endregion INTAKE_SBCMD_router() function
 # ---------------------------------------------------------------------------- +
 #region INTAKE_TASK_copy_file_to_wf_folder() function
 def INTAKE_TASK_copy_file_to_wf_folder(
         cmd: p3m.CMD_OBJECT_TYPE, 
-        bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
-    """INTAKE_TASK: copy a file to a specified destination wf_folder.
+        bdm_DC: BudManAppDataContext_Base,
+        level: int = 0) -> p3m.CMD_RESULT_TYPE:
+    """workflow intake subcmd copy task: copy a .csv file to a specified 
+    destination wf_folder.
 
-    Workflow Intake Task to copy a file from the source wf_folder location 
+    Workflow Intake subcmd Task to copy a file from the source wf_folder location 
     indicated by the cmd parameters CK_CMDLINE_WF_KEY and CK_CMDLINE_WF_PURPOSE
     using the CK_FILE_INDEX to identify the file to be copied. The destination
     wf_folder is specified by the current DC values for WF_KEY and WF_PURPOSE.
@@ -82,37 +101,78 @@ def INTAKE_TASK_copy_file_to_wf_folder(
             BudMan application.
     """
     try:
+        #region Initialization and validation
         # Assume the cmd parameters have been validated before reaching this point.
+        level += 1
+        ts: str = "[bold dark_orange]CMD: [/bold dark_orange]"
+        m: str = f"{pad(level)}{ts} {INTAKE_TASK_copy_file_to_wf_folder.__name__}() "
+        # Start: ------------------------------------------------------------- +
+        p3m.cp_user_info_message(m + "Start: ...")
+        level += 1
+        # # Validate the cmd argsuments.
+        cmd_args: p3m.CMD_ARGS_TYPE = cp.validate_cmd_arguments(
+            cmd=cmd, 
+            bdm_DC=bdm_DC,
+            cmd_key=cp.CV_WORKFLOW_CMD_KEY, 
+            subcmd_key=cp.CV_INTAKE_SUBCMD_NAME,
+            model_aware=True,
+            required_args=[
+                cp.CK_INTAKE_TASK,
+                cp.CV_INTAKE_COPY_TASK,
+                cp.CK_FILE_LIST,
+                cp.CK_CMDLINE_WF_KEY,
+                cp.CK_CMDLINE_WF_PURPOSE
+            ]
+        )
         cmd_result : p3m.CMD_RESULT_TYPE = p3m.cp_CMD_RESULT_create(
             status = True,
             type = p3m.CV_CMD_STRING_OUTPUT,
             content = "",
             cmd = cmd
         )
-        # Current DC values of wf_key and wf_purpose are the destination 
-        # folder for the file to be copied. CMDLINE file_index, wf_key and 
-        # wf_purpose identify the file to copy. 
-        # Source file parameters
-        src_wf_key: str = cmd[cp.CK_CMDLINE_WF_KEY]
-        src_wf_purpose: str = cmd[cp.CK_CMDLINE_WF_PURPOSE]
-        src_file_index: int = cmd[cp.CK_FILE_INDEX]
-        fi_key:str = bdm_DC.dc_FI_KEY
-        file_tree = cp.BUDMAN_CMD_TASK_get_file_tree(fi_key, src_wf_key, 
-                                                   src_wf_purpose, bdm_DC)
-        p3u.is_not_obj_of_type("src_folder_tree", file_tree, Tree, raise_error=True)
-        # file_trees are a BSM concern
-        src_file: cp.BSMFile = cp.BUDMAN_CMD_FILE_SERVICE_get_BSMFile(file_tree, src_file_index)
-        if not src_file:
-            msg = f"Source file_index '{src_file_index}' not found "
-            msg += f"in folder tree: {file_tree.root}"
-            logger.error(msg)
-            return p3m.cp_CMD_RESULT_ERROR_create(cmd, msg)
-        # Destination workflow folder
-        dst_wf_key = bdm_DC.dc_WF_KEY
-        dst_wf_purpose = bdm_DC.dc_WF_PURPOSE
-        msg:str = f"copy file_index {src_file_index} from {src_wf_key} "
-        msg += f"to {dst_wf_key} for {dst_wf_purpose}"
+        msg: str = 'Copy files task:'
+        model: BudgetDomainModel = bdm_DC.model
+        if (p3u.is_not_obj_of_type('bdm_DC.model',model, BudgetDomainModel)):
+            return cp.create_CMD_RESULT_ERROR(cmd, f"Invalid BudgetDomainModel: {model}")
+        bsm_file_tree : BSMFileTree = model.bsm_file_tree
+        if (p3u.is_not_obj_of_type('bsm_file_tree',bsm_file_tree, BSMFileTree)):
+            return cp.create_CMD_RESULT_ERROR(cmd, f"Invalid BSMFileTree in model: {bsm_file_tree}")
+        src_bsm_file: BSMFile = None
+        dst_wf_key: str = cmd[cp.CK_CMDLINE_WF_KEY]
+        if (p3u.str_empty(dst_wf_key) or not model.bdm_WF_KEY_validate(dst_wf_key)):
+            return cp.create_CMD_RESULT_ERROR(cmd, f"Invalid wf_key: '{dst_wf_key}'")
+        dst_wf_purpose: str = cmd[cp.CK_CMDLINE_WF_PURPOSE]
+        if (p3u.str_empty(dst_wf_purpose) or not model.bdm_WF_PURPOSE_validate(dst_wf_purpose)):
+            return cp.create_CMD_RESULT_ERROR(cmd, f"Invalid wf_purpose: '{dst_wf_purpose}'")
+        #endregion Initialization and validation
+
+        # The file indicated by cmd[cp.CK_FILE_INDEX] provide the 
+        # WF_KEY/WF_PURPOSE/WF_FOLDER of the src file to copy.
+        # The values of cmd[cp.CK_CMDLINE_WF_KEY] and 
+        # cmd[cp.CK_CMDLINE_WF_PURPOSE] indicate the destination WF)FOLDER
+        # where the file is copied. SRC to DST will imply transformation tasks
+        # to occur during the copy. The SRC file is never modified. The DST
+        # almost always is modified and has naming conventions applied.
+
+        for file_index in cmd[cp.CK_FILE_LIST]:
+            src_bsm_file: BSMFile = bsm_file_tree.get_BSMFile(file_index)
+            if not src_bsm_file:
+                msg = f"Source file_index '{file_index}' not found "
+                msg += f"in folder tree: {bsm_file_tree.root}"
+                logger.error(msg)
+                continue
+            logger.debug(f"BSMFile: {src_bsm_file}")
+            src_wf_key: str = src_bsm_file.wf_key
+            src_wf_purpose: str = src_bsm_file.wf_purpose
+            fi_key:str = src_bsm_file.fi_key
+            # Destination workflow folder
+            dst_wf_key = cmd[cp.CK_CMDLINE_WF_KEY]
+            dst_wf_purpose = cmd[cp.CK_CMDLINE_WF_PURPOSE]
+            msg:str = f"\n  copy file_index {file_index} from {src_wf_key} "
+            msg += f"to {dst_wf_key} for {dst_wf_purpose}"
         cmd_result[p3m.CK_CMD_RESULT_CONTENT] = msg
+        # End: ------------------------------------------------------------- +
+        p3m.cp_user_info_message(m + "End: ...")
         return cmd_result
     except Exception as e:
         return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
@@ -152,4 +212,12 @@ def convert_csv_txns_to_excel_txns(csv_txns: BDMWorkbook) -> Union[bool, str]:
         logger.error(p3u.exc_err_msg(e))
         return False, str(e)
 #endregion convert_csv_txns_to_excel_txns() function
+# ---------------------------------------------------------------------------- +
+
+# ---------------------------------------------------------------------------- +
+#region helper functions
+def pad(level: int) -> str:
+    """Helper function to create indentation padding for logging messages."""
+    return "    " * level
+#endregion helper functions
 # ---------------------------------------------------------------------------- +

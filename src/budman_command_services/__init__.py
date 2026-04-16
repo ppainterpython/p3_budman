@@ -12,7 +12,7 @@ __license__ = "MIT"
 from .budman_cp_namespace import *
 from .budman_command_services import (
     # BUDMAN_CMD_TASK functions
-    BUDMAN_CMD_process,
+    BUDMAN_CMD_router,
     # BudMan Command File Services
     BUDMAN_CMD_FILE_SERVICE_get_BSMFile,
     BUDMAN_CMD_FILE_SERVICE_get_full_filename,
@@ -23,16 +23,16 @@ from .budman_command_services import (
     validate_cmd_arguments
 )
 from .workflow_command_services import (
-    WORKFLOW_CMD_dispatch,
+    WORKFLOW_CMD_router,
     WORKFLOW_CMD_process
 )
 from .budget_intake import (
-    INTAKE_TASK_process
+    INTAKE_SBCMD_router
 )
 # target for 'from budman_app import *'
 __all__ = [
     "BudManApp",
-    "BUDMAN_CMD_process",
+    "BUDMAN_CMD_router",
     # budman_command_services.py
     "BUDMAN_CMD_FILE_SERVICE_get_BSMFile",
     "BUDMAN_CMD_FILE_SERVICE_get_full_filename",
@@ -42,9 +42,9 @@ __all__ = [
     "verify_subcmd_key",
     "validate_cmd_arguments",
     # workflow_commands.py module
-    "WORKFLOW_CMD_dispatch",
+    "WORKFLOW_CMD_router",
     "WORKFLOW_CMD_process",
     # budget_intake",
-    "INTAKE_TASK_process",
+    "INTAKE_SBCMD_router",
 ]
 
