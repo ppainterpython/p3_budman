@@ -98,6 +98,7 @@ from .mvvm_namespace import *
 from .command_processor_Base_ABC import CommandProcessor_Base
 from .cp_message_service import *
 from .data_context_binding import DataContext_Binding
+from .command_class import Command
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals
@@ -240,7 +241,7 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
         """Initialize the CommandProcessor."""
         try:
             if self.cp_initialized:
-                logger.debug("CommandProcessor already initialized.")
+                cp_user_debug_message("CommandProcessor already initialized.")
                 return self
             self.cp_initialize_cmd_map()
             self.cp_initialized = True
@@ -563,7 +564,7 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
     #endregion cp_exec_func_binding() Command Processor method
     # ------------------------------------------------------------------------ +
     #region    cp_execute_cmd() method
-    def cp_execute_cmd(self, cmd : CMD_OBJECT_TYPE = None,
+    def cp_execute_cmd(self, cmd : CMD_OBJECT_TYPE | Command = None,
                        raise_error : bool = False) -> CMD_RESULT_TYPE:
         """Execute a command within the command processor.
 
@@ -579,41 +580,63 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
         """
         try:
             st = p3u.start_timer()
-            parse_only: bool = self.cp_cmd_attr_get(cmd, CK_PARSE_ONLY, self.cp_parse_only)
-            if parse_only:
-                cmd_string: str = f"{CK_PARSE_ONLY}: {str(cmd)}"
-                _ = self.cp_verbose_log and cp_user_info_message(cmd_string)
-                return cp_CMD_RESULT_create(status=True,
-                                                 type=CV_CMD_STRING_OUTPUT,
-                                                 content=cmd_string,
-                                                 cmd=cmd)
-            cmd_result: CMD_RESULT_TYPE = self.cp_validate_cmd(cmd)
-            if not cmd_result[CK_CMD_RESULT_STATUS]: return cmd_result
-            # if cp_validate_cmd() is good, continue.
-            exec_func: Callable = cmd[CK_CMD_EXEC_FUNC]
-            function_name = exec_func.__name__
-            cmd_str: str = f"{cmd[CK_CMD_NAME]} {cmd[CK_SUBCMD_NAME]}"
-            validate_only: bool = self.cp_cmd_attr_get(cmd, CK_VALIDATE_ONLY, self.cp_validate_only)
-            if validate_only:
-                cmd_string: str = f"{CK_VALIDATE_ONLY}: {function_name}({str(cmd)})"
-                logger.info(cmd_string)
-                return cp_CMD_RESULT_create(status=True,
-                                                 type=CV_CMD_STRING_OUTPUT,
-                                                 content=cmd_string,
-                                                 cmd=cmd)
-            if self.cp_verbose_log:
-                cp_user_info_message(f"CMD: '{cmd_str}' -> {function_name}({str(cmd)})")
+            if isinstance(cmd, Command):
+                command: Command = cmd
+                parse_only: bool = command.cmd_parms[CK_PARSE_ONLY]
+                if parse_only:
+                    cmd_string: str = f"{CK_PARSE_ONLY}: {str(command)}"
+                    _ = self.cp_verbose_log and cp_user_info_message(cmd_string)
+                    return cp_CMD_RESULT_create(status=True,
+                                                    type=CV_CMD_STRING_OUTPUT,
+                                                    content=cmd_string,
+                                                    cmd=cmd)
+                exec_func: Callable = command.cmd_exec_func
+                function_name = exec_func.__name__
+                cmd_str: str = f"{command.cmd_name} {command.subcmd_name}"
+                cmd_result: CMD_RESULT_TYPE = exec_func(command, self.DC)
+                cp_publish_cmd_result(cmd_result)
+                if cp_is_ASYNC_CMD(cmd):
+                    cp_user_none_message(f"       Async CMD '{cmd_str}' executed, results to follow...")
+                cp_user_info_message(
+                    f"Complete: [{p3u.stop_timer(st)}] "
+                    f"status: {(cmd_result[CK_CMD_RESULT_STATUS])}")
+                return cmd_result
             else:
-                cp_user_info_message(f"CMD: '{cmd_str}' -> {function_name}()")
-            # Execute a cmd with its associated exec_func from the cmd_map.
-            cmd_result: CMD_RESULT_TYPE = exec_func(cmd)
-            cp_publish_cmd_result(cmd_result)
-            if cp_is_ASYNC_CMD(cmd):
-                cp_user_none_message(f"       Async CMD '{cmd_str}' executed, results to follow...")
-            cp_user_info_message(
-                f"Complete: [{p3u.stop_timer(st)}] "
-                f"status: {(cmd_result[CK_CMD_RESULT_STATUS])}")
-            return cmd_result
+                parse_only: bool = self.cp_cmd_attr_get(cmd, CK_PARSE_ONLY, self.cp_parse_only)
+                if parse_only:
+                    cmd_string: str = f"{CK_PARSE_ONLY}: {str(cmd)}"
+                    _ = self.cp_verbose_log and cp_user_info_message(cmd_string)
+                    return cp_CMD_RESULT_create(status=True,
+                                                    type=CV_CMD_STRING_OUTPUT,
+                                                    content=cmd_string,
+                                                    cmd=cmd)
+                cmd_result: CMD_RESULT_TYPE = self.cp_validate_cmd(cmd)
+                if not cmd_result[CK_CMD_RESULT_STATUS]: return cmd_result
+                # if cp_validate_cmd() is good, continue.
+                exec_func: Callable = cmd[CK_CMD_EXEC_FUNC]
+                function_name = exec_func.__name__
+                cmd_str: str = f"{cmd[CK_CMD_NAME]} {cmd[CK_SUBCMD_NAME]}"
+                validate_only: bool = self.cp_cmd_attr_get(cmd, CK_VALIDATE_ONLY, self.cp_validate_only)
+                if validate_only:
+                    cmd_string: str = f"{CK_VALIDATE_ONLY}: {function_name}({str(cmd)})"
+                    logger.info(cmd_string)
+                    return cp_CMD_RESULT_create(status=True,
+                                                    type=CV_CMD_STRING_OUTPUT,
+                                                    content=cmd_string,
+                                                    cmd=cmd)
+                if self.cp_verbose_log:
+                    cp_user_info_message(f"CMD: '{cmd_str}' -> {function_name}({str(cmd)})")
+                else:
+                    cp_user_info_message(f"CMD: '{cmd_str}' -> {function_name}()")
+                # Execute a cmd with its associated exec_func from the cmd_map.
+                cmd_result: CMD_RESULT_TYPE = exec_func(cmd)
+                cp_publish_cmd_result(cmd_result)
+                if cp_is_ASYNC_CMD(cmd):
+                    cp_user_none_message(f"       Async CMD '{cmd_str}' executed, results to follow...")
+                cp_user_info_message(
+                    f"Complete: [{p3u.stop_timer(st)}] "
+                    f"status: {(cmd_result[CK_CMD_RESULT_STATUS])}")
+                return cmd_result
         except Exception as e:
             cmd_result = cp_CMD_RESULT_EXCEPTION_create(cmd, e)
             if raise_error:

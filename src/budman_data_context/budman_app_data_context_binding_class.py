@@ -78,6 +78,13 @@ class BudManAppDataContext_Binding(BudManAppDataContext_Base, p3m.DataContext_Bi
         return dc_binding
     #endregion Class Methods (override DataContext_Binding)
     # ------------------------------------------------------------------------ +
+    #region BudManAppDataContext_Binging __unut__() method
+    def __init__(self, data_context: BudManAppDataContext_Base = None) -> None:
+        """DC_Binding: Simple instantiation-time initialization. 
+        Binding happens at initialization-time."""
+        super().__init__(data_context)
+    #endregion BudManAppDataContext_Binging __unut__() method
+    # ------------------------------------------------------------------------ +
     #region BudManAppDataContext_Binding Properties (override DataContext_Binding)
     @property
     def DC(self) -> BudManAppDataContext_Base:

@@ -53,11 +53,11 @@ class DataContext_Binding(DataContext_Base):
     #endregion Class Methods
     # ------------------------------------------------------------------------ +
     #region DataContext_Binding __init__() method
-    def __init__(self) -> None:
+    def __init__(self, data_context: DataContext_Base = None) -> None:
         """DC_Binding: Simple instantiation-time initialization. 
         Binding happens at initialization-time."""
         # super().__init__()
-        self._data_context: DataContext_Base = None
+        self._data_context: DataContext_Base = data_context
     #endregion DataContext_Binding __init__() method
     # ------------------------------------------------------------------------ +
     #region DataContext_Binding Properties

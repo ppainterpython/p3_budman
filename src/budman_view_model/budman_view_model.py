@@ -245,6 +245,7 @@ from typing import List, Type, Optional, Dict, Tuple, Any, Callable
 import importlib
 
 # third-party modules and packages
+from budman_command_services.budman_cp_namespace import CK_CMDLINE_FI_KEY, CK_RAW_FORMAT, CK_SRC_WF_FOLDER, CK_SRC_WF_KEY, CK_SRC_WF_KEY, CK_SRC_WF_PURPOSE
 import p3_utils as p3u, p3logging as p3l, p3_mvvm as p3m
 from openpyxl import Workbook, load_workbook
 
@@ -523,6 +524,54 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                 cp.CV_CHANGE_CMD_KEY: self.CHANGE_cmd,
                 cp.CV_APP_CMD_KEY: self.APP_cmd,
             }
+            #region Command object definitions
+            self.cp_commands = {
+                # list workbooks
+                cp.CV_LIST_WORKBOOKS_SUBCMD_KEY: p3m.Command(
+                    cp:p3m.CommandProcessor=self,
+                    cmd_name=cp.CV_LIST_CMD_NAME, 
+                    cmd_exec_func=cp.BUDMAN_CMD_list_workbooks,
+                    subcmd_name=cp.CV_WORKBOOKS_SUBCMD_NAME,
+                    required_parms=[
+                        cp.CK_BDM_TREE,
+                        cp.CK_ALL_FILES,
+                        cp.CK_SRC_WF_FOLDER,
+                        cp.CK_SRC_WF_KEY,
+                        cp.CK_SRC_WF_PURPOSE,
+                        cp.CK_RAW_FORMAT,
+                        cp.CK_CMDLINE_FI_KEY]),
+                # list files
+                cp.CV_LIST_FILES_SUBCMD_KEY: p3m.Command(
+                    cp:p3m.CommandProcessor=self,
+                    cmd_name=cp.CV_LIST_CMD_NAME, 
+                    cmd_exec_func=cp.BUDMAN_CMD_list_files,
+                    subcmd_name=cp.CV_FILES_SUBCMD_NAME,
+                    required_parms=[
+                        cp.CK_BDM_TREE,
+                        cp.CK_ALL_FILES,
+                        cp.CK_SRC_WF_FOLDER,
+                        cp.CK_SRC_WF_KEY,
+                        cp.CK_SRC_WF_PURPOSE,
+                        cp.CK_RAW_FORMAT,
+                        cp.CK_CMDLINE_FI_KEY]),
+                # list BDM_STORE
+                cp.CV_LIST_BDM_STORE_SUBCMD_KEY: p3m.Command(
+                    cp:p3m.CommandProcessor=self,
+                    cmd_name=cp.CV_LIST_CMD_NAME, 
+                    cmd_exec_func=cp.BUDMAN_CMD_list_bdm_store,
+                    subcmd_name=cp.CV_BDM_STORE_SUBCMD_NAME,
+                    required_parms=[
+                        cp.CK_BDM_TREE,
+                        cp.CK_ALL_FILES,
+                        cp.CK_SRC_WF_FOLDER,
+                        cp.CK_SRC_WF_KEY,
+                        cp.CK_SRC_WF_PURPOSE,
+                        cp.CK_RAW_FORMAT,
+                        cp.CK_CMDLINE_FI_KEY])
+
+            }
+            #endregion Command object definitions
+            p3m.cp_user_info_message(f"Command map initialized with {len(self.cp_commands)} commands.")
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise

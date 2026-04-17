@@ -34,6 +34,7 @@ from datetime import datetime as dt
 # third-party modules and packages
 from arrow import now
 import p3_utils as p3u, pyjson5, p3logging as p3l, p3_mvvm as p3m
+from setuptools import command
 from openpyxl import Workbook, load_workbook
 from treelib import Tree, Node
 from rich import print
@@ -226,12 +227,12 @@ def BUDMAN_CMD_list_bdm_store_json(cmd: p3m.CMD_OBJECT_TYPE,
 # ---------------------------------------------------------------------------- +    
 #region BUDMAN_CMD_list_files()
 def BUDMAN_CMD_list_files(
-        cmd: p3m.CMD_OBJECT_TYPE,
+        cmd: p3m.Command,
         bdm_DC: BudManAppDataContext_Base,
         level: int = 0) -> p3m.CMD_RESULT_TYPE:
     """List the files in the BDM store.
     Args:
-        cmd (CMD_OBJECT_TYPE): The command object to process.
+        cmd (p3m.Command): The command object to process.
         bdm_DC (BudManAppDataContext_Base): The data context for the BudMan application.
     Returns:
         p3m.CMD_RESULT_TYPE: The result of the command execution.
@@ -245,19 +246,9 @@ def BUDMAN_CMD_list_files(
         level += 1
         # Start: ------------------------------------------------------------- +
         # Validate the cmd argsuments.
-        cmd_args: p3m.CMD_ARGS_TYPE = validate_cmd_arguments(
-            cmd=cmd, 
-            bdm_DC=bdm_DC,
-            cmd_key=CV_LIST_CMD_KEY, 
-            subcmd_key=CV_LIST_FILES_SUBCMD_KEY,
-            required_args=[
-                CK_ALL_FILES,
-                CK_SRC_WF_FOLDER,
-                CK_SRC_WF_KEY,
-                CK_SRC_WF_PURPOSE,
-                CK_RAW_FORMAT,
-                CK_CMDLINE_FI_KEY
-            ]
+        cmd_args: p3m.CMD_ARGS_TYPE = command.validate_command(
+            expected_cmd_key=CV_LIST_CMD_KEY,
+            expected_subcmd_key=CV_LIST_FILES_SUBCMD_KEY
         )
         cmd_result: p3m.CMD_RESULT_TYPE = BUDMAN_CMD_TASK_validate_model_binding(bdm_DC)
         # Validate DC is Model-aware with a model binding.

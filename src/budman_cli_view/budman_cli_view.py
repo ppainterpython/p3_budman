@@ -164,6 +164,7 @@ class BudManCLIView(cmd2.Cmd,
     #region    __init__() method
     def __init__(self, 
                  command_processor : Optional[p3m.CommandProcessor_Binding] = None,
+                 data_context : Optional[BudManAppDataContext_Binding] = None,
                  app_name : str = "budman_cli",
                  settings : Optional[bdms.BudManSettings] = None) -> None:
         # Internal attributes for this View
@@ -177,6 +178,11 @@ class BudManCLIView(cmd2.Cmd,
 
         # Setup CommandProcessor_Binding 
         p3m.CommandProcessor_Binding.__init__(self, command_processor)
+        # Bind with the CommandProcessor.
+        self.CP.view = self
+
+        # Setup BudManAppDataContext_Binding
+        BudManAppDataContext_Binding.__init__(self, data_context)
 
         # Setup CP Msg Svc bindings
         p3m.cp_msg_svc.subscribe_user_message(cli_view_cp_user_output)

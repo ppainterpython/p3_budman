@@ -230,12 +230,9 @@ class BudManApp(p3m.Model_Binding, metaclass=BDMSingletonMeta):
             # Next, instantiate the BudManCLIView class to server as the VIEW 
             # for the application. The VIEW_MODEL is bound as the CommandProcessor.
             self.view = BudManCLIView(command_processor=self.view_model,
+                                      data_context=self.DC,
                                       app_name=self.app_name,
                                       settings=self.settings)
-            # Next, bind the DATA_CONTEXT to the VIEW.
-            self.view.DC = self.DC
-            # Next, initialize the view.
-            self.view.initialize() 
             # This completes the app_services setup.
             logger.debug(f"Complete:")
             return self
