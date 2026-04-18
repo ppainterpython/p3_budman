@@ -1141,6 +1141,8 @@ def WORKFLOW_CMD_transfer_files(
         ts: str = "[bold dark_orange]CMD: [/bold dark_orange]"
         m: str = f"{pad(level)}{ts} {WORKFLOW_CMD_transfer_files.__name__}() "
         p3m.cp_user_info_message(m + "Start: ...")
+        level += 1
+        # Start: ------------------------------------------------------------- +
         # Validate the cmd argsuments.
         cmd_args: p3m.CMD_ARGS_TYPE = cp.validate_cmd_arguments(
             cmd=cmd, 
@@ -1245,6 +1247,7 @@ def WORKFLOW_CMD_transfer_files(
                 continue
         model.bdm_save_model()
         model.bdm_refresh_trees()
+        # End: --------------------------------------------------------------- +
         p3m.cp_user_info_message(m + "End: ...")
         return p3m.cp_CMD_RESULT_create(
             status=True,

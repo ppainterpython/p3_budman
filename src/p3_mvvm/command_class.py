@@ -84,11 +84,8 @@ import p3_utils as p3u
 import p3logging as p3l
 # local modules and packages
 import budman_namespace.design_language_namespace as bdm
-from budman_data_context import BudManAppDataContext_Base
 from .mvvm_namespace import *
-from .command_processor import *
 from .cp_message_service import *
-from .data_context_binding import DataContext_Binding
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals
@@ -119,19 +116,23 @@ class Command:
     #region Command __init__() method
 
     def __init__(self,
-                 cp: CommandProcessor, 
+                 cp: object, 
                  cmd_name: str, 
                  cmd_exec_func: Callable, 
                  subcmd_name: Optional[str] = None,
                  required_parms: Optional[List[str]] = None) -> None:
         """Initialize a Command object with required and optional attributes."""
-        self.cp : CommandProcessor = cp
+        if not cp:
+            raise ValueError("Command Processor (cp) is required to create a Command.")
+        self.cp : object = cp
         self.cmd_name: str = cmd_name
         self.cmd_key: str = f"{cmd_name}_cmd"
-        self.cmd_exec_func: Callable = cmd_exec_func
         if subcmd_name :
             self.subcmd_name = subcmd_name
             self.subcmd_key = f"{self.cmd_key}_{subcmd_name}"
+        if not cmd_exec_func or not callable(cmd_exec_func):
+            raise ValueError("cmd_exec_func is required and must be callable to create a Command.")
+        self.cmd_exec_func: Callable = cmd_exec_func
         self.async_id: str | None = None  
         self.cmd_parms: Dict[str, Any] = {} # Optional attribute for async command execution tracking
         # Add required_parms to cmd_parms if provided.
@@ -139,20 +140,21 @@ class Command:
             for parm in required_parms:
                 self.cmd_parms[parm] = None  # Initialize required parms with None or default values.
         self.add_common_cmd_parms()  # Add common command parameters to cmd_parms.
+        self.add_command_to_cp()  # Add the command to the Command Processor's command dictionary.
     #endregion Command __init__() method
     # ------------------------------------------------------------------------ +
 
     # ------------------------------------------------------------------------ +
     #region Instance Methods
     # ------------------------------------------------------------------------ +
-    #region add_common_cmd_parms() method
-    def add_common_cmd_parms(self) -> None:
-        """Add common command parameters to the cmd_parms dictionary."""
-        self.cmd_parms[CK_PARSE_ONLY] = False
-        self.cmd_parms[CK_VALIDATE_ONLY] = False
-        self.cmd_parms[CK_WHAT_IF] = False
-        self.cmd_parms[CK_VERBOSE] = False
-    #endregion add_common_cmd_parms() method
+    #region add_command_to_cp() method
+    def add_command_to_cp(self) -> None:
+        """Add the command to the Command Processor's command dictionary."""
+        if self.subcmd_name:
+            self.cp.cp_commands[self.subcmd_key] = self
+        else:
+            self.cp.cp_commands[self.cmd_key] = self
+    #endregion add_command_to_cp() method
     # ------------------------------------------------------------------------ +
     #region validate_command() method
     def validate_command(self,
@@ -174,21 +176,15 @@ class Command:
             if not command_def:
                 m = f"Command definition not found for key: {key}"
                 logger.error(m)
-                raise CMDValidationException(cmd=self, msg=m)
+                raise ValueError(msg=m)
             # Check it is a command of the type the caller expected.
             cmd_result : CMD_RESULT_TYPE = None
             # Should be indicated cmd_key.
-            cmd_result = self.verify_cmd_key(expected_cmd_key)
-            if not cmd_result[CK_CMD_RESULT_STATUS]: 
-                raise CMDValidationException(cmd=self, 
-                                             msg=cmd_result[CK_CMD_RESULT_CONTENT],
-                                             cmd_result_error=cmd_result)
+            if not self.verify_cmd_key(expected_cmd_key): 
+                raise ValueError(msg=f"cmd_key: '{self.cmd_key}' does not match expected_cmd_key: '{expected_cmd_key}'")
             # Should be indicated subcmd_key.
-            cmd_result = self.verify_subcmd_key(expected_subcmd_key)
-            if not cmd_result[CK_CMD_RESULT_STATUS]: 
-                raise CMDValidationException(cmd=self, 
-                                             msg=cmd_result[CK_CMD_RESULT_CONTENT],
-                                             cmd_result_error=cmd_result)
+            if not self.verify_subcmd_key(expected_subcmd_key): 
+                raise ValueError(msg=f"subcmd_key: '{self.subcmd_key}' does not match expected_subcmd_key: '{expected_subcmd_key}'")    
             # Check for required command key arguments (CK_) in the command object
             cmd_args: CMD_ARGS_TYPE = {}
             cmd_args[CK_CMD_KEY] = self.cmd_key
@@ -209,84 +205,59 @@ class Command:
                 m = (f"Missing {missing_arg_count} required arguments: "
                     f"{missing_arg_list}")
                 logger.error(m)
-                cmd_result = cp_CMD_RESULT_create(
-                    status=False,
-                    type=CV_CMD_ERROR_STRING_OUTPUT,
-                    content=missing_arg_error_msg,
-                    cmd=self
-                    )
-                raise CMDValidationException(cmd=self,
-                                             msg=cmd_result[CK_CMD_RESULT_CONTENT],
-                                             cmd_result_error=cmd_result)
+                raise ValueError(msg=m)
             return cmd_args
-        except CMDValidationException as ve:
-            raise
         except Exception as e:
             logger.error(f"Error validating command components: {e}")
-            return cp_CMD_RESULT_create(
-                status=False,
-                type=CV_CMD_ERROR_STRING_OUTPUT,
-                content=str(e),
-                cmd=self
-            )
+            raise
     #endregion validate_command() method
     # ------------------------------------------------------------------------ +
+    #region add_common_cmd_parms() method
+    def add_common_cmd_parms(self) -> None:
+        """Add common command parameters to the cmd_parms dictionary."""
+        self.cmd_parms[CK_PARSE_ONLY] = False
+        self.cmd_parms[CK_VALIDATE_ONLY] = False
+        self.cmd_parms[CK_WHAT_IF] = False
+        self.cmd_parms[CK_VERBOSE] = False
+    #endregion add_common_cmd_parms() method
+    # ------------------------------------------------------------------------ +
     #region verify_cmd_key()
-    def verify_cmd_key(self, expected_cmd_key: str) -> CMD_RESULT_TYPE:
+    def verify_cmd_key(self, expected_cmd_key: str) -> bool:
         """Verify the command key in the command object.
 
         Args:
             expected_cmd_key (str): The expected command key.
 
         Returns:
-            CMD_RESULT_TYPE: True if the command key matches, False otherwise,
-            with a returnable CMD_RESULT_TYPE.
+            bool: True if the command key matches, False otherwise.
         """
-        cmd_result: CMD_RESULT_TYPE = cp_CMD_RESULT_create(
-            status=True,
-            type=CV_CMD_STRING_OUTPUT,
-            content=f"Expected cmd_key: {expected_cmd_key} is valid.",
-            cmd=self
-        )
         if self.cmd_key != expected_cmd_key:
             # Invalid cmd_key
             m = (f"Invalid cmd_key: {self.cmd_key} "
                 f"expected: {expected_cmd_key}")
-            logger.error(m)
-            cmd_result[CK_CMD_RESULT_STATUS] = False
-            cmd_result[CK_CMD_RESULT_CONTENT] = m
-            cmd_result[CK_CMD_RESULT_CONTENT_TYPE] = CV_CMD_ERROR_STRING_OUTPUT
-        return cmd_result
+            logger.debug(m)
+            return False
+        return True
     #endregion verify_cmd_key()
     # ------------------------------------------------------------------------ +
     #region verify_subcmd_key()
     def verify_subcmd_key( self,  
-                            expected_subcmd_key: str) -> CMD_RESULT_TYPE:
+                            expected_subcmd_key: str) -> bool:
         """Verify the subcommand key in the command object.
 
         Args:
             expected_subcmd_key (str): The expected subcommand key.
 
         Returns:
-            CMD_RESULT_TYPE: True if the command key matches, False otherwise,
-            with a returnable CMD_RESULT_TYPE.
+            bool: True if the subcommand key matches, False otherwise.
         """
-        cmd_result: CMD_RESULT_TYPE = cp_CMD_RESULT_create(
-            status=True,
-            type=CV_CMD_STRING_OUTPUT,
-            content=f"Expected subcmd_key: {expected_subcmd_key} is valid.",
-            cmd=self
-        )
-        actual_subcmd_key = self.get(CK_SUBCMD_KEY)
-        if actual_subcmd_key != expected_subcmd_key:
+        if self.subcmd_key != expected_subcmd_key:
             # Invalid subcmd_key
             m = (f"Invalid subcmd_key: {self.subcmd_key} "
                 f"expected: {expected_subcmd_key}")
-            logger.error(m)
-            cmd_result[CK_CMD_RESULT_STATUS] = False
-            cmd_result[CK_CMD_RESULT_CONTENT] = m
-            cmd_result[CK_CMD_RESULT_CONTENT_TYPE] = CV_CMD_ERROR_STRING_OUTPUT
-        return cmd_result
+            logger.debug(m)
+            return False
+        return True     
     #endregion verify_cmd_key()
     # ---------------------------------------------------------------------------- +
 

@@ -16,6 +16,7 @@ from typing import List, Type, Generator, Dict, Tuple, Any, Callable, Optional
 import p3_utils as p3u, pyjson5, p3logging as p3l
 # local modules and packages
 from .mvvm_namespace import *
+from .command_class import Command
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -51,6 +52,17 @@ class CommandProcessor_Base(ABC):
     @abstractmethod
     def cp_cmd_map(self, value : Dict[str, Callable]) -> None:
         """Set the command map for the command processor."""
+        pass
+
+    @property
+    @abstractmethod
+    def cp_commands(self) -> Dict[str, Command]:
+        """Return the commands set for the command processor."""
+        pass
+    @cp_commands.setter
+    @abstractmethod
+    def cp_commands(self, value : Dict[str, Command]) -> None:
+        """Set the commands set for the command processor."""
         pass
 
     @property
@@ -108,6 +120,11 @@ class CommandProcessor_Base(ABC):
     @abstractmethod
     def cp_initialize_cmd_map(self) -> None:
         """Application-specific: Initialize the cp_cmd_map."""
+        pass
+
+    @abstractmethod
+    def cp_find_command(self, cmd_key : str, subcmd_key : str | None = None) -> Optional[Command]:
+        """Find a Command object by its cmd_key and subcmd_key if provided."""
         pass
 
     @abstractmethod

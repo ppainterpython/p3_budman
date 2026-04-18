@@ -34,11 +34,11 @@ from typing import List, Type, Generator, Dict, Tuple, Any, Optional, Union, Cal
 from rich import print
 from rich.markup import escape
 from rich.text import Text
-from rich.tree import Tree
+from rich.tree import Tree as RichTree
 from rich.console import Console
 from rich.table import Table
 import p3_utils as p3u, pyjson5, p3logging as p3l, p3_mvvm as p3m
-import cmd2
+import cmd2, argparse
 from cmd2 import with_argparser
 # local modules and packages
 import budman_settings as bdms
@@ -47,6 +47,7 @@ from budman_data_context import BudManAppDataContext_Binding
 import budman_namespace as bdm
 import budman_command_services as cp
 from budman_cli_view import BudManCLIParser
+from p3_mvvm.cp_message_service import cp_user_error_message
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -435,9 +436,9 @@ class BudManCLIView(cmd2.Cmd,
             object for the command processor.
         """
         try:
-            list_parser = self._command_parsers.get(self.do_list)
+            # list_parser = self._command_parsers.get(self.do_list)
             # Construct the command object from cmd2's argparse Namespace.
-            cmd: p3m.CMD_OBJECT_TYPE = self.cp_construct_cmd_from_argparse(opts)
+            cmd: p3m.Command = self.construct_command_from_argparse(opts)
             # Submit the command to the command processor.
             _ = self.cp_execute_cmd(cmd)
         except Exception as e:
@@ -650,13 +651,16 @@ class BudManCLIView(cmd2.Cmd,
                 self.view_user_message(output_str, p3m.CP_INFO)
             # CV_CMD_JSON_OUTPUT
             elif result_type == cp.CV_CMD_JSON_OUTPUT:
-                # JSON_STRING input is a JSON string.
+                # CV_CMD_JSON_OUTPUT input is a JSON string.
                 console.print_json(result_content)
             # CV_CMD_TREE_OBJECT
             elif result_type == cp.CV_CMD_TREE_OBJECT:
                 # CMD_RESULT content is a treelib.Tree.
                 formatted_tree = p3u.format_tree_view(result_content)
                 console.print(formatted_tree)
+            elif result_type == cp.CV_CMD_RICHTREE_OBJECT:
+                # CMD_RESULT content is a RichTree.
+                self.view_user_message(result_content, p3m.CP_NONE)
             # CV_CMD_FILE_TREE_OBJECT
             elif result_type == cp.CV_CMD_FILE_TREE_OBJECT:
                 # CMD_RESULT content is a treelib.Tree with file information.
@@ -702,12 +706,16 @@ class BudManCLIView(cmd2.Cmd,
     def view_user_message(self, msg: Optional[str], tag: Optional[str]) -> None:
         """Output user messages from the Command Processor to the CLI View."""
         try:
-            if p3u.str_empty(msg):
+            if not self.is_valid_user_message_type(msg):
                 return
             if p3u.str_empty(tag):
                 tag = p3m.CP_INFO
             prefix: str = ""
             with self.terminal_lock:
+                if tag == p3m.CP_NONE:
+                    # When CP_NONE, just output the message with no prefix.
+                    console.print(msg)
+                    return
                 for n, line in enumerate(msg.splitlines(), start=1):
                     if tag == p3m.CP_INFO:
                         prefix = f"[bold green]{p3m.CP_INFO:>7}:[/bold green] "
@@ -721,8 +729,6 @@ class BudManCLIView(cmd2.Cmd,
                         prefix = f"[bold light blue]{p3m.CP_VERBOSE:>7}:[/bold light blue] "
                     elif tag == p3m.CP_CRITICAL:
                         prefix = f"[bold dark red]{p3m.CP_CRITICAL:>7}:[/bold dark red] "
-                    elif tag == p3m.CP_NONE:
-                        prefix = ""
                     else:
                         prefix = ""
                     self.poutput(f"{prefix}{line}", markup=True)
@@ -730,6 +736,14 @@ class BudManCLIView(cmd2.Cmd,
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
     #endregion view_user_message()
+    # ------------------------------------------------------------------------ +    
+    #region is_valid_user_message_type()
+    def is_valid_user_message_type(self, msg: Any|None) -> bool:
+        """Check if the provided msg is a valid user message type."""
+        if msg is not None and isinstance(msg, (str, RichTree)):
+            return True
+        return False
+    #endregion is_valid_user_message_type()
     # ------------------------------------------------------------------------ +    
     #region BudManCLIView user message methods
     def user_info_message(self, message: str, log: bool = True) -> None:
@@ -814,6 +828,100 @@ class BudManCLIView(cmd2.Cmd,
 
     # ------------------------------------------------------------------------ +    
 #endregion BudManCLIView class
+    # ------------------------------------------------------------------------ +    
+    #endregion BudManCLIView direct user output methods
+    # ------------------------------------------------------------------------ +    
+
+    # ------------------------------------------------------------------------ +    
+    #region    construct_command_from_argparse
+    def construct_command_from_argparse(self, opts : argparse.Namespace) -> p3m.Command:
+        """Construct a valid p3m.Command (cmd) object from cmd2/argparse 
+           arguments or raise error."""
+        try:
+            # Process cmd object core values, either return a valid command 
+            # object or raise an error.
+            cmd: p3m.Command = self.extract_command_from_argparse_namespace(opts)
+            if not cmd:
+                raise ValueError("Failed to construct command object from cmd2/argparse arguments.")
+            # Process parameters affecting possible cmd.
+            # parse_only flag can be set in the view or added to any cmd.
+            self.parse_only = cmd.cmd_parms.get(p3m.CK_PARSE_ONLY, False)
+            # validate_only flag 
+            self.validate_only = cmd.cmd_parms.get(p3m.CK_VALIDATE_ONLY,False)
+            # what_if flag 
+            self.what_if = cmd.cmd_parms.get(p3m.CK_WHAT_IF, False)
+            return cmd
+        except SystemExit as e:
+            # Handle the case where argparse exits the program
+            self.pwarning(BMCLI_SYSTEM_EXIT_WARNING)
+        except Exception as e:
+            m = p3u.exc_err_msg(e)
+            cp_user_error_message(m)
+            raise
+    #endregion construct_command_from_argparse
+    # ------------------------------------------------------------------------ +
+    #region    extract_command_from_argparse_namespace
+    def extract_command_from_argparse_namespace(self, opts : argparse.Namespace) -> p3m.Command:
+        """Create a CommandProcessor cmd dictionary from argparse.Namespace.
+        
+        This method is specific to BudManCLIView which utilizes argparse for 
+        command line argument parsing integrated with cmd2.cmd for command help
+        and execution. It converts the argparse.Namespace object into a
+        dictionary suitable for the command processor to execute, but 
+        independent of the cmd2.cmd structure and argparse specifics.
+
+        A ViewModelCommandProcessor_Binding implementation must provide valid
+        ViewModelCommandProcessor cmd dictionaries to the
+        ViewModelCommandProcessor interface. This method is used to convert
+        the cmd2.cmd arguments into a dictionary that can be used by the
+        ViewModelCommandProcessor_Binding implementation.
+        """
+        try:
+            if not isinstance(opts, argparse.Namespace):
+                raise TypeError("opts must be an instance of argparse.Namespace.")
+            cmd2_cmd_name: str = ''
+            cmd_name: str = ''
+            cmd_key: str = ''
+            subcmd_name: str = ''
+            subcmd_key: str = ''
+            cmd_exec_func: Optional[Callable] = None
+
+            # Convert to p3m.Command instance, remove two common cmd2 attributes, if present.
+            # see bottom of https://cmd2.readthedocs.io/en/latest/features/argument_processing/#decorator-order
+            opts_dict = vars(opts).copy()
+            cmd2_statement: cmd2.Statement = opts_dict.pop('cmd2_statement', None).get()
+            cmd2_handler = opts_dict.pop('cmd2_handler', None).get()
+            if cmd2_statement is not None:
+                # A valid cmd2.cmd will provide a cmd_name, at a minimum.
+                # see https://cmd2.readthedocs.io/en/latest/features/commands/#statements
+                cmd2_cmd_name = cmd2_statement.command
+            # Remove cmd_name, cmd_key, subcmd_name, subcmd_key, cmd_exec_func if present in opts_dict to avoid conflicts with cmd2 attributes.
+            # Collect the command attributes present (or not) in the opts_dict.
+            cmd_name = opts_dict.pop(p3m.CK_CMD_NAME, cmd2_cmd_name) 
+            if p3u.str_empty(cmd_name):
+                # Must have cmd_name
+                raise ValueError("Invalid: No command name provided.")
+            cmd_key = opts_dict.pop(p3m.CK_CMD_KEY, f"{cmd_name}{p3m.CK_CMD_KEY_SUFFIX}")
+            subcmd_name = opts_dict.pop(p3m.CK_SUBCMD_NAME, None)
+            subcmd_key = opts_dict.pop(p3m.CK_SUBCMD_KEY, 
+                    f"{cmd_key}_{subcmd_name}" if subcmd_name else None)
+            cmd_exec_func = opts_dict.pop(p3m.CK_CMD_EXEC_FUNC, None)
+            # Validate CMD_OBJECT requirements.
+            if not p3m.cp_validate_cmd_key_with_name(cmd_name, cmd_key):
+                raise ValueError(f"Invalid: cmd_key '{cmd_key}' does not match cmd_name '{cmd_name}'.")
+            if (p3u.str_notempty(subcmd_name) and 
+                not p3m.cp_validate_subcmd_key_with_name(subcmd_name, cmd_key, subcmd_key)):
+                raise ValueError(f"Invalid: subcmd_key '{subcmd_key}' does not "
+                                f"match subcmd_name '{subcmd_name}'.")
+            cmd: p3m.Command = self.cp_find_command(cmd_key, subcmd_key)
+            if cmd:
+                cmd.cmd_parms.update(opts_dict)
+            return cmd
+        except Exception as e:
+            cp_user_error_message(p3u.exc_err_msg(e))
+            raise ValueError(f"Failed to create command object from cmd2:opts: {e}")
+    #endregion extract_command_from_argparse_namespace
+    # ------------------------------------------------------------------------ +
 # ============================================================================ +
 
 # ---------------------------------------------------------------------------- +

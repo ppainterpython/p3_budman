@@ -11,8 +11,17 @@ __license__ = "MIT"
 
 from .budman_cp_namespace import *
 from .budman_command_services import (
-    # BUDMAN_CMD_TASK functions
+    # BUDMAN_CMD execution functions
     BUDMAN_CMD_router,
+    BUDMAN_CMD_list_workbooks,
+    BUDMAN_CMD_list_bdm_store_json,
+    BUDMAN_CMD_list_files,
+    BUDMAN_CMD_show_DATA_CONTEXT,
+    BUDMAN_CMD_app_sync,
+    BUDMAN_CMD_app_log,
+    BUDMAN_CMD_app_refresh,
+    BUDMAN_CMD_app_reload,
+    BUDMAN_CMD_app_delete,
     # BudMan Command File Services
     BUDMAN_CMD_FILE_SERVICE_get_BSMFile,
     BUDMAN_CMD_FILE_SERVICE_get_full_filename,
@@ -33,6 +42,15 @@ from .budget_intake import (
 __all__ = [
     "BudManApp",
     "BUDMAN_CMD_router",
+    "BUDMAN_CMD_list_workbooks",
+    "BUDMAN_CMD_list_bdm_store_json",
+    "BUDMAN_CMD_list_files",
+    "BUDMAN_CMD_show_DATA_CONTEXT",
+    "BUDMAN_CMD_app_sync",
+    "BUDMAN_CMD_app_log",
+    "BUDMAN_CMD_app_refresh",
+    "BUDMAN_CMD_app_reload",
+    "BUDMAN_CMD_app_delete",
     # budman_command_services.py
     "BUDMAN_CMD_FILE_SERVICE_get_BSMFile",
     "BUDMAN_CMD_FILE_SERVICE_get_full_filename",

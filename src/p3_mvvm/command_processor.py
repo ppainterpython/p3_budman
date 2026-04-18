@@ -123,7 +123,8 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
     #region    __init__() constructor method
     def __init__(self, view: View_Base|None = None) -> None:
         self._initialized : bool = False
-        self._cmd_map : Dict[str, Callable] = None
+        self._cmd_map : Dict[str, Callable] | None = None
+        self._commands : Dict[str, Command] = {}
         self._parse_only : bool = False
         self._validate_only : bool = False
         self._what_if : bool = False
@@ -133,8 +134,8 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
         self._cp_message_service: CPMessageService = CPMessageService(view=view)
         # Cmd Asyn attributes
         self._worker_thread : Optional[threading.Thread] = None
-        self._async_cmd_queue: queue.Queue = None
-        self._async_cmd_result_queue: queue.Queue = None
+        self._async_cmd_queue: queue.Queue | None = None
+        self._async_cmd_result_queue: queue.Queue | None = None
         self._async_cmd_result_registry: Dict[str, CMD_RESULT_TYPE] = {}
     #endregion __init__() constructor method
     # ------------------------------------------------------------------------ +
@@ -160,6 +161,17 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
         if not isinstance(value, dict):
             raise ValueError("cp_cmd_map must be a dictionary.")
         self._cmd_map = value
+
+    @property
+    def cp_commands(self) -> Dict[str, Callable]:
+        """Return the command set for the command processor."""
+        return self._commands
+    @cp_commands.setter
+    def cp_commands(self, value : Dict[str, Callable]) -> None:
+        """Set the command set for the command processor."""
+        if not isinstance(value, dict):
+            raise ValueError("cp_commands must be a dictionary.")
+        self._commands = value
 
     @property
     def cp_parse_only(self) -> bool:
@@ -425,6 +437,26 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
         return cnt
     #endregion cp_process_async_cmd_results() method
     # ------------------------------------------------------------------------ +
+    #region    cp_find_command() method
+    def cp_find_command(self, cmd_key: str, subcmd_key: str | None = None) -> Optional[Command]:
+        """Find a Command object by its cmd_key and subcmd_key if provided."""
+        if self.cp_commands is None:
+            logger.warning("cp_commands is not initialized.")
+            return None
+        key: str = subcmd_key if subcmd_key else cmd_key
+        command: Command | None = self.cp_commands.get(key, None)
+        if command and command.cmd_key == cmd_key and command.subcmd_key == subcmd_key:
+            return Command(
+                cp=self,
+                cmd_name=command.cmd_name,
+                cmd_exec_func=command.cmd_exec_func,
+                subcmd_name=command.subcmd_name,
+                required_parms=command.cmd_parms
+            )
+        logger.warning(f"Command with cmd_key '{cmd_key}' subcmd_key '{subcmd_key}' not found.")
+        return None
+    #endregion cp_find_command() method
+    # ------------------------------------------------------------------------ +
     #region    cp_validate_cmd() method
     def cp_validate_cmd(self, 
                         cmd : CMD_OBJECT_TYPE = None,
@@ -488,47 +520,70 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
                 if raise_error:
                     raise RuntimeError(m)
                 return False
-            if p3u.is_not_obj_of_type("cmd",cmd,dict,raise_error=raise_error):
-                cmd_type = type(cmd).__name__
-                m = f"Invalid CMD_OBJECT type: '{cmd_type}', no action taken."
-                logger.error(m)
-                if raise_error:
-                    raise RuntimeError(m)
-                return False
-            if not cp_is_CMD_OBJECT(cmd):
-                m = f"No action taken, invalid CMD_OBJECT[{str(cmd)}]."
-                logger.error(m)
-                if raise_error:
-                    raise RuntimeError(m)
-                return False
-            if len(cmd) == 0:
-                m = f"CMD_OBJECT is empty, no action taken."
-                logger.error(m)
-                if raise_error:
-                    raise RuntimeError(m)
-                return False
-            # Examine the CMD_OBJECT for the required cmd values.
-            success : bool = False
-            cmd_exec_func : Callable = None
-            # Check for the current cmd keys.
-            cmd_key:str = cmd.get(CK_CMD_KEY, None)
-            if not p3u.str_notempty(cmd_key):
-                m = f"CMD_OBJECT is missing required key '{CK_CMD_KEY}'."
-                logger.error(m)
-                if raise_error:
-                    raise RuntimeError(m)
-                return False
-            cmd_name:str = cmd.get(CK_CMD_NAME, None)
-            subcmd_name:str = cmd.get(CK_SUBCMD_NAME, None)
-            subcmd_key:str = cmd.get(CK_SUBCMD_KEY, None)
-            # Bind the command execution function, using subcmd_key first,
-            # then cmd_key, then the UNKNOWN_cmd function.
-            if subcmd_key:
-                cmd_exec_func = self.cp_exec_func_binding(subcmd_key, None)
-            if cmd_key and cmd_exec_func is None:
-                cmd_exec_func = self.cp_exec_func_binding(cmd_key, self.UNKNOWN_cmd)
-            # Set the command key CK_CMD_EXEC_FUNC in the CMD_OBJECT.
-            cmd[CK_CMD_EXEC_FUNC] = cmd_exec_func
+            if isinstance(cmd, Command):
+                # Examine the CMD_OBJECT for the required cmd values.
+                success : bool = False
+                cmd_exec_func : Callable = None
+                # Check for the current cmd keys.
+                if not p3u.str_notempty(cmd.cmd_key):
+                    m = f"Command is missing required attribute 'cmd_key'."
+                    logger.error(m)
+                    if raise_error:
+                        raise RuntimeError(m)
+                    return False
+                cmd_name:str = cmd.cmd_name
+                subcmd_name:str = cmd.subcmd_name
+                subcmd_key:str = cmd.subcmd_key
+                # Bind the command execution function, using subcmd_key first,
+                # then cmd_key, then the UNKNOWN_cmd function.
+                if subcmd_key:
+                    cmd_exec_func = self.cp_exec_func_binding(subcmd_key, None)
+                if cmd_key and cmd_exec_func is None:
+                    cmd_exec_func = self.cp_exec_func_binding(cmd_key, self.UNKNOWN_cmd)
+                # Set the command key CK_CMD_EXEC_FUNC in the CMD_OBJECT.
+                cmd[CK_CMD_EXEC_FUNC] = cmd_exec_func
+            else:
+                if p3u.is_not_obj_of_type("cmd",cmd,dict,raise_error=raise_error):
+                    cmd_type = type(cmd).__name__
+                    m = f"Invalid CMD_OBJECT type: '{cmd_type}', no action taken."
+                    logger.error(m)
+                    if raise_error:
+                        raise RuntimeError(m)
+                    return False
+                if not cp_is_CMD_OBJECT(cmd):
+                    m = f"No action taken, invalid CMD_OBJECT[{str(cmd)}]."
+                    logger.error(m)
+                    if raise_error:
+                        raise RuntimeError(m)
+                    return False
+                if len(cmd) == 0:
+                    m = f"CMD_OBJECT is empty, no action taken."
+                    logger.error(m)
+                    if raise_error:
+                        raise RuntimeError(m)
+                    return False
+                # Examine the CMD_OBJECT for the required cmd values.
+                success : bool = False
+                cmd_exec_func : Callable = None
+                # Check for the current cmd keys.
+                cmd_key:str = cmd.get(CK_CMD_KEY, None)
+                if not p3u.str_notempty(cmd_key):
+                    m = f"CMD_OBJECT is missing required key '{CK_CMD_KEY}'."
+                    logger.error(m)
+                    if raise_error:
+                        raise RuntimeError(m)
+                    return False
+                cmd_name:str = cmd.get(CK_CMD_NAME, None)
+                subcmd_name:str = cmd.get(CK_SUBCMD_NAME, None)
+                subcmd_key:str = cmd.get(CK_SUBCMD_KEY, None)
+                # Bind the command execution function, using subcmd_key first,
+                # then cmd_key, then the UNKNOWN_cmd function.
+                if subcmd_key:
+                    cmd_exec_func = self.cp_exec_func_binding(subcmd_key, None)
+                if cmd_key and cmd_exec_func is None:
+                    cmd_exec_func = self.cp_exec_func_binding(cmd_key, self.UNKNOWN_cmd)
+                # Set the command key CK_CMD_EXEC_FUNC in the CMD_OBJECT.
+                cmd[CK_CMD_EXEC_FUNC] = cmd_exec_func
             logger.debug(f"Success validating CMD_OBJECT: {str(cmd)}")
             return True
         except Exception as e:
