@@ -83,21 +83,8 @@ def BUDMAN_CMD_router(cmd: p3m.CMD_OBJECT_TYPE,
                                raise_error= True)
         # Assuming the CMD_OBJECT has been validated before reaching this point.
         # Process the CMD_OBJECT based on its cmd_key and subcmd_key.
-        # List command
-        if cmd[p3m.CK_CMD_KEY] == CV_LIST_CMD_KEY:
-            if cmd[p3m.CK_SUBCMD_KEY] == CV_LIST_WORKBOOKS_SUBCMD_KEY:
-                # List workbooks
-                return BUDMAN_CMD_list_workbooks(cmd, bdm_DC)
-            elif cmd[p3m.CK_SUBCMD_NAME] == CV_BDM_STORE_SUBCMD_NAME:
-                # List BDM_STORE as JSON
-                return BUDMAN_CMD_list_bdm_store_json(cmd, bdm_DC)
-            elif cmd[p3m.CK_SUBCMD_KEY] == CV_LIST_FILES_SUBCMD_KEY:
-                # List files in the BDM store
-                return BUDMAN_CMD_list_files(cmd, bdm_DC)
-            else:
-                return p3m.cp_CMD_RESULT_ERROR_unknown(cmd)
         # Show command
-        elif cmd[p3m.CK_CMD_KEY] == CV_SHOW_CMD_KEY:
+        if cmd[p3m.CK_CMD_KEY] == CV_SHOW_CMD_KEY:
             if cmd[p3m.CK_SUBCMD_KEY] == CV_SHOW_DATA_CONTEXT_SUBCMD_KEY:
                 return BUDMAN_CMD_show_DATA_CONTEXT(cmd, bdm_DC)
             elif cmd[p3m.CK_SUBCMD_KEY] == CV_SHOW_BUDGET_CATEGORIES_SUBCMD_KEY:
@@ -159,6 +146,9 @@ def BUDMAN_CMD_list_workbooks(cmd: p3m.Command,
             expected_cmd_key=CV_LIST_CMD_KEY,
             expected_subcmd_key=CV_LIST_WORKBOOKS_SUBCMD_KEY
         )
+        # Extract parameter values from cmd_args
+        prev_fi_key: str = bdm_DC.dc_FI_KEY
+        fi_key: str = cmd_args.get(CK_CMDLINE_FI_KEY, None)
         bdm_tree: bool = cmd.cmd_parms.get(CK_BDM_TREE, False)
         # Construct CMD_RESULT for return.
         cmd_result: p3m.CMD_RESULT_TYPE = p3m.cp_CMD_RESULT_create(cmd=cmd)
@@ -273,6 +263,7 @@ def BUDMAN_CMD_list_files(
         level += 1
         # Start: ------------------------------------------------------------- +
         # Validate the cmd argsuments.
+
         cmd_args: p3m.CMD_ARGS_TYPE = cmd.validate_command(
             expected_cmd_key=CV_LIST_CMD_KEY,
             expected_subcmd_key=CV_LIST_FILES_SUBCMD_KEY
@@ -282,6 +273,12 @@ def BUDMAN_CMD_list_files(
         if not cmd_result[p3m.CK_CMD_RESULT_STATUS]:
             return cmd_result
         model: BudgetDomainModel = bdm_DC.model
+        all_files: bool = cmd_args.get(CK_ALL_FILES, False)
+        src_wf_folder: bool = cmd_args.get(CK_SRC_WF_FOLDER, False)
+        raw_format: bool = cmd_args.get(CK_RAW_FORMAT, False)
+        fi_key: str = cmd_args.get(CK_CMDLINE_FI_KEY, None)
+        prev_fi_key: str = bdm_DC.dc_FI_KEY
+        bdm_DC.dc_FI_KEY = fi_key if fi_key else prev_fi_key
         # Refresh the BSM file tree in the model to ensure it is up to date.
         model.bdm_FILE_TREE_refresh()
         bsm_file_tree : BSMFileTree = model.bsm_file_tree
@@ -293,10 +290,6 @@ def BUDMAN_CMD_list_files(
             cmd=cmd
         )
         # List files all_files | wf_folder
-        fi_key: str = cmd_args.get(CK_CMDLINE_FI_KEY, None)
-        all_files: bool = cmd_args.get(CK_ALL_FILES, False)
-        src_wf_folder: bool = cmd_args.get(CK_SRC_WF_FOLDER, False)
-        raw_format: bool = cmd_args.get(CK_RAW_FORMAT, False)
         # If src_wf_folder, then will need wf_key and wf_purpose.
         if src_wf_folder:
             wf_key: str = cmd_args.get(CK_SRC_WF_KEY, None)
@@ -340,6 +333,7 @@ def BUDMAN_CMD_list_files(
                     type=p3m.CV_CMD_STRING_OUTPUT)
         if src_wf_folder and not all_files:
             # From the Model, get the wf_folder_url for an fi_key, wf_key, wf_purpose
+
             fi_wf_folder_url: str = model.bdm_WF_FOLDER_CONFIG_ATTRIBUTE(
                 fi_key=fi_key, wf_key=wf_key, wf_purpose=wf_purpose, 
                 attribute=bdm.WF_FOLDER_URL, raise_errors=False)
@@ -363,6 +357,8 @@ def BUDMAN_CMD_list_files(
         return cmd_result
     except Exception as e:
         return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
+    finally:
+        bdm_DC.dc_FI_KEY = prev_fi_key
 #endregion BUDMAN_CMD_list_files()
 # ---------------------------------------------------------------------------- +    
 #region BUDMAN_CMD_show_DATA_CONTEXT()

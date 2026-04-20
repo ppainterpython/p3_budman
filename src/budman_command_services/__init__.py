@@ -33,7 +33,14 @@ from .budman_command_services import (
 )
 from .workflow_command_services import (
     WORKFLOW_CMD_router,
-    WORKFLOW_CMD_process
+    WORKFLOW_CMD_transfer_files,
+    WORKFLOW_CMD_transfer_workbooks,
+    WORKFLOW_CMD_process,
+    WORKFLOW_TASK_categorize_transactions,
+    WORKFLOW_TASK_delete_workbooks,
+    WORKFLOW_CMD_check_workbooks,
+    WORKFLOW_TASK_update_catalog_map,
+    WORKFLOW_CMD_transfer_files
 )
 from .budget_intake import (
     INTAKE_SBCMD_router

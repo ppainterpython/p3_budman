@@ -272,11 +272,11 @@ logger = logging.getLogger(__name__)
 class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor, 
                       p3m.ViewModel_Base, p3m.Model_Binding): 
     # ======================================================================== +
-    #region    BudManViewModel_Base class intrinsics                              +
+    #region    BudManViewModel_Base class intrinsics                           +
     # ======================================================================== +
     #                                                                          +
     # ------------------------------------------------------------------------ +
-    #region BudManViewModel class doc string                                   +
+    #region    BudManViewModel class doc string                                +
     """BudManViewModel - A Budget Manager View Model providing 
     CommandProcessor & Data Context.
     
@@ -441,7 +441,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
     # ======================================================================== +
 
     # ======================================================================== +
-    #region    BudManViewModel p3m.CommandProcessor super class Override methods          +
+    #region    BudManViewModel p3m.CommandProcessor superclass Override methods+
     # ======================================================================== +
     #region    Design Notes                                                    +
     """ ViewModelCommandProcessor Design Notes (future ABC)
@@ -537,7 +537,9 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                     cp.CK_SRC_WF_KEY,
                     cp.CK_SRC_WF_PURPOSE,
                     cp.CK_RAW_FORMAT,
-                    cp.CK_CMDLINE_FI_KEY])
+                    cp.CK_CMDLINE_FI_KEY
+                    ]
+                )
             # list files
             cmd = p3m.Command(
                 cp=self,
@@ -545,13 +547,14 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                 subcmd_name=cp.CV_FILES_SUBCMD_NAME,
                 cmd_exec_func=cp.BUDMAN_CMD_list_files,
                 required_parms=[
-                    cp.CK_BDM_TREE,
                     cp.CK_ALL_FILES,
+                    cp.CK_CMDLINE_FI_KEY,
                     cp.CK_SRC_WF_FOLDER,
                     cp.CK_SRC_WF_KEY,
                     cp.CK_SRC_WF_PURPOSE,
-                    cp.CK_RAW_FORMAT,
-                    cp.CK_CMDLINE_FI_KEY])
+                    cp.CK_RAW_FORMAT
+                    ]
+                )
             # list BDM_STORE
             cmd = p3m.Command(
                 cp=self,
@@ -565,7 +568,38 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                     cp.CK_SRC_WF_KEY,
                     cp.CK_SRC_WF_PURPOSE,
                     cp.CK_RAW_FORMAT,
-                    cp.CK_CMDLINE_FI_KEY])
+                    cp.CK_CMDLINE_FI_KEY
+                    ]
+                )
+            # workflow transfer files
+            cmd = p3m.Command(
+                cp=self,
+                cmd_name=cp.CV_WORKFLOW_CMD_NAME, 
+                subcmd_name=cp.CV_WORKFLOW_TRANSFER_SUBCMD_KEY,
+                cmd_exec_func=cp.WORKFLOW_CMD_transfer_files,
+                required_parms=[
+                    cp.CK_TRANSFER_FILES,
+                    cp.CK_FILE_LIST,
+                    cp.CK_WF_KEY,
+                    cp.CK_WF_PURPOSE,
+                    cp.CK_WB_TYPE
+                    ]
+                )
+            # workflow process files
+            cmd = p3m.Command(
+                cp=self,
+                cmd_name=cp.CV_WORKFLOW_CMD_NAME, 
+                subcmd_name=cp.CV_PROCESS_SUBCMD_NAME,
+                cmd_exec_func=cp.WORKFLOW_CMD_process,
+                required_parms=[
+                    cp.CK_TRANSFER_FILES,
+                    cp.CK_TRANSFER_WORKBOOKS,
+                    cp.CK_FILE_LIST,
+                    cp.CK_WF_KEY,
+                    cp.CK_WF_PURPOSE,
+                    cp.CK_WB_TYPE
+                    ]
+                )
             #endregion Command object definitions
             p3m.cp_user_info_message(f"Command map initialized with {len(self.cp_commands)} commands.")
         except Exception as e:

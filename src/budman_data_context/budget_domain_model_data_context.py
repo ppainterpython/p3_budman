@@ -111,16 +111,6 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
         if not isinstance(value, dict):
             raise TypeError(f"dc_FI_OBJECT must be an FI_OBJECT, "
                             f"not {type(value).__name__}.")
-        # The value's FI_KEY must match dc_FI_KEY.
-        if value[FI_KEY] != self.dc_FI_KEY:
-            raise ValueError(f"FI_OBJECT key mismatch: "
-                             f"value[{FI_KEY}]('{value[FI_KEY]}') != "
-                             f"dc_FI_KEY('{self.dc_FI_KEY}')")
-        # The new FI_OBJECT value must be the same object from model.
-        if value != self.model.bdm_FI_COLLECTION.get(self.dc_FI_KEY, None):
-            raise ValueError(f"dc_FI_OBJECT must be the same object from "
-                             f"model.bdm_FI_COLLECTION for key "
-                             f"dc_FI_KEY'{self.dc_FI_KEY}').")
         self._dc_FI_OBJECT = value
 
     @property

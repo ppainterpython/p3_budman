@@ -251,9 +251,9 @@ class BudManCLIParser():
             parser = self.list_cmd
             parser.prog = app_name
             list_cmd_defaults = {
+                # cp.CK_CMDLINE_FI_KEY: self.settings[BUDMAN_DEFAULT_FI],
                 p3m.CK_CMD_KEY: cp.CV_LIST_CMD_KEY,
                 p3m.CK_CMD_NAME: cp.CV_LIST_CMD_NAME,
-                cp.CK_CMDLINE_FI_KEY: self.settings[BUDMAN_DEFAULT_FI]
             }
             parser.set_defaults(**list_cmd_defaults)
             # List command subparsers
@@ -303,6 +303,7 @@ class BudManCLIParser():
                 p3m.CK_SUBCMD_NAME: cp.CV_FILES_SUBCMD_NAME,
                 p3m.CK_SUBCMD_KEY: cp.CV_LIST_FILES_SUBCMD_KEY,
                 cp.CK_ALL_FILES: True,
+                cp.CK_CMDLINE_FI_KEY: self.settings[BUDMAN_DEFAULT_FI],
                 cp.CK_SRC_WF_FOLDER: False,
                 cp.CK_SRC_WF_KEY: None,
                 cp.CK_SRC_WF_PURPOSE: None,
@@ -315,6 +316,8 @@ class BudManCLIParser():
             # wf_folder specified as wf_key and wf_purpose values.
             self.add_all_files_subparser(files_subcmd_subparsers)
             self.add_src_wf_folder_subparser(files_subcmd_subparsers)
+            # self.add_CK_CMDLINE_FI_KEY_optional_argument(files_subcmd_parser)
+            self.add_common_optional_args(files_subcmd_parser)
             #endregion files_subcmd_parser
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
@@ -866,7 +869,7 @@ class BudManCLIParser():
         try:
             valid_fi_keys: List[str] = self.settings[BUDMAN_VALID_FI_KEYS]
             parser.add_argument(
-                f"--{cp.CK_CMDLINE_FI_KEY}", "-fi", 
+                "-fi", f"--{cp.CK_CMDLINE_FI_KEY}", 
                 dest=cp.CK_CMDLINE_FI_KEY, 
                 choices=valid_fi_keys,
                 action="store",
@@ -927,6 +930,7 @@ class BudManCLIParser():
                 help="Specify all files.")
             all_files_parser_defaults = { 
                 cp.CK_ALL_FILES: True,
+                cp.CK_CMDLINE_FI_KEY: self.settings[BUDMAN_DEFAULT_FI],
                 cp.CK_SRC_WF_FOLDER: False,
                 cp.CK_SRC_WF_KEY: None,
                 cp.CK_SRC_WF_PURPOSE: None,
@@ -955,6 +959,7 @@ class BudManCLIParser():
             src_wf_folder_parser_defaults = {
                 cp.CK_ALL_FILES: False, 
                 cp.CK_SRC_WF_FOLDER: True,
+                cp.CK_CMDLINE_FI_KEY: self.settings[BUDMAN_DEFAULT_FI],
                 cp.CK_SRC_WF_KEY: None,
                 cp.CK_SRC_WF_PURPOSE: None,
                 cp.CK_RAW_FORMAT: False
@@ -1090,11 +1095,11 @@ class BudManCLIParser():
                 action="store_true", 
                 help="Command args are only validated with results returned, but no cmd execution.")
             common_args.add_argument(
-                f"--{cp.CK_WHAT_IF}", 
+                "-wif", f"--{cp.CK_WHAT_IF}", 
                 action="store_true", 
                 help="Return details about what the command would do, but don't to any action.")
             common_args.add_argument(
-                f"--{cp.CK_VERBOSE}", "-vb", 
+                "-vb", f"--{cp.CK_VERBOSE}",  
                 action="store_true", 
                 help="Enable verbose logging output.")
             return common_args

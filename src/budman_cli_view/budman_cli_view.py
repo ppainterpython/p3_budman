@@ -203,12 +203,22 @@ class BudManCLIView(cmd2.Cmd,
         self.register_postcmd_hook(self.postcmd_hook)
         self.register_postparsing_hook(self.postparsing_hook)
         # Configure set cmd parameters
-        self.parse_only = False
+        self.parse_only: bool = False
         self.add_settable(
             cmd2.Settable(cp.CK_PARSE_ONLY, str, 'parse_only mode: on|off|toggle',
                           self, onchange_cb=self._onchange_parse_only)
         )
-        self.verbose = False
+        self.validate_only: bool = False
+        self.add_settable(
+            cmd2.Settable(cp.CK_VALIDATE_ONLY, str, 'validate_only mode: on|off|toggle',
+                          self, onchange_cb=self._onchange_validate_only)
+        )
+        self.what_if: bool = False
+        self.add_settable(
+            cmd2.Settable(cp.CK_WHAT_IF, str, 'what_if mode: on|off|toggle',
+                          self, onchange_cb=self._onchange_what_if)
+        )
+        self.verbose: bool = False
         self.add_settable(
             cmd2.Settable(cp.CK_VERBOSE, str, 'verbose mode: on|off|toggle',
                           self, onchange_cb=self._onchange_verbose)
@@ -435,16 +445,16 @@ class BudManCLIView(cmd2.Cmd,
             the arguments with argparse. The opts dict becomes the command
             object for the command processor.
         """
-        try:
+        try:  # Catch exceptions here at top of the command execution chain
             # list_parser = self._command_parsers.get(self.do_list)
             # Construct the command object from cmd2's argparse Namespace.
             cmd: p3m.Command = self.construct_command_from_argparse(opts)
             # Submit the command to the command processor.
             _ = self.cp_execute_cmd(cmd)
+            _ = self._persist_history()
         except Exception as e:
             m = p3u.exc_err_msg(e)
-            logger.error(m)
-            self.pexcept(m)
+            cp_user_error_message(m)
     #endregion do_show command
     # ------------------------------------------------------------------------ +
     #region do_load command - load workbooks
@@ -613,14 +623,24 @@ class BudManCLIView(cmd2.Cmd,
         """
         try:
             # Construct the command object from cmd2's argparse Namespace.
-            cmd: p3m.CMD_OBJECT_TYPE = self.cp_construct_cmd_from_argparse(opts)
+            cmd: p3m.Command = self.construct_command_from_argparse(opts)
             # Submit the command to the command processor.
-            _  = self.cp_execute_cmd(cmd)
+            _ = self.cp_execute_cmd(cmd)
+            _ = self._persist_history()
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
             self.pexcept(e)
     #endregion do_workflow command
+    # ------------------------------------------------------------------------ +
+    #
+    #endregion BudManCLIView do_ommand Execution Methods
+    # ======================================================================== +
+
+    # ======================================================================== +
+    #region BudManCLIView direct user output methods
+    # ------------------------------------------------------------------------ +
+    #
     # ------------------------------------------------------------------------ +
     #region cmd_result_output() method
     def output_cmd_result(self, cmd_result: p3m.CMD_RESULT_TYPE):
@@ -692,15 +712,6 @@ class BudManCLIView(cmd2.Cmd,
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
     #endregion cmd_result_output() method
-    # ------------------------------------------------------------------------ +
-    #
-    #endregion BudManCLIView do_ommand Execution Methods
-    # ======================================================================== +
-
-    # ======================================================================== +
-    #region BudManCLIView direct user output methods
-    # ------------------------------------------------------------------------ +
-    #
     # ------------------------------------------------------------------------ +
     #region view_user_message()
     def view_user_message(self, msg: Optional[str], tag: Optional[str]) -> None:
@@ -784,9 +795,7 @@ class BudManCLIView(cmd2.Cmd,
     def user_message(self, message: str, log: bool = True) -> None:
         """Publish a user message with no prefix."""
         self.user_none_message(message)
-    #region BudManCLIView user message methods
-    # ------------------------------------------------------------------------ +    
-    #
+    #endregion BudManCLIView user message methods
     # ------------------------------------------------------------------------ +    
     #
     #endregion BudManCLIView direct user output methods
@@ -808,7 +817,31 @@ class BudManCLIView(cmd2.Cmd,
         elif new == "off" or new == 'false':
             self.parse_only = False
     #endregion _onchange_parse_only
-    # ------------------------------------------------------------------------ +    
+    # ------------------------------------------------------------------------ +
+    #region _onchange_validate_only    
+    def _onchange_validate_only(self, _param_name, _old, new: str) -> None:
+        """validate_only settalbe attribute was changed."""
+        new = new.lower()
+        if new == "toggle":
+            self.validate_only = not self.cp_validate_only
+        elif new == "on" or new == 'true':
+            self.validate_only = True
+        elif new == "off" or new == 'false':
+            self.validate_only = False
+    #endregion _onchange_validate_only
+    # ------------------------------------------------------------------------ +
+    #region _onchange_what_if
+    def _onchange_what_if(self, _param_name, _old, new: str) -> None:
+        """what_if settalbe attribute was changed."""
+        new = new.lower()
+        if new == "toggle":
+            self.what_if = not self.cp_what_if
+        elif new == "on" or new == 'true':
+            self.what_if = True
+        elif new == "off" or new == 'false':
+            self.what_if = False
+    #endregion _onchange_what_if
+    # ------------------------------------------------------------------------ +
     #region _onchange_verbose
     def _onchange_verbose(self, _param_name, _old, new: str) -> None:
         """verbose settalbe attribute was changed."""
@@ -822,42 +855,26 @@ class BudManCLIView(cmd2.Cmd,
         self.cp_verbose_log = self.verbose
     #endregion _onchange_verbose
     # ------------------------------------------------------------------------ +    
-    #
-    #endregion BudManCLIView Helper Methods
-    # ======================================================================== +
-
-    # ------------------------------------------------------------------------ +    
-#endregion BudManCLIView class
-    # ------------------------------------------------------------------------ +    
-    #endregion BudManCLIView direct user output methods
-    # ------------------------------------------------------------------------ +    
-
-    # ------------------------------------------------------------------------ +    
     #region    construct_command_from_argparse
     def construct_command_from_argparse(self, opts : argparse.Namespace) -> p3m.Command:
         """Construct a valid p3m.Command (cmd) object from cmd2/argparse 
            arguments or raise error."""
-        try:
-            # Process cmd object core values, either return a valid command 
-            # object or raise an error.
-            cmd: p3m.Command = self.extract_command_from_argparse_namespace(opts)
-            if not cmd:
-                raise ValueError("Failed to construct command object from cmd2/argparse arguments.")
-            # Process parameters affecting possible cmd.
-            # parse_only flag can be set in the view or added to any cmd.
-            self.parse_only = cmd.cmd_parms.get(p3m.CK_PARSE_ONLY, False)
-            # validate_only flag 
-            self.validate_only = cmd.cmd_parms.get(p3m.CK_VALIDATE_ONLY,False)
-            # what_if flag 
-            self.what_if = cmd.cmd_parms.get(p3m.CK_WHAT_IF, False)
-            return cmd
-        except SystemExit as e:
-            # Handle the case where argparse exits the program
-            self.pwarning(BMCLI_SYSTEM_EXIT_WARNING)
-        except Exception as e:
-            m = p3u.exc_err_msg(e)
-            cp_user_error_message(m)
-            raise
+        # Process cmd object core values, either return a valid command 
+        # object or raise an error.
+        cmd: p3m.Command = self.extract_command_from_argparse_namespace(opts)
+        if not cmd:
+            raise ValueError("Failed to construct command object from cmd2/argparse arguments.")
+        # Process parameters affecting possible cmd.
+        # parse_only flag can be set in the view or added to any cmd.
+        if self.parse_only: 
+            cmd.cmd_parms[p3m.CK_PARSE_ONLY] = True
+        # validate_only flag 
+        if self.validate_only:
+            cmd.cmd_parms[p3m.CK_VALIDATE_ONLY] = True
+        # what_if flag 
+        if self.what_if:
+            cmd.cmd_parms[p3m.CK_WHAT_IF] = True
+        return cmd
     #endregion construct_command_from_argparse
     # ------------------------------------------------------------------------ +
     #region    extract_command_from_argparse_namespace
@@ -876,52 +893,65 @@ class BudManCLIView(cmd2.Cmd,
         the cmd2.cmd arguments into a dictionary that can be used by the
         ViewModelCommandProcessor_Binding implementation.
         """
-        try:
-            if not isinstance(opts, argparse.Namespace):
-                raise TypeError("opts must be an instance of argparse.Namespace.")
-            cmd2_cmd_name: str = ''
-            cmd_name: str = ''
-            cmd_key: str = ''
-            subcmd_name: str = ''
-            subcmd_key: str = ''
-            cmd_exec_func: Optional[Callable] = None
+        if not isinstance(opts, argparse.Namespace):
+            raise TypeError("opts must be an instance of argparse.Namespace.")
+        cmd2_cmd_name: str = ''
+        cmd_name: str = ''
+        cmd_key: str = ''
+        subcmd_name: str = ''
+        subcmd_key: str = ''
+        cmd_exec_func: Optional[Callable] = None
 
-            # Convert to p3m.Command instance, remove two common cmd2 attributes, if present.
-            # see bottom of https://cmd2.readthedocs.io/en/latest/features/argument_processing/#decorator-order
-            opts_dict = vars(opts).copy()
-            cmd2_statement: cmd2.Statement = opts_dict.pop('cmd2_statement', None).get()
-            cmd2_handler = opts_dict.pop('cmd2_handler', None).get()
-            if cmd2_statement is not None:
-                # A valid cmd2.cmd will provide a cmd_name, at a minimum.
-                # see https://cmd2.readthedocs.io/en/latest/features/commands/#statements
-                cmd2_cmd_name = cmd2_statement.command
-            # Remove cmd_name, cmd_key, subcmd_name, subcmd_key, cmd_exec_func if present in opts_dict to avoid conflicts with cmd2 attributes.
-            # Collect the command attributes present (or not) in the opts_dict.
-            cmd_name = opts_dict.pop(p3m.CK_CMD_NAME, cmd2_cmd_name) 
-            if p3u.str_empty(cmd_name):
-                # Must have cmd_name
-                raise ValueError("Invalid: No command name provided.")
-            cmd_key = opts_dict.pop(p3m.CK_CMD_KEY, f"{cmd_name}{p3m.CK_CMD_KEY_SUFFIX}")
-            subcmd_name = opts_dict.pop(p3m.CK_SUBCMD_NAME, None)
-            subcmd_key = opts_dict.pop(p3m.CK_SUBCMD_KEY, 
-                    f"{cmd_key}_{subcmd_name}" if subcmd_name else None)
-            cmd_exec_func = opts_dict.pop(p3m.CK_CMD_EXEC_FUNC, None)
-            # Validate CMD_OBJECT requirements.
-            if not p3m.cp_validate_cmd_key_with_name(cmd_name, cmd_key):
-                raise ValueError(f"Invalid: cmd_key '{cmd_key}' does not match cmd_name '{cmd_name}'.")
-            if (p3u.str_notempty(subcmd_name) and 
-                not p3m.cp_validate_subcmd_key_with_name(subcmd_name, cmd_key, subcmd_key)):
-                raise ValueError(f"Invalid: subcmd_key '{subcmd_key}' does not "
-                                f"match subcmd_name '{subcmd_name}'.")
-            cmd: p3m.Command = self.cp_find_command(cmd_key, subcmd_key)
-            if cmd:
-                cmd.cmd_parms.update(opts_dict)
-            return cmd
-        except Exception as e:
-            cp_user_error_message(p3u.exc_err_msg(e))
-            raise ValueError(f"Failed to create command object from cmd2:opts: {e}")
+        # Convert to p3m.Command instance, remove two common cmd2 attributes, if present.
+        # see bottom of https://cmd2.readthedocs.io/en/latest/features/argument_processing/#decorator-order
+        opts_dict = vars(opts).copy()
+        cmd2_statement: cmd2.Statement = opts_dict.pop('cmd2_statement', None).get()
+        cmd2_handler = opts_dict.pop('cmd2_handler', None).get()
+        if cmd2_statement is not None:
+            # A valid cmd2.cmd will provide a cmd_name, at a minimum.
+            # see https://cmd2.readthedocs.io/en/latest/features/commands/#statements
+            cmd2_cmd_name = cmd2_statement.command
+        # Remove cmd_name, cmd_key, subcmd_name, subcmd_key, cmd_exec_func if present in opts_dict to avoid conflicts with cmd2 attributes.
+        # Collect the command attributes present (or not) in the opts_dict.
+        cmd_name = opts_dict.pop(p3m.CK_CMD_NAME, cmd2_cmd_name) 
+        if p3u.str_empty(cmd_name):
+            # Must have cmd_name
+            raise ValueError("Invalid: No command name provided.")
+        cmd_key = opts_dict.pop(p3m.CK_CMD_KEY, f"{cmd_name}{p3m.CK_CMD_KEY_SUFFIX}")
+        subcmd_name = opts_dict.pop(p3m.CK_SUBCMD_NAME, None)
+        subcmd_key = opts_dict.pop(p3m.CK_SUBCMD_KEY, 
+                f"{cmd_key}_{subcmd_name}" if subcmd_name else None)
+        cmd_exec_func = opts_dict.pop(p3m.CK_CMD_EXEC_FUNC, None)
+        # Validate CMD_OBJECT requirements.
+        if not p3m.cp_validate_cmd_key_with_name(cmd_name, cmd_key):
+            raise ValueError(f"Invalid: cmd_key '{cmd_key}' does not match cmd_name '{cmd_name}'.")
+        if (p3u.str_notempty(subcmd_name) and 
+            not p3m.cp_validate_subcmd_key_with_name(subcmd_name, cmd_key, subcmd_key)):
+            raise ValueError(f"Invalid: subcmd_key '{subcmd_key}' does not "
+                            f"match subcmd_name '{subcmd_name}'.")
+        if cp.CK_SRC_WF_PURPOSE in opts_dict:
+            opts_dict[cp.CK_SRC_WF_PURPOSE] = self.translate_wf_purpose(opts_dict[cp.CK_SRC_WF_PURPOSE])
+        cmd: p3m.Command = self.cp_find_command(cmd_key, subcmd_key)
+        if cmd:
+            cmd.cmd_parms.update(opts_dict)
+        return cmd
     #endregion extract_command_from_argparse_namespace
     # ------------------------------------------------------------------------ +
+    #region    translate_wf_purpose
+    def translate_wf_purpose(self, wf_purpose: str) -> str:
+        """Translate workflow purpose to user-friendly string."""
+        if p3u.str_empty(wf_purpose):
+            return "Unknown Purpose"
+        translate_purpose: dict = dict(zip(bdm.VALID_WF_PURPOSE_CHOICES, 
+                                           bdm.VALID_WF_PURPOSE_VALUES))
+        return translate_purpose.get(wf_purpose.lower(), wf_purpose)
+    #endregion translate_wf_purpose
+    # ------------------------------------------------------------------------ +
+    #
+    #endregion BudManCLIView Helper Methods
+    # ======================================================================== +
+
+#endregion BudManCLIView class
 # ============================================================================ +
 
 # ---------------------------------------------------------------------------- +

@@ -417,13 +417,17 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
                 cmd_result: CMD_RESULT_TYPE = self.cp_async_cmd_result_queue.get_nowait()
                 if cmd_result is None:
                     break  # Exit signal, requires explicit .put(None) to stop
-                cmd: CMD_OBJECT_TYPE = cmd_result.get(CK_CMD_OBJECT_VALUE, None)
+                cmd: CMD_OBJECT_TYPE | Command | None = cmd_result.get(CK_CMD_OBJECT_VALUE, None)
                 if cmd is None:
                     logger.error(f"Invalid cmd_result without cmd_object: {str(cmd_result)}")
                     self.cp_async_cmd_result_queue.task_done()
                     continue
-                async_id: str = cmd.get(CK_CMD_ASYNC_ID, None)
-                async_subscriber: Callable = cmd.get(CK_CMD_ASYNC_RESULT_SUBSCRIBER, None)
+                if isinstance(cmd, Command):
+                    async_id: str = getattr(cmd, CK_CMD_ASYNC_ID, None)
+                    async_subscriber: Callable = getattr(cmd, CK_CMD_ASYNC_RESULT_SUBSCRIBER, None)
+                else:
+                    async_id: str = cmd.get(CK_CMD_ASYNC_ID, None)
+                    async_subscriber: Callable = cmd.get(CK_CMD_ASYNC_RESULT_SUBSCRIBER, None)
                 if async_id is None or async_subscriber is None:
                     logger.error(f"Invalid async cmd result: {str(cmd_result)}")
                     self.cp_async_cmd_result_queue.task_done()
@@ -636,15 +640,16 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
         try:
             st = p3u.start_timer()
             if isinstance(cmd, Command):
+                cmd_result: CMD_RESULT_TYPE = cp_CMD_RESULT_create(status=True,
+                                                    type=CV_CMD_STRING_OUTPUT,
+                                                    content="",
+                                                    cmd=cmd)
                 command: Command = cmd
                 parse_only: bool = command.cmd_parms[CK_PARSE_ONLY]
                 if parse_only:
-                    cmd_string: str = f"{CK_PARSE_ONLY}: {str(command)}"
-                    _ = self.cp_verbose_log and cp_user_info_message(cmd_string)
-                    return cp_CMD_RESULT_create(status=True,
-                                                    type=CV_CMD_STRING_OUTPUT,
-                                                    content=cmd_string,
-                                                    cmd=cmd)
+                    cmd_result[CK_CMD_RESULT_CONTENT] = f"{CK_PARSE_ONLY}: {str(command)}"
+                    cp_publish_cmd_result(cmd_result)
+                    return cmd_result
                 exec_func: Callable = command.cmd_exec_func
                 function_name = exec_func.__name__
                 cmd_str: str = f"{command.cmd_name} {command.subcmd_name}"
@@ -1010,7 +1015,7 @@ def cp_CMD_RESULT_create(
     status: bool = False,
     type: str = CV_CMD_STRING_OUTPUT,
     content: Optional[Any] = "No result content.",
-    cmd: Optional[CMD_OBJECT_TYPE] = None
+    cmd: CMD_OBJECT_TYPE | Command | None = None
 ) -> CMD_RESULT_TYPE:
     """Construct a CMD_RESULT_OBJECT from input parameters."""
     cmd_result = {
@@ -1048,21 +1053,30 @@ def cp_is_CMD_RESULT(cmd_result: Any) -> bool:
 #endregion cp_is_CMD_RESULT() function
 # ---------------------------------------------------------------------------- +
 #region    cp_CMD_RESULT_ERROR_create() function
-def cp_CMD_RESULT_ERROR_create(cmd: CMD_OBJECT_TYPE|None, msg: str|None = None) -> CMD_RESULT_TYPE:
+def cp_CMD_RESULT_ERROR_create(cmd: CMD_OBJECT_TYPE|Command|None, 
+                               msg: str|None = None) -> CMD_RESULT_TYPE:
         """Return a CMD_RESULT based on an Error msg.
 
         Executing the cmd resulted in Error. Wrap the error message
         and return it in a CMD_RESULT suitable to return as an error.
 
         Arguments:
-            cmd (Dict): A valid CMD_OBJECT_TYPE.
+            cmd (Dict|Command|None): A valid CMD_OBJECT_TYPE or Command object.
 
         Returns:
             CMD_RESULT_TYPE with error information and status of False.
             
         """
-        m = (f"Error executing cmd: {cmd.get(CK_CMD_KEY,"Unknown cmd_key")} "
-             f"{cmd.get(CK_SUBCMD_KEY, "Unknown subcmd_key")}: {msg}")
+        if isinstance(cmd, Command):
+            cmd_key = cmd.cmd_key
+            subcmd_key = cmd.subcmd_key
+        elif isinstance(cmd, dict):
+            cmd_key = cmd.get(CK_CMD_KEY, "Unknown cmd_key")
+            subcmd_key = cmd.get(CK_SUBCMD_KEY, "Unknown subcmd_key")
+        else:
+            cmd_key = "Unknown cmd_key"
+            subcmd_key = "Unknown subcmd_key"
+        m = (f"Error executing cmd: {cmd_key} {subcmd_key}: {msg}")
         logger.error(m)
         return cp_CMD_RESULT_create(
             status = False,
@@ -1073,41 +1087,58 @@ def cp_CMD_RESULT_ERROR_create(cmd: CMD_OBJECT_TYPE|None, msg: str|None = None) 
 #endregion cp_CMD_RESULT_ERROR_create() function
 # ---------------------------------------------------------------------------- +
 #region    cp_CMD_RESULT_EXCEPTION_create() function
-def cp_CMD_RESULT_EXCEPTION_create(cmd: CMD_OBJECT_TYPE, e: Exception) -> CMD_RESULT_TYPE:
+def cp_CMD_RESULT_EXCEPTION_create(cmd: CMD_OBJECT_TYPE|Command|None, e: Exception) -> CMD_RESULT_TYPE:
         """Return a CMD_RESULT based on an Exception e for the CMD_OBJECT execution.
 
         Executing the cmd resulted in Exception e. Format an error message
         and return it in a CMD_RESULT suitable to return as an error.
 
         Arguments:
-            cmd (Dict): A valid CMD_OBJECT_TYPE.
+            cmd (Dict|Command|None): A valid CMD_OBJECT_TYPE or Command object.
             e (Exception): The exception that occurred.
 
         Returns:
             CMD_RESULT_TYPE with error information and status of False.
             
         """
-        m = (f"Exception executing cmd: {cmd.get(CK_CMD_KEY,"Unknown cmd_key")} "
-             f"{cmd.get(CK_SUBCMD_KEY, "Unknown subcmd_key")}: "
+        if isinstance(cmd, Command):
+            cmd_key = cmd.cmd_key
+            subcmd_key = cmd.subcmd_key
+        elif isinstance(cmd, dict):
+            cmd_key = cmd.get(CK_CMD_KEY, "Unknown cmd_key")
+            subcmd_key = cmd.get(CK_SUBCMD_KEY, "Unknown subcmd_key")
+        else:
+            cmd_key = "Unknown cmd_key"
+            subcmd_key = "Unknown subcmd_key"
+        m = (f"Exception executing cmd: {cmd_key} {subcmd_key}: "
              f"{p3u.exc_err_msg(e)}")
         logger.error(m)
         return cp_CMD_RESULT_ERROR_create(cmd, m)
 #endregion cp_CMD_RESULT_EXCEPTION_create() function
 # ---------------------------------------------------------------------------- +
 #region    cp_CMD_RESULT_ERROR_unknown() function
-def cp_CMD_RESULT_ERROR_unknown(cmd: CMD_OBJECT_TYPE, msg: Optional[str] = None) -> CMD_RESULT_TYPE:
+def cp_CMD_RESULT_ERROR_unknown(cmd: CMD_OBJECT_TYPE|Command|None, msg: Optional[str] = None) -> CMD_RESULT_TYPE:
         """Return a CMD_RESULT based on unknown CK_CMD_KEY and CK_SUBCMD_KEY.
 
         Arguments:
-            cmd (Dict): A valid CMD_OBJECT_TYPE.
+            cmd (Dict|Command|None): A valid CMD_OBJECT_TYPE or Command object.
 
         Returns:
             CMD_RESULT_TYPE with error information and status of False.
             
         """
         if msg is None:
-            msg = (f"Error unknown {CK_CMD_KEY}: '{cmd.get(CK_CMD_KEY,None)}' "
-             f"{CK_SUBCMD_KEY}: '{cmd.get(CK_SUBCMD_KEY, None)}' ")
+            if isinstance(cmd, Command):
+                cmd_key = cmd.cmd_key
+                subcmd_key = cmd.subcmd_key
+            elif isinstance(cmd, dict):
+                cmd_key = cmd.get(CK_CMD_KEY, "Unknown cmd_key")
+                subcmd_key = cmd.get(CK_SUBCMD_KEY, "Unknown subcmd_key")
+            else:
+                cmd_key = "Unknown cmd_key"
+                subcmd_key = "Unknown subcmd_key"
+            msg = (f"Error unknown {CK_CMD_KEY}: '{cmd_key}' "
+                   f"{CK_SUBCMD_KEY}: '{subcmd_key}' ")
         logger.error(msg)
         return cp_CMD_RESULT_create(
             status = False,

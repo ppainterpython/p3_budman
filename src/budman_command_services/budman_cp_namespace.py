@@ -10,8 +10,8 @@ Command Processor Objects."""
 # third-party modules and packages
 
 # local modules and packages
-import p3_mvvm as p3m
 import budman_namespace as bdm
+import p3_mvvm as p3m
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants

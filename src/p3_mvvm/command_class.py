@@ -97,6 +97,9 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 #region Command class
 class Command:
+    # ------------------------------------------------------------------------ +
+    #region    Command class instrisics - override for app-specific
+    # ------------------------------------------------------------------------ +
     #region Command class docstring
     """Command: A class representing a command in the Command Processor pattern.
     
@@ -134,6 +137,7 @@ class Command:
             raise ValueError("cmd_exec_func is required and must be callable to create a Command.")
         self.cmd_exec_func: Callable = cmd_exec_func
         self.async_id: str | None = None  
+        self.cmd_async_result_subscriber: Callable | None = None
         self.cmd_parms: Dict[str, Any] = {} # Optional attribute for async command execution tracking
         # Add required_parms to cmd_parms if provided.
         if required_parms:
@@ -142,6 +146,18 @@ class Command:
         self.add_common_cmd_parms()  # Add common command parameters to cmd_parms.
         self.add_command_to_cp()  # Add the command to the Command Processor's command dictionary.
     #endregion Command __init__() method
+    # ------------------------------------------------------------------------ +
+    #region __str__() method
+    def __str__(self) -> str:
+        """Return a string representation of the Command object."""
+        return (f"Command(cmd_name='{self.cmd_name}', cmd_key='{self.cmd_key}', "
+                f"subcmd_name='{getattr(self, 'subcmd_name', None)}', "
+                f"subcmd_key='{getattr(self, 'subcmd_key', None)}', "
+                f"cmd_exec_func='{self.cmd_exec_func.__name__}', "
+                f"cmd_parms={self.cmd_parms})")
+    #endregion __str__() method
+    # ------------------------------------------------------------------------ +
+    #region    Command class instrisics - override for app-specific
     # ------------------------------------------------------------------------ +
 
     # ------------------------------------------------------------------------ +

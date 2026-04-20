@@ -34,6 +34,7 @@ BUDMAN_CMD_HISTORY_FILENAME = "budman.cmd_history_filename"
 # [financial_institutions] Table
 FINANCIAL_INSTITUTIONS = "financial_institutions"  # Dict[fi_key, full filename of FI's transaction data
 BUDMAN_VALID_FI_KEYS = "financial_institutions.valid_fi_keys"  # List of valid FI keys
+BUDMAN_DEFAULT_FI = "financial_institutions.default_fi"
 # [category_catalog] Table
 CATEGORY_CATALOG = "category_catalog"
 TXN_CATEGORIES_WORKBOOK_FULL_FILENAME = "txn_categories_workbook_full_filename"
