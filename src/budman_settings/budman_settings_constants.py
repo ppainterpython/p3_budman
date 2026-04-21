@@ -31,6 +31,7 @@ BUDMAN_DEFAULT_WORKFLOW = "budman.default_workflow"
 BUDMAN_DEFAULT_WORKFLOW_PURPOSE = "budman.default_workflow_purpose"
 BUDMAN_DEFAULT_WORKBOOK_TYPE = "budman.default_workbook_type"
 BUDMAN_CMD_HISTORY_FILENAME = "budman.cmd_history_filename"
+BUDMAN_CMD_STARTUP_SCRIPT = "budman.cmd_startup_script"
 # [financial_institutions] Table
 FINANCIAL_INSTITUTIONS = "financial_institutions"  # Dict[fi_key, full filename of FI's transaction data
 BUDMAN_VALID_FI_KEYS = "financial_institutions.valid_fi_keys"  # List of valid FI keys

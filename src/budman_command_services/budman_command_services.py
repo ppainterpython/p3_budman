@@ -358,6 +358,7 @@ def BUDMAN_CMD_list_files(
     except Exception as e:
         return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
     finally:
+        # Restore previous DC Values if they were modified.
         bdm_DC.dc_FI_KEY = prev_fi_key
 #endregion BUDMAN_CMD_list_files()
 # ---------------------------------------------------------------------------- +    

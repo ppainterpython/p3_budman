@@ -42,7 +42,7 @@ import cmd2, argparse
 from cmd2 import with_argparser
 # local modules and packages
 import budman_settings as bdms
-from budman_settings.budman_settings_constants import BUDMAN_CMD_HISTORY_FILENAME
+from budman_settings.budman_settings_constants import BUDMAN_CMD_HISTORY_FILENAME, BUDMAN_CMD_STARTUP_SCRIPT
 from budman_data_context import BudManAppDataContext_Binding
 import budman_namespace as bdm
 import budman_command_services as cp
@@ -185,18 +185,20 @@ class BudManCLIView(cmd2.Cmd,
         # Setup BudManAppDataContext_Binding
         BudManAppDataContext_Binding.__init__(self, data_context)
 
-        # Setup CP Msg Svc bindings
+        # Setup CP Msg Svc subscriber bindings
         p3m.cp_msg_svc.subscribe_user_message(cli_view_cp_user_output)
         p3m.cp_msg_svc.subscribe_cmd_result_message(cli_cmd_result_output)
 
         # Setup and initialize cmd2.cmd cli parser
         shortcuts = dict(cmd2.DEFAULT_SHORTCUTS)
         shortcuts.update({'wf': 'workflow'})
-        hfn = self._settings[BUDMAN_CMD_HISTORY_FILENAME]
+        hfn = self.settings[BUDMAN_CMD_HISTORY_FILENAME]
+        startup_script: str = self.settings.BUDMAN_CMD_STARTUP_SCRIPT_abs_path_str()
         cmd2.Cmd.__init__(self, 
                           shortcuts=shortcuts,
                           allow_cli_args=False, 
                           include_ipy=True,
+                          startup_script=startup_script,
                           persistent_history_file=hfn)
         # self.allow_style = ansi.AllowStyle.TERMINAL
         self.register_precmd_hook(self.precmd_hook)
@@ -390,6 +392,7 @@ class BudManCLIView(cmd2.Cmd,
 
         """
         try:
+            _ = self._persist_history()
             # Construct the command object from cmd2's argparse Namespace.
             cmd: p3m.CMD_OBJECT_TYPE = self.cp_construct_cmd_from_argparse(opts)
             # If app exit cmd, handle here.
@@ -418,6 +421,7 @@ class BudManCLIView(cmd2.Cmd,
     def do_change(self, opts):
         """Change (ch) attributes of workbooks and other objects in the Data Context for the Budget Manager application."""
         try:
+            _ = self._persist_history()
             # Construct the command object from cmd2's argparse Namespace.
             cmd: p3m.CMD_OBJECT_TYPE = self.cp_construct_cmd_from_argparse(opts)
             # Submit the command to the command processor.
@@ -446,12 +450,12 @@ class BudManCLIView(cmd2.Cmd,
             object for the command processor.
         """
         try:  # Catch exceptions here at top of the command execution chain
+            _ = self._persist_history()
             # list_parser = self._command_parsers.get(self.do_list)
             # Construct the command object from cmd2's argparse Namespace.
             cmd: p3m.Command = self.construct_command_from_argparse(opts)
             # Submit the command to the command processor.
             _ = self.cp_execute_cmd(cmd)
-            _ = self._persist_history()
         except Exception as e:
             m = p3u.exc_err_msg(e)
             cp_user_error_message(m)
@@ -477,6 +481,7 @@ class BudManCLIView(cmd2.Cmd,
             object for the command processor.
         """
         try:
+            _ = self._persist_history()
             # Construct the command object from cmd2's argparse Namespace.
             cmd: p3m.CMD_OBJECT_TYPE = self.cp_construct_cmd_from_argparse(opts)
             # Submit the command to the command processor.
@@ -498,6 +503,7 @@ class BudManCLIView(cmd2.Cmd,
     def do_restart(self, args):
         """Restart the Budget Manager CLI application."""
         try:
+            _ = self._persist_history()
             logger.info(f"BizEVENT: Restarting the application.")
             # Restart the application.
             python = sys.executable
@@ -528,6 +534,7 @@ class BudManCLIView(cmd2.Cmd,
             object for the command processor.
         """
         try:
+            _ = self._persist_history()
             # Construct the command object from cmd2's argparse Namespace.
             cmd: p3m.CMD_OBJECT_TYPE = self.cp_construct_cmd_from_argparse(opts)
             # _  = self.cp_execute_cmd(cmd)
@@ -560,7 +567,9 @@ class BudManCLIView(cmd2.Cmd,
             object for the command processor.
         """
         try:
+            _ = self._persist_history()
             # Construct the command object from cmd2's argparse Namespace.
+            _ = self._persist_history()
             cmd: p3m.CMD_OBJECT_TYPE = self.cp_construct_cmd_from_argparse(opts)
            # Submit the command to the command processor.
             _ = self.cp_execute_cmd(cmd)
@@ -588,6 +597,7 @@ class BudManCLIView(cmd2.Cmd,
             object for the command processor.
         """
         try:
+            _ = self._persist_history()
             # Construct the command object from cmd2's argparse Namespace.
             cmd: p3m.CMD_OBJECT_TYPE = self.cp_construct_cmd_from_argparse(opts)
            # Submit the command to the command processor.
@@ -622,11 +632,11 @@ class BudManCLIView(cmd2.Cmd,
 
         """
         try:
+            _ = self._persist_history()
             # Construct the command object from cmd2's argparse Namespace.
             cmd: p3m.Command = self.construct_command_from_argparse(opts)
             # Submit the command to the command processor.
             _ = self.cp_execute_cmd(cmd)
-            _ = self._persist_history()
         except Exception as e:
             m = p3u.exc_err_msg(e)
             logger.error(m)
@@ -900,13 +910,12 @@ class BudManCLIView(cmd2.Cmd,
         cmd_key: str = ''
         subcmd_name: str = ''
         subcmd_key: str = ''
-        cmd_exec_func: Optional[Callable] = None
 
         # Convert to p3m.Command instance, remove two common cmd2 attributes, if present.
         # see bottom of https://cmd2.readthedocs.io/en/latest/features/argument_processing/#decorator-order
         opts_dict = vars(opts).copy()
         cmd2_statement: cmd2.Statement = opts_dict.pop('cmd2_statement', None).get()
-        cmd2_handler = opts_dict.pop('cmd2_handler', None).get()
+        _ = opts_dict.pop('cmd2_handler', None).get()
         if cmd2_statement is not None:
             # A valid cmd2.cmd will provide a cmd_name, at a minimum.
             # see https://cmd2.readthedocs.io/en/latest/features/commands/#statements
@@ -921,7 +930,7 @@ class BudManCLIView(cmd2.Cmd,
         subcmd_name = opts_dict.pop(p3m.CK_SUBCMD_NAME, None)
         subcmd_key = opts_dict.pop(p3m.CK_SUBCMD_KEY, 
                 f"{cmd_key}_{subcmd_name}" if subcmd_name else None)
-        cmd_exec_func = opts_dict.pop(p3m.CK_CMD_EXEC_FUNC, None)
+        _ = opts_dict.pop(p3m.CK_CMD_EXEC_FUNC, None)
         # Validate CMD_OBJECT requirements.
         if not p3m.cp_validate_cmd_key_with_name(cmd_name, cmd_key):
             raise ValueError(f"Invalid: cmd_key '{cmd_key}' does not match cmd_name '{cmd_name}'.")

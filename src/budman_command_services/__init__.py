@@ -39,11 +39,12 @@ from .workflow_command_services import (
     WORKFLOW_TASK_categorize_transactions,
     WORKFLOW_TASK_delete_workbooks,
     WORKFLOW_CMD_check_workbooks,
-    WORKFLOW_TASK_update_catalog_map,
+    WORKFLOW_CMD_update_catalog_map,
     WORKFLOW_CMD_transfer_files
 )
 from .budget_intake import (
-    INTAKE_SBCMD_router
+    INTAKE_SBCMD_router,
+    INTAKE_TASK_convert_csv_txns_schema
 )
 # target for 'from budman_app import *'
 __all__ = [
@@ -71,5 +72,6 @@ __all__ = [
     "WORKFLOW_CMD_process",
     # budget_intake",
     "INTAKE_SBCMD_router",
+    "INTAKE_TASK_convert_csv_txns_schema"
 ]
 

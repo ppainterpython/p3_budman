@@ -34,7 +34,7 @@ from budget_categorization import BDMTXNCategoryManager
 logger = logging.getLogger(__name__)
 console = Console(force_terminal=True,width=bdm.BUDMAN_WIDTH, highlight=True,
                   soft_wrap=False)
-console.print(f"Starting {__name__}...")
+console.print(f"Starting [green]{__name__}...[/green]")
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +

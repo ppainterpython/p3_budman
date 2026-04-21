@@ -29,6 +29,8 @@ from openpyxl.cell.cell import Cell
 from treelib import Tree
 
 # local modules and packages
+import budman_settings as bdms
+from budget_categorization import BDMTXNCategoryManager
 import budman_command_services as cp
 import budman_namespace.design_language_namespace as bdm
 from budman_namespace.bdm_workbook_class import BDMWorkbook
@@ -81,6 +83,32 @@ def INTAKE_SBCMD_router(cmd: p3m.CMD_OBJECT_TYPE,
     except Exception as e:
         return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
 #endregion INTAKE_SBCMD_router() function
+# ---------------------------------------------------------------------------- +
+#region INTAKE_TASK_convert_csv_file_schema() function
+def INTAKE_TASK_convert_csv_txns_schema(csv_txns_wb: BDMWorkbook) -> bdm.BUDMAN_RESULT_TYPE:
+    """workflow intake task: convert a .csv file schema to BudMan standard for
+    .csv_txns workbook type.
+
+    Workflow Intake Task to convert an intake/input .csv file schema from the 
+    associate fi_key schema the builtin-in .csv_txns schema.
+
+    Args:
+        csv_txns_wb (BDMWorkbook): A valid BudMan Workbook object for .csv_txns.
+    """
+    try:
+        #region Initialization and validation
+        succss: bool = False
+        result: str = ''
+        settings: bdms.BudManSettings = bdms.BudManSettings()
+        catman: BDMTXNCategoryManager = BDMTXNCategoryManager(settings)
+
+        #endregion Initialization and validation
+
+        return True, "Successfully converted .csv file schema to BudMan standard for .csv_txns workbook type."
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        return False, str(e)
+#endregion INTAKE_TASK_convert_csv_file_schema() function
 # ---------------------------------------------------------------------------- +
 #region INTAKE_TASK_copy_file_to_wf_folder() function
 def INTAKE_TASK_copy_file_to_wf_folder(

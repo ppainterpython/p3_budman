@@ -110,6 +110,7 @@ class TXNCategoryMap:
         self._compiled_category_map: Dict[re.Pattern, str] = None
         self._check_register_map: Dict[str, str] = None
         self._category_histogram: CategoryCounter = CategoryCounter()
+        self._csv_file_input_columns: List[str] = []
     #endregion __init__()
     # ------------------------------------------------------------------------ +
     #region TXNCategoryCatalogItem properties
@@ -213,6 +214,15 @@ class TXNCategoryMap:
     def category_histogram(self, value: CategoryCounter):
         """Set the category histogram."""
         self._category_histogram = value
+
+    @property
+    def csv_file_input_columns(self) -> List[str]:
+        """Get the list of expected CSV file input columns."""
+        return self._csv_file_input_columns
+    @csv_file_input_columns.setter
+    def csv_file_input_columns(self, value: List[str]):
+        """Set the list of expected CSV file input columns."""
+        self._csv_file_input_columns = value
     #endregion TXNCategoryCatalogItem properties
     # ------------------------------------------------------------------------ +
     #endregion TXNCategoryCatalog class intrinsics
@@ -475,6 +485,7 @@ class TXNCategoryMap:
             self.category_map_module = mod
             self.category_map = mod.category_map
             self.check_register_map = mod.check_register_map
+            self.csv_file_input_columns = mod.CSV_FILE_INPUT_COLUMNS
             self.compile_category_map()
             # self.compiled_category_map = mod.compile_category_map(mod.category_map)
             if not isinstance(self._category_map, dict):

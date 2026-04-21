@@ -90,3 +90,20 @@ class BudManSettings(Dynaconf,metaclass=BDMSingletonMeta):
             raise
     #endregion FI_FOLDER_abs_path()
     # ------------------------------------------------------------------------ +
+    #region    BUDMAN_CMD_STARTUP_SCRIPT_abs_path_str()
+    def BUDMAN_CMD_STARTUP_SCRIPT_abs_path_str(self) -> str:
+        """Return the absolute path to the BUDMAN_CMD_STARTUP_SCRIPT as a string."""
+        try:
+            budman_folder = self[BDM_FOLDER]
+            budman_folder_abs_path = Path(budman_folder).expanduser().resolve()
+            startup_script = self[BUDMAN_CMD_STARTUP_SCRIPT]
+            startup_script_abs_path = budman_folder_abs_path / startup_script
+            if not startup_script_abs_path.exists():
+                logger.warning(f"Startup script '{startup_script_abs_path}' does not exist.")
+                return ''  # Return empty string if the startup script does not exist
+            return str(startup_script_abs_path)
+        except Exception as e:
+            logger.error(exc_err_msg(e))
+            return ''  # Return empty string if there is an error
+    #endregion BUDMAN_CMD_STARTUP_SCRIPT_abs_path_str()
+    # ------------------------------------------------------------------------ +

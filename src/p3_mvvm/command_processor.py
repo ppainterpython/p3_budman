@@ -1009,7 +1009,7 @@ def cp_validate_subcmd_key_with_name(subcmd_name: str, cmd_key: str,
 
 # ---------------------------------------------------------------------------- +
 #region    CMD_RESULT objecvt functions
-# --------------------------------------------------------------------------- +
+# ---------------------------------------------------------------------------- +
 #region    cp_CMD_RESULT_create()
 def cp_CMD_RESULT_create(
     status: bool = False,
@@ -1035,7 +1035,7 @@ def cp_CMD_RESULT_summary(cmd_result: CMD_RESULT_TYPE) -> str:
     status: bool = cmd_result.get(CK_CMD_RESULT_STATUS, False)
     content_type: str = cmd_result.get(CK_CMD_RESULT_CONTENT_TYPE, "Unknown")
     content: Any = cmd_result.get(CK_CMD_RESULT_CONTENT, "No content")
-    content_len: int = len(content)
+    content_len: int = len(content) if hasattr(content, '__len__') else -1
     summary: str = (f"CMD_RESULT: "
                     f"Status: {'Success' if status else 'Failure'} "
                     f"Content Type: {content_type} "

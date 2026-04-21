@@ -575,13 +575,15 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             cmd = p3m.Command(
                 cp=self,
                 cmd_name=cp.CV_WORKFLOW_CMD_NAME, 
-                subcmd_name=cp.CV_WORKFLOW_TRANSFER_SUBCMD_KEY,
+                subcmd_name=cp.CV_TRANSFER_SUBCMD_NAME,
                 cmd_exec_func=cp.WORKFLOW_CMD_transfer_files,
                 required_parms=[
+                    cp.CK_CMDLINE_FI_KEY,
                     cp.CK_TRANSFER_FILES,
                     cp.CK_FILE_LIST,
-                    cp.CK_WF_KEY,
-                    cp.CK_WF_PURPOSE,
+                    cp.CK_CMDLINE_FI_KEY,
+                    cp.CK_SRC_WF_KEY,
+                    cp.CK_SRC_WF_PURPOSE,
                     cp.CK_WB_TYPE
                     ]
                 )
@@ -596,8 +598,20 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                     cp.CK_TRANSFER_WORKBOOKS,
                     cp.CK_FILE_LIST,
                     cp.CK_WF_KEY,
+                    cp.CK_CMDLINE_FI_KEY,
                     cp.CK_WF_PURPOSE,
                     cp.CK_WB_TYPE
+                    ]
+                )
+            # workflow update files
+            cmd = p3m.Command(
+                cp=self,
+                cmd_name=cp.CV_WORKFLOW_CMD_NAME, 
+                subcmd_name=cp.CV_UPDATE_SUBCMD_NAME,
+                cmd_exec_func=cp.WORKFLOW_CMD_update_catalog_map,
+                required_parms=[
+                    cp.CK_CMDLINE_FI_KEY,
+                    cp.CK_UPDATE_CATEGORY_MAP_WORKBOOK
                     ]
                 )
             #endregion Command object definitions
