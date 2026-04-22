@@ -125,7 +125,7 @@ def INTAKE_TASK_convert_csv_txns_schema(csv_txns_wb: BDMWorkbook,
         # Check there is a correct header row in the .csv file.
         if not csv_DATA_LIST_has_header_row(csv_txns_wb.wb_content, catmap_csv_file_input_columns):
             # Add the correct header row to the original .csv data list.
-            data: bdm.DATA_LIST_TYPE = csv_DATA_LIST_add_header_row(
+            data: bdm.DATA_OBJECT_LIST_TYPE = csv_DATA_LIST_add_header_row(
                 csv_txns_wb.wb_content, 
                 catmap_csv_file_input_columns)
             csv_txns_wb.wb_content = data

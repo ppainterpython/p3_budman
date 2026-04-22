@@ -26,17 +26,20 @@ BDM = "BudgetDomainModel"
 # Type Alias Constants
 # Base Types - not model-aware
 DATA_OBJECT_TYPE = Dict[str, Any] 
-DATA_TUPLE_TYPE = Tuple[str, DATA_OBJECT_TYPE]  # A tuple of (key, value) for data objects
+# DATA_TUPLE_TYPE = Tuple[str, DATA_OBJECT_TYPE]  # A tuple of (key, value) for data objects
+DATA_TUPLE_TYPE = Tuple[Any]  # A tuple of Any data types
 DATA_COLLECTION_TYPE = Dict[str, DATA_OBJECT_TYPE] 
-DATA_LIST_TYPE = List[DATA_OBJECT_TYPE] 
+type DATA_OBJECT_LIST_TYPE = List[DATA_OBJECT_TYPE] 
 type DATA_MAP_TYPE = Dict[str, str]
+type DATA_ROW_LIST_TYPE = List[List[str]]         # csv file row type
+type DATA_ROW_DICT_TYPE = DATA_OBJECT_LIST_TYPE    # csv file row type
 # BUDMAN data type constants
 type WORKBOOK_ID_TYPE = str
 type BUDMAN_RESULT_TYPE = tuple[bool, Any]  # A tuple of (success, message or data)
 type WORKBOOK_OBJECT_TYPE = Union[object, Dict]
 type WORKBOOK_CONTENT_TYPE = Any
 WORKBOOK_DATA_COLLECTION_TYPE = Dict[str, WORKBOOK_OBJECT_TYPE]
-WORKBOOK_ITEM_TYPE = DATA_TUPLE_TYPE
+# WORKBOOK_ITEM_TYPE = DATA_TUPLE_TYPE
 LOADED_WORKBOOK_COLLECTION_TYPE = dict[WORKBOOK_ID_TYPE, WORKBOOK_CONTENT_TYPE]
 LOADED_WORKBOOK_ITEM_TYPE = DATA_OBJECT_TYPE
 DATA_CONTEXT_TYPE = DATA_OBJECT_TYPE

@@ -1,6 +1,7 @@
 #------------------------------------------------------------------------------+
 # bdm_intake.py - test some intake process functions.
 #------------------------------------------------------------------------------+
+#region    Imports
 import logging, io, sys
 import csv
 from pathlib import Path
@@ -50,12 +51,19 @@ def bdm_open_intake_file(file_path: Path):
     try:
 
         fieldnames = ["date", "amount", "ignore1", "ignore2", "Original Description"]
-        file_data: bdm.DATA_LIST_TYPE = bsm.csv_DATA_LIST_url_get(file_path, fieldnames=fieldnames)
-        file_data2: bdm.DATA_LIST_TYPE = bsm.csv_DATA_LIST_add_header_row(file_data, fieldnames)
+        data_list: bdm.DATA_ROW_LIST_TYPE = None
+        data_list2: bdm.DATA_ROW_LIST_TYPE = None
+        data_list3: bdm.DATA_ROW_LIST_TYPE = None
+        data_list = bsm.csv_DATA_LIST_url_get(file_path, return_type=bdm.DATA_ROW_LIST_TYPE)
+        if not bsm.csv_DATA_LIST_has_header_row(data_list, fieldnames):
+            logger.info(f"Header row is missing from the .csv file. "
+                        f"Adding header row: {fieldnames}")
+            data_list2 = bsm.csv_DATA_LIST_add_header_row(data_list, fieldnames)
         # Remove unrequired columns for .csv_txns schema.
-        file_data3: bdm.DATA_LIST_TYPE = bsm.csv_DATA_LIST_remove_columns(file_data2, "ignore")
+        data_list3 = bsm.csv_DATA_ROW_LIST_remove_columns_by_name(data_list2, 
+                                                              ["ignore1", "ignore2"])
         # Add missing columns with default values for .csv_txns schema.
-        print(f"Count={len(file_data)}")
+        print(f"Count={len(data_list3)}")
 
     except Exception as e:
         m = p3u.exc_err_msg(e)
@@ -71,16 +79,15 @@ if __name__ == "__main__":
 
     try:
         cvs_path = Path.from_uri(cvs_url).expanduser().resolve()
-        with open(cvs_path, "r",newline="",encoding='utf-8-sig') as f:
-            reader = csv.DictReader(f, skipinitialspace=True)
-            data_list: bdm.DATA_LIST_TYPE = list(reader)
-            # check if data_list[0] is equale to fieldnames case insensitive
-            if data_list and set(k.lower() for k in data_list[0].keys()) == set(k.lower() for k in fieldnames):
-                print("CSV file has the expected fieldnames.")
-            else:
-                print("CSV file does not have the expected fieldnames.")
+        bdm_open_intake_file(cvs_url)
+        # with open(cvs_path,"r",newline="",encoding='utf-8-sig') as f:
+        #     reader = csv.reader(f, delimiter=',', skipinitialspace=True)
+        #     data_row_list = list(reader)
 
-        # bdm_open_intake_file(cvs_url)
+        # with open(cvs_path,"r",newline="",encoding='utf-8-sig') as f:
+        #     reader = csv.DictReader(f, skipinitialspace=True)
+        #     data_row_dict: bdm.DATA_OBJECT_LIST_TYPE = list(reader)
+
         # configure_logging(__name__, logtest=False)
         # logger.info(f"wb_path: '{wb_path}' url:'{wb_url}'")
         pass
