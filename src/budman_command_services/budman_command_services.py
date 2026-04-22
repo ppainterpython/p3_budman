@@ -53,7 +53,7 @@ from budman_data_context import BudManAppDataContext_Base
 from budget_storage_model import (
     BSMFile, BSMFileTree,
     bsm_verify_folder, bsm_URL_verify_file_scheme,)
-from budget_categorization import (BDMTXNCategoryManager, TXNCategoryMap)
+from budman_workflow_services import (BDMTXNCategoryManager, TXNCategoryMap)
 import budman_workflows
 #endregion Imports
 # ---------------------------------------------------------------------------- +

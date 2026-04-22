@@ -49,7 +49,7 @@ import p3_utils as p3u, p3logging as p3l
 import budman_namespace as bdm
 from budman_namespace import (P2, P4, P6)
 import budman_settings as bdms
-from budget_categorization.txn_category import (
+from budman_workflow_services.txn_category import (
     BDMTXNCategory, TXNCategoryMap, BDMTXNCategoryManager
 )
 from budget_storage_model import (

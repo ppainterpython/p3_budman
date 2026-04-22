@@ -43,7 +43,9 @@ logger = logging.getLogger(__name__)
 # Note: Python lists are 0-based. With openpyxl, data is often returned in a
 # list. In excel, worksheet columns are 1-based. So, we need to adjust the indices.
 # A list of cells from a worksheet row is 0-based, with cell(0) being the value
-# from column 1, or column 'A'.
+# from column 'A'.
+
+
 # Symbols for BOA .csv files.
 BOA_ORIGINAL_DESCRIPTION_COL_NAME = "Original Description"
 BOA_DATE_COL_NAME = "Date"
@@ -76,6 +78,7 @@ BOA_WB_COLUMNS_TO_REMOVE = [
     "Memo", 
     "Classification"
     ]
+
 
 
 # BudMan adds additional columns prior to processing transactions. These

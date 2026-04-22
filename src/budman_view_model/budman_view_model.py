@@ -256,7 +256,7 @@ import budman_command_services as cp
 import budman_settings as bdms
 from budman_namespace.design_language_namespace import *
 from budman_namespace.bdm_workbook_class import BDMWorkbook
-from budget_categorization import (
+from budman_workflow_services import (
     check_sheet_schema, WORKFLOW_TASK_check_sheet_columns, 
     validate_budget_categories, WORKFLOW_TASK_process_budget_category)
 from budman_command_services import (WORKFLOW_CMD_router)

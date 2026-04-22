@@ -25,7 +25,7 @@ from budman_view_model import BudManViewModel
 from budman_cli_view import BudManCLIView
 from budget_domain_model import (BudgetDomainModel)
 from budman_data_context import BDMDataContext
-from budget_categorization import BDMTXNCategoryManager
+from budman_workflow_services import BDMTXNCategoryManager
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants

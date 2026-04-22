@@ -45,8 +45,10 @@ from .csv_data_collection import (
     csv_DATA_LIST_url_put,
     csv_DATA_LIST_file_load,
     csv_DATA_LIST_file_save,
+    csv_DATA_LIST_has_header_row,
     csv_DATA_LIST_add_header_row,
     csv_DATA_LIST_remove_columns,
+    csv_DATA_LIST_add_columns
 )
 
 __all__ = [
@@ -90,6 +92,8 @@ __all__ = [
     "csv_DATA_LIST_url_put",
     "csv_DATA_LIST_file_load",
     "csv_DATA_LIST_file_save",
+    "csv_DATA_LIST_has_header_row",
     "csv_DATA_LIST_add_header_row",
-    "csv_DATA_LIST_remove_columns"
+    "csv_DATA_LIST_remove_columns",
+    "csv_DATA_LIST_add_columns"
 ]

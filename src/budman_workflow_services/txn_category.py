@@ -108,9 +108,14 @@ class TXNCategoryMap:
         self._category_map : bdm.CATEGORY_MAP_WORKBOOK_TYPE = None
         self._category_map_module : types.ModuleType =  None
         self._compiled_category_map: Dict[re.Pattern, str] = None
+        # Fields extracted from the category map module.
         self._check_register_map: Dict[str, str] = None
         self._category_histogram: CategoryCounter = CategoryCounter()
+        self._category_map_fi_key: str = ''
+        self._csv_file_has_header: bool = False
         self._csv_file_input_columns: List[str] = []
+        self._csv_file_account_code:str = ''
+        self._csv_file_column_transformations: Dict[str, List[str]] = {}
     #endregion __init__()
     # ------------------------------------------------------------------------ +
     #region TXNCategoryCatalogItem properties
@@ -216,6 +221,24 @@ class TXNCategoryMap:
         self._category_histogram = value
 
     @property
+    def category_map_fi_key(self) -> str:
+        """Get the financial institution key for the category map."""
+        return self._category_map_fi_key
+    @category_map_fi_key.setter
+    def category_map_fi_key(self, value: str):
+        """Set the financial institution key for the category map."""
+        self._category_map_fi_key = value
+
+    @property
+    def csv_file_has_header(self) -> bool:
+        """Get whether the CSV file has a header row."""
+        return self._csv_file_has_header
+    @csv_file_has_header.setter
+    def csv_file_has_header(self, value: bool):
+        """Set whether the CSV file has a header row."""
+        self._csv_file_has_header = value
+
+    @property
     def csv_file_input_columns(self) -> List[str]:
         """Get the list of expected CSV file input columns."""
         return self._csv_file_input_columns
@@ -223,6 +246,25 @@ class TXNCategoryMap:
     def csv_file_input_columns(self, value: List[str]):
         """Set the list of expected CSV file input columns."""
         self._csv_file_input_columns = value
+
+    @property
+    def csv_file_account_code(self) -> str:
+        """Get the CSV file account code."""
+        return self._csv_file_account_code
+    @csv_file_account_code.setter
+    def csv_file_account_code(self, value: str):
+        """Set the CSV file account code."""
+        self._csv_file_account_code = value
+
+    @property
+    def csv_file_column_transformations(self) -> Dict[str, List[str]]:
+        """Get the CSV file column transformations."""
+        return self._csv_file_column_transformations
+    @csv_file_column_transformations.setter
+    def csv_file_column_transformations(self, value: Dict[str, List[str]]):
+        """Set the CSV file column transformations."""
+        self._csv_file_column_transformations = value
+
     #endregion TXNCategoryCatalogItem properties
     # ------------------------------------------------------------------------ +
     #endregion TXNCategoryCatalog class intrinsics
@@ -483,9 +525,14 @@ class TXNCategoryMap:
             mod_name: str = f"{self._fi_key}_category_map"
             mod = p3u.import_module_from_path(mod_name, mod_path)
             self.category_map_module = mod
+            # Extract fields from the module and set properties.
             self.category_map = mod.category_map
             self.check_register_map = mod.check_register_map
+            self.category_map_fi_key = mod.CATEGORY_MAP_FI_KEY
+            self.csv_file_has_header = mod.CSV_FILE_HAS_HEADER
             self.csv_file_input_columns = mod.CSV_FILE_INPUT_COLUMNS
+            self.csv_file_account_code = mod.CSV_FILE_ACCOUNT_CODE
+            self.csv_file_column_transformations = mod.CSV_FILE_COLUMN_TRANSFORMATIONS
             self.compile_category_map()
             # self.compiled_category_map = mod.compile_category_map(mod.category_map)
             if not isinstance(self._category_map, dict):

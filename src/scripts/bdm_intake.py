@@ -2,6 +2,7 @@
 # bdm_intake.py - test some intake process functions.
 #------------------------------------------------------------------------------+
 import logging, io, sys
+import csv
 from pathlib import Path
 from typing import List
 
@@ -10,6 +11,7 @@ import p3_utils as p3u, p3logging as p3l, pyjson5 as json5
 
 # local modules and packages
 from budman_settings import *
+import budman_namespace.design_language_namespace as bdm
 import budget_storage_model as bsm
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -46,7 +48,8 @@ def configure_logging(logger_name : str = __name__, logtest : bool = False) -> N
 #region bdm_open_intake_file() function
 def bdm_open_intake_file(file_path: Path):
     try:
-        fieldnames = ["date", "amount", "ignore", "Original Description"]
+
+        fieldnames = ["date", "amount", "ignore1", "ignore2", "Original Description"]
         file_data: bdm.DATA_LIST_TYPE = bsm.csv_DATA_LIST_url_get(file_path, fieldnames=fieldnames)
         file_data2: bdm.DATA_LIST_TYPE = bsm.csv_DATA_LIST_add_header_row(file_data, fieldnames)
         # Remove unrequired columns for .csv_txns schema.
@@ -64,9 +67,20 @@ def bdm_open_intake_file(file_path: Path):
 if __name__ == "__main__":
     wb_url = "file:///C:/Users/ppain/OneDrive/budget/p3_budget_manager_ca063e8b.jsonc"
     cvs_url = "file:///C:/Users/ppain/OneDrive/budget/wellsfargo/raw_data/wellsfargo_Paul_Checking_20260410.csv"
+    fieldnames = ["date", "amount", "ignore1", "ignore2", "Original Description"]
 
     try:
-        bdm_open_intake_file(cvs_url)
+        cvs_path = Path.from_uri(cvs_url).expanduser().resolve()
+        with open(cvs_path, "r",newline="",encoding='utf-8-sig') as f:
+            reader = csv.DictReader(f, skipinitialspace=True)
+            data_list: bdm.DATA_LIST_TYPE = list(reader)
+            # check if data_list[0] is equale to fieldnames case insensitive
+            if data_list and set(k.lower() for k in data_list[0].keys()) == set(k.lower() for k in fieldnames):
+                print("CSV file has the expected fieldnames.")
+            else:
+                print("CSV file does not have the expected fieldnames.")
+
+        # bdm_open_intake_file(cvs_url)
         # configure_logging(__name__, logtest=False)
         # logger.info(f"wb_path: '{wb_path}' url:'{wb_url}'")
         pass
