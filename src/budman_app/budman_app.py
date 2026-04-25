@@ -2,7 +2,8 @@
 #region p3_budman.py The Budget Manager Application.
 """ Budget Manager (BudMan) - an app to help users track a financial budget.
 
-    This module is the main entry point for the BudMan application.
+    This module is the main entry point for the BudMan application, a CLI App
+    using rich.console for tty output.
 """
 #endregion p3_budman.py The Budget Manager Application.
 # ---------------------------------------------------------------------------- +
@@ -30,11 +31,10 @@ from budman_workflow_services import BDMTXNCategoryManager
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
 # ---------------------------------------------------------------------------- +
-# globals for logger
 logger = logging.getLogger(__name__)
 console = Console(force_terminal=True,width=bdm.BUDMAN_WIDTH, highlight=True,
                   soft_wrap=False)
-console.print(f"Starting [green]{__name__}...[/green]")
+console.print(f"Starting [green]{__name__}[/green] ...")
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +

@@ -129,15 +129,17 @@ CV_PARSE_ONLY_SUBCMD_NAME = "parse_only"
 CV_PARSE_ONLY_SUBCMD_KEY = CV_VAL_CMD_KEY + "_" + CV_PARSE_ONLY_SUBCMD_NAME
 
 # Common argument optional flag attribute keys, used in parsers
-CK_PARSE_ONLY = p3m.CK_PARSE_ONLY          # --parse_only  -po
-CK_VALIDATE_ONLY = p3m.CK_VALIDATE_ONLY    # --validate_only  -vo
-CK_WHAT_IF = p3m.CK_WHAT_IF                # --what_if  -wi
-CK_VERBOSE = p3m.CK_VERBOSE                # --verbose  -v
-CK_ALL_WBS = "all_wbs"                     # --all_wbs  -all
-CK_ALL_FILES = "all_files"                 # --all_files  -all
-CK_LOAD_WORKBOOK_SWITCH = "load_workbook"  # --load_workbook  -l, -load
-CK_FIX_SWITCH = "fix_switch"               # --fix_switch  -fix
-CK_VALIDATE_CATEGORIES = "validate_categories"
+CK_PARSE_ONLY = p3m.CK_PARSE_ONLY                # --parse_only  -po
+CK_VALIDATE_ONLY = p3m.CK_VALIDATE_ONLY          # --validate_only  -vo
+CK_WHAT_IF = p3m.CK_WHAT_IF                      # --what_if  -wi
+CK_VERBOSE = p3m.CK_VERBOSE                      # --verbose  -v
+CK_ALL_WBS = "all_wbs"                           # --all_wbs  -all
+CK_ALL_FILES = "all_files"                       # --all_files  -all
+CK_LOAD_WORKBOOK_SWITCH = "load_workbook"        # --load_workbook  -l, -load
+CK_FIX_SWITCH = "fix_switch"                     # --fix_switch  -fix
+CK_VALIDATE_CATEGORIES = "validate_categories"   # --validate_categories  -vc
+CK_REMOVE_EXTRA_COLUMNS = "remove_extra_columns" # --remove_extra_columns  -rec
+CK_SYMLINK = "symlink"                           # --symlink  -s
 CK_LOG_ALL = "log_all"
 CK_SAVE = "save"
 CK_NO_SAVE = "no_save"

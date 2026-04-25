@@ -610,9 +610,13 @@ class BudManCLIParser():
             self.add_load_workbook_argument(check_parser)
             self.add_fix_argument(check_parser)
             check_parser.add_argument(
-                f"--{cp.CK_VALIDATE_CATEGORIES}", "-val", "-v", 
+                "-v", f"--{cp.CK_VALIDATE_CATEGORIES}", "-val", 
                 action="store_true", 
                 help="Validate the budget categories.")
+            check_parser.add_argument(
+                "-r", f"--{cp.CK_REMOVE_EXTRA_COLUMNS}", "-rec", 
+                action="store_true", 
+                help="Remove extra columns from the worksheet   .")
             self.add_common_optional_args(check_parser)
             #endregion Workflow 'check' subcommand
 
@@ -717,7 +721,7 @@ class BudManCLIParser():
             # transfer subcmd subparsers
             transfer_subparsers = transfer_subcmd_parser.add_subparsers()
 
-            # workflow transfer files subcommand subparser
+            #region workflow transfer files subcommand subparser
             files_parser = transfer_subparsers.add_parser(
                 cp.CV_FILES_SUBCMD_NAME,
                 aliases=["FILES"],
@@ -746,8 +750,9 @@ class BudManCLIParser():
                 choices=bdm.VALID_WB_TYPE_VALUES,
                 help="Specify the destination workbook type.")
             self.add_common_optional_args(files_parser)
+            #endregion workflow transfer files subcommand subparser
 
-            # workflow transfer workbooks subcommand subparser
+            #region workflow transfer workbooks subcommand subparser
             workbooks_parser = transfer_subparsers.add_parser(
                 cp.CV_WORKBOOKS_SUBCMD_NAME,
                 aliases=["WORKBOOKS"],
@@ -767,20 +772,16 @@ class BudManCLIParser():
                 cp.CK_WB_LIST, nargs='*',
                 type=int, default=[], 
                 help=("One or more workbook index values from wb_list."))
-            workbooks_parser.add_argument(
-                f"--{cp.CK_WF_KEY}", "-w",
-                choices=bdm.VALID_BDM_WORKFLOWS,
-                help="Specify the destination workflow key.")
-            workbooks_parser.add_argument(
-                f"--{cp.CK_WF_PURPOSE}", "-p",
-                choices=bdm.VALID_WF_PURPOSE_CHOICES,
-                help="Specify the workflow purpose.")
+            self.add_CK_CMDLINE_FI_KEY_optional_argument(workbooks_parser)
+            self.add_src_wf_key_optional_argument(workbooks_parser)
+            self.add_src_wf_purpose_optional_argument(workbooks_parser)
+            self.add_CK_SYMLINK_optional_argument(workbooks_parser)
             workbooks_parser.add_argument(
                 f"--{cp.CK_WB_TYPE}", "-t",
                 choices=bdm.VALID_WB_TYPE_VALUES,
                 help="Specify the destination workbook type.")
-            self.add_CK_CMDLINE_FI_KEY_optional_argument(workbooks_parser)
             self.add_common_optional_args(workbooks_parser)
+            #endregion workflow transfer workbooks subcommand subparser
 
             return transfer_subcmd_parser
         except Exception as e:
@@ -1099,6 +1100,18 @@ class BudManCLIParser():
                 f"--{cp.CK_LOAD_WORKBOOK_SWITCH}", "-l", "-load", 
                 action="store_true", 
                 help="Load the workbook if not yet loaded.")
+            return
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise
+
+    def add_CK_SYMLINK_optional_argument(self, parser) -> None:
+        """Add a --symlink argument.""" 
+        try:
+            parser.add_argument(
+                "-s", f"--{cp.CK_SYMLINK}", 
+                action="store_true", 
+                help="Use symbolic links when transferring workbook files.")
             return
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))

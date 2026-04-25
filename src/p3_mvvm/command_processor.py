@@ -463,7 +463,7 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
     # ------------------------------------------------------------------------ +
     #region    cp_validate_cmd() method
     def cp_validate_cmd(self, 
-                        cmd : CMD_OBJECT_TYPE = None,
+                        cmd : CMD_OBJECT_TYPE | Command = None,
                         validate_all : bool = False) -> CMD_RESULT_TYPE:
         """Validate the CMD_OBJECT for cmd_key and parameters.
 
@@ -472,7 +472,7 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
         returns a CMD_RESULT_TYPE indicating the validation result.
 
         Arguments:
-            cmd (Dict): A candidate Command object to validate.
+            cmd (Dict | Command): A candidate Command object to validate.
             validate_all (bool): If True, validate all attributes in the cmd.
 
         Returns:
@@ -650,6 +650,9 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
                     cmd_result[CK_CMD_RESULT_CONTENT] = f"{CK_PARSE_ONLY}: {str(command)}"
                     cp_publish_cmd_result(cmd_result)
                     return cmd_result
+                # cmd_result: CMD_RESULT_TYPE = self.cp_validate_cmd(cmd)
+                if not cmd_result[CK_CMD_RESULT_STATUS]: return cmd_result
+                # if cp_validate_cmd() is good, continue.
                 exec_func: Callable = command.cmd_exec_func
                 function_name = exec_func.__name__
                 cmd_str: str = f"{command.cmd_name} {command.subcmd_name}"
@@ -703,7 +706,8 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
                 raise RuntimeError(cmd_result[CK_CMD_RESULT_CONTENT]) from e
             return cmd_result
     #endregion cp_execute_cmd() method
-    # ------------------------------------------------------------------------ +
+    # --------------------
+    # ---------------------------------------------------- +
     #region    cp_cmd_attr_get() Command Processor method
     def cp_cmd_attr_get(self, cmd: Dict,
                        key_name: str, default_value: Any = None) -> Any:
@@ -1076,7 +1080,7 @@ def cp_CMD_RESULT_ERROR_create(cmd: CMD_OBJECT_TYPE|Command|None,
         else:
             cmd_key = "Unknown cmd_key"
             subcmd_key = "Unknown subcmd_key"
-        m = (f"Error executing cmd: {cmd_key} {subcmd_key}: {msg}")
+        m = (f"[red]Error:[/red] '{msg}' - executing cmd: {cmd_key} {subcmd_key}")
         logger.error(m)
         return cp_CMD_RESULT_create(
             status = False,

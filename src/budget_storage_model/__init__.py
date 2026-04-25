@@ -46,15 +46,10 @@ from .csv_data_collection import (
     csv_DATA_LIST_file_load,
     csv_DATA_LIST_file_save,
     csv_DATA_LIST_has_header_row,
-    csv_DATA_LIST_add_header_row,
     csv_DATA_LIST_remove_columns,
     csv_DATA_LIST_add_columns,
     csv_DATA_LIST_remove_extra_columns,
-    csv_is_DATA_ROW_LIST_TYPE,
-    csv_is_DATA_OBJECT_LIST_TYPE,
-    csv_is_DATA_ROW_DICT_TYPE,
-    csv_DATA_ROW_LIST_remove_columns_by_index,
-    csv_DATA_ROW_LIST_remove_columns_by_name
+    csv_DATA_LIST_file_validate_header
 )
 
 __all__ = [
@@ -99,13 +94,8 @@ __all__ = [
     "csv_DATA_LIST_file_load",
     "csv_DATA_LIST_file_save",
     "csv_DATA_LIST_has_header_row",
-    "csv_DATA_LIST_add_header_row",
     "csv_DATA_LIST_remove_columns",
     "csv_DATA_LIST_add_columns",
     "csv_DATA_LIST_remove_extra_columns",
-    "csv_is_DATA_ROW_LIST_TYPE",
-    "csv_is_DATA_OBJECT_LIST_TYPE",
-    "csv_is_DATA_ROW_DICT_TYPE",
-    "csv_DATA_ROW_LIST_remove_columns_by_index",
-    "csv_DATA_ROW_LIST_remove_columns_by_name"
-]
+    "csv_DATA_LIST_file_validate_header"
+    ]

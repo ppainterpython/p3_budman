@@ -23,7 +23,7 @@ from budman_namespace import *
 from budman_data_context import BudManAppDataContext
 from p3_mvvm import Model_Base, Model_Binding
 import budget_storage_model as bsm
-from budman_workflow_services.txn_category import BDMTXNCategoryManager
+from budman_workflow_services.category_manager import BDMTXNCategoryManager
 from budget_domain_model import BudgetDomainModel
 #endregion imports
 # ---------------------------------------------------------------------------- +
@@ -133,7 +133,7 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
         self.not_dc_INITIALIZED()
         if not self.model.bdm_FI_KEY_validate(value):
             raise ValueError(f"Invalid FI_KEY: {value}")
-        self.dc_FI_OBJECT = self.dc_BDM_STORE[BDM_FI_COLLECTION].get(value, None)
+        self.dc_FI_OBJECT = self.model.bdm_fi_collection.get(value, None)
         # One of the model-saved DC properties.
         self.model.bdm_data_context[DC_FI_KEY] = value
 
@@ -235,9 +235,10 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
                 self._dc_FI_OBJECT = fi_object
                 # This is not DC business, but setup the WF_CATEGORY_MANAGER here.
                 if self.WF_CATEGORY_MANAGER is not None:
-                    # Load the WB_TYPE_TXN_CATEGORIES for the FI.
+                    # Load the WB_TYPE_TXN_CATEGORIES for all FI's.
                     wfm : BDMTXNCategoryManager = self.WF_CATEGORY_MANAGER
-                    wfm.FI_TXN_CATEGORIES_WORKBOOK_load(self._dc_FI_KEY)
+                    for fi_key in self.model.bdm_fi_collection.keys():
+                        wfm.FI_TXN_CATEGORIES_WORKBOOK_load(fi_key)
             except Exception as e:
                 m = f"{p3u.exc_err_msg(e)}"
                 logger.error(m)
@@ -270,6 +271,8 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
                      f"not type: {type(bdm_wb).__name__}.")
                 logger.error(m)
                 return False
+            # NOTE: May need to vaidate the wb_id in the model using the fi_key to support
+            # workbook actions across financial institutions.
             if not self.dc_WB_ID_validate(bdm_wb.wb_id):
                 m = f"Invalid workbook ID: {bdm_wb.wb_id}"
                 logger.error(m)

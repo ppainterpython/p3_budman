@@ -21,11 +21,12 @@ __name__ = "budman_workflow_services"
 __description__ = "Budget Manager (BudMan) Workflow process implementation."
 __license__ = "MIT"
 
-from .budman_wf_namespace import *
-from .workflow_intake_services import (
+from .workflow_namespace import *
+from .intake_process_services import (
     INTAKE_TASK_convert_csv_txns_schema
 )
-from .budget_categorization import (
+from .categorization_process_services import (
+    excel_WORKSHEET_remove_extra_columns,
     WORKFLOW_TASK_check_sheet_columns, 
     check_sheet_schema, 
     TRANSACTION_DESCRIPTION_COL_NAME, 
@@ -33,7 +34,7 @@ from .budget_categorization import (
     WORKFLOW_TASK_process_budget_category,
     WORKFLOW_TASK_categorize_transaction
 )
-from .txn_category import (
+from .category_manager import (
     BDMTXNCategory,
     BDMTXNCategoryManager,
     TXNCategoryMap
@@ -50,6 +51,7 @@ __all__ = [
     "TXNCategoryMap",
     "BDMTXNCategoryManager",
     # budget_categorization.py module
+    "excel_WORKSHEET_remove_extra_columns",
     "WORKFLOW_TASK_check_sheet_columns",
     "check_sheet_schema",
     "TRANSACTION_DESCRIPTION_COL_NAME",

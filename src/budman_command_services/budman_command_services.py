@@ -611,7 +611,7 @@ def BUDMAN_CMD_app_delete(cmd: p3m.CMD_OBJECT_TYPE,
 #endregion BudMan Application CMD_ functions
 # ---------------------------------------------------------------------------- +    
 #endregion BudMan Application CMD_ functions
-# --------------------------------------------------------------------------- +
+# ---------------------------------------------------------------------------- +
 
 # --------------------------------------------------------------------------- +
 #region BudMan Application CMD_TASK_ functions
@@ -941,7 +941,8 @@ def process_selected_workbook_input(cmd: p3m.Command,
         elif len(wb_list) > 0:
             for wb_index in wb_list:
                 bdm_wb = bdm_DC.dc_WORKBOOK_by_index(wb_index)
-                selected_bdm_wb_list.append(bdm_wb)
+                if bdm_wb is not None:
+                    selected_bdm_wb_list.append(bdm_wb)
         else:
             # No workbooks selected by the command parameters.
             return selected_bdm_wb_list
@@ -973,7 +974,7 @@ def process_selected_workbook_input(cmd: p3m.Command,
         logger.error(m)
         raise RuntimeError(m)
 #endregion process_selected_workbook_input()
-# ------------------------------------------------------------------------ +    
+# ---------------------------------------------------------------------------- +    
 #region get_workbook_data_collection_info_str() method
 def get_workbook_data_collection_info_str(bdm_DC: BudManAppDataContext_Base) -> bdm.BUDMAN_RESULT_TYPE:
     """Construct an outout string with information about the WORKBOOKS."""

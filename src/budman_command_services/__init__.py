@@ -33,14 +33,14 @@ from .budman_command_services import (
 )
 from .workflow_command_services import (
     WORKFLOW_CMD_router,
+    WORKFLOW_CMD_transfer,
     WORKFLOW_CMD_transfer_files,
     WORKFLOW_CMD_transfer_workbooks,
     WORKFLOW_CMD_process,
     WORKFLOW_TASK_categorize_transactions,
     WORKFLOW_TASK_delete_workbooks,
     WORKFLOW_CMD_check_workbooks,
-    WORKFLOW_CMD_update_catalog_map,
-    WORKFLOW_CMD_transfer_files
+    WORKFLOW_CMD_update_catalog_map
 )
 # target for 'from budman_app import *'
 __all__ = [
@@ -63,8 +63,15 @@ __all__ = [
     "verify_cmd_key",
     "verify_subcmd_key",
     "validate_cmd_arguments",
-    # workflow_commands.py module
+    # workflow_command_services.py module
     "WORKFLOW_CMD_router",
-    "WORKFLOW_CMD_process"
-]
+    "WORKFLOW_CMD_transfer",
+    "WORKFLOW_CMD_transfer_workbooks",
+    "WORKFLOW_CMD_transfer_files",
+    "WORKFLOW_CMD_process",
+    "WORKFLOW_TASK_categorize_transactions",
+    "WORKFLOW_TASK_delete_workbooks",
+    "WORKFLOW_CMD_check_workbooks",
+    "WORKFLOW_CMD_update_catalog_map"
+    ]
 

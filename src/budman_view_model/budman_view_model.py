@@ -576,10 +576,12 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                 cp=self,
                 cmd_name=cp.CV_WORKFLOW_CMD_NAME, 
                 subcmd_name=cp.CV_TRANSFER_SUBCMD_NAME,
-                cmd_exec_func=cp.WORKFLOW_CMD_transfer_files,
+                cmd_exec_func=cp.WORKFLOW_CMD_transfer,
                 required_parms=[
                     cp.CK_CMDLINE_FI_KEY,
                     cp.CK_TRANSFER_FILES,
+                    cp.CK_TRANSFER_WORKBOOKS,
+                    cp.CK_SYMLINK,
                     cp.CK_FILE_LIST,
                     cp.CK_CMDLINE_FI_KEY,
                     cp.CK_SRC_WF_KEY,
@@ -614,6 +616,30 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                     cp.CK_UPDATE_CATEGORY_MAP_WORKBOOK
                     ]
                 )
+            # workflow check files
+            cmd = p3m.Command(
+                cp=self,
+                cmd_name=cp.CV_WORKFLOW_CMD_NAME, 
+                subcmd_name=cp.CV_CHECK_SUBCMD_NAME,
+                cmd_exec_func=cp.WORKFLOW_CMD_check_workbooks,
+                required_parms=[
+                    cp.CK_LOAD_WORKBOOK_SWITCH,
+                    cp.CK_FIX_SWITCH,
+                    cp.CK_REMOVE_EXTRA_COLUMNS,
+                    cp.CK_VALIDATE_CATEGORIES
+                    ]
+                )   
+            # workflow categorization
+            cmd = p3m.Command(
+                cp=self,
+                cmd_name=cp.CV_WORKFLOW_CMD_NAME, 
+                subcmd_name=cp.CV_CATEGORIZATION_SUBCMD_NAME,
+                cmd_exec_func=cp.WORKFLOW_TASK_categorize_transactions,
+                required_parms=[
+                    cp.CK_LOG_ALL,
+                    cp.CK_CLEAR_OTHER
+                    ]
+                )   
             #endregion Command object definitions
             p3m.cp_user_info_message(f"Command map initialized with {len(self.cp_commands)} commands.")
         except Exception as e:

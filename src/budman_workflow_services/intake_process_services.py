@@ -37,11 +37,11 @@ from budman_data_context import BudManAppDataContext_Base
 from budget_domain_model import BudgetDomainModel
 from budget_storage_model import (
     csv_DATA_LIST_has_header_row, 
-    csv_DATA_LIST_add_header_row,
     csv_DATA_LIST_remove_columns,
-    csv_DATA_LIST_add_columns
+    csv_DATA_LIST_add_columns,
+    csv_DATA_LIST_file_validate_header
 )   
-from .txn_category import BDMTXNCategoryManager, TXNCategoryMap
+from .category_manager import BDMTXNCategoryManager, TXNCategoryMap
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -117,22 +117,18 @@ def INTAKE_TASK_convert_csv_txns_schema(csv_txns_wb: BDMWorkbook,
         catmap_csv_file_column_transformations: Dict[str, List[str]] = catmap.csv_file_column_transformations
         #endregion Initialization and validation
 
+        # Resolve the header line question at the BSM file level.
+        csv_path: Path = csv_txns_wb.abs_path()
+        return_path: Path = csv_DATA_LIST_file_validate_header(csv_path, 
+                                                               catmap_csv_file_input_columns,
+                                                               inplace=True)
+
         # Load the .csv_txns workbook if it is not already loaded.
         if not csv_txns_wb.wb_loaded:
             success, result = bdm_DC.dc_WORKBOOK_load(csv_txns_wb)
             if not success:
                 return False, result
-        # Check there is a correct header row in the .csv file.
-        if not csv_DATA_LIST_has_header_row(csv_txns_wb.wb_content, catmap_csv_file_input_columns):
-            # Add the correct header row to the original .csv data list.
-            data: bdm.DATA_OBJECT_LIST_TYPE = csv_DATA_LIST_add_header_row(
-                csv_txns_wb.wb_content, 
-                catmap_csv_file_input_columns)
-            csv_txns_wb.wb_content = data
-            logger.debug(f"Added header row to .csv transactions data for "
-                         f"fi_key '{fi_key}' using catmap_csv_file_input_columns:"
-                         f" {catmap_csv_file_input_columns}")
-            bdm_DC.dc_WORKBOOK_save(csv_txns_wb)
+
         # Apply any column transformations specified in the category map for this fi_key.
         for transform, col_list in catmap_csv_file_column_transformations.items():
             data = None

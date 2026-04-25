@@ -703,7 +703,7 @@ class BDMTXNCategoryManager(metaclass=BDMSingletonMeta):
         Load the content from the WB_TYPE_TXN_CATEGORIES workbook for the given
         financial institution (FI). Urls for TXN_CATEGORIES_WORKBOOK
         and CATEGORY_MAP_WORKBOOK files are based on settings values, configured
-        for each financial institution (fi). Also, load the 
+        for each supported financial institution (FI). Also, load the 
         CATEGORY_MAP_WORKBOOK file, and compile it. Create a 
         TXNCategoryCatalogItem populated. Then add or replace it in the 
         BDMTXNCategoryManager's catalog.
@@ -712,10 +712,16 @@ class BDMTXNCategoryManager(metaclass=BDMSingletonMeta):
 
         Args:
             fi_key (str): The key for the financial institution.
+        Returns:
+            TXNCategoryCatalogItem: The loaded transaction category catalog item
+            or None if no settings for the fi_key are available.
         """
         try:
             self.valid_state()  # Ensure the manager is in a valid state
             # Load the TXN_CATEGORIES_WORKBOOK file for an FI
+            if not fi_key in self.settings[bdms.CATEGORY_CATALOG].keys():
+                logger.debug(f"No settings found for FI_KEY('{fi_key}').")
+                return None
             txn_cat_wb_url = self.FI_TXN_CATEGORIES_WORKBOOK_url(fi_key)
             txn_cat_wb_content: bdm.TXN_CATEGORIES_WORKBOOK_TYPE = None
             txn_cat_wb_content = bsm_WORKBOOK_CONTENT_url_get(txn_cat_wb_url,
@@ -750,7 +756,7 @@ class BDMTXNCategoryManager(metaclass=BDMSingletonMeta):
             logger.debug(f"Loaded '{count}' categories for FI_KEY('{fi_key}').")
             return txn_category_catalog
         except Exception as e:
-            logger.error(f"Error loading catalog fi_key: '{fi_key}' {e}")
+            e.add_note(f"Error loading catalog fi_key: '{fi_key}'")
             raise
     #endregion FI_TXN_CATEGORIES_WORKBOOK_load()
     # ------------------------------------------------------------------------ +
@@ -812,11 +818,10 @@ class BDMTXNCategoryManager(metaclass=BDMSingletonMeta):
                                         f"found: {txn_cat_path}")
             return txn_cat_path.as_uri()
         except KeyError as e:
-            logger.error(f"WB_TYPE_TXN_CATEGORIES file not found for FI key: {fi_key}")
+            e.add_note(f"WB_TYPE_TXN_CATEGORIES file not found for FI key: {fi_key}")
             raise e
         except Exception as e:
-            m = p3u.exc_err_msg(e)
-            logger.error(m)
+            e.add_note(p3u.exc_err_msg(e))
             raise
     #endregion FI_TXN_CATEGORIES_WORKBOOK_url()
     # ------------------------------------------------------------------------ +
@@ -841,11 +846,10 @@ class BDMTXNCategoryManager(metaclass=BDMSingletonMeta):
                                         f"found: {txn_cat_path}")
             return txn_cat_path
         except KeyError as e:
-            logger.error(f"WB_TYPE_TXN_CATEGORIES file not found for FI key: {fi_key}")
+            e.add_note(f"WB_TYPE_TXN_CATEGORIES file not found for FI key: {fi_key}")
             raise e
         except Exception as e:
-            m = p3u.exc_err_msg(e)
-            logger.error(m)
+            e.add_note(p3u.exc_err_msg(e))
             raise
     #endregion FI_TXN_CATEGORIES_WORKBOOK_abs_path()
     # ------------------------------------------------------------------------ +

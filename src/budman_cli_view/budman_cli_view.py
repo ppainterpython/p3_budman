@@ -205,6 +205,11 @@ class BudManCLIView(cmd2.Cmd,
         self.register_postcmd_hook(self.postcmd_hook)
         self.register_postparsing_hook(self.postparsing_hook)
         # Configure set cmd parameters
+        self.fi_key = self.DC.dc_FI_KEY if self.DC else None
+        self.add_settable(
+            cmd2.Settable(cp.CK_FI_KEY, str, 'fi_key <value>',
+                          self, onchange_cb=self._onchange_fi_key)
+        )
         self.parse_only: bool = False
         self.add_settable(
             cmd2.Settable(cp.CK_PARSE_ONLY, str, 'parse_only mode: on|off|toggle',
@@ -537,11 +542,11 @@ class BudManCLIView(cmd2.Cmd,
             _ = self._persist_history()
             # Construct the command object from cmd2's argparse Namespace.
             cmd: p3m.CMD_OBJECT_TYPE = self.cp_construct_cmd_from_argparse(opts)
-            # _  = self.cp_execute_cmd(cmd)
-            cr : p3m.CMD_RESULT_TYPE  = self.cp_execute_cmd_async(
-                cmd,
-                async_result_subscriber=cli_cmd_result_output
-                )
+            _  = self.cp_execute_cmd(cmd)
+            # cr : p3m.CMD_RESULT_TYPE  = self.cp_execute_cmd_async(
+            #     cmd,
+            #     async_result_subscriber=cli_cmd_result_output
+            #     )
             ...
         except Exception as e:
             self.pexcept(e)
@@ -815,6 +820,13 @@ class BudManCLIView(cmd2.Cmd,
     #region BudManCLIView Helper Methods
     # ------------------------------------------------------------------------ +
     #
+    # ------------------------------------------------------------------------ +
+    #region _onchange_fi_key
+    def _onchange_fi_key(self, _param_name, _old, new: str) -> None:
+        """fi_key settalbe attribute was changed."""
+        new = new.lower()
+        self.DC.dc_FI_KEY = new
+    #endregion _onchange_fi_key
     # ------------------------------------------------------------------------ +
     #region _onchange_parse_only
     def _onchange_parse_only(self, _param_name, _old, new: str) -> None:

@@ -33,8 +33,9 @@ from pyparsing import Optional
 import budman_command_services as cp
 from budman_namespace.design_language_namespace import *
 from budman_namespace.bdm_workbook_class import BDMWorkbook
-from .txn_category import (BDMTXNCategoryManager, TXNCategoryMap)
 from budman_data_context import BudManAppDataContext_Base
+from .workflow_namespace import *
+from .category_manager import (BDMTXNCategoryManager, TXNCategoryMap)
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -155,7 +156,6 @@ BUDMAN_SHEET_NAME = "TransactionData"
 BUDMAN_REQUIRED_COLUMNS = [
     DATE_COL_NAME, 
     TRANSACTION_DESCRIPTION_COL_NAME, 
-    CURRENCY_COL_NAME,
     AMOUNT_COL_NAME, 
     ACCOUNT_CODE_COL_NAME, 
     BUDGET_CATEGORY_COL_NAME,
@@ -268,6 +268,33 @@ class TransactionData:
     
 #endregion TransactionData dataclass
 # ---------------------------------------------------------------------------- +
+#region excel_WORKSHEET_remove_extra_columns() function
+def excel_WORKSHEET_remove_extra_columns(ws: Worksheet, expected_columns: List[str]) -> bdm.BUDMAN_RESULT_TYPE:
+    """Remove extra columns from a worksheet that are not in the expected columns list.
+
+    Args:
+        ws (Worksheet): The worksheet to remove extra columns from.
+        expected_columns (List[str]): The list of expected column names to keep.
+
+    Returns:
+        bdm.BUDMAN_RESULT_TYPE: The result of the operation.
+    """
+    try:
+        # Get the column names from the header row (row 1).
+        col_names = [cell.value for cell in ws[1]]
+        # Identify columns to remove.
+        columns_to_remove = [col for col in col_names if col not in expected_columns]
+        # Remove columns from right to left to avoid index shifting issues.
+        for col_name in reversed(columns_to_remove):
+            col_index = col_names.index(col_name) + 1  # Convert to 1-based index for openpyxl.
+            ws.delete_cols(col_index)
+            logger.debug(f"Removed extra column '{col_name}' at index {col_index}.")
+        return True, f"Removed {len(columns_to_remove)} extra columns: {', '.join(columns_to_remove)}"
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion excel_WORKSHEET_remove_extra_columns() function
+# ---------------------------------------------------------------------------- +
 #region WORKFLOW_TASK_check_sheet_columns() function
 def WORKFLOW_TASK_check_sheet_columns(sheet: Worksheet, 
                         add_columns: bool = True) -> bool:
@@ -276,7 +303,6 @@ def WORKFLOW_TASK_check_sheet_columns(sheet: Worksheet,
     BudMan uses these columns to process transactions in a sheet:
     DATE_COL_NAME - date of the transaction.
     TRANSACTION_DESCRIPTION_COL_NAME - the description of the transaction.
-    CURRENCY_COL_NAME - the unit of currency, USD, EUR, etc.
     AMOUNT_COL_NAME - the amount of the transaction, as a float.
     ACCOUNT_CODE_COL_NAME - the short-name of the account for the transaction. 
     BUDGET_CATEGORY_COL_NAME - the budget category for the transaction.
@@ -375,7 +401,7 @@ def check_sheet_schema(wb: Workbook, correct: bool = False) -> bool:
         # 3. Check the column names are correct spelling and order.
         col_names = [cell.value for cell in ws[1]]
         # Check if all required columns are present
-        missing_columns = [col for col in BUDMAN_REQUIRED_COLUMNS if col not in col_names]
+        missing_columns = [col for col in BUDMAN_TXNS_WORKBOOK_COL_NAMES if col not in col_names]
         if len(missing_columns) > 0:
             logger.error(f"Missing required columns: {', '.join(missing_columns)}")
             good_schema = rule3 = False
@@ -465,14 +491,14 @@ def WORKSHEET_row_data(row:tuple,hdr:list=BUDMAN_WB_COLUMNS) -> TransactionData:
         # to rerpresent a date of manual change, like 20260304.
         if isinstance(t_rule, int) and t_rule > 20200000:
             t_manual = True
-        t_acct_code: str = row_dict[ACCOUNT_NAME_COL_NAME].split('-')[-1].strip()
+        t_acct_code: str = row_dict[ACCOUNT_CODE_COL_NAME].split('-')[-1].strip()
         t_debit_credit: str = 'C' if row_dict[AMOUNT_COL_NAME] > 0 else 'D'
 
         transaction = TransactionData(
             tid=None,
             date=row_dict[DATE_COL_NAME],
             description=row_dict[TRANSACTION_DESCRIPTION_COL_NAME],
-            currency=row_dict[CURRENCY_COL_NAME],
+            # currency=row_dict[CURRENCY_COL_NAME],
             amount=row_dict[AMOUNT_COL_NAME],
             account_code=t_acct_code,
             category=row_dict[BUDGET_CATEGORY_COL_NAME],

@@ -49,18 +49,22 @@ def configure_logging(logger_name : str = __name__, logtest : bool = False) -> N
 #region bdm_open_intake_file() function
 def bdm_open_intake_file(file_path: Path):
     try:
-
+        output_path: Path = None
         fieldnames = ["date", "amount", "ignore1", "ignore2", "Original Description"]
-        data_list: bdm.DATA_ROW_LIST_TYPE = None
-        data_list2: bdm.DATA_ROW_LIST_TYPE = None
-        data_list3: bdm.DATA_ROW_LIST_TYPE = None
-        data_list = bsm.csv_DATA_LIST_url_get(file_path, return_type=bdm.DATA_ROW_LIST_TYPE)
+        data_list: bdm.DATA_OBJECT_LIST_TYPE = None
+        data_list2: bdm.DATA_OBJECT_LIST_TYPE = None
+        data_list3: bdm.DATA_OBJECT_LIST_TYPE = None
+
+        output_path = bsm.csv_DATA_LIST_file_validate_header(file_path, fieldnames)
+
+
+        data_list = bsm.csv_DATA_LIST_url_get(file_path, return_type=bdm.DATA_OBJECT_LIST_TYPE)
         if not bsm.csv_DATA_LIST_has_header_row(data_list, fieldnames):
             logger.info(f"Header row is missing from the .csv file. "
                         f"Adding header row: {fieldnames}")
             data_list2 = bsm.csv_DATA_LIST_add_header_row(data_list, fieldnames)
         # Remove unrequired columns for .csv_txns schema.
-        data_list3 = bsm.csv_DATA_ROW_LIST_remove_columns_by_name(data_list2, 
+        data_list3 = bsm.csv_DATA_LIST_remove_columns_by_name(data_list2, 
                                                               ["ignore1", "ignore2"])
         # Add missing columns with default values for .csv_txns schema.
         print(f"Count={len(data_list3)}")
@@ -79,7 +83,7 @@ if __name__ == "__main__":
 
     try:
         cvs_path = Path.from_uri(cvs_url).expanduser().resolve()
-        bdm_open_intake_file(cvs_url)
+        bdm_open_intake_file(cvs_path)
         # with open(cvs_path,"r",newline="",encoding='utf-8-sig') as f:
         #     reader = csv.reader(f, delimiter=',', skipinitialspace=True)
         #     data_row_list = list(reader)

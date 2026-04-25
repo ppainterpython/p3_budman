@@ -33,18 +33,24 @@ class BudManSettings(Dynaconf,metaclass=BDMSingletonMeta):
     def __init__(self, settings_files: str = None, root_path: str = None) -> None:
         """Initialize the BudManSettings instance."""
         try:
-            print(f"Entry: settings_files='{settings_files}', root_path='{root_path}'")
+            # self._startup_msg: str = ''
+            # startup_msg = f"\nEntry: settings_files='{settings_files}', root_path='{root_path}\n'"
             if settings_files is None:
                 settings_files = os.getenv(BUDMAN_SETTINGS_FILES_ENV_VAR, BUDMAN_SETTINGS)
             if root_path is None:
-                root_path = os.getenv(BUDMAN_FOLDER_ENV_VAR, str(Path.home() / "budget"))
-            logger.debug(f"After Env: settings_files='{settings_files}', root_path='{root_path}'")
+                # Default is ~/budget, but allow override by env variable.
+                root_path = os.getenv(BUDMAN_FOLDER_ENV_VAR, str(Path.home() / "budman"))
+            # startup_msg += f"After Env: settings_files='{settings_files}', root_path='{root_path}'\n"
             super().__init__(settings_files=settings_files, root_path=root_path)
-            logger.debug(f"Initialized BudManSettings: {self.to_dict()}")
+            # startup_msg += f"Initialized BudManSettings: {self.to_dict()}\n"
+            # self.startup_msg = startup_msg
         except Exception as e:
-            logger.error(f"Failed to initialize BudManSettings: {exc_err_msg(e)}")
+            print(f"budman_settings.py:Failed to initialize BudManSettings: {exc_err_msg(e)}")
             raise
-
+    @property
+    def startup_msg(self) -> str:
+        """Return the startup message."""
+        return self._startup_msg
     # def __repr__(self) -> str:
     #     return f"<BudManSettings: {self.to_dict()}>"
     # ------------------------------------------------------------------------ +
