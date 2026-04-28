@@ -183,12 +183,12 @@ class BudManAppDataContext_Base(DataContext_Base):
     @property
     @abstractmethod
     def dc_BDM_STORE(self) -> Optional[str]:
-        """Abstract: Return the BDM_STORE jsonc definition."""
+        """Abstract: Return the BDM_STORE property value."""
         pass
     @dc_BDM_STORE.setter
     @abstractmethod
     def dc_BDM_STORE(self, value: Optional[str]) -> None:
-        """Abstract: Set the BDM_STORE jsonc definition."""
+        """Abstract: Set the BDM_STORE property value."""
         pass
 
     @property
@@ -299,6 +299,12 @@ class BudManAppDataContext_Base(DataContext_Base):
     @abstractmethod
     def dc_WORKBOOK_DATA_COLLECTION_validate(self, wdc : WORKBOOK_DATA_COLLECTION_TYPE) -> bool:
         """Abstract: Validate the type of WORKBOOK_DATA_COLLECTION."""
+        pass
+
+    @abstractmethod
+    def dc_WORKBOOK_DATA_COLLECTION_add(self, 
+                                        wb: WORKBOOK_OBJECT_TYPE) -> None:
+        """Abstract: Add a workbook to the WORKBOOK_DATA_COLLECTION."""
         pass
 
     @abstractmethod

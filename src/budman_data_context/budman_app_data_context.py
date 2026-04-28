@@ -421,7 +421,7 @@ class BudManAppDataContext(BudManAppDataContext_Base):
         return wf_purpose in VALID_WF_PURPOSE_VALUES
 
     def dc_WB_ID_validate(self, wb_id: str) -> bool:
-        """Validate the provided WB_ID."""
+        """DC-ONLY: Validate the provided WB_ID."""
         if not self.dc_VALID: return False
         _ = p3u.is_str_or_none("wb_id", wb_id, raise_error=True)
         return True if wb_id in self.dc_WORKBOOK_DATA_COLLECTION else False
@@ -482,6 +482,22 @@ class BudManAppDataContext(BudManAppDataContext_Base):
                          f"not type: '{type(wdc).__name__}'")
             return False
         return True 
+
+    def dc_WORKBOOK_DATA_COLLECTION_add(self, wb: WORKBOOK_OBJECT_TYPE) -> None:
+        """DC-ONLY: Add a workbook to the WORKBOOK_DATA_COLLECTION.
+        Abstract: Add a workbook to the WORKBOOK_DATA_COLLECTION.
+        """
+        if not self.dc_VALID: return False
+        if self.dc_WORKBOOK_DATA_COLLECTION is None:
+            logger.error("dc_WORKBOOK_DATA_COLLECTION is None.")
+            return False
+        wdc = self.dc_WORKBOOK_DATA_COLLECTION
+        if not isinstance(wdc, dict):
+            logger.error(f"dc_WORKBOOK_DATA_COLLECTION must be a dict, "
+                         f"not type: '{type(wdc).__name__}'")
+            return False
+        wdc[wb.wb_id] = wb
+        return True
 
     def dc_WORKBOOK_validate(self, wb : WORKBOOK_OBJECT_TYPE=None) -> bool:
         """ DC-Only: Validate the type of WORKBOOK_OBJECT_TYPE.

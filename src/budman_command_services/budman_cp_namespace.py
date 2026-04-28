@@ -152,30 +152,32 @@ CK_WB_INDEX = bdm.WB_INDEX
 CK_WB_LIST = "wb_list"
 CK_FI_KEY = bdm.FI_KEY
 CK_WF_KEY = bdm.WF_KEY
+CK_SRC_WF_KEY = "src_" + bdm.WF_KEY
+CK_DST_WF_KEY = "dst_" + bdm.WF_KEY
 CK_WF_FOLDER = bdm.WF_FOLDER
 CK_SRC_WF_FOLDER = "src_" + CK_WF_FOLDER
 CK_DST_WF_FOLDER = "dst_" + CK_WF_FOLDER
 CK_WF_PURPOSE = bdm.WF_PURPOSE
+CK_SRC_WF_PURPOSE = "src_" + bdm.WF_PURPOSE
+CK_DST_WF_PURPOSE = "dst_" + bdm.WF_PURPOSE
 CK_WF_INPUT = bdm.WF_INPUT
 CK_WF_WORKING = bdm.WF_WORKING
 CK_WF_OUTPUT = bdm.WF_OUTPUT
 CK_WB_ID = bdm.WB_ID
 CK_WB_TYPE = bdm.WB_TYPE
+CK_SRC_WB_TYPE = "src_" + bdm.WB_TYPE
+CK_DST_WB_TYPE = "dst_" + bdm.WB_TYPE
 CK_WB_NAME = bdm.WB_NAME
 CK_FILE_LIST = "file_list"
 CK_WB_REF = "wb_ref"
 CK_WB_INFO = "wb_info"
 CK_WF_TASK = "wf_task"
-CK_SRC_WF_KEY = "src_" + bdm.WF_KEY
-CK_DST_WF_KEY = "dst_" + bdm.WF_KEY
-CK_SRC_WF_PURPOSE = "src_" + bdm.WF_PURPOSE
-CK_DST_WF_PURPOSE = "dst_" + bdm.WF_PURPOSE
-CK_SRC_WB_TYPE = "src_" + bdm.WB_TYPE
-CK_DST_WB_TYPE = "dst_" + bdm.WB_TYPE
 CK_TRANSFER_FILES = "transfer_files"
 CK_TRANSFER_WORKBOOKS = "transfer_workbooks"
 CK_UPDATE_CATEGORY_MAP_WORKBOOK = "update_category_map_workbook"
 CK_RAW_FORMAT = "raw_format"
+CK_CATEGORY_MAP = "category_map"
+CK_CHECK_REGISTER = "check_register"
 
 # subcmd_key CV_TASK_SUBCMD_KEY argument constants
 
@@ -212,6 +214,7 @@ CK_ROLLOVER_SWITCH = "rollover_switch"
 # subcmd_name CV_RELOAD_SUBCMD argument constants
 CK_RELOAD_TARGET = "reload_target"
 CV_CATEGORY_MAP = "category_map"
+CV_CHECK_REGISTER = "check_register"
 CV_FI_WORKBOOK_DATA_COLLECTION = bdm.FI_WORKBOOK_DATA_COLLECTION
 CV_WORKFLOWS_MODULE = "budman_workflows"
 # deprecated

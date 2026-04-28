@@ -10,16 +10,19 @@ from .budget_storage_model import (
     # Level 1 Methods
     bsm_BDMWorkbook_load,
     bsm_BDMWorkbook_save,
+    bsm_BDMWorkbook_copy,
     bsm_BDMWorkbook_close,
     bsm_BDMWorkbook_delete,
     # Level 2 Methods
     bsm_WORKBOOK_CONTENT_url_get,
     bsm_WORKBOOK_CONTENT_url_put,
+    bsm_WORKBOOK_CONTENT_url_copy,
     bsm_WORKBOOK_CONTENT_url_close,
     bsm_WORKBOOK_CONTENT_url_delete,
     # Level 3 Methods
     bsm_WORKBOOK_CONTENT_file_load,
     bsm_WORKBOOK_CONTENT_file_save,
+    bsm_WORKBOOK_CONTENT_file_copy,
     bsm_WORKBOOK_CONTENT_file_close,
     bsm_WORKBOOK_CONTENT_file_delete,
     bsm_BDM_STORE_url_get,
@@ -43,12 +46,15 @@ from .bsm_file_tree import BSMFileTree
 from .csv_data_collection import (
     csv_DATA_LIST_url_get,
     csv_DATA_LIST_url_put,
+    csv_DATA_LIST_url_copy,
     csv_DATA_LIST_file_load,
     csv_DATA_LIST_file_save,
     csv_DATA_LIST_has_header_row,
     csv_DATA_LIST_remove_columns,
     csv_DATA_LIST_add_columns,
     csv_DATA_LIST_remove_extra_columns,
+    csv_DATA_LIST_merge_columns,
+    csv_DATA_LIST_rename_columns,
     csv_DATA_LIST_file_validate_header
 )
 
@@ -57,16 +63,19 @@ __all__ = [
     # Level 1 Methods
     "bsm_BDMWorkbook_load",
     "bsm_BDMWorkbook_save",
+    "bsm_BDMWorkbook_copy",
     "bsm_BDMWorkbook_close",
     "bsm_BDMWorkbook_delete",
     # Level 2 Methods
     "bsm_WORKBOOK_CONTENT_url_get",
     "bsm_WORKBOOK_CONTENT_url_put",
+    "bsm_WORKBOOK_CONTENT_url_copy",
     "bsm_WORKBOOK_CONTENT_url_close",
     "bsm_WORKBOOK_CONTENT_url_delete",
     # Level 3 Methods
     "bsm_WORKBOOK_CONTENT_file_load",
     "bsm_WORKBOOK_CONTENT_file_save",
+    "bsm_WORKBOOK_CONTENT_file_copy",
     "bsm_WORKBOOK_CONTENT_file_close",
     "bsm_WORKBOOK_CONTENT_file_delete",
     "bsm_BDM_STORE_url_get",
@@ -91,11 +100,14 @@ __all__ = [
     # csv_data_collection Functions
     "csv_DATA_LIST_url_get",
     "csv_DATA_LIST_url_put",
+    "csv_DATA_LIST_url_copy",
     "csv_DATA_LIST_file_load",
     "csv_DATA_LIST_file_save",
     "csv_DATA_LIST_has_header_row",
     "csv_DATA_LIST_remove_columns",
     "csv_DATA_LIST_add_columns",
     "csv_DATA_LIST_remove_extra_columns",
+    "csv_DATA_LIST_merge_columns",
+    "csv_DATA_LIST_rename_columns",
     "csv_DATA_LIST_file_validate_header"
     ]

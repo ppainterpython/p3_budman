@@ -39,6 +39,9 @@ from budget_storage_model import (
     csv_DATA_LIST_has_header_row, 
     csv_DATA_LIST_remove_columns,
     csv_DATA_LIST_add_columns,
+    csv_DATA_LIST_remove_extra_columns,
+    csv_DATA_LIST_merge_columns,
+    csv_DATA_LIST_rename_columns,
     csv_DATA_LIST_file_validate_header
 )   
 from .category_manager import BDMTXNCategoryManager, TXNCategoryMap
@@ -134,6 +137,10 @@ def INTAKE_TASK_convert_csv_txns_schema(csv_txns_wb: BDMWorkbook,
             data = None
             if transform == "remove":
                 data = csv_DATA_LIST_remove_columns(csv_txns_wb.wb_content, col_list)
+            elif transform == "merge":
+                data = csv_DATA_LIST_merge_columns(csv_txns_wb.wb_content, col_list)
+            elif transform == "rename":
+                data = csv_DATA_LIST_rename_columns(csv_txns_wb.wb_content, col_list)
             elif transform == "add":
                 data = csv_DATA_LIST_add_columns(csv_txns_wb.wb_content, col_list)
             else:

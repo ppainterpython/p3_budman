@@ -70,7 +70,7 @@ TERM_TITLE = "Budget Manager CLI"
 # settings = bdms.BudManSettings()
 #endregion Configure the CLI parser 
 # ---------------------------------------------------------------------------- +
-#region    cli_view_cp_user_output()
+#region    cli_view_cp_user_output() function
 @p3m.cp_user_message_callback
 def cli_view_cp_user_output(m: p3m.CPUserOutputMessage) -> None:
     """Output callback for async user messages from the Command Processor to the CLI View.
@@ -82,9 +82,9 @@ def cli_view_cp_user_output(m: p3m.CPUserOutputMessage) -> None:
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))        
 
-#endregion cli_view_cp_user_output()
+#endregion cli_view_cp_user_output() function
 # ---------------------------------------------------------------------------- +
-#region    cli_cmd_result_output() method
+#region    cli_cmd_result_output() function
 @p3m.cp_cmd_result_message_callback
 def cli_cmd_result_output(cmd_result: p3m.CMD_RESULT_TYPE) -> None:
     """Output async command results to the CLI View.
@@ -97,7 +97,7 @@ def cli_cmd_result_output(cmd_result: p3m.CMD_RESULT_TYPE) -> None:
             budman_cli_view.output_cmd_result( cmd_result)
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
-#endregion cli_cmd_result_output() method
+#endregion cli_cmd_result_output() function
 # ---------------------------------------------------------------------------- +
 
 # ============================================================================ +
@@ -268,10 +268,6 @@ class BudManCLIView(cmd2.Cmd,
         if value is not None and not isinstance(value, str):
             raise TypeError("current_cmd must be a string or None.")
         self._current_cmd = value
-        if value:
-            logger.debug(f"Current command set to: {value}")
-        else:
-            logger.debug("Current command cleared.")
 
     @property
     def settings(self) -> bdms.BudManSettings:
@@ -329,9 +325,9 @@ class BudManCLIView(cmd2.Cmd,
     def postparsing_hook(self, data: cmd2.plugin.PostparsingData) -> cmd2.plugin.PostparsingData:
         """Tweak the cmd args after parsing complete()."""
         try:
-            logger.debug(f"Start:")
+            verbose(f"Start:")
             self.current_cmd = data.statement.raw
-            logger.debug(f"Complete:")
+            verbose(f"Complete:")
             return data
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
@@ -342,10 +338,10 @@ class BudManCLIView(cmd2.Cmd,
     def precmd_hook(self, data: cmd2.plugin.PrecommandData) -> cmd2.plugin.PrecommandData:
         """Tweak the cmd args before cp_execute_cmd()."""
         try:
-            logger.debug(f"Start:")
+            verbose(f"Start:")
             self.current_cmd = data.statement.raw
             # self.terminal_lock.acquire()
-            logger.debug(f"Complete:")
+            verbose(f"Complete:")
             return data
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
@@ -356,12 +352,12 @@ class BudManCLIView(cmd2.Cmd,
     def postcmd_hook(self, data: cmd2.plugin.PostcommandData) -> cmd2.plugin.PostcommandData:
         """Clean after cmd execution."""
         try:
-            logger.debug(f"Start:")
+            verbose(f"Start:")
             self.current_cmd = None
             # self.terminal_lock.release()
             # update the dynamic prompt and window title
             self.set_prompt()
-            logger.debug(f"Complete:")
+            verbose(f"Complete:")
             return data
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
@@ -950,8 +946,10 @@ class BudManCLIView(cmd2.Cmd,
             not p3m.cp_validate_subcmd_key_with_name(subcmd_name, cmd_key, subcmd_key)):
             raise ValueError(f"Invalid: subcmd_key '{subcmd_key}' does not "
                             f"match subcmd_name '{subcmd_name}'.")
-        if cp.CK_SRC_WF_PURPOSE in opts_dict:
-            opts_dict[cp.CK_SRC_WF_PURPOSE] = self.translate_wf_purpose(opts_dict[cp.CK_SRC_WF_PURPOSE])
+        # Do some cmd argument cleanup
+        if cp.CK_CMDLINE_WF_PURPOSE in opts_dict:
+            opts_dict[cp.CK_CMDLINE_WF_PURPOSE] = self.translate_wf_purpose(opts_dict[cp.CK_CMDLINE_WF_PURPOSE])
+
         cmd: p3m.Command = self.cp_find_command(cmd_key, subcmd_key)
         if cmd:
             cmd.cmd_parms.update(opts_dict)
@@ -977,3 +975,10 @@ class BudManCLIView(cmd2.Cmd,
 
 # ---------------------------------------------------------------------------- +
 budman_cli_view: BudManCLIView = None
+#region    verbose() function
+def verbose(msg: str) -> None:
+    """Output a verbose message to the logger."""
+    if budman_cli_view.verbose:
+        logger.debug(msg)
+#endregion verbose() function
+# ---------------------------------------------------------------------------- +

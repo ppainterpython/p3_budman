@@ -256,11 +256,41 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
             raise ValueError(m)
         return False
 
+    def dc_WB_ID_validate(self, wb_id: str) -> bool:
+        """MODEL-AWARE: Validate wb_id from all FI workbook collections.
+        DC-ONLY: Validate the provided WB_ID."""
+        self.not_dc_INITIALIZED()
+        _ = p3u.is_str_or_none("wb_id", wb_id, raise_error=True)
+        for fi_key in self.model.bdm_fi_collection.keys():
+            wdc: WORKBOOK_DATA_COLLECTION_TYPE = self.model.bdm_FI_WORKBOOK_DATA_COLLECTION(fi_key)
+            if wb_id in wdc:
+                return True
+        return True if wb_id in self.dc_WORKBOOK_DATA_COLLECTION else False
+
+    def dc_WORKBOOK_DATA_COLLECTION_add(self, wb: WORKBOOK_OBJECT_TYPE) -> bool:
+        """MODEL-AWARE: Add a workbook to the WORKBOOK_DATA_COLLECTION.
+        DC-ONLY: Add a workbook to the WORKBOOK_DATA_COLLECTION.
+        Abstract: Add a workbook to the WORKBOOK_DATA_COLLECTION.
+        """
+        self.not_dc_INITIALIZED()
+        if not self.dc_WORKBOOK_validate(wb):
+            m = f"Invalid workbook object: {wb!r}"
+            logger.error(m)
+            return False
+        wdc: WORKBOOK_DATA_COLLECTION_TYPE = self.model.bdm_FI_WORKBOOK_DATA_COLLECTION(wb.fi_key)
+        if wdc:
+            wdc[wb.wb_id] = wb
+            return True
+        return False
+
     def dc_WORKBOOK_validate(self, bdm_wb : WORKBOOK_OBJECT_TYPE) -> bool:
         """Model-Aware: Validate the type of WORKBOOK_OBJECT.
-        Abstract: sub-class hook to test specialized WORKBOOK_OBJECT types.
-        DC-ONLY: check builtin type: 'object'.
         Model-Aware: validate type: BDMWorkbook class.
+        Abstract: sub-class hook to test specialized WORKBOOK_OBJECT types.
+
+        Here in BudMan model world, the workbook should be an instance of
+        BDMWorkbook class. Don't check the wb_id because this could be when it
+        is first created.
         """
         self.not_dc_INITIALIZED()
         try:
@@ -269,12 +299,6 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
             if not isinstance(bdm_wb, BDMWorkbook):
                 m = (f"bdm_wb must be type: 'BDMWorkbook', "
                      f"not type: {type(bdm_wb).__name__}.")
-                logger.error(m)
-                return False
-            # NOTE: May need to vaidate the wb_id in the model using the fi_key to support
-            # workbook actions across financial institutions.
-            if not self.dc_WB_ID_validate(bdm_wb.wb_id):
-                m = f"Invalid workbook ID: {bdm_wb.wb_id}"
                 logger.error(m)
                 return False
             return True

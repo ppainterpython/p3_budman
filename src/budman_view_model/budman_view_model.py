@@ -245,21 +245,15 @@ from typing import List, Type, Optional, Dict, Tuple, Any, Callable
 import importlib
 
 # third-party modules and packages
-from budman_command_services.budman_cp_namespace import CK_CMDLINE_FI_KEY, CK_RAW_FORMAT, CK_SRC_WF_FOLDER, CK_SRC_WF_KEY, CK_SRC_WF_KEY, CK_SRC_WF_PURPOSE
 import p3_utils as p3u, p3logging as p3l, p3_mvvm as p3m
 from openpyxl import Workbook, load_workbook
 
 # local modules and packages
 # from budman_command_services.cp_utils import CMD_RESULT_OBJECT
-import budman_workflows
 import budman_command_services as cp
 import budman_settings as bdms
 from budman_namespace.design_language_namespace import *
 from budman_namespace.bdm_workbook_class import BDMWorkbook
-from budman_workflow_services import (
-    check_sheet_schema, WORKFLOW_TASK_check_sheet_columns, 
-    validate_budget_categories, WORKFLOW_TASK_process_budget_category)
-from budman_command_services import (WORKFLOW_CMD_router)
 from budget_domain_model import (BudgetDomainModel, BDMConfig)
 from budman_data_context.budman_app_data_context_binding_class import BudManAppDataContext_Binding
 from budman_gui_view import BudManGUIView
@@ -517,8 +511,6 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                 cp.CV_SAVE_WORKBOOKS_SUBCMD_KEY: self.WORKBOOKS_save_cmd,
                 cp.CV_CLOSE_WORKBOOKS_SUBCMD_KEY: self.BUDMAN_CMD_close_workbooks,
                 cp.CV_CHANGE_WORKBOOKS_SUBCMD_KEY: self.CHANGE_cmd,
-                cp.CV_WORKFLOW_CMD_KEY: self.WORKFLOW_cmd,
-                cp.CV_APPLY_SUBCMD_KEY: self.WORKFLOW_apply_cmd,
                 cp.CV_SHOW_CMD_KEY: self.SHOW_cmd,
                 cp.CV_CHANGE_CMD_KEY: self.CHANGE_cmd,
                 cp.CV_APP_CMD_KEY: self.APP_cmd,
@@ -584,8 +576,8 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                     cp.CK_SYMLINK,
                     cp.CK_FILE_LIST,
                     cp.CK_CMDLINE_FI_KEY,
-                    cp.CK_SRC_WF_KEY,
-                    cp.CK_SRC_WF_PURPOSE,
+                    cp.CK_CMDLINE_WF_KEY,
+                    cp.CK_CMDLINE_WF_PURPOSE,
                     cp.CK_WB_TYPE
                     ]
                 )
@@ -623,6 +615,8 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                 subcmd_name=cp.CV_CHECK_SUBCMD_NAME,
                 cmd_exec_func=cp.WORKFLOW_CMD_check_workbooks,
                 required_parms=[
+                    cp.CK_WB_LIST,
+                    cp.CK_ALL_WBS,
                     cp.CK_LOAD_WORKBOOK_SWITCH,
                     cp.CK_FIX_SWITCH,
                     cp.CK_REMOVE_EXTRA_COLUMNS,
@@ -634,10 +628,56 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                 cp=self,
                 cmd_name=cp.CV_WORKFLOW_CMD_NAME, 
                 subcmd_name=cp.CV_CATEGORIZATION_SUBCMD_NAME,
-                cmd_exec_func=cp.WORKFLOW_TASK_categorize_transactions,
+                cmd_exec_func=cp.WORKFLOW_CMD_categorize_transactions,
                 required_parms=[
                     cp.CK_LOG_ALL,
                     cp.CK_CLEAR_OTHER
+                    ]
+                )
+            # workflow delete
+            cmd = p3m.Command(
+                cp=self,
+                cmd_name=cp.CV_WORKFLOW_CMD_NAME, 
+                subcmd_name=cp.CV_FILE_DELETE_SUBCMD_NAME,
+                cmd_exec_func=cp.WORKFLOW_CMD_delete_workbooks,
+                required_parms=[
+                    cp.CK_WB_LIST,
+                    cp.CK_ALL_WBS,
+                    cp.CK_NO_SAVE,
+                    cp.CK_CLEAR_OTHER
+                    ]
+                )
+            # workflow set
+            cmd = p3m.Command(
+                cp=self,
+                cmd_name=cp.CV_WORKFLOW_CMD_NAME, 
+                subcmd_name=cp.CV_SET_SUBCMD_NAME,
+                cmd_exec_func=cp.WORKFLOW_CMD_set_value,
+                required_parms=[
+                    cp.CK_CMDLINE_WF_KEY,
+                    cp.CK_CMDLINE_WF_PURPOSE
+                    ]
+                )
+            # workflow task
+            cmd = p3m.Command(
+                cp=self,
+                cmd_name=cp.CV_WORKFLOW_CMD_NAME, 
+                subcmd_name=cp.CV_TASK_SUBCMD_NAME,
+                cmd_exec_func=cp.WORKFLOW_CMD_task,
+                required_parms=[
+                    cp.CK_TASK_NAME,
+                    cp.CK_RECONCILE
+                    ]
+                )   
+            # workflow apply
+            cmd = p3m.Command(
+                cp=self,
+                cmd_name=cp.CV_WORKFLOW_CMD_NAME, 
+                subcmd_name=cp.CV_APPLY_SUBCMD_NAME,
+                cmd_exec_func=cp.WORKFLOW_CMD_apply,
+                required_parms=[
+                    cp.CK_CATEGORY_MAP,
+                    cp.CK_CHECK_REGISTER
                     ]
                 )   
             #endregion Command object definitions
@@ -1179,72 +1219,6 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
     #endregion APP_cmd() execution method
     # ------------------------------------------------------------------------ +
-    #region WORKFLOW_cmd() execution method
-    def WORKFLOW_cmd(self, cmd : p3m.CMD_OBJECT_TYPE) -> p3m.CMD_RESULT_TYPE:
-        """Execute a workflow task.
-
-        Arguments:
-            cmd (CMD_OBJECT_TYPE): 
-                A validated CommandProcessor CMD_OBJECT_TYPE. Contains
-                the command attributes and parameters to execute.
-
-        Returns:
-            p3m.CMD_RESULT_TYPE:
-                The outcome of the command execution. 
-        """
-        try:
-            st = p3u.start_timer()
-            logger.debug(f"Start: ...")
-            # Should be called only for workflow cmd.
-            cmd_result : p3m.CMD_RESULT_TYPE = cp.verify_cmd_key(cmd, cp.CV_WORKFLOW_CMD_KEY)
-            if not cmd_result[p3m.CK_CMD_RESULT_STATUS]: return cmd_result
-            # Process workflow command tasks.
-            cmd_result = WORKFLOW_CMD_router(cmd, self.DC)
-            logger.info(f"Complete: {p3u.stop_timer(st)}")
-            return cmd_result
-        except Exception as e:
-            return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
-    #endregion WORKFLOW_cmd() execution method
-    # ------------------------------------------------------------------------ +
-    #region WORKFLOW_apply_cmd() execution method
-    def WORKFLOW_apply_cmd(self, cmd : p3m.CMD_OBJECT_TYPE) -> BUDMAN_RESULT_TYPE:
-        """Apply workflow tasks to WORKBOOKS.
-
-        A WORKFLOW_apply_cmd command will use the wb_ref value in the cmd. 
-        Value is a number or a wb_name.
-
-        Arguments:
-            cmd (Dict): A valid BudMan View Model Command object. For this
-            command, must contain workflow_cmd = 'apply' resulting in
-            a full command key of 'workflow_cmd_apply'.
-
-        Returns:
-            Tuple[success : bool, result : Any]: The outcome of the command 
-            execution. If success is True, result contains result of the 
-            command, if False, a description of the error.
-            
-        Raises:
-            RuntimeError: A description of the
-            root error is contained in the exception message.
-        """
-        try:
-            logger.info(f"Start: ...")
-            r_msg: str = "Start:"
-            logger.debug(r_msg)
-            subcmd_name = cmd[cp.p3m.CK_SUBCMD_NAME]
-            if subcmd_name == cp.CV_APPLY_SUBCMD_NAME:
-                # Update the txn_categories by apply the category_map.
-                p3m.cp_msg_svc.user_info_message("workflow apply cmd starting..")
-                p3m.cp_msg_svc.user_warning_message("workflow apply cmd Warning..")
-                p3m.cp_msg_svc.user_error_message("workflow apply cmd Error..")
-                p3m.cp_msg_svc.user_debug_message("workflow apply cmd Debug..")
-                return p3m.cp_CMD_RESULT_create(True, p3m.CV_CMD_STRING_OUTPUT,
-                                 "Applied category_map to txn_categories.", cmd)   
-            return p3m.cp_CMD_RESULT_create(False, p3m.CV_CMD_STRING_OUTPUT, "", cmd)
-        except Exception as e:
-            return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
-    #endregion WORKFLOW_apply_cmd() execution method
-    # ------------------------------------------------------------------------ +
     #                                                                          +
     #endregion Command Execution Methods                                       +
     # ======================================================================== +
@@ -1252,7 +1226,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
     # ======================================================================== +
     #region    helper methods                                                  +
     # ======================================================================== +
-    #region process_workbook_input()
+    #region    process_workbook_input()
     def process_selected_workbook_input(self, cmd: p3m.CMD_OBJECT_TYPE) -> List[BDMWorkbook]:
         """Process the workbook input from the command, return a list of 
         BDMWorkbooks, which may be empty.

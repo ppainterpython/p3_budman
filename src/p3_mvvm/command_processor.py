@@ -706,8 +706,7 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
                 raise RuntimeError(cmd_result[CK_CMD_RESULT_CONTENT]) from e
             return cmd_result
     #endregion cp_execute_cmd() method
-    # --------------------
-    # ---------------------------------------------------- +
+    # ------------------------------------------------------------------------ +
     #region    cp_cmd_attr_get() Command Processor method
     def cp_cmd_attr_get(self, cmd: Dict,
                        key_name: str, default_value: Any = None) -> Any:

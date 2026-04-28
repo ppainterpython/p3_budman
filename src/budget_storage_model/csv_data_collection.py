@@ -20,7 +20,7 @@
 # ---------------------------------------------------------------------------- +
 #region    Imports
 # python standard library modules and packages
-import csv, logging, os, time
+import csv, logging, shutil, os, time
 from pathlib import Path
 from urllib.parse import urlparse, unquote
 from typing import List, Dict, Any
@@ -79,6 +79,37 @@ def csv_DATA_LIST_url_put(csv_list: list, csv_url: str = None) -> None:
         csv_DATA_LIST_file_save(csv_list, csv_path)
         logger.debug(f"Complete csv_path: {csv_path} {p3u.stop_timer(st)}")
         return
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion csv_DATA_LIST_url_put() function
+# ---------------------------------------------------------------------------- +
+#region    csv_DATA_LIST_url_put() function
+def csv_DATA_LIST_url_copy(src_url: str, dst_url: str ) -> None:
+    """Copy a DATA_LIST object from a source URL to a destination URL in storage.
+
+    A csv list is copied from the src_url to the dst_url. Parse the URLs and decide
+    how to load and save the DATA_LIST object based on the URL scheme. 
+
+    Args:
+        src_url (str): The URL to the source DATA_LIST object to load.
+        dst_url (str): The URL to the destination DATA_LIST object to save.
+
+    raises:
+        ValueError: If the URLs are invalid or the copy operation fails.
+    """
+    try:
+        src: Path = Path.from_uri(src_url)
+        p3u.verify_file_path_for_load(src)
+        dst: Path = Path.from_uri(dst_url)
+        p3u.verify_file_path_for_save(dst)
+        shutil.copyfile(src, dst)
+        return
+    except shutil.SameFileError:
+        msg = (f"No transfer needed. "
+               f"Source and destination are the same file: '{src_url}'. ")
+        logger.warning(msg)
+        return False, msg
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
@@ -298,6 +329,96 @@ def csv_DATA_LIST_remove_extra_columns(csv_content: bdm.DATA_OBJECT_LIST_TYPE,
         logger.error(p3u.exc_err_msg(e))
         raise
 #endregion csv_DATA_LIST_remove_extra_columns() function
+# ---------------------------------------------------------------------------- +
+#region csv_DATA_LIST_merge_columns() function
+def csv_DATA_LIST_merge_columns(csv_content: bdm.DATA_OBJECT_LIST_TYPE,
+                                     column_map: dict) -> bdm.DATA_OBJECT_LIST_TYPE:
+    """Merge columns in the csv data list according to the from and to values in the dictionary.
+
+    Merge columns in csv_content according to the column_map dictionary. Each key
+    in column_map is the from_column and the corresponding value is the to_column. 
+    The column_map may contain multiple pairs for merging multiple columns. 
+    Both from_column and to_column are expected to be in the csv data list. 
+    If the from_column exists and has a value, then copy that value to the 
+    to_column. If the from_column does not exist or has no value, then no action
+    is taken for that row. The from_column is not removed from the csv data list.
+
+    Args:
+        csv_content: The csv data content as List[Dict[str,Any]]
+        column_map: A dictionary mapping from_column to to_column for merging columns.
+    
+    """
+    try:
+        if not csv_content:
+            m = "The csv_data_list is empty, cannot merge columns."
+            logger.error(m)
+            raise ValueError(m)
+        if not column_map:
+            m = "The column_map must contain at least one from and to column name."
+            logger.error(m)
+            raise ValueError(m)
+        
+        new_csv_data_list = []
+        for row in csv_content:
+            new_row = row.copy()
+            for from_col, to_col in column_map.items():
+                if (from_col in new_row and 
+                    new_row[from_col] is not None and
+                    new_row[from_col] != '' ):
+                    new_row[to_col] = new_row[from_col]
+            new_csv_data_list.append(new_row)
+        
+        logger.debug(f"Merged columns according to '{column_map}' in csv_data_list.")
+        return new_csv_data_list
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion csv_DATA_LIST_merge_columns() function
+# ---------------------------------------------------------------------------- +
+#region csv_DATA_LIST_rename_columns() function
+def csv_DATA_LIST_rename_columns(csv_content: bdm.DATA_OBJECT_LIST_TYPE,
+                                     column_map: dict) -> bdm.DATA_OBJECT_LIST_TYPE:
+    """Rename columns in the csv data list according to the from and to values in the dictionary.
+
+    Rename columns in csv_content according to the column_map dictionary. Each key
+    in column_map is the from_column and the corresponding value is the to_column. 
+    The column_map may contain multiple pairs for renaming multiple columns. 
+    If the from_column exists, then rename it to the to_column. If the from_column
+    does not exist, then no action is taken for that row. When complete, the
+    from_column is removed and the to_column is added with the value from the
+    from_column in the csv data list.
+    
+    Args:
+        csv_content: The csv data content as List[Dict[str,Any]]
+        column_map: A dictionary mapping from_column to to_column for renaming columns.
+    
+    """
+    try:
+        if not csv_content:
+            m = "The csv_data_list is empty, cannot rename columns."
+            logger.error(m)
+            raise ValueError(m)
+        
+        if not column_map:
+            m = "The column_map must contain at least one from and to column name."
+            logger.error(m)
+            raise ValueError(m)
+
+        new_csv_data_list = []
+        for row in csv_content:
+            new_row = row.copy()
+            for from_col, to_col in column_map.items():
+                if from_col in new_row and new_row[from_col] is not None:
+                    new_row[to_col] = new_row[from_col]
+                    del new_row[from_col]  # Remove the original column after renaming
+            new_csv_data_list.append(new_row)
+        
+        logger.debug(f"Renamed columns according to '{column_map}' in csv_data_list.")
+        return new_csv_data_list
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion csv_DATA_LIST_rename_columns() function
 # ---------------------------------------------------------------------------- +
 #region csv_DATA_LIST_file_validate_header() function
 def csv_DATA_LIST_file_validate_header(csv_path: Path, 
