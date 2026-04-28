@@ -33,18 +33,24 @@ class BudManSettings(Dynaconf,metaclass=BDMSingletonMeta):
     def __init__(self, settings_files: str = None, root_path: str = None) -> None:
         """Initialize the BudManSettings instance."""
         try:
-            print(f"Entry: settings_files='{settings_files}', root_path='{root_path}'")
+            # self._startup_msg: str = ''
+            # startup_msg = f"\nEntry: settings_files='{settings_files}', root_path='{root_path}\n'"
             if settings_files is None:
                 settings_files = os.getenv(BUDMAN_SETTINGS_FILES_ENV_VAR, BUDMAN_SETTINGS)
             if root_path is None:
-                root_path = os.getenv(BUDMAN_FOLDER_ENV_VAR, str(Path.home() / "budget"))
-            logger.debug(f"After Env: settings_files='{settings_files}', root_path='{root_path}'")
+                # Default is ~/budget, but allow override by env variable.
+                root_path = os.getenv(BUDMAN_FOLDER_ENV_VAR, str(Path.home() / "budman"))
+            # startup_msg += f"After Env: settings_files='{settings_files}', root_path='{root_path}'\n"
             super().__init__(settings_files=settings_files, root_path=root_path)
-            logger.debug(f"Initialized BudManSettings: {self.to_dict()}")
+            # startup_msg += f"Initialized BudManSettings: {self.to_dict()}\n"
+            # self.startup_msg = startup_msg
         except Exception as e:
-            logger.error(f"Failed to initialize BudManSettings: {exc_err_msg(e)}")
+            print(f"budman_settings.py:Failed to initialize BudManSettings: {exc_err_msg(e)}")
             raise
-
+    @property
+    def startup_msg(self) -> str:
+        """Return the startup message."""
+        return self._startup_msg
     # def __repr__(self) -> str:
     #     return f"<BudManSettings: {self.to_dict()}>"
     # ------------------------------------------------------------------------ +
@@ -89,4 +95,21 @@ class BudManSettings(Dynaconf,metaclass=BDMSingletonMeta):
             logger.error(exc_err_msg(e))
             raise
     #endregion FI_FOLDER_abs_path()
+    # ------------------------------------------------------------------------ +
+    #region    BUDMAN_CMD_STARTUP_SCRIPT_abs_path_str()
+    def BUDMAN_CMD_STARTUP_SCRIPT_abs_path_str(self) -> str:
+        """Return the absolute path to the BUDMAN_CMD_STARTUP_SCRIPT as a string."""
+        try:
+            budman_folder = self[BDM_FOLDER]
+            budman_folder_abs_path = Path(budman_folder).expanduser().resolve()
+            startup_script = self[BUDMAN_CMD_STARTUP_SCRIPT]
+            startup_script_abs_path = budman_folder_abs_path / startup_script
+            if not startup_script_abs_path.exists():
+                logger.warning(f"Startup script '{startup_script_abs_path}' does not exist.")
+                return ''  # Return empty string if the startup script does not exist
+            return str(startup_script_abs_path)
+        except Exception as e:
+            logger.error(exc_err_msg(e))
+            return ''  # Return empty string if there is an error
+    #endregion BUDMAN_CMD_STARTUP_SCRIPT_abs_path_str()
     # ------------------------------------------------------------------------ +

@@ -34,6 +34,7 @@ from datetime import datetime as dt
 # third-party modules and packages
 from arrow import now
 import p3_utils as p3u, pyjson5, p3logging as p3l, p3_mvvm as p3m
+from setuptools import command
 from openpyxl import Workbook, load_workbook
 from treelib import Tree, Node
 from rich import print
@@ -52,7 +53,7 @@ from budman_data_context import BudManAppDataContext_Base
 from budget_storage_model import (
     BSMFile, BSMFileTree,
     bsm_verify_folder, bsm_URL_verify_file_scheme,)
-from budget_categorization import (BDMTXNCategoryManager, TXNCategoryMap)
+from budman_workflow_services import (BDMTXNCategoryManager, TXNCategoryMap)
 import budman_workflows
 #endregion Imports
 # ---------------------------------------------------------------------------- +
@@ -82,21 +83,8 @@ def BUDMAN_CMD_router(cmd: p3m.CMD_OBJECT_TYPE,
                                raise_error= True)
         # Assuming the CMD_OBJECT has been validated before reaching this point.
         # Process the CMD_OBJECT based on its cmd_key and subcmd_key.
-        # List command
-        if cmd[p3m.CK_CMD_KEY] == CV_LIST_CMD_KEY:
-            if cmd[p3m.CK_SUBCMD_KEY] == CV_LIST_WORKBOOKS_SUBCMD_KEY:
-                # List workbooks
-                return BUDMAN_CMD_list_workbooks(cmd, bdm_DC)
-            elif cmd[p3m.CK_SUBCMD_NAME] == CV_BDM_STORE_SUBCMD_NAME:
-                # List BDM_STORE as JSON
-                return BUDMAN_CMD_list_bdm_store_json(cmd, bdm_DC)
-            elif cmd[p3m.CK_SUBCMD_KEY] == CV_LIST_FILES_SUBCMD_KEY:
-                # List files in the BDM store
-                return BUDMAN_CMD_list_files(cmd, bdm_DC)
-            else:
-                return p3m.cp_CMD_RESULT_ERROR_unknown(cmd)
         # Show command
-        elif cmd[p3m.CK_CMD_KEY] == CV_SHOW_CMD_KEY:
+        if cmd[p3m.CK_CMD_KEY] == CV_SHOW_CMD_KEY:
             if cmd[p3m.CK_SUBCMD_KEY] == CV_SHOW_DATA_CONTEXT_SUBCMD_KEY:
                 return BUDMAN_CMD_show_DATA_CONTEXT(cmd, bdm_DC)
             elif cmd[p3m.CK_SUBCMD_KEY] == CV_SHOW_BUDGET_CATEGORIES_SUBCMD_KEY:
@@ -131,8 +119,9 @@ def BUDMAN_CMD_router(cmd: p3m.CMD_OBJECT_TYPE,
 #endregion BUDMAN_CMD_router() function
 # ---------------------------------------------------------------------------- +
 #region BUDMAN_CMD_list_workbooks()
-def BUDMAN_CMD_list_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
-        bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
+def BUDMAN_CMD_list_workbooks(cmd: p3m.Command,
+        bdm_DC: BudManAppDataContext_Base,
+        level: int = 0) -> p3m.CMD_RESULT_TYPE:
     """List workbooks in the BudMan application data context.
 
     Args:
@@ -145,12 +134,25 @@ def BUDMAN_CMD_list_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
         p3m.CMD_RESULT_TYPE: The result of the command execution.
     """
     try:
-        # Construct CMD_RESULT for return.
-        cmd_result: p3m.CMD_RESULT_TYPE = p3m.cp_CMD_RESULT_create(
-            cmd=cmd
+        #region Initialization and validation
+        level += 1
+        ts: str = "[bold dark_orange]CMD: [/bold dark_orange]"
+        m: str = f"{pad(level)}{ts} {BUDMAN_CMD_list_workbooks.__name__}() "
+        p3m.cp_user_info_message(m + "Start: ...")
+        level += 1
+        # Start: ------------------------------------------------------------- +
+        # Validate the cmd argsuments.
+        cmd_args: p3m.CMD_ARGS_TYPE = cmd.validate_command(
+            expected_cmd_key=CV_LIST_CMD_KEY,
+            expected_subcmd_key=CV_LIST_WORKBOOKS_SUBCMD_KEY
         )
-        # check bdm_tree flag
-        bdm_tree: bool = cmd.get(CK_BDM_TREE, False)
+        # Extract parameter values from cmd_args
+        prev_fi_key: str = bdm_DC.dc_FI_KEY
+        fi_key: str = cmd_args.get(CK_CMDLINE_FI_KEY, None)
+        bdm_tree: bool = cmd.cmd_parms.get(CK_BDM_TREE, False)
+        # Construct CMD_RESULT for return.
+        cmd_result: p3m.CMD_RESULT_TYPE = p3m.cp_CMD_RESULT_create(cmd=cmd)
+        #endregion Initialization and validation
         if bdm_tree:
             # Return all workbooks in a RichTree
             result_tree: RichTree = BUDMAN_CMD_TASK_get_workbook_tree(bdm_DC)
@@ -163,7 +165,7 @@ def BUDMAN_CMD_list_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
             # Success for workbook_tree
             cmd_result[p3m.CK_CMD_RESULT_STATUS] = True
             cmd_result[p3m.CK_CMD_RESULT_CONTENT] = result_tree
-            cmd_result[p3m.CK_CMD_RESULT_CONTENT_TYPE] = CV_CMD_JSON_OUTPUT
+            cmd_result[p3m.CK_CMD_RESULT_CONTENT_TYPE] = CV_CMD_RICHTREE_OBJECT
             return cmd_result
         else:
             # CMD_TASK_list_workbook_info_table()
@@ -179,16 +181,21 @@ def BUDMAN_CMD_list_workbooks(cmd: p3m.CMD_OBJECT_TYPE,
                 cmd_result[p3m.CK_CMD_RESULT_CONTENT].append(wb.wb_info_dict(wb_index))
             if len(selected_bdm_wb_list) == 1:
                     bdm_DC.dc_WORKBOOK = wb
+            # Convert the output dictionary result to a JSON string.
+            cmd_result[p3m.CK_CMD_RESULT_CONTENT] = pyjson5.dumps(cmd_result[p3m.CK_CMD_RESULT_CONTENT])
             # Success for workbook_tree
             cmd_result[p3m.CK_CMD_RESULT_STATUS] = True
+            # End: ----------------------------------------------------------- +
+            p3m.cp_user_info_message(m + "End: ...")
             return cmd_result
     except Exception as e:
         return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
 #endregion BUDMAN_CMD_list_workbooks()
 # ---------------------------------------------------------------------------- +
 #region BUDMAN_CMD_list_bdm_store_json()
-def BUDMAN_CMD_list_bdm_store_json(cmd: p3m.CMD_OBJECT_TYPE,
-                                  bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
+def BUDMAN_CMD_list_bdm_store_json(cmd: p3m.Command,
+                                  bdm_DC: BudManAppDataContext_Base,
+                                  level: int = 0) -> p3m.CMD_RESULT_TYPE:
     """List the BDM store in JSON format.
     Args:
         cmd (CMD_OBJECT_TYPE): The command object to process.
@@ -200,9 +207,22 @@ def BUDMAN_CMD_list_bdm_store_json(cmd: p3m.CMD_OBJECT_TYPE,
         p3m.CMD_RESULT_TYPE: The result of the command execution.
     """
     try:
-        p3u.is_not_obj_of_type("bdm_DC", bdm_DC, BudManAppDataContext_Base,
-                               raise_error=True)
+        #region Initialization and validation
+        level += 1
+        ts: str = "[bold dark_orange]CMD: [/bold dark_orange]"
+        m: str = f"{pad(level)}{ts} {BUDMAN_CMD_list_bdm_store_json.__name__}() "
+        p3m.cp_user_info_message(m + "Start: ...")
+        level += 1
+        # Start: ------------------------------------------------------------- +
+        # Validate the cmd argsuments.
+        cmd_args: p3m.CMD_ARGS_TYPE = cmd.validate_command(
+            expected_cmd_key=CV_LIST_CMD_KEY,
+            expected_subcmd_key=CV_LIST_BDM_STORE_SUBCMD_KEY
+        )
+        # Construct CMD_RESULT for return.
+        cmd_result: p3m.CMD_RESULT_TYPE = p3m.cp_CMD_RESULT_create(cmd=cmd)
         model: BudgetDomainModel = bdm_DC.model
+        #endregion Initialization and validation
         if not model:
             m = "No BudgetDomainModel binding in the DC."
             logger.error(m)
@@ -212,13 +232,11 @@ def BUDMAN_CMD_list_bdm_store_json(cmd: p3m.CMD_OBJECT_TYPE,
                 type=p3m.CV_CMD_STRING_OUTPUT,
                 content=m
             )
-        # Construct CMD_RESULT for return.
-        cmd_result: p3m.CMD_RESULT_TYPE = p3m.cp_CMD_RESULT_create(
-            cmd=cmd
-        )
-        cmd_result[p3m.CK_CMD_RESULT_CONTENT_TYPE] = p3m.CMD_JSON_OUTPUT
+        cmd_result[p3m.CK_CMD_RESULT_CONTENT_TYPE] = CV_CMD_JSON_OUTPUT
         cmd_result[p3m.CK_CMD_RESULT_CONTENT] = bdm_DC.model.bdm_BDM_STORE_json()
         cmd_result[p3m.CK_CMD_RESULT_STATUS] = True
+        # End: ----------------------------------------------------------- +
+        p3m.cp_user_info_message(m + "End: ...")
         return cmd_result
     except Exception as e:
         return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
@@ -226,12 +244,12 @@ def BUDMAN_CMD_list_bdm_store_json(cmd: p3m.CMD_OBJECT_TYPE,
 # ---------------------------------------------------------------------------- +    
 #region BUDMAN_CMD_list_files()
 def BUDMAN_CMD_list_files(
-        cmd: p3m.CMD_OBJECT_TYPE,
+        cmd: p3m.Command,
         bdm_DC: BudManAppDataContext_Base,
         level: int = 0) -> p3m.CMD_RESULT_TYPE:
     """List the files in the BDM store.
     Args:
-        cmd (CMD_OBJECT_TYPE): The command object to process.
+        cmd (p3m.Command): The command object to process.
         bdm_DC (BudManAppDataContext_Base): The data context for the BudMan application.
     Returns:
         p3m.CMD_RESULT_TYPE: The result of the command execution.
@@ -245,25 +263,22 @@ def BUDMAN_CMD_list_files(
         level += 1
         # Start: ------------------------------------------------------------- +
         # Validate the cmd argsuments.
-        cmd_args: p3m.CMD_ARGS_TYPE = validate_cmd_arguments(
-            cmd=cmd, 
-            bdm_DC=bdm_DC,
-            cmd_key=CV_LIST_CMD_KEY, 
-            subcmd_key=CV_LIST_FILES_SUBCMD_KEY,
-            required_args=[
-                CK_ALL_FILES,
-                CK_SRC_WF_FOLDER,
-                CK_SRC_WF_KEY,
-                CK_SRC_WF_PURPOSE,
-                CK_RAW_FORMAT,
-                CK_CMDLINE_FI_KEY
-            ]
+
+        cmd_args: p3m.CMD_ARGS_TYPE = cmd.validate_command(
+            expected_cmd_key=CV_LIST_CMD_KEY,
+            expected_subcmd_key=CV_LIST_FILES_SUBCMD_KEY
         )
         cmd_result: p3m.CMD_RESULT_TYPE = BUDMAN_CMD_TASK_validate_model_binding(bdm_DC)
         # Validate DC is Model-aware with a model binding.
         if not cmd_result[p3m.CK_CMD_RESULT_STATUS]:
             return cmd_result
         model: BudgetDomainModel = bdm_DC.model
+        all_files: bool = cmd_args.get(CK_ALL_FILES, False)
+        src_wf_folder: bool = cmd_args.get(CK_SRC_WF_FOLDER, False)
+        raw_format: bool = cmd_args.get(CK_RAW_FORMAT, False)
+        fi_key: str = cmd_args.get(CK_CMDLINE_FI_KEY, None)
+        prev_fi_key: str = bdm_DC.dc_FI_KEY
+        bdm_DC.dc_FI_KEY = fi_key if fi_key else prev_fi_key
         # Refresh the BSM file tree in the model to ensure it is up to date.
         model.bdm_FILE_TREE_refresh()
         bsm_file_tree : BSMFileTree = model.bsm_file_tree
@@ -275,10 +290,6 @@ def BUDMAN_CMD_list_files(
             cmd=cmd
         )
         # List files all_files | wf_folder
-        fi_key: str = cmd_args.get(CK_CMDLINE_FI_KEY, None)
-        all_files: bool = cmd_args.get(CK_ALL_FILES, False)
-        src_wf_folder: bool = cmd_args.get(CK_SRC_WF_FOLDER, False)
-        raw_format: bool = cmd_args.get(CK_RAW_FORMAT, False)
         # If src_wf_folder, then will need wf_key and wf_purpose.
         if src_wf_folder:
             wf_key: str = cmd_args.get(CK_SRC_WF_KEY, None)
@@ -322,6 +333,7 @@ def BUDMAN_CMD_list_files(
                     type=p3m.CV_CMD_STRING_OUTPUT)
         if src_wf_folder and not all_files:
             # From the Model, get the wf_folder_url for an fi_key, wf_key, wf_purpose
+
             fi_wf_folder_url: str = model.bdm_WF_FOLDER_CONFIG_ATTRIBUTE(
                 fi_key=fi_key, wf_key=wf_key, wf_purpose=wf_purpose, 
                 attribute=bdm.WF_FOLDER_URL, raise_errors=False)
@@ -345,6 +357,9 @@ def BUDMAN_CMD_list_files(
         return cmd_result
     except Exception as e:
         return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
+    finally:
+        # Restore previous DC Values if they were modified.
+        bdm_DC.dc_FI_KEY = prev_fi_key
 #endregion BUDMAN_CMD_list_files()
 # ---------------------------------------------------------------------------- +    
 #region BUDMAN_CMD_show_DATA_CONTEXT()
@@ -596,7 +611,7 @@ def BUDMAN_CMD_app_delete(cmd: p3m.CMD_OBJECT_TYPE,
 #endregion BudMan Application CMD_ functions
 # ---------------------------------------------------------------------------- +    
 #endregion BudMan Application CMD_ functions
-# --------------------------------------------------------------------------- +
+# ---------------------------------------------------------------------------- +
 
 # --------------------------------------------------------------------------- +
 #region BudMan Application CMD_TASK_ functions
@@ -902,31 +917,32 @@ def workbook_names(wdc: bdm.WORKBOOK_DATA_COLLECTION_TYPE, wf_key: str, wf_purpo
 #endregion workbook_names() function
 # ---------------------------------------------------------------------------- +
 #region process_selected_workbook_input()
-def process_selected_workbook_input(cmd: p3m.CMD_OBJECT_TYPE,
+def process_selected_workbook_input(cmd: p3m.Command,
                                     bdm_DC: BudManAppDataContext_Base,
                                     validate_url:bool = True) -> List[BDMWorkbook]:
     """Process the workbook input from the command, return a list of 
     BDMWorkbooks, which may be empty.
 
     Arguments:
-        cmd (Dict): A p3m.CMD_OBJECT.
-
+        cmd (p3m.Command): A p3m.Command object .
+        bdm_DC (BudManAppDataContext_Base): The data context for the BudMan application
     Returns:
         List[BDMWorkbook]: A list of BDMWorkbook objects.
     """
     try:
         # Extract common command attributes to select workbooks for task action.
-        wb_list : List[int] = cmd.get(CK_WB_LIST, [])
-        all_wbs : bool = cmd.get(CK_ALL_WBS, bdm_DC.dc_ALL_WBS)
+        wb_list : List[int] = cmd.cmd_parms.get(CK_WB_LIST, [])
+        all_wbs : bool = cmd.cmd_parms.get(CK_ALL_WBS, bdm_DC.dc_ALL_WBS)
         selected_bdm_wb_list : List[BDMWorkbook] = []
-        load_workbook:bool = cmd.get(CK_LOAD_WORKBOOK_SWITCH, False)
+        load_workbook:bool = cmd.cmd_parms.get(CK_LOAD_WORKBOOK_SWITCH, False)
         if all_wbs:
             # If all_wbs is True, process all workbooks in the data context.
             selected_bdm_wb_list = list(bdm_DC.dc_WORKBOOK_DATA_COLLECTION.values())
         elif len(wb_list) > 0:
             for wb_index in wb_list:
                 bdm_wb = bdm_DC.dc_WORKBOOK_by_index(wb_index)
-                selected_bdm_wb_list.append(bdm_wb)
+                if bdm_wb is not None:
+                    selected_bdm_wb_list.append(bdm_wb)
         else:
             # No workbooks selected by the command parameters.
             return selected_bdm_wb_list
@@ -958,7 +974,7 @@ def process_selected_workbook_input(cmd: p3m.CMD_OBJECT_TYPE,
         logger.error(m)
         raise RuntimeError(m)
 #endregion process_selected_workbook_input()
-# ------------------------------------------------------------------------ +    
+# ---------------------------------------------------------------------------- +    
 #region get_workbook_data_collection_info_str() method
 def get_workbook_data_collection_info_str(bdm_DC: BudManAppDataContext_Base) -> bdm.BUDMAN_RESULT_TYPE:
     """Construct an outout string with information about the WORKBOOKS."""

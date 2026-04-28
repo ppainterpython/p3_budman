@@ -23,7 +23,7 @@ from budman_namespace import *
 from budman_data_context import BudManAppDataContext
 from p3_mvvm import Model_Base, Model_Binding
 import budget_storage_model as bsm
-from budget_categorization.txn_category import BDMTXNCategoryManager
+from budman_workflow_services.category_manager import BDMTXNCategoryManager
 from budget_domain_model import BudgetDomainModel
 #endregion imports
 # ---------------------------------------------------------------------------- +
@@ -111,16 +111,6 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
         if not isinstance(value, dict):
             raise TypeError(f"dc_FI_OBJECT must be an FI_OBJECT, "
                             f"not {type(value).__name__}.")
-        # The value's FI_KEY must match dc_FI_KEY.
-        if value[FI_KEY] != self.dc_FI_KEY:
-            raise ValueError(f"FI_OBJECT key mismatch: "
-                             f"value[{FI_KEY}]('{value[FI_KEY]}') != "
-                             f"dc_FI_KEY('{self.dc_FI_KEY}')")
-        # The new FI_OBJECT value must be the same object from model.
-        if value != self.model.bdm_FI_COLLECTION.get(self.dc_FI_KEY, None):
-            raise ValueError(f"dc_FI_OBJECT must be the same object from "
-                             f"model.bdm_FI_COLLECTION for key "
-                             f"dc_FI_KEY'{self.dc_FI_KEY}').")
         self._dc_FI_OBJECT = value
 
     @property
@@ -143,7 +133,7 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
         self.not_dc_INITIALIZED()
         if not self.model.bdm_FI_KEY_validate(value):
             raise ValueError(f"Invalid FI_KEY: {value}")
-        self.dc_FI_OBJECT = self.dc_BDM_STORE[BDM_FI_COLLECTION].get(value, None)
+        self.dc_FI_OBJECT = self.model.bdm_fi_collection.get(value, None)
         # One of the model-saved DC properties.
         self.model.bdm_data_context[DC_FI_KEY] = value
 
@@ -245,9 +235,10 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
                 self._dc_FI_OBJECT = fi_object
                 # This is not DC business, but setup the WF_CATEGORY_MANAGER here.
                 if self.WF_CATEGORY_MANAGER is not None:
-                    # Load the WB_TYPE_TXN_CATEGORIES for the FI.
+                    # Load the WB_TYPE_TXN_CATEGORIES for all FI's.
                     wfm : BDMTXNCategoryManager = self.WF_CATEGORY_MANAGER
-                    wfm.FI_TXN_CATEGORIES_WORKBOOK_load(self._dc_FI_KEY)
+                    for fi_key in self.model.bdm_fi_collection.keys():
+                        wfm.FI_TXN_CATEGORIES_WORKBOOK_load(fi_key)
             except Exception as e:
                 m = f"{p3u.exc_err_msg(e)}"
                 logger.error(m)
@@ -265,11 +256,41 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
             raise ValueError(m)
         return False
 
+    def dc_WB_ID_validate(self, wb_id: str) -> bool:
+        """MODEL-AWARE: Validate wb_id from all FI workbook collections.
+        DC-ONLY: Validate the provided WB_ID."""
+        self.not_dc_INITIALIZED()
+        _ = p3u.is_str_or_none("wb_id", wb_id, raise_error=True)
+        for fi_key in self.model.bdm_fi_collection.keys():
+            wdc: WORKBOOK_DATA_COLLECTION_TYPE = self.model.bdm_FI_WORKBOOK_DATA_COLLECTION(fi_key)
+            if wb_id in wdc:
+                return True
+        return True if wb_id in self.dc_WORKBOOK_DATA_COLLECTION else False
+
+    def dc_WORKBOOK_DATA_COLLECTION_add(self, wb: WORKBOOK_OBJECT_TYPE) -> bool:
+        """MODEL-AWARE: Add a workbook to the WORKBOOK_DATA_COLLECTION.
+        DC-ONLY: Add a workbook to the WORKBOOK_DATA_COLLECTION.
+        Abstract: Add a workbook to the WORKBOOK_DATA_COLLECTION.
+        """
+        self.not_dc_INITIALIZED()
+        if not self.dc_WORKBOOK_validate(wb):
+            m = f"Invalid workbook object: {wb!r}"
+            logger.error(m)
+            return False
+        wdc: WORKBOOK_DATA_COLLECTION_TYPE = self.model.bdm_FI_WORKBOOK_DATA_COLLECTION(wb.fi_key)
+        if wdc:
+            wdc[wb.wb_id] = wb
+            return True
+        return False
+
     def dc_WORKBOOK_validate(self, bdm_wb : WORKBOOK_OBJECT_TYPE) -> bool:
         """Model-Aware: Validate the type of WORKBOOK_OBJECT.
-        Abstract: sub-class hook to test specialized WORKBOOK_OBJECT types.
-        DC-ONLY: check builtin type: 'object'.
         Model-Aware: validate type: BDMWorkbook class.
+        Abstract: sub-class hook to test specialized WORKBOOK_OBJECT types.
+
+        Here in BudMan model world, the workbook should be an instance of
+        BDMWorkbook class. Don't check the wb_id because this could be when it
+        is first created.
         """
         self.not_dc_INITIALIZED()
         try:
@@ -278,10 +299,6 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
             if not isinstance(bdm_wb, BDMWorkbook):
                 m = (f"bdm_wb must be type: 'BDMWorkbook', "
                      f"not type: {type(bdm_wb).__name__}.")
-                logger.error(m)
-                return False
-            if not self.dc_WB_ID_validate(bdm_wb.wb_id):
-                m = f"Invalid workbook ID: {bdm_wb.wb_id}"
                 logger.error(m)
                 return False
             return True

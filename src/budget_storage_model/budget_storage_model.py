@@ -124,7 +124,6 @@ def bsm_BDMWorkbook_save(bdm_wb:BDMWorkbook) -> None:
     """
     try:
         st: float = p3u.start_timer()
-        p3u.is_not_obj_of_type("bdm_wb", bdm_wb, BDMWorkbook, raise_error=True)
         logger.debug(f"Start:")
         p3u.is_not_obj_of_type("bdm_wb", bdm_wb, BDMWorkbook, raise_error=True)
         logger.debug(f"Saving BDMWorkbook content for WB_ID('{bdm_wb.wb_id}') ")
@@ -135,6 +134,25 @@ def bsm_BDMWorkbook_save(bdm_wb:BDMWorkbook) -> None:
         logger.error(p3u.exc_err_msg(e))
         raise
 #endregion bsm_BDMWorkbook_save()
+# ---------------------------------------------------------------------------- +
+#region    bsm_BDMWorkbook_copy()
+def bsm_BDMWorkbook_copy(src_wb:BDMWorkbook, dst_wb:BDMWorkbook, symlink: bool = False) -> None:
+    """
+    Copy the BDMWorkbook content to another workbook.
+    
+    """
+    try:
+        st: float = p3u.start_timer()
+        logger.debug(f"Start:")
+        p3u.is_not_obj_of_type("src_wb", src_wb, BDMWorkbook, raise_error=True)
+        p3u.is_not_obj_of_type("dst_wb", dst_wb, BDMWorkbook, raise_error=True)
+        logger.debug(f"Copying BDMWorkbook content to WB_ID('{dst_wb.wb_id}') ")
+        bsm_WORKBOOK_CONTENT_url_copy(src_wb.wb_url, dst_wb.wb_url, symlink=symlink)
+        logger.debug(f"Complete: {p3u.stop_timer(st)}")
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion bsm_BDMWorkbook_copy()
 # ---------------------------------------------------------------------------- +
 #region    bsm_BDMWorkbook_close()
 def bsm_BDMWorkbook_close(bdm_wb:BDMWorkbook) -> None:
@@ -269,6 +287,37 @@ def bsm_WORKBOOK_CONTENT_url_put(wb_content: bdm.WORKBOOK_CONTENT_TYPE,
         logger.error(p3u.exc_err_msg(e))
         raise
 #endregion bsm_WORKBOOK_CONTENT_url_put() function
+# ---------------------------------------------------------------------------- +
+ #region    bsm_WORKBOOK_CONTENT_url_copy() function
+def bsm_WORKBOOK_CONTENT_url_copy(src_url: str, dst_url: str, wb_type: str, symlink: bool = False) -> None:
+    """BSM: Copy a WORKBOOK_OBJECT from a source URL to a destination URL in storage.
+
+    Layer 2 point copying wb_content from a source URL to a destination URL in a storage service. Parse the URLs to 
+    decide how to route the request to an appropriate storage service.
+
+    Args:
+        src_url (str): The URL to the source WORKBOOK_CONTENT object to copy.
+        dst_url (str): The URL to the destination WORKBOOK_CONTENT object to copy.
+        wb_type (str): The type of the workbook to copy.
+
+    Returns:
+        None
+    """
+    try:
+        st: float = p3u.start_timer()
+        logger.debug(f"Start:")
+        # Validate the URL and wb_type. Raises error if not valid.
+        bsm_WB_URL_TYPE_validate(src_url, wb_type)
+        bsm_WB_URL_TYPE_validate(dst_url, wb_type)
+        src_abs_path: Path = bsm_URL_verify_file_scheme(src_url, test_exists=True)
+        dst_abs_path: Path = bsm_URL_verify_file_scheme(dst_url, test_exists=False)
+        bsm_WORKBOOK_CONTENT_file_copy(src_abs_path, dst_abs_path, symlink, 
+                                       pre_validated=True)
+        logger.debug(f"Complete: {p3u.stop_timer(st)}")
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion bsm_WORKBOOK_CONTENT_url_copy() function
 # ---------------------------------------------------------------------------- +
 #region    bsm_WORKBOOK_CONTENT_url_close() function
 def bsm_WORKBOOK_CONTENT_url_close(wb_content: bdm.WORKBOOK_CONTENT_TYPE, 
@@ -501,6 +550,45 @@ def bsm_WORKBOOK_CONTENT_file_save(wb_content:bdm.WORKBOOK_CONTENT_TYPE,
         logger.error(p3u.exc_err_msg(e))
         raise    
 #endregion bsm_WORKBOOK_CONTENT_file_save(wb_abs_path : str = None) -> Any
+# ---------------------------------------------------------------------------- +
+#region    bsm_WORKBOOK_CONTENT_file_copy(wb:Workbook,wb_abs_path : str = None) -> Any
+def bsm_WORKBOOK_CONTENT_file_copy(src_abs_path:Path, 
+                                   dst_abs_path:Path,
+                                   symlink: bool = False,   
+                                   pre_validated:bool=False) -> None:
+    """Copy a wb_content file of a given wb_type.
+
+    BSM Layer 3: This is a local file system service function, copying a 
+    workbook's data content to the local file system.
+
+    Args:
+        src_abs_path (Path): The path of the source workbook file to copy.
+        dst_abs_path (Path): The path of the destination workbook file to copy.
+        pre_validated (bool): If True, the input parameters are already validated.
+
+    """
+    try:
+        st = p3u.start_timer()
+        logger.debug(f"Start:")
+
+        logger.debug(f"BSM Local Filesystem: Copying WORKBOOK_CONTENT file: "
+                     f"'{src_abs_path}' to '{dst_abs_path}'")
+        wbtl: str = "WB_TYPE_UNKNOWN" # wb_type label
+        if not pre_validated:
+            # Validate the src_abs_path and dest_abs_path are Path objects.
+            p3u.is_obj_of_type("src_abs_path", src_abs_path, Path, raise_error=True)
+            p3u.is_obj_of_type("dst_abs_path", dst_abs_path, Path, raise_error=True)
+            ...
+        if symlink:
+            dst_abs_path.symlink_to(src_abs_path)
+        else:
+            shutil.copyfile(src_abs_path, dst_abs_path)
+        logger.info(f"BizEVENT: Copied {src_abs_path} to file: {dst_abs_path}")
+        logger.debug(f"Complete: {p3u.stop_timer(st)}")
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise    
+#endregion bsm_WORKBOOK_CONTENT_file_copy(wb_abs_path : str = None) -> Any
 # ---------------------------------------------------------------------------- +
 #region    bsm_WORKBOOK_CONTENT_file_close(wb:Workbook,wb_abs_path : str = None) -> Any
 def bsm_WORKBOOK_CONTENT_file_close(wb_content:bdm.WORKBOOK_CONTENT_TYPE,

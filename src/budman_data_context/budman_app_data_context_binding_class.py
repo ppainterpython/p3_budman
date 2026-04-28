@@ -78,6 +78,13 @@ class BudManAppDataContext_Binding(BudManAppDataContext_Base, p3m.DataContext_Bi
         return dc_binding
     #endregion Class Methods (override DataContext_Binding)
     # ------------------------------------------------------------------------ +
+    #region BudManAppDataContext_Binding __init__() method
+    def __init__(self, data_context: BudManAppDataContext_Base = None) -> None:
+        """DC_Binding: Simple instantiation-time initialization. 
+        Binding happens at initialization-time."""
+        super().__init__(data_context)
+    #endregion BudManAppDataContext_Binding __init__() method
+    # ------------------------------------------------------------------------ +
     #region BudManAppDataContext_Binding Properties (override DataContext_Binding)
     @property
     def DC(self) -> BudManAppDataContext_Base:
@@ -314,9 +321,13 @@ class BudManAppDataContext_Binding(BudManAppDataContext_Base, p3m.DataContext_Bi
         """
         return self.DC.dc_WB_INDEX_validate(wb_index)
 
-    def dc_WORKBOOK_DATA_COLLECTION_validate(self) -> bool:
+    def dc_WORKBOOK_DATA_COLLECTION_validate(self, wdc: WORKBOOK_DATA_COLLECTION_TYPE) -> bool:
         """Validate the type of WORKBOOK_DATA_COLLECTION."""
-        return self.DC.dc_WORKBOOK_DATA_COLLECTION_validate()
+        return self.DC.dc_WORKBOOK_DATA_COLLECTION_validate(wdc)
+    
+    def dc_WORKBOOK_DATA_COLLECTION_add(self, wb: WORKBOOK_OBJECT_TYPE) -> None:
+        """Add a workbook to the WORKBOOK_DATA_COLLECTION."""
+        return self.DC.dc_WORKBOOK_DATA_COLLECTION_add(wb)
     
     def dc_WORKBOOK_validate(self, wb: WORKBOOK_OBJECT_TYPE) -> bool:
         """DC-Binding: Validate the type of WORKBOOK_OBJECT_TYPE.

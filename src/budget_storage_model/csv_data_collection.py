@@ -20,7 +20,7 @@
 # ---------------------------------------------------------------------------- +
 #region    Imports
 # python standard library modules and packages
-import csv, logging, os, time
+import csv, logging, shutil, os, time
 from pathlib import Path
 from urllib.parse import urlparse, unquote
 from typing import List, Dict, Any
@@ -37,13 +37,12 @@ logger = logging.getLogger(__name__)
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
 #region    csv_DATA_LIST_get_url() function
-def csv_DATA_LIST_url_get(csv_url : str = None,
-                          fieldnames: List[str] | None = None) -> bdm.DATA_LIST_TYPE:
+def csv_DATA_LIST_url_get(csv_url : str = None, 
+                          return_type: type = bdm.DATA_ROW_DICT_TYPE) -> bdm.DATA_ROW_DICT_TYPE | bdm.DATA_ROW_LIST_TYPE:
     """Get a DATA_LIST object from a URL to a csv file in storage.
 
-    A csv dictionary is read in from the csv_url. Parse the URL and decide
-    how to load the DATA_LIST object based on the URL scheme. Decode the
-    json content and return it as a dictionary.
+    A csv DATA_LIST is read in from the csv_url. Parse the URL and decide
+    how to load the DATA_LIST object based on the URL scheme. 
 
     Args:
         csv_url (str): The URL to the DATA_LIST object to load.
@@ -53,7 +52,7 @@ def csv_DATA_LIST_url_get(csv_url : str = None,
         logger.debug(f"Get DATA_LIST from  url: '{csv_url}'")
         # only support file:// scheme for now.
         csv_path = p3u.verify_url_file_path(csv_url, test=True)
-        result = csv_DATA_LIST_file_load(csv_path, fieldnames=fieldnames)
+        result = csv_DATA_LIST_file_load(csv_path, return_type=return_type)
         logger.debug(f"Complete csv_path: {csv_path} {p3u.stop_timer(st)}")
         return result
     except Exception as e:
@@ -66,8 +65,7 @@ def csv_DATA_LIST_url_put(csv_list: list, csv_url: str = None) -> None:
     """Put a DATA_LIST object to a URL in storage.
 
     A csv list is stored to the csv_url. Parse the URL and decide
-    how to load the DATA_LIST object based on the URL scheme. Decode the
-    json content and return it as a dictionary.
+    how to load the DATA_LIST object based on the URL scheme. 
 
     Args:
         csv_list (list): The DATA_LIST object to save.
@@ -86,61 +84,70 @@ def csv_DATA_LIST_url_put(csv_list: list, csv_url: str = None) -> None:
         raise
 #endregion csv_DATA_LIST_url_put() function
 # ---------------------------------------------------------------------------- +
+#region    csv_DATA_LIST_url_put() function
+def csv_DATA_LIST_url_copy(src_url: str, dst_url: str ) -> None:
+    """Copy a DATA_LIST object from a source URL to a destination URL in storage.
+
+    A csv list is copied from the src_url to the dst_url. Parse the URLs and decide
+    how to load and save the DATA_LIST object based on the URL scheme. 
+
+    Args:
+        src_url (str): The URL to the source DATA_LIST object to load.
+        dst_url (str): The URL to the destination DATA_LIST object to save.
+
+    raises:
+        ValueError: If the URLs are invalid or the copy operation fails.
+    """
+    try:
+        src: Path = Path.from_uri(src_url)
+        p3u.verify_file_path_for_load(src)
+        dst: Path = Path.from_uri(dst_url)
+        p3u.verify_file_path_for_save(dst)
+        shutil.copyfile(src, dst)
+        return
+    except shutil.SameFileError:
+        msg = (f"No transfer needed. "
+               f"Source and destination are the same file: '{src_url}'. ")
+        logger.warning(msg)
+        return False, msg
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion csv_DATA_LIST_url_put() function
+# ---------------------------------------------------------------------------- +
 #region    csv_DATA_LIST_file_load() function
-def csv_DATA_LIST_file_load(csv_path : Path, 
-                            fieldnames: List[str] | None = None) -> bdm.DATA_LIST_TYPE:
-    """Load a DATA_LIST from a csv file at the given Path with the expected fieldnames.
+def csv_DATA_LIST_file_load(csv_path: Path) -> bdm.DATA_OBJECT_LIST_TYPE:
+    """Load a DATA_LIST from a csv file at the given Path.
     
-    A csv file is read in from the csv_path. The csv file is expected to
-    have a header row with the fieldnames that map to the DATA_LIST dict
-    item keys.
+    A csv file is read in from the csv_path using csv.DictReader().
+    The csv file is expected to have a header row with the fieldnames.
 
     Args:
         csv_path (Path): The path to the csv file to load.
-        fieldnames (List[str] | None): The expected fieldnames for the csv file.
 
     Returns:
-        bdm.DATA_LIST_TYPE: The loaded DATA_LIST object.
+        bdm.DATA_OBJECT_LIST_TYPE: The loaded DATA_LIST object as List[Dict[str,Any]].
 
     Raises:
-        ValueError: If the csv file does not have the expected fieldnames.
+        ValueError: If the csv file cannot be loaded.
     """
-    try:        
+    try:
         st = p3u.start_timer()
         logger.debug(f"BSM: Start: Loading DATA_LIST from csv file: '{csv_path}'")
         # Verify the csv_path is a valid file path for loading.
-        # If the file does not exist, raise an error. 
         _ = p3u.is_valid_path("csv_path", csv_path)  
         p3u.verify_file_path_for_load(csv_path)
-        # Only hand csv files here.
+        # Only handle csv files here.
         if csv_path.suffix != bdm.WB_FILETYPE_CSV:
             m = f"csv_path filetype is not supported: {csv_path.suffix}"
             logger.error(m)
             raise ValueError(m)
-        if fieldnames is None or len(fieldnames) == 0:
-            m = "fieldnames is required to load a csv file into a DATA_LIST."
-            logger.error(m)
-            raise ValueError(m)
-        with open(csv_path, "r",newline="",encoding='utf-8-sig') as f:
-            sample = f.read(1024)
-            dialect = csv.Sniffer().sniff(sample)
-            try:
-                has_header: bool = csv.Sniffer().has_header(sample)
-            except (ValueError, csv.Error):
-                # If sniffer can't determine header, assume no header and use provided fieldnames
-                logger.debug(f"Could not determine if CSV has header, assuming no header for: '{csv_path}'")
-                has_header: bool = False
         
-        with open(csv_path, "r",newline="",encoding='utf-8-sig') as f:
-            if has_header:
-                # File has a header row, use it
-                reader = csv.DictReader(f, skipinitialspace=True)
-                data_list: bdm.DATA_LIST_TYPE = list(reader)
-            else:
-                # File has no header, use provided fieldnames
-                reader = csv.DictReader(f, fieldnames=fieldnames, skipinitialspace=True)
-                data_list: bdm.DATA_LIST_TYPE = list(reader)
-        logger.info(f"BizEVENT: BSM: Loaded DATA_LIST from csv file: '{csv_path}'")
+        with open(csv_path, "r", newline="", encoding='utf-8-sig') as f:
+            reader = csv.DictReader(f, skipinitialspace=True)
+            data_list: bdm.DATA_OBJECT_LIST_TYPE = list(reader)
+        
+        logger.info(f"BizEVENT: BSM: Loaded DATA_OBJECT_LIST_TYPE from csv file: '{csv_path}'")
         logger.debug(f"BSM: Complete {p3u.stop_timer(st)}")
         return data_list
     except Exception as e:
@@ -149,22 +156,23 @@ def csv_DATA_LIST_file_load(csv_path : Path,
 #endregion csv_DATA_LIST_file_load() function
 # ---------------------------------------------------------------------------- +
 #region    csv_DATA_LIST_file_save() function
-def csv_DATA_LIST_file_save(csv_content: List[Dict[str, Any]], csv_path : Path = None) -> None:
-    """Load a DATA_LIST from a csv file at the given Path."""
+def csv_DATA_LIST_file_save(csv_content: bdm.DATA_OBJECT_LIST_TYPE, 
+                            csv_path: Path = None) -> None:
+    """Save a DATA_LIST to a csv file at the given Path using csv.DictWriter()."""
     try:
         st = p3u.start_timer()
-        logger.debug(f"Loading DATA_LIST from  file: '{csv_path}'")
+        logger.debug(f"Saving DATA_LIST to file: '{csv_path}'")
         p3u.verify_file_path_for_save(csv_path)
-        # Only hand csv files here.
+        # Only handle csv files here.
         if csv_path.suffix != bdm.WB_FILETYPE_CSV:
             m = f"csv_path filetype is not supported: {csv_path.suffix}"
             logger.error(m)
             raise ValueError(m)
-        # Extract the fieldnames from the first row of the cvs_content.
+        # Extract the fieldnames from the first row of the csv_content.
         try:
             first_record = csv_content[0]
         except IndexError:
-            m = "The cvs_content is empty, cannot determine fieldnames."
+            m = "The csv_content is empty, cannot determine fieldnames."
             logger.error(m)
             raise ValueError(m)
         fieldnames = list(first_record.keys())
@@ -177,7 +185,7 @@ def csv_DATA_LIST_file_save(csv_content: List[Dict[str, Any]], csv_path : Path =
             writer.writeheader()
             for row in csv_content:
                 writer.writerow(row)
-        logger.info(f"BizEVENT: Save DATA_LIST to csv  file: '{csv_path}'")
+        logger.info(f"BizEVENT: Save DATA_LIST to csv file: '{csv_path}'")
         logger.debug(f"Complete {p3u.stop_timer(st)}")
         return
     except Exception as e:
@@ -185,61 +193,88 @@ def csv_DATA_LIST_file_save(csv_content: List[Dict[str, Any]], csv_path : Path =
         raise
 #endregion csv_DATA_LIST_file_save() function
 # ---------------------------------------------------------------------------- +
-#region csv_DATA_LIST_add_header_row() function
-def csv_DATA_LIST_add_header_row(csv_data_list: bdm.DATA_LIST_TYPE, fieldnames  : List[str]) -> bdm.DATA_LIST_TYPE:
-    """Add a header row to a csv data list if it does not already have one."""
+#region csv_DATA_LIST_has_header_row() function
+def csv_DATA_LIST_has_header_row(csv_content: bdm.DATA_OBJECT_LIST_TYPE, 
+                                fieldnames: List[str]) -> bool:
+    """Check if a csv data list has the expected fieldnames as keys.
+    
+    Args:
+        csv_content: The csv data content as List[Dict[str,Any]]
+        fieldnames: The expected fieldnames to check for
+    
+    Returns:
+        True if keys match expected fieldnames, False otherwise
+    """
     try:
-        if not csv_data_list:
-            m = "The csv_data_list is empty, cannot add header row."
+        if not csv_content:
+            m = "The csv_data_list is empty, cannot check header row."
             logger.error(m)
             raise ValueError(m)
-        # Check if the first row of the csv_data_list has the fieldnames as keys.
-        first_row = csv_data_list[0]
-        if all(field in first_row for field in fieldnames):
-            logger.debug("The csv_data_list already has a header row.")
-            return csv_data_list
-        # If not, add a header row with the fieldnames as keys and empty values.
-        header_row = {field: "" for field in fieldnames}
-        new_csv_data_list = [header_row] + csv_data_list
-        logger.debug(f"Added header row to csv_data_list: {fieldnames}")
-        return new_csv_data_list
+        
+        # Check if the keys of the first dictionary match the expected fieldnames (case insensitive)
+        first_row_keys = set(k.lower() for k in csv_content[0].keys())
+        expected_keys = set(k.lower() for k in fieldnames)
+        
+        return first_row_keys == expected_keys
+        
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
-#endregion csv_DATA_LIST_add_header_row() function
+#endregion csv_DATA_LIST_has_header_row() function
 # ---------------------------------------------------------------------------- +
-#region csv_DATA_LIST_remove_column() function
-def csv_DATA_LIST_remove_columns(csv_data_list: bdm.DATA_LIST_TYPE, 
-                                 column_name: str | List[str]) -> bdm.DATA_LIST_TYPE:
-    """Remove a column from a csv data list."""
+#region csv_DATA_LIST_remove_columns() function
+def csv_DATA_LIST_remove_columns(csv_content: bdm.DATA_OBJECT_LIST_TYPE, 
+                                column_names: str | List[str]) -> bdm.DATA_OBJECT_LIST_TYPE:
+    """Remove columns from a csv data list.
+    
+    Args:
+        csv_content: The csv data content as List[Dict[str,Any]]
+        column_names: Column name(s) to remove
+    
+    Returns:
+        Modified csv data with columns removed
+    """
     try:
-        if not csv_data_list:
-            m = "The csv_data_list is empty, cannot remove column."
+        if not csv_content:
+            m = "The csv_data_list is empty, cannot remove columns."
             logger.error(m)
             raise ValueError(m)
+        
+        # Ensure column_names is a list
+        if isinstance(column_names, str):
+            columns_to_remove = [column_names]
+        else:
+            columns_to_remove = list(column_names)
+        
         new_csv_data_list = []
-        for row in csv_data_list:
-            if isinstance(column_name, list):
-                for col in column_name:
-                    if col in row:
-                        del row[col]
-            else:
-                if column_name in row:
-                    del row[column_name]
-            new_csv_data_list.append(row)
-        logger.debug(f"Removed column '{column_name}' from csv_data_list.")
+        for row in csv_content:
+            new_row = row.copy()
+            for col in columns_to_remove:
+                if col in new_row:
+                    del new_row[col]
+            new_csv_data_list.append(new_row)
+        
+        logger.debug(f"Removed columns '{column_names}' from csv_data_list.")
         return new_csv_data_list
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
-#endregion csv_DATA_LIST_remove_column() function
+#endregion csv_DATA_LIST_remove_columns() function
 # ---------------------------------------------------------------------------- +
 #region csv_DATA_LIST_add_columns() function
-def csv_DATA_LIST_add_columns(csv_data_list: bdm.DATA_LIST_TYPE, 
-                                columns: Dict[str, Any]) -> bdm.DATA_LIST_TYPE:
-    """Add columns with default values to a csv data list."""
+def csv_DATA_LIST_add_columns(csv_content: bdm.DATA_OBJECT_LIST_TYPE, 
+                              columns_and_defaults: Dict[str, Any]) -> bdm.DATA_OBJECT_LIST_TYPE:
+    """Add columns with default values to a csv data list.
+    
+    Args:
+        csv_content: The csv data content as List[Dict[str,Any]]
+        columns_and_defaults: Dict mapping column names to default values
+    
+    Returns:
+        Modified csv data with new columns added
+    """
     try:
-        if not csv_data_list:
+        if not csv_content:
             m = "The csv_data_list is empty, cannot add columns."
             logger.error(m)
             raise ValueError(m)
@@ -249,16 +284,17 @@ def csv_DATA_LIST_add_columns(csv_data_list: bdm.DATA_LIST_TYPE,
         existing_columns = set()
         
         new_csv_data_list = []
-        for row in csv_data_list:
-            for col_name, default_value in columns.items():
-                if col_name not in row:
+        for row in csv_content:
+            new_row = row.copy()
+            for col_name, default_value in columns_and_defaults.items():
+                if col_name not in new_row:
                     # Column doesn't exist, add it with default value
-                    row[col_name] = default_value
+                    new_row[col_name] = default_value
                     added_columns.add(col_name)
                 else:
                     # Column already exists, leave it undisturbed
                     existing_columns.add(col_name)
-            new_csv_data_list.append(row)
+            new_csv_data_list.append(new_row)
         
         # Log what happened
         if added_columns:
@@ -270,19 +306,20 @@ def csv_DATA_LIST_add_columns(csv_data_list: bdm.DATA_LIST_TYPE,
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
+#endregion csv_DATA_LIST_add_columns() function
 # ---------------------------------------------------------------------------- +
 #region csv_DATA_LIST_remove_extra_columns() function
-def csv_DATA_LIST_remove_extra_columns(csv_data_list: bdm.DATA_LIST_TYPE,
-                                     expected_columns: List[str]) -> bdm.DATA_LIST_TYPE:
+def csv_DATA_LIST_remove_extra_columns(csv_content: bdm.DATA_OBJECT_LIST_TYPE,
+                                     expected_columns: List[str]) -> bdm.DATA_OBJECT_LIST_TYPE:
     """Remove columns that are not in the expected_columns list from a csv data list."""
     try:
-        if not csv_data_list:
+        if not csv_content:
             m = "The csv_data_list is empty, cannot remove extra columns."
             logger.error(m)
             raise ValueError(m)
         
         new_csv_data_list = []
-        for row in csv_data_list:
+        for row in csv_content:
             new_row = {col: val for col, val in row.items() if col in expected_columns}
             new_csv_data_list.append(new_row)
         
@@ -292,3 +329,175 @@ def csv_DATA_LIST_remove_extra_columns(csv_data_list: bdm.DATA_LIST_TYPE,
         logger.error(p3u.exc_err_msg(e))
         raise
 #endregion csv_DATA_LIST_remove_extra_columns() function
+# ---------------------------------------------------------------------------- +
+#region csv_DATA_LIST_merge_columns() function
+def csv_DATA_LIST_merge_columns(csv_content: bdm.DATA_OBJECT_LIST_TYPE,
+                                     column_map: dict) -> bdm.DATA_OBJECT_LIST_TYPE:
+    """Merge columns in the csv data list according to the from and to values in the dictionary.
+
+    Merge columns in csv_content according to the column_map dictionary. Each key
+    in column_map is the from_column and the corresponding value is the to_column. 
+    The column_map may contain multiple pairs for merging multiple columns. 
+    Both from_column and to_column are expected to be in the csv data list. 
+    If the from_column exists and has a value, then copy that value to the 
+    to_column. If the from_column does not exist or has no value, then no action
+    is taken for that row. The from_column is not removed from the csv data list.
+
+    Args:
+        csv_content: The csv data content as List[Dict[str,Any]]
+        column_map: A dictionary mapping from_column to to_column for merging columns.
+    
+    """
+    try:
+        if not csv_content:
+            m = "The csv_data_list is empty, cannot merge columns."
+            logger.error(m)
+            raise ValueError(m)
+        if not column_map:
+            m = "The column_map must contain at least one from and to column name."
+            logger.error(m)
+            raise ValueError(m)
+        
+        new_csv_data_list = []
+        for row in csv_content:
+            new_row = row.copy()
+            for from_col, to_col in column_map.items():
+                if (from_col in new_row and 
+                    new_row[from_col] is not None and
+                    new_row[from_col] != '' ):
+                    new_row[to_col] = new_row[from_col]
+            new_csv_data_list.append(new_row)
+        
+        logger.debug(f"Merged columns according to '{column_map}' in csv_data_list.")
+        return new_csv_data_list
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion csv_DATA_LIST_merge_columns() function
+# ---------------------------------------------------------------------------- +
+#region csv_DATA_LIST_rename_columns() function
+def csv_DATA_LIST_rename_columns(csv_content: bdm.DATA_OBJECT_LIST_TYPE,
+                                     column_map: dict) -> bdm.DATA_OBJECT_LIST_TYPE:
+    """Rename columns in the csv data list according to the from and to values in the dictionary.
+
+    Rename columns in csv_content according to the column_map dictionary. Each key
+    in column_map is the from_column and the corresponding value is the to_column. 
+    The column_map may contain multiple pairs for renaming multiple columns. 
+    If the from_column exists, then rename it to the to_column. If the from_column
+    does not exist, then no action is taken for that row. When complete, the
+    from_column is removed and the to_column is added with the value from the
+    from_column in the csv data list.
+    
+    Args:
+        csv_content: The csv data content as List[Dict[str,Any]]
+        column_map: A dictionary mapping from_column to to_column for renaming columns.
+    
+    """
+    try:
+        if not csv_content:
+            m = "The csv_data_list is empty, cannot rename columns."
+            logger.error(m)
+            raise ValueError(m)
+        
+        if not column_map:
+            m = "The column_map must contain at least one from and to column name."
+            logger.error(m)
+            raise ValueError(m)
+
+        new_csv_data_list = []
+        for row in csv_content:
+            new_row = row.copy()
+            for from_col, to_col in column_map.items():
+                if from_col in new_row and new_row[from_col] is not None:
+                    new_row[to_col] = new_row[from_col]
+                    del new_row[from_col]  # Remove the original column after renaming
+            new_csv_data_list.append(new_row)
+        
+        logger.debug(f"Renamed columns according to '{column_map}' in csv_data_list.")
+        return new_csv_data_list
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion csv_DATA_LIST_rename_columns() function
+# ---------------------------------------------------------------------------- +
+#region csv_DATA_LIST_file_validate_header() function
+def csv_DATA_LIST_file_validate_header(csv_path: Path, 
+                                       expected_fieldnames: List[str],
+                                       inplace: bool=False) -> Path:
+    """Check if a CSV file has the expected header row. If missing, add it and save to a new file.
+    
+    Args:
+        csv_path (Path): Path to the CSV file to check
+        expected_fieldnames (List[str]): List of expected fieldnames for the header row
+        inplace (bool): If True, modify the original file in place. If False, create a new file with "_hdr" suffix.
+
+    Returns:
+        Path: Path to the output file (original if header exists, new file with "_hdr" if header was added)
+        
+    Raises:
+        ValueError: If the CSV file cannot be processed
+    """
+    try:
+        logger.debug(f"Checking header in CSV file: '{csv_path}'")
+        
+        # Verify the csv_path is a valid file path for loading
+        if not csv_path.exists():
+            raise ValueError(f"CSV file does not exist: {csv_path}")
+        if csv_path.suffix.lower() != '.csv':
+            raise ValueError(f"File is not a CSV file: {csv_path}")
+            
+        # Load the CSV file using DictReader to check current structure
+        with open(csv_path, "r", newline="", encoding='utf-8-sig') as f:
+            # Peek at the first line to check if it looks like a header
+            first_line = f.readline().strip()
+            f.seek(0)  # Reset file pointer
+            
+            reader = csv.DictReader(f, skipinitialspace=True)
+            
+            # Get the actual fieldnames from DictReader (will be None, integers, or strings)
+            actual_fieldnames = reader.fieldnames
+            
+        # Check if the current fieldnames match expected fieldnames (case insensitive)
+        if actual_fieldnames:
+            actual_set = set(name.lower() if isinstance(name, str) else str(name) 
+                           for name in actual_fieldnames)
+            expected_set = set(name.lower() for name in expected_fieldnames)
+            
+            if actual_set == expected_set:
+                logger.debug(f"Header row already exists and matches expected fieldnames")
+                return csv_path
+        
+        # Header is missing or doesn't match - need to add it
+        logger.info(f"Adding missing header row to CSV file: {expected_fieldnames}")
+        
+        # Create new filename with "_hdr" appended
+        stem = csv_path.stem
+        suffix = csv_path.suffix
+        if inplace:
+            output_path = csv_path
+        else:
+            new_filename = f"{stem}_hdr{suffix}"
+            output_path = csv_path.parent / new_filename
+        
+        # Read the original file as raw rows
+        with open(csv_path, "r", newline="", encoding='utf-8-sig') as f:
+            reader = csv.reader(f, skipinitialspace=True)
+            raw_rows = list(reader)
+        
+        # Write new file with header row
+        with open(output_path, "w", newline="", encoding='utf-8-sig') as f:
+            writer = csv.writer(f)
+            # Write the header row first
+            writer.writerow(expected_fieldnames)
+            # Write all the original rows
+            for row in raw_rows:
+                writer.writerow(row)
+        
+        logger.info(f"Created CSV file with header: '{output_path}'")
+        return output_path
+        
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion csv_DATA_LIST_file_validate_header() function
+# ---------------------------------------------------------------------------- +

@@ -31,9 +31,19 @@ BUDMAN_DEFAULT_WORKFLOW = "budman.default_workflow"
 BUDMAN_DEFAULT_WORKFLOW_PURPOSE = "budman.default_workflow_purpose"
 BUDMAN_DEFAULT_WORKBOOK_TYPE = "budman.default_workbook_type"
 BUDMAN_CMD_HISTORY_FILENAME = "budman.cmd_history_filename"
+BUDMAN_CMD_STARTUP_SCRIPT = "budman.cmd_startup_script"
+# [workflow_purposes] Table
+WORKFLOW_PURPOSES = "workflow_purposes"
+BUDMAN_VALID_WF_PURPOSE_KEY_VALUES = "workflow_purposes.valid_wf_purpose_key_values"  # List of valid workflow purpose keys
+BUDMAN_DEFAULT_WF_PURPOSE_KEY = "workflow_purposes.default_wf_purpose_key"
+# [workflows] Table
+WORKFLOWS = "workflows"
+BUDMAN_VALID_WF_KEY_VALUES = "workflows.valid_wf_key_values"  # List of valid workflow keys
+BUDMAN_DEFAULT_WF_KEY = "workflows.default_wf_key"
 # [financial_institutions] Table
 FINANCIAL_INSTITUTIONS = "financial_institutions"  # Dict[fi_key, full filename of FI's transaction data
-BUDMAN_VALID_FI_KEYS = "financial_institutions.valid_fi_keys"  # List of valid FI keys
+BUDMAN_VALID_FI_KEY_VALUES = "financial_institutions.valid_fi_key_values"  # List of valid FI keys
+BUDMAN_DEFAULT_FI = "financial_institutions.default_fi"
 # [category_catalog] Table
 CATEGORY_CATALOG = "category_catalog"
 TXN_CATEGORIES_WORKBOOK_FULL_FILENAME = "txn_categories_workbook_full_filename"

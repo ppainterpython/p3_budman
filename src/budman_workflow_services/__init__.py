@@ -16,12 +16,17 @@ to implement tasks associated with budget categorization workflows.
 """
 __version__ = "0.4.0"
 __author__ = "Paul Painter"
-__copyright__ = "2025 Paul Painter"
-__name__ = "budget_categorization"
+__copyright__ = "2025, 2026 Paul Painter"
+__name__ = "budman_workflow_services"
 __description__ = "Budget Manager (BudMan) Workflow process implementation."
 __license__ = "MIT"
 
-from .budget_categorization import (
+from .workflow_namespace import *
+from .intake_process_services import (
+    INTAKE_TASK_convert_csv_txns_schema
+)
+from .categorization_process_services import (
+    excel_WORKSHEET_remove_extra_columns,
     WORKFLOW_TASK_check_sheet_columns, 
     check_sheet_schema, 
     TRANSACTION_DESCRIPTION_COL_NAME, 
@@ -29,7 +34,7 @@ from .budget_categorization import (
     WORKFLOW_TASK_process_budget_category,
     WORKFLOW_TASK_categorize_transaction
 )
-from .txn_category import (
+from .category_manager import (
     BDMTXNCategory,
     BDMTXNCategoryManager,
     TXNCategoryMap
@@ -38,16 +43,19 @@ from .txn_category import (
 # symbols for "from budman_model import *"
 __all__ = [
     # module names
+    # workflow_intake_services module
+    # "INTAKE_SBCMD_router",
+    "INTAKE_TASK_convert_csv_txns_schema",
     # txn_category.py module
     "BDMTXNCategory",
     "TXNCategoryMap",
     "BDMTXNCategoryManager",
     # budget_categorization.py module
+    "excel_WORKSHEET_remove_extra_columns",
     "WORKFLOW_TASK_check_sheet_columns",
     "check_sheet_schema",
     "TRANSACTION_DESCRIPTION_COL_NAME",
     "validate_budget_categories",
     "WORKFLOW_TASK_process_budget_category",
-    "WORKFLOW_TASK_categorize_transaction",
-    "apply_check_register",
-    ]
+    "WORKFLOW_TASK_categorize_transaction"
+]

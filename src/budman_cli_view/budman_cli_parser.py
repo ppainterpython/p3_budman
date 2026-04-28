@@ -28,6 +28,9 @@ from budman_data_context.budman_app_data_context_binding_class import BudManAppD
 logger = logging.getLogger(__name__)
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
+
+# ---------------------------------------------------------------------------- +
+#region    internal classes 
 class WideHelpFormatter(Cmd2HelpFormatter):
     def __init__(self, *args, **kwargs):
         kwargs['width'] = None  # Set desired width here
@@ -40,19 +43,48 @@ class UnwrappedPositionalHelpFormatter(Cmd2HelpFormatter):
             metavar = self._metavar_formatter(action, action.dest)(1)[0]
             return metavar
         return super()._format_action_invocation(action)
+#endregion    internal classes ----------------------------------------------- + 
+# ---------------------------------------------------------------------------- +
+
+# ---------------------------------------------------------------------------- +
+#region    BudManCLIParser Class --------------------------------------------- +
 class BudManCLIParser():
-    #region class BudManCLIParser initialization
+    # ------------------------------------------------------------------------ +
+    #region class    BudManCLIParser Intrinsics
+    # ------------------------------------------------------------------------ +
+    #region    BudManCLIParser class docstring
     """A class to parse command line arguments for the BudgetModelCLIView class.
 
-    This class is used to parse command line arguments for the BudgetModelCLIView
-    class. It uses the cmd2 library to create a command line interface for the
-    BudgetModel application.
+    BudManCLIParser uses cmd2 to parse command line arguments for the 
+    BudgetModelCLIView class, creating a command line interface for the
+    Budget Manager application.
     """
+    #endregion    BudManCLIParser class docstring
+    # ------------------------------------------------------------------------ +
+    #region    Class Variables
+    design_notes = """
+    A wf_folder maps to an actual folder in the Storage Model (BSM). It is 
+    specified by a triplet of values: fi_key, wf_key, wf_purpose. 
+    The DC always has an fi_key current value which scopes the fi-dependent
+    values in the DC. Some commands reference files or workbooks by and index,
+    the file_index or wb_index. A file_index is scoped to the BSM spanning all
+    defined fi_keys, while a wb_index is scoped to the current fi_key. 
+
+    So the context of a cmd is important as there can be an implied source and
+    destination conext associated to files and workbooks in command line
+    arguments.
+    """
+    #endregion Class Variables
+    # ------------------------------------------------------------------------ +
+    #region    __init__()
     def __init__(self,settings: BudManSettings) -> None:
         """Initialize the BudManCLIParser class."""
         self.settings: BudManSettings = settings
         self.app_name = settings[APP_NAME]
-        self.valid_fi_keys = settings[BUDMAN_VALID_FI_KEYS]
+        self.valid_fi_key_values = settings[BUDMAN_VALID_FI_KEY_VALUES]
+        self.valid_wf_key_values = settings[BUDMAN_VALID_WF_KEY_VALUES]
+        self.valid_wf_purpose_key_values = settings[BUDMAN_VALID_WF_PURPOSE_KEY_VALUES]
+        # The cmd parsers
         self.app_cmd = cmd2.Cmd2ArgumentParser()
         self.change_cmd = cmd2.Cmd2ArgumentParser()
         self.list_cmd = cmd2.Cmd2ArgumentParser()
@@ -64,6 +96,7 @@ class BudManCLIParser():
             description="Workflow management commands.",
             formatter_class=UnwrappedPositionalHelpFormatter
         )
+        # Initialize all the cmd parsers
         self.app_cmd_parser_setup(self.app_name)
         self.change_cmd_parser_setup(self.app_name)
         self.list_cmd_parser_setup(self.app_name)
@@ -72,7 +105,11 @@ class BudManCLIParser():
         self.close_cmd_parser_setup(self.app_name)
         self.show_cmd_parser_setup(self.app_name)
         self.workflow_cmd_parser_setup(self.app_name)
-    #endregion class BudManCLIParser initialization
+    #endregion __init__()
+    # ------------------------------------------------------------------------ +
+    #endregion class BudManCLIParser Intrinsics
+    # ------------------------------------------------------------------------ +
+
     # ------------------------------------------------------------------------ +
     #region Command Parser Setup Methods
     def app_cmd_parser_setup(self,app_name : str = "not-set") -> None:
@@ -251,9 +288,9 @@ class BudManCLIParser():
             parser = self.list_cmd
             parser.prog = app_name
             list_cmd_defaults = {
+                # cp.CK_CMDLINE_FI_KEY: self.settings[BUDMAN_DEFAULT_FI],
                 p3m.CK_CMD_KEY: cp.CV_LIST_CMD_KEY,
                 p3m.CK_CMD_NAME: cp.CV_LIST_CMD_NAME,
-                cp.CK_CMDLINE_FI_KEY: self.settings[BUDMAN_DEFAULT_FI]
             }
             parser.set_defaults(**list_cmd_defaults)
             # List command subparsers
@@ -303,6 +340,7 @@ class BudManCLIParser():
                 p3m.CK_SUBCMD_NAME: cp.CV_FILES_SUBCMD_NAME,
                 p3m.CK_SUBCMD_KEY: cp.CV_LIST_FILES_SUBCMD_KEY,
                 cp.CK_ALL_FILES: True,
+                cp.CK_CMDLINE_FI_KEY: self.settings[BUDMAN_DEFAULT_FI],
                 cp.CK_SRC_WF_FOLDER: False,
                 cp.CK_SRC_WF_KEY: None,
                 cp.CK_SRC_WF_PURPOSE: None,
@@ -315,6 +353,8 @@ class BudManCLIParser():
             # wf_folder specified as wf_key and wf_purpose values.
             self.add_all_files_subparser(files_subcmd_subparsers)
             self.add_src_wf_folder_subparser(files_subcmd_subparsers)
+            # self.add_CK_CMDLINE_FI_KEY_optional_argument(files_subcmd_parser)
+            self.add_common_optional_args(files_subcmd_parser)
             #endregion files_subcmd_parser
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
@@ -548,6 +588,7 @@ class BudManCLIParser():
                 p3m.CK_SUBCMD_NAME: cp.CV_PROCESS_SUBCMD_NAME,
                 p3m.CK_SUBCMD_KEY: cp.CV_PROCESS_SUBCMD_KEY,
                 cp.CK_FILE_LIST: [], 
+                cp.CK_CMDLINE_FI_KEY: self.settings[BUDMAN_DEFAULT_FI],
                 cp.CK_CMDLINE_WF_KEY: None,
                 cp.CK_CMDLINE_WF_PURPOSE: None
             }
@@ -559,8 +600,9 @@ class BudManCLIParser():
                 help=("One or more file index values from file_list."))
             process_parser.add_argument(
                 f"--{cp.CK_CMDLINE_WF_KEY}", "-w",
-                choices=bdm.VALID_BDM_WORKFLOWS,
+                choices=self.valid_wf_key_values,
                 help="Specify the destination workflow key.")
+            self.add_CK_CMDLINE_FI_KEY_optional_argument(process_parser)
             self.add_common_optional_args(process_parser)
             #endregion workflow process subcommand
 
@@ -597,6 +639,8 @@ class BudManCLIParser():
             check_parser_defaults = {
                 p3m.CK_SUBCMD_NAME: cp.CV_CHECK_SUBCMD_NAME,
                 p3m.CK_SUBCMD_KEY: cp.CV_CHECK_SUBCMD_KEY,
+                cp.CK_WB_LIST: [],
+                cp.CK_ALL_WBS: False,
                 cp.CK_LOAD_WORKBOOK_SWITCH: True,
                 cp.CK_FIX_SWITCH: False,
                 cp.CK_VALIDATE_CATEGORIES: False}
@@ -605,9 +649,13 @@ class BudManCLIParser():
             self.add_load_workbook_argument(check_parser)
             self.add_fix_argument(check_parser)
             check_parser.add_argument(
-                f"--{cp.CK_VALIDATE_CATEGORIES}", "-val", "-v", 
+                "-v", f"--{cp.CK_VALIDATE_CATEGORIES}", "-val", 
                 action="store_true", 
                 help="Validate the budget categories.")
+            check_parser.add_argument(
+                "-r", f"--{cp.CK_REMOVE_EXTRA_COLUMNS}", "-rec", 
+                action="store_true", 
+                help="Remove extra columns from the worksheet   .")
             self.add_common_optional_args(check_parser)
             #endregion Workflow 'check' subcommand
 
@@ -620,6 +668,8 @@ class BudManCLIParser():
             delete_parser_defaults = {
                 p3m.CK_SUBCMD_NAME: cp.CV_FILE_DELETE_SUBCMD_NAME,
                 p3m.CK_SUBCMD_KEY: cp.CV_WORKFLOW_DELETE_SUBCMD_KEY,
+                cp.CK_WB_LIST: [],
+                cp.CK_ALL_WBS: False,
                 cp.CK_NO_SAVE: False}
             delete_parser.set_defaults(**delete_parser_defaults)
             self.add_wb_list_or_all_mutually_exclusive_group(delete_parser)
@@ -637,7 +687,9 @@ class BudManCLIParser():
                 help="Task: Perform a specific workflow task on workbooks.")
             task_parser_defaults = {
                 p3m.CK_SUBCMD_NAME: cp.CV_TASK_SUBCMD_NAME,
-                p3m.CK_SUBCMD_KEY: cp.CV_TASK_SUBCMD_KEY}
+                p3m.CK_SUBCMD_KEY: cp.CV_TASK_SUBCMD_KEY,
+                cp.CK_TASK_NAME: None,
+                cp.CK_RECONCILE: False}
             task_parser.set_defaults(**task_parser_defaults)
             task_name_choices = cp.VALID_TASK_NAMES
             task_parser.add_argument(
@@ -656,16 +708,19 @@ class BudManCLIParser():
                 cp.CV_APPLY_SUBCMD_NAME,
                 aliases=["a"], 
                 help="Task: Apply some operation with workbooks.")
-            apply_parser.set_defaults(
-                subcmd_name=cp.CV_APPLY_SUBCMD_NAME,
-                subcmd_key=cp.CV_APPLY_SUBCMD_KEY)
+            apply_parser_defaults = {
+                p3m.CK_SUBCMD_NAME: cp.CV_APPLY_SUBCMD_NAME,
+                p3m.CK_SUBCMD_KEY: cp.CV_APPLY_SUBCMD_KEY,
+                cp.CK_CATEGORY_MAP: None,
+                cp.CK_CHECK_REGISTER: None}
+            apply_parser.set_defaults(**apply_parser_defaults)
             apply_parser.add_argument(
-                "-cm", "--category_map", nargs="?",
+                "-cm", f"--{cp.CK_CATEGORY_MAP}", nargs="?",
                 action="store", 
                 default=None,
                 help="apply the category_map to update the txn_categories.")
             apply_parser.add_argument(
-                "-cr", "--check_register", nargs="?",
+                "-cr", f"--{cp.CK_CHECK_REGISTER}", nargs="?",
                 action="store", 
                 default=None,
                 help="a wb_ref to a check register(s). wb_index, wb_name or 'all'.")
@@ -685,9 +740,13 @@ class BudManCLIParser():
                 cp.CV_SET_SUBCMD_NAME,
                 aliases=["set"], 
                 help="Set workflow task information.")
-            set_parser.set_defaults(
-                subcmd_name=cp.CV_SET_SUBCMD_NAME,
-                subcmd_key=cp.CV_SET_SUBCMD_KEY)
+            set_cmd_defaults = {
+                p3m.CK_SUBCMD_NAME: cp.CV_SET_SUBCMD_NAME,
+                p3m.CK_SUBCMD_KEY: cp.CV_SET_SUBCMD_KEY,
+                cp.CK_CMDLINE_WF_KEY: None,
+                cp.CK_CMDLINE_WF_PURPOSE: None
+}
+            set_parser.set_defaults(**set_cmd_defaults)
             self.add_CK_CMDLINE_WF_KEY_optional_argument(set_parser)
             self.add_CK_CMDLINE_WF_PURPOSE_optional_argument(set_parser)
             self.add_common_optional_args(set_parser)
@@ -712,7 +771,7 @@ class BudManCLIParser():
             # transfer subcmd subparsers
             transfer_subparsers = transfer_subcmd_parser.add_subparsers()
 
-            # workflow transfer files subcommand subparser
+            #region workflow transfer files subcommand subparser
             files_parser = transfer_subparsers.add_parser(
                 cp.CV_FILES_SUBCMD_NAME,
                 aliases=["FILES"],
@@ -721,8 +780,9 @@ class BudManCLIParser():
                 cp.CK_TRANSFER_FILES: True, 
                 cp.CK_TRANSFER_WORKBOOKS: False,
                 cp.CK_FILE_LIST: [],
-                cp.CK_WF_KEY: None,
-                cp.CK_WF_PURPOSE: None,
+                cp.CK_CMDLINE_FI_KEY: None,
+                cp.CK_CMDLINE_WF_KEY: None,
+                cp.CK_CMDLINE_WF_PURPOSE: None,
                 cp.CK_WB_TYPE: None
             }
             files_parser.set_defaults(**files_parser_defaults)
@@ -732,21 +792,20 @@ class BudManCLIParser():
                 cp.CK_FILE_LIST, nargs='*',
                 type=int, default=[], 
                 help=("One or more file index values from file_list."))
+            m: str = "Enter destination fi_key for the transfer."
+            self.add_CK_CMDLINE_FI_KEY_optional_argument(files_parser, help=m)
+            m = "Enter destination workflow key for the transfer."
+            self.add_CK_CMDLINE_WF_KEY_optional_argument(files_parser, help=m)
+            m = "Enter destination workflow purpose for the transfer."
+            self.add_CK_CMDLINE_WF_PURPOSE_optional_argument(files_parser, help=m)
             files_parser.add_argument(
-                f"--{cp.CK_WF_KEY}", "-w",
-                choices=bdm.VALID_BDM_WORKFLOWS,
-                help="Specify the destination workflow key.")
-            files_parser.add_argument(
-                f"--{cp.CK_WF_PURPOSE}", "-p",
-                choices=bdm.VALID_WF_PURPOSE_CHOICES,
-                help="Specify the workflow purpose.")
-            files_parser.add_argument(
-                f"--{cp.CK_WB_TYPE}", "-t",
+                "-t", f"--{cp.CK_WB_TYPE}",
                 choices=bdm.VALID_WB_TYPE_VALUES,
                 help="Specify the destination workbook type.")
             self.add_common_optional_args(files_parser)
+            #endregion workflow transfer files subcommand subparser
 
-            # workflow transfer workbooks subcommand subparser
+            #region workflow transfer workbooks subcommand subparser
             workbooks_parser = transfer_subparsers.add_parser(
                 cp.CV_WORKBOOKS_SUBCMD_NAME,
                 aliases=["WORKBOOKS"],
@@ -755,8 +814,9 @@ class BudManCLIParser():
                 cp.CK_TRANSFER_FILES: False,
                 cp.CK_TRANSFER_WORKBOOKS: True,
                 cp.CK_WB_LIST: [],
-                cp.CK_WF_KEY: None,
-                cp.CK_WF_PURPOSE: None,
+                cp.CK_CMDLINE_FI_KEY: None,
+                cp.CK_CMDLINE_WF_KEY: None,
+                cp.CK_CMDLINE_WF_PURPOSE: None,
                 cp.CK_WB_TYPE: None
             }
             workbooks_parser.set_defaults(**workbooks_parser_defaults)
@@ -765,19 +825,16 @@ class BudManCLIParser():
                 cp.CK_WB_LIST, nargs='*',
                 type=int, default=[], 
                 help=("One or more workbook index values from wb_list."))
-            workbooks_parser.add_argument(
-                f"--{cp.CK_WF_KEY}", "-w",
-                choices=bdm.VALID_BDM_WORKFLOWS,
-                help="Specify the destination workflow key.")
-            workbooks_parser.add_argument(
-                f"--{cp.CK_WF_PURPOSE}", "-p",
-                choices=bdm.VALID_WF_PURPOSE_CHOICES,
-                help="Specify the workflow purpose.")
+            self.add_CK_CMDLINE_FI_KEY_optional_argument(workbooks_parser)
+            self.add_CK_CMDLINE_WF_KEY_optional_argument(workbooks_parser)
+            self.add_CK_CMDLINE_WF_PURPOSE_optional_argument(workbooks_parser)
+            self.add_CK_SYMLINK_optional_argument(workbooks_parser)
             workbooks_parser.add_argument(
                 f"--{cp.CK_WB_TYPE}", "-t",
                 choices=bdm.VALID_WB_TYPE_VALUES,
                 help="Specify the destination workbook type.")
             self.add_common_optional_args(workbooks_parser)
+            #endregion workflow transfer workbooks subcommand subparser
 
             return transfer_subcmd_parser
         except Exception as e:
@@ -807,15 +864,10 @@ class BudManCLIParser():
                 help="Specifies update of category map workbook.")
             category_map_wb_defaults = {
                 cp.CK_UPDATE_CATEGORY_MAP_WORKBOOK: True, 
-                cp.CK_FI_KEY: None,
+                cp.CK_CMDLINE_FI_KEY: None,
             }
             category_map_wb_parser.set_defaults(**category_map_wb_defaults)
-
-            category_map_wb_parser.add_argument(
-                # selected FI_KEY for financial institution
-                cp.CK_FI_KEY, nargs='?',
-                default='boa', 
-                help=("One fi_key value."))
+            self.add_CK_CMDLINE_FI_KEY_optional_argument(category_map_wb_parser)
             self.add_common_optional_args(category_map_wb_parser)
             return update_subcmd_parser
         except Exception as e:
@@ -861,58 +913,57 @@ class BudManCLIParser():
             raise
     #endregion intake subcommand subparser
     # ------------------------------------------------------------------------ +
-    def add_CK_CMDLINE_FI_KEY_optional_argument(self, parser) -> None:
+    def add_CK_CMDLINE_FI_KEY_optional_argument(self, parser, help:str|None=None) -> None:
         """Add a fi_key optional argument to the provided parser."""
         try:
-            valid_fi_keys: List[str] = self.settings[BUDMAN_VALID_FI_KEYS]
+            if help is None:
+                help = "Enter a valid financial institution key."
             parser.add_argument(
-                f"--{cp.CK_CMDLINE_FI_KEY}", "-fi", 
+                "-fi", f"--{cp.CK_CMDLINE_FI_KEY}", 
                 dest=cp.CK_CMDLINE_FI_KEY, 
-                choices=valid_fi_keys,
+                choices=self.valid_fi_key_values,
                 action="store",
-                help="List files for selected financial institution.")
+                help=help)
             return
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise
 
-    def add_CK_CMDLINE_WF_KEY_optional_argument(self, parser) -> None:
+    def add_CK_CMDLINE_WF_KEY_optional_argument(self, parser, help:str|None=None) -> None:
         """Add a workflow optional argument to the provided parser."""
         try:
-            wf_choices = bdm.VALID_BDM_WORKFLOWS
             parser.add_argument(
                 "-w", f"--{cp.CK_CMDLINE_WF_KEY}", nargs="?", 
                 dest=cp.CK_CMDLINE_WF_KEY, 
-                choices=wf_choices,
-                help="Specify the workflow key to apply.")
+                choices=self.valid_wf_key_values,
+                help=help if help is not None else "Specify the workflow key to apply.")
             return
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise
 
-    def add_CK_CMDLINE_WF_PURPOSE_optional_argument(self, parser) -> None:
+    def add_CK_CMDLINE_WF_PURPOSE_optional_argument(self, parser, help:str|None=None) -> None:
         """Add a workflow purpose optional argument to the provided parser."""
         try:
-            purpose_choices = bdm.VALID_WF_PURPOSE_VALUES
             parser.add_argument(
                 "-p", f"--{cp.CK_CMDLINE_WF_PURPOSE}", nargs="?",  
-                choices=purpose_choices,
-                help="Specify the workflow folder purpose.")
+                choices=self.valid_wf_purpose_key_values,
+                help=help if help is not None else "Specify the workflow folder purpose.")
             parser.add_argument(
                 "-wi", nargs="?",
                 dest=cp.CK_CMDLINE_WF_PURPOSE,
                 const=cp.CK_WF_INPUT,
-                help="Use workflow folder purpose: wf_input.")
+                help=help if help is not None else "Use workflow folder purpose: wf_input.")
             parser.add_argument(
                 "-ww", nargs="?",
                 dest=cp.CK_CMDLINE_WF_PURPOSE,
                 const=cp.CK_WF_WORKING,
-                help="Use workflow folder purpose: wf_working.")
+                help=help if help is not None else "Use workflow folder purpose: wf_working.")
             parser.add_argument(
                 "-wo", nargs="?",
                 dest=cp.CK_CMDLINE_WF_PURPOSE,
                 const=cp.CK_WF_OUTPUT,
-                help="Use workflow folder purpose: wf_output.")
+                help=help if help is not None else "Use workflow folder purpose: wf_output.")
             return
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
@@ -927,6 +978,7 @@ class BudManCLIParser():
                 help="Specify all files.")
             all_files_parser_defaults = { 
                 cp.CK_ALL_FILES: True,
+                cp.CK_CMDLINE_FI_KEY: self.settings[BUDMAN_DEFAULT_FI],
                 cp.CK_SRC_WF_FOLDER: False,
                 cp.CK_SRC_WF_KEY: None,
                 cp.CK_SRC_WF_PURPOSE: None,
@@ -955,6 +1007,7 @@ class BudManCLIParser():
             src_wf_folder_parser_defaults = {
                 cp.CK_ALL_FILES: False, 
                 cp.CK_SRC_WF_FOLDER: True,
+                cp.CK_CMDLINE_FI_KEY: self.settings[BUDMAN_DEFAULT_FI],
                 cp.CK_SRC_WF_KEY: None,
                 cp.CK_SRC_WF_PURPOSE: None,
                 cp.CK_RAW_FORMAT: False
@@ -977,10 +1030,24 @@ class BudManCLIParser():
     def add_src_wf_key_positional_arg(self, parser) -> None:
         """Add a workflow positional argument to the provided parser."""
         try:
+            
             parser.add_argument(
                 cp.CK_SRC_WF_KEY,
-                choices=bdm.VALID_BDM_WORKFLOWS,
+                choices=self.valid_wf_key_values,
                 help="Specify the workflow key.")
+            return
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise
+
+    def add_src_wf_key_optional_argument(self, parser) -> None:
+        """Add a workflow optional argument to the provided parser."""
+        try:
+            parser.add_argument(
+                f"--{cp.CK_SRC_WF_KEY}", "-w", nargs="?", 
+                dest=cp.CK_SRC_WF_KEY, 
+                choices=self.valid_wf_key_values,
+                help="Specify the workflow key to pull files from.")
             return
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
@@ -991,8 +1058,35 @@ class BudManCLIParser():
         try:
             parser.add_argument(
                 cp.CK_SRC_WF_PURPOSE,
-                choices=bdm.VALID_WF_PURPOSE_CHOICES,
+                choices=self.valid_wf_purpose_key_values,
                 help="Specify the workflow purpose.")
+            return
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise
+
+    def add_src_wf_purpose_optional_argument(self, parser) -> None:
+        """Add a workflow purpose optional argument to the provided parser."""
+        try:
+            parser.add_argument(
+                f"--{cp.CK_SRC_WF_PURPOSE}", "-p", nargs="?",  
+                choices=self.valid_wf_purpose_key_values,
+                help="Specify the workflow folder purpose to pull files from.")
+            parser.add_argument(
+                "-wi", nargs="?",
+                dest=cp.CK_SRC_WF_PURPOSE,
+                const=cp.CK_WF_INPUT,
+                help="Use workflow folder purpose: wf_input.")
+            parser.add_argument(
+                "-ww", nargs="?",
+                dest=cp.CK_SRC_WF_PURPOSE,
+                const=cp.CK_WF_WORKING,
+                help="Use workflow folder purpose: wf_working.")
+            parser.add_argument(
+                "-wo", nargs="?",
+                dest=cp.CK_SRC_WF_PURPOSE,
+                const=cp.CK_WF_OUTPUT,
+                help="Use workflow folder purpose: wf_output.")
             return
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
@@ -1062,6 +1156,18 @@ class BudManCLIParser():
             logger.exception(p3u.exc_err_msg(e))
             raise
 
+    def add_CK_SYMLINK_optional_argument(self, parser) -> None:
+        """Add a --symlink argument.""" 
+        try:
+            parser.add_argument(
+                "-s", f"--{cp.CK_SYMLINK}", 
+                action="store_true", 
+                help="Use symbolic links when transferring workbook files.")
+            return
+        except Exception as e:
+            logger.exception(p3u.exc_err_msg(e))
+            raise
+
     def add_fix_argument(self, parser) -> None:
         """Add a --fix_switch argument.""" 
         try:
@@ -1090,11 +1196,11 @@ class BudManCLIParser():
                 action="store_true", 
                 help="Command args are only validated with results returned, but no cmd execution.")
             common_args.add_argument(
-                f"--{cp.CK_WHAT_IF}", 
+                "-wif", f"--{cp.CK_WHAT_IF}", 
                 action="store_true", 
                 help="Return details about what the command would do, but don't to any action.")
             common_args.add_argument(
-                f"--{cp.CK_VERBOSE}", "-vb", 
+                "-vb", f"--{cp.CK_VERBOSE}",  
                 action="store_true", 
                 help="Enable verbose logging output.")
             return common_args
@@ -1103,3 +1209,5 @@ class BudManCLIParser():
             raise
     #endregion Common Sub-parsers for Commands
     # ------------------------------------------------------------------------ +
+#endregion BudManCLIParser Class --------------------------------------------- +
+# ---------------------------------------------------------------------------- +

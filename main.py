@@ -119,9 +119,9 @@ def main(bdms_url : str = None, start_time:float = app_start_time) -> None:
                     f"in {stop_timer(app_start_time)} seconds.")
         return
     except Exception as e:
-        print(f"An error occurred: {e}", file=sys.stderr)
+        console.print(f"[red]Error:[/red]main.py:main():An error occurred: {str(e)}")
         sys.exit(1)
 
 if __name__ == "__main__":
-    bdms_url = None #"file:///C:/Users/ppain/OneDrive/budget/p3_budget_manager_ca063e8b.jsonc"
+    bdms_url = None #"file:///C:/Users/ppain/OneDrive/budman/p3_budget_manager_ca063e8b.jsonc"
     main(bdms_url,start_time=app_start_time)

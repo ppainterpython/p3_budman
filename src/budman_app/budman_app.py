@@ -2,7 +2,8 @@
 #region p3_budman.py The Budget Manager Application.
 """ Budget Manager (BudMan) - an app to help users track a financial budget.
 
-    This module is the main entry point for the BudMan application.
+    This module is the main entry point for the BudMan application, a CLI App
+    using rich.console for tty output.
 """
 #endregion p3_budman.py The Budget Manager Application.
 # ---------------------------------------------------------------------------- +
@@ -25,16 +26,15 @@ from budman_view_model import BudManViewModel
 from budman_cli_view import BudManCLIView
 from budget_domain_model import (BudgetDomainModel)
 from budman_data_context import BDMDataContext
-from budget_categorization import BDMTXNCategoryManager
+from budman_workflow_services import BDMTXNCategoryManager
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
 # ---------------------------------------------------------------------------- +
-# globals for logger
 logger = logging.getLogger(__name__)
 console = Console(force_terminal=True,width=bdm.BUDMAN_WIDTH, highlight=True,
                   soft_wrap=False)
-console.print(f"Starting {__name__}...")
+console.print(f"Starting [green]{__name__}[/green] ...")
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
@@ -230,12 +230,9 @@ class BudManApp(p3m.Model_Binding, metaclass=BDMSingletonMeta):
             # Next, instantiate the BudManCLIView class to server as the VIEW 
             # for the application. The VIEW_MODEL is bound as the CommandProcessor.
             self.view = BudManCLIView(command_processor=self.view_model,
+                                      data_context=self.DC,
                                       app_name=self.app_name,
                                       settings=self.settings)
-            # Next, bind the DATA_CONTEXT to the VIEW.
-            self.view.DC = self.DC
-            # Next, initialize the view.
-            self.view.initialize() 
             # This completes the app_services setup.
             logger.debug(f"Complete:")
             return self

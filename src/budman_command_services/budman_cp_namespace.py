@@ -10,8 +10,8 @@ Command Processor Objects."""
 # third-party modules and packages
 
 # local modules and packages
-import p3_mvvm as p3m
 import budman_namespace as bdm
+import p3_mvvm as p3m
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -34,6 +34,7 @@ CV_CMD_LIST_OUTPUT = "list_output"
 CV_CMD_DICT_OUTPUT = "dict_output"
 CV_CMD_JSON_OUTPUT = "json_output"
 CV_CMD_TREE_OBJECT = "tree_object"
+CV_CMD_RICHTREE_OBJECT = "rich_tree_object"
 CV_CMD_BDM_MODEL_OBJECT = "bdm_model_object"
 CV_CMD_WORKBOOK_INFO_TABLE = "workbook_info_table_output"
 CV_CMD_WORKBOOK_TREE_OBJECT = "workbook_tree_object"
@@ -128,15 +129,17 @@ CV_PARSE_ONLY_SUBCMD_NAME = "parse_only"
 CV_PARSE_ONLY_SUBCMD_KEY = CV_VAL_CMD_KEY + "_" + CV_PARSE_ONLY_SUBCMD_NAME
 
 # Common argument optional flag attribute keys, used in parsers
-CK_PARSE_ONLY = p3m.CK_PARSE_ONLY          # --parse_only  -po
-CK_VALIDATE_ONLY = p3m.CK_VALIDATE_ONLY    # --validate_only  -vo
-CK_WHAT_IF = p3m.CK_WHAT_IF                # --what_if  -wi
-CK_VERBOSE = p3m.CK_VERBOSE                # --verbose  -v
-CK_ALL_WBS = "all_wbs"                     # --all_wbs  -all
-CK_ALL_FILES = "all_files"                 # --all_files  -all
-CK_LOAD_WORKBOOK_SWITCH = "load_workbook"  # --load_workbook  -l, -load
-CK_FIX_SWITCH = "fix_switch"               # --fix_switch  -fix
-CK_VALIDATE_CATEGORIES = "validate_categories"
+CK_PARSE_ONLY = p3m.CK_PARSE_ONLY                # --parse_only  -po
+CK_VALIDATE_ONLY = p3m.CK_VALIDATE_ONLY          # --validate_only  -vo
+CK_WHAT_IF = p3m.CK_WHAT_IF                      # --what_if  -wi
+CK_VERBOSE = p3m.CK_VERBOSE                      # --verbose  -v
+CK_ALL_WBS = "all_wbs"                           # --all_wbs  -all
+CK_ALL_FILES = "all_files"                       # --all_files  -all
+CK_LOAD_WORKBOOK_SWITCH = "load_workbook"        # --load_workbook  -l, -load
+CK_FIX_SWITCH = "fix_switch"                     # --fix_switch  -fix
+CK_VALIDATE_CATEGORIES = "validate_categories"   # --validate_categories  -vc
+CK_REMOVE_EXTRA_COLUMNS = "remove_extra_columns" # --remove_extra_columns  -rec
+CK_SYMLINK = "symlink"                           # --symlink  -s
 CK_LOG_ALL = "log_all"
 CK_SAVE = "save"
 CK_NO_SAVE = "no_save"
@@ -149,30 +152,32 @@ CK_WB_INDEX = bdm.WB_INDEX
 CK_WB_LIST = "wb_list"
 CK_FI_KEY = bdm.FI_KEY
 CK_WF_KEY = bdm.WF_KEY
+CK_SRC_WF_KEY = "src_" + bdm.WF_KEY
+CK_DST_WF_KEY = "dst_" + bdm.WF_KEY
 CK_WF_FOLDER = bdm.WF_FOLDER
 CK_SRC_WF_FOLDER = "src_" + CK_WF_FOLDER
 CK_DST_WF_FOLDER = "dst_" + CK_WF_FOLDER
 CK_WF_PURPOSE = bdm.WF_PURPOSE
+CK_SRC_WF_PURPOSE = "src_" + bdm.WF_PURPOSE
+CK_DST_WF_PURPOSE = "dst_" + bdm.WF_PURPOSE
 CK_WF_INPUT = bdm.WF_INPUT
 CK_WF_WORKING = bdm.WF_WORKING
 CK_WF_OUTPUT = bdm.WF_OUTPUT
 CK_WB_ID = bdm.WB_ID
 CK_WB_TYPE = bdm.WB_TYPE
+CK_SRC_WB_TYPE = "src_" + bdm.WB_TYPE
+CK_DST_WB_TYPE = "dst_" + bdm.WB_TYPE
 CK_WB_NAME = bdm.WB_NAME
 CK_FILE_LIST = "file_list"
 CK_WB_REF = "wb_ref"
 CK_WB_INFO = "wb_info"
 CK_WF_TASK = "wf_task"
-CK_SRC_WF_KEY = "src_" + bdm.WF_KEY
-CK_DST_WF_KEY = "dst_" + bdm.WF_KEY
-CK_SRC_WF_PURPOSE = "src_" + bdm.WF_PURPOSE
-CK_DST_WF_PURPOSE = "dst_" + bdm.WF_PURPOSE
-CK_SRC_WB_TYPE = "src_" + bdm.WB_TYPE
-CK_DST_WB_TYPE = "dst_" + bdm.WB_TYPE
 CK_TRANSFER_FILES = "transfer_files"
 CK_TRANSFER_WORKBOOKS = "transfer_workbooks"
 CK_UPDATE_CATEGORY_MAP_WORKBOOK = "update_category_map_workbook"
 CK_RAW_FORMAT = "raw_format"
+CK_CATEGORY_MAP = "category_map"
+CK_CHECK_REGISTER = "check_register"
 
 # subcmd_key CV_TASK_SUBCMD_KEY argument constants
 
@@ -209,6 +214,7 @@ CK_ROLLOVER_SWITCH = "rollover_switch"
 # subcmd_name CV_RELOAD_SUBCMD argument constants
 CK_RELOAD_TARGET = "reload_target"
 CV_CATEGORY_MAP = "category_map"
+CV_CHECK_REGISTER = "check_register"
 CV_FI_WORKBOOK_DATA_COLLECTION = bdm.FI_WORKBOOK_DATA_COLLECTION
 CV_WORKFLOWS_MODULE = "budman_workflows"
 # deprecated

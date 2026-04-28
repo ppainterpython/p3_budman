@@ -250,15 +250,10 @@ from openpyxl import Workbook, load_workbook
 
 # local modules and packages
 # from budman_command_services.cp_utils import CMD_RESULT_OBJECT
-import budman_workflows
 import budman_command_services as cp
 import budman_settings as bdms
 from budman_namespace.design_language_namespace import *
 from budman_namespace.bdm_workbook_class import BDMWorkbook
-from budget_categorization import (
-    check_sheet_schema, WORKFLOW_TASK_check_sheet_columns, 
-    validate_budget_categories, WORKFLOW_TASK_process_budget_category)
-from budman_command_services import (WORKFLOW_CMD_router)
 from budget_domain_model import (BudgetDomainModel, BDMConfig)
 from budman_data_context.budman_app_data_context_binding_class import BudManAppDataContext_Binding
 from budman_gui_view import BudManGUIView
@@ -271,11 +266,11 @@ logger = logging.getLogger(__name__)
 class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor, 
                       p3m.ViewModel_Base, p3m.Model_Binding): 
     # ======================================================================== +
-    #region    BudManViewModel_Base class intrinsics                              +
+    #region    BudManViewModel_Base class intrinsics                           +
     # ======================================================================== +
     #                                                                          +
     # ------------------------------------------------------------------------ +
-    #region BudManViewModel class doc string                                   +
+    #region    BudManViewModel class doc string                                +
     """BudManViewModel - A Budget Manager View Model providing 
     CommandProcessor & Data Context.
     
@@ -440,7 +435,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
     # ======================================================================== +
 
     # ======================================================================== +
-    #region    BudManViewModel p3m.CommandProcessor super class Override methods          +
+    #region    BudManViewModel p3m.CommandProcessor superclass Override methods+
     # ======================================================================== +
     #region    Design Notes                                                    +
     """ ViewModelCommandProcessor Design Notes (future ABC)
@@ -510,164 +505,328 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
         try:
             # Use the following cmd_map to dispatch the command for execution.
             self.cp_cmd_map = {
-                cp.CV_LIST_CMD_KEY: self.LIST_cmd,
                 cp.CV_LOAD_BDM_STORE_SUBCMD_KEY: self.BDM_STORE_load_cmd,
                 cp.CV_SAVE_BDM_STORE_SUBCMD_KEY: self.BDM_STORE_save_cmd,
                 cp.CV_LOAD_WORKBOOKS_SUBCMD_KEY: self.WORKBOOKS_load_cmd,
                 cp.CV_SAVE_WORKBOOKS_SUBCMD_KEY: self.WORKBOOKS_save_cmd,
                 cp.CV_CLOSE_WORKBOOKS_SUBCMD_KEY: self.BUDMAN_CMD_close_workbooks,
                 cp.CV_CHANGE_WORKBOOKS_SUBCMD_KEY: self.CHANGE_cmd,
-                cp.CV_WORKFLOW_CMD_KEY: self.WORKFLOW_cmd,
-                cp.CV_APPLY_SUBCMD_KEY: self.WORKFLOW_apply_cmd,
                 cp.CV_SHOW_CMD_KEY: self.SHOW_cmd,
                 cp.CV_CHANGE_CMD_KEY: self.CHANGE_cmd,
                 cp.CV_APP_CMD_KEY: self.APP_cmd,
             }
+            #region Command object definitions
+            # list workbooks
+            cmd: p3m.Command = p3m.Command(
+                cp=self,
+                cmd_name=cp.CV_LIST_CMD_NAME, 
+                subcmd_name=cp.CV_WORKBOOKS_SUBCMD_NAME,
+                cmd_exec_func=cp.BUDMAN_CMD_list_workbooks,
+                required_parms=[
+                    cp.CK_BDM_TREE,
+                    cp.CK_ALL_FILES,
+                    cp.CK_SRC_WF_FOLDER,
+                    cp.CK_SRC_WF_KEY,
+                    cp.CK_SRC_WF_PURPOSE,
+                    cp.CK_RAW_FORMAT,
+                    cp.CK_CMDLINE_FI_KEY
+                    ]
+                )
+            # list files
+            cmd = p3m.Command(
+                cp=self,
+                cmd_name=cp.CV_LIST_CMD_NAME, 
+                subcmd_name=cp.CV_FILES_SUBCMD_NAME,
+                cmd_exec_func=cp.BUDMAN_CMD_list_files,
+                required_parms=[
+                    cp.CK_ALL_FILES,
+                    cp.CK_CMDLINE_FI_KEY,
+                    cp.CK_SRC_WF_FOLDER,
+                    cp.CK_SRC_WF_KEY,
+                    cp.CK_SRC_WF_PURPOSE,
+                    cp.CK_RAW_FORMAT
+                    ]
+                )
+            # list BDM_STORE
+            cmd = p3m.Command(
+                cp=self,
+                cmd_name=cp.CV_LIST_CMD_NAME, 
+                subcmd_name=cp.CV_BDM_STORE_SUBCMD_NAME,
+                cmd_exec_func=cp.BUDMAN_CMD_list_bdm_store_json,
+                required_parms=[
+                    cp.CK_BDM_TREE,
+                    cp.CK_ALL_FILES,
+                    cp.CK_SRC_WF_FOLDER,
+                    cp.CK_SRC_WF_KEY,
+                    cp.CK_SRC_WF_PURPOSE,
+                    cp.CK_RAW_FORMAT,
+                    cp.CK_CMDLINE_FI_KEY
+                    ]
+                )
+            # workflow transfer files
+            cmd = p3m.Command(
+                cp=self,
+                cmd_name=cp.CV_WORKFLOW_CMD_NAME, 
+                subcmd_name=cp.CV_TRANSFER_SUBCMD_NAME,
+                cmd_exec_func=cp.WORKFLOW_CMD_transfer,
+                required_parms=[
+                    cp.CK_CMDLINE_FI_KEY,
+                    cp.CK_TRANSFER_FILES,
+                    cp.CK_TRANSFER_WORKBOOKS,
+                    cp.CK_SYMLINK,
+                    cp.CK_FILE_LIST,
+                    cp.CK_CMDLINE_FI_KEY,
+                    cp.CK_CMDLINE_WF_KEY,
+                    cp.CK_CMDLINE_WF_PURPOSE,
+                    cp.CK_WB_TYPE
+                    ]
+                )
+            # workflow process files
+            cmd = p3m.Command(
+                cp=self,
+                cmd_name=cp.CV_WORKFLOW_CMD_NAME, 
+                subcmd_name=cp.CV_PROCESS_SUBCMD_NAME,
+                cmd_exec_func=cp.WORKFLOW_CMD_process,
+                required_parms=[
+                    cp.CK_TRANSFER_FILES,
+                    cp.CK_TRANSFER_WORKBOOKS,
+                    cp.CK_FILE_LIST,
+                    cp.CK_WF_KEY,
+                    cp.CK_CMDLINE_FI_KEY,
+                    cp.CK_WF_PURPOSE,
+                    cp.CK_WB_TYPE
+                    ]
+                )
+            # workflow update files
+            cmd = p3m.Command(
+                cp=self,
+                cmd_name=cp.CV_WORKFLOW_CMD_NAME, 
+                subcmd_name=cp.CV_UPDATE_SUBCMD_NAME,
+                cmd_exec_func=cp.WORKFLOW_CMD_update_catalog_map,
+                required_parms=[
+                    cp.CK_CMDLINE_FI_KEY,
+                    cp.CK_UPDATE_CATEGORY_MAP_WORKBOOK
+                    ]
+                )
+            # workflow check files
+            cmd = p3m.Command(
+                cp=self,
+                cmd_name=cp.CV_WORKFLOW_CMD_NAME, 
+                subcmd_name=cp.CV_CHECK_SUBCMD_NAME,
+                cmd_exec_func=cp.WORKFLOW_CMD_check_workbooks,
+                required_parms=[
+                    cp.CK_WB_LIST,
+                    cp.CK_ALL_WBS,
+                    cp.CK_LOAD_WORKBOOK_SWITCH,
+                    cp.CK_FIX_SWITCH,
+                    cp.CK_REMOVE_EXTRA_COLUMNS,
+                    cp.CK_VALIDATE_CATEGORIES
+                    ]
+                )   
+            # workflow categorization
+            cmd = p3m.Command(
+                cp=self,
+                cmd_name=cp.CV_WORKFLOW_CMD_NAME, 
+                subcmd_name=cp.CV_CATEGORIZATION_SUBCMD_NAME,
+                cmd_exec_func=cp.WORKFLOW_CMD_categorize_transactions,
+                required_parms=[
+                    cp.CK_LOG_ALL,
+                    cp.CK_CLEAR_OTHER
+                    ]
+                )
+            # workflow delete
+            cmd = p3m.Command(
+                cp=self,
+                cmd_name=cp.CV_WORKFLOW_CMD_NAME, 
+                subcmd_name=cp.CV_FILE_DELETE_SUBCMD_NAME,
+                cmd_exec_func=cp.WORKFLOW_CMD_delete_workbooks,
+                required_parms=[
+                    cp.CK_WB_LIST,
+                    cp.CK_ALL_WBS,
+                    cp.CK_NO_SAVE,
+                    cp.CK_CLEAR_OTHER
+                    ]
+                )
+            # workflow set
+            cmd = p3m.Command(
+                cp=self,
+                cmd_name=cp.CV_WORKFLOW_CMD_NAME, 
+                subcmd_name=cp.CV_SET_SUBCMD_NAME,
+                cmd_exec_func=cp.WORKFLOW_CMD_set_value,
+                required_parms=[
+                    cp.CK_CMDLINE_WF_KEY,
+                    cp.CK_CMDLINE_WF_PURPOSE
+                    ]
+                )
+            # workflow task
+            cmd = p3m.Command(
+                cp=self,
+                cmd_name=cp.CV_WORKFLOW_CMD_NAME, 
+                subcmd_name=cp.CV_TASK_SUBCMD_NAME,
+                cmd_exec_func=cp.WORKFLOW_CMD_task,
+                required_parms=[
+                    cp.CK_TASK_NAME,
+                    cp.CK_RECONCILE
+                    ]
+                )   
+            # workflow apply
+            cmd = p3m.Command(
+                cp=self,
+                cmd_name=cp.CV_WORKFLOW_CMD_NAME, 
+                subcmd_name=cp.CV_APPLY_SUBCMD_NAME,
+                cmd_exec_func=cp.WORKFLOW_CMD_apply,
+                required_parms=[
+                    cp.CK_CATEGORY_MAP,
+                    cp.CK_CHECK_REGISTER
+                    ]
+                )   
+            #endregion Command object definitions
+            p3m.cp_user_info_message(f"Command map initialized with {len(self.cp_commands)} commands.")
         except Exception as e:
             logger.error(p3u.exc_err_msg(e))
             raise
     #endregion cp_initialize_cmd_map() method
     #region    cp_validate_cmd() Command Processor method
-    def cp_validate_cmd(self, cmd : p3m.CMD_OBJECT_TYPE = None,
-                        validate_all : bool = False) -> p3m.CMD_RESULT_TYPE:
-        """BudMan-App-specific: Validate the cmd object for cmd_key and parameters.
+    # def cp_validate_cmd(self, cmd : p3m.CMD_OBJECT_TYPE = None,
+    #                     validate_all : bool = False) -> p3m.CMD_RESULT_TYPE:
+    #     """BudMan-App-specific: Validate the cmd object for cmd_key and parameters.
 
-        Extract a valid, known full_cmd_key/cmd_key to succeed.
-        Consider values to common arguments which can be validated with
-        the data context.
+    #     Extract a valid, known full_cmd_key/cmd_key to succeed.
+    #     Consider values to common arguments which can be validated with
+    #     the data context.
 
-        Arguments:
-            cmd (Dict): A candidate Command object to validate.
-            validate_all (bool): If True, validate all parts of the cmd, 
-                before returning a result. If False, return on first discovery
-                of an error.
+    #     Arguments:
+    #         cmd (Dict): A candidate Command object to validate.
+    #         validate_all (bool): If True, validate all parts of the cmd, 
+    #             before returning a result. If False, return on first discovery
+    #             of an error.
 
-        returns:
-            Tuple[bool, str]: A tuple containing a boolean indicating if the
-                cmd and arguments are valid.
-                True returns the full cmd_key value as result.
-                False, the message will contain an error message.
-        """
-        try:
-            self.cp_validate_cmd_object(cmd, raise_error = True)
-            # If cp_validate_cmd_object() returns, CMD_OBJECT has 
-            # content to examine and validate.
-            # Setup a CMD_RESULT object to return.
-            cmd_result : p3m.CMD_RESULT_TYPE = p3m.cp_CMD_RESULT_create(
-                status=False, 
-                type=p3m.CV_CMD_STRING_OUTPUT,
-                content="Command validation failed.",
-                cmd=cmd
-            )
-            # For a few args, apply the DC values if no value given in the cmd.
-            if self.cp_cmd_attr_get(cmd, cp.CK_FI_KEY) is None:
-                self.cp_cmd_attr_set(cmd, cp.CK_FI_KEY,
-                                    self.dc_FI_KEY)
-            if self.cp_cmd_attr_get(cmd, cp.CK_WF_KEY) is None:
-                self.cp_cmd_attr_set(cmd, cp.CK_WF_KEY,
-                                    self.dc_WF_KEY)
-            # If validate_all, check all cmd args before return. 
-            validate_all: bool = self.cp_cmd_attr_get(cmd, cp.CK_VALIDATE_ONLY)
-            all_results : str = "All Results:\n" if validate_all else ""
-            result = "It's all good." 
-            if validate_all:
-                all_results = f"Command validation info: \n{P2}cmd: {str(cmd)}\n"
-            success:bool = True
-            # Validate the cmd arguments.
-            for key, value in cmd.items():
-                if key == cmd[cp.p3m.CK_CMD_KEY]: 
-                    continue
-                elif key == cp.CK_WB_LIST:
-                    for wb_index in cmd[cp.CK_WB_LIST]:
-                        if not self.dc_WB_INDEX_validate(wb_index):
-                            result = f"Invalid wb_list value: '{wb_index}'."
-                            success = False 
-                            logger.error(result)
-                        continue
-                    continue
-                elif key == cp.CK_FI_KEY:
-                    if not self.dc_FI_KEY_validate(value):
-                        result = f"Invalid fi_key value: '{value}'."
-                        success = False 
-                        logger.error(result)
-                    continue
-                elif key == cp.CK_WB_NAME:
-                    continue
-                elif (key == cp.CK_WF_KEY or
-                      key == cp.CK_SRC_WF_KEY or
-                      key == cp.CK_DST_WF_KEY):
-                    if value is None:
-                        # No further validation if value is None
-                        continue
-                    if not self.dc_WF_KEY_validate(value):
-                        result = f"Invalid wf_key value: '{value}'."
-                        success = False 
-                        logger.error(result)
-                    continue
-                elif (key == cp.CK_WF_PURPOSE or
-                      key == cp.CK_SRC_WF_PURPOSE or
-                      key == cp.CK_DST_WF_PURPOSE):
-                    if value is None:
-                        # No further validation if value is None
-                        continue
-                    if self.cp_cmd_attr_get(cmd, key) in VALID_WF_PURPOSE_CHOICES:
-                        # Map the choices value to actual value
-                        value = VALID_WF_PURPOSE_MAP[value]
-                    if not self.dc_WF_PURPOSE_validate(value):
-                        result = f"Invalid wf_purpose value: '{value}'."
-                        success = False 
-                        logger.error(result)
-                    self.cp_cmd_attr_set(cmd,key,value)
-                    continue
-                elif key == cp.CK_WB_ID:
-                    if not self.dc_WB_ID_validate(value):
-                        result = f"Invalid wb_id level: '{value}'."
-                        success = False 
-                        logger.error(result)
-                elif key == cp.CK_PARSE_ONLY: 
-                    po = cmd.get(cp.CK_PARSE_ONLY, False)
-                    continue
-                elif key == cp.CK_VALIDATE_ONLY: 
-                    vo = cmd.get(cp.CK_VALIDATE_ONLY, False)
-                    continue
-                elif key == cp.CK_WHAT_IF: 
-                    what_if = cmd.get(cp.CK_WHAT_IF, False)
-                    continue
-                elif key == cp.CK_CHECK_REGISTER:
-                    continue
-                else:
-                    if key not in cp.BUDMAN_VALID_CK_ATTRS:
-                        result = f"Unchecked argument key: '{key}': '{value}'."
-                        logger.debug(result)
-                # If not validate_all and success is False, return. Else, 
-                # continue validating all cmd args.
-                if not validate_all and not success:
-                    # Without validate_all, if error, return, else continue
-                    cmd_result[p3m.CK_CMD_RESULT_STATUS] = success
-                    cmd_result[p3m.CK_CMD_RESULT_CONTENT] = result
-                    return cmd_result
-                else:
-                    # If validate_all, accumulate results.
-                    all_results += f"{P2}{result}\n"
-            # Argument check is complete
-            if success:
-                m = (f"Command validated - cmd_key: '{cmd[cp.p3m.CK_CMD_KEY]}' "
-                            f"subcmd_key: {str(cmd[cp.p3m.CK_SUBCMD_KEY])}")
-                logger.info(m)
-                cmd_result[p3m.CK_CMD_RESULT_STATUS] = success
-                cmd_result[p3m.CK_CMD_RESULT_CONTENT] = m
-                return cmd_result # The happy path return 
-            if validate_all:
-                cmd_result[p3m.CK_CMD_RESULT_STATUS] = success
-                cmd_result[p3m.CK_CMD_RESULT_CONTENT] = all_results
-                return cmd_result # The happy path return 
-            cmd_result[p3m.CK_CMD_RESULT_STATUS] = success
-            cmd_result[p3m.CK_CMD_RESULT_CONTENT] = result
-            return cmd_result
-        except Exception as e:
-            m = f"Error validating command: {str(cmd)}: {p3u.exc_err_msg(e)}"
-            logger.error(m)
-            return False, m
+    #     returns:
+    #         Tuple[bool, str]: A tuple containing a boolean indicating if the
+    #             cmd and arguments are valid.
+    #             True returns the full cmd_key value as result.
+    #             False, the message will contain an error message.
+    #     """
+    #     try:
+    #         self.cp_validate_cmd_object(cmd, raise_error = True)
+    #         # If cp_validate_cmd_object() returns, CMD_OBJECT has 
+    #         # content to examine and validate.
+    #         # Setup a CMD_RESULT object to return.
+    #         cmd_result : p3m.CMD_RESULT_TYPE = p3m.cp_CMD_RESULT_create(
+    #             status=False, 
+    #             type=p3m.CV_CMD_STRING_OUTPUT,
+    #             content="Command validation failed.",
+    #             cmd=cmd
+    #         )
+    #         # For a few args, apply the DC values if no value given in the cmd.
+    #         if self.cp_cmd_attr_get(cmd, cp.CK_FI_KEY) is None:
+    #             self.cp_cmd_attr_set(cmd, cp.CK_FI_KEY,
+    #                                 self.dc_FI_KEY)
+    #         if self.cp_cmd_attr_get(cmd, cp.CK_WF_KEY) is None:
+    #             self.cp_cmd_attr_set(cmd, cp.CK_WF_KEY,
+    #                                 self.dc_WF_KEY)
+    #         # If validate_all, check all cmd args before return. 
+    #         validate_all: bool = self.cp_cmd_attr_get(cmd, cp.CK_VALIDATE_ONLY)
+    #         all_results : str = "All Results:\n" if validate_all else ""
+    #         result = "It's all good." 
+    #         if validate_all:
+    #             all_results = f"Command validation info: \n{P2}cmd: {str(cmd)}\n"
+    #         success:bool = True
+    #         # Validate the cmd arguments.
+    #         for key, value in cmd.items():
+    #             if key == cmd[cp.p3m.CK_CMD_KEY]: 
+    #                 continue
+    #             elif key == cp.CK_WB_LIST:
+    #                 for wb_index in cmd[cp.CK_WB_LIST]:
+    #                     if not self.dc_WB_INDEX_validate(wb_index):
+    #                         result = f"Invalid wb_list value: '{wb_index}'."
+    #                         success = False 
+    #                         logger.error(result)
+    #                     continue
+    #                 continue
+    #             elif key == cp.CK_FI_KEY:
+    #                 if not self.dc_FI_KEY_validate(value):
+    #                     result = f"Invalid fi_key value: '{value}'."
+    #                     success = False 
+    #                     logger.error(result)
+    #                 continue
+    #             elif key == cp.CK_WB_NAME:
+    #                 continue
+    #             elif (key == cp.CK_WF_KEY or
+    #                   key == cp.CK_SRC_WF_KEY or
+    #                   key == cp.CK_DST_WF_KEY):
+    #                 if value is None:
+    #                     # No further validation if value is None
+    #                     continue
+    #                 if not self.dc_WF_KEY_validate(value):
+    #                     result = f"Invalid wf_key value: '{value}'."
+    #                     success = False 
+    #                     logger.error(result)
+    #                 continue
+    #             elif (key == cp.CK_WF_PURPOSE or
+    #                   key == cp.CK_SRC_WF_PURPOSE or
+    #                   key == cp.CK_DST_WF_PURPOSE):
+    #                 if value is None:
+    #                     # No further validation if value is None
+    #                     continue
+    #                 if self.cp_cmd_attr_get(cmd, key) in VALID_WF_PURPOSE_CHOICES:
+    #                     # Map the choices value to actual value
+    #                     value = VALID_WF_PURPOSE_MAP[value]
+    #                 if not self.dc_WF_PURPOSE_validate(value):
+    #                     result = f"Invalid wf_purpose value: '{value}'."
+    #                     success = False 
+    #                     logger.error(result)
+    #                 self.cp_cmd_attr_set(cmd,key,value)
+    #                 continue
+    #             elif key == cp.CK_WB_ID:
+    #                 if not self.dc_WB_ID_validate(value):
+    #                     result = f"Invalid wb_id level: '{value}'."
+    #                     success = False 
+    #                     logger.error(result)
+    #             elif key == cp.CK_PARSE_ONLY: 
+    #                 po = cmd.get(cp.CK_PARSE_ONLY, False)
+    #                 continue
+    #             elif key == cp.CK_VALIDATE_ONLY: 
+    #                 vo = cmd.get(cp.CK_VALIDATE_ONLY, False)
+    #                 continue
+    #             elif key == cp.CK_WHAT_IF: 
+    #                 what_if = cmd.get(cp.CK_WHAT_IF, False)
+    #                 continue
+    #             elif key == cp.CK_CHECK_REGISTER:
+    #                 continue
+    #             else:
+    #                 if key not in cp.BUDMAN_VALID_CK_ATTRS:
+    #                     result = f"Unchecked argument key: '{key}': '{value}'."
+    #                     logger.debug(result)
+    #             # If not validate_all and success is False, return. Else, 
+    #             # continue validating all cmd args.
+    #             if not validate_all and not success:
+    #                 # Without validate_all, if error, return, else continue
+    #                 cmd_result[p3m.CK_CMD_RESULT_STATUS] = success
+    #                 cmd_result[p3m.CK_CMD_RESULT_CONTENT] = result
+    #                 return cmd_result
+    #             else:
+    #                 # If validate_all, accumulate results.
+    #                 all_results += f"{P2}{result}\n"
+    #         # Argument check is complete
+    #         if success:
+    #             m = (f"Command validated - cmd_key: '{cmd[cp.p3m.CK_CMD_KEY]}' "
+    #                         f"subcmd_key: {str(cmd[cp.p3m.CK_SUBCMD_KEY])}")
+    #             logger.info(m)
+    #             cmd_result[p3m.CK_CMD_RESULT_STATUS] = success
+    #             cmd_result[p3m.CK_CMD_RESULT_CONTENT] = m
+    #             return cmd_result # The happy path return 
+    #         if validate_all:
+    #             cmd_result[p3m.CK_CMD_RESULT_STATUS] = success
+    #             cmd_result[p3m.CK_CMD_RESULT_CONTENT] = all_results
+    #             return cmd_result # The happy path return 
+    #         cmd_result[p3m.CK_CMD_RESULT_STATUS] = success
+    #         cmd_result[p3m.CK_CMD_RESULT_CONTENT] = result
+    #         return cmd_result
+    #     except Exception as e:
+    #         m = f"Error validating command: {str(cmd)}: {p3u.exc_err_msg(e)}"
+    #         logger.error(m)
+    #         return False, m
     #endregion cp_validate_cmd() Command Processor method
     # ------------------------------------------------------------------------ +
     #                                                                          +
@@ -697,33 +856,6 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
     # ======================================================================== +
     #region    Command Execution Methods                                       +
     # ======================================================================== +
-    #region LIST_cmd() execution method
-    def LIST_cmd(self, cmd : p3m.CMD_OBJECT_TYPE) -> p3m.CMD_RESULT_TYPE:
-        """List requested info from Budget Manager Data Context.
-
-        Arguments:
-            cmd (CMD_OBJECT_TYPE): 
-                A validated CommandProcessor CMD_OBJECT_TYPE. Contains
-                the command attributes and parameters to execute.
-
-        Returns:
-            p3m.CMD_RESULT_TYPE:
-            The outcome of the command execution. 
-        """
-        try:
-            st = p3u.start_timer()
-            logger.debug(f"Start: ...{P2}")
-            # Should be called only for list cmd.
-            cmd_result : p3m.CMD_RESULT_TYPE = cp.verify_cmd_key(cmd, cp.CV_LIST_CMD_KEY)
-            if not cmd_result[p3m.CK_CMD_RESULT_STATUS]: return cmd_result
-            # Process BudMan command tasks.
-            cmd_result = cp.BUDMAN_CMD_router(cmd, self.DC)
-            logger.debug(f"Complete: {p3u.stop_timer(st)}")
-            return cmd_result
-        except Exception as e:
-            return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
-    #endregion SHOW_cmd() execution method
-    # ------------------------------------------------------------------------ +
     #region BDM_STORE_save_cmd() execution method
     def BDM_STORE_save_cmd(self, cmd : p3m.CMD_OBJECT_TYPE) -> p3m.CMD_RESULT_TYPE:
         """Save the Budget Manager store (BDM_STORE) file with the BSM.
@@ -1087,72 +1219,6 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
     #endregion APP_cmd() execution method
     # ------------------------------------------------------------------------ +
-    #region WORKFLOW_cmd() execution method
-    def WORKFLOW_cmd(self, cmd : p3m.CMD_OBJECT_TYPE) -> p3m.CMD_RESULT_TYPE:
-        """Execute a workflow task.
-
-        Arguments:
-            cmd (CMD_OBJECT_TYPE): 
-                A validated CommandProcessor CMD_OBJECT_TYPE. Contains
-                the command attributes and parameters to execute.
-
-        Returns:
-            p3m.CMD_RESULT_TYPE:
-                The outcome of the command execution. 
-        """
-        try:
-            st = p3u.start_timer()
-            logger.debug(f"Start: ...")
-            # Should be called only for workflow cmd.
-            cmd_result : p3m.CMD_RESULT_TYPE = cp.verify_cmd_key(cmd, cp.CV_WORKFLOW_CMD_KEY)
-            if not cmd_result[p3m.CK_CMD_RESULT_STATUS]: return cmd_result
-            # Process workflow command tasks.
-            cmd_result = WORKFLOW_CMD_router(cmd, self.DC)
-            logger.info(f"Complete: {p3u.stop_timer(st)}")
-            return cmd_result
-        except Exception as e:
-            return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
-    #endregion WORKFLOW_cmd() execution method
-    # ------------------------------------------------------------------------ +
-    #region WORKFLOW_apply_cmd() execution method
-    def WORKFLOW_apply_cmd(self, cmd : p3m.CMD_OBJECT_TYPE) -> BUDMAN_RESULT_TYPE:
-        """Apply workflow tasks to WORKBOOKS.
-
-        A WORKFLOW_apply_cmd command will use the wb_ref value in the cmd. 
-        Value is a number or a wb_name.
-
-        Arguments:
-            cmd (Dict): A valid BudMan View Model Command object. For this
-            command, must contain workflow_cmd = 'apply' resulting in
-            a full command key of 'workflow_cmd_apply'.
-
-        Returns:
-            Tuple[success : bool, result : Any]: The outcome of the command 
-            execution. If success is True, result contains result of the 
-            command, if False, a description of the error.
-            
-        Raises:
-            RuntimeError: A description of the
-            root error is contained in the exception message.
-        """
-        try:
-            logger.info(f"Start: ...")
-            r_msg: str = "Start:"
-            logger.debug(r_msg)
-            subcmd_name = cmd[cp.p3m.CK_SUBCMD_NAME]
-            if subcmd_name == cp.CV_APPLY_SUBCMD_NAME:
-                # Update the txn_categories by apply the category_map.
-                p3m.cp_msg_svc.user_info_message("workflow apply cmd starting..")
-                p3m.cp_msg_svc.user_warning_message("workflow apply cmd Warning..")
-                p3m.cp_msg_svc.user_error_message("workflow apply cmd Error..")
-                p3m.cp_msg_svc.user_debug_message("workflow apply cmd Debug..")
-                return p3m.cp_CMD_RESULT_create(True, p3m.CV_CMD_STRING_OUTPUT,
-                                 "Applied category_map to txn_categories.", cmd)   
-            return p3m.cp_CMD_RESULT_create(False, p3m.CV_CMD_STRING_OUTPUT, "", cmd)
-        except Exception as e:
-            return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
-    #endregion WORKFLOW_apply_cmd() execution method
-    # ------------------------------------------------------------------------ +
     #                                                                          +
     #endregion Command Execution Methods                                       +
     # ======================================================================== +
@@ -1160,7 +1226,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
     # ======================================================================== +
     #region    helper methods                                                  +
     # ======================================================================== +
-    #region process_workbook_input()
+    #region    process_workbook_input()
     def process_selected_workbook_input(self, cmd: p3m.CMD_OBJECT_TYPE) -> List[BDMWorkbook]:
         """Process the workbook input from the command, return a list of 
         BDMWorkbooks, which may be empty.

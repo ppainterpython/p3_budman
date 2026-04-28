@@ -16,6 +16,7 @@ import cmd2, argparse
 import p3_utils as p3u, pyjson5, p3logging as p3l
 # local modules and packages
 from .mvvm_namespace import *
+from .command_class import Command
 from .command_processor_Base_ABC import CommandProcessor_Base
 from .command_processor import cp_CMD_RESULT_EXCEPTION_create
 from .cp_message_service import *
@@ -85,6 +86,17 @@ class CommandProcessor_Binding(CommandProcessor_Base):
         """Set the command map for the command processor."""
         if not isinstance(value, dict):
             raise ValueError("cp_cmd_map must be a dictionary.")
+        self.CP.cp_cmd_map = value
+
+    @property
+    def cp_commands(self) -> Dict[str, Command]:
+        """Return the commands set for the command processor."""
+        return self.CP.cp_cmd_map
+    @cp_commands.setter
+    def cp_commands(self, value : Dict[str, Command]) -> None:
+        """Set the commands set for the command processor."""
+        if not isinstance(value, dict):
+            raise ValueError("cp_commands must be a dictionary.")
         self.CP.cp_cmd_map = value
 
     @property
@@ -171,6 +183,18 @@ class CommandProcessor_Binding(CommandProcessor_Base):
             cmd_result = cp_CMD_RESULT_EXCEPTION_create(cmd, e)
             return cmd_result
     #endregion cp_validate_cmd() command method
+    # ------------------------------------------------------------------------ +
+    #region cp_find_command() method
+    def cp_find_command(self, cmd_key : str, subcmd_key : str | None = None) -> Optional[Command]:
+        """CP-Binding: Find a Command object by its cmd_key and subcmd_key if provided.
+
+        """
+        try:
+            return self.CP.cp_find_command(cmd_key, subcmd_key)
+        except Exception as e:
+            cmd_result = cp_CMD_RESULT_EXCEPTION_create(cmd_key, e)
+            return cmd_result
+    #endregion cp_find_command() command method
     # ------------------------------------------------------------------------ +
     #region cp_validate_cmd_object() method
     def cp_validate_cmd_object(self, 

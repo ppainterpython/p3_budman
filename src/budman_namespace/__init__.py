@@ -22,14 +22,19 @@ __all__ = [
     # Budget Domain Model Constants
     "BDM",
     # Type Alias Constants
+    # Base Types - not model-aware
     "DATA_OBJECT_TYPE",
     "DATA_TUPLE_TYPE",
     "DATA_COLLECTION_TYPE",
-    "DATA_LIST_TYPE",
-    # Base Types - not model-aware
+    "DATA_OBJECT_LIST_TYPE",
+    "DATA_MAP_TYPE",
+    "DATA_ROW_LIST_TYPE",
+    "DATA_ROW_DICT_TYPE",
+    # BUDMAN data type constants
+    "WORKBOOK_ID_TYPE",
     "BUDMAN_RESULT_TYPE",  
     "WORKBOOK_DATA_COLLECTION_TYPE",
-    "WORKBOOK_ITEM_TYPE",
+    # "WORKBOOK_ITEM_TYPE",
     "WORKBOOK_OBJECT_TYPE", 
     "WORKBOOK_CONTENT_TYPE",  
     "LOADED_WORKBOOK_COLLECTION_TYPE",

@@ -721,8 +721,11 @@ class BudgetDomainModel(p3m.Model,metaclass=BDMSingletonMeta):
                 logger.debug("FI_COLLECTION is empty.")
                 return None
             for fi_key, fi_object in self.bdm_fi_collection.items():
-                if (fi_object[FI_WORKBOOK_DATA_COLLECTION] is None or
-                    not isinstance(fi_object[FI_WORKBOOK_DATA_COLLECTION], dict) or
+                if (fi_object[FI_WORKBOOK_DATA_COLLECTION] is None):
+                    logger.debug(f"FI_KEY('{fi_key}') WORKBOOK_DATA_COLLECTION is None.")
+                    logger.debug(f"FI_KEY('{fi_key}') Initialized to empty dict.")
+                    fi_object[FI_WORKBOOK_DATA_COLLECTION] = {}
+                if (not isinstance(fi_object[FI_WORKBOOK_DATA_COLLECTION], dict) or
                     len(fi_object[FI_WORKBOOK_DATA_COLLECTION]) == 0):
                     logger.debug(f"FI_KEY('{fi_key}') has no WORKBOOK_DATA_COLLECTION.")
                     continue
@@ -805,8 +808,13 @@ class BudgetDomainModel(p3m.Model,metaclass=BDMSingletonMeta):
                     continue
                 wdc: WORKBOOK_DATA_COLLECTION_TYPE = fi_object[FI_WORKBOOK_DATA_COLLECTION]
                 # If the FI_WORKBOOK_DATA_COLLECTION is empty, skip it.
-                if (wdc is None or len(wdc) == 0):
-                    logger.debug(f"FI_KEY('{fi_key}') WORKBOOK_DATA_COLLECTION is empty.")
+                if (wdc is None):
+                    logger.debug(f"FI_KEY('{fi_key}') WORKBOOK_DATA_COLLECTION is None.")
+                    logger.debug(f"FI_KEY('{fi_key}') Initialized to empty dict.")
+                    fi_object[FI_WORKBOOK_DATA_COLLECTION] = {}
+                    wdc: WORKBOOK_DATA_COLLECTION_TYPE = fi_object[FI_WORKBOOK_DATA_COLLECTION]
+                if (len(wdc) == 0):
+                    logger.debug(f"FI_KEY('{fi_key}') WORKBOOK_DATA_COLLECTION is empty, skipping.")
                     continue
                 for wb_id, bdm_wb in wdc.items():
                     if isinstance(bdm_wb, BDMWorkbook):

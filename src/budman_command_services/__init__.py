@@ -11,8 +11,17 @@ __license__ = "MIT"
 
 from .budman_cp_namespace import *
 from .budman_command_services import (
-    # BUDMAN_CMD_TASK functions
+    # BUDMAN_CMD execution functions
     BUDMAN_CMD_router,
+    BUDMAN_CMD_list_workbooks,
+    BUDMAN_CMD_list_bdm_store_json,
+    BUDMAN_CMD_list_files,
+    BUDMAN_CMD_show_DATA_CONTEXT,
+    BUDMAN_CMD_app_sync,
+    BUDMAN_CMD_app_log,
+    BUDMAN_CMD_app_refresh,
+    BUDMAN_CMD_app_reload,
+    BUDMAN_CMD_app_delete,
     # BudMan Command File Services
     BUDMAN_CMD_FILE_SERVICE_get_BSMFile,
     BUDMAN_CMD_FILE_SERVICE_get_full_filename,
@@ -23,16 +32,31 @@ from .budman_command_services import (
     validate_cmd_arguments
 )
 from .workflow_command_services import (
-    WORKFLOW_CMD_router,
-    WORKFLOW_CMD_process
-)
-from .budget_intake import (
-    INTAKE_SBCMD_router
+    WORKFLOW_CMD_transfer,
+    WORKFLOW_CMD_transfer_files,
+    WORKFLOW_CMD_transfer_workbooks,
+    WORKFLOW_CMD_process,
+    WORKFLOW_CMD_categorize_transactions,
+    WORKFLOW_CMD_delete_workbooks,
+    WORKFLOW_CMD_check_workbooks,
+    WORKFLOW_CMD_update_catalog_map,
+    WORKFLOW_CMD_set_value,
+    WORKFLOW_CMD_task,
+    WORKFLOW_CMD_apply
 )
 # target for 'from budman_app import *'
 __all__ = [
     "BudManApp",
     "BUDMAN_CMD_router",
+    "BUDMAN_CMD_list_workbooks",
+    "BUDMAN_CMD_list_bdm_store_json",
+    "BUDMAN_CMD_list_files",
+    "BUDMAN_CMD_show_DATA_CONTEXT",
+    "BUDMAN_CMD_app_sync",
+    "BUDMAN_CMD_app_log",
+    "BUDMAN_CMD_app_refresh",
+    "BUDMAN_CMD_app_reload",
+    "BUDMAN_CMD_app_delete",
     # budman_command_services.py
     "BUDMAN_CMD_FILE_SERVICE_get_BSMFile",
     "BUDMAN_CMD_FILE_SERVICE_get_full_filename",
@@ -41,10 +65,17 @@ __all__ = [
     "verify_cmd_key",
     "verify_subcmd_key",
     "validate_cmd_arguments",
-    # workflow_commands.py module
-    "WORKFLOW_CMD_router",
+    # workflow_command_services.py module
+    "WORKFLOW_CMD_transfer",
+    "WORKFLOW_CMD_transfer_workbooks",
+    "WORKFLOW_CMD_transfer_files",
     "WORKFLOW_CMD_process",
-    # budget_intake",
-    "INTAKE_SBCMD_router",
-]
+    "WORKFLOW_CMD_categorize_transactions",
+    "WORKFLOW_CMD_delete_workbooks",
+    "WORKFLOW_CMD_check_workbooks",
+    "WORKFLOW_CMD_update_catalog_map",
+    "WORKFLOW_CMD_set_value",
+    "WORKFLOW_CMD_task",
+    "WORKFLOW_CMD_apply"
+    ]
 

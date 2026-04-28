@@ -17,6 +17,9 @@ __name__ = "p3_mvvm"
 __description__ = "p3_MVVM - a simple MVVM framework for Python."
 __license__ = "MIT"
 
+from .command_class import (
+    Command
+)
 from .model_binding import (
     Model_Binding
 )
@@ -125,6 +128,8 @@ from .mvvm_namespace import (
 )
 # target for 'from budman_app import *'
 __all__ = [
+    # Command Class
+    "Command",
     # Model
     "Model_Binding",
     "Model_Base",
