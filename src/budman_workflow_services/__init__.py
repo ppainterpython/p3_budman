@@ -26,11 +26,14 @@ from .intake_process_services import (
     INTAKE_TASK_convert_csv_txns_schema
 )
 from .categorization_process_services import (
+    BOA_WB_COL_DIMENSIONS,
     excel_WORKSHEET_remove_extra_columns,
     WORKFLOW_TASK_check_sheet_columns, 
+    WORKFLOW_TASK_set_column_width,
     check_sheet_schema, 
     TRANSACTION_DESCRIPTION_COL_NAME, 
     validate_budget_categories,
+    WORKFLOW_TASK_invert_amount_column,
     WORKFLOW_TASK_process_budget_category,
     WORKFLOW_TASK_categorize_transaction
 )
@@ -51,11 +54,14 @@ __all__ = [
     "TXNCategoryMap",
     "BDMTXNCategoryManager",
     # budget_categorization.py module
+    "BOA_WB_COL_DIMENSIONS",
     "excel_WORKSHEET_remove_extra_columns",
     "WORKFLOW_TASK_check_sheet_columns",
+    "WORKFLOW_TASK_set_column_width",
     "check_sheet_schema",
     "TRANSACTION_DESCRIPTION_COL_NAME",
     "validate_budget_categories",
+    "WORKFLOW_TASK_invert_amount_column",
     "WORKFLOW_TASK_process_budget_category",
     "WORKFLOW_TASK_categorize_transaction"
 ]

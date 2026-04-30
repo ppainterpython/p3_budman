@@ -252,6 +252,8 @@ def WORKFLOW_CMD_transfer_workbooks(
                     continue
             src_wb_type = src_wb.wb_type
             # Supportted transfer cases.
+            # ---------------------------------------------------------------- +
+            #region wb_type bdm.WB_TYPE_CSV_TXNS transfer
             if src_wb_type == bdm.WB_TYPE_CSV_TXNS and dst_wb_type == bdm.WB_TYPE_EXCEL_TXNS:
                 # Transfer a csv_txns workbook by converting to a excel_txns workbook.
                 # Create a file_url for the new workbook being transferred.
@@ -285,6 +287,9 @@ def WORKFLOW_CMD_transfer_workbooks(
                 result_new_wb_index_list.append(wb_index)
                 msg = (f"{pad(level)}Added new workbook: '{wb_index:03}:{dst_wb.wb_name}' ")
                 p3m.cp_user_info_message(msg)
+            #endregion wb_type bdm.WB_TYPE_CSV_TXNS transfer
+            # ---------------------------------------------------------------- +
+            #region wb_type bdm.WB_TYPE_EXCEL_TXNS transfer
             elif src_wb_type == bdm.WB_TYPE_EXCEL_TXNS and dst_wb_type == bdm.WB_TYPE_EXCEL_TXNS:
                 # Transfer a excel_txns workbook to another workflow wf_folder.
                 # Create a file_url for the new workbook file being transferred.
@@ -326,6 +331,8 @@ def WORKFLOW_CMD_transfer_workbooks(
                 result_new_wb_index_list.append(wb_index)
                 msg = (f"{pad(level)}Added new workbook: '{wb_index:03}:{dst_wb.wb_name}' ")
                 p3m.cp_user_info_message(msg)
+            #endregion wb_type bdm.WB_TYPE_EXCEL_TXNS transfer
+            # ---------------------------------------------------------------- +
             else:
                 msg = (f"Unsupported transfer from src wb_type '{src_wb_type}' "
                      f"to dst wb_type '{dst_wb_type}'")
@@ -828,11 +835,9 @@ def WORKFLOW_CMD_categorize_transactions(
     try:
         #region Initialization and validation
         level += 1
-        ls: str = P2 * (level + 1)
         ts: str = "[bold dark_orange]CMD: [/bold dark_orange]"
-        m: str = f"{pad(level)}{ts} {WORKFLOW_CMD_categorize_transactions.__name__}()"
-        msg: str = ""
-        p3m.cp_user_info_message(m + "Start: ...")
+        m: str = f"{pad(level)}{ts}{WORKFLOW_CMD_categorize_transactions.__name__}()"
+        p3m.cp_user_info_message(m + " Start: ...")
         level += 1
         # Start: ------------------------------------------------------------- +
         # Validate the cmd argsuments.
@@ -841,6 +846,7 @@ def WORKFLOW_CMD_categorize_transactions(
             expected_subcmd_key=CV_CATEGORIZATION_SUBCMD_KEY)
         # Extract and validate required parameters from the command.
         success: bool = False
+        msg: str = ""
         model: BudgetDomainModel = bdm_DC.model
         selected_bdm_wb_list : List[BDMWorkbook] = None
         selected_bdm_wb_list = process_selected_workbook_input(
@@ -857,7 +863,7 @@ def WORKFLOW_CMD_categorize_transactions(
             p3m.cp_user_info_message(msg)
         else :
             msg = f"{pad(level)}A single workbook selected to check."
-            p3m.cp_user_info_message(f"{pad(level)}{msg}")
+            p3m.cp_user_info_message(msg)
         p3m.cp_user_info_message(f"{pad(level)}Categorizing {len(selected_bdm_wb_list)} workbooks:")
         success : bool = False
         r : str = ""
@@ -872,7 +878,7 @@ def WORKFLOW_CMD_categorize_transactions(
             # Select the current workbook in the Data Context.
             bdm_DC.dc_WORKBOOK = bdm_wb
             bdm_wb_abs_path = bdm_wb.abs_path()
-            p3m.cp_user_info_message(f"{pad(level)}workbook: {str(bdm_DC.dc_WB_INDEX):>4} '{bdm_DC.dc_WB_ID:<40}'")
+            p3m.cp_user_info_message(f"{pad(level)}Workbook: {str(bdm_DC.dc_WB_INDEX):>4} '{bdm_DC.dc_WB_ID:<40}'")
             bdm_wb_abs_path = bdm_wb.abs_path()
             if bdm_wb_abs_path is None:
                 msg = f"Workbook path is not valid: {bdm_wb.wb_url}"
@@ -884,7 +890,7 @@ def WORKFLOW_CMD_categorize_transactions(
                 success, result = bdm_DC.dc_WORKBOOK_content_get(bdm_wb)
                 if not success:
                     selected_bdm_wb_list.remove(bdm_wb)
-                    msg = f"{pad(level)}Excluded workbook: '{bdm_wb.wb_id}', "
+                    msg = f"{pad(level+1)}Excluded workbook: '{bdm_wb.wb_id}', "
                     msg += f"failed to load: {result}"
                     logger.error(msg)
                     p3m.cp_user_error_message(msg)
@@ -892,9 +898,9 @@ def WORKFLOW_CMD_categorize_transactions(
             # Now we have a valid bdm_wb to process.
             if bdm_wb.wb_type == bdm.WB_TYPE_EXCEL_TXNS:
                 task = "process_budget_category()"
-                msg = (f"{pad(level)}Task: {task:30} {str(bdm_DC.dc_WB_INDEX):>4} "
+                msg = (f"{pad(level+1)}Task: {task:30} {str(bdm_DC.dc_WB_INDEX):>4} "
                         f"'{bdm_DC.dc_WB_ID:<40}'")
-                p3m.cp_user_info_message(f"{pad(level)}{msg}")
+                p3m.cp_user_info_message(msg)
                 success, r = WORKFLOW_TASK_process_budget_category(bdm_wb, bdm_DC, 
                                                         log_all, cleared_other_now)
                 cleared_other_now = False # Only clear_other for first workbook
@@ -903,24 +909,35 @@ def WORKFLOW_CMD_categorize_transactions(
                             f"'{bdm_DC.dc_WB_ID}'\n{pad(level + 2)}Result: {r}")
                     p3m.cp_user_info_message(f"{pad(level + 1)}{r}")
                     continue
-                p3m.cp_user_info_message(f"{pad(level + 2)}Result: {r}")
+                p3m.cp_user_info_message(f"{pad(level + 1)}Result: {r}")
                 task = "dc_WORKBOOK_save()"
-                m = (f"{pad(level)}Task: {task:30} {str(bdm_DC.dc_WB_INDEX):>4} "
+                msg = (f"{pad(level+1)}Task: {task:30} {str(bdm_DC.dc_WB_INDEX):>4} "
                         f"'{bdm_DC.dc_WB_ID:<40}'")
-                p3m.cp_user_info_message(f"{pad(level)}{m}")
+                p3m.cp_user_info_message(msg)
                 success, r = bdm_DC.dc_WORKBOOK_save(bdm_wb)
                 if not success:
-                    msg = (f"{pad(level + 1)}Task Failed: dc_WORKBOOK_save() Workbook: "
-                            f"'{bdm_DC.dc_WB_ID}'\n{pad(level + 2)}Result: {msg}")
-                    p3m.cp_user_error_message(f"{pad(level + 1)}{msg}")
+                    msg = (f"{pad(level + 1)}Task Failed: {task:30} Workbook: "
+                            f"'{bdm_DC.dc_WB_ID}'\n{pad(level + 2)}Result: {r}")
+                    p3m.cp_user_error_message(msg)
                     continue
-                p3m.cp_user_info_message(f"{pad(level + 2)}Result: {r}")
-        p3m.cp_user_info_message(f"{pad(level)}{m}Complete: ...")
+                p3m.cp_user_info_message(f"{pad(level + 1)}Result: {r}")
+                task = "dc_WORKBOOK_close()"
+                msg = (f"{pad(level+1)}Task: {task:30} {str(bdm_DC.dc_WB_INDEX):>4} "
+                        f"'{bdm_DC.dc_WB_ID:<40}'")
+                p3m.cp_user_info_message(msg)
+                success, r = bdm_DC.dc_WORKBOOK_close(bdm_wb)
+                if not success:
+                    msg = (f"{pad(level + 1)}Task Failed: {task:30} Workbook: "
+                            f"'{bdm_DC.dc_WB_ID}'\n{pad(level + 1)}Result: {r}")
+                    p3m.cp_user_error_message(msg)
+                    continue
+                p3m.cp_user_info_message(f"{pad(level + 1)}Result: {r}")
+        p3m.cp_user_info_message(f"{m} Complete: ...")
         return p3m.cp_CMD_RESULT_create(True, p3m.CV_CMD_STRING_OUTPUT, "Complete", cmd)
     except Exception as e:
         return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
 #endregion WORKFLOW_TASK_categorize_transactions() execution method
-# ------------------------------------------------------------------------ +
+# ---------------------------------------------------------------------------- +
 #region WORKFLOW_CMD_delete_workbooks() function
 def WORKFLOW_CMD_delete_workbooks(
         cmd: p3m.Command,
@@ -1417,43 +1434,6 @@ def WORKFLOW_TASK_transfer_csv_file_to_workbook(src_file_url: str,
         err_msg = (f"Exception transfer_csv_file_to_workbook(): {m}")
         logger.error(err_msg)
         return False, err_msg
-#endregion WORKFLOW_TASK_transfer_csv_file()
-# ---------------------------------------------------------------------------- +
-#region WORKFLOW_TASK_copy_workbook()
-# def WORKFLOW_TASK_copy_workbook(src_wb: BDMWorkbook,
-#                                 dst_wb: BDMWorkbook,
-#                                 symlink: bool = False) -> bdm.BUDMAN_RESULT_TYPE:
-#     """Copy a workbook to a new wf_folder location.
-
-#     Args:
-#         src_wb (BDMWorkbook): The source workbook object.
-#         dst_wb (BDMWorkbook): The destination workbook object.
-
-#     Returns:
-#         bdm.BUDMAN_RESULT_TYPE: The result of the transfer operation.
-#     """
-#     try:
-#         p3u.is_not_obj_of_type("src_wb", src_wb, BDMWorkbook, raise_error=True)
-#         p3u.is_not_obj_of_type("dst_wb", dst_wb, BDMWorkbook, raise_error=True)
-#         src: Path = Path.from_uri(src_wb.wb_url)
-#         dst: Path = Path.from_uri(dst_wb.wb_url)
-#         try:
-#             # Use symlink?
-#             if symlink:
-#                 dst.symlink_to(src)
-#                 return True, f"Symlinked workbook from {dst_wb.wb_url} to {src_wb.wb_url}"
-#         except FileExistsError:
-#             m: str = f"Symlink already exists for {dst_wb.wb_url}, no action taken."
-#             logger.debug(m)   
-#             return True, m
-#         # No, copy the file.
-#         shutil.copyfile(src, dst)
-#         return True, f"Copied workbook from {src_wb.wb_url} to {dst_wb.wb_url}"
-#     except Exception as e:
-#         m = p3u.exc_err_msg(e)
-#         err_msg = (f"Exception WORKFLOW_TASK_copy_workbook(): {m}")
-#         logger.error(err_msg)
-#         return False, err_msg
 #endregion WORKFLOW_TASK_transfer_csv_file()
 # ---------------------------------------------------------------------------- +
 #region WORKFLOW_TASK_contstruct_wb_file_url() function

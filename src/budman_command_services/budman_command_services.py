@@ -53,8 +53,9 @@ from budman_data_context import BudManAppDataContext_Base
 from budget_storage_model import (
     BSMFile, BSMFileTree,
     bsm_verify_folder, bsm_URL_verify_file_scheme,)
-from budman_workflow_services import (BDMTXNCategoryManager, TXNCategoryMap)
-import budman_workflows
+from budman_workflow_services import (
+    BDMTXNCategoryManager, TXNCategoryMap,
+    WORKFLOW_TASK_invert_amount_column)
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals and Constants
@@ -117,6 +118,132 @@ def BUDMAN_CMD_router(cmd: p3m.CMD_OBJECT_TYPE,
         logger.error(p3u.exc_err_msg(e))
         raise
 #endregion BUDMAN_CMD_router() function
+# ---------------------------------------------------------------------------- +
+#region BUDMAN_CMD_change_workbooks()
+def BUDMAN_CMD_change_workbooks(
+        cmd: p3m.Command,
+        bdm_DC: BudManAppDataContext_Base,
+        level: int = 0) -> p3m.CMD_RESULT_TYPE:
+    """Change workbooks in the BudMan application.
+
+    Args:
+        cmd (CMD_OBJECT_TYPE): The command object to process.
+        bdm_DC (BudManAppDataContext_Base): The data context for the BudMan application.
+        CMD parameters:
+            CK_BDM_TREE (bool): --bdm_tree | -t switch, dispaly result as
+            a tree, else display a table.
+    Returns:
+        p3m.CMD_RESULT_TYPE: The result of the command execution.
+    """
+    try:
+        # Start: ------------------------------------------------------------- +
+        #region Initialization and validation
+        level += 1
+        ts: str = "[bold dark_orange]CMD: [/bold dark_orange]"
+        m: str = f"{pad(level)}{ts} {BUDMAN_CMD_change_workbooks.__name__}() "
+        p3m.cp_user_info_message(m + "Start: ...")
+        level += 1
+        # Validate the cmd argsuments.
+        cmd_args: p3m.CMD_ARGS_TYPE = cmd.validate_command(
+            expected_cmd_key=CV_CHANGE_CMD_KEY,
+            expected_subcmd_key=CV_CHANGE_WORKBOOKS_SUBCMD_KEY
+        )
+        # Extract parameter values from cmd_args
+        prev_fi_key: str = bdm_DC.dc_FI_KEY
+        fi_key: str = cmd_args.get(CK_CMDLINE_FI_KEY, None)
+        invert_amount : bool = cmd_args.get(CK_INVERT_AMOUNT, False)
+        new_wb_type: Optional[str] = cmd_args.get(CK_CMDLINE_WB_TYPE, None)
+        new_wf_key: Optional[str] = cmd_args.get(CK_CMDLINE_WF_KEY, None)
+        new_wf_purpose: Optional[str] = cmd_args.get(CK_CMDLINE_WF_PURPOSE, None)
+        # Initializations.
+        success: bool = False
+        result: str = ""
+        msg: str = ""
+        cmd_result: p3m.CMD_RESULT_TYPE = p3m.cp_CMD_RESULT_create(cmd=cmd)
+        #endregion Initialization and validation
+
+        # Capture the workbooks selected by list command line arguments.
+        selected_bdm_wb_list : List[BDMWorkbook] = None
+        selected_bdm_wb_list = process_selected_workbook_input(cmd, bdm_DC)
+        # Invert the amount column if requested.
+        if invert_amount and selected_bdm_wb_list:
+            for bdm_wb in selected_bdm_wb_list:
+                # Select the current workbook in the Data Context.
+                bdm_DC.dc_WORKBOOK = bdm_wb
+                p3m.cp_user_info_message(f"{pad(level)}workbook: {str(bdm_DC.dc_WB_INDEX):>4} '{bdm_DC.dc_WB_ID:<40}'")
+
+                # Invert the amount column for the current workbook.
+                task: str = "WORKFLOW_TASK_invert_amount_column()"
+                msg = (f"{pad(level)}Task: {task:30} {str(bdm_DC.dc_WB_INDEX):>4} "
+                        f"'{bdm_DC.dc_WB_ID:<40}'")
+                p3m.cp_user_info_message(f"{pad(level)}{msg}")
+                success, result = WORKFLOW_TASK_invert_amount_column(bdm_wb, bdm_DC)
+                if not success:
+                    msg = (f"{pad(level + 1)}Task Failed: {task:30} Workbook: "
+                            f"'{bdm_DC.dc_WB_ID}'\n{pad(level + 2)}Result: {result}")
+                    p3m.cp_user_error_message(f"{pad(level + 1)}{msg}")
+                    continue
+                p3m.cp_user_info_message(f"{pad(level + 2)}Result: {result}")
+
+                # Save the changed workbook.
+                task: str = "dc_WORKBOOK_save()"
+                msg = (f"{pad(level)}Task: {task:30} {str(bdm_DC.dc_WB_INDEX):>4} "
+                        f"'{bdm_DC.dc_WB_ID:<40}'")
+                p3m.cp_user_info_message(f"{pad(level)}{msg}")
+                success, result = bdm_DC.dc_WORKBOOK_save(bdm_wb)
+                if not success:
+                    msg = (f"{pad(level + 1)}Task Failed: {task:30} Workbook: "
+                            f"'{bdm_DC.dc_WB_ID}'\n{pad(level + 2)}Result: {result}")
+                    p3m.cp_user_error_message(f"{pad(level + 1)}{msg}")
+                    continue
+                p3m.cp_user_info_message(f"{pad(level + 2)}Result: {result}")
+            cmd_result[p3m.CK_CMD_RESULT_CONTENT] = "Complete."
+            cmd_result[p3m.CK_CMD_RESULT_STATUS] = True
+            # End: ----------------------------------------------------------- +
+            p3m.cp_user_info_message(m + "End: ...")
+            return cmd_result
+
+        result_all: str = f"Changing {len(selected_bdm_wb_list)} workbooks:"
+        r: str = ""
+        for bdm_wb in selected_bdm_wb_list:
+            # Select the current workbook in the Data Context.
+            bdm_DC.dc_WORKBOOK = bdm_wb
+            result_all += f"\n{P2}workbook: {str(bdm_DC.dc_WB_INDEX):>4} '{bdm_wb.wb_id:<40}'"
+            # Apply the include argument switches to the selected workbook.
+            if new_wb_type is not None:
+                bdm_wb.wb_type = new_wb_type
+                result_all += (f"\n{P4}Changed wb_type: '{new_wb_type}' for "
+                        f"wb_index: {str(bdm_DC.dc_WB_INDEX):>4}' wb_id: '{bdm_wb.wb_id}'")
+                bdm_DC.dc_BDM_STORE_changed = True
+            if new_wf_key is not None:
+                bdm_wb.wf_key = new_wf_key
+                result_all += (f"\n{P4}Changed wf_key: '{new_wf_key}' for "
+                        f"wb_index: '{str(bdm_DC.dc_WB_INDEX):>4}' wb_id: '{bdm_wb.wb_id}'")
+                bdm_DC.dc_BDM_STORE_changed = True
+            if new_wf_purpose is not None:
+                wf_key = new_wf_key or bdm_wb.wf_key
+                # DEPRECATED, refactor to change wf_purpose without folder_id
+                # folder_id = self.dc_WF_PURPOSE__FOLDER_MAP(wf_key, new_wf_purpose)
+                # if folder_id != bdm_wb.wf_folder_id:
+                #     bdm_wb.wf_folder_id = folder_id
+                #     m = f", wf_folder_id: '{folder_id}' "
+                # else:
+                #     m = ""
+                m = "fix me"
+                bdm_wb.wf_purpose = new_wf_purpose
+                result_all += (f"\n{P4}Changed wf_purpose: '{new_wf_purpose}'"
+                            f" {m} for wb_index: "
+                        f"'{str(bdm_DC.dc_WB_INDEX):>4}' wb_id: '{bdm_wb.wb_id}'")
+                bdm_DC.dc_BDM_STORE_changed = True
+            bdm_DC.dc_WORKBOOK = bdm_wb
+        cmd_result[p3m.CK_CMD_RESULT_CONTENT] = result_all
+        cmd_result[p3m.CK_CMD_RESULT_STATUS] = True
+        # End: ----------------------------------------------------------- +
+        p3m.cp_user_info_message(m + "End: ...")
+        return cmd_result
+    except Exception as e:
+        return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
+#endregion BUDMAN_CMD_change_workbooks()
 # ---------------------------------------------------------------------------- +
 #region BUDMAN_CMD_list_workbooks()
 def BUDMAN_CMD_list_workbooks(cmd: p3m.Command,
@@ -536,17 +663,6 @@ def BUDMAN_CMD_app_reload(cmd: p3m.CMD_OBJECT_TYPE,
                     return p3m.cp_CMD_RESULT_create(
                         False, p3m.CV_CMD_STRING_OUTPUT, 
                         "Failed to reload category_map_module", cmd)
-        if reload_target == CV_FI_WORKBOOK_DATA_COLLECTION:
-            m = "deprecated"
-            # wdc: WORKBOOK_DATA_COLLECTION_TYPE = None
-            # wdc, m = self.model.bsm_FI_WORKBOOK_DATA_COLLECTION_resolve(self.dc_FI_KEY)
-            return p3m.cp_CMD_RESULT_create(
-                True, p3m.CV_CMD_STRING_OUTPUT, m, cmd)
-        if reload_target == CV_WORKFLOWS_MODULE:
-            importlib.reload(budman_workflows.workflow_utils)
-            return p3m.cp_CMD_RESULT_create(
-                True, p3m.CV_CMD_STRING_OUTPUT, 
-                "Reloaded workflows module.", cmd)
         return p3m.cp_CMD_RESULT_create(
             True, p3m.CV_CMD_STRING_OUTPUT, r_msg, cmd)
     except Exception as e:

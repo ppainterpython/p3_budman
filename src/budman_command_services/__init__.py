@@ -13,6 +13,7 @@ from .budman_cp_namespace import *
 from .budman_command_services import (
     # BUDMAN_CMD execution functions
     BUDMAN_CMD_router,
+    BUDMAN_CMD_change_workbooks,
     BUDMAN_CMD_list_workbooks,
     BUDMAN_CMD_list_bdm_store_json,
     BUDMAN_CMD_list_files,
@@ -48,6 +49,7 @@ from .workflow_command_services import (
 __all__ = [
     "BudManApp",
     "BUDMAN_CMD_router",
+    "BUDMAN_CMD_change_workbooks",
     "BUDMAN_CMD_list_workbooks",
     "BUDMAN_CMD_list_bdm_store_json",
     "BUDMAN_CMD_list_files",

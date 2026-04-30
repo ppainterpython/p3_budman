@@ -64,12 +64,6 @@ TERM_TITLE = "Budget Manager CLI"
 # ---------------------------------------------------------------------------- +
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
-#region Configure the CLI parser
-# Setup the command line argument parsers. Parsers are now initialized
-# as a class variable in BudManCLIView for better encapsulation.
-# settings = bdms.BudManSettings()
-#endregion Configure the CLI parser 
-# ---------------------------------------------------------------------------- +
 #region    cli_view_cp_user_output() function
 @p3m.cp_user_message_callback
 def cli_view_cp_user_output(m: p3m.CPUserOutputMessage) -> None:
@@ -311,9 +305,8 @@ class BudManCLIView(cmd2.Cmd,
             # update the dynamic prompt and window title
             BudManCLIView.prompt = PO_ON_PROMPT if self.cp_parse_only else PO_OFF_PROMPT
             if self.cp_initialized:
-                # cwl = self.current_working_location()
-                # self.prompt = f"{cwl}{BudManCLIView.prompt}"
-                self.prompt = f"{BudManCLIView.prompt}"
+                cwl = self.current_working_location()
+                self.prompt = f"{cwl}{BudManCLIView.prompt}"
             else:
                 self.prompt = f"{BudManCLIView.prompt}"
         except Exception as e:
@@ -424,7 +417,7 @@ class BudManCLIView(cmd2.Cmd,
         try:
             _ = self._persist_history()
             # Construct the command object from cmd2's argparse Namespace.
-            cmd: p3m.CMD_OBJECT_TYPE = self.cp_construct_cmd_from_argparse(opts)
+            cmd: p3m.Command = self.construct_command_from_argparse(opts)
             # Submit the command to the command processor.
             _ = self.cp_execute_cmd(cmd)
         except Exception as e:
@@ -663,7 +656,7 @@ class BudManCLIView(cmd2.Cmd,
                 return
             if not cmd_result.get(p3m.CK_CMD_RESULT_STATUS, False):
                 # If the command result status is False, output the error message.
-                self.cp_cmd_result_output_error(cmd_result)
+                self.cp_cmd_result_output_error(cmd_result[p3m.CK_CMD_RESULT_CONTENT])
                 return
             result_type = cmd_result.get(p3m.CK_CMD_RESULT_CONTENT_TYPE, None)
             result_content: Any = cmd_result.get(p3m.CK_CMD_RESULT_CONTENT, "")

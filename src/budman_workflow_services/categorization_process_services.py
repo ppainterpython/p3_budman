@@ -296,6 +296,44 @@ def excel_WORKSHEET_remove_extra_columns(ws: Worksheet, expected_columns: List[s
 #endregion excel_WORKSHEET_remove_extra_columns() function
 # ---------------------------------------------------------------------------- +
 #region WORKFLOW_TASK_check_sheet_columns() function
+def WORKFLOW_TASK_set_column_width(sheet: Worksheet, 
+                                   col_dimensions: Dict[str, int]) -> None:
+    """Set the width of columns in the worksheet based on the provided dimensions.
+    
+    Sets column widths for columns that exist in both the sheet and the col_dimensions
+    dictionary. Column names are matched by name from the header row (row 1).
+
+    Args:
+        sheet (Worksheet): The worksheet to set column widths for.
+        col_dimensions (Dict[str, int]): Dictionary mapping column names to their desired widths.
+
+    Returns:
+        None
+    """
+    try:
+        logger.info("Set worksheet column widths.")
+        # Get the column names from the header row (row 1)
+        hdr_col_names = [cell.value for cell in sheet[1]]
+        logger.debug(f"Column names in sheet('{sheet.title}'): {hdr_col_names}")
+
+        # Set column widths for columns that exist in both the sheet and col_dimensions
+        columns_set = 0
+        for col_index, col_name in enumerate(hdr_col_names, start=1):
+            if col_name in col_dimensions:
+                width = col_dimensions[col_name]
+                column_letter = sheet.cell(row=1, column=col_index).column_letter
+                sheet.column_dimensions[column_letter].width = width
+                logger.debug(f"Set column '{col_name}' (column {column_letter}) width to {width}")
+                columns_set += 1
+        
+        logger.info(f"Set widths for {columns_set} columns.")
+        logger.info("Completed setting column widths.")
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion WORKFLOW_TASK_check_sheet_columns() function
+# ---------------------------------------------------------------------------- +
+#region WORKFLOW_TASK_check_sheet_columns() function
 def WORKFLOW_TASK_check_sheet_columns(sheet: Worksheet, 
                         add_columns: bool = True) -> bool:
     """Check that the sheet is ready to process transactions.
@@ -360,7 +398,8 @@ def WORKFLOW_TASK_check_sheet_columns(sheet: Worksheet,
 #endregion WORKFLOW_TASK_check_sheet_columns() function
 # ---------------------------------------------------------------------------- +
 #region check_sheet_schema() function
-def check_sheet_schema(wb: Workbook, correct: bool = False) -> bool:
+def check_sheet_schema(wb: Workbook, 
+                       correct: bool = False) -> bool:
     """Check that the Workbook active sheet is ready to process transactions.
     
     Steps to check the active sheet of an excel workbook for BudMan processing:
@@ -687,11 +726,126 @@ def validate_budget_categories(bdm_wb:BDMWorkbook,
         return False, result
 #endregion validate_budget_categories() function
 # ---------------------------------------------------------------------------- +
+#region WORKFLOW_TASK_invert_amount_column() function
+def WORKFLOW_TASK_invert_amount_column(
+        bdm_wb:BDMWorkbook,
+        bdm_DC : BudManAppDataContext_Base) -> BUDMAN_RESULT_TYPE:
+    """Invert the amounts for the WB_TYPE_EXCEL_TXNS workbook.
+    
+    Args:
+        bdm_wb (BDMWorkbook): The workbook with WB_TYPE_EXCEL_TXNS content.
+        bdm_DC (BudManAppDataContext_Base): The data context for the budget.
+    """
+    try:
+        #region Validate all required information is accessible.
+        #
+        # Validatethe input parameters.
+        _ = p3u.is_not_obj_of_type("wb_object", bdm_wb, BDMWorkbook,
+                                   raise_error=True)
+        _ = p3u.is_not_obj_of_type("bdm_DC", bdm_DC, BudManAppDataContext_Base,
+                                   raise_error=True)
+        success : bool = False
+        result : str = ""
+        # Validate applicable WB_TYPE_EXCEL_TXNS workbooks
+        if bdm_wb.wb_type != bdm.WB_TYPE_EXCEL_TXNS:
+            # This is not a transactions workbook, no action taken.
+            m = (f"Workbook '{bdm_wb.wb_id}' is not wb_type: "
+                 f"'{bdm.WB_TYPE_EXCEL_TXNS}', no action taken.")
+            logger.error(m)
+            return False, m
+        # Transfer cmd needs loaded workbooks
+        if not bdm_wb.wb_loaded:
+            # Load the workbook content if it is not loaded.
+            success, result = bdm_DC.dc_WORKBOOK_content_get(bdm_wb)
+            if not success:
+                return success, result
+        if p3u.is_not_obj_of_type("wb", bdm_wb.wb_content, Workbook):
+            m = f"Error accessing wb_content for workbook: '{bdm_wb.wb_id}'."
+            logger.error(m)
+            return False, m
+        #
+        #endregion Validate all required information is accessible.
+
+        #region Workbook FI-specific data needed for the workbook 
+        #
+        # Use the bdm_wb fi_key to access the category manager for the FI in 
+        # the data context. 
+        fi_key: str = bdm_wb.fi_key
+        if not p3u.is_non_empty_str("fi_key", fi_key):
+            m = f"Invalid fi_key: '{fi_key}' in workbook '{bdm_wb.wb_id}'."
+            logger.error(m)
+            return False, m
+        fi_obj: dict = bdm_DC.dc_FI_OBJECT
+        if fi_key != fi_obj[FI_KEY]:
+            m = (f"FI_Key: '{fi_key}' from workbook does not match FI_Key "
+                 f"from current DC FI_OBJECT: '{fi_obj[FI_KEY]}'.")
+            logger.error(m)
+            return False, m
+        # Now get the BDM_STORE-configured name of the worksheet in the workbook 
+        # containing the transactions.
+        ws_name = fi_obj[FI_TRANSACTION_WORKSHEET_NAME]
+        if not p3u.is_non_empty_str("ws_name", ws_name):
+            m = f"For FI_KEY: '{fi_key}', Transaction worksheet name '{str(ws_name)}' is not valid."
+            logger.error(m)
+            return False, m
+        #
+        # Access the named worksheet from the wb_content
+        ws : Worksheet = bdm_wb.wb_content[ws_name] 
+        if ws is None or not isinstance(ws, Worksheet):
+            m = (f"Worksheet '{ws_name}' not found in workbook '{bdm_wb.wb_id}'.")
+            logger.error(m)
+            return False, m
+        #
+        #endregion FI-specific data needed for the workbook
+
+        # The workbooks's transaction worksheet is now available as ws.
+        # Check that the required columns are present.
+        if not WORKFLOW_TASK_check_sheet_columns(ws, add_columns=False):
+            m = (f"Sheet '{ws.title}' cannot be mapped due to "
+                    f"missing required columns.")
+            logger.error(m)
+            return False, m
+
+        # An openpyxl Worksheet is an array of tuples, 1-based index.
+        # A row is a tuple of the Cell objects in the row. Tuples are 0-based.
+        # The first row is the header row, hdr, a list, also 0-based. So, using 
+        # the index of the column name from the hdr gives the cell from a 
+        # row tuple matching the column name in hdr.
+        hdr = [cell.value for cell in ws[1]] # Extract hdr col names. 
+
+        # Setup row index values for each hdr column.
+        amt_i = col_i(AMOUNT_COL_NAME,hdr)
+        transactions: List[TransactionData] = []  # To hold all transactions.
+        task_name = "WORKFLOW_TASK_invert_amount_column()"
+        logger.info(f"Start Task: {task_name}: "
+                    f"to {ws.max_row-1} rows in workbook: '{bdm_wb.wb_id}' "
+                    f"worksheet: '{ws.title}'")
+        st = p3u.start_timer()
+        for row in ws.iter_rows(min_row=2):
+            # row is a 'tuple' of Cell objects, 0-based index
+            row_idx = row[0].row  # Get the row index, the row number, 1-based.
+            transaction = WORKSHEET_row_data(row,hdr) 
+            transactions.append(transaction)
+            # Invert the Amount - change the sign of the number
+            if amt_i != -1 and row[amt_i].value is not None:
+                row[amt_i].value = -row[amt_i].value
+        time_taken = p3u.stop_timer(st)
+        m = (f"Task Complete: {time_taken} ")
+        logger.info(m)
+        del transactions 
+        return True, m
+    except Exception as e:
+        m = p3u.exc_err_msg(e)
+        logger.error(m)
+        return False, m
+#endregion WORKFLOW_TASK_invert_amount_column() function
+# ---------------------------------------------------------------------------- +
 #region WORKFLOW_TASK_process_budget_category() function
-def WORKFLOW_TASK_process_budget_category(bdm_wb:BDMWorkbook,
-                            bdm_DC : BudManAppDataContext_Base,
-                            log_all : bool,
-                            clear_other : bool=False) -> BUDMAN_RESULT_TYPE:
+def WORKFLOW_TASK_process_budget_category(
+        bdm_wb:BDMWorkbook,
+        bdm_DC : BudManAppDataContext_Base,
+        log_all : bool,
+        clear_other : bool=False) -> BUDMAN_RESULT_TYPE:
     """Process budget categorization for the workbook.
     
     The sheet has banking transaction data in rows and columns. 
@@ -805,7 +959,7 @@ def WORKFLOW_TASK_process_budget_category(bdm_wb:BDMWorkbook,
             logger.error(m)
             return False, m
         #
-
+        WORKFLOW_TASK_set_column_width(ws,BOA_WB_COL_DIMENSIONS)
         # Get the configured Path for the FI's other category workbook.
         other_cat_full_filename: str = fi_obj[FI_OTHER_CATEGORY_WORKBOOK_FULL_FILENAME]
         fi_folder: Path = bdm_DC.model.bsm_FI_FOLDER_abs_path(fi_key)

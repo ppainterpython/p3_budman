@@ -179,7 +179,8 @@ CK_RAW_FORMAT = "raw_format"
 CK_CATEGORY_MAP = "category_map"
 CK_CHECK_REGISTER = "check_register"
 
-# subcmd_key CV_TASK_SUBCMD_KEY argument constants
+# subcmd_key CV_CHECK_SUBCMD_KEY argument constants
+CK_INVERT_AMOUNT = "invert_amount"
 
 # subcmd_key CV_INTAKE_SUBCMD_KEY argument key/value constants
 CK_INTAKE_TASK = "intake_task"

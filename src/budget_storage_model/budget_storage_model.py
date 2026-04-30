@@ -147,7 +147,8 @@ def bsm_BDMWorkbook_copy(src_wb:BDMWorkbook, dst_wb:BDMWorkbook, symlink: bool =
         p3u.is_not_obj_of_type("src_wb", src_wb, BDMWorkbook, raise_error=True)
         p3u.is_not_obj_of_type("dst_wb", dst_wb, BDMWorkbook, raise_error=True)
         logger.debug(f"Copying BDMWorkbook content to WB_ID('{dst_wb.wb_id}') ")
-        bsm_WORKBOOK_CONTENT_url_copy(src_wb.wb_url, dst_wb.wb_url, symlink=symlink)
+        bsm_WORKBOOK_CONTENT_url_copy(src_wb.wb_url, dst_wb.wb_url, 
+                                      wb_type=src_wb.wb_type,symlink=symlink)
         logger.debug(f"Complete: {p3u.stop_timer(st)}")
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
@@ -292,13 +293,16 @@ def bsm_WORKBOOK_CONTENT_url_put(wb_content: bdm.WORKBOOK_CONTENT_TYPE,
 def bsm_WORKBOOK_CONTENT_url_copy(src_url: str, dst_url: str, wb_type: str, symlink: bool = False) -> None:
     """BSM: Copy a WORKBOOK_OBJECT from a source URL to a destination URL in storage.
 
-    Layer 2 point copying wb_content from a source URL to a destination URL in a storage service. Parse the URLs to 
-    decide how to route the request to an appropriate storage service.
+    Layer 2 point copying wb_content from a source URL to a destination URL in 
+    a storage service. Parse the URLs to decide how to route the request to an 
+    appropriate storage service.
 
     Args:
         src_url (str): The URL to the source WORKBOOK_CONTENT object to copy.
         dst_url (str): The URL to the destination WORKBOOK_CONTENT object to copy.
         wb_type (str): The type of the workbook to copy.
+        symlink (bool): Whether to create a symbolic link instead of copying the 
+        file. Default is False. Depends on storage service support for links.
 
     Returns:
         None

@@ -254,19 +254,35 @@ class BudManCLIParser():
             parser.prog = app_name
             subparsers = parser.add_subparsers()
             title = f"Change SubCommands"
-            parser.set_defaults(cmd_key=cp.CV_CHANGE_CMD_KEY,
-                                cmd_name=cp.CV_CHANGE_CMD_NAME)
+            change_cmd_defaults = {
+                p3m.CK_CMD_KEY: cp.CV_CHANGE_CMD_KEY,
+                p3m.CK_CMD_NAME: cp.CV_CHANGE_CMD_NAME}
+            parser.set_defaults(**change_cmd_defaults)
 
-            # change subcommands: workbook, wb_ref
+            # change subcommands: workbook
             # change workbooks subcommand
             workbook_subcmd_parser  = subparsers.add_parser(
                 cp.CV_WORKBOOKS_SUBCMD_NAME,
                 aliases=["wb", "WB"], 
-                help="Change workbook attributes.")
-            workbook_subcmd_parser.set_defaults(
-                subcmd_name=cp.CV_WORKBOOKS_SUBCMD_NAME,
-                subcmd_key=cp.CV_CHANGE_WORKBOOKS_SUBCMD_KEY)
+                help="Change workbook data and attributes.")
+            workbook_subcmd_defaults = {
+                p3m.CK_SUBCMD_NAME: cp.CV_WORKBOOKS_SUBCMD_NAME,
+                p3m.CK_SUBCMD_KEY: cp.CV_CHANGE_WORKBOOKS_SUBCMD_KEY,
+                cp.CK_WB_LIST: [],
+                cp.CK_ALL_FILES: False,
+                cp.CK_CMDLINE_FI_KEY: self.settings[BUDMAN_DEFAULT_FI],
+                cp.CK_CMDLINE_WB_TYPE: None,
+                cp.CK_CMDLINE_WF_KEY: None,
+                cp.CK_CMDLINE_WF_PURPOSE: None,
+                cp.CK_INVERT_AMOUNT : False
+            }
+            workbook_subcmd_parser.set_defaults(**workbook_subcmd_defaults)
             self.add_wb_list_or_all_mutually_exclusive_group(workbook_subcmd_parser)
+            self.add_CK_CMDLINE_FI_KEY_optional_argument(workbook_subcmd_parser)
+            workbook_subcmd_parser.add_argument(
+                "-i", f"--{cp.CK_INVERT_AMOUNT}", 
+                action="store_true", 
+                help="Invert the amount column values in the workbook.")
             wb_type_choices = bdm.VALID_WB_TYPE_VALUES
             workbook_subcmd_parser.add_argument(
                 "-t", f"--{cp.CK_CMDLINE_WB_TYPE}",
@@ -643,7 +659,8 @@ class BudManCLIParser():
                 cp.CK_ALL_WBS: False,
                 cp.CK_LOAD_WORKBOOK_SWITCH: True,
                 cp.CK_FIX_SWITCH: False,
-                cp.CK_VALIDATE_CATEGORIES: False}
+                cp.CK_VALIDATE_CATEGORIES: False
+                }
             check_parser.set_defaults(**check_parser_defaults)
             self.add_wb_list_or_all_mutually_exclusive_group(check_parser)
             self.add_load_workbook_argument(check_parser)
@@ -913,6 +930,7 @@ class BudManCLIParser():
             raise
     #endregion intake subcommand subparser
     # ------------------------------------------------------------------------ +
+    #region Common Sub-parsers for Commands
     def add_CK_CMDLINE_FI_KEY_optional_argument(self, parser, help:str|None=None) -> None:
         """Add a fi_key optional argument to the provided parser."""
         try:

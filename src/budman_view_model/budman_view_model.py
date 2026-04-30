@@ -510,12 +510,27 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                 cp.CV_LOAD_WORKBOOKS_SUBCMD_KEY: self.WORKBOOKS_load_cmd,
                 cp.CV_SAVE_WORKBOOKS_SUBCMD_KEY: self.WORKBOOKS_save_cmd,
                 cp.CV_CLOSE_WORKBOOKS_SUBCMD_KEY: self.BUDMAN_CMD_close_workbooks,
-                cp.CV_CHANGE_WORKBOOKS_SUBCMD_KEY: self.CHANGE_cmd,
                 cp.CV_SHOW_CMD_KEY: self.SHOW_cmd,
-                cp.CV_CHANGE_CMD_KEY: self.CHANGE_cmd,
                 cp.CV_APP_CMD_KEY: self.APP_cmd,
             }
             #region Command object definitions
+            # change workbooks
+            cmd: p3m.Command = p3m.Command(
+                cp=self,
+                cmd_name=cp.CV_CHANGE_CMD_NAME, 
+                subcmd_name=cp.CV_WORKBOOKS_SUBCMD_NAME,
+                cmd_exec_func=cp.BUDMAN_CMD_change_workbooks,
+                required_parms=[
+                    cp.CK_WB_LIST,
+                    cp.CK_ALL_FILES,
+                    cp.CK_CMDLINE_FI_KEY,
+                    cp.CK_INVERT_AMOUNT,
+                    cp.CK_CMDLINE_WB_TYPE,
+                    cp.CK_CMDLINE_WF_KEY,
+                    cp.CK_CMDLINE_WF_PURPOSE,
+                    cp.CK_CMDLINE_FI_KEY
+                    ]
+                )
             # list workbooks
             cmd: p3m.Command = p3m.Command(
                 cp=self,
@@ -620,7 +635,8 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                     cp.CK_LOAD_WORKBOOK_SWITCH,
                     cp.CK_FIX_SWITCH,
                     cp.CK_REMOVE_EXTRA_COLUMNS,
-                    cp.CK_VALIDATE_CATEGORIES
+                    cp.CK_VALIDATE_CATEGORIES,
+                    cp.CK_INVERT_AMOUNT
                     ]
                 )   
             # workflow categorization
@@ -1091,78 +1107,6 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
         except Exception as e:
             return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
     #endregion BUDMAN_CMD_close_workbooks() execution method
-    # ------------------------------------------------------------------------ +
-    #region CHANGE_cmd() execution method
-    def CHANGE_cmd(self, cmd : p3m.CMD_OBJECT_TYPE) -> p3m.CMD_RESULT_TYPE:
-        """Change aspects of the Data Context.
-
-        A CHANGE_cmd command uses the wb_ref arg parameter.
-
-        Arguments:
-            cmd (Dict): A valid BudMan View Model Command object. 
-    
-        Required cmd object attributes:
-            cmd_key: 'change_cmd' 
-        Optional cmd object attributes:
-            cmd_name: 'change'
-            subcmd_name: CV_BUDGET_CATEGORIES_SUBCMD
-            subcmd_key: 'change_cmd_BUDGET_CATEGORIES'
-            CK_CAT_LIST: A list of budget categories to include, len()==0 means All. 
-
-        Returns:
-            Tuple[success : bool, result : Any]: The outcome of the command 
-            execution. If success is True, result contains result of the 
-            command, if False, a description of the error.
-            
-        Raises:
-            RuntimeError: A description of the
-            root error is contained in the exception message.
-        """
-        try:
-            logger.info(f"Start: ...")
-            if cmd[cp.p3m.CK_SUBCMD_NAME] == cp.CV_WORKBOOKS_SUBCMD_NAME:
-                selected_bdm_wb_list : List[BDMWorkbook] = None
-                selected_bdm_wb_list = self.process_selected_workbook_input(cmd)
-                result: str = f"Changing {len(selected_bdm_wb_list)} workbooks:"
-                r: str = ""
-                for bdm_wb in selected_bdm_wb_list:
-                    # Select the current workbook in the Data Context.
-                    self.dc_WORKBOOK = bdm_wb
-                    result += f"\n{P2}workbook: {str(self.dc_WB_INDEX):>4} '{bdm_wb.wb_id:<40}'"
-                    # Apply the include argument switches to the selected workbook.
-                    new_wb_type = self.cp_cmd_attr_get(cmd, cp.CK_CMDLINE_WB_TYPE, None)
-                    if new_wb_type is not None:
-                        bdm_wb.wb_type = new_wb_type
-                        result += (f"\n{P4}Changed wb_type: '{new_wb_type}' for "
-                                f"wb_index: {str(self.dc_WB_INDEX):>4}' wb_id: '{bdm_wb.wb_id}'")
-                        self.dc_BDM_STORE_changed = True
-                    new_wf_key = self.cp_cmd_attr_get(cmd, cp.CK_CMDLINE_WF_KEY, None)
-                    if new_wf_key is not None:
-                        bdm_wb.wf_key = new_wf_key
-                        result += (f"\n{P4}Changed wf_key: '{new_wf_key}' for "
-                                f"wb_index: '{str(self.dc_WB_INDEX):>4}' wb_id: '{bdm_wb.wb_id}'")
-                        self.dc_BDM_STORE_changed = True
-                    new_wf_purpose = self.cp_cmd_attr_get(cmd, cp.CK_CMDLINE_WF_PURPOSE, None)
-                    if new_wf_purpose is not None:
-                        wf_key = new_wf_key or bdm_wb.wf_key
-                        # DEPRECATED, refactor to change wf_purpose without folder_id
-                        # folder_id = self.dc_WF_PURPOSE__FOLDER_MAP(wf_key, new_wf_purpose)
-                        # if folder_id != bdm_wb.wf_folder_id:
-                        #     bdm_wb.wf_folder_id = folder_id
-                        #     m = f", wf_folder_id: '{folder_id}' "
-                        # else:
-                        #     m = ""
-                        m = "fix me"
-                        bdm_wb.wf_purpose = new_wf_purpose
-                        result += (f"\n{P4}Changed wf_purpose: '{new_wf_purpose}'"
-                                   f" {m} for wb_index: "
-                                f"'{str(self.dc_WB_INDEX):>4}' wb_id: '{bdm_wb.wb_id}'")
-                        self.dc_BDM_STORE_changed = True
-                    self.dc_WORKBOOK = bdm_wb
-                return p3m.cp_CMD_RESULT_create(True, p3m.CV_CMD_STRING_OUTPUT, result, cmd)
-        except Exception as e:
-            return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
-    #endregion CHANGE_cmd() execution method
     # ------------------------------------------------------------------------ +
     #region APP_cmd() execution method
     def APP_cmd(self, cmd : p3m.CMD_OBJECT_TYPE) -> p3m.CMD_RESULT_TYPE:
