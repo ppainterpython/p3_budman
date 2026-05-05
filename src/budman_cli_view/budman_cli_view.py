@@ -306,9 +306,9 @@ class BudManCLIView(cmd2.Cmd,
             BudManCLIView.prompt = PO_ON_PROMPT if self.cp_parse_only else PO_OFF_PROMPT
             if self.cp_initialized:
                 cwl = self.current_working_location()
-                self.prompt = f"{cwl}{BudManCLIView.prompt}"
+                self.prompt = f"\r{cwl}{BudManCLIView.prompt}"
             else:
-                self.prompt = f"{BudManCLIView.prompt}"
+                self.prompt = f"\r{BudManCLIView.prompt}"
         except Exception as e:
             logger.exception(p3u.exc_err_msg(e))
             raise

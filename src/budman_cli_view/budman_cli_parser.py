@@ -270,7 +270,7 @@ class BudManCLIParser():
                 p3m.CK_SUBCMD_KEY: cp.CV_CHANGE_WORKBOOKS_SUBCMD_KEY,
                 cp.CK_WB_LIST: [],
                 cp.CK_ALL_FILES: False,
-                cp.CK_CMDLINE_FI_KEY: self.settings[BUDMAN_DEFAULT_FI],
+                cp.CK_CMDLINE_FI_KEY: None, #self.settings[BUDMAN_DEFAULT_FI],
                 cp.CK_CMDLINE_WB_TYPE: None,
                 cp.CK_CMDLINE_WF_KEY: None,
                 cp.CK_CMDLINE_WF_PURPOSE: None,
@@ -304,7 +304,7 @@ class BudManCLIParser():
             parser = self.list_cmd
             parser.prog = app_name
             list_cmd_defaults = {
-                # cp.CK_CMDLINE_FI_KEY: self.settings[BUDMAN_DEFAULT_FI],
+                cp.CK_CMDLINE_FI_KEY: None, #self.settings[BUDMAN_DEFAULT_FI],
                 p3m.CK_CMD_KEY: cp.CV_LIST_CMD_KEY,
                 p3m.CK_CMD_NAME: cp.CV_LIST_CMD_NAME,
             }
@@ -344,7 +344,7 @@ class BudManCLIParser():
             wb_subcmd_defaults = {
                 p3m.CK_SUBCMD_NAME: cp.CV_WORKBOOKS_SUBCMD_NAME,
                 p3m.CK_SUBCMD_KEY: cp.CV_LIST_WORKBOOKS_SUBCMD_KEY,
-                cp.CK_CMDLINE_FI_KEY: self.settings[BUDMAN_DEFAULT_FI],
+                cp.CK_CMDLINE_FI_KEY: None, #self.settings[BUDMAN_DEFAULT_FI],
                 cp.CK_BDM_TREE: False,
                 cp.CK_ALL_WBS: False,
                 cp.CK_WB_LIST: [],
@@ -368,7 +368,7 @@ class BudManCLIParser():
                 p3m.CK_SUBCMD_KEY: cp.CV_LIST_FILES_SUBCMD_KEY,
                 cp.CK_ALL_FILES: True,
                 cp.CK_FILE_LIST: [],
-                cp.CK_CMDLINE_FI_KEY: self.settings[BUDMAN_DEFAULT_FI],
+                cp.CK_CMDLINE_FI_KEY: None, #self.settings[BUDMAN_DEFAULT_FI],
                 cp.CK_WF_FOLDER_TRIPLET: False,
                 cp.CK_CMDLINE_WF_KEY: self.settings[BUDMAN_DEFAULT_WF_KEY],
                 cp.CK_CMDLINE_WF_PURPOSE: self.settings[BUDMAN_DEFAULT_WF_PURPOSE_KEY],
@@ -393,7 +393,7 @@ class BudManCLIParser():
                 cp.CK_ALL_FILES: False,
                 cp.CK_FILE_LIST: [],
                 cp.CK_WF_FOLDER_TRIPLET: True,
-                cp.CK_CMDLINE_FI_KEY: self.settings[BUDMAN_DEFAULT_FI],
+                cp.CK_CMDLINE_FI_KEY: None, #self.settings[BUDMAN_DEFAULT_FI],
                 cp.CK_CMDLINE_WF_KEY: self.settings[BUDMAN_DEFAULT_WF_KEY],
                 cp.CK_CMDLINE_WF_PURPOSE: self.settings[BUDMAN_DEFAULT_WF_PURPOSE_KEY],
             }
@@ -635,7 +635,7 @@ class BudManCLIParser():
                 p3m.CK_SUBCMD_NAME: cp.CV_PROCESS_SUBCMD_NAME,
                 p3m.CK_SUBCMD_KEY: cp.CV_PROCESS_SUBCMD_KEY,
                 cp.CK_FILE_LIST: [], 
-                cp.CK_CMDLINE_FI_KEY: self.settings[BUDMAN_DEFAULT_FI],
+                cp.CK_CMDLINE_FI_KEY: None, #self.settings[BUDMAN_DEFAULT_FI],
                 cp.CK_CMDLINE_WF_KEY: None,
                 cp.CK_CMDLINE_WF_PURPOSE: None
             }
@@ -1068,7 +1068,7 @@ class BudManCLIParser():
                 help="Specify all files.")
             all_files_parser_defaults = { 
                 cp.CK_ALL_FILES: True,
-                cp.CK_CMDLINE_FI_KEY: self.settings[BUDMAN_DEFAULT_FI],
+                cp.CK_CMDLINE_FI_KEY: None, #self.settings[BUDMAN_DEFAULT_FI],
                 cp.CK_WF_FOLDER_TRIPLET: False,
                 cp.CK_SRC_WF_KEY: None,
                 cp.CK_SRC_WF_PURPOSE: None,
@@ -1097,7 +1097,7 @@ class BudManCLIParser():
             src_wf_folder_parser_defaults = {
                 cp.CK_ALL_FILES: False, 
                 cp.CK_WF_FOLDER_TRIPLET: True,
-                cp.CK_CMDLINE_FI_KEY: self.settings[BUDMAN_DEFAULT_FI],
+                cp.CK_CMDLINE_FI_KEY: None, # self.settings[BUDMAN_DEFAULT_FI],
                 cp.CK_SRC_WF_KEY: None,
                 cp.CK_SRC_WF_PURPOSE: None,
                 cp.CK_RAW_FORMAT: False

@@ -724,148 +724,22 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             raise
     #endregion cp_initialize_cmd_map() method
     # ------------------------------------------------------------------------ +
-    #region    cp_validate_cmd() Command Processor method
-    # def cp_validate_cmd(self, cmd : p3m.CMD_OBJECT_TYPE = None,
-    #                     validate_all : bool = False) -> p3m.CMD_RESULT_TYPE:
-    #     """BudMan-App-specific: Validate the cmd object for cmd_key and parameters.
+    #region    validate_command_for_exec() Command Processor method
+    def validate_command_for_exec(self,
+                                  cmd: p3m.Command,
+                                  expected_cmd_key: str | tuple,
+                                  expected_subcmd_key: str | tuple) -> p3m.CMD_ARGS_TYPE:
+        """Override: BudManApp-Specific Command Validation for execution."""
+        cmd_args: p3m.CMD_ARGS_TYPE = super().validate_command_for_exec(
+            cmd, expected_cmd_key, expected_subcmd_key)
 
-    #     Extract a valid, known full_cmd_key/cmd_key to succeed.
-    #     Consider values to common arguments which can be validated with
-    #     the data context.
+        # Set some defaults if necessary
+        if cp.CK_CMDLINE_FI_KEY in cmd_args and cmd_args[cp.CK_CMDLINE_FI_KEY] is None:
+            # Default to the current session value for FI_KEY
+            cmd_args[cp.CK_CMDLINE_FI_KEY] = self.dc_FI_KEY
+        return cmd_args
 
-    #     Arguments:
-    #         cmd (Dict): A candidate Command object to validate.
-    #         validate_all (bool): If True, validate all parts of the cmd, 
-    #             before returning a result. If False, return on first discovery
-    #             of an error.
-
-    #     returns:
-    #         Tuple[bool, str]: A tuple containing a boolean indicating if the
-    #             cmd and arguments are valid.
-    #             True returns the full cmd_key value as result.
-    #             False, the message will contain an error message.
-    #     """
-    #     try:
-    #         self.cp_validate_cmd_object(cmd, raise_error = True)
-    #         # If cp_validate_cmd_object() returns, CMD_OBJECT has 
-    #         # content to examine and validate.
-    #         # Setup a CMD_RESULT object to return.
-    #         cmd_result : p3m.CMD_RESULT_TYPE = p3m.cp_CMD_RESULT_create(
-    #             status=False, 
-    #             type=p3m.CV_CMD_STRING_OUTPUT,
-    #             content="Command validation failed.",
-    #             cmd=cmd
-    #         )
-    #         # For a few args, apply the DC values if no value given in the cmd.
-    #         if self.cp_cmd_attr_get(cmd, cp.CK_FI_KEY) is None:
-    #             self.cp_cmd_attr_set(cmd, cp.CK_FI_KEY,
-    #                                 self.dc_FI_KEY)
-    #         if self.cp_cmd_attr_get(cmd, cp.CK_WF_KEY) is None:
-    #             self.cp_cmd_attr_set(cmd, cp.CK_WF_KEY,
-    #                                 self.dc_WF_KEY)
-    #         # If validate_all, check all cmd args before return. 
-    #         validate_all: bool = self.cp_cmd_attr_get(cmd, cp.CK_VALIDATE_ONLY)
-    #         all_results : str = "All Results:\n" if validate_all else ""
-    #         result = "It's all good." 
-    #         if validate_all:
-    #             all_results = f"Command validation info: \n{P2}cmd: {str(cmd)}\n"
-    #         success:bool = True
-    #         # Validate the cmd arguments.
-    #         for key, value in cmd.items():
-    #             if key == cmd[cp.p3m.CK_CMD_KEY]: 
-    #                 continue
-    #             elif key == cp.CK_WB_LIST:
-    #                 for wb_index in cmd[cp.CK_WB_LIST]:
-    #                     if not self.dc_WB_INDEX_validate(wb_index):
-    #                         result = f"Invalid wb_list value: '{wb_index}'."
-    #                         success = False 
-    #                         logger.error(result)
-    #                     continue
-    #                 continue
-    #             elif key == cp.CK_FI_KEY:
-    #                 if not self.dc_FI_KEY_validate(value):
-    #                     result = f"Invalid fi_key value: '{value}'."
-    #                     success = False 
-    #                     logger.error(result)
-    #                 continue
-    #             elif key == cp.CK_WB_NAME:
-    #                 continue
-    #             elif (key == cp.CK_WF_KEY or
-    #                   key == cp.CK_SRC_WF_KEY or
-    #                   key == cp.CK_DST_WF_KEY):
-    #                 if value is None:
-    #                     # No further validation if value is None
-    #                     continue
-    #                 if not self.dc_WF_KEY_validate(value):
-    #                     result = f"Invalid wf_key value: '{value}'."
-    #                     success = False 
-    #                     logger.error(result)
-    #                 continue
-    #             elif (key == cp.CK_WF_PURPOSE or
-    #                   key == cp.CK_SRC_WF_PURPOSE or
-    #                   key == cp.CK_DST_WF_PURPOSE):
-    #                 if value is None:
-    #                     # No further validation if value is None
-    #                     continue
-    #                 if self.cp_cmd_attr_get(cmd, key) in VALID_WF_PURPOSE_CHOICES:
-    #                     # Map the choices value to actual value
-    #                     value = VALID_WF_PURPOSE_MAP[value]
-    #                 if not self.dc_WF_PURPOSE_validate(value):
-    #                     result = f"Invalid wf_purpose value: '{value}'."
-    #                     success = False 
-    #                     logger.error(result)
-    #                 self.cp_cmd_attr_set(cmd,key,value)
-    #                 continue
-    #             elif key == cp.CK_WB_ID:
-    #                 if not self.dc_WB_ID_validate(value):
-    #                     result = f"Invalid wb_id level: '{value}'."
-    #                     success = False 
-    #                     logger.error(result)
-    #             elif key == cp.CK_PARSE_ONLY: 
-    #                 po = cmd.get(cp.CK_PARSE_ONLY, False)
-    #                 continue
-    #             elif key == cp.CK_VALIDATE_ONLY: 
-    #                 vo = cmd.get(cp.CK_VALIDATE_ONLY, False)
-    #                 continue
-    #             elif key == cp.CK_WHAT_IF: 
-    #                 what_if = cmd.get(cp.CK_WHAT_IF, False)
-    #                 continue
-    #             elif key == cp.CK_CHECK_REGISTER:
-    #                 continue
-    #             else:
-    #                 if key not in cp.BUDMAN_VALID_CK_ATTRS:
-    #                     result = f"Unchecked argument key: '{key}': '{value}'."
-    #                     logger.debug(result)
-    #             # If not validate_all and success is False, return. Else, 
-    #             # continue validating all cmd args.
-    #             if not validate_all and not success:
-    #                 # Without validate_all, if error, return, else continue
-    #                 cmd_result[p3m.CK_CMD_RESULT_STATUS] = success
-    #                 cmd_result[p3m.CK_CMD_RESULT_CONTENT] = result
-    #                 return cmd_result
-    #             else:
-    #                 # If validate_all, accumulate results.
-    #                 all_results += f"{P2}{result}\n"
-    #         # Argument check is complete
-    #         if success:
-    #             m = (f"Command validated - cmd_key: '{cmd[cp.p3m.CK_CMD_KEY]}' "
-    #                         f"subcmd_key: {str(cmd[cp.p3m.CK_SUBCMD_KEY])}")
-    #             logger.info(m)
-    #             cmd_result[p3m.CK_CMD_RESULT_STATUS] = success
-    #             cmd_result[p3m.CK_CMD_RESULT_CONTENT] = m
-    #             return cmd_result # The happy path return 
-    #         if validate_all:
-    #             cmd_result[p3m.CK_CMD_RESULT_STATUS] = success
-    #             cmd_result[p3m.CK_CMD_RESULT_CONTENT] = all_results
-    #             return cmd_result # The happy path return 
-    #         cmd_result[p3m.CK_CMD_RESULT_STATUS] = success
-    #         cmd_result[p3m.CK_CMD_RESULT_CONTENT] = result
-    #         return cmd_result
-    #     except Exception as e:
-    #         m = f"Error validating command: {str(cmd)}: {p3u.exc_err_msg(e)}"
-    #         logger.error(m)
-    #         return False, m
-    #endregion cp_validate_cmd() Command Processor method
+    #endregion validate_command_for_exec() Command Processor method
     # ------------------------------------------------------------------------ +
     #                                                                          +
     #endregion BudManViewModel p3mCommandProcessor super class Override methods          +

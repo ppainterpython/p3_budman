@@ -584,7 +584,10 @@ def bsm_WORKBOOK_CONTENT_file_copy(src_abs_path:Path,
             p3u.is_obj_of_type("dst_abs_path", dst_abs_path, Path, raise_error=True)
             ...
         if symlink:
-            dst_abs_path.symlink_to(src_abs_path)
+            try:
+                dst_abs_path.symlink_to(src_abs_path)
+            except FileExistsError:
+                pass
         else:
             shutil.copyfile(src_abs_path, dst_abs_path)
         logger.info(f"BizEVENT: Copied {src_abs_path} to file: {dst_abs_path}")

@@ -646,6 +646,14 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
         keys and/or subkeys to be executed. Execution functions should be 
         invoked for the correct purpose.
 
+        Override this method to provide application-specific validation logic for
+        command execution. This base implementation checks if the Command object
+        has the expected cmd_key and subcmd_key, and that all required command
+        arguments are present. It returns a CMD_ARGS_TYPE dictionary containing the
+        command arguments if validation is successful, or raises a ValueError if
+        validation fails. It is a good idea to include this base behaviour 
+        as a super() call from override methods
+
         Args:
             expected_cmd_key (str|tuple): Either a single value or a tuple of 
             values expected to match the cmd.cmd_key.

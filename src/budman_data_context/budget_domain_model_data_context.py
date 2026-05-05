@@ -277,9 +277,12 @@ class BDMDataContext(BudManAppDataContext, Model_Binding):
             m = f"Invalid workbook object: {wb!r}"
             logger.error(m)
             return False
-        wdc: WORKBOOK_DATA_COLLECTION_TYPE = self.model.bdm_FI_WORKBOOK_DATA_COLLECTION(wb.fi_key)
-        if wdc:
-            wdc[wb.wb_id] = wb
+        model_wdc: WORKBOOK_DATA_COLLECTION_TYPE = self.model.bdm_FI_WORKBOOK_DATA_COLLECTION(wb.fi_key)
+        if model_wdc is not None:
+            # Add to the model
+            model_wdc[wb.wb_id] = wb
+            # Add to the DC
+            super().dc_WORKBOOK_DATA_COLLECTION_add(wb)
             return True
         return False
 

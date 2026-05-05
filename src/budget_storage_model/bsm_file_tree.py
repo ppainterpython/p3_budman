@@ -44,8 +44,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------- +
 #region BSMFileTree Class
 class BSMFileTree:
-    """
-    A file_tree is a treelib.Tree populated from the BSM folders and files. 
+    """A file_tree is a treelib.Tree populated from the BSM folders and files. 
     BSMFile objects are stored in the node.data attribute of each node and 
     contain additional information about the file or folder.
 
@@ -106,9 +105,10 @@ class BSMFileTree:
         file_tree = Tree()
         tag = f"{folder_index:03}:{folder_abs_path.name}"
         # Root node
-        bsm_file: BSMFile = BSMFile(BSMFile.BSM_FOLDER, folder_index, -1, self.folder_url,
-                                   valid_prefixes=self.valid_prefixes,
-                                   valid_wb_types=self.valid_wb_types)
+        bsm_file: BSMFile = BSMFile(BSMFile.BSM_FOLDER, folder_index, -1, 
+                                    self.folder_url,
+                                    valid_prefixes=self.valid_prefixes,
+                                    valid_wb_types=self.valid_wb_types)
         file_tree.create_node(tag=tag, identifier=self.folder_url,data=bsm_file)
 
         def add_nodes(current_path: Path, parent_id: str) -> None:

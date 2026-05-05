@@ -735,6 +735,7 @@ def WORKFLOW_CMD_process(
         check_cmd.cmd_parms[CK_ALL_WBS] = False
         check_cmd.cmd_parms[CK_LOAD_WORKBOOK_SWITCH] = True
         check_cmd.cmd_parms[CK_FIX_SWITCH] = True
+        check_cmd.cmd_parms[CK_REMOVE_EXTRA_COLUMNS] = False
         check_cmd.cmd_parms[CK_VALIDATE_CATEGORIES] = False
         check_cmd.cmd_parms[CK_INVERT_AMOUNT] = False
         # Run CMD: WORKFLOW_CMD_check_workbooks() and capture the result.
@@ -757,10 +758,11 @@ def WORKFLOW_CMD_process(
             cp=cmd.cp,
             cmd_name=CV_WORKFLOW_CMD_NAME,
             subcmd_name=CV_CATEGORIZATION_SUBCMD_NAME)
-        cat_cmd[CK_LOAD_WORKBOOK_SWITCH] = True
-        cat_cmd[CK_LOG_ALL] = False
-        cat_cmd[CK_CLEAR_OTHER] = True
-        cat_cmd[CK_WB_LIST] = wb_index_list
+        cat_cmd.cmd_parms[CK_WB_LIST] = wb_index_list
+        cat_cmd.cmd_parms[CK_ALL_WBS] = False
+        cat_cmd.cmd_parms[CK_LOAD_WORKBOOK_SWITCH] = True
+        cat_cmd.cmd_parms[CK_LOG_ALL] = False
+        cat_cmd.cmd_parms[CK_CLEAR_OTHER] = True
         # Run CMD: WORKFLOW_TASK_categorize_transactions() and capture the result.
         if what_if:
             m = f"{pad(level)}[yellow]What-If:[/yellow] Executing: {str(cat_cmd)}"
@@ -816,9 +818,6 @@ def WORKFLOW_CMD_process(
         raise p3m.CMDValidationException(cmd=cmd, 
                                          msg=err_msg,
                                          cmd_result_error=cmd_result_error)
-    finally:
-        # Restore previous DC Values if they were modified.
-        bdm_DC.dc_FI_KEY = prev_fi_key
 #endregion WORKFLOW_CMD_process() function
 # ---------------------------------------------------------------------------- +
 #region WORKFLOW_CMD_categorize_transactions() execution method
