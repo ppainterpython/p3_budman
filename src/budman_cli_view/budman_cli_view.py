@@ -943,9 +943,9 @@ class BudManCLIView(cmd2.Cmd,
         if cp.CK_CMDLINE_WF_PURPOSE in opts_dict:
             opts_dict[cp.CK_CMDLINE_WF_PURPOSE] = self.translate_wf_purpose(opts_dict[cp.CK_CMDLINE_WF_PURPOSE])
 
-        cmd: p3m.Command = self.cp_find_command(cmd_key, subcmd_key)
+        cmd: p3m.Command = self.cp_copy_command(cmd_key, subcmd_key)
         if cmd:
-            cmd.cmd_parms.update(opts_dict)
+            cmd.cmd_parms_update(opts_dict)
         return cmd
     #endregion extract_command_from_argparse_namespace
     # ------------------------------------------------------------------------ +

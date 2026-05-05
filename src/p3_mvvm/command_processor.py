@@ -441,14 +441,27 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
         return cnt
     #endregion cp_process_async_cmd_results() method
     # ------------------------------------------------------------------------ +
-    #region    cp_find_command() method
-    def cp_find_command(self, cmd_key: str, subcmd_key: str | None = None) -> Optional[Command]:
+    #region    cp_search_command() method
+    def cp_search_command(self, cmd_key: str, subcmd_key: str | None = None) -> Command|None:
         """Find a Command object by its cmd_key and subcmd_key if provided."""
         if self.cp_commands is None:
             logger.warning("cp_commands is not initialized.")
             return None
         key: str = subcmd_key if subcmd_key else cmd_key
         command: Command | None = self.cp_commands.get(key, None)
+        if command and command.cmd_key == cmd_key and command.subcmd_key == subcmd_key:
+            return command
+        logger.warning(f"Command not found with cmd_key '{cmd_key}' subcmd_key '{subcmd_key}'.")
+        return None
+    #endregion cp_search_command() method
+    # ------------------------------------------------------------------------ +
+    #region    cp_copy_command() method
+    def cp_copy_command(self, cmd_key: str, subcmd_key: str | None = None) -> Optional[Command]:
+        """Copy a Command object by its cmd_key and subcmd_key if provided."""
+        if self.cp_commands is None:
+            logger.warning("cp_commands is not initialized.")
+            return None
+        command: Command | None = self.cp_search_command(cmd_key, subcmd_key)
         if command and command.cmd_key == cmd_key and command.subcmd_key == subcmd_key:
             return Command(
                 cp=self,
@@ -457,9 +470,8 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
                 subcmd_name=command.subcmd_name,
                 required_parms=command.cmd_parms
             )
-        logger.warning(f"Command with cmd_key '{cmd_key}' subcmd_key '{subcmd_key}' not found.")
         return None
-    #endregion cp_find_command() method
+    #endregion cp_copy_command() method
     # ------------------------------------------------------------------------ +
     #region    cp_validate_cmd() method
     def cp_validate_cmd(self, 
@@ -622,6 +634,82 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
         return exec_func
     #endregion cp_exec_func_binding() Command Processor method
     # ------------------------------------------------------------------------ +
+    #region cp_validate_command_for_exec() method
+    def validate_command_for_exec(self,
+                                  cmd: Command,
+                                  expected_cmd_key: str | tuple,
+                                  expected_subcmd_key: str | tuple) -> CMD_ARGS_TYPE:
+        """Validate a command for its execution function.
+
+        Each Command execution function invokes this method to validate the
+        set of parameters supplied, including that it is the expected Command
+        keys and/or subkeys to be executed. Execution functions should be 
+        invoked for the correct purpose.
+
+        Args:
+            expected_cmd_key (str|tuple): Either a single value or a tuple of 
+            values expected to match the cmd.cmd_key.
+            expected_subcmd_key (str|tuple): Either a single value or a tuple 
+            of values expected to match the cmd.subcmd_key.
+
+        Returns:
+            cmd_args: CMD_ARGS_TYPE: The resulting cmd arg from the validation.
+        """
+        try:
+            if cmd is None or not isinstance(cmd, Command):
+                m = f"Invalid cmd argument: {str(cmd)}, expected a Command object."
+                logger.error(m)
+                raise ValueError(m)
+            # Check the expected cmd_key or subcmd_key have a binding in the command processor.
+            key: str = cmd.subcmd_key if cmd.subcmd_key else cmd.cmd_key
+            command_def: Command = self.cp_search_command(cmd.cmd_key, cmd.subcmd_key) 
+            if not command_def:
+                m = f"Expected Command definition not found for key: {key}"
+                logger.error(m)
+                raise ValueError(m)
+            # Check it is a command of the type the caller expected.
+            cmd_result : CMD_RESULT_TYPE = None
+            # Should be indicated cmd_key.
+            if isinstance(expected_cmd_key, tuple):
+                if cmd.cmd_key not in expected_cmd_key:
+                    raise ValueError(f"cmd_key: '{cmd.cmd_key}' does not match any of the expected_cmd_key values: '{expected_cmd_key}'")
+            else:
+                if cmd.cmd_key != expected_cmd_key:
+                    raise ValueError(f"cmd_key: '{cmd.cmd_key}' does not match expected_cmd_key: '{expected_cmd_key}'")
+            # Should be indicated subcmd_key.
+            if isinstance(expected_subcmd_key, tuple):
+                if cmd.subcmd_key not in expected_subcmd_key:
+                    raise ValueError(f"subcmd_key: '{cmd.subcmd_key}' does not match any of the expected_subcmd_key values: '{expected_subcmd_key}'")
+            else:
+                if cmd.subcmd_key != expected_subcmd_key:
+                    raise ValueError(f"subcmd_key: '{cmd.subcmd_key}' does not match expected_subcmd_key: '{expected_subcmd_key}'")
+            # Check for required command key arguments (CK_) in the command object
+            cmd_args: CMD_ARGS_TYPE = {}
+            cmd_args[CK_CMD_KEY] = cmd.cmd_key
+            cmd_args[CK_SUBCMD_KEY] = cmd.subcmd_key
+            missing_arg_error_msg: str = "Required arguments validation:"
+            missing_arg_list = []
+            missing_arg_count = 0
+            for key in command_def.cmd_parms.keys():
+                if key not in cmd.cmd_parms:
+                    m = f"Missing required command argument key: {key}"
+                    logger.error(m)
+                    missing_arg_error_msg += f"{m}\n"
+                    missing_arg_count += 1
+                    missing_arg_list.append(key)
+                else:
+                    cmd_args[key] = cmd.cmd_parms[key]
+            if missing_arg_count > 0:
+                m = (f"Missing {missing_arg_count} required arguments: "
+                    f"{missing_arg_list}")
+                logger.error(m)
+                raise ValueError(m)
+            return cmd_args
+        except Exception as e:
+            logger.error(f"Error validating command components: {e}")
+            raise
+    #endregion cp_validate_command_for_exec() method
+    # ------------------------------------------------------------------------ +
     #region    cp_execute_cmd() method
     def cp_execute_cmd(self, cmd : CMD_OBJECT_TYPE | Command = None,
                        raise_error : bool = False) -> CMD_RESULT_TYPE:
@@ -656,7 +744,7 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
                 exec_func: Callable = command.cmd_exec_func
                 function_name = exec_func.__name__
                 cmd_str: str = f"{command.cmd_name} {command.subcmd_name}"
-                cmd_result: CMD_RESULT_TYPE = exec_func(command, self.DC)
+                cmd_result: CMD_RESULT_TYPE = exec_func(command, self.DC, self)
                 cp_publish_cmd_result(cmd_result)
                 if cp_is_ASYNC_CMD(cmd):
                     cp_user_none_message(f"       Async CMD '{cmd_str}' executed, results to follow...")
@@ -1011,7 +1099,7 @@ def cp_validate_subcmd_key_with_name(subcmd_name: str, cmd_key: str,
 # ---------------------------------------------------------------------------- +
 
 # ---------------------------------------------------------------------------- +
-#region    CMD_RESULT objecvt functions
+#region    CMD_RESULT object functions
 # ---------------------------------------------------------------------------- +
 #region    cp_CMD_RESULT_create()
 def cp_CMD_RESULT_create(

@@ -86,6 +86,7 @@ import p3logging as p3l
 import budman_namespace.design_language_namespace as bdm
 from .mvvm_namespace import *
 from .cp_message_service import *
+# from .command_processor import CommandProcessor
 #endregion Imports
 # ---------------------------------------------------------------------------- +
 #region Globals
@@ -121,30 +122,39 @@ class Command:
     def __init__(self,
                  cp: object, 
                  cmd_name: str, 
-                 cmd_exec_func: Callable, 
-                 subcmd_name: Optional[str] = None,
-                 required_parms: Optional[List[str]] = None) -> None:
+                 cmd_exec_func: Callable | None = None, 
+                 subcmd_name: str | None = None,
+                 required_parms: List[str] | None = None) -> None:
         """Initialize a Command object with required and optional attributes."""
         if not cp:
             raise ValueError("Command Processor (cp) is required to create a Command.")
-        self.cp : object = cp
+        self.cp : object = cp # CommandProcessor object reference for access to cp_commands and other cp attributes.
         self.cmd_name: str = cmd_name
         self.cmd_key: str = f"{cmd_name}_cmd"
         if subcmd_name :
             self.subcmd_name = subcmd_name
             self.subcmd_key = f"{self.cmd_key}_{subcmd_name}"
-        if not cmd_exec_func or not callable(cmd_exec_func):
-            raise ValueError("cmd_exec_func is required and must be callable to create a Command.")
-        self.cmd_exec_func: Callable = cmd_exec_func
         self.async_id: str | None = None  
         self.cmd_async_result_subscriber: Callable | None = None
         self.cmd_parms: Dict[str, Any] = {} # Optional attribute for async command execution tracking
+        self.cmd_exec_func: Callable = cmd_exec_func
+        # Look up the command in the Command Processor's command dictionary to ensure it is registered.
+        cmd: object = self.cp.cp_search_command(self.cmd_key, self.subcmd_key)
+        if cmd is None:
+            # This is a new Command creation
+            if self.cmd_exec_func is None or not callable(self.cmd_exec_func):
+                raise ValueError("cmd_exec_func is required and must be callable to create a Command.")
+        else:
+            # Command already exists in the Command Processor's command dictionary, so we are updating it.
+            if cmd_exec_func is None or not callable(cmd_exec_func):
+                self.cmd_exec_func = cmd.cmd_exec_func
+            else:
+                self.cmd_exec_func = cmd_exec_func
         # Add required_parms to cmd_parms if provided.
         if required_parms:
             for parm in required_parms:
                 self.cmd_parms[parm] = None  # Initialize required parms with None or default values.
         self.add_common_cmd_parms()  # Add common command parameters to cmd_parms.
-        self.add_command_to_cp()  # Add the command to the Command Processor's command dictionary.
     #endregion Command __init__() method
     # ------------------------------------------------------------------------ +
     #region __str__() method
@@ -163,70 +173,67 @@ class Command:
     # ------------------------------------------------------------------------ +
     #region Instance Methods
     # ------------------------------------------------------------------------ +
-    #region add_command_to_cp() method
-    def add_command_to_cp(self) -> None:
-        """Add the command to the Command Processor's command dictionary."""
-        if self.subcmd_name:
-            self.cp.cp_commands[self.subcmd_key] = self
-        else:
-            self.cp.cp_commands[self.cmd_key] = self
-    #endregion add_command_to_cp() method
-    # ------------------------------------------------------------------------ +
     #region validate_command() method
-    def validate_command(self,
-                         expected_cmd_key: str,
-                         expected_subcmd_key: str) -> CMD_ARGS_TYPE:
-        """Validate the components of the command object.
+    # def validate_command(self,
+    #                      expected_cmd_key: str,
+    #                      expected_subcmd_key: str) -> CMD_ARGS_TYPE:
+    #     """Validate the components of the command object.
 
-        Args:
-            expected_cmd_key (str): The expected command key to validate.
-            expected_subcmd_key (str): The expected sub-command key to validate.
+    #     Args:
+    #         expected_cmd_key (str): The expected command key to validate.
+    #         expected_subcmd_key (str): The expected sub-command key to validate.
 
-        Returns:
-            cmd_args: CMD_ARGS_TYPE: The resulting cmd arg from the validation.
-        """
-        try:
-            # Check the cmd_key or subcmd_key have a binding in the command processor.
-            key: str = self.subcmd_key if self.subcmd_key else self.cmd_key
-            command_def: Command = self.cp.cp_commands.get(key, None)
-            if not command_def:
-                m = f"Command definition not found for key: {key}"
-                logger.error(m)
-                raise ValueError(msg=m)
-            # Check it is a command of the type the caller expected.
-            cmd_result : CMD_RESULT_TYPE = None
-            # Should be indicated cmd_key.
-            if not self.verify_cmd_key(expected_cmd_key): 
-                raise ValueError(msg=f"cmd_key: '{self.cmd_key}' does not match expected_cmd_key: '{expected_cmd_key}'")
-            # Should be indicated subcmd_key.
-            if not self.verify_subcmd_key(expected_subcmd_key): 
-                raise ValueError(msg=f"subcmd_key: '{self.subcmd_key}' does not match expected_subcmd_key: '{expected_subcmd_key}'")    
-            # Check for required command key arguments (CK_) in the command object
-            cmd_args: CMD_ARGS_TYPE = {}
-            cmd_args[CK_CMD_KEY] = self.cmd_key
-            cmd_args[CK_SUBCMD_KEY] = self.subcmd_key
-            missing_arg_error_msg: str = "Required arguments validation:"
-            missing_arg_list = []
-            missing_arg_count = 0
-            for key in command_def.cmd_parms.keys():
-                if key not in self.cmd_parms:
-                    m = f"Missing required command argument key: {key}"
-                    logger.error(m)
-                    missing_arg_error_msg += f"{m}\n"
-                    missing_arg_count += 1
-                    missing_arg_list.append(key)
-                else:
-                    cmd_args[key] = self.cmd_parms[key]
-            if missing_arg_count > 0:
-                m = (f"Missing {missing_arg_count} required arguments: "
-                    f"{missing_arg_list}")
-                logger.error(m)
-                raise ValueError(msg=m)
-            return cmd_args
-        except Exception as e:
-            logger.error(f"Error validating command components: {e}")
-            raise
+    #     Returns:
+    #         cmd_args: CMD_ARGS_TYPE: The resulting cmd arg from the validation.
+    #     """
+    #     try:
+    #         # Check the cmd_key or subcmd_key have a binding in the command processor.
+    #         key: str = self.subcmd_key if self.subcmd_key else self.cmd_key
+    #         command_def: Command = self.cp.cp_commands.get(key, None)
+    #         if not command_def:
+    #             m = f"Command definition not found for key: {key}"
+    #             logger.error(m)
+    #             raise ValueError(m)
+    #         # Check it is a command of the type the caller expected.
+    #         cmd_result : CMD_RESULT_TYPE = None
+    #         # Should be indicated cmd_key.
+    #         if not self.verify_cmd_key(expected_cmd_key): 
+    #             raise ValueError(f"cmd_key: '{self.cmd_key}' does not match expected_cmd_key: '{expected_cmd_key}'")
+    #         # Should be indicated subcmd_key.
+    #         if not self.verify_subcmd_key(expected_subcmd_key): 
+    #             raise ValueError(f"subcmd_key: '{self.subcmd_key}' does not match expected_subcmd_key: '{expected_subcmd_key}'")    
+    #         # Check for required command key arguments (CK_) in the command object
+    #         cmd_args: CMD_ARGS_TYPE = {}
+    #         cmd_args[CK_CMD_KEY] = self.cmd_key
+    #         cmd_args[CK_SUBCMD_KEY] = self.subcmd_key
+    #         missing_arg_error_msg: str = "Required arguments validation:"
+    #         missing_arg_list = []
+    #         missing_arg_count = 0
+    #         for key in command_def.cmd_parms.keys():
+    #             if key not in self.cmd_parms:
+    #                 m = f"Missing required command argument key: {key}"
+    #                 logger.error(m)
+    #                 missing_arg_error_msg += f"{m}\n"
+    #                 missing_arg_count += 1
+    #                 missing_arg_list.append(key)
+    #             else:
+    #                 cmd_args[key] = self.cmd_parms[key]
+    #         if missing_arg_count > 0:
+    #             m = (f"Missing {missing_arg_count} required arguments: "
+    #                 f"{missing_arg_list}")
+    #             logger.error(m)
+    #             raise ValueError(m)
+    #         return cmd_args
+    #     except Exception as e:
+    #         logger.error(f"Error validating command components: {e}")
+    #         raise
     #endregion validate_command() method
+    # ------------------------------------------------------------------------ +
+    #region cmd_parms_update() method
+    def cmd_parms_update(self, cmd_parameters: Dict[str, Any]) -> None:
+        """Add common command parameters to the cmd_parms dictionary."""
+        self.cmd_parms.update(cmd_parameters)
+    #endregion cmd_parms_update() method
     # ------------------------------------------------------------------------ +
     #region add_common_cmd_parms() method
     def add_common_cmd_parms(self) -> None:

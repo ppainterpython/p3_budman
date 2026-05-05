@@ -47,45 +47,15 @@ logger = logging.getLogger(__name__)
 # from column 'A'.
 
 
-# Symbols for BOA .csv files.
-BOA_ORIGINAL_DESCRIPTION_COL_NAME = "Original Description"
-BOA_DATE_COL_NAME = "Date"
-BOA_CURRENCY_COL_NAME = "Currency"
-BOA_AMOUNT_COL_NAME = "Amount"
-BOA_ACCOUNT_NAME_COL_NAME = "Account Name"
-
-# BOA csv files originals contain these columns, beginning with "Status".
-BOA_WB_COLUMNS = [
-    "Status", 
-    BOA_DATE_COL_NAME, 
-    BOA_ORIGINAL_DESCRIPTION_COL_NAME,
-    "Split Type", 
-    "Category", 
-    BOA_CURRENCY_COL_NAME, 
-    BOA_AMOUNT_COL_NAME, 
-    "User Description", 
-    "Memo", 
-    "Classification", 
-    BOA_ACCOUNT_NAME_COL_NAME,
-    "Simple Description"
-    ]
-
-# The following columns are not needed and can be removed
-BOA_WB_COLUMNS_TO_REMOVE = [
-    "Status", 
-    "Split Type", 
-    "Category", 
-    "User Description", 
-    "Memo", 
-    "Classification"
-    ]
-
-
-
-# BudMan adds additional columns prior to processing transactions. These
-# columns are filled by BudMan workflows, such as categorization.
+# ---------------------------------------------------------------------------- +
+#region BudMan Standard Workbook schema - required columns
+# BudMan standard columns for a Workbook.
+DATE_COL_NAME = "Date" 
+TRANSACTION_DESCRIPTION_COL_NAME = "Original Description"
+AMOUNT_COL_NAME = "Amount" 
 BUDGET_CATEGORY_COL_NAME = "Budget Category"  
 ACCOUNT_CODE_COL_NAME = "Account Code" 
+RULE_COL_NAME = "Rule"
 LEVEL_1_COL_NAME = "Level1" 
 LEVEL_2_COL_NAME = "Level2" 
 LEVEL_3_COL_NAME = "Level3" 
@@ -93,144 +63,64 @@ DEBIT_CREDIT_COL_NAME = "DebitOrCredit"
 YEAR_MONTH_COL_NAME = "YearMonth"  
 PAYEE_COL_NAME = "Payee"
 ESSENTIAL_COL_NAME = "Essential" 
-RULE_COL_NAME = "Rule"
 
-# BudMan utilizes the following columns from the BOA side:
-DATE_COL_NAME = BOA_DATE_COL_NAME 
-TRANSACTION_DESCRIPTION_COL_NAME = BOA_ORIGINAL_DESCRIPTION_COL_NAME
-CURRENCY_COL_NAME = BOA_CURRENCY_COL_NAME
-AMOUNT_COL_NAME = BOA_AMOUNT_COL_NAME 
-ACCOUNT_NAME_COL_NAME = BOA_ACCOUNT_NAME_COL_NAME  
-
-# BudMan processes the original .csv file from BOA to produce an excel
-# transactions workbook with the following columns:
-BUDMAN_WB_COLUMNS = [
-    "Status", 
-    DATE_COL_NAME, 
-    TRANSACTION_DESCRIPTION_COL_NAME,
-    "Split Type", 
-    "Category", 
-    CURRENCY_COL_NAME, 
-    AMOUNT_COL_NAME, 
-    "User Description", 
-    "Memo", 
-    "Classification", 
-    ACCOUNT_NAME_COL_NAME,
-    "Simple Description",
-    BUDGET_CATEGORY_COL_NAME,
-    ACCOUNT_CODE_COL_NAME,
-    LEVEL_1_COL_NAME,
-    LEVEL_2_COL_NAME,
-    LEVEL_3_COL_NAME,
-    DEBIT_CREDIT_COL_NAME,
-    YEAR_MONTH_COL_NAME,
-    PAYEE_COL_NAME,
-    ESSENTIAL_COL_NAME
-    ]
-
-# Column indices for a list of cells from a row in the BOA workbook.
-DATE_COL_INDEX = 1
-ORIGINAL_DESCRIPTION_COL_INDEX = 2  
-CURRENCY_COL_INDEX = 4  
-AMOUNT_COL_INDEX = 6  
-ACCOUNT_NAME_COL_INDEX = 10  
-BUDGET_CATEGORY_COL_INDEX = 12  
-
-BOA_WB_COL_DIMENSIONS = {
-    DATE_COL_NAME: 12,
-    TRANSACTION_DESCRIPTION_COL_NAME: 95,
-    CURRENCY_COL_NAME: 9,
-    AMOUNT_COL_NAME: 14,
-    ACCOUNT_NAME_COL_NAME: 68,
-    BUDGET_CATEGORY_COL_NAME: 40,
-    LEVEL_1_COL_NAME: 20,
-    LEVEL_2_COL_NAME: 20,
-    LEVEL_3_COL_NAME: 20,
-    DEBIT_CREDIT_COL_NAME: 10,
-    YEAR_MONTH_COL_NAME: 20,
-    PAYEE_COL_NAME: 25,
-    ESSENTIAL_COL_NAME: 10,
-}
 BUDMAN_SHEET_NAME = "TransactionData"
 
-BUDMAN_REQUIRED_COLUMNS = [
-    DATE_COL_NAME, 
-    TRANSACTION_DESCRIPTION_COL_NAME, 
-    AMOUNT_COL_NAME, 
-    ACCOUNT_CODE_COL_NAME, 
-    BUDGET_CATEGORY_COL_NAME,
-    LEVEL_1_COL_NAME, 
-    LEVEL_2_COL_NAME, 
-    LEVEL_3_COL_NAME,
-    DEBIT_CREDIT_COL_NAME,
-    YEAR_MONTH_COL_NAME,
-    PAYEE_COL_NAME,
-    ESSENTIAL_COL_NAME,
-    RULE_COL_NAME
-]
-
 BUDMAN_WB_SCHEMA = [
-    DATE_COL_NAME, 
-    TRANSACTION_DESCRIPTION_COL_NAME,
-    AMOUNT_COL_NAME, 
-    ACCOUNT_NAME_COL_NAME,
-    ACCOUNT_CODE_COL_NAME,
-    LEVEL_1_COL_NAME,
-    LEVEL_2_COL_NAME,
-    LEVEL_3_COL_NAME,
-    YEAR_MONTH_COL_NAME,
-    PAYEE_COL_NAME,
-    ESSENTIAL_COL_NAME,
-    RULE_COL_NAME
+    DATE_COL_NAME,                         # 1
+    TRANSACTION_DESCRIPTION_COL_NAME,      # 2
+    AMOUNT_COL_NAME,                       # 3
+    ACCOUNT_CODE_COL_NAME,                 # 4
+    RULE_COL_NAME,                         # 5
+    BUDGET_CATEGORY_COL_NAME,              # 6
+    LEVEL_1_COL_NAME,                      # 7
+    LEVEL_2_COL_NAME,                      # 8
+    LEVEL_3_COL_NAME,                      # 9
+    DEBIT_CREDIT_COL_NAME,                 # 10
+    YEAR_MONTH_COL_NAME,                   # 11
+    PAYEE_COL_NAME,                        # 12
+    ESSENTIAL_COL_NAME                     # 13
     ]
 
-BUDMAN_INTAKE_FORMATS = [
-    {
-        "fi_key": "boa",
-        "intake_format_name": "BOA account Info",
-        "intake_format_description": "Intake format for BOA account info excel files.",
-        "intake_format_id": "boa_account_info",
-        "intake_file_ext": ".csv",
-        "has_column_headers": True,
-        "intake_columns": BOA_WB_COLUMNS
-    },
-    {
-        "fi_key": "wellsfargo",
-        "intake_format_name": "Wells Fargo account Info",
-        "intake_format_description": "Intake format for Wells Fargo account info excel files.",
-        "intake_format_id": "wellsfargo_account_info",
-        "intake_file_ext": ".csv",
-        "has_column_headers": False,
-        "intake_columns": ["Date", "Amount", "ignore", "Original Description"]
-    }
-]
+# BudMan Standard Workbook schema - preferred column dimensions
+BUDMAN_WB_COL_DIMENSIONS = {
+    DATE_COL_NAME: 12,                     # 1
+    TRANSACTION_DESCRIPTION_COL_NAME: 95,  # 2
+    AMOUNT_COL_NAME: 14,                   # 3
+    ACCOUNT_CODE_COL_NAME: 30,             # 4
+    RULE_COL_NAME: 10,                     # 5
+    BUDGET_CATEGORY_COL_NAME: 50,          # 6
+    LEVEL_1_COL_NAME: 20,                  # 7
+    LEVEL_2_COL_NAME: 20,                  # 8
+    LEVEL_3_COL_NAME: 20,                  # 9
+    DEBIT_CREDIT_COL_NAME: 10,             # 10
+    YEAR_MONTH_COL_NAME: 20,               # 11
+    PAYEE_COL_NAME: 25,                    # 12
+    ESSENTIAL_COL_NAME: 10                 # 13
+}
+#endregion BudMan Standard Workbook schema - required columns
+# ---------------------------------------------------------------------------- +
 
 #endregion Globals and Constants
 # ---------------------------------------------------------------------------- +
 #region TransactionData dataclasse
-TRANS_PARAMETERS = ["tid", "date", "description", "currency",
-                    "account_code", "amount", "category",
-                    "level1", "level2", "level3", 
-                    "debit_credit", "year_month", "essential", "payee", 
-                    "rule", "manual", "row_data"]
 @dataclass
 class TransactionData:
     """Data class to hold transaction data."""
     tid: str = None   # Transaction ID.
-    date: datetime.date = None
-    description: str = None
-    currency: str = None
-    account_code: str = None
-    amount: float = 0.0
-    category: str = field(default="Other")
-    level1: str = None
-    level2: str = None
-    level3: str = None
-    debit_credit: str = None  # 'D' for debit, 'C' for credit.
-    year_month: str = None  # Formant 'YYYY-MM-mmm' e.g., 2025-01-Jan
-    essential: bool = False
-    payee: str = field(default="")
-    rule: int = field(default=-1)
+    date: datetime.date = None                # 1
+    description: str = None                   # 2
+    amount: float = 0.0                       # 3
+    account_code: str = None                  # 4
+    rule: int = field(default=-1)             # 5
+    category: str = field(default="Other")    # 6
+    level1: str = None                        # 7
+    level2: str = None                        # 8
+    level3: str = None                        # 9
+    debit_credit: str = None                  # 10
+    year_month: str = None                    # 11
+    essential: bool = False                   # 12
+    payee: str = field(default="")            # 13
     manual: bool = field(default=False)
     row_data: Dict[str, any] = field(default_factory=dict)
 
@@ -334,8 +224,9 @@ def WORKFLOW_TASK_set_column_width(sheet: Worksheet,
 #endregion WORKFLOW_TASK_check_sheet_columns() function
 # ---------------------------------------------------------------------------- +
 #region WORKFLOW_TASK_check_sheet_columns() function
-def WORKFLOW_TASK_check_sheet_columns(sheet: Worksheet, 
-                        add_columns: bool = True) -> bool:
+def WORKFLOW_TASK_check_sheet_columns(
+        sheet: Worksheet, 
+        add_columns: bool = True) -> bool:
     """Check that the sheet is ready to process transactions.
     
     BudMan uses these columns to process transactions in a sheet:
@@ -366,10 +257,10 @@ def WORKFLOW_TASK_check_sheet_columns(sheet: Worksheet,
         logger.debug(f"Column names in sheet('{sheet.title}'): {col_names}")
         
         # Check if all required columns are present
-        missing_columns = [col for col in BUDMAN_REQUIRED_COLUMNS if col not in col_names]
+        missing_columns = [col for col in BUDMAN_WB_SCHEMA if col not in col_names]
         
         if missing_columns is not None and len(missing_columns) > 0:
-            logger.error(f"Some required columns are present in sheet:('{sheet.title}')")
+            logger.error(f"Some required columns are missing in sheet:('{sheet.title}')")
             logger.error(f"  Missing Columns: '{missing_columns}'")
         
         missing_count = len(missing_columns)
@@ -381,7 +272,7 @@ def WORKFLOW_TASK_check_sheet_columns(sheet: Worksheet,
                 sheet.insert_cols(i)
                 sheet.cell(row=1, column=i).value = col_name
                 # Set column width based on predefined dimensions
-                width = BOA_WB_COL_DIMENSIONS.get(col_name, 20)
+                width = BUDMAN_WB_COL_DIMENSIONS.get(col_name, 20)
                 sheet.column_dimensions[sheet.cell(row=1, column=i).column_letter].width = width
                 logger.debug(f"Column '{col_name}' added at index = {i}, "
                             f"column_letter = '{sheet.cell(row =1, column=i).column_letter}'")
@@ -405,7 +296,7 @@ def check_sheet_schema(wb: Workbook,
     Steps to check the active sheet of an excel workbook for BudMan processing:
     1. Should be just 1 worksheet, the active worksheet.
     2. Title must be 'TransactionData'. BOA_SHEET_NAME
-    3. Column names must match spelling an order from BOA_WB_COLUMNS.
+    3. Column names must match spelling an order from BUDMAN_WB_SCHEMA.
     Args:
         wb (openpyxl.workbook): The workbook to check.
         correct (bool): Whether to correct the sheet schema or not.
@@ -492,7 +383,7 @@ def WORKSHEET_data(ws:Worksheet, just_values:bool=False) -> list[TransactionData
 #endregion WORKSHEET_data(ws:Worksheet) -> List[TransactionData]
 # ---------------------------------------------------------------------------- +
 #region WORKSHEET_row_data(row:list) -> TransactionData
-def WORKSHEET_row_data(row:tuple,hdr:list=BUDMAN_WB_COLUMNS) -> TransactionData:
+def WORKSHEET_row_data(row:tuple,hdr:list=BUDMAN_WB_SCHEMA) -> TransactionData:
     """Extract transaction data from a worksheet row.
 
     Args:
@@ -509,7 +400,7 @@ def WORKSHEET_row_data(row:tuple,hdr:list=BUDMAN_WB_COLUMNS) -> TransactionData:
         if len(row) == 0 or len(hdr) == 0 or len(row) != len(hdr):
             raise ValueError("Row and Hdr must be equal, non-zero length.")
         # Check if all required columns are present in the hdr.
-        missing_columns = [col for col in BUDMAN_REQUIRED_COLUMNS if col not in hdr]
+        missing_columns = [col for col in BUDMAN_WB_SCHEMA if col not in hdr]
         if missing_columns:
             raise ValueError(f"Hdr is missing required columns: {missing_columns}")
         # First, determine if row contains Cells or value-only cell.value's and
@@ -535,18 +426,19 @@ def WORKSHEET_row_data(row:tuple,hdr:list=BUDMAN_WB_COLUMNS) -> TransactionData:
 
         transaction = TransactionData(
             tid=None,
-            date=row_dict[DATE_COL_NAME],
-            description=row_dict[TRANSACTION_DESCRIPTION_COL_NAME],
-            # currency=row_dict[CURRENCY_COL_NAME],
-            amount=row_dict[AMOUNT_COL_NAME],
-            account_code=t_acct_code,
-            category=row_dict[BUDGET_CATEGORY_COL_NAME],
-            level1=row_dict[LEVEL_1_COL_NAME],
-            level2=row_dict[LEVEL_2_COL_NAME],
-            level3=row_dict[LEVEL_3_COL_NAME],
-            debit_credit=t_debit_credit,
-            year_month=t_year_month,
-            rule=t_rule,
+            date=row_dict[DATE_COL_NAME],                            # 1
+            description=row_dict[TRANSACTION_DESCRIPTION_COL_NAME],  # 2
+            amount=row_dict[AMOUNT_COL_NAME],                        # 3
+            account_code=t_acct_code,                                # 4
+            rule=t_rule,                                             # 5
+            category=row_dict[BUDGET_CATEGORY_COL_NAME],             # 6
+            level1=row_dict[LEVEL_1_COL_NAME],                       # 7
+            level2=row_dict[LEVEL_2_COL_NAME],                       # 8
+            level3=row_dict[LEVEL_3_COL_NAME],                       # 9
+            debit_credit=t_debit_credit,                             # 10
+            year_month=t_year_month,                                 # 11
+            essential=row_dict[ESSENTIAL_COL_NAME],                  # 12
+            payee=row_dict[PAYEE_COL_NAME],                          # 13
             manual=t_manual,
             row_data=row_dict
         )
@@ -911,8 +803,7 @@ def WORKFLOW_TASK_process_budget_category(
         catman : BDMTXNCategoryManager = bdm_DC.WF_CATEGORY_MANAGER
         if fi_key not in catman.catalogs:
             # No WB_TYPE_TXN_CATEGORIES dictionary for this FI, no action taken.
-            m = (f"WB_TYPE_TXN_CATEGORIES dictionary not found for FI '{fi_key}', "
-                 f"no action taken.")
+            m = (f"No Category Catalog found for FI '{fi_key}', no action taken.")
             logger.error(m)
             return False, m
         fi_catmap : TXNCategoryMap = catman.catalogs[fi_key]
@@ -959,7 +850,7 @@ def WORKFLOW_TASK_process_budget_category(
             logger.error(m)
             return False, m
         #
-        WORKFLOW_TASK_set_column_width(ws,BOA_WB_COL_DIMENSIONS)
+        WORKFLOW_TASK_set_column_width(ws,BUDMAN_WB_COL_DIMENSIONS)
         # Get the configured Path for the FI's other category workbook.
         other_cat_full_filename: str = fi_obj[FI_OTHER_CATEGORY_WORKBOOK_FULL_FILENAME]
         fi_folder: Path = bdm_DC.model.bsm_FI_FOLDER_abs_path(fi_key)
@@ -1001,14 +892,13 @@ def WORKFLOW_TASK_process_budget_category(
         amt_i = col_i(AMOUNT_COL_NAME,hdr)
         dORc_i = col_i(DEBIT_CREDIT_COL_NAME,hdr)
         year_month_i = col_i(YEAR_MONTH_COL_NAME,hdr)
-        acct_name_i = col_i(ACCOUNT_NAME_COL_NAME,hdr)
         acct_code_i = col_i(ACCOUNT_CODE_COL_NAME,hdr)
         payee_i = col_i(PAYEE_COL_NAME,hdr)
         essential_i = col_i(ESSENTIAL_COL_NAME,hdr)
         rule_i = col_i(RULE_COL_NAME,hdr)
 
         logger.debug(f"Mapping '{trans_desc}'({trans_desc_i}) to "
-                    f"'{bud_cat}'({bud_cat_i})")
+                     f"'{bud_cat}'({bud_cat_i})")
         num_rows = ws.max_row # or set a smaller limit
         other_count = 0
         ch = fi_catmap.clear_category_histogram()  # Clear the category histogram.
@@ -1047,7 +937,7 @@ def WORKFLOW_TASK_process_budget_category(
             row[dORc_i].value = transaction.debit_credit if dORc_i != -1 else None
             row[acct_code_i].value = transaction.account_code if acct_code_i != -1 else None
             if transaction.payee is not None:
-                row[payee_i].value = transaction.payee if payee_i != -1 else "unknown"
+                row[payee_i].value = transaction.payee if payee_i != -1 else "undetected"
             essential_value = False
             if (transaction.category != 'Other' and 
                 transaction.category in fi_catmap.category_collection):
@@ -1131,6 +1021,8 @@ def WORKFLOW_TASK_categorize_transaction(
             transaction.category = "Other"
             transaction.level1 = "Other"
             # Apply the pattern to the transaction description
+            if "AMDA" in transaction.description and "AMDA" in pattern.pattern:
+                ...
             m = pattern.search(transaction.description)
             if m:
                 transaction.category = ch.count(category)

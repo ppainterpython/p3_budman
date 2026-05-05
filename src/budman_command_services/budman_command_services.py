@@ -123,6 +123,7 @@ def BUDMAN_CMD_router(cmd: p3m.CMD_OBJECT_TYPE,
 def BUDMAN_CMD_change_workbooks(
         cmd: p3m.Command,
         bdm_DC: BudManAppDataContext_Base,
+        cp: p3m.CommandProcessor,
         level: int = 0) -> p3m.CMD_RESULT_TYPE:
     """Change workbooks in the BudMan application.
 
@@ -144,9 +145,10 @@ def BUDMAN_CMD_change_workbooks(
         p3m.cp_user_info_message(m + "Start: ...")
         level += 1
         # Validate the cmd argsuments.
-        cmd_args: p3m.CMD_ARGS_TYPE = cmd.validate_command(
+        cmd_args: p3m.CMD_ARGS_TYPE = cp.validate_command_for_exec(
             expected_cmd_key=CV_CHANGE_CMD_KEY,
-            expected_subcmd_key=CV_CHANGE_WORKBOOKS_SUBCMD_KEY
+            expected_subcmd_key=CV_CHANGE_WORKBOOKS_SUBCMD_KEY,
+            cmd=cmd
         )
         # Extract parameter values from cmd_args
         prev_fi_key: str = bdm_DC.dc_FI_KEY
@@ -248,6 +250,7 @@ def BUDMAN_CMD_change_workbooks(
 #region BUDMAN_CMD_list_workbooks()
 def BUDMAN_CMD_list_workbooks(cmd: p3m.Command,
         bdm_DC: BudManAppDataContext_Base,
+        cp: p3m.CommandProcessor,
         level: int = 0) -> p3m.CMD_RESULT_TYPE:
     """List workbooks in the BudMan application data context.
 
@@ -269,7 +272,8 @@ def BUDMAN_CMD_list_workbooks(cmd: p3m.Command,
         level += 1
         # Start: ------------------------------------------------------------- +
         # Validate the cmd argsuments.
-        cmd_args: p3m.CMD_ARGS_TYPE = cmd.validate_command(
+        cmd_args: p3m.CMD_ARGS_TYPE = cp.validate_command_for_exec(
+            cmd,
             expected_cmd_key=CV_LIST_CMD_KEY,
             expected_subcmd_key=CV_LIST_WORKBOOKS_SUBCMD_KEY
         )
@@ -322,6 +326,7 @@ def BUDMAN_CMD_list_workbooks(cmd: p3m.Command,
 #region BUDMAN_CMD_list_bdm_store_json()
 def BUDMAN_CMD_list_bdm_store_json(cmd: p3m.Command,
                                   bdm_DC: BudManAppDataContext_Base,
+                                  cp: p3m.CommandProcessor,
                                   level: int = 0) -> p3m.CMD_RESULT_TYPE:
     """List the BDM store in JSON format.
     Args:
@@ -342,9 +347,10 @@ def BUDMAN_CMD_list_bdm_store_json(cmd: p3m.Command,
         level += 1
         # Start: ------------------------------------------------------------- +
         # Validate the cmd argsuments.
-        cmd_args: p3m.CMD_ARGS_TYPE = cmd.validate_command(
+        cmd_args: p3m.CMD_ARGS_TYPE = cp.validate_command_for_exec(
             expected_cmd_key=CV_LIST_CMD_KEY,
-            expected_subcmd_key=CV_LIST_BDM_STORE_SUBCMD_KEY
+            expected_subcmd_key=CV_LIST_BDM_STORE_SUBCMD_KEY,
+            cmd=cmd
         )
         # Construct CMD_RESULT for return.
         cmd_result: p3m.CMD_RESULT_TYPE = p3m.cp_CMD_RESULT_create(cmd=cmd)
@@ -373,11 +379,15 @@ def BUDMAN_CMD_list_bdm_store_json(cmd: p3m.Command,
 def BUDMAN_CMD_list_files(
         cmd: p3m.Command,
         bdm_DC: BudManAppDataContext_Base,
+        cp: p3m.CommandProcessor,
         level: int = 0) -> p3m.CMD_RESULT_TYPE:
-    """List the files in the BDM store.
+    """ List all the files in the BDM store or the content of one folder. 
+        A workflow folder is indicated by the fi_key, wf_key and wf_purpose.
     Args:
         cmd (p3m.Command): The command object to process.
         bdm_DC (BudManAppDataContext_Base): The data context for the BudMan application.
+        cp (p3m.CommandProcessor): The command processor for validating the command.
+        level (int): The indentation level for logging.
     Returns:
         p3m.CMD_RESULT_TYPE: The result of the command execution.
     """
@@ -389,62 +399,59 @@ def BUDMAN_CMD_list_files(
         p3m.cp_user_info_message(m + "Start: ...")
         level += 1
         # Start: ------------------------------------------------------------- +
-        # Validate the cmd argsuments.
-
-        cmd_args: p3m.CMD_ARGS_TYPE = cmd.validate_command(
+        # Validate the cmd arguments.
+        cmd_args: p3m.CMD_ARGS_TYPE = cp.validate_command_for_exec(
             expected_cmd_key=CV_LIST_CMD_KEY,
-            expected_subcmd_key=CV_LIST_FILES_SUBCMD_KEY
+            expected_subcmd_key=(CV_LIST_FILES_SUBCMD_KEY, CV_LIST_FOLDER_SUBCMD_KEY),
+            cmd=cmd
+        )
+
+        cmd_args: p3m.CMD_ARGS_TYPE = cp.validate_command_for_exec(
+            expected_cmd_key=CV_LIST_CMD_KEY,
+            expected_subcmd_key=(CV_LIST_FILES_SUBCMD_KEY, CV_LIST_FOLDER_SUBCMD_KEY),
+            cmd=cmd
         )
         cmd_result: p3m.CMD_RESULT_TYPE = BUDMAN_CMD_TASK_validate_model_binding(bdm_DC)
         # Validate DC is Model-aware with a model binding.
         if not cmd_result[p3m.CK_CMD_RESULT_STATUS]:
             return cmd_result
         model: BudgetDomainModel = bdm_DC.model
-        all_files: bool = cmd_args.get(CK_ALL_FILES, False)
-        src_wf_folder: bool = cmd_args.get(CK_SRC_WF_FOLDER, False)
+        wf_folder_triplet: bool = cmd_args.get(CK_WF_FOLDER_TRIPLET, False)
         raw_format: bool = cmd_args.get(CK_RAW_FORMAT, False)
+        all_files: bool = cmd_args.get(CK_ALL_FILES, False)
         fi_key: str = cmd_args.get(CK_CMDLINE_FI_KEY, None)
         prev_fi_key: str = bdm_DC.dc_FI_KEY
         bdm_DC.dc_FI_KEY = fi_key if fi_key else prev_fi_key
+        wf_key: str = cmd_args.get(CK_CMDLINE_WF_KEY, bdm_DC.dc_WF_KEY)
+        if not wf_key:
+            # No wf_key to work with
+            err_msg = "No wf_key from cmd args or DC."
+            logger.error(err_msg)
+            raise ValueError(err_msg)
+        wf_purpose: str = cmd_args.get(CK_CMDLINE_WF_PURPOSE, bdm_DC.dc_WF_PURPOSE)
+        if not wf_purpose:
+            # No wf_purpose to work with
+            err_msg = "No wf_purpose from cmd args or DC."
+            logger.error(err_msg)
+            raise ValueError(err_msg)
+        raw_format: bool = cmd_args.get(CK_RAW_FORMAT, False)
+        file_tree: Tree = None
+        err_msg:str = ""
+        cmd_result: p3m.CMD_RESULT_TYPE = p3m.cp_CMD_RESULT_create(cmd=cmd)
+        #endregion Initialization and validation
+
         # Refresh the BSM file tree in the model to ensure it is up to date.
         model.bdm_FILE_TREE_refresh()
         bsm_file_tree : BSMFileTree = model.bsm_file_tree
-        file_tree: Tree = None
-        cmd_err: bool = False
-        err_msg:str = ""
-        # Construct CMD_RESULT for return.
-        cmd_result: p3m.CMD_RESULT_TYPE = p3m.cp_CMD_RESULT_create(
-            cmd=cmd
-        )
-        # List files all_files | wf_folder
-        # If src_wf_folder, then will need wf_key and wf_purpose.
-        if src_wf_folder:
-            wf_key: str = cmd_args.get(CK_SRC_WF_KEY, None)
-            if not wf_key:
-                # If wf_key is not present in cmd, try to get it from the data context
-                # No wf_key in cmdline, try DC
-                wf_key = bdm_DC.dc_WF_KEY
-                if not wf_key:
-                    # No wf_key to work with
-                    return p3m.cp_CMD_RESULT_create(cmd,"No wf_key from cmd args or DC.")
-            wf_purpose: str = cmd_args.get(CK_SRC_WF_PURPOSE, None)
-            if not wf_purpose:
-                # If wf_purpose is not present in cmd, try to get it from the data context
-                # No wf_purpose in cmdline, try DC
-                wf_purpose = bdm_DC.dc_WF_PURPOSE
-                if not wf_purpose:
-                    # No wf_purpose to work with
-                    cmd_result[p3m.CK_CMD_RESULT_CONTENT_TYPE] = p3m.CV_CMD_ERROR_STRING_OUTPUT
-                    cmd_result[p3m.CK_CMD_RESULT_CONTENT] = "No wf_purpose from cmd args or DC."
-                    logger.error(cmd_result[p3m.CK_CMD_RESULT_CONTENT])
-                    return cmd_result
-        #endregion Initialization and validation
 
+        fi_wf_folder_url: str = model.bdm_WF_FOLDER_CONFIG_ATTRIBUTE(
+            fi_key=fi_key, wf_key=wf_key, wf_purpose=wf_purpose, 
+            attribute=bdm.WF_FOLDER_URL, raise_errors=False)
         if all_files:
             # List all files in the BDM store.
             file_tree = bsm_file_tree.file_tree
             if file_tree and raw_format:
-                # Return a raw list of file URLs
+                # Return file_list as a raw list of file URLs
                 file_list = bsm_file_tree.output_all_files()
                 cmd_result[p3m.CK_CMD_RESULT_STATUS] = True
                 cmd_result[p3m.CK_CMD_RESULT_CONTENT_TYPE] = p3m.CV_CMD_STRING_OUTPUT
@@ -454,30 +461,19 @@ def BUDMAN_CMD_list_files(
                 # End: ------------------------------------------------------- +
                 return cmd_result
             if not file_tree:
-                return p3m.cp_CMD_RESULT_create(
-                    cmd=cmd, status=True, 
-                    content=f"{pad(level)}No files found in file_tree for URL: {fi_wf_folder_url}", 
-                    type=p3m.CV_CMD_STRING_OUTPUT)
-        if src_wf_folder and not all_files:
+                err_msg = f"No files found in file_tree for URL: {fi_wf_folder_url}"
+                logger.error(err_msg)
+                raise ValueError(err_msg)
+        if wf_folder_triplet and not all_files:
             # From the Model, get the wf_folder_url for an fi_key, wf_key, wf_purpose
 
-            fi_wf_folder_url: str = model.bdm_WF_FOLDER_CONFIG_ATTRIBUTE(
-                fi_key=fi_key, wf_key=wf_key, wf_purpose=wf_purpose, 
-                attribute=bdm.WF_FOLDER_URL, raise_errors=False)
             # Retrieve the sub tree for that folder_url
             if fi_wf_folder_url:
                 file_tree: Tree = bsm_file_tree.get_sub_file_tree(fi_wf_folder_url)
                 if not file_tree:
-                    return p3m.cp_CMD_RESULT_create(
-                        cmd=cmd, status=True, 
-                        content=(f"{pad(level)}No files found in file_tree for fi_key: '{fi_key}' " 
-                                 f"wf_key: '{wf_key}', wf_purpose: '{wf_purpose}', URL: {fi_wf_folder_url}"), 
-                        type=p3m.CV_CMD_STRING_OUTPUT)
-        if cmd_err:
-            cmd_result[p3m.CK_CMD_RESULT_CONTENT_TYPE] = p3m.CV_CMD_ERROR_STRING_OUTPUT
-            cmd_result[p3m.CK_CMD_RESULT_CONTENT] = err_msg
-            logger.error(cmd_result[p3m.CK_CMD_RESULT_CONTENT])
-            return cmd_result
+                    err_msg = f"No files found in file_tree for URL: {fi_wf_folder_url}"
+                    logger.error(err_msg)
+                    raise ValueError(err_msg)
         cmd_result[p3m.CK_CMD_RESULT_STATUS] = True
         cmd_result[p3m.CK_CMD_RESULT_CONTENT_TYPE] = CV_CMD_TREE_OBJECT
         cmd_result[p3m.CK_CMD_RESULT_CONTENT] = file_tree

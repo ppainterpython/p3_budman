@@ -26,7 +26,8 @@ from .intake_process_services import (
     INTAKE_TASK_convert_csv_txns_schema
 )
 from .categorization_process_services import (
-    BOA_WB_COL_DIMENSIONS,
+    BUDMAN_WB_SCHEMA,
+    BUDMAN_WB_COL_DIMENSIONS,
     excel_WORKSHEET_remove_extra_columns,
     WORKFLOW_TASK_check_sheet_columns, 
     WORKFLOW_TASK_set_column_width,
@@ -54,7 +55,8 @@ __all__ = [
     "TXNCategoryMap",
     "BDMTXNCategoryManager",
     # budget_categorization.py module
-    "BOA_WB_COL_DIMENSIONS",
+    "BUDMAN_WB_SCHEMA",
+    "BUDMAN_WB_COL_DIMENSIONS",
     "excel_WORKSHEET_remove_extra_columns",
     "WORKFLOW_TASK_check_sheet_columns",
     "WORKFLOW_TASK_set_column_width",

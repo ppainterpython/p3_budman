@@ -123,7 +123,7 @@ class CommandProcessor_Base(ABC):
         pass
 
     @abstractmethod
-    def cp_find_command(self, cmd_key : str, subcmd_key : str | None = None) -> Optional[Command]:
+    def cp_copy_command(self, cmd_key : str, subcmd_key : str | None = None) -> Optional[Command]:
         """Find a Command object by its cmd_key and subcmd_key if provided."""
         pass
 

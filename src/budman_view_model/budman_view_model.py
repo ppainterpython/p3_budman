@@ -514,8 +514,12 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                 cp.CV_APP_CMD_KEY: self.APP_cmd,
             }
             #region Command object definitions
+
+            # select fi_key, category_catalog, workbook
+            # show category_catalog
+            
             # change workbooks
-            cmd: p3m.Command = p3m.Command(
+            self.cp_commands[cp.CV_CHANGE_WORKBOOKS_SUBCMD_KEY] = p3m.Command(
                 cp=self,
                 cmd_name=cp.CV_CHANGE_CMD_NAME, 
                 subcmd_name=cp.CV_WORKBOOKS_SUBCMD_NAME,
@@ -532,38 +536,52 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                     ]
                 )
             # list workbooks
-            cmd: p3m.Command = p3m.Command(
+            self.cp_commands[cp.CV_LIST_WORKBOOKS_SUBCMD_KEY] = p3m.Command(
                 cp=self,
                 cmd_name=cp.CV_LIST_CMD_NAME, 
                 subcmd_name=cp.CV_WORKBOOKS_SUBCMD_NAME,
                 cmd_exec_func=cp.BUDMAN_CMD_list_workbooks,
                 required_parms=[
+                    cp.CK_CMDLINE_FI_KEY,
                     cp.CK_BDM_TREE,
-                    cp.CK_ALL_FILES,
-                    cp.CK_SRC_WF_FOLDER,
-                    cp.CK_SRC_WF_KEY,
-                    cp.CK_SRC_WF_PURPOSE,
-                    cp.CK_RAW_FORMAT,
-                    cp.CK_CMDLINE_FI_KEY
+                    cp.CK_ALL_WBS,
+                    cp.CK_WB_LIST,
+                    cp.CK_LOAD_WORKBOOK_SWITCH
                     ]
                 )
             # list files
-            cmd = p3m.Command(
+            self.cp_commands[cp.CV_LIST_FILES_SUBCMD_KEY] = p3m.Command(
                 cp=self,
                 cmd_name=cp.CV_LIST_CMD_NAME, 
                 subcmd_name=cp.CV_FILES_SUBCMD_NAME,
                 cmd_exec_func=cp.BUDMAN_CMD_list_files,
                 required_parms=[
                     cp.CK_ALL_FILES,
+                    cp.CK_FILE_LIST,
+                    cp.CK_WF_FOLDER_TRIPLET,
                     cp.CK_CMDLINE_FI_KEY,
-                    cp.CK_SRC_WF_FOLDER,
-                    cp.CK_SRC_WF_KEY,
-                    cp.CK_SRC_WF_PURPOSE,
+                    cp.CK_CMDLINE_WF_KEY,
+                    cp.CK_CMDLINE_WF_PURPOSE,
                     cp.CK_RAW_FORMAT
                     ]
                 )
+            # list folder
+            self.cp_commands[cp.CV_LIST_FOLDER_SUBCMD_KEY] = p3m.Command(
+                cp=self,
+                cmd_name=cp.CV_LIST_CMD_NAME, 
+                subcmd_name=cp.CV_FOLDER_SUBCMD_NAME,
+                cmd_exec_func=cp.BUDMAN_CMD_list_files,
+                required_parms=[
+                    cp.CK_ALL_FILES,
+                    cp.CK_FILE_LIST,
+                    cp.CK_WF_FOLDER_TRIPLET,
+                    cp.CK_CMDLINE_FI_KEY,
+                    cp.CK_CMDLINE_WF_KEY,
+                    cp.CK_CMDLINE_WF_PURPOSE,
+                    ]
+                )
             # list BDM_STORE
-            cmd = p3m.Command(
+            self.cp_commands[cp.CV_LIST_BDM_STORE_SUBCMD_KEY] = p3m.Command(
                 cp=self,
                 cmd_name=cp.CV_LIST_CMD_NAME, 
                 subcmd_name=cp.CV_BDM_STORE_SUBCMD_NAME,
@@ -571,15 +589,15 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                 required_parms=[
                     cp.CK_BDM_TREE,
                     cp.CK_ALL_FILES,
-                    cp.CK_SRC_WF_FOLDER,
-                    cp.CK_SRC_WF_KEY,
-                    cp.CK_SRC_WF_PURPOSE,
-                    cp.CK_RAW_FORMAT,
-                    cp.CK_CMDLINE_FI_KEY
+                    cp.CK_WF_FOLDER_TRIPLET,
+                    cp.CK_CMDLINE_FI_KEY,
+                    cp.CK_CMDLINE_WF_KEY,
+                    cp.CK_CMDLINE_WF_PURPOSE,
+                    cp.CK_RAW_FORMAT
                     ]
                 )
             # workflow transfer files
-            cmd = p3m.Command(
+            self.cp_commands[cp.CV_WORKFLOW_TRANSFER_SUBCMD_KEY] = p3m.Command(
                 cp=self,
                 cmd_name=cp.CV_WORKFLOW_CMD_NAME, 
                 subcmd_name=cp.CV_TRANSFER_SUBCMD_NAME,
@@ -597,23 +615,23 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                     ]
                 )
             # workflow process files
-            cmd = p3m.Command(
+            self.cp_commands[cp.CV_PROCESS_SUBCMD_KEY] = p3m.Command(
                 cp=self,
                 cmd_name=cp.CV_WORKFLOW_CMD_NAME, 
                 subcmd_name=cp.CV_PROCESS_SUBCMD_NAME,
                 cmd_exec_func=cp.WORKFLOW_CMD_process,
                 required_parms=[
+                    cp.CK_CMDLINE_FI_KEY,
                     cp.CK_TRANSFER_FILES,
                     cp.CK_TRANSFER_WORKBOOKS,
                     cp.CK_FILE_LIST,
                     cp.CK_WF_KEY,
-                    cp.CK_CMDLINE_FI_KEY,
                     cp.CK_WF_PURPOSE,
                     cp.CK_WB_TYPE
                     ]
                 )
             # workflow update files
-            cmd = p3m.Command(
+            self.cp_commands[cp.CV_WORKFLOW_UPDATE_SUBCMD_KEY] = p3m.Command(
                 cp=self,
                 cmd_name=cp.CV_WORKFLOW_CMD_NAME, 
                 subcmd_name=cp.CV_UPDATE_SUBCMD_NAME,
@@ -624,7 +642,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                     ]
                 )
             # workflow check files
-            cmd = p3m.Command(
+            self.cp_commands[cp.CV_CHECK_SUBCMD_KEY] = p3m.Command(
                 cp=self,
                 cmd_name=cp.CV_WORKFLOW_CMD_NAME, 
                 subcmd_name=cp.CV_CHECK_SUBCMD_NAME,
@@ -640,18 +658,21 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                     ]
                 )   
             # workflow categorization
-            cmd = p3m.Command(
+            self.cp_commands[cp.CV_CATEGORIZATION_SUBCMD_KEY] = p3m.Command(
                 cp=self,
                 cmd_name=cp.CV_WORKFLOW_CMD_NAME, 
                 subcmd_name=cp.CV_CATEGORIZATION_SUBCMD_NAME,
                 cmd_exec_func=cp.WORKFLOW_CMD_categorize_transactions,
                 required_parms=[
+                    cp.CK_WB_LIST,
+                    cp.CK_ALL_WBS,
+                    cp.CK_LOAD_WORKBOOK_SWITCH,
                     cp.CK_LOG_ALL,
                     cp.CK_CLEAR_OTHER
                     ]
                 )
             # workflow delete
-            cmd = p3m.Command(
+            self.cp_commands[cp.CV_WORKFLOW_DELETE_SUBCMD_KEY] = p3m.Command(
                 cp=self,
                 cmd_name=cp.CV_WORKFLOW_CMD_NAME, 
                 subcmd_name=cp.CV_FILE_DELETE_SUBCMD_NAME,
@@ -664,7 +685,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                     ]
                 )
             # workflow set
-            cmd = p3m.Command(
+            self.cp_commands[cp.CV_SET_SUBCMD_KEY] = p3m.Command(
                 cp=self,
                 cmd_name=cp.CV_WORKFLOW_CMD_NAME, 
                 subcmd_name=cp.CV_SET_SUBCMD_NAME,
@@ -675,7 +696,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                     ]
                 )
             # workflow task
-            cmd = p3m.Command(
+            self.cp_commands[cp.CV_TASK_SUBCMD_KEY] = p3m.Command(
                 cp=self,
                 cmd_name=cp.CV_WORKFLOW_CMD_NAME, 
                 subcmd_name=cp.CV_TASK_SUBCMD_NAME,
@@ -686,7 +707,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                     ]
                 )   
             # workflow apply
-            cmd = p3m.Command(
+            self.cp_commands[cp.CV_APPLY_SUBCMD_KEY] = p3m.Command(
                 cp=self,
                 cmd_name=cp.CV_WORKFLOW_CMD_NAME, 
                 subcmd_name=cp.CV_APPLY_SUBCMD_NAME,
@@ -702,6 +723,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
             logger.error(p3u.exc_err_msg(e))
             raise
     #endregion cp_initialize_cmd_map() method
+    # ------------------------------------------------------------------------ +
     #region    cp_validate_cmd() Command Processor method
     # def cp_validate_cmd(self, cmd : p3m.CMD_OBJECT_TYPE = None,
     #                     validate_all : bool = False) -> p3m.CMD_RESULT_TYPE:

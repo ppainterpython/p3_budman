@@ -12,7 +12,8 @@
             "console": "integratedTerminal",
             "justMyCode": false,  // Allows stepping into third-party or library code
             "env": {
-                "PYTHONPATH": "${workspaceFolder};${workspaceFolder}/src"
+                "PYTHONPATH": "${workspaceFolder};${workspaceFolder}/src",
+                "PYTHONDONTWRITEBYTECODE": "1"
             },
             "envFile": "${workspaceFolder}/.env",
             "autoReload": {
@@ -29,7 +30,8 @@
             "console": "externalTerminal",
             "justMyCode": false,  // Allows stepping into third-party or library code
             "env": {
-                "PYTHONPATH": "${workspaceFolder};${workspaceFolder}/src"
+                "PYTHONPATH": "${workspaceFolder};${workspaceFolder}/src",
+                "PYTHONDONTWRITEBYTECODE": "1"
             },
             "envFile": "${workspaceFolder}/.env",
             "autoReload": {

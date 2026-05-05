@@ -106,7 +106,7 @@ def main(bdms_url : str = None, start_time:float = app_start_time) -> None:
         configure_logging(app_name, logging_config_url, logtest=False)
         logger.debug(msg)
         logger.debug(f"Settings and logger configured: {stop_timer(start_time)}")
-        fs = ""  # from settings 
+        fs = ""  # from settings set fi 
         if bdms_url is None:
             bdms_url = BudManMain_settings[BDM_STORE_URL]
             fs ="(from settings) "

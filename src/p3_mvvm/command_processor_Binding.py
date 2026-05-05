@@ -185,12 +185,12 @@ class CommandProcessor_Binding(CommandProcessor_Base):
     #endregion cp_validate_cmd() command method
     # ------------------------------------------------------------------------ +
     #region cp_find_command() method
-    def cp_find_command(self, cmd_key : str, subcmd_key : str | None = None) -> Optional[Command]:
+    def cp_copy_command(self, cmd_key : str, subcmd_key : str | None = None) -> Optional[Command]:
         """CP-Binding: Find a Command object by its cmd_key and subcmd_key if provided.
 
         """
         try:
-            return self.CP.cp_find_command(cmd_key, subcmd_key)
+            return self.CP.cp_copy_command(cmd_key, subcmd_key)
         except Exception as e:
             cmd_result = cp_CMD_RESULT_EXCEPTION_create(cmd_key, e)
             return cmd_result
