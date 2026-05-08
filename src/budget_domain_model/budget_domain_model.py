@@ -1647,6 +1647,7 @@ class BudgetDomainModel(p3m.Model,metaclass=BDMSingletonMeta):
     # ------------------------------------------------------------------------ +    
     #region bsm_FI_WORKBOOK_DATA_COLLECTION_resolve() method
     def bsm_FI_WORKBOOK_DATA_COLLECTION_resolve(self, 
+                                                fi_key:str,
                                                 reconcile:bool = False) -> Tuple[WORKBOOK_DATA_COLLECTION_TYPE, str]:
         """Discover all actual WORKBOOKS in storage for the BDM. 
         Return a file_tree with just workbook files found in the BSM storage.
@@ -1665,68 +1666,56 @@ class BudgetDomainModel(p3m.Model,metaclass=BDMSingletonMeta):
         #       present in the file tree, removing it from the BDM_STORE if not.
 
         discovered_wdc: WORKBOOK_DATA_COLLECTION_TYPE = {}
-        wf_object: WF_OBJECT_TYPE = None
+        wf_folder_config: WF_OBJECT_TYPE = None
         r_msg: str = ""
-        fi_folder: Path = None
+        fi_folder_abs_path: Path = None
         wf_name: str = ""
-        fi_key: str = ""
         wfdf_name: str = ""
-        wfdf_abs_path: Path = None
+        wf_folder_abs_path: Path = None
         try:
             _ = self.bdm_FI_KEY_validate(fi_key)
-            fi_folder = self.bsm_FI_FOLDER_abs_path(fi_key)
+            fi_object: FI_OBJECT_TYPE = self.bdm_FI_OBJECT(fi_key)
+            fi_folder_abs_path = self.bsm_FI_FOLDER_abs_path(fi_key)
             fi_name = self.bdm_FI_NAME(fi_key)
             m = (f"Start: FI_KEY('{fi_key}') "
                             f"WORKBOOK_DATA_COLLECTION storage discovery "
-                            f"FI_FOLDER('{str(fi_folder)}')")
+                            f"FI_FOLDER('{str(fi_folder_abs_path)}')")
             r_msg += f"{P2}{m}\n"
             logger.debug(m)
             # Traverse the FI_OBJECT's FI_WF_FOLDER_CONFIG_COLLECTION structure, 
             # to compile a list of WORKBOOKS as BDMWorkbook objects with 
             # populated metadata. 
             # Then reconcile list with the FI_WORKBOOK_DATA_COLLECTION.
-            for wf_key, wf_object in self.bdm_wf_collection.items():
-                wf_name = wf_object[WF_NAME]
+            for wf_key, wf_folder_config_list in self.bdm_FI_WF_FOLDER_CONFIG_COLLECTION(fi_key).items():
+                # wf_folder_config_collection is a dict 'wf_key' : List[WF_FOLDER_CONFIG]
+                wf_name = self.bdm_WF_NAME(wf_key)
 
-                for wf_purpose in VALID_WF_PURPOSE_VALUES:
-                    # For each possible wf_purpose, see if a folder is configured.
-                    folder_id = self.bdm_WF_PURPOSE_FOLDER_MAP(wf_key, wf_purpose)
-                    if folder_id is None or len(folder_id) == 0:
-                        m = (f"Workflow: '{wf_name}') has no configured folder "
-                             f" for wf_purpose: '{wf_purpose}', skipping.")
+                for wf_folder_config in wf_folder_config_list:
+                    wf_purpose: str = wf_folder_config[WF_PURPOSE]
+                    wf_folder: str = wf_folder_config[WF_FOLDER]
+                    wf_folder_url: str = wf_folder_config[WF_FOLDER_URL]
+                    wf_prefix: str = wf_folder_config[WF_PREFIX]
+
+                    wf_folder_abs_path = Path.from_uri(wf_folder_url).resolve() if wf_folder_url is not None else None
+                    if wf_folder_abs_path is None: 
+                        m = f"{id} wf_folder_abs_path path is None.",
                         logger.debug(m)
                         r_msg += f"{P4}{m}\n"
                         continue
-                    # wfdf - WORKFLOW_DATA_FOLDER
-                    wfdf_name = self.bdm_WF_FOLDER(wf_key, folder_id)
-                    if wfdf_name is None or len(wfdf_name) == 0:
-                        m = (f"Workflow: '{wf_name}') has no configured folder "
-                             f" for wf_purpose: '{wf_purpose}', skipping.")
-                        logger.debug(m)
-                        r_msg += f"{P4}{m}\n"
-                        continue
-                    bdm_wb_paths = []
-                    id = f"<{fi_key}:{wf_key}:{wf_purpose}:{folder_id}>"
-                    wfdf_abs_path = self.bsm_FI_WORKFLOW_DATA_FOLDER_abs_path(fi_key, wf_key, folder_id)
-                    if wfdf_abs_path is None: 
-                        m = f"{id} wfdf_abs_path path is None.",
-                        logger.debug(m)
-                        r_msg += f"{P4}{m}\n"
-                        continue
-                    if not wfdf_abs_path.exists():
-                        m = f"{id} wfdf_abs_path does not exist: {wfdf_abs_path}"
+                    if not wf_folder_abs_path.exists():
+                        m = f"{id} wf_folder_abs_path does not exist: {wf_folder_abs_path}"
                         logger.debug(m)
                         r_msg += f"{P4}{m}\n"
                         continue
                     # This is where the bsm scans a folder for actual workbook files.
-                    bdm_wb_paths = bsm_get_workbook_names(wfdf_abs_path)
+                    bdm_wb_paths = bsm_get_workbook_names(wf_folder_abs_path)
                     if len(bdm_wb_paths) == 0:
-                        m = f"{id} wfdf_abs_path has no workbooks: {wfdf_abs_path}"
+                        m = f"{id} wf_folder_abs_path has no workbooks: {wf_folder_abs_path}"
                         logger.debug(m)
                         r_msg += f"{P4}{m}\n"
                         continue
-                    m = f"{id} WORKFLOW_DATA_FOLDER('{wfdf_abs_path}') "
-                    m += f"found {len(bdm_wb_paths)} workbooks."
+                    m = f"{id} WORKFLOW_DATA_FOLDER('{wf_folder_abs_path}') "
+                    m += f"found {len(bdm_wb_paths)} files."
                     logger.debug(m)
                     r_msg += f"{P4}{m}\n"
                     for wb_path in bdm_wb_paths:
@@ -1743,8 +1732,8 @@ class BudgetDomainModel(p3m.Model,metaclass=BDMSingletonMeta):
                             fi_key= fi_key,
                             wf_key = wf_key,
                             wf_purpose = wf_purpose,
-                            wf_folder_id = folder_id,
-                            wf_folder = wfdf_name,
+                            wf_folder_url = wf_folder_url,
+                            wf_folder = wf_folder,
                             wb_loaded = False,
                             wb_content = None
                             )
@@ -1775,8 +1764,10 @@ class BudgetDomainModel(p3m.Model,metaclass=BDMSingletonMeta):
     #endregion bsm_FI_WORKBOOK_DATA_COLLECTION_resolve() method
     # ------------------------------------------------------------------------ +   
     #region bsm_FI_WORKBOOK_DATA_COLLECTION_reconcile() method
-    def bsm_FI_WORKBOOK_DATA_COLLECTION_reconcile(self, fi_key:str,
-                                                  disc_wdc:WORKBOOK_DATA_COLLECTION_TYPE) -> None:
+    def bsm_FI_WORKBOOK_DATA_COLLECTION_reconcile(
+            self, 
+            fi_key:str,
+            disc_wdc:WORKBOOK_DATA_COLLECTION_TYPE) -> None:
         """Reconcile the FI_WORKBOOK_DATA_COLLECTION with the discovered workbooks.
         
         This method reconciles the discovered workbooks with the existing 
@@ -1790,10 +1781,14 @@ class BudgetDomainModel(p3m.Model,metaclass=BDMSingletonMeta):
         try:
             logger.debug(f"Start: FI_KEY('{fi_key}') reconcile WORKBOOK_DATA_COLLECTION")
             wdc = self.bdm_FI_WORKBOOK_DATA_COLLECTION(fi_key)
-            if len(wdc) == 0:
-                m = f"FI_KEY('{fi_key}') has no workflow data."
+            if (p3u.is_not_obj_of_type(f"FI_WORKBOOK_DATA_COLLECTION({fi_key})", 
+                                       wdc, 
+                                       WORKBOOK_DATA_COLLECTION_TYPE, 
+                                       raise_error=False) or 
+                len(wdc) == 0):
+                m = f"FI_KEY('{fi_key}') has no workflow workbook data."
                 logger.debug(m)
-                return
+                raise ValueError(m)
             # Enumerate the discoverd WORKBOOK_DATA_COLLECTION (disc_wdc),
             # and test the FI WORKBOOK_DATA_COLLECTION for the presence of each
             # discovered BDMWorkbook. If the BDMWorkbook is not present, add it.

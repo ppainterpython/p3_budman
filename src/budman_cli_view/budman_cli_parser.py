@@ -739,6 +739,7 @@ class BudManCLIParser():
             task_parser_defaults = {
                 p3m.CK_SUBCMD_NAME: cp.CV_TASK_SUBCMD_NAME,
                 p3m.CK_SUBCMD_KEY: cp.CV_TASK_SUBCMD_KEY,
+                cp.CK_CMDLINE_FI_KEY: None,
                 cp.CK_TASK_NAME: None,
                 cp.CK_RECONCILE: False}
             task_parser.set_defaults(**task_parser_defaults)
@@ -747,6 +748,7 @@ class BudManCLIParser():
                 cp.CK_TASK_NAME, nargs="?",
                 choices=task_name_choices, 
                 help=("Name of the task function to perform, e.g., 'sync' etc."))
+            self.add_CK_CMDLINE_FI_KEY_optional_argument(task_parser)
             task_parser.add_argument(
                 f"--{cp.CK_RECONCILE}", "-r",
                 action="store_true", 

@@ -155,6 +155,37 @@ class TransactionData:
         desc_hash : str = p3u.gen_hash_key(self.description)
         self.tid = f"{desc_hash[:8]}|{dt}|{self.amount:>+12.2f}"
         return self.tid
+
+    def map_account_code(self) -> str:
+        """Map previous versions of the account code for a transaction."""
+        map: dict = {
+            "6338 Rollover IRA": "x6338 Merrill Lynch Rollover IRA",
+            "6914 My Investment Account": "x6914 Merrill Lynch My Investment Account",
+            "Paul Checking": "x7218 BoA Paul Checking",
+            "Paul Savings": "x7660 BoA Paul Savings",
+            "Primary Checking Acct": "x1391 BoA Joint Checking",
+            "BoA x1391 Joint Checking": "x1391 BoA Joint Checking",
+            "Primary Savings": "x1391 BoA Joint Checking",
+            "BoA x1294 Joint Low Interest VISA": "x1294 BoA Joint Low Interest VISA",   
+            "Visa Low Interest": "x1294 BoA Joint Low Interest VISA",   
+            "Visa Low Interest Card": "x1294 BoA Joint Low Interest VISA",   
+            "Joint Checking Acct": "x1391 BoA Joint Checking",
+            "Joint Savings": "x0196 BoA Joint Savings",
+            "BoA x1670 Joint Signature VISA": "x1670 BoA Joint Signature VISA",
+            "Joint Visa Signature Card": "x1670 BoA Joint Signature VISA",
+            "Visa Signature": "x1670 BoA Joint Signature VISA",
+            "Chase VISA x5518": "x5518 Chase VISA",
+            "Citibank x6545 Paul Checking": "x1285 Citibank MasterCard",
+            "Citibank MasterCard x1285": "x1285 Citibank MasterCard",
+            "Citibank x4155 Paul Checking": "x4155 Citibank Paul Checking",
+            "Wellsfargo x6545 Paul Checking": "x6545 Wellsfargo Paul Checking",
+            "Chase VISA x5518": "x5518 Chase VISA",
+        }
+        for key in map.keys():
+            if self.account_code.lower() == key.lower():
+                self.account_code = map[key]
+                return map[key]
+        return None
     
 #endregion TransactionData dataclass
 # ---------------------------------------------------------------------------- +
@@ -185,7 +216,7 @@ def excel_WORKSHEET_remove_extra_columns(ws: Worksheet, expected_columns: List[s
         raise
 #endregion excel_WORKSHEET_remove_extra_columns() function
 # ---------------------------------------------------------------------------- +
-#region WORKFLOW_TASK_check_sheet_columns() function
+#region WORKFLOW_TASK_set_column_width() function
 def WORKFLOW_TASK_set_column_width(sheet: Worksheet, 
                                    col_dimensions: Dict[str, int]) -> None:
     """Set the width of columns in the worksheet based on the provided dimensions.
@@ -221,7 +252,7 @@ def WORKFLOW_TASK_set_column_width(sheet: Worksheet,
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
-#endregion WORKFLOW_TASK_check_sheet_columns() function
+#endregion WORKFLOW_TASK_set_column_width() function
 # ---------------------------------------------------------------------------- +
 #region WORKFLOW_TASK_check_sheet_columns() function
 def WORKFLOW_TASK_check_sheet_columns(
@@ -410,8 +441,8 @@ def WORKSHEET_row_data(row:tuple,hdr:list=BUDMAN_WB_SCHEMA) -> TransactionData:
             row_values = [cell.value for cell in row]
         else:
             row_values = row 
-        # Second, verify the hdr contains the required columns.
-        row_dict = dict(zip(hdr, row_values))  # Create a dict from the header and row values.
+        # Second, Create a dict from the header and row values.
+        row_dict = dict(zip(hdr, row_values))
 
         t_year_month = year_month_str(row_dict[DATE_COL_NAME])
         t_manual: bool = False
@@ -442,6 +473,7 @@ def WORKSHEET_row_data(row:tuple,hdr:list=BUDMAN_WB_SCHEMA) -> TransactionData:
             manual=t_manual,
             row_data=row_dict
         )
+        _ = transaction.map_account_code()  # Map previous versions of the account code for a transaction.
         return transaction
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
@@ -917,6 +949,7 @@ def WORKFLOW_TASK_process_budget_category(
             transactions.append(transaction)
             trans_str = f"Row({row_idx}): '{transaction.data_str()}'"
             rule_value = row[rule_i].value if rule_i != -1 else None
+            row[acct_code_i].value = transaction.account_code if acct_code_i != -1 else None
             # Do the mapping from trans_desc to bud_cat columns.
             if transaction.manual:
                 # Skip manually modified transactions
@@ -935,7 +968,6 @@ def WORKFLOW_TASK_process_budget_category(
             row[l2_i].value = transaction.level2 if l2_i != -1 else None
             row[l3_i].value = transaction.level3 if l3_i != -1 else None
             row[dORc_i].value = transaction.debit_credit if dORc_i != -1 else None
-            row[acct_code_i].value = transaction.account_code if acct_code_i != -1 else None
             if transaction.payee is not None:
                 row[payee_i].value = transaction.payee if payee_i != -1 else "undetected"
             essential_value = False
@@ -1021,8 +1053,8 @@ def WORKFLOW_TASK_categorize_transaction(
             transaction.category = "Other"
             transaction.level1 = "Other"
             # Apply the pattern to the transaction description
-            if "AMDA" in transaction.description and "AMDA" in pattern.pattern:
-                ...
+            # if "AMDA" in transaction.description and "AMDA" in pattern.pattern:
+            #     ...
             m = pattern.search(transaction.description)
             if m:
                 transaction.category = ch.count(category)

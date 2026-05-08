@@ -93,10 +93,10 @@ def WORKFLOW_CMD_transfer(
         transfer_workbooks: bool = cmd_args.get(CK_TRANSFER_WORKBOOKS, False)
         if transfer_workbooks and not transfer_files:
             # This cmd is for transferring files, not workbooks.
-            return WORKFLOW_CMD_transfer_workbooks(cmd, bdm_DC, level=level)
+            return WORKFLOW_CMD_transfer_workbooks(cmd, bdm_DC, cp, level=level)
         if not transfer_workbooks and transfer_files:
             # This cmd is for transferring files, not workbooks.
-            return WORKFLOW_CMD_transfer_files(cmd, bdm_DC, level=level)
+            return WORKFLOW_CMD_transfer_files(cmd, bdm_DC, cp, level=level)
         
         # Some invalid combination of parameters.
         msg = (f"{pad(level)}Unsupported combination of input parameters: "
@@ -679,6 +679,8 @@ def WORKFLOW_CMD_process(
         transfer_cmd.cmd_parms[CK_TRANSFER_WORKBOOKS] = False
         transfer_cmd.cmd_parms[CK_SYMLINK] = False
         transfer_cmd.cmd_parms[CK_FILE_LIST] = cmd_args.get(CK_FILE_LIST)
+        # Src in the file_list assumed to be Intake:Input
+        # Dst worflow folder fi_key:wf_key:wf_purpose and wb_type parameters for the transfer command.
         transfer_cmd.cmd_parms[CK_CMDLINE_FI_KEY] = fi_key
         transfer_cmd.cmd_parms[CK_CMDLINE_WF_KEY] = "intake"
         transfer_cmd.cmd_parms[CK_CMDLINE_WF_PURPOSE] =  bdm.WF_WORKING
@@ -705,9 +707,12 @@ def WORKFLOW_CMD_process(
         # Modify the transfer_cmd object for transfer to this workflow
         transfer_cmd.cmd_parms[CK_TRANSFER_FILES] = False
         transfer_cmd.cmd_parms[CK_TRANSFER_WORKBOOKS] = True
+        # Src is wb_index_list, output from previous Task
         transfer_cmd.cmd_parms[CK_WB_LIST] = wb_index_list
-        transfer_cmd.cmd_parms[CK_WF_KEY] = "categorize_transactions"
-        transfer_cmd.cmd_parms[CK_WF_PURPOSE] =  bdm.WF_WORKING
+        # Dst worflow folder fi_key:wf_key:wf_purpose and wb_type parameters for the transfer command.
+        transfer_cmd.cmd_parms[CK_CMDLINE_FI_KEY] = fi_key
+        transfer_cmd.cmd_parms[CK_CMDLINE_WF_KEY] = "categorize_transactions"
+        transfer_cmd.cmd_parms[CK_CMDLINE_WF_PURPOSE] =  bdm.WF_WORKING
         transfer_cmd.cmd_parms[CK_WB_TYPE] = bdm.WB_TYPE_EXCEL_TXNS
         # Run CMD: WORKFLOW_CMD_transfer_workbooks() and capture the result.
         if what_if:
@@ -731,6 +736,7 @@ def WORKFLOW_CMD_process(
             cp=cmd.cp,
             cmd_name=CV_WORKFLOW_CMD_NAME,
             subcmd_name=CV_CHECK_SUBCMD_NAME)
+        check_cmd.cmd_parms[CK_CMDLINE_FI_KEY] = fi_key
         check_cmd.cmd_parms[CK_WB_LIST] = wb_index_list
         check_cmd.cmd_parms[CK_ALL_WBS] = False
         check_cmd.cmd_parms[CK_LOAD_WORKBOOK_SWITCH] = True
@@ -758,6 +764,7 @@ def WORKFLOW_CMD_process(
             cp=cmd.cp,
             cmd_name=CV_WORKFLOW_CMD_NAME,
             subcmd_name=CV_CATEGORIZATION_SUBCMD_NAME)
+        cat_cmd.cmd_parms[CK_CMDLINE_FI_KEY] = fi_key
         cat_cmd.cmd_parms[CK_WB_LIST] = wb_index_list
         cat_cmd.cmd_parms[CK_ALL_WBS] = False
         cat_cmd.cmd_parms[CK_LOAD_WORKBOOK_SWITCH] = True
@@ -780,9 +787,10 @@ def WORKFLOW_CMD_process(
         #    Transfer WB_TYPE_EXCEL_TXNS(.xlsx) workbook from wb_index_list to a 
         #    WB_TYPE_EXCEL_TXNS(.xlsx) workbooks.
         # Modify the transfer_cmd object for transfer to this workflow
+        transfer_cmd.cmd_parms[CK_CMDLINE_FI_KEY] = "mybudget"
         transfer_cmd.cmd_parms[CK_WB_LIST] = wb_index_list
-        transfer_cmd.cmd_parms[CK_WF_KEY] = "budget"
-        transfer_cmd.cmd_parms[CK_WF_PURPOSE] =  bdm.WF_WORKING
+        transfer_cmd.cmd_parms[CK_CMDLINE_WF_KEY] = "categorize_transactions"
+        transfer_cmd.cmd_parms[CK_CMDLINE_WF_PURPOSE] =  bdm.WF_WORKING
         transfer_cmd.cmd_parms[CK_WB_TYPE] = bdm.WB_TYPE_EXCEL_TXNS
         transfer_cmd.cmd_parms[CK_SYMLINK] = True
         # Run CMD: WORKFLOW_CMD_transfer_workbooks() and capture the result.
@@ -1314,36 +1322,34 @@ def WORKFLOW_CMD_task(
         )
         # Initializations
         p3u.is_not_obj_of_type("bdm_DC", bdm_DC, BudManAppDataContext_Base,
-                               raise_error= True)
+                               raise_error=True)
         msg: str = ''
-        fi_key: str = bdm_DC.dc_FI_KEY
-        if not fi_key:
-            msg = "No FI_KEY set in the DC."
-            logger.error(msg)
-            return p3m.cp_CMD_RESULT_ERROR_create(cmd, msg)
+        fi_key: str = cmd_args.get(CK_CMDLINE_FI_KEY, bdm_DC.dc_FI_KEY)
+        if p3u.str_empty( fi_key):
+            raise ValueError("No FI_KEY provided by user or set in the DC.")
         model:BudgetDomainModel = bdm_DC.model
         if not model:
-            msg = "No BudgetDomainModel binding in the DC."
-            logger.error(msg)
-            return p3m.cp_CMD_RESULT_ERROR_create(cmd, msg)
+            raise ValueError("No BudgetDomainModel binding in the DC.")
         task_name: str = cmd_args.get(CK_TASK_NAME, "Unnamed Task")
+        reconcile: bool = cmd_args.get(CK_RECONCILE, False)
         if task_name == CV_SYNC:
-            msg = f"DEPRECATED: Syncing WORKBOOK_DATA_COLLECTION for FI_KEY: '{fi_key}'"
-            p3m.cp_user_warning_message(msg)
-                # r_msg: str = ""
-                # discovered_wdc: bdm.WORKBOOK_DATA_COLLECTION_TYPE = None
-                # discovered_wdc, r_msg = model.bsm_FI_WORKBOOK_DATA_COLLECTION_resolve(fi_key)
+            r_msg: str = ""
+            discovered_wdc: bdm.WORKBOOK_DATA_COLLECTION_TYPE = None
+            discovered_wdc, r_msg = model.bsm_FI_WORKBOOK_DATA_COLLECTION_resolve(fi_key)
+            p3m.cp_user_info_message(r_msg)
+            if reconcile:
+                r_msg = model.bsm_FI_WORKBOOK_DATA_COLLECTION_reconcile(fi_key, discovered_wdc)
+                p3m.cp_user_info_message(r_msg)
             p3m.cp_user_info_message(m + "End: ...")
             # End: ----------------------------------------------------------- +
             return p3m.cp_CMD_RESULT_create(
                 cmd=cmd,
                 status=True,
                 type=p3m.CV_CMD_STRING_OUTPUT,
-                content=msg
+                content=f"Processed workbooks for fi_key: '{fi_key}'"
             )
         else:
-            msg = f"Unknown task name: '{task_name}'"
-            return p3m.cp_CMD_RESULT_ERROR_create(cmd, msg)
+            raise ValueError(f"Unknown task name: '{task_name}'")
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise

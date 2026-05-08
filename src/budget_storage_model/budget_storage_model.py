@@ -974,7 +974,7 @@ def bsm_WB_TYPE(wb_url : str, wb_filetype:str) -> Any:
 #region    Common functions
 #                                                                              +
 # ---------------------------------------------------------------------------- +
-#region    bsm_WB_URL_verify(wb_url: str) function 
+#region    bsm_file_delete(wb_url: str) function 
 def bsm_file_delete(file_path: Path) -> None:
     """Delete the file from the file system.
     """
@@ -993,7 +993,7 @@ def bsm_file_delete(file_path: Path) -> None:
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
-#endregion bsm_WB_URL_verify(url: str) function
+#endregion bsm_file_delete(file_path: Path) function
 # ---------------------------------------------------------------------------- +
 #region    bsm_WB_URL_verify(wb_url: str) function 
 def bsm_WB_URL_verify(wb_url: str,test:bool=True) -> Any:
