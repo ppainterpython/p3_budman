@@ -558,9 +558,24 @@ class BudManCLIParser():
                 help="Show the data context information.")
             datacontext_subcmd_defaults = {
                 p3m.CK_SUBCMD_NAME: cp.CV_DATA_CONTEXT_SUBCMD_NAME,
-                p3m.CK_SUBCMD_KEY: cp.CV_SHOW_DATA_CONTEXT_SUBCMD_KEY
+                p3m.CK_SUBCMD_KEY: cp.CV_SHOW_DATA_CONTEXT_SUBCMD_KEY,
+                cp.CK_CMDLINE_FI_KEY: None, 
+                cp.CK_CMDLINE_WF_KEY: None,
+                cp.CK_CMDLINE_WF_PURPOSE: None,
+                cp.CK_CMDLINE_WB_TYPE: None
             }
             datacontext_subcmd_parser.set_defaults(**datacontext_subcmd_defaults)
+            m: str = "Enter destination fi_key for the transfer."
+            self.add_CK_CMDLINE_FI_KEY_optional_argument(datacontext_subcmd_parser, help=m)
+            m = "Enter destination workflow key for the transfer."
+            self.add_CK_CMDLINE_WF_KEY_optional_argument(datacontext_subcmd_parser, help=m)
+            m = "Enter destination workflow purpose for the transfer."
+            self.add_CK_CMDLINE_WF_PURPOSE_optional_argument(datacontext_subcmd_parser, help=m)
+            datacontext_subcmd_parser.add_argument(
+                "-t", f"--{cp.CK_CMDLINE_WB_TYPE}",
+                choices=bdm.VALID_WB_TYPE_VALUES,
+                default=bdm.WB_TYPE_EXCEL_TXNS,
+                help="Specify the destination workbook type.")
             self.add_common_optional_args(datacontext_subcmd_parser)
             #endregion show DataContext subcommand
 
@@ -1004,6 +1019,7 @@ class BudManCLIParser():
                 "-w", f"--{cp.CK_CMDLINE_WF_KEY}", nargs="?", 
                 dest=cp.CK_CMDLINE_WF_KEY, 
                 choices=self.valid_wf_key_values,
+                default=self.settings[BUDMAN_DEFAULT_WF_KEY],
                 help=help if help is not None else "Specify the workflow key to apply.")
             return
         except Exception as e:
@@ -1028,6 +1044,7 @@ class BudManCLIParser():
             parser.add_argument(
                 "-p", f"--{cp.CK_CMDLINE_WF_PURPOSE}", nargs="?",  
                 choices=self.valid_wf_purpose_key_values,
+                default=self.settings[BUDMAN_DEFAULT_WF_PURPOSE_KEY],
                 help=help if help is not None else "Specify the workflow folder purpose.")
             parser.add_argument(
                 "-wi", nargs="?",

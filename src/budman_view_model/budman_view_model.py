@@ -510,7 +510,7 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                 cp.CV_LOAD_WORKBOOKS_SUBCMD_KEY: self.WORKBOOKS_load_cmd,
                 cp.CV_SAVE_WORKBOOKS_SUBCMD_KEY: self.WORKBOOKS_save_cmd,
                 cp.CV_CLOSE_WORKBOOKS_SUBCMD_KEY: self.BUDMAN_CMD_close_workbooks,
-                cp.CV_SHOW_CMD_KEY: self.SHOW_cmd,
+                # cp.CV_SHOW_CMD_KEY: self.SHOW_cmd,
                 cp.CV_APP_CMD_KEY: self.APP_cmd,
             }
             #region Command object definitions
@@ -716,6 +716,19 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                     cp.CK_CATEGORY_MAP,
                     cp.CK_CHECK_REGISTER
                     ]
+                )   
+            # show DATA_CONTEXT
+            self.cp_commands[cp.CV_SHOW_DATA_CONTEXT_SUBCMD_KEY] = p3m.Command(
+                cp=self,
+                cmd_name=cp.CV_SHOW_CMD_NAME, 
+                subcmd_name=cp.CV_DATA_CONTEXT_SUBCMD_NAME,
+                cmd_exec_func=cp.BUDMAN_CMD_show_DATA_CONTEXT,
+                required_parms=[
+                    cp.CK_CMDLINE_FI_KEY,
+                    cp.CK_CMDLINE_WF_KEY,
+                    cp.CK_CMDLINE_WF_PURPOSE,
+                    cp.CK_CMDLINE_WB_TYPE
+                ]
                 )   
             #endregion Command object definitions
             p3m.cp_user_info_message(f"Command map initialized with {len(self.cp_commands)} commands.")

@@ -32,7 +32,8 @@ from budman_data_context import BudManAppDataContext_Base
 from budman_workflow_services import *
 from budman_workflow_services.workflow_namespace import BUDMAN_TXNS_WORKBOOK_COL_NAMES
 from budget_storage_model import (BSMFile, BSMFileTree) 
-from budget_storage_model import (csv_DATA_LIST_url_copy, bsm_BDMWorkbook_copy)
+from budget_storage_model import (csv_DATA_LIST_url_copy, bsm_BDMWorkbook_copy,
+                                  bsm_is_file_open)
 from budman_command_services import *
 from .budman_cp_namespace import * 
 #endregion Imports
@@ -921,6 +922,11 @@ def WORKFLOW_CMD_categorize_transactions(
             bdm_wb_abs_path = bdm_wb.abs_path()
             if bdm_wb_abs_path is None:
                 msg = f"Workbook path is not valid: {bdm_wb.wb_url}"
+                p3m.cp_user_error_message(f"{pad(level + 1)}Error: {msg}")
+                continue
+            # Check if the file is already open and inaccessible.
+            if bsm_is_file_open(bdm_wb_abs_path):
+                msg = f"Workbook file is currently open and inaccessible: {bdm_wb_abs_path}"
                 p3m.cp_user_error_message(f"{pad(level + 1)}Error: {msg}")
                 continue
             # Check cmd needs loaded workbooks to check

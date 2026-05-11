@@ -86,9 +86,9 @@ def BUDMAN_CMD_router(cmd: p3m.CMD_OBJECT_TYPE,
         # Process the CMD_OBJECT based on its cmd_key and subcmd_key.
         # Show command
         if cmd[p3m.CK_CMD_KEY] == CV_SHOW_CMD_KEY:
-            if cmd[p3m.CK_SUBCMD_KEY] == CV_SHOW_DATA_CONTEXT_SUBCMD_KEY:
-                return BUDMAN_CMD_show_DATA_CONTEXT(cmd, bdm_DC)
-            elif cmd[p3m.CK_SUBCMD_KEY] == CV_SHOW_BUDGET_CATEGORIES_SUBCMD_KEY:
+            # if cmd[p3m.CK_SUBCMD_KEY] == CV_SHOW_DATA_CONTEXT_SUBCMD_KEY:
+            #     return BUDMAN_CMD_show_DATA_CONTEXT(cmd, bdm_DC)
+            if cmd[p3m.CK_SUBCMD_KEY] == CV_SHOW_BUDGET_CATEGORIES_SUBCMD_KEY:
                 return BUDMAN_CMD_TASK_show_BUDGET_CATEGORIES(cmd, bdm_DC)
             else:
                 return p3m.cp_CMD_RESULT_ERROR_unknown(cmd)
@@ -486,39 +486,73 @@ def BUDMAN_CMD_list_files(
 #endregion BUDMAN_CMD_list_files()
 # ---------------------------------------------------------------------------- +    
 #region BUDMAN_CMD_show_DATA_CONTEXT()
-def BUDMAN_CMD_show_DATA_CONTEXT(cmd: p3m.CMD_OBJECT_TYPE,
-                                bdm_DC: BudManAppDataContext_Base) -> p3m.CMD_RESULT_TYPE:
+def BUDMAN_CMD_show_DATA_CONTEXT(cmd: p3m.Command, 
+        bdm_DC: BudManAppDataContext_Base,
+        cp: p3m.CommandProcessor,
+        level: int = 0
+        ) -> p3m.CMD_RESULT_TYPE:
     """Show the data context for the command."""
     try:
-        time.sleep(1) # Pause to let View threads finish async setup
+        #region Initialization and validation
+        level += 1
+        ts: str = "[bold dark_orange]CMD: [/bold dark_orange]"
+        m: str = f"{pad(level)}{ts} {BUDMAN_CMD_show_DATA_CONTEXT.__name__}() "
+        p3m.cp_user_info_message(m + "Start: ...")
+        level += 1
+        # Start: ------------------------------------------------------------- +
+        # Validate the cmd argsuments.
+        cmd_args: p3m.CMD_ARGS_TYPE = cp.validate_command_for_exec(
+            cmd,
+            expected_cmd_key=CV_SHOW_CMD_KEY,
+            expected_subcmd_key=CV_SHOW_DATA_CONTEXT_SUBCMD_KEY
+        )
+        # Initializations
+        model: BudgetDomainModel = bdm_DC.model
         # Gather the current content of the DATA_CONTEXT.
         bs = bdm_DC.dc_BDM_STORE
         bs_str = p3u.first_n(str(bs))
+        fi_key : str = cmd_args.get(CK_CMDLINE_FI_KEY, bdm_DC.dc_FI_KEY)
+        wf_key : str = cmd_args.get(CK_CMDLINE_WF_KEY, bdm_DC.dc_WF_KEY)
+        wf_purpose : str = cmd_args.get(CK_CMDLINE_WF_PURPOSE, bdm_DC.dc_WF_PURPOSE)
+        wb_type : str = cmd_args.get(CK_CMDLINE_WB_TYPE, None)
+        if (p3u.str_empty(fi_key) or not model.bdm_FI_KEY_validate(fi_key)):
+            return p3m.cp_CMD_RESULT_ERROR_create(cmd, f"Invalid fi_key: '{fi_key}'")
+        if (p3u.str_empty(wf_key) or not model.bdm_WF_KEY_validate(wf_key)):
+            return p3m.cp_CMD_RESULT_ERROR_create(cmd, f"Invalid wf_key: '{wf_key}'")
+        if (p3u.str_empty(wf_purpose) or not model.bdm_WF_PURPOSE_validate(wf_purpose)):
+            return p3m.cp_CMD_RESULT_ERROR_create(cmd, f"Invalid wf_purpose: '{wf_purpose}'")
+        if (p3u.str_empty(wb_type) or wb_type not in bdm.VALID_WB_TYPE_VALUES):
+            return p3m.cp_CMD_RESULT_ERROR_create(cmd, f"Invalid wb_type: '{wb_type}'")
+        #endregion Initialization and validation
+
         # Prepare the Command output result
-        result = f"Budget Manager Data Context:"
-        result += f"{P2}{bdm.DC_INITIALIZED}: {bdm_DC.dc_INITIALIZED}\n"
-        result += f"{P2}{bdm.DC_BDM_STORE}: {bs_str}\n"
-        result += "Current Workflow Location:"
-        result += ( f"{P2}{bdm.FI_KEY}: {bdm_DC.dc_FI_KEY}"
-                    f"{P2}{bdm.WF_KEY}: {bdm_DC.dc_WF_KEY}"
-                    f"{P2}{bdm.WF_PURPOSE}: {bdm_DC.dc_WF_PURPOSE}\n")
-        result += "Current Workbook:"
+        p3m.cp_user_info_message("Budget Manager Data Context:")
+        p3m.cp_user_info_message(f"{P2}{bdm.DC_INITIALIZED}: {bdm_DC.dc_INITIALIZED}")
+        p3m.cp_user_info_message(f"{P2}{bdm.DC_BDM_STORE}: {bs_str}")
+        p3m.cp_user_info_message("Current Workflow Location:")
+        p3m.cp_user_info_message(f"{P2}{bdm.FI_KEY}: {fi_key}"
+                                 f"{P2}{bdm.WF_KEY}: {wf_key}"
+                                 f"{P2}{bdm.WF_PURPOSE}: {wf_purpose}")
+        p3m.cp_user_info_message("Current Workbook:")
         wb:BDMWorkbook = bdm_DC.dc_WORKBOOK
         if wb:
-            result += (f"{P2}{bdm.WB_ID}: {bdm_DC.dc_WB_ID}"
-                        f"{P2}{bdm.WB_INDEX}: {bdm_DC.dc_WB_INDEX}"
-                        f"{P2}{bdm.WB_NAME}: {bdm_DC.dc_WB_NAME}"
-                        f"{P2}{bdm.WB_TYPE}: {bdm_DC.dc_WB_TYPE}\n")
+            p3m.cp_user_info_message(f"{P2}{bdm.WB_ID}: {bdm_DC.dc_WB_ID}"
+                                     f"{P2}{bdm.WB_INDEX}: {bdm_DC.dc_WB_INDEX}"
+                                     f"{P2}{bdm.WB_NAME}: {bdm_DC.dc_WB_NAME}"
+                                     f"{P2}{bdm.WB_TYPE}: {bdm_DC.dc_WB_TYPE}")
         else:
-            result += (f"{P2}{bdm.WB_ID}: ..."
-                        f"{P2}{bdm.WB_INDEX}: ..."
-                        f"{P2}{bdm.WB_NAME}: ..."
-                        f"{P2}{bdm.WB_TYPE}: ...\n")
-        _, wdc_result = get_workbook_data_collection_info_str(bdm_DC)
-        result += wdc_result
+            p3m.cp_user_info_message(f"{P2}{bdm.WB_ID}: ..."
+                                     f"{P2}{bdm.WB_INDEX}: ..."
+                                     f"{P2}{bdm.WB_NAME}: ..."
+                                     f"{P2}{bdm.WB_TYPE}: {wb_type}")
+        wdc_result = get_workbook_data_collection_info_str(model,
+                                                           fi_key,
+                                                           wf_key,
+                                                           wf_purpose,
+                                                           wb_type)
         return p3m.cp_CMD_RESULT_create(
             status=True,
-            content=result,
+            content="Complete",
             type=p3m.CV_CMD_STRING_OUTPUT,
             cmd=cmd
         )
@@ -1088,31 +1122,36 @@ def process_selected_workbook_input(cmd: p3m.Command,
 #endregion process_selected_workbook_input()
 # ---------------------------------------------------------------------------- +    
 #region get_workbook_data_collection_info_str() method
-def get_workbook_data_collection_info_str(bdm_DC: BudManAppDataContext_Base) -> bdm.BUDMAN_RESULT_TYPE:
+def get_workbook_data_collection_info_str(model: BudgetDomainModel,
+                                          fi_key: str,
+                                          wf_key: str,
+                                          wf_purpose: str,
+                                          wb_type: str) -> bdm.BUDMAN_RESULT_TYPE:
     """Construct an outout string with information about the WORKBOOKS."""
     try:
         logger.debug(f"Start: ...")
         # Be workbook-centric is this view of the DC
-        wdc = bdm_DC.dc_WORKBOOK_DATA_COLLECTION
+        wdc = model.bdm_FI_WORKBOOK_DATA_COLLECTION(fi_key)
         wdc_count = len(wdc) if wdc else 0
-        lwbc = bdm_DC.dc_LOADED_WORKBOOKS
 
         # Prepare the output result
-        result = f"{P2}{bdm.FI_WORKBOOK_DATA_COLLECTION}: {wdc_count}\n"
-        result += f"{P4}{bdm.WB_INDEX:6}{P2}{bdm.WB_ID:55}{P2}"
-        result += f"{bdm.WB_TYPE:15}{P2}{bdm.WB_CONTENT:30}"
-        result += "\n"
+        p3m.cp_user_info_message(f"{P2}{bdm.FI_WORKBOOK_DATA_COLLECTION}: {wdc_count}")
+        p3m.cp_user_info_message(f"{P4}{bdm.WB_INDEX:6}{P2}{bdm.WB_ID:55}{P2}"
+                                 f"{bdm.WB_TYPE:15}{P2}{bdm.WB_CONTENT:30}")
         bdm_wb : BDMWorkbook = None
         if wdc_count > 0:
             for i, bdm_wb in enumerate(wdc.values()):
-                r = f"{bdm_wb.wb_index_display_str(i)}"
-                result += r + "\n"
+                if (bdm_wb.wf_key == wf_key and 
+                    bdm_wb.wf_purpose == wf_purpose and 
+                    bdm_wb.wb_type == wb_type):
+                    r = f"{bdm_wb.wb_index_display_str(i)}"
+                    p3m.cp_user_info_message(r)
         logger.info(f"Complete:")
-        return True, result
+        return True
     except Exception as e:
         m = p3u.exc_err_msg(e)
         logger.error(m)
-        return False, m
+        return False
 #endregion get_workbook_data_collection_info_str() method
 # ------------------------------------------------------------------------ +
 #region verify_cmd_key()

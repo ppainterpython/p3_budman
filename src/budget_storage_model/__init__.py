@@ -32,6 +32,7 @@ from .budget_storage_model import (
     bsm_BDM_STORE_file_abs_path,
     bsm_WB_TYPE,
     # Common Functions
+    bsm_is_file_open,
     bsm_file_delete,
     bsm_URL_verify_file_scheme,
     bsm_verify_folder,
@@ -85,6 +86,7 @@ __all__ = [
     "bsm_BDM_STORE_file_abs_path",
     "bsm_WB_TYPE",
     # Common Functions
+    "bsm_is_file_open",
     "bsm_file_delete",
     "bsm_URL_verify_file_scheme",
     "bsm_verify_folder",

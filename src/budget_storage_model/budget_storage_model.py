@@ -974,6 +974,25 @@ def bsm_WB_TYPE(wb_url : str, wb_filetype:str) -> Any:
 #region    Common functions
 #                                                                              +
 # ---------------------------------------------------------------------------- +
+#region    bsm_is_file_open(wb_url: str) function 
+def bsm_is_file_open(file_path: Path) -> bool:
+    """Check if the file is open.
+    Returns True if the file is open, False otherwise.
+    """
+    try:
+        p3u.is_not_obj_of_type("file_path", file_path, Path, raise_error=True)
+        with file_path.open("r+"):
+            pass
+        return False
+    except FileNotFoundError:
+        return False
+    except PermissionError:
+        return True
+    except Exception as e:
+        logger.error(p3u.exc_err_msg(e))
+        raise
+#endregion bsm_is_file_open(file_path: Path) function
+# ---------------------------------------------------------------------------- +
 #region    bsm_file_delete(wb_url: str) function 
 def bsm_file_delete(file_path: Path) -> None:
     """Delete the file from the file system.

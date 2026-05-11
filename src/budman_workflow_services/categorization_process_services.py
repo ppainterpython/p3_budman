@@ -142,11 +142,11 @@ class TransactionData:
 
     def data_str(self) -> str:
         """Return a string representation of the transaction data."""
-        ret =  f"{self.tid:12}|{self.date.strftime("%m/%d/%Y")}|"
+        ret = f"({len(self.description):03})[{self.description:102}]|"
+        ret += f"{self.tid:12}|{self.date.strftime("%m/%d/%Y")}|"
         ret += f"{self.year_month:11}|{self.account_code:26}|" 
         ret += f"{self.payee:25}|{self.amount:>+12.2f}|{self.debit_credit:1}|" 
-        ret += f"({len(self.description):03}){self.description:102}|->" 
-        ret += f"|({len(self.category):03})|{self.category:40}|"
+        ret += f"({len(self.category):03})|{self.category:40}|"
         return ret
 
     def create_tid(self) -> str:
@@ -947,7 +947,7 @@ def WORKFLOW_TASK_process_budget_category(
             row_idx = row[0].row  # Get the row index, the row number, 1-based.
             transaction = WORKSHEET_row_data(row,hdr) 
             transactions.append(transaction)
-            trans_str = f"Row({row_idx}): '{transaction.data_str()}'"
+            trans_str = f"Row({row_idx}): {transaction.data_str()}"
             rule_value = row[rule_i].value if rule_i != -1 else None
             row[acct_code_i].value = transaction.account_code if acct_code_i != -1 else None
             # Do the mapping from trans_desc to bud_cat columns.

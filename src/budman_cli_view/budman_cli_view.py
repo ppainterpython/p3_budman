@@ -530,12 +530,8 @@ class BudManCLIView(cmd2.Cmd,
         try:
             _ = self._persist_history()
             # Construct the command object from cmd2's argparse Namespace.
-            cmd: p3m.CMD_OBJECT_TYPE = self.cp_construct_cmd_from_argparse(opts)
+            cmd: p3m.Command = self.construct_command_from_argparse(opts)
             _  = self.cp_execute_cmd(cmd)
-            # cr : p3m.CMD_RESULT_TYPE  = self.cp_execute_cmd_async(
-            #     cmd,
-            #     async_result_subscriber=cli_cmd_result_output
-            #     )
             ...
         except Exception as e:
             self.pexcept(e)
