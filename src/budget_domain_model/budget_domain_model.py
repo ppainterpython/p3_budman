@@ -715,6 +715,8 @@ class BudgetDomainModel(p3m.Model,metaclass=BDMSingletonMeta):
         """Rehydrate dicts loaded from the BDM_STORE into class instances."""
         try:
             logger.debug("Start:  ...")
+            to_remove: List[str] = []
+            removed_count: int = 0
             # Focus on the BDM_FI_COLLECTION.
             if (self.bdm_fi_collection is None or
                 len(self.bdm_fi_collection) == 0):
@@ -727,7 +729,7 @@ class BudgetDomainModel(p3m.Model,metaclass=BDMSingletonMeta):
                     fi_object[FI_WORKBOOK_DATA_COLLECTION] = {}
                 if (not isinstance(fi_object[FI_WORKBOOK_DATA_COLLECTION], dict) or
                     len(fi_object[FI_WORKBOOK_DATA_COLLECTION]) == 0):
-                    logger.debug(f"FI_KEY('{fi_key}') has no WORKBOOK_DATA_COLLECTION.")
+                    logger.debug(f"FI_KEY('{fi_key}') has empty WORKBOOK_DATA_COLLECTION.")
                     continue
                 fi_folder_abs_path: Path = self.bsm_FI_FOLDER_abs_path(fi_key)
                 for wb_id, wb_data in fi_object[FI_WORKBOOK_DATA_COLLECTION].items():
@@ -745,6 +747,7 @@ class BudgetDomainModel(p3m.Model,metaclass=BDMSingletonMeta):
                         isinstance(wb_data[WB_URL], str)):
                         wb_url = wb_data[WB_URL]
                         try:
+                            # Raises exception if wb_url not found or invalid.
                             _ = p3u.verify_url_file_path(wb_url)
                         except Exception as e: 
                             m = p3u.exc_err_msg(e)
@@ -757,6 +760,15 @@ class BudgetDomainModel(p3m.Model,metaclass=BDMSingletonMeta):
                     wb_data_2: dict = BDMWorkbook.check_schema(wb_data)
                     # Convert the WORKBOOK_ITEM to a WORKBOOK_OBJECT.
                     wb_object = BDMWorkbook(**wb_data_2)
+                    # Check the workbook type
+                    detected_wb_type = wb_object.determine_wb_type()
+                    if detected_wb_type == WB_TYPE_UNKNOWN:
+                        logger.warning(f"FI_KEY('{fi_key}') WB_ID('{wb_id}'): "
+                                       f"Workbook type is unknown,"
+                                       f"leave out of FI_WORKBOOK_DATA_COLLECTION.")
+                        # Save invalid wb_id to remove from the wdc.
+                        to_remove.append(wb_id)
+                        continue
                     # Get the wf_folder_url expected for this workbook.
                     wb_folder_url = self.bdm_WF_FOLDER_CONFIG_ATTRIBUTE(
                         fi_key=wb_object.fi_key, wf_key=wb_object.wf_key,
@@ -770,17 +782,29 @@ class BudgetDomainModel(p3m.Model,metaclass=BDMSingletonMeta):
                         logger.warning(f"FI_KEY('{fi_key}') WF_KEY('{wb_object.wf_key}') "
                                      f"WF_PURPOSE('{wb_object.wf_purpose}'): "
                                      f"FI_WF_FOLDER_CONFIG_COLLECTION is missing "
-                                     f"BDMWorkbook(wb_id='{wb_object.wb_id}').wf_folder "
+                                     f"BDMWorkbook(wb_id='{wb_object.wb_id}').wf_folder: "
                                      f"'{wb_object.wf_folder}'.")
                     # Set the wb_folder_url in the WORKBOOK_OBJECT.
                     wb_object.wb_folder_url = wb_folder_url
                     # Replace the DATA_OBJECT with the WORKBOOK_OBJECT.
                     fi_object[FI_WORKBOOK_DATA_COLLECTION][wb_id] = wb_object
+                # Remove detected invalid wb_id from the wdc
+                for wb_id in to_remove:
+                    logger.warning(f"Removing invalid WB_ID('{wb_id}') from "
+                                   f"FI_KEY('{fi_key}') WORKBOOK_DATA_COLLECTION.")
+                    del fi_object[FI_WORKBOOK_DATA_COLLECTION][wb_id]
+                    removed_count += 1
+                to_remove.clear()
                 # Sort the FI_WORKBOOK_DATA_COLLECTION by wb_id, for
                 # WB_INDEX order from here on.
                 sorted_wdc = dict(
                     sorted(fi_object[FI_WORKBOOK_DATA_COLLECTION].items()))
                 fi_object[FI_WORKBOOK_DATA_COLLECTION] = sorted_wdc
+            # If model was modified during rehydration, then save it.
+            if removed_count > 0:
+                logger.info(f"Model modified during rehydration, saving model. "
+                            f"Removed {removed_count} invalid workbooks.")
+                self.bdm_save_model()
             logger.debug(f"Complete:")
             return None
         except Exception as e:
@@ -983,7 +1007,8 @@ class BudgetDomainModel(p3m.Model,metaclass=BDMSingletonMeta):
         """Return the FI_WORKBOOK_COLLECTION object of the FI_OBJECT for fi_key."""
         try:
             fi_obj: FI_OBJECT_TYPE = self.bdm_FI_OBJECT(fi_key)
-            if (fi_obj[FI_WORKBOOK_DATA_COLLECTION] is None or
+            if (fi_obj is None or
+                fi_obj[FI_WORKBOOK_DATA_COLLECTION] is None or
                 len(fi_obj[FI_WORKBOOK_DATA_COLLECTION]) == 0):
                 return {}
             return self.bdm_FI_OBJECT(fi_key)[FI_WORKBOOK_DATA_COLLECTION]
@@ -1698,28 +1723,29 @@ class BudgetDomainModel(p3m.Model,metaclass=BDMSingletonMeta):
 
                     wf_folder_abs_path = Path.from_uri(wf_folder_url).resolve() if wf_folder_url is not None else None
                     if wf_folder_abs_path is None: 
-                        m = f"{id} wf_folder_abs_path path is None.",
+                        m = f"{fi_key}:{wf_key}:{wf_purpose}: wf_folder_abs_path path is None."
                         logger.debug(m)
                         r_msg += f"{P4}{m}\n"
                         continue
                     if not wf_folder_abs_path.exists():
-                        m = f"{id} wf_folder_abs_path does not exist: {wf_folder_abs_path}"
+                        m = f"{fi_key}:{wf_key}:{wf_purpose}: wf_folder_abs_path does not exist: {wf_folder_abs_path}"
                         logger.debug(m)
                         r_msg += f"{P4}{m}\n"
                         continue
-                    # This is where the bsm scans a folder for actual workbook files.
+                    # Scan the storage model (bsm) folder for actual files that
+                    # are potentially associated with workbooks based on filetype.
                     bdm_wb_paths = bsm_get_workbook_names(wf_folder_abs_path)
                     if len(bdm_wb_paths) == 0:
-                        m = f"{id} wf_folder_abs_path has no workbooks: {wf_folder_abs_path}"
+                        m = f"{fi_key}:{wf_key}:{wf_purpose}: wf_folder_abs_path has no workbooks: {wf_folder_abs_path}"
                         logger.debug(m)
                         r_msg += f"{P4}{m}\n"
                         continue
-                    m = f"{id} WORKFLOW_DATA_FOLDER('{wf_folder_abs_path}') "
+                    m = f"{fi_key}:{wf_key}:{wf_purpose}: WORKFLOW_DATA_FOLDER('{wf_folder_abs_path}') "
                     m += f"found {len(bdm_wb_paths)} files."
                     logger.debug(m)
                     r_msg += f"{P4}{m}\n"
                     for wb_path in bdm_wb_paths:
-                        # Create a BDMWorkbook object for each workbook.
+                        # Create a BDMWorkbook object for each workbook found in storage.
                         wb_filename = wb_path.stem
                         wb_filetype = wb_path.suffix.lower()
                         wb_name = wb_path.name
@@ -1739,6 +1765,13 @@ class BudgetDomainModel(p3m.Model,metaclass=BDMSingletonMeta):
                             )
                         wb_id = bdm_wb.wb_id
                         bdm_wb.determine_wb_type() 
+                        # Exclude unknown workbook types from the discovered workbook collection,
+                        if bdm_wb.wb_type == WB_TYPE_UNKNOWN:
+                            m = f"{fi_key}:{wf_key}:{wf_purpose}: Workbook '{wb_name}' has unknown type, skipping."
+                            logger.debug(m)
+                            r_msg += f"{P6}{m}\n"
+                            del bdm_wb
+                            continue
                         discovered_wdc[wb_id] = bdm_wb
                         m = bdm_wb.wb_info_display_str()
                         logger.debug(f"Collected workbook: {m}")

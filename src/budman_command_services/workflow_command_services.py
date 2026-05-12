@@ -1329,7 +1329,7 @@ def WORKFLOW_CMD_task(
         # Initializations
         p3u.is_not_obj_of_type("bdm_DC", bdm_DC, BudManAppDataContext_Base,
                                raise_error=True)
-        msg: str = ''
+        r_msg: str = ''
         fi_key: str = cmd_args.get(CK_CMDLINE_FI_KEY, bdm_DC.dc_FI_KEY)
         if p3u.str_empty( fi_key):
             raise ValueError("No FI_KEY provided by user or set in the DC.")
@@ -1339,13 +1339,9 @@ def WORKFLOW_CMD_task(
         task_name: str = cmd_args.get(CK_TASK_NAME, "Unnamed Task")
         reconcile: bool = cmd_args.get(CK_RECONCILE, False)
         if task_name == CV_SYNC:
-            r_msg: str = ""
-            discovered_wdc: bdm.WORKBOOK_DATA_COLLECTION_TYPE = None
-            discovered_wdc, r_msg = model.bsm_FI_WORKBOOK_DATA_COLLECTION_resolve(fi_key)
+            _, r_msg = model.bsm_FI_WORKBOOK_DATA_COLLECTION_resolve(fi_key, reconcile)
             p3m.cp_user_info_message(r_msg)
-            if reconcile:
-                r_msg = model.bsm_FI_WORKBOOK_DATA_COLLECTION_reconcile(fi_key, discovered_wdc)
-                p3m.cp_user_info_message(r_msg)
+            level -= 1
             p3m.cp_user_info_message(m + "End: ...")
             # End: ----------------------------------------------------------- +
             return p3m.cp_CMD_RESULT_create(

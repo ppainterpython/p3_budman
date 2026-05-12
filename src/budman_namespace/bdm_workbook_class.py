@@ -54,7 +54,6 @@ class BDMWorkbook:
     fi_key: str = None
     wf_key: str = None
     wf_purpose: str = None
-    # wf_folder_id: str = None # Removed 08/04/2025, added wf_folder_url at that time.
     wf_folder_url: str = None
     wf_folder: str = None
     wb_loaded : bool = False
@@ -68,6 +67,7 @@ class BDMWorkbook:
         """BDMWorkbook.__post_init__() method."""
         try:
             self.wb_url = self.wb_url.lower() if self.wb_url else None
+            self.wf_folder = self.wf_folder.lower() if self.wf_folder else None
         except Exception as e:
             logger.error(f"BDMWorkbook __post_init__ error: {p3u.exc_err_msg(e)}")
             raise
@@ -118,7 +118,7 @@ class BDMWorkbook:
     @property
     def wb_id(self) -> str:
         """ combine wf_folder ID_SEPARATOR wb_name. """
-        return f"{self.wf_folder}{ID_SEPARATOR}{self.wb_name}"
+        return f"{self.wf_folder.lower()}{ID_SEPARATOR}{self.wb_name.lower()}"
     @wb_id.setter
     def wb_id(self, value: str) -> None:
         """ set the wb_name. """
@@ -192,7 +192,7 @@ class BDMWorkbook:
             wb_status = self.get_wb_content_repr()
         else:
             wb_status = "unloaded"
-        s = f"{str(self.wb_id):55}{P2}{str(self.wb_type):15}{P2}{wb_status:30}{P2}"
+        s = f"{str(self.wb_id):62}{P2}{str(self.wb_type):15}{P2}{wb_status:30}{P2}"
         return s
     #endregion wb_info_display_str
     # ------------------------------------------------------------------------ +

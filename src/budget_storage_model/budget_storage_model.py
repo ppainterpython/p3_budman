@@ -1053,7 +1053,7 @@ def bsm_WB_URL_validate(wb_content_url: str,result:bool=False) -> Union[ParseRes
     except Exception as e:
         logger.error(p3u.exc_err_msg(e))
         raise
-#endregion bsm_WB_URL_verify_file_scheme(url: str) function
+#endregion bsm_WB_URL_validate(url: str) function
 # ---------------------------------------------------------------------------- +
 #region    bsm_WB_TYPE_validate() function 
 def bsm_WB_URL_TYPE_validate(wb_content_url: str, wb_type: str,

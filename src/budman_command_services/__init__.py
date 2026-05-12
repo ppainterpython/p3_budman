@@ -18,6 +18,7 @@ from .budman_command_services import (
     BUDMAN_CMD_list_bdm_store_json,
     BUDMAN_CMD_list_files,
     BUDMAN_CMD_show_DATA_CONTEXT,
+    BUDMAN_CMD_show_BUDGET_CATEGORIES,
     BUDMAN_CMD_app_sync,
     BUDMAN_CMD_app_log,
     BUDMAN_CMD_app_refresh,

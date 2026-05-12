@@ -510,7 +510,6 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                 cp.CV_LOAD_WORKBOOKS_SUBCMD_KEY: self.WORKBOOKS_load_cmd,
                 cp.CV_SAVE_WORKBOOKS_SUBCMD_KEY: self.WORKBOOKS_save_cmd,
                 cp.CV_CLOSE_WORKBOOKS_SUBCMD_KEY: self.BUDMAN_CMD_close_workbooks,
-                # cp.CV_SHOW_CMD_KEY: self.SHOW_cmd,
                 cp.CV_APP_CMD_KEY: self.APP_cmd,
             }
             #region Command object definitions
@@ -730,6 +729,18 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
                     cp.CK_CMDLINE_WB_TYPE
                 ]
                 )   
+            # show BUDGET_CATEGORIES
+            self.cp_commands[cp.CV_SHOW_BUDGET_CATEGORIES_SUBCMD_KEY] = p3m.Command(
+                cp=self,
+                cmd_name=cp.CV_SHOW_CMD_NAME, 
+                subcmd_name=cp.CV_BUDGET_CATEGORIES_SUBCMD_NAME,
+                cmd_exec_func=cp.BUDMAN_CMD_show_BUDGET_CATEGORIES,
+                required_parms=[
+                    cp.CK_CMDLINE_FI_KEY,
+                    cp.CK_CAT_LIST,
+                    cp.CK_LEVEL
+                ]
+                )
             #endregion Command object definitions
             p3m.cp_user_info_message(f"Command map initialized with {len(self.cp_commands)} commands.")
         except Exception as e:
@@ -842,44 +853,6 @@ class BudManViewModel(BudManAppDataContext_Binding, p3m.CommandProcessor,
         except Exception as e:
             return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
     #endregion BDM_STORE_load_cmd() execution method
-    # ------------------------------------------------------------------------ +
-    #region SHOW_cmd() execution method
-    def SHOW_cmd(self, cmd : p3m.CMD_OBJECT_TYPE) -> BUDMAN_RESULT_TYPE:
-        """Show requested info from Budget Manager Data Context.
-
-        Arguments:
-            cmd (Dict): A valid BudMan View Model Command object. 
-    
-        Required cmd object attributes:
-            cmd_key: 'show_cmd' 
-        Optional cmd object attributes:
-            cmd_name: 'show'
-            subcmd_name: CV_BUDGET_CATEGORIES_SUBCMD
-            subcmd_key: 'show_cmd_BUDGET_CATEGORIES'
-            CK_CAT_LIST: A list of budget categories to include, len()==0 means All. 
-
-        Returns:
-            Tuple[success : bool, result : Any]: The outcome of the command 
-            execution. If success is True, result contains result of the 
-            command, if False, a description of the error.
-            
-        Raises:
-            RuntimeError: A description of the
-            root error is contained in the exception message.
-        """
-        try:
-            st = p3u.start_timer()
-            logger.debug(f"Start: ...")
-            # Should be called only for show cmd.
-            cmd_result : p3m.CMD_RESULT_TYPE = cp.verify_cmd_key(cmd, cp.CV_SHOW_CMD_KEY)
-            if not cmd_result[p3m.CK_CMD_RESULT_STATUS]: return cmd_result
-            # Process BudMan command tasks.
-            cmd_result = cp.BUDMAN_CMD_router(cmd, self.DC)
-            logger.info(f"Complete: {p3u.stop_timer(st)}")
-            return cmd_result
-        except Exception as e:
-            return p3m.cp_CMD_RESULT_EXCEPTION_create(cmd, e)
-    #endregion SHOW_cmd() execution method
     # ------------------------------------------------------------------------ +
     #region WORKBOOKS_load_cmd() execution method
     def WORKBOOKS_load_cmd(self, cmd : p3m.CMD_OBJECT_TYPE) -> BUDMAN_RESULT_TYPE:

@@ -449,9 +449,8 @@ class CommandProcessor(CommandProcessor_Base, DataContext_Binding):
             return None
         key: str = subcmd_key if subcmd_key else cmd_key
         command: Command | None = self.cp_commands.get(key, None)
-        if command and command.cmd_key == cmd_key and command.subcmd_key == subcmd_key:
+        if command is not None and command.cmd_key == cmd_key and command.subcmd_key == subcmd_key:
             return command
-        logger.warning(f"Command not found with cmd_key '{cmd_key}' subcmd_key '{subcmd_key}'.")
         return None
     #endregion cp_search_command() method
     # ------------------------------------------------------------------------ +

@@ -532,18 +532,19 @@ class BudManCLIParser():
                 help="Show the Budget Categories.")
             categories_subcmd_defaults = {
                 p3m.CK_SUBCMD_NAME: cp.CV_BUDGET_CATEGORIES_SUBCMD_NAME,
-                p3m.CK_SUBCMD_KEY: cp.CV_SHOW_BUDGET_CATEGORIES_SUBCMD_KEY
+                p3m.CK_SUBCMD_KEY: cp.CV_SHOW_BUDGET_CATEGORIES_SUBCMD_KEY,
+                cp.CK_CMDLINE_FI_KEY: None
             }
             categories_subcmd_parser.set_defaults(**categories_subcmd_defaults)
+            m: str = "Enter destination fi_key for the transfer."
+            self.add_CK_CMDLINE_FI_KEY_optional_argument(categories_subcmd_parser, help=m)
             categories_subcmd_parser.add_argument(
                 "cat_list", nargs="*",
-                # "-i", "--include", nargs="*",
                 action='extend', 
                 default= [],
                 help="List of categories to include, default is all.") 
             categories_subcmd_parser.add_argument(
                 "-l", "--level",nargs="?",
-                # "-i", "--include", nargs="*",
                 action='store',
                 type=int,
                 default=2, 

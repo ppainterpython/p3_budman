@@ -143,6 +143,8 @@ __all__ = [
     "WF_OUTPUT",
     "VALID_WF_PURPOSE_VALUES",
     # New Workbook Type constants
+    "WB_TYPE_UNKNOWN",
+    "WB_TYPE_CSV_TXNS",
     "WB_TYPE_BDM_STORE",
     "WB_TYPE_BDM_CONFIG",
     "WB_TYPE_TXN_REGISTER",
